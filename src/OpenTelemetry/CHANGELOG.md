@@ -11,6 +11,10 @@
 * Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
   ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
 
+* Added `AddExporter` `OpenTelemetryLoggerOptions` methods and further refined
+  the `OpenTelemetryLoggerProvider` dependency injection scenarios
+  ([#3596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3596))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using Xunit;
@@ -86,20 +87,20 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ThreadStaticPoolUsedByProviderTests()
         {
-            using var provider1 = new OpenTelemetryLoggerProvider(new OpenTelemetryLoggerOptions());
+            using var provider1 = new OpenTelemetryLoggerProvider();
 
             Assert.Equal(LogRecordThreadStaticPool.Instance, provider1.LogRecordPool);
 
-            var options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
-
-            using var provider2 = new OpenTelemetryLoggerProvider(options);
+            using var provider2 = Sdk.CreateLoggerProviderBuilder()
+                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+                .Build();
 
             Assert.Equal(LogRecordThreadStaticPool.Instance, provider2.LogRecordPool);
 
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
-
-            using var provider3 = new OpenTelemetryLoggerProvider(options);
+            using var provider3 = Sdk.CreateLoggerProviderBuilder()
+                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+                .Build();
 
             Assert.Equal(LogRecordThreadStaticPool.Instance, provider3.LogRecordPool);
         }
@@ -107,30 +108,27 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void SharedPoolUsedByProviderTests()
         {
-            var options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()));
-
-            using var provider1 = new OpenTelemetryLoggerProvider(options);
+            using var provider1 = Sdk.CreateLoggerProviderBuilder()
+                .AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()))
+                .Build();
 
             Assert.Equal(LogRecordSharedPool.Current, provider1.LogRecordPool);
 
-            options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
-            options.AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()));
-
-            using var provider2 = new OpenTelemetryLoggerProvider(options);
+            using var provider2 = Sdk.CreateLoggerProviderBuilder()
+                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+                .AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()))
+                .Build();
 
             Assert.Equal(LogRecordSharedPool.Current, provider2.LogRecordPool);
 
-            options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
-            options.AddProcessor(new CompositeProcessor<LogRecord>(new BaseProcessor<LogRecord>[]
-            {
-                new SimpleLogRecordExportProcessor(new NoopExporter()),
-                new BatchLogRecordExportProcessor(new NoopExporter()),
-            }));
-
-            using var provider3 = new OpenTelemetryLoggerProvider(options);
+            using var provider3 = Sdk.CreateLoggerProviderBuilder()
+                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
+                .AddProcessor(new CompositeProcessor<LogRecord>(new BaseProcessor<LogRecord>[]
+                {
+                    new SimpleLogRecordExportProcessor(new NoopExporter()),
+                    new BatchLogRecordExportProcessor(new NoopExporter()),
+                }))
+                .Build();
 
             Assert.Equal(LogRecordSharedPool.Current, provider3.LogRecordPool);
         }
