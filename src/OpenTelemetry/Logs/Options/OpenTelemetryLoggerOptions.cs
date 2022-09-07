@@ -32,8 +32,6 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public class OpenTelemetryLoggerOptions
     {
-        internal readonly List<BaseProcessor<LogRecord>> Processors = new();
-        internal ResourceBuilder? ResourceBuilder;
         internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
 
         private const bool DefaultIncludeScopes = false;
@@ -113,7 +111,7 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(processor);
 
-            this.Processors.Add(processor);
+            this.ConfigureProvider((sp, provider) => provider.AddProcessor(processor));
 
             return this;
         }
@@ -126,36 +124,108 @@ namespace OpenTelemetry.Logs
         /// registered as a singleton service into application services.
         /// </remarks>
         /// <typeparam name="T">Processor type.</typeparam>
-        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor<T>()
             where T : BaseProcessor<LogRecord>
         {
-            return this
-                .ConfigureServices(services => services.TryAddSingleton<BaseProcessor<LogRecord>, T>());
-        }
-
-        /// <summary>
-        /// Sets the <see cref="Resources.ResourceBuilder"/> from which the Resource associated with
-        /// this provider is built from. Overwrites currently set ResourceBuilder.
-        /// You should usually use <see cref="ConfigureResource(Action{ResourceBuilder})"/> instead
-        /// (call <see cref="ResourceBuilder.Clear"/> if desired).
-        /// </summary>
-        /// <param name="resourceBuilder"><see cref="Resources.ResourceBuilder"/> from which Resource will be built.</param>
-        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-        public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Guard.ThrowIfNull(resourceBuilder);
-
-            this.ResourceBuilder = resourceBuilder;
+            this.TryAddSingleton<T>();
+            this.ConfigureProvider((sp, provider) => provider.AddProcessor(sp.GetRequiredService<T>()));
 
             return this;
         }
 
         /// <summary>
-        /// Modify the <see cref="Resources.ResourceBuilder"/> from which the Resource associated with
+        /// Adds an exporter to the provider.
+        /// </summary>
+        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <param name="exporter">LogRecord exporter to add.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddExporter(ExportProcessorType exportProcessorType, BaseExporter<LogRecord> exporter)
+            => this.AddExporter(exportProcessorType, exporter, o => { });
+
+        /// <summary>
+        /// Adds an exporter to the provider.
+        /// </summary>
+        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <param name="exporter">LogRecord exporter to add.</param>
+        /// <param name="configure">Callback action to configure <see
+        /// cref="ExportLogRecordProcessorOptions"/>. Only invoked when <paramref
+        /// name="exportProcessorType"/> is <see
+        /// cref="ExportProcessorType.Batch"/>.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddExporter(ExportProcessorType exportProcessorType, BaseExporter<LogRecord> exporter, Action<ExportLogRecordProcessorOptions> configure)
+        {
+            Guard.ThrowIfNull(exporter);
+            Guard.ThrowIfNull(configure);
+
+            this.ConfigureProvider((sp, provider)
+                => provider.AddProcessor(
+                    BuildExportProcessor(sp, exportProcessorType, exporter, configure)));
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds an exporter to the provider which will be retrieved using dependency injection.
+        /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
+        /// <typeparam name="T">Exporter type.</typeparam>
+        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddExporter<T>(ExportProcessorType exportProcessorType)
+            where T : BaseExporter<LogRecord>
+            => this.AddExporter<T>(exportProcessorType, o => { });
+
+        /// <summary>
+        /// Adds an exporter to the provider which will be retrieved using dependency injection.
+        /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
+        /// <typeparam name="T">Exporter type.</typeparam>
+        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <param name="configure">Callback action to configure <see
+        /// cref="ExportLogRecordProcessorOptions"/>. Only invoked when <paramref
+        /// name="exportProcessorType"/> is <see
+        /// cref="ExportProcessorType.Batch"/>.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddExporter<T>(ExportProcessorType exportProcessorType, Action<ExportLogRecordProcessorOptions> configure)
+            where T : BaseExporter<LogRecord>
+        {
+            Guard.ThrowIfNull(configure);
+
+            this.TryAddSingleton<T>();
+            this.ConfigureProvider((sp, provider)
+                => provider.AddProcessor(
+                    BuildExportProcessor(sp, exportProcessorType, sp.GetRequiredService<T>(), configure)));
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// You should usually use <see cref="ConfigureResource(Action{ResourceBuilder})"/> instead
+        /// (call <see cref="ResourceBuilder.Clear"/> if desired).
+        /// </summary>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
+        {
+            Guard.ThrowIfNull(resourceBuilder);
+
+            return this.ConfigureProvider((sp, provider) => provider.ResourceBuilder = resourceBuilder);
+        }
+
+        /// <summary>
+        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from in-place.
         /// </summary>
-        /// <param name="configure">An action which modifies the provided <see cref="Resources.ResourceBuilder"/> in-place.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions ConfigureResource(
             Action<ResourceBuilder> configure)
@@ -271,7 +341,7 @@ namespace OpenTelemetry.Logs
 
             if (services == null)
             {
-                throw new NotSupportedException("LoggerProviderBuilder build method cannot be called multiple times.");
+                throw new NotSupportedException("OpenTelemetryLoggerOptions build method cannot be called multiple times.");
             }
 
             this.services = null;
@@ -296,11 +366,6 @@ namespace OpenTelemetry.Logs
         {
             Debug.Assert(other != null, "other instance was null");
 
-            if (this.ResourceBuilder != null)
-            {
-                other!.ResourceBuilder = this.ResourceBuilder;
-            }
-
             if (this.includeFormattedMessage.HasValue)
             {
                 other!.includeFormattedMessage = this.includeFormattedMessage;
@@ -316,18 +381,54 @@ namespace OpenTelemetry.Logs
                 other!.parseStateValues = this.parseStateValues;
             }
 
-            Debug.Assert(this.Processors != null && other!.Processors != null, "Processors was null");
-
-            foreach (var processor in this.Processors!)
-            {
-                other!.Processors!.Add(processor);
-            }
-
             Debug.Assert(this.ConfigurationActions != null && other!.ConfigurationActions != null, "ConfigurationActions was null");
 
             foreach (var configurationAction in this.ConfigurationActions!)
             {
                 other!.ConfigurationActions!.Add(configurationAction);
+            }
+        }
+
+        private static BaseProcessor<LogRecord> BuildExportProcessor(
+            IServiceProvider serviceProvider,
+            ExportProcessorType exportProcessorType,
+            BaseExporter<LogRecord> exporter,
+            Action<ExportLogRecordProcessorOptions> configure)
+        {
+            switch (exportProcessorType)
+            {
+                case ExportProcessorType.Simple:
+                    return new SimpleLogRecordExportProcessor(exporter);
+                case ExportProcessorType.Batch:
+                    var options = new ExportLogRecordProcessorOptions
+                    {
+                        ExportProcessorType = ExportProcessorType.Batch,
+                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptions<BatchExportLogRecordProcessorOptions>>().Value,
+                    };
+
+                    configure(options);
+
+                    var batchOptions = options.BatchExportProcessorOptions;
+
+                    return new BatchLogRecordExportProcessor(
+                        exporter,
+                        batchOptions.MaxQueueSize,
+                        batchOptions.ScheduledDelayMilliseconds,
+                        batchOptions.ExporterTimeoutMilliseconds,
+                        batchOptions.MaxExportBatchSize);
+                default:
+                    throw new NotSupportedException($"ExportProcessorType '{exportProcessorType}' is not supported.");
+            }
+        }
+
+        private void TryAddSingleton<T>()
+            where T : class
+        {
+            var services = this.services;
+
+            if (services != null)
+            {
+                services.TryAddSingleton<T>();
             }
         }
     }

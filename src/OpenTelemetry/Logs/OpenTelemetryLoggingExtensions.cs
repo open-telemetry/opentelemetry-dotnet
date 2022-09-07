@@ -17,7 +17,6 @@
 #nullable enable
 
 using System;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -37,9 +36,9 @@ namespace Microsoft.Extensions.Logging
         /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <remarks>
-        /// Note: This is safe to be called more than once and should be used by
-        /// library authors to ensure at least one <see
-        /// cref="OpenTelemetryLoggerProvider"/> is registered.
+        /// Note: This is safe to be called multiple times and by library
+        /// authors. Only a single <see cref="OpenTelemetryLoggerProvider"/>
+        /// will be created for a given <see cref="IServiceCollection"/>.
         /// </remarks>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -49,11 +48,7 @@ namespace Microsoft.Extensions.Logging
         /// <summary>
         /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
-        /// <remarks>
-        /// Note: This is should only be called once during application
-        /// bootstrap for a given <see cref="IServiceCollection"/>. This should
-        /// not be used by library authors.
-        /// </remarks>
+        /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="configure">Optional configuration action.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -65,12 +60,6 @@ namespace Microsoft.Extensions.Logging
 
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp =>
             {
-                var registeredBuilders = sp.GetServices<TrackedOpenTelemetryLoggerOptions>();
-                if (registeredBuilders.Count() > 1)
-                {
-                    throw new NotSupportedException("Multiple logger provider builders cannot be registered in the same service collection.");
-                }
-
                 var finalOptions = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
 
                 return new OpenTelemetryLoggerProvider(finalOptions, sp, ownsServiceProvider: false);
@@ -93,8 +82,6 @@ namespace Microsoft.Extensions.Logging
                 var options = new OpenTelemetryLoggerOptions(builder.Services);
 
                 configure(options);
-
-                builder.Services.AddSingleton(new TrackedOpenTelemetryLoggerOptions(options));
 
                 /*
                  * Step 2: When ServiceProvider is built from "Services" and the
@@ -119,9 +106,19 @@ namespace Microsoft.Extensions.Logging
         /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <remarks>
-        /// Note: The supplied <see cref="OpenTelemetryLoggerProvider"/> will
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>
+        /// The supplied <see cref="OpenTelemetryLoggerProvider"/> will
         /// automatically be disposed when the <see cref="ILoggerFactory"/>
         /// built from <paramref name="builder"/> is disposed.
+        /// </item>
+        /// <item>
+        /// Only a single<see cref="OpenTelemetryLoggerProvider"/> can be
+        /// registered for a given <see cref="IServiceCollection"/>. Additional
+        /// calls to this method will be ignored.
+        /// </item>
+        /// </list>
         /// </remarks>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
@@ -132,6 +129,11 @@ namespace Microsoft.Extensions.Logging
         /// <summary>
         /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: Only a single <see cref="OpenTelemetryLoggerProvider"/> can be
+        /// registered for a given <see cref="IServiceCollection"/>. Additional
+        /// calls to this method will be ignored.
+        /// </remarks>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
         /// <param name="disposeProvider">Controls whether or not the supplied
@@ -160,16 +162,6 @@ namespace Microsoft.Extensions.Logging
             }
 
             return builder;
-        }
-
-        private sealed class TrackedOpenTelemetryLoggerOptions
-        {
-            public TrackedOpenTelemetryLoggerOptions(OpenTelemetryLoggerOptions options)
-            {
-                this.Options = options;
-            }
-
-            public OpenTelemetryLoggerOptions Options { get; }
         }
     }
 }
