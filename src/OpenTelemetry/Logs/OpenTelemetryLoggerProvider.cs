@@ -70,12 +70,6 @@ namespace OpenTelemetry.Logs
         {
         }
 
-        // Note: This is only for tests. Options will be missing ServiceCollection & ServiceProvider features will be unavailable.
-        internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
-            : this(options, serviceProvider: null, ownsServiceProvider: false)
-        {
-        }
-
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options, IServiceProvider? serviceProvider, bool ownsServiceProvider)
         {
             Guard.ThrowIfNull(options);
@@ -91,33 +85,11 @@ namespace OpenTelemetry.Logs
                 Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
             }
 
-            // Step 1: Add any processors added to options.
-
-            foreach (var processor in options.Processors)
-            {
-                this.AddProcessor(processor);
-            }
-
-            this.ResourceBuilder = options.ResourceBuilder ?? ResourceBuilder.CreateDefault();
-
-            if (serviceProvider != null)
-            {
-                // Step 2: Look for any Action<IServiceProvider,
-                // OpenTelemetryLoggerProvider> configuration actions registered and
-                // execute them.
-
-                var registeredConfigurations = serviceProvider.GetServices<Action<IServiceProvider, OpenTelemetryLoggerProvider>>();
-                foreach (var registeredConfiguration in registeredConfigurations)
-                {
-                    registeredConfiguration?.Invoke(serviceProvider, this);
-                }
-            }
+            this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
             var configurationActions = options.ConfigurationActions;
             if (configurationActions?.Count > 0)
             {
-                // Step 3: Execute any configuration actions.
-
                 if (serviceProvider == null)
                 {
                     throw new InvalidOperationException("Configuration actions were registered on options but no service provider was supplied.");
@@ -131,17 +103,6 @@ namespace OpenTelemetry.Logs
                 }
 
                 options.ConfigurationActions = null;
-            }
-
-            if (serviceProvider != null)
-            {
-                // Step 4: Look for any processors registered directly with the service provider.
-
-                var registeredProcessors = serviceProvider.GetServices<BaseProcessor<LogRecord>>();
-                foreach (BaseProcessor<LogRecord> processor in registeredProcessors)
-                {
-                    this.AddProcessor(processor);
-                }
             }
 
             this.Resource = this.ResourceBuilder.Build();
