@@ -335,6 +335,22 @@ Custom resource detectors can be implemented:
 
 A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
+## Sampler Detector
+
+OpenTelemetry .NET SDK provides a sampler detector for detecting sampler
+from the `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`environment variables
+for following samplers: `always_on`, `always_off`, `traceidratio`,
+`parentbased_always_on`, `parentbased_always_off`, `parentbased_traceidratio`.
+
+Custom sampler detectors can be implemented:
+
+* SamplerDetectors should inherit from
+  `OpenTelemetry.Trace.ISamplerDetector`, (which belongs to the
+  [OpenTelemetry](../../../src/OpenTelemetry/README.md) package), and implement
+  the `Detect` method.
+
+A demo SamplerDetector is shown [here](./MySamplerDetector.cs).
+
 ## References
 
 * [Exporter
