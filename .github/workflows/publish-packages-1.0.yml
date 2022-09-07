@@ -19,18 +19,12 @@ on:
 
 jobs:
   build-pack:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [windows-latest]
-        branches: [main]
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
-        ref: ${{ matrix.branches }}
 
     - uses: actions/setup-dotnet@v2
       with:
@@ -49,7 +43,7 @@ jobs:
     - name: Publish Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.os }}-packages
+        name: windows-latest-packages
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
