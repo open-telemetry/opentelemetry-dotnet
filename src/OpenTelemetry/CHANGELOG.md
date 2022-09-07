@@ -11,6 +11,18 @@
 * Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
   ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
 
+* Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
+  ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
+
+* Added support for detecting, by default, sampler from the `OTEL_TRACES_SAMPLER`
+  and `OTEL_TRACES_SAMPLER_ARG`environment variables for following samplers:
+  `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`,
+  `parentbased_always_off`, `parentbased_traceidratio`.
+  ([#3635](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3635/))
+
+* Added support for implementing custom `SamplerDetector`.
+  ([#3635](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3635/))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
