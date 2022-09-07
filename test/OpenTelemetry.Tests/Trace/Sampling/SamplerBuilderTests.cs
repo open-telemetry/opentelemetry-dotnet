@@ -30,8 +30,6 @@ public class SamplerBuilderTests : IDisposable
     public void Dispose()
     {
         Environment.SetEnvironmentVariable(OTelEnvSamplerDetector.OTelTracesSamplerEnvVarKey, null);
-
-        GC.SuppressFinalize(this);
     }
 
     [Fact]

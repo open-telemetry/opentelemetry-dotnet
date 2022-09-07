@@ -47,8 +47,6 @@ public class OTelEnvSamplerDetectorTests : IDisposable
     {
         Environment.SetEnvironmentVariable(OTelEnvSamplerDetector.OTelTracesSamplerEnvVarKey, null);
         Environment.SetEnvironmentVariable(OTelEnvSamplerDetector.OTelTracesSamplerArgEnvVarKey, null);
-
-        GC.SuppressFinalize(this);
     }
 
     [Fact]
