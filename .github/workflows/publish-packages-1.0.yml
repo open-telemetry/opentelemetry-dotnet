@@ -48,7 +48,7 @@ jobs:
     - name: Publish Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: windows-latest-packages
+        name: ${{ inputs.ref }}-artifacts
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
