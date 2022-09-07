@@ -19,6 +19,13 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptionsExtensions
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerProvider!
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
+OpenTelemetry.Metrics.HistogramConfiguration
+OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
+OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.get -> bool
+OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.set -> void
+OpenTelemetry.Metrics.MetricPoint.GetHistogramMax() -> double
+OpenTelemetry.Metrics.MetricPoint.GetHistogramMin() -> double
+OpenTelemetry.Metrics.MetricType.HistogramWithMinMax = 80 -> OpenTelemetry.Metrics.MetricType
 ~OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string
 ~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string traceStateString) -> void
 ~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes, string traceStateString) -> void

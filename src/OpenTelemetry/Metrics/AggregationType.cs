@@ -54,13 +54,23 @@ namespace OpenTelemetry.Metrics
         DoubleGauge = 5,
 
         /// <summary>
-        /// Histogram.
+        /// Histogram with sum, count, buckets.
         /// </summary>
         Histogram = 6,
 
         /// <summary>
-        /// Histogram with sum, count only.
+        /// Histogram with sum, count.
         /// </summary>
         HistogramSumCount = 7,
+
+        /// <summary>
+        /// Histogram with sum, count, min, max, buckets.
+        /// </summary>
+        HistogramMinMax = 8,
+
+        /// <summary>
+        /// Histogram with sum, count, min, max.
+        /// </summary>
+        HistogramSumCountMinMax = 9,
     }
 }

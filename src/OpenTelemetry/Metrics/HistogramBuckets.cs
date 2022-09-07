@@ -38,6 +38,12 @@ namespace OpenTelemetry.Metrics
 
         internal double SnapshotSum;
 
+        internal double RunningMin = double.PositiveInfinity;
+        internal double SnapshotMin;
+
+        internal double RunningMax = double.NegativeInfinity;
+        internal double SnapshotMax;
+
         internal int IsCriticalSectionOccupied = 0;
 
         private readonly BucketLookupNode bucketLookupTreeRoot;
