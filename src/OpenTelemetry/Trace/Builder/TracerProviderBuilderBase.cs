@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -51,8 +52,15 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(services);
 
-            services.AddOptions();
-            services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+            RegisterSharedServices(services);
+
+            services.TryAddSingleton<TracerProvider>(sp =>
+            {
+                var sdkOptions = sp.GetRequiredService<IOptions<SdkOptions>>().Value;
+                return !sdkOptions.TracingEnabled
+                    ? new NoopTracerProvider()
+                    : new TracerProviderSdk(sp, ownsServiceProvider: false);
+            });
 
             this.services = services;
             this.ownsServices = false;
@@ -64,7 +72,7 @@ namespace OpenTelemetry.Trace
         {
             var services = new ServiceCollection();
 
-            services.AddOptions();
+            RegisterSharedServices(services);
 
             this.services = services;
             this.ownsServices = true;
@@ -264,7 +272,24 @@ namespace OpenTelemetry.Trace
 
             var serviceProvider = services.BuildServiceProvider();
 
-            return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+            var sdkOptions = serviceProvider.GetRequiredService<IOptions<SdkOptions>>().Value;
+            if (!sdkOptions.TracingEnabled)
+            {
+                serviceProvider.Dispose();
+
+                return new NoopTracerProvider();
+            }
+            else
+            {
+                return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+            }
+        }
+
+        private static void RegisterSharedServices(IServiceCollection services)
+        {
+            services.AddOptions();
+            services.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+            services.TryAddSingleton<IConfigureOptions<SdkOptions>, SdkOptions.ConfigureSdkOptions>();
         }
 
         private static BaseProcessor<Activity> BuildExportProcessor(
@@ -332,10 +357,7 @@ namespace OpenTelemetry.Trace
         {
             var services = this.services;
 
-            if (services != null)
-            {
-                services.TryAddSingleton<T>();
-            }
+            services?.TryAddSingleton<T>();
         }
     }
 }
