@@ -11,8 +11,9 @@
 * Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
   ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
 
-* Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
-  ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
+* Added `AddExporter` `OpenTelemetryLoggerOptions` methods and further refined
+  the `OpenTelemetryLoggerProvider` dependency injection scenarios
+  ([#3596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3596))
 
 * Added support for detecting, by default, sampler from the `OTEL_TRACES_SAMPLER`
   and `OTEL_TRACES_SAMPLER_ARG`environment variables for following samplers:
