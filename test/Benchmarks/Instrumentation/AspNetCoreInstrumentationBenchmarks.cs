@@ -30,6 +30,7 @@ namespace Benchmarks.Instrumentation
     public class AspNetCoreInstrumentationBenchmarks
     {
         private HttpClient httpClient;
+        private WebApplication app;
 
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
         public void UninstrumentedAspNetCoreAppGlobalSetup()
@@ -39,7 +40,9 @@ namespace Benchmarks.Instrumentation
             builder.Logging.ClearProviders();
             var app = builder.Build();
             app.MapControllers();
-            Task.Run(() => app.Run());
+            app.RunAsync();
+
+            this.app = app;
             this.httpClient = new HttpClient();
         }
 
@@ -50,8 +53,10 @@ namespace Benchmarks.Instrumentation
             builder.Services.AddControllers();
             builder.Logging.ClearProviders();
             var app = builder.Build();
-            Task.Run(() => app.Run());
             app.MapControllers();
+            app.RunAsync();
+
+            this.app = app;
             this.httpClient = new HttpClient();
 
             Sdk.CreateTracerProviderBuilder()
@@ -63,6 +68,7 @@ namespace Benchmarks.Instrumentation
         public void GlobalCleanup()
         {
             this.httpClient.Dispose();
+            this.app.DisposeAsync();
         }
 
         [Benchmark]
