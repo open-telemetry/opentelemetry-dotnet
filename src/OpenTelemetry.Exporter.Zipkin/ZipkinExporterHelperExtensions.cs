@@ -17,6 +17,8 @@
 using System;
 using System.Net.Http;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -33,31 +35,29 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure = null)
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            if (configure != null)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddZipkinExporter(builder, sp.GetOptions<ZipkinExporterOptions>(), configure, sp);
-                });
+                builder.ConfigureServices(services => services.Configure(configure));
             }
 
-            return AddZipkinExporter(builder, new ZipkinExporterOptions(), configure, serviceProvider: null);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ZipkinExporterOptions>>().Value;
+
+                AddZipkinExporter(builder, options, sp);
+            });
         }
 
         private static TracerProviderBuilder AddZipkinExporter(
             TracerProviderBuilder builder,
             ZipkinExporterOptions options,
-            Action<ZipkinExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            configure?.Invoke(options);
-
-            if (serviceProvider != null && options.HttpClientFactory == ZipkinExporterOptions.DefaultHttpClientFactory)
+            if (options.HttpClientFactory == ZipkinExporterOptions.DefaultHttpClientFactory)
             {
                 options.HttpClientFactory = () =>
                 {
