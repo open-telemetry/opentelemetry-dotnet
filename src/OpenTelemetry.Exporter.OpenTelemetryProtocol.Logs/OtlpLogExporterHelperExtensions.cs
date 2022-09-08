@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -28,6 +30,12 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="AddOtlpExporter(OpenTelemetryLoggerOptions,
+        /// Action{OtlpExporterOptions})"/> automatically sets <see
+        /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> to <see
+        /// langword="true"/>.
+        /// </remarks>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
@@ -35,21 +43,41 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(loggerOptions);
 
-            return AddOtlpExporter(loggerOptions, new OtlpExporterOptions(), configure);
+            loggerOptions.ParseStateValues = true;
+
+            if (configure != null)
+            {
+                loggerOptions.ConfigureServices(services => services.Configure(configure));
+            }
+
+            return loggerOptions.ConfigureProvider((sp, provider) =>
+            {
+                var options = sp.GetRequiredService<IOptions<OtlpExporterOptions>>().Value;
+
+                AddOtlpExporter(provider, options, sp);
+            });
         }
 
-        private static OpenTelemetryLoggerOptions AddOtlpExporter(OpenTelemetryLoggerOptions loggerOptions, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
+        private static void AddOtlpExporter(
+            OpenTelemetryLoggerProvider provider,
+            OtlpExporterOptions exporterOptions,
+            IServiceProvider serviceProvider)
         {
-            configure?.Invoke(exporterOptions);
+            exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+
             var otlpExporter = new OtlpLogExporter(exporterOptions);
-            loggerOptions.ParseStateValues = true;
+
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
+                provider.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
             }
             else
             {
-                return loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+                // TODO: exporterOptions.BatchExportProcessorOptions is
+                // BatchExportActivityProcessorOptions which is using tracing
+                // environment variables. There should probably be a dedicated
+                // setting for logs using BatchExportLogRecordProcessorOptions
+                provider.AddProcessor(new BatchLogRecordExportProcessor(
                     otlpExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
