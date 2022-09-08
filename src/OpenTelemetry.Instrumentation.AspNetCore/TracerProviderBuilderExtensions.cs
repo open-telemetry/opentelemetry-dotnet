@@ -17,8 +17,9 @@
 using System;
 #if NET7_0_OR_GREATER
 using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 #endif
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
@@ -42,15 +43,17 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            if (configureAspNetCoreInstrumentationOptions != null)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions, sp);
-                });
+                builder.ConfigureServices(services => services.Configure(configureAspNetCoreInstrumentationOptions));
             }
 
-            return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<AspNetCoreInstrumentationOptions>>().Value;
+
+                AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentation(new HttpInListener(options)), sp);
+            });
         }
 
         internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
@@ -80,19 +83,6 @@ namespace OpenTelemetry.Trace
 #endif
 
             return builder.AddInstrumentation(() => instrumentation);
-        }
-
-        private static TracerProviderBuilder AddAspNetCoreInstrumentation(
-            TracerProviderBuilder builder,
-            AspNetCoreInstrumentationOptions options,
-            Action<AspNetCoreInstrumentationOptions> configure = null,
-            IServiceProvider serviceProvider = null)
-        {
-            configure?.Invoke(options);
-            return AddAspNetCoreInstrumentation(
-                builder,
-                new AspNetCoreInstrumentation(new HttpInListener(options)),
-                serviceProvider);
         }
     }
 }
