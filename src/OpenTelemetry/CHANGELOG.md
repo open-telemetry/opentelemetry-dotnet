@@ -2,8 +2,18 @@
 
 ## Unreleased
 
+* Use binary search for histograms with 50 or more supplied boundaries.
+  ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
+
 * Allows samplers the ability to modify tracestate if desired.
   ([#3610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3610))
+
+* Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
+  ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
+
+* Added `AddExporter` `OpenTelemetryLoggerOptions` methods and further refined
+  the `OpenTelemetryLoggerProvider` dependency injection scenarios
+  ([#3596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3596))
 
 ## 1.4.0-alpha.2
 
@@ -70,7 +80,7 @@ Released 2022-May-16
 
 * Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`,
   and `LogRecord.FormattedMessage`.
- ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
+  ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
 
 ## 1.3.0-beta.1
 

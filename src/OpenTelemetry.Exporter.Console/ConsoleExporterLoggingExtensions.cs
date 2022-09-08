@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -32,9 +34,17 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(loggerOptions);
 
-            var options = new ConsoleExporterOptions();
-            configure?.Invoke(options);
-            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
+            if (configure != null)
+            {
+                loggerOptions.ConfigureServices(services => services.Configure(configure));
+            }
+
+            return loggerOptions.ConfigureProvider((sp, provider) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ConsoleExporterOptions>>().Value;
+
+                provider.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
+            });
         }
     }
 }
