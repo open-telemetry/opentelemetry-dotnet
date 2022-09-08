@@ -46,7 +46,7 @@ namespace OpenTelemetry
             {
                 Debug.Assert(configuration != null, "configuration was null");
 
-                this.configuration = configuration;
+                this.configuration = configuration!;
             }
 
             public void Configure(SdkOptions options)
@@ -56,12 +56,12 @@ namespace OpenTelemetry
                 var globalDisableFlagValue = this.configuration.GetValue("OTEL_SDK_DISABLED", false);
                 if (globalDisableFlagValue)
                 {
-                    options.TracingEnabled = false;
+                    options!.TracingEnabled = false;
                     options.MetricsEnabled = false;
                     options.LoggingEnabled = false;
                 }
 
-                globalConfigureCallbacks?.Invoke(options);
+                globalConfigureCallbacks?.Invoke(options!);
             }
         }
     }
