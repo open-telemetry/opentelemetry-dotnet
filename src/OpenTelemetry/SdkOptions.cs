@@ -38,13 +38,6 @@ namespace OpenTelemetry
             globalConfigureCallbacks += configure ?? throw new ArgumentNullException(nameof(configure));
         }
 
-        internal static void InvokeConfigureCallbacks(SdkOptions options)
-        {
-            Debug.Assert(options != null, "options was null");
-
-            globalConfigureCallbacks?.Invoke(options);
-        }
-
         internal sealed class ConfigureSdkOptions : IConfigureOptions<SdkOptions>
         {
             private readonly IConfiguration configuration;
@@ -68,7 +61,7 @@ namespace OpenTelemetry
                     options.LoggingEnabled = false;
                 }
 
-                InvokeConfigureCallbacks(options);
+                globalConfigureCallbacks?.Invoke(options);
             }
         }
     }
