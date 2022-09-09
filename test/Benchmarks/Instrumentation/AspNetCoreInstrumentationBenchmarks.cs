@@ -64,11 +64,18 @@ namespace Benchmarks.Instrumentation
                 .Build();
         }
 
-        [GlobalCleanup]
-        public void GlobalCleanup()
+        [GlobalCleanup(Target = nameof(UninstrumentedAspNetCoreApp))]
+        public void GlobalCleanupUninstrumentedAspNetCoreApp()
         {
             this.httpClient.Dispose();
-            this.app.DisposeAsync();
+            this.app.DisposeAsync().GetAwaiter().GetResult();
+        }
+
+        [GlobalCleanup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
+        public void GlobalCleanupInstrumentedAspNetCoreAppWithDefaultOptions()
+        {
+            this.httpClient.Dispose();
+            this.app.DisposeAsync().GetAwaiter().GetResult();
         }
 
         [Benchmark]
