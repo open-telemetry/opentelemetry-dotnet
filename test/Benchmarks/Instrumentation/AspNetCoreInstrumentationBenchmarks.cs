@@ -36,8 +36,8 @@ Job=InProcess  Toolchain=InProcessEmitToolchain
 
 |                                      Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
 |-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 154.3 us | 2.95 us | 3.27 us | 0.9766 |      5 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 176.2 us | 2.61 us | 2.32 us | 1.2207 |      7 KB |
+|                 UninstrumentedAspNetCoreApp | 155.6 us | 2.63 us | 2.33 us | 0.9766 |      5 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions | 176.8 us | 3.24 us | 2.70 us | 1.2207 |      7 KB |
 */
 
 namespace Benchmarks.Instrumentation
@@ -82,17 +82,17 @@ namespace Benchmarks.Instrumentation
         }
 
         [GlobalCleanup(Target = nameof(UninstrumentedAspNetCoreApp))]
-        public void GlobalCleanupUninstrumentedAspNetCoreApp()
+        public async Task GlobalCleanupUninstrumentedAspNetCoreAppAsync()
         {
             this.httpClient.Dispose();
-            this.app.DisposeAsync().GetAwaiter().GetResult();
+            await this.app.DisposeAsync();
         }
 
         [GlobalCleanup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
-        public void GlobalCleanupInstrumentedAspNetCoreAppWithDefaultOptions()
+        public async Task GlobalCleanupInstrumentedAspNetCoreAppWithDefaultOptionsAsync()
         {
             this.httpClient.Dispose();
-            this.app.DisposeAsync().GetAwaiter().GetResult();
+            await this.app.DisposeAsync();
             this.tracerProvider.Dispose();
         }
 
