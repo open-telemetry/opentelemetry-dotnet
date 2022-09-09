@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricReaderOptions
 {
-    private PeriodicExportingMetricReaderOptions periodicExportingMetricReaderOptions = new();
+    private PeriodicExportingMetricReaderOptions? periodicExportingMetricReaderOptions;
 
     /// <summary>
     /// Gets or sets the <see cref="MetricReaderTemporalityPreference" />.
@@ -37,7 +37,7 @@ public class MetricReaderOptions
     /// </summary>
     public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions
     {
-        get => this.periodicExportingMetricReaderOptions;
+        get => this.periodicExportingMetricReaderOptions ??= new();
         set
         {
             Guard.ThrowIfNull(value);
