@@ -17,6 +17,8 @@
 using System;
 using System.Net.Http;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -37,27 +39,25 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            if (configure != null)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddJaegerExporter(builder, sp.GetOptions<JaegerExporterOptions>(), configure, sp);
-                });
+                builder.ConfigureServices(services => services.Configure(configure));
             }
 
-            return AddJaegerExporter(builder, new JaegerExporterOptions(), configure, serviceProvider: null);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<JaegerExporterOptions>>().Value;
+
+                AddJaegerExporter(builder, options, sp);
+            });
         }
 
         private static TracerProviderBuilder AddJaegerExporter(
             TracerProviderBuilder builder,
             JaegerExporterOptions options,
-            Action<JaegerExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            configure?.Invoke(options);
-
-            if (serviceProvider != null
-                && options.Protocol == JaegerExportProtocol.HttpBinaryThrift
+            if (options.Protocol == JaegerExportProtocol.HttpBinaryThrift
                 && options.HttpClientFactory == JaegerExporterOptions.DefaultHttpClientFactory)
             {
                 options.HttpClientFactory = () =>
