@@ -31,6 +31,7 @@ namespace OpenTelemetry.Metrics
     {
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
+        internal bool Disposed;
 
         private readonly List<object> instrumentations = new();
         private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
@@ -38,7 +39,6 @@ namespace OpenTelemetry.Metrics
         private readonly MeterListener listener;
         private readonly MetricReader? reader;
         private readonly CompositeMetricReader? compositeMetricReader;
-        private bool disposed;
 
         internal MeterProviderSdk(
             IServiceProvider serviceProvider,
@@ -555,7 +555,7 @@ namespace OpenTelemetry.Metrics
         protected override void Dispose(bool disposing)
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.Dispose)} started.");
-            if (!this.disposed)
+            if (!this.Disposed)
             {
                 if (disposing)
                 {
@@ -579,7 +579,7 @@ namespace OpenTelemetry.Metrics
                     this.OwnedServiceProvider?.Dispose();
                 }
 
-                this.disposed = true;
+                this.Disposed = true;
                 OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
             }
 
