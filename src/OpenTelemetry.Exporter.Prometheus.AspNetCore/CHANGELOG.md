@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Bug fix for Prometheus Exporter reporting StatusCode 204
+instead of 200, when no metrics are collected
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
