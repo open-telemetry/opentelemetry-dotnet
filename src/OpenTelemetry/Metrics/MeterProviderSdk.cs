@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,39 +29,48 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class MeterProviderSdk : MeterProvider
     {
+        internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
+
         private readonly List<object> instrumentations = new();
-        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
+        private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
         private readonly object collectLock = new();
         private readonly MeterListener listener;
-        private readonly MetricReader reader;
-        private readonly CompositeMetricReader compositeMetricReader;
+        private readonly MetricReader? reader;
+        private readonly CompositeMetricReader? compositeMetricReader;
         private bool disposed;
 
         internal MeterProviderSdk(
-            Resource resource,
-            IEnumerable<string> meterSources,
-            List<MeterProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
-            List<Func<Instrument, MetricStreamConfiguration>> viewConfigs,
-            int maxMetricStreams,
-            int maxMetricPointsPerMetricStream,
-            IEnumerable<MetricReader> readers)
+            IServiceProvider serviceProvider,
+            bool ownsServiceProvider)
         {
+            if (ownsServiceProvider)
+            {
+                this.OwnedServiceProvider = serviceProvider as IDisposable;
+                Debug.Assert(this.OwnedServiceProvider != null, "serviceProvider was not IDisposable");
+            }
+
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
+
+            var state = new MeterProviderBuilderState(serviceProvider);
+
+            MeterProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
+                serviceProvider,
+                state);
 
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-            this.Resource = resource;
-            this.viewConfigs = viewConfigs;
+            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            this.viewConfigs = state.ViewConfigs;
 
-            foreach (var reader in readers)
+            foreach (var reader in state.Readers)
             {
                 Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
-                reader.SetMaxMetricStreams(maxMetricStreams);
-                reader.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
+                reader.SetMaxMetricStreams(state.MaxMetricStreams);
+                reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
 
                 if (this.reader == null)
                 {
@@ -98,12 +109,12 @@ namespace OpenTelemetry.Metrics
 
             this.compositeMetricReader = this.reader as CompositeMetricReader;
 
-            if (instrumentationFactories.Any())
+            if (state.Instrumentation.Any())
             {
-                foreach (var instrumentationFactory in instrumentationFactories)
+                foreach (var instrumentation in state.Instrumentation)
                 {
-                    this.instrumentations.Add(instrumentationFactory.Factory());
-                    instrumentationFactoriesAdded.Append(instrumentationFactory.Name);
+                    this.instrumentations.Add(instrumentation.Instance);
+                    instrumentationFactoriesAdded.Append(instrumentation.Name);
                     instrumentationFactoriesAdded.Append(';');
                 }
             }
@@ -116,18 +127,18 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (meterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
+            if (state.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = WildcardHelper.GetWildcardRegex(meterSources);
+                var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
-            else if (meterSources.Any())
+            else if (state.MeterSources.Any())
             {
-                var meterSourcesToSubscribe = new HashSet<string>(meterSources, StringComparer.OrdinalIgnoreCase);
+                var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
                 shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", meterSources)}\".");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
@@ -154,11 +165,11 @@ namespace OpenTelemetry.Metrics
                         // possible size, to avoid any array resize/copy internally.
                         // There may be excess space wasted, but it'll eligible for
                         // GC right after this method.
-                        var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
+                        var metricStreamConfigs = new List<MetricStreamConfiguration?>(viewConfigCount);
                         for (var i = 0; i < viewConfigCount; ++i)
                         {
                             var viewConfig = this.viewConfigs[i];
-                            MetricStreamConfiguration metricStreamConfig = null;
+                            MetricStreamConfiguration? metricStreamConfig = null;
 
                             try
                             {
@@ -320,7 +331,7 @@ namespace OpenTelemetry.Metrics
 
         internal List<object> Instrumentations => this.instrumentations;
 
-        internal MetricReader Reader => this.reader;
+        internal MetricReader? Reader => this.reader;
 
         internal void MeasurementsCompletedSingleStream(Instrument instrument, object state)
         {
@@ -334,7 +345,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.reader.CompleteSingleStreamMeasurement(metric);
+                this.reader?.CompleteSingleStreamMeasurement(metric);
             }
             else
             {
@@ -360,7 +371,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.reader.CompleteMeasurement(metrics);
+                this.reader?.CompleteMeasurement(metrics);
             }
             else
             {
@@ -386,7 +397,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.reader.RecordDoubleMeasurement(metrics, value, tagsRos);
+                this.reader?.RecordDoubleMeasurement(metrics, value, tagsRos);
             }
             else
             {
@@ -412,7 +423,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.reader.RecordLongMeasurement(metrics, value, tagsRos);
+                this.reader?.RecordLongMeasurement(metrics, value, tagsRos);
             }
             else
             {
@@ -438,7 +449,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.reader.RecordSingleStreamLongMeasurement(metric, value, tagsRos);
+                this.reader?.RecordSingleStreamLongMeasurement(metric, value, tagsRos);
             }
             else
             {
@@ -464,7 +475,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.reader.RecordSingleStreamDoubleMeasurement(metric, value, tagsRos);
+                this.reader?.RecordSingleStreamDoubleMeasurement(metric, value, tagsRos);
             }
             else
             {
@@ -563,7 +574,9 @@ namespace OpenTelemetry.Metrics
                     this.reader?.Dispose();
                     this.compositeMetricReader?.Dispose();
 
-                    this.listener.Dispose();
+                    this.listener?.Dispose();
+
+                    this.OwnedServiceProvider?.Dispose();
                 }
 
                 this.disposed = true;
