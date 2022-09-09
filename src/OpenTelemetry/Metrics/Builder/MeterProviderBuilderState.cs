@@ -91,7 +91,7 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(viewConfig != null, "viewConfig was null");
 
-            this.ViewConfigs.Add(viewConfig);
+            this.ViewConfigs.Add(viewConfig!);
         }
 
         public void ConfigureResource(Action<ResourceBuilder> configure)
