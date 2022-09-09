@@ -24,6 +24,22 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+/*
+// * Summary *
+
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
+Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
+.NET SDK=7.0.100-preview.6.22275.1
+  [Host] : .NET 6.0.8 (6.0.822.36306), X64 RyuJIT
+
+Job=InProcess  Toolchain=InProcessEmitToolchain
+
+|                                      Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
+|-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
+|                 UninstrumentedAspNetCoreApp | 154.3 us | 2.95 us | 3.27 us | 0.9766 |      5 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions | 176.2 us | 2.61 us | 2.32 us | 1.2207 |      7 KB |
+*/
+
 namespace Benchmarks.Instrumentation
 {
     [InProcess]
@@ -31,6 +47,7 @@ namespace Benchmarks.Instrumentation
     {
         private HttpClient httpClient;
         private WebApplication app;
+        private TracerProvider tracerProvider;
 
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
         public void UninstrumentedAspNetCoreAppGlobalSetup()
@@ -59,7 +76,7 @@ namespace Benchmarks.Instrumentation
             this.app = app;
             this.httpClient = new HttpClient();
 
-            Sdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetCoreInstrumentation()
                 .Build();
         }
@@ -76,6 +93,7 @@ namespace Benchmarks.Instrumentation
         {
             this.httpClient.Dispose();
             this.app.DisposeAsync().GetAwaiter().GetResult();
+            this.tracerProvider.Dispose();
         }
 
         [Benchmark]
