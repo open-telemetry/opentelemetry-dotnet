@@ -333,7 +333,7 @@ namespace OpenTelemetry.Metrics
 
         internal MetricReader? Reader => this.reader;
 
-        internal void MeasurementsCompletedSingleStream(Instrument instrument, object state)
+        internal void MeasurementsCompletedSingleStream(Instrument instrument, object? state)
         {
             Debug.Assert(instrument != null, "instrument must be non-null.");
 
@@ -359,7 +359,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void MeasurementsCompleted(Instrument instrument, object state)
+        internal void MeasurementsCompleted(Instrument instrument, object? state)
         {
             Debug.Assert(instrument != null, "instrument must be non-null.");
 
@@ -385,7 +385,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
         {
             Debug.Assert(instrument != null, "instrument must be non-null.");
 
@@ -411,7 +411,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
         {
             Debug.Assert(instrument != null, "instrument must be non-null.");
 
@@ -437,7 +437,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void MeasurementRecordedLongSingleStream(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        internal void MeasurementRecordedLongSingleStream(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
         {
             Debug.Assert(instrument != null, "instrument must be non-null.");
 
@@ -463,7 +463,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void MeasurementRecordedDoubleSingleStream(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        internal void MeasurementRecordedDoubleSingleStream(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
         {
             Debug.Assert(instrument != null, "instrument must be non-null.");
 
