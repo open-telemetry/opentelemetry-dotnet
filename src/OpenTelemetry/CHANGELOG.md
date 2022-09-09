@@ -17,7 +17,7 @@
 
 * Added support for dependency injection scenarios when configuring
   `MeterProvider`
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3646))
 
 ## 1.4.0-alpha.2
 

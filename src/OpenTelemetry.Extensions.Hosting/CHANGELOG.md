@@ -8,7 +8,7 @@
 
 * Dependency injection support when configuring
   `MeterProvider` has been moved into the SDK.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3646))
 
 ## 1.0.0-rc9.6
 
