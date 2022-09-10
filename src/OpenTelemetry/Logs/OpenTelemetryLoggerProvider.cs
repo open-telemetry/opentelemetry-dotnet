@@ -195,8 +195,6 @@ namespace OpenTelemetry.Logs
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started adding processor.");
 
-            StringBuilder processorAdded = new StringBuilder();
-
             Guard.ThrowIfNull(processor);
 
             processor.SetParentProvider(this);
