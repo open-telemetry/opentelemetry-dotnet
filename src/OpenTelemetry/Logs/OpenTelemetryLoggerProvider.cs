@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Threading;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
