@@ -396,6 +396,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(43, processorType, result);
         }
 
+        [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
+        public void OpenTelemetryLoggerProviderEvent(string message)
+        {
+            this.WriteEvent(44, message);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
