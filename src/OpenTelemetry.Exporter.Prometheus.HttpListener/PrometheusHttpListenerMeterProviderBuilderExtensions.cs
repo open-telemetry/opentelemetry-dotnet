@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -38,24 +40,23 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            if (configure != null)
             {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddPrometheusHttpListener(builder, sp.GetOptions<PrometheusHttpListenerOptions>(), configure);
-                });
+                builder.ConfigureServices(services => services.Configure(configure));
             }
 
-            return AddPrometheusHttpListener(builder, new PrometheusHttpListenerOptions(), configure);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<PrometheusHttpListenerOptions>>().Value;
+
+                AddPrometheusHttpListener(builder, options);
+            });
         }
 
         private static MeterProviderBuilder AddPrometheusHttpListener(
             MeterProviderBuilder builder,
-            PrometheusHttpListenerOptions options,
-            Action<PrometheusHttpListenerOptions> configure = null)
+            PrometheusHttpListenerOptions options)
         {
-            configure?.Invoke(options);
-
             var exporter = new PrometheusExporter();
 
             var reader = new BaseExportingMetricReader(exporter)

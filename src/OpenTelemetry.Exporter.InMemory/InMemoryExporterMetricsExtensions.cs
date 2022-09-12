@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -41,7 +43,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems)
         {
-            return builder.AddInMemoryExporter(exportedItems: exportedItems, configureMetricReader: null);
+            return AddInMemoryExporter(builder, exportedItems, configureMetricReader: null);
         }
 
         /// <summary>
@@ -59,15 +61,17 @@ namespace OpenTelemetry.Metrics
             Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(exportedItems);
 
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            if (configureMetricReader != null)
             {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddInMemoryExporter(builder, exportedItems, sp.GetOptions<MetricReaderOptions>(), configureMetricReader);
-                });
+                builder.ConfigureServices(services => services.Configure(configureMetricReader));
             }
 
-            return AddInMemoryExporter(builder, exportedItems, new MetricReaderOptions(), configureMetricReader);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<MetricReaderOptions>>().Value;
+
+                AddInMemoryExporter(builder, exportedItems, options);
+            });
         }
 
         /// <summary>
@@ -84,7 +88,7 @@ namespace OpenTelemetry.Metrics
             this MeterProviderBuilder builder,
             ICollection<MetricSnapshot> exportedItems)
         {
-            return builder.AddInMemoryExporter(exportedItems: exportedItems, configureMetricReader: null);
+            return AddInMemoryExporter(builder, exportedItems, configureMetricReader: null);
         }
 
         /// <summary>
@@ -106,25 +110,24 @@ namespace OpenTelemetry.Metrics
             Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(exportedItems);
 
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            if (configureMetricReader != null)
             {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddInMemoryExporter(builder, exportedItems, sp.GetOptions<MetricReaderOptions>(), configureMetricReader);
-                });
+                builder.ConfigureServices(services => services.Configure(configureMetricReader));
             }
 
-            return AddInMemoryExporter(builder, exportedItems, new MetricReaderOptions(), configureMetricReader);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<MetricReaderOptions>>().Value;
+
+                AddInMemoryExporter(builder, exportedItems, options);
+            });
         }
 
         private static MeterProviderBuilder AddInMemoryExporter(
             MeterProviderBuilder builder,
             ICollection<Metric> exportedItems,
-            MetricReaderOptions metricReaderOptions,
-            Action<MetricReaderOptions> configureMetricReader)
+            MetricReaderOptions metricReaderOptions)
         {
-            configureMetricReader?.Invoke(metricReaderOptions);
-
             var metricExporter = new InMemoryExporter<Metric>(exportedItems);
 
             var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
@@ -139,11 +142,8 @@ namespace OpenTelemetry.Metrics
         private static MeterProviderBuilder AddInMemoryExporter(
             MeterProviderBuilder builder,
             ICollection<MetricSnapshot> exportedItems,
-            MetricReaderOptions metricReaderOptions,
-            Action<MetricReaderOptions> configureMetricReader)
+            MetricReaderOptions metricReaderOptions)
         {
-            configureMetricReader?.Invoke(metricReaderOptions);
-
             var metricExporter = new InMemoryExporter<Metric>(
                 exportFunc: (in Batch<Metric> metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
 

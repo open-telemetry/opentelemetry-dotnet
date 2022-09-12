@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -36,22 +38,23 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            if (configure != null)
             {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddPrometheusExporter(builder, sp.GetOptions<PrometheusExporterOptions>(), configure);
-                });
+                builder.ConfigureServices(services => services.Configure(configure));
             }
 
-            return AddPrometheusExporter(builder, new PrometheusExporterOptions(), configure);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<PrometheusExporterOptions>>().Value;
+
+                AddPrometheusExporter(builder, options);
+            });
         }
 
-        private static MeterProviderBuilder AddPrometheusExporter(MeterProviderBuilder builder, PrometheusExporterOptions options, Action<PrometheusExporterOptions> configure = null)
+        private static MeterProviderBuilder AddPrometheusExporter(MeterProviderBuilder builder, PrometheusExporterOptions options)
         {
-            configure?.Invoke(options);
-
             var exporter = new PrometheusExporter(scrapeResponseCacheDurationMilliseconds: options.ScrapeResponseCacheDurationMilliseconds);
+
             var reader = new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
