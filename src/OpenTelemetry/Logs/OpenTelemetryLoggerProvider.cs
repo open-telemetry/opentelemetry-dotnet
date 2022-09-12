@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -200,22 +201,39 @@ namespace OpenTelemetry.Logs
 
             processor.SetParentProvider(this);
 
+            StringBuilder processorAdded = new StringBuilder();
+
             if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
             {
+                processorAdded.Append("Using shared thread pool. ");
+                
                 this.threadStaticPool = null;
             }
 
             if (this.Processor == null)
             {
+                processorAdded.Append("Setting processor to ");
+                processorAdded.Append(processor);
+                processorAdded.Append('.');
+
                 this.Processor = processor;
             }
             else if (this.Processor is CompositeProcessor<LogRecord> compositeProcessor)
             {
+                processorAdded.Append("Adding processor ");
+                processorAdded.Append(processor);
+                processorAdded.Append(" to composite processor.");
+
                 compositeProcessor.AddProcessor(processor);
-                OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Adding processor to composite processor.");
             }
             else
             {
+                processorAdded.Append("Creating new composite processor with processor ");
+                processorAdded.Append(this.Processor);
+                processorAdded.Append(" and adding new processor ");
+                processorAdded.Append(processor);
+                processorAdded.Append('.');
+
                 var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
                 {
                     this.Processor,
@@ -223,10 +241,8 @@ namespace OpenTelemetry.Logs
                 newCompositeProcessor.SetParentProvider(this);
                 newCompositeProcessor.AddProcessor(processor);
                 this.Processor = newCompositeProcessor;
-                OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Creating new composite processor and adding processor to it.");
             }
-
-            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Completed adding processor.");
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent($"Completed adding processor = \"{processorAdded}\".");
 
             return this;
         }
