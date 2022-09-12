@@ -37,31 +37,44 @@ namespace OpenTelemetry.Metrics
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder)
-        {
-            return AddConsoleExporter(builder, configureExporter: null);
-        }
+            => AddConsoleExporter(builder, name: null, configureExporter: null);
 
         /// <summary>
         /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configureExporter">Exporter configuration options.</param>
+        /// <param name="configureExporter">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configureExporter)
+            => AddConsoleExporter(builder, name: null, configureExporter);
+
+        /// <summary>
+        /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configureExporter">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddConsoleExporter(
+            this MeterProviderBuilder builder,
+            string name,
+            Action<ConsoleExporterOptions> configureExporter)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             if (configureExporter != null)
             {
-                builder.ConfigureServices(services => services.Configure(configureExporter));
+                builder.ConfigureServices(services => services.Configure(name, configureExporter));
             }
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
                 AddConsoleExporter(
                     builder,
-                    sp.GetRequiredService<IOptions<ConsoleExporterOptions>>().Value,
-                    sp.GetRequiredService<IOptions<MetricReaderOptions>>().Value);
+                    sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name),
+                    sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name));
             });
         }
 
@@ -69,18 +82,37 @@ namespace OpenTelemetry.Metrics
         /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configureExporterAndMetricReader">Exporter and <see cref="MetricReader"/> configuration options.</param>
+        /// <param name="configureExporterAndMetricReader">Callback action for
+        /// configuring <see cref="ConsoleExporterOptions"/> and <see
+        /// cref="MetricReaderOptions"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddConsoleExporter(
             this MeterProviderBuilder builder,
             Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
+            => AddConsoleExporter(builder, name: null, configureExporterAndMetricReader);
+
+        /// <summary>
+        /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configureExporterAndMetricReader">Callback action for
+        /// configuring <see cref="ConsoleExporterOptions"/> and <see
+        /// cref="MetricReaderOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddConsoleExporter(
+            this MeterProviderBuilder builder,
+            string name,
+            Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptions<ConsoleExporterOptions>>().Value;
-                var metricReaderOptions = sp.GetRequiredService<IOptions<MetricReaderOptions>>().Value;
+                var exporterOptions = sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name);
+                var metricReaderOptions = sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name);
 
                 configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
