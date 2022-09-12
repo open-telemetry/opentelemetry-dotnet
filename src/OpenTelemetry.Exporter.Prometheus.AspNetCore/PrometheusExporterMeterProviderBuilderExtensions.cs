@@ -32,20 +32,45 @@ namespace OpenTelemetry.Metrics
         /// Adds <see cref="PrometheusExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        public static MeterProviderBuilder AddPrometheusExporter(this MeterProviderBuilder builder, Action<PrometheusExporterOptions> configure = null)
+        public static MeterProviderBuilder AddPrometheusExporter(this MeterProviderBuilder builder)
+            => AddPrometheusExporter(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds <see cref="PrometheusExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddPrometheusExporter(
+            this MeterProviderBuilder builder,
+            Action<PrometheusExporterOptions> configure)
+            => AddPrometheusExporter(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds <see cref="PrometheusExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddPrometheusExporter(
+            this MeterProviderBuilder builder,
+            string name,
+            Action<PrometheusExporterOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             if (configure != null)
             {
-                builder.ConfigureServices(services => services.Configure(configure));
+                builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptions<PrometheusExporterOptions>>().Value;
+                var options = sp.GetRequiredService<IOptionsSnapshot<PrometheusExporterOptions>>().Get(name);
 
                 AddPrometheusExporter(builder, options);
             });
