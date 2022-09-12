@@ -32,22 +32,45 @@ namespace OpenTelemetry.Metrics
         /// Adds PrometheusHttpListener to MeterProviderBuilder.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
-        /// <param name="configure">PrometheusHttpListenerOptions options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
+        public static MeterProviderBuilder AddPrometheusHttpListener(this MeterProviderBuilder builder)
+            => AddPrometheusHttpListener(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds PrometheusHttpListener to MeterProviderBuilder.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusHttpListenerOptions"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
         public static MeterProviderBuilder AddPrometheusHttpListener(
             this MeterProviderBuilder builder,
-            Action<PrometheusHttpListenerOptions> configure = null)
+            Action<PrometheusHttpListenerOptions> configure)
+            => AddPrometheusHttpListener(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds PrometheusHttpListener to MeterProviderBuilder.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusHttpListenerOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
+        public static MeterProviderBuilder AddPrometheusHttpListener(
+            this MeterProviderBuilder builder,
+            string name,
+            Action<PrometheusHttpListenerOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             if (configure != null)
             {
-                builder.ConfigureServices(services => services.Configure(configure));
+                builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptions<PrometheusHttpListenerOptions>>().Value;
+                var options = sp.GetRequiredService<IOptionsSnapshot<PrometheusHttpListenerOptions>>().Get(name);
 
                 AddPrometheusHttpListener(builder, options);
             });
