@@ -52,10 +52,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             meterProvider.Dispose();
 
             meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
-                {
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions = null;
-                })
+                .AddOtlpExporter()
                 .Build();
 
             CheckMetricReaderDefaults();

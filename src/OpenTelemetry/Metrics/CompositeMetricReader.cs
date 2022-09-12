@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     internal sealed partial class CompositeMetricReader : MetricReader
     {
-        private readonly DoublyLinkedListNode head;
+        public readonly DoublyLinkedListNode Head;
         private DoublyLinkedListNode tail;
         private bool disposed;
         private int count;
@@ -42,8 +42,8 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
-            this.head = new DoublyLinkedListNode(iter.Current);
-            this.tail = this.head;
+            this.Head = new DoublyLinkedListNode(iter.Current);
+            this.tail = this.Head;
             this.count++;
 
             while (iter.MoveNext())
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        public Enumerator GetEnumerator() => new(this.head);
+        public Enumerator GetEnumerator() => new(this.Head);
 
         /// <inheritdoc/>
         internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (sw == null)
                 {
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (sw == null)
                 {
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (disposing)
                 {
-                    for (var cur = this.head; cur != null; cur = cur.Next)
+                    for (var cur = this.Head; cur != null; cur = cur.Next)
                     {
                         try
                         {
