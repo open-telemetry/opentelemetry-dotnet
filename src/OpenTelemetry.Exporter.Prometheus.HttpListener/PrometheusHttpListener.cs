@@ -166,7 +166,7 @@ namespace OpenTelemetry.Exporter
                     else
                     {
                         // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                        context.Response.StatusCode = 204;
+                        context.Response.StatusCode = 200;
                         PrometheusExporterEventSource.Log.NoMetrics();
                     }
                 }
