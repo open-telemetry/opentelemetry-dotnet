@@ -54,8 +54,40 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
         }
 
+        public override void OnCustom(string name, object payload)
+        {
+            switch (name)
+            {
+                case AspNetCoreInstrumentation.OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case AspNetCoreInstrumentation.OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case AspNetCoreInstrumentation.OnMvcBeforeAction:
+                    {
+                        this.OnMvcBeforeAction(Activity.Current, payload);
+                    }
+
+                    break;
+                case AspNetCoreInstrumentation.OnUnhandledHostingExceptionEvent:
+                case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
+                    {
+                        this.OnException(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public override void OnStartActivity(Activity activity, object payload)
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what AspNetCore library does is as below:
             // Activity.Start()
@@ -179,7 +211,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
             if (activity.IsAllDataRequested)
             {
@@ -239,55 +271,52 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
         }
 
-        public override void OnCustom(string name, Activity activity, object payload)
+        public void OnMvcBeforeAction(Activity activity, object payload)
         {
-            if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
+            // We cannot rely on Activity.Current here
+            // There could be activities started by middleware
+            // after activity started by framework resulting in different Activity.Current.
+            // so, we need to first find the activity started by Asp.Net Core.
+            // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
+            // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+            // activity = httpActivityFeature.Activity;
+            // However, this will not work as in case of custom propagator
+            // we start a new activity during onStart event which is a sibling to the activity created by framework
+            // So, in that case we need to get the activity created by us here.
+            // we can do so only by looping through activity.Parent chain.
+            while (activity != null)
             {
-                // We cannot rely on Activity.Current here
-                // There could be activities started by middleware
-                // after activity started by framework resulting in different Activity.Current.
-                // so, we need to first find the activity started by Asp.Net Core.
-                // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
-                // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
-                // activity = httpActivityFeature.Activity;
-                // However, this will not work as in case of custom propagator
-                // we start a new activity during onStart event which is a sibling to the activity created by framework
-                // So, in that case we need to get the activity created by us here.
-                // we can do so only by looping through activity.Parent chain.
-                while (activity != null)
+                if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
                 {
-                    if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
-                    {
-                        break;
-                    }
-
-                    activity = activity.Parent;
+                    break;
                 }
 
-                if (activity == null)
+                activity = activity.Parent;
+            }
+
+            if (activity == null)
+            {
+                return;
+            }
+
+            if (activity.IsAllDataRequested)
+            {
+                var beforeActionEventData = payload as BeforeActionEventData;
+                var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
+                if (!string.IsNullOrEmpty(template))
                 {
-                    return;
+                    // override the span name that was previously set to the path part of URL.
+                    activity.DisplayName = template;
+                    activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
                 }
 
-                if (activity.IsAllDataRequested)
-                {
-                    var beforeActionEventData = payload as BeforeActionEventData;
-                    var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
-                    if (!string.IsNullOrEmpty(template))
-                    {
-                        // override the span name that was previously set to the path part of URL.
-                        activity.DisplayName = template;
-                        activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
-                    }
-
-                    // TODO: Should we get values from RouteData?
-                    // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-                    // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
-                }
+                // TODO: Should we get values from RouteData?
+                // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
+                // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
             }
         }
 
-        public override void OnException(Activity activity, object payload)
+        public void OnException(Activity activity, object payload)
         {
             if (activity.IsAllDataRequested)
             {

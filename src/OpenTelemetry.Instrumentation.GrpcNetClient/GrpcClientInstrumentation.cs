@@ -23,6 +23,8 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
     /// </summary>
     internal class GrpcClientInstrumentation : IDisposable
     {
+        internal const string OnStartEvent = "start";
+        internal const string OnStopEvent = "stop";
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         /// <summary>

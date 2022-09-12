@@ -466,14 +466,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
-                            OnStartActivityCallback = (activity, payload) =>
+                            OnCustomCallback = (name, payload) =>
                             {
-                                baggageCountAfterStart = Baggage.Current.Count;
-                            },
-                            OnStopActivityCallback = (activity, payload) =>
-                            {
-                                baggageCountAfterStop = Baggage.Current.Count;
-                                stopSignal.Set();
+                                switch (name)
+                                {
+                                    case AspNetCoreInstrumentation.OnStartEvent:
+                                        {
+                                            baggageCountAfterStart = Baggage.Current.Count;
+                                        }
+
+                                        break;
+                                    case AspNetCoreInstrumentation.OnStopEvent:
+                                        {
+                                            baggageCountAfterStop = Baggage.Current.Count;
+                                            stopSignal.Set();
+                                        }
+
+                                        break;
+                                }
                             },
                         }))
                     .Build();
@@ -707,10 +717,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
-                            OnCustomCallback = (name, activity, payload) =>
+                            OnCustomCallback = (name, payload) =>
                             {
-                                actualCustomEventName = name;
-                                numberOfCustomCallbacks++;
+                                switch (name)
+                                {
+                                    case AspNetCoreInstrumentation.OnMvcBeforeAction:
+                                        {
+                                            actualCustomEventName = name;
+                                            numberOfCustomCallbacks++;
+                                        }
+
+                                        break;
+                                }
                             },
                         }))
                     .Build();
@@ -742,9 +760,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
-                            OnExceptionCallback = (activity, payload) =>
+                            OnCustomCallback = (name, payload) =>
                             {
-                                numberOfExceptionCallbacks++;
+                                switch (name)
+                                {
+                                    case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
+                                        {
+                                            numberOfExceptionCallbacks++;
+                                        }
+
+                                        break;
+                                }
                             },
                         }))
                     .Build();
@@ -782,9 +808,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                     new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                     {
-                        OnExceptionCallback = (activity, payload) =>
+                        OnCustomCallback = (name, payload) =>
                         {
-                            numberOfExceptionCallbacks++;
+                            switch (name)
+                            {
+                                case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
+                                    {
+                                        numberOfExceptionCallbacks++;
+                                    }
+
+                                    break;
+                            }
                         },
                     }))
                     .Build();
@@ -952,45 +986,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private class TestHttpInListener : HttpInListener
         {
-            public Action<Activity, object> OnStartActivityCallback;
-
-            public Action<Activity, object> OnStopActivityCallback;
-
-            public Action<Activity, object> OnExceptionCallback;
-
-            public Action<string, Activity, object> OnCustomCallback;
+            public Action<string, object> OnCustomCallback;
 
             public TestHttpInListener(AspNetCoreInstrumentationOptions options)
                 : base(options)
             {
             }
 
-            public override void OnStartActivity(Activity activity, object payload)
+            public override void OnCustom(string name, object payload)
             {
-                base.OnStartActivity(activity, payload);
+                base.OnCustom(name, payload);
 
-                this.OnStartActivityCallback?.Invoke(activity, payload);
-            }
-
-            public override void OnStopActivity(Activity activity, object payload)
-            {
-                base.OnStopActivity(activity, payload);
-
-                this.OnStopActivityCallback?.Invoke(activity, payload);
-            }
-
-            public override void OnCustom(string name, Activity activity, object payload)
-            {
-                base.OnCustom(name, activity, payload);
-
-                this.OnCustomCallback?.Invoke(name, activity, payload);
-            }
-
-            public override void OnException(Activity activity, object payload)
-            {
-                base.OnException(activity, payload);
-
-                this.OnExceptionCallback?.Invoke(activity, payload);
+                this.OnCustomCallback?.Invoke(name, payload);
             }
         }
 

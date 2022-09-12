@@ -23,6 +23,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     internal class AspNetCoreInstrumentation : IDisposable
     {
+        internal const string OnStartEvent = "start";
+        internal const string OnStopEvent = "stop";
+        internal const string OnMvcBeforeAction = "error";
+        internal const string OnUnhandledHostingExceptionEvent = "exception";
+        internal const string OnUnHandledDiagnosticsExceptionEvent = "exception1";
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         public AspNetCoreInstrumentation(HttpInListener httpInListener)

@@ -41,7 +41,26 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             this.options = options;
         }
 
-        public override void OnStartActivity(Activity activity, object payload)
+        public override void OnCustom(string name, object payload)
+        {
+            switch (name)
+            {
+                case GrpcClientInstrumentation.OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case GrpcClientInstrumentation.OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what GrpcClient library does is as below:
             // Activity.Start()
@@ -137,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
             if (activity.IsAllDataRequested)
             {

@@ -59,7 +59,32 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.options = options;
         }
 
-        public override void OnStartActivity(Activity activity, object payload)
+        public override void OnCustom(string name, object payload)
+        {
+            switch (name)
+            {
+                case HttpClientInstrumentation.OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case HttpClientInstrumentation.OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case HttpClientInstrumentation.OnUnhandledHostingExceptionEvent:
+                    {
+                        this.OnException(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what HttpClient library does is as below:
             // Activity.Start()
@@ -148,7 +173,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
             // For .NET7.0 or higher versions, activity is created using activity source
             // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
@@ -206,7 +231,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public override void OnException(Activity activity, object payload)
+        public void OnException(Activity activity, object payload)
         {
             // For .NET7.0 or higher versions, activity is created using activity source
             // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
