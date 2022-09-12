@@ -178,7 +178,7 @@ namespace OpenTelemetry.Logs
         /// </remarks>
         public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent($"OpenTelemetryLoggerProvider.ForceFlush called with timeoutMilliseconds = {timeoutMilliseconds}.");
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderForceFlushInvoked(timeoutMilliseconds);
             return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
         }
 
