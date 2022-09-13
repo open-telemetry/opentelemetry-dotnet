@@ -6,6 +6,11 @@
 instead of 200, when no metrics are collected
 ([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
 
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddPrometheusExporter` extension to allow for more fine-grained options
+  management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
