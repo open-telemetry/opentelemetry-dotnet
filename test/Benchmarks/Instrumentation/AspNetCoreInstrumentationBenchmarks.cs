@@ -52,28 +52,14 @@ namespace Benchmarks.Instrumentation
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
         public void UninstrumentedAspNetCoreAppGlobalSetup()
         {
-            var builder = WebApplication.CreateBuilder();
-            builder.Services.AddControllers();
-            builder.Logging.ClearProviders();
-            var app = builder.Build();
-            app.MapControllers();
-            app.RunAsync();
-
-            this.app = app;
+            this.StartWebApplication();
             this.httpClient = new HttpClient();
         }
 
         [GlobalSetup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
         public void InstrumentedAspNetCoreAppWithDefaultOptionsGlobalSetup()
         {
-            var builder = WebApplication.CreateBuilder();
-            builder.Services.AddControllers();
-            builder.Logging.ClearProviders();
-            var app = builder.Build();
-            app.MapControllers();
-            app.RunAsync();
-
-            this.app = app;
+            this.StartWebApplication();
             this.httpClient = new HttpClient();
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -108,6 +94,18 @@ namespace Benchmarks.Instrumentation
         {
             var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
             httpResponse.EnsureSuccessStatusCode();
+        }
+
+        private void StartWebApplication()
+        {
+            var builder = WebApplication.CreateBuilder();
+            builder.Services.AddControllers();
+            builder.Logging.ClearProviders();
+            var app = builder.Build();
+            app.MapControllers();
+            app.RunAsync();
+
+            this.app = app;
         }
     }
 }
