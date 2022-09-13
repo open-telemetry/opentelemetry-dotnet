@@ -80,6 +80,33 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void TestAddOtlpExporter_NamedOptions()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<OtlpExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                    services.Configure<MetricReaderOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<OtlpExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                    services.Configure<MetricReaderOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<OtlpExporterOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
+                    services.Configure<MetricReaderOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddOtlpExporter()
+                .AddOtlpExporter("Exporter2", o => { })
+                .AddOtlpExporter("Exporter3", (eo, ro) => { })
+                .Build();
+
+            Assert.Equal(2, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(4, namedExporterOptionsConfigureOptionsInvocations);
+        }
+
+        [Fact]
         public void UserHttpFactoryCalled()
         {
             OtlpExporterOptions options = new OtlpExporterOptions();

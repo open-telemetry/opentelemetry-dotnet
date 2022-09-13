@@ -162,8 +162,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 builder,
                 exporterOptions,
                 readerOptions,
-                configureExporter: null,
-                configureExporterAndMetricReader: null,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {

@@ -7,6 +7,11 @@
   disposed.
   ([#3607](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3607))
 
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddInMemoryExporter` extension to allow for more fine-grained options
+  management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
