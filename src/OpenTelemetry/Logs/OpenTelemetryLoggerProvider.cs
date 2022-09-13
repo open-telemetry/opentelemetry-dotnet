@@ -206,7 +206,7 @@ namespace OpenTelemetry.Logs
             if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
             {
                 processorAdded.Append("Using shared thread pool. ");
-                
+
                 this.threadStaticPool = null;
             }
 
@@ -242,6 +242,7 @@ namespace OpenTelemetry.Logs
                 newCompositeProcessor.AddProcessor(processor);
                 this.Processor = newCompositeProcessor;
             }
+            
             OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent($"Completed adding processor = \"{processorAdded}\".");
 
             return this;
