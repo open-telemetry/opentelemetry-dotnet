@@ -205,7 +205,7 @@ namespace OpenTelemetry.Logs
 
             if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
             {
-                processorAdded.Append("Using shared thread pool. ");
+                OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Using shared thread pool.");
 
                 this.threadStaticPool = null;
             }
@@ -214,7 +214,6 @@ namespace OpenTelemetry.Logs
             {
                 processorAdded.Append("Setting processor to ");
                 processorAdded.Append(processor);
-                processorAdded.Append('.');
 
                 this.Processor = processor;
             }
@@ -222,7 +221,7 @@ namespace OpenTelemetry.Logs
             {
                 processorAdded.Append("Adding processor ");
                 processorAdded.Append(processor);
-                processorAdded.Append(" to composite processor.");
+                processorAdded.Append(" to composite processor");
 
                 compositeProcessor.AddProcessor(processor);
             }
@@ -232,7 +231,6 @@ namespace OpenTelemetry.Logs
                 processorAdded.Append(this.Processor);
                 processorAdded.Append(" and adding new processor ");
                 processorAdded.Append(processor);
-                processorAdded.Append('.');
 
                 var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
                 {
