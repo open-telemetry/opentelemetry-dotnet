@@ -32,20 +32,43 @@ namespace OpenTelemetry.Trace
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder)
+            => AddOtlpExporter(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure)
+            => AddOtlpExporter(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<OtlpExporterOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             if (configure != null)
             {
-                builder.ConfigureServices(services => services.Configure(configure));
+                builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptions<OtlpExporterOptions>>().Value;
+                var options = sp.GetRequiredService<IOptionsSnapshot<OtlpExporterOptions>>().Get(name);
 
                 AddOtlpExporter(builder, options, sp);
             });
