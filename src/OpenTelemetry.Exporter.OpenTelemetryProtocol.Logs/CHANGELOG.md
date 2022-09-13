@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* `OtlpExporterOptions` can now be bound to `IConfiguation` and
+  `HttpClientFactory` may be used to manage the `HttpClient` instance used when
+  `HttpProtobuf` is configured
+  ([#3640](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3640))
+
+* Added overloads which accept a name to the `OpenTelemetryLoggerOptions`
+  `AddOtlpExporter` extension to allow for more fine-grained options management
+  ([#3652](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3652))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

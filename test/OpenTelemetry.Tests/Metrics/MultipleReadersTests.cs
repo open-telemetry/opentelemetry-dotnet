@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -47,13 +48,27 @@ namespace OpenTelemetry.Metrics.Tests
             long GetSum() => valuesSum[indexSum++];
             var observableCounter = meter.CreateObservableCounter("obs-counter", () => GetSum());
 
+            bool defaultNamedOptionsConfigureCalled = false;
+            bool namedOptionsConfigureCalled = false;
+
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<MetricReaderOptions>(o =>
+                    {
+                        defaultNamedOptionsConfigureCalled = true;
+                    });
+                    services.Configure<MetricReaderOptions>("Exporter2", o =>
+                    {
+                        namedOptionsConfigureCalled = true;
+                    });
+                })
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems1, metricReaderOptions =>
                 {
                     metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
                 })
-                .AddInMemoryExporter(exportedItems2, metricReaderOptions =>
+                .AddInMemoryExporter("Exporter2", exportedItems2, metricReaderOptions =>
                 {
                     metricReaderOptions.TemporalityPreference = aggregationTemporality;
                 });
@@ -66,6 +81,9 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             using var meterProvider = meterProviderBuilder.Build();
+
+            Assert.True(defaultNamedOptionsConfigureCalled);
+            Assert.True(namedOptionsConfigureCalled);
 
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
 

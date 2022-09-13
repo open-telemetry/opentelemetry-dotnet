@@ -271,8 +271,13 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteHelpText(byte[] buffer, int cursor, string metricName, string metricUnit = null, string metricDescription = null)
+        public static int WriteHelpMetadata(byte[] buffer, int cursor, string metricName, string metricUnit, string metricDescription)
         {
+            if (string.IsNullOrEmpty(metricDescription))
+            {
+                return cursor;
+            }
+
             cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
             cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
 
@@ -288,7 +293,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteTypeInfo(byte[] buffer, int cursor, string metricName, string metricUnit, string metricType)
+        public static int WriteTypeMetadata(byte[] buffer, int cursor, string metricName, string metricUnit, string metricType)
         {
             Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
 
@@ -296,6 +301,40 @@ namespace OpenTelemetry.Exporter.Prometheus
             cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
             buffer[cursor++] = unchecked((byte)' ');
             cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
+
+            buffer[cursor++] = ASCII_LINEFEED;
+
+            return cursor;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteUnitMetadata(byte[] buffer, int cursor, string metricName, string metricUnit)
+        {
+            if (string.IsNullOrEmpty(metricUnit))
+            {
+                return cursor;
+            }
+
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# UNIT ");
+            cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
+
+            buffer[cursor++] = unchecked((byte)' ');
+
+            for (int i = 0; i < metricUnit.Length; i++)
+            {
+                var ordinal = (ushort)metricUnit[i];
+
+                if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
+                    (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
+                    (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
+                {
+                    buffer[cursor++] = unchecked((byte)ordinal);
+                }
+                else
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                }
+            }
 
             buffer[cursor++] = ASCII_LINEFEED;
 

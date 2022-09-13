@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -28,26 +30,21 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            if (configure != null)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), configure);
-                });
+                builder.ConfigureServices(services => services.Configure(configure));
             }
 
-            return AddConsoleExporter(builder, new ConsoleExporterOptions(), configure);
-        }
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptions<ConsoleExporterOptions>>().Value;
 
-        private static TracerProviderBuilder AddConsoleExporter(TracerProviderBuilder builder, ConsoleExporterOptions options, Action<ConsoleExporterOptions> configure = null)
-        {
-            configure?.Invoke(options);
-            return builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
+                builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
+            });
         }
     }
 }
