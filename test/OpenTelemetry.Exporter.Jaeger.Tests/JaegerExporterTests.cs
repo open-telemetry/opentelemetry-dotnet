@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
     public class JaegerExporterTests
     {
         [Fact]
-        public void AddAddZipkinExporterNamedOptionsSupported()
+        public void AddJaegerExporterNamedOptionsSupported()
         {
             int defaultExporterOptionsConfigureOptionsInvocations = 0;
             int namedExporterOptionsConfigureOptionsInvocations = 0;
