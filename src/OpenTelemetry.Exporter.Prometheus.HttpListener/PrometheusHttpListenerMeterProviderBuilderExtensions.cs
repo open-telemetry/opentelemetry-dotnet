@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -30,32 +32,54 @@ namespace OpenTelemetry.Metrics
         /// Adds PrometheusHttpListener to MeterProviderBuilder.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
-        /// <param name="configure">PrometheusHttpListenerOptions options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
+        public static MeterProviderBuilder AddPrometheusHttpListener(this MeterProviderBuilder builder)
+            => AddPrometheusHttpListener(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds PrometheusHttpListener to MeterProviderBuilder.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusHttpListenerOptions"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
         public static MeterProviderBuilder AddPrometheusHttpListener(
             this MeterProviderBuilder builder,
-            Action<PrometheusHttpListenerOptions> configure = null)
+            Action<PrometheusHttpListenerOptions> configure)
+            => AddPrometheusHttpListener(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds PrometheusHttpListener to MeterProviderBuilder.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusHttpListenerOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
+        public static MeterProviderBuilder AddPrometheusHttpListener(
+            this MeterProviderBuilder builder,
+            string name,
+            Action<PrometheusHttpListenerOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            name ??= Options.DefaultName;
+
+            if (configure != null)
             {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddPrometheusHttpListener(builder, sp.GetOptions<PrometheusHttpListenerOptions>(), configure);
-                });
+                builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
-            return AddPrometheusHttpListener(builder, new PrometheusHttpListenerOptions(), configure);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsSnapshot<PrometheusHttpListenerOptions>>().Get(name);
+
+                AddPrometheusHttpListener(builder, options);
+            });
         }
 
         private static MeterProviderBuilder AddPrometheusHttpListener(
             MeterProviderBuilder builder,
-            PrometheusHttpListenerOptions options,
-            Action<PrometheusHttpListenerOptions> configure = null)
+            PrometheusHttpListenerOptions options)
         {
-            configure?.Invoke(options);
-
             var exporter = new PrometheusExporter();
 
             var reader = new BaseExportingMetricReader(exporter)

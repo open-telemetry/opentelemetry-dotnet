@@ -1,1 +1,3 @@
 override OpenTelemetry.Exporter.ConsoleLogRecordExporter.Dispose(bool disposing) -> void
+static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions, OpenTelemetry.Metrics.MetricReaderOptions> configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configureExporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
