@@ -242,7 +242,7 @@ namespace OpenTelemetry.Logs
                 newCompositeProcessor.AddProcessor(processor);
                 this.Processor = newCompositeProcessor;
             }
-            
+
             OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent($"Completed adding processor = \"{processorAdded}\".");
 
             return this;
