@@ -14,12 +14,12 @@
 * Added overloads which accept a name to the `OpenTelemetryLoggerOptions`
   `AddConsoleExporter` extension to allow for more fine-grained options
   management
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3657))
 
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddConsoleExporter` extension to allow for more fine-grained options
   management
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3657))
 
 ## 1.4.0-alpha.2
 
