@@ -271,6 +271,15 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteEof(byte[] buffer, int cursor)
+        {
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
+            buffer[cursor++] = ASCII_LINEFEED;
+
+            return cursor;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteHelpMetadata(byte[] buffer, int cursor, string metricName, string metricUnit, string metricDescription)
         {
             if (string.IsNullOrEmpty(metricDescription))
