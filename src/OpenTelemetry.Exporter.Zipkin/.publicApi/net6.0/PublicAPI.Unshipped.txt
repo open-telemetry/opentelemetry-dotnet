@@ -1,0 +1,4 @@
+*REMOVED*static OpenTelemetry.Trace.ZipkinExporterHelperExtensions.AddZipkinExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ZipkinExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.ZipkinExporterHelperExtensions.AddZipkinExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.ZipkinExporterHelperExtensions.AddZipkinExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.ZipkinExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.ZipkinExporterHelperExtensions.AddZipkinExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ZipkinExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
