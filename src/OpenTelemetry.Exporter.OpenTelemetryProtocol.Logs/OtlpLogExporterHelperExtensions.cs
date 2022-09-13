@@ -30,29 +30,55 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
         /// </summary>
+        /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, string, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
+            => AddOtlpExporter(loggerOptions, name: null, configure: null);
+
+        /// <summary>
+        /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+        /// </summary>
+        /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, string, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddOtlpExporter(
+            this OpenTelemetryLoggerOptions loggerOptions,
+            Action<OtlpExporterOptions> configure)
+            => AddOtlpExporter(loggerOptions, name: null, configure);
+
+        /// <summary>
+        /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+        /// </summary>
         /// <remarks>
-        /// Note: <see cref="AddOtlpExporter(OpenTelemetryLoggerOptions,
-        /// Action{OtlpExporterOptions})"/> automatically sets <see
+        /// Note: AddOtlpExporter automatically sets <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> to <see
         /// langword="true"/>.
         /// </remarks>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-        public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<OtlpExporterOptions> configure = null)
+        public static OpenTelemetryLoggerOptions AddOtlpExporter(
+            this OpenTelemetryLoggerOptions loggerOptions,
+            string name,
+            Action<OtlpExporterOptions> configure)
         {
             Guard.ThrowIfNull(loggerOptions);
 
             loggerOptions.ParseStateValues = true;
 
+            name ??= Options.DefaultName;
+
             if (configure != null)
             {
-                loggerOptions.ConfigureServices(services => services.Configure(configure));
+                loggerOptions.ConfigureServices(services => services.Configure(name, configure));
             }
 
             return loggerOptions.ConfigureProvider((sp, provider) =>
             {
-                var options = sp.GetRequiredService<IOptions<OtlpExporterOptions>>().Value;
+                var options = sp.GetRequiredService<IOptionsSnapshot<OtlpExporterOptions>>().Get(name);
 
                 AddOtlpExporter(provider, options, sp);
             });
