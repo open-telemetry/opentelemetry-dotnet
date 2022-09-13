@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddOtlpExporter` extension to allow for more fine-grained options management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

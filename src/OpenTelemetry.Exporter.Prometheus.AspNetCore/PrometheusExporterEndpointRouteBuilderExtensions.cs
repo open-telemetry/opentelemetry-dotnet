@@ -18,6 +18,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -89,7 +90,8 @@ namespace Microsoft.AspNetCore.Builder
 
             if (path == null)
             {
-                var options = endpoints.ServiceProvider.GetOptions<PrometheusExporterOptions>();
+                var options = endpoints.ServiceProvider.GetRequiredService<IOptions<PrometheusExporterOptions>>().Value;
+
                 path = options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
             }
 

@@ -21,15 +21,15 @@ OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generi
 ~OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void
 ~OpenTelemetry.Metrics.IPullMetricExporter.Collect.get -> System.Func<int, bool>
 ~OpenTelemetry.Metrics.IPullMetricExporter.Collect.set -> void
-~OpenTelemetry.Metrics.MeterProviderBuilderBase.Build() -> OpenTelemetry.Metrics.MeterProvider
+OpenTelemetry.Metrics.MeterProviderBuilderBase.Build() -> OpenTelemetry.Metrics.MeterProvider!
 ~OpenTelemetry.Metrics.Metric.Description.get -> string
 ~OpenTelemetry.Metrics.Metric.MeterName.get -> string
 ~OpenTelemetry.Metrics.Metric.MeterVersion.get -> string
 ~OpenTelemetry.Metrics.Metric.Name.get -> string
 ~OpenTelemetry.Metrics.Metric.Unit.get -> string
 ~OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics.HistogramBuckets
-~OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-~OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.set -> void
+OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions!
+OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.set -> void
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.Name.get -> string
@@ -63,8 +63,8 @@ OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.Tra
 override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T! data) -> void
 ~override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnExport(T! data) -> void
-~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
+~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string![]! names) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 ~override OpenTelemetry.SimpleActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T! data) -> void
 ~override OpenTelemetry.Trace.SamplingResult.Equals(object obj) -> bool
@@ -74,14 +74,14 @@ override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string![
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T! data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T!>!
 ~readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric>
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, OpenTelemetry.Metrics.MetricReader reader) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, string instrumentName, OpenTelemetry.Metrics.MetricStreamConfiguration metricStreamConfiguration) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, string instrumentName, string name) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.Func<System.Diagnostics.Metrics.Instrument, OpenTelemetry.Metrics.MetricStreamConfiguration> viewConfig) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProvider
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricStreams(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, int maxMetricStreams) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.MetricReader! reader) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, string! instrumentName, OpenTelemetry.Metrics.MetricStreamConfiguration! metricStreamConfiguration) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, string! instrumentName, string! name) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.Diagnostics.Metrics.Instrument!, OpenTelemetry.Metrics.MetricStreamConfiguration?>! viewConfig) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProvider?
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, int maxMetricPointsPerMetricStream) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricStreams(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, int maxMetricStreams) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 ~static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 ~static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 ~static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
