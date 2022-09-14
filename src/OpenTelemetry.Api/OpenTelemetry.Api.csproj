@@ -11,5 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer)" />
   </ItemGroup>
 </Project>

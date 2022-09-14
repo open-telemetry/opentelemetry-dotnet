@@ -23,6 +23,7 @@ namespace OpenTelemetry.Trace
     /// initialization using an <see cref="IServiceProvider"/> to perform
     /// dependency injection.
     /// </summary>
+    [Obsolete("Call TracerProviderBuilder.ConfigureBuilder instead this interface will be removed in a future version.")]
     public interface IDeferredTracerProviderBuilder
     {
         /// <summary>

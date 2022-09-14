@@ -97,8 +97,24 @@ namespace OpenTelemetry.Trace
         }
 
         /// <inheritdoc />
-        TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(
-            Action<IServiceProvider, TracerProviderBuilder> configure)
+        public override TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            var services = this.services;
+
+            if (services == null)
+            {
+                throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
+            }
+
+            configure(services);
+
+            return this;
+        }
+
+        /// <inheritdoc />
+        public override TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
         {
             Guard.ThrowIfNull(configure);
 
@@ -114,6 +130,11 @@ namespace OpenTelemetry.Trace
 
             return this;
         }
+
+        /// <inheritdoc />
+        TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(
+            Action<IServiceProvider, TracerProviderBuilder> configure)
+            => this.ConfigureBuilder(configure);
 
         internal TracerProviderBuilder AddExporter<T>(ExportProcessorType exportProcessorType, string? name, Action<ExportActivityProcessorOptions>? configure)
             where T : BaseExporter<Activity>
@@ -167,22 +188,6 @@ namespace OpenTelemetry.Trace
             Guard.ThrowIfNull(configure);
 
             return this.ConfigureState((sp, state) => state.ConfigureResource(configure));
-        }
-
-        internal TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            var services = this.services;
-
-            if (services == null)
-            {
-                throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
-            }
-
-            configure(services);
-
-            return this;
         }
 
         internal TracerProvider InvokeBuild()

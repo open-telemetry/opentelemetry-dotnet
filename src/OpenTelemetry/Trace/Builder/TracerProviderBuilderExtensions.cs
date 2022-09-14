@@ -18,7 +18,6 @@
 
 using System;
 using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -284,49 +283,6 @@ namespace OpenTelemetry.Trace
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
                 tracerProviderBuilderBase.AddInstrumentation<T>();
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Register a callback action to configure the <see
-        /// cref="IServiceCollection"/> where tracing services are configured.
-        /// </summary>
-        /// <remarks>
-        /// Note: Tracing services are only available during the application
-        /// configuration phase.
-        /// </remarks>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="configure">Configuration callback.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder ConfigureServices(
-            this TracerProviderBuilder tracerProviderBuilder,
-            Action<IServiceCollection> configure)
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-            {
-                tracerProviderBuilderBase.ConfigureServices(configure);
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Register a callback action to configure the <see
-        /// cref="TracerProviderBuilder"/> once the application <see
-        /// cref="IServiceProvider"/> is available.
-        /// </summary>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="configure">Configuration callback.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder ConfigureBuilder(
-            this TracerProviderBuilder tracerProviderBuilder,
-            Action<IServiceProvider, TracerProviderBuilder> configure)
-        {
-            if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
-            {
-                deferredTracerProviderBuilder.Configure(configure);
             }
 
             return tracerProviderBuilder;

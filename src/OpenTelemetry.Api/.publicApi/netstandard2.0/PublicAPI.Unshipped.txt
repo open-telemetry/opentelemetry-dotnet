@@ -1,1 +1,3 @@
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex, in System.Diagnostics.TagList tags) -> void
+virtual OpenTelemetry.Trace.TracerProviderBuilder.ConfigureBuilder(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+virtual OpenTelemetry.Trace.TracerProviderBuilder.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection> configure) -> OpenTelemetry.Trace.TracerProviderBuilder

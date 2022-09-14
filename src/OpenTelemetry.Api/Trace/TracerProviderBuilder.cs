@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenTelemetry.Trace
 {
@@ -56,5 +57,35 @@ namespace OpenTelemetry.Trace
         /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public abstract TracerProviderBuilder AddLegacySource(string operationName);
+
+        /// <summary>
+        /// Register a callback action to configure the <see
+        /// cref="IServiceCollection"/> where tracing services are configured.
+        /// </summary>
+        /// <remarks>
+        /// Note: Tracing services are only available during the application
+        /// configuration phase.
+        /// </remarks>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public virtual TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
+            => throw new NotSupportedException();
+
+        /// <summary>
+        /// Register a callback action to configure the <see
+        /// cref="TracerProviderBuilder"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
+        /// </summary>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public virtual TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            if (this is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure(configure);
+            }
+
+            throw new NotSupportedException();
+        }
     }
 }

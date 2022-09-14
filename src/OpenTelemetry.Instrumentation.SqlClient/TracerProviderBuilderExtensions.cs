@@ -62,30 +62,20 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
-            {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    var options = sp.GetRequiredService<IOptionsMonitor<SqlClientInstrumentationOptions>>().Get(name ?? Options.DefaultName);
+            name ??= Options.DefaultName;
 
-                    AddSqlClientInstrumentation(builder, options, configureSqlClientInstrumentationOptions);
-                });
+            if (configureSqlClientInstrumentationOptions != null)
+            {
+                builder.ConfigureServices(services => services.Configure(name, configureSqlClientInstrumentationOptions));
             }
 
-            return AddSqlClientInstrumentation(builder, new SqlClientInstrumentationOptions(), configureSqlClientInstrumentationOptions);
-        }
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<SqlClientInstrumentationOptions>>().Get(name);
 
-        private static TracerProviderBuilder AddSqlClientInstrumentation(
-            TracerProviderBuilder builder,
-            SqlClientInstrumentationOptions options,
-            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
-        {
-            configureSqlClientInstrumentationOptions?.Invoke(options);
-
-            builder.AddInstrumentation(() => new SqlClientInstrumentation(options));
-            builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
-
-            return builder;
+                builder.AddInstrumentation(() => new SqlClientInstrumentation(options));
+                builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
+            });
         }
     }
 }
