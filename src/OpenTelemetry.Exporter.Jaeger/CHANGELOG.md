@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddJaegerExporter` extension to allow for more fine-grained options
+  management
+  ([#3656](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3656))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

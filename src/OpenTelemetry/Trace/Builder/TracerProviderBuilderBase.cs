@@ -115,27 +115,24 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        internal TracerProviderBuilder AddExporter<T>(ExportProcessorType exportProcessorType, Action<ExportActivityProcessorOptions> configure)
+        internal TracerProviderBuilder AddExporter<T>(ExportProcessorType exportProcessorType, string? name, Action<ExportActivityProcessorOptions>? configure)
             where T : BaseExporter<Activity>
         {
-            Guard.ThrowIfNull(configure);
-
             this.TryAddSingleton<T>();
             this.ConfigureState((sp, state)
                 => state.AddProcessor(
-                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, sp.GetRequiredService<T>(), configure)));
+                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, sp.GetRequiredService<T>(), name, configure)));
 
             return this;
         }
 
-        internal TracerProviderBuilder AddExporter(ExportProcessorType exportProcessorType, BaseExporter<Activity> exporter, Action<ExportActivityProcessorOptions> configure)
+        internal TracerProviderBuilder AddExporter(ExportProcessorType exportProcessorType, BaseExporter<Activity> exporter, string? name, Action<ExportActivityProcessorOptions>? configure)
         {
             Guard.ThrowIfNull(exporter);
-            Guard.ThrowIfNull(configure);
 
             this.ConfigureState((sp, state)
                 => state.AddProcessor(
-                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, exporter, configure)));
+                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, exporter, name, configure)));
 
             return this;
         }
@@ -271,8 +268,11 @@ namespace OpenTelemetry.Trace
             IServiceProvider serviceProvider,
             ExportProcessorType exportProcessorType,
             BaseExporter<Activity> exporter,
-            Action<ExportActivityProcessorOptions> configure)
+            string? name,
+            Action<ExportActivityProcessorOptions>? configure)
         {
+            name ??= Options.DefaultName;
+
             switch (exportProcessorType)
             {
                 case ExportProcessorType.Simple:
@@ -281,10 +281,10 @@ namespace OpenTelemetry.Trace
                     var options = new ExportActivityProcessorOptions
                     {
                         ExportProcessorType = ExportProcessorType.Batch,
-                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptions<BatchExportActivityProcessorOptions>>().Value,
+                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<BatchExportActivityProcessorOptions>>().Get(name),
                     };
 
-                    configure(options);
+                    configure?.Invoke(options);
 
                     var batchOptions = options.BatchExportProcessorOptions;
 
@@ -332,10 +332,7 @@ namespace OpenTelemetry.Trace
         {
             var services = this.services;
 
-            if (services != null)
-            {
-                services.TryAddSingleton<T>();
-            }
+            services?.TryAddSingleton<T>();
         }
     }
 }

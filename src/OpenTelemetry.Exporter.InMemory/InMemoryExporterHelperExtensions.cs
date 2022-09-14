@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
         /// Adds InMemory exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
-        /// <param name="exportedItems">Collection which will be populated with the exported Activity.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Activity"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddInMemoryExporter(this TracerProviderBuilder builder, ICollection<Activity> exportedItems)
         {
