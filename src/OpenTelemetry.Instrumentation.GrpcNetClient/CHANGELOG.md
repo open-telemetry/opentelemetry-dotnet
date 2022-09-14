@@ -5,7 +5,7 @@
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddGrpcClientInstrumentation` extension to allow for more fine-grained
   options management
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3665](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3665))
 
 ## 1.0.0-rc9.6
 
