@@ -141,26 +141,37 @@ namespace OpenTelemetry.Logs
         /// <param name="exporter">LogRecord exporter to add.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddExporter(ExportProcessorType exportProcessorType, BaseExporter<LogRecord> exporter)
-            => this.AddExporter(exportProcessorType, exporter, o => { });
+            => this.AddExporter(exportProcessorType, exporter, name: null, configure: null);
 
         /// <summary>
         /// Adds an exporter to the provider.
         /// </summary>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
         /// <param name="exporter">LogRecord exporter to add.</param>
-        /// <param name="configure">Callback action to configure <see
-        /// cref="ExportLogRecordProcessorOptions"/>. Only invoked when <paramref
-        /// name="exportProcessorType"/> is <see
-        /// cref="ExportProcessorType.Batch"/>.</param>
+        /// <param name="configure"><inheritdoc cref="AddExporter{T}(ExportProcessorType, string?, Action{ExportLogRecordProcessorOptions}?)" path="/param[@name='configure']"/></param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddExporter(ExportProcessorType exportProcessorType, BaseExporter<LogRecord> exporter, Action<ExportLogRecordProcessorOptions> configure)
+            => this.AddExporter(exportProcessorType, exporter, name: null, configure);
+
+        /// <summary>
+        /// Adds an exporter to the provider.
+        /// </summary>
+        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <param name="exporter">LogRecord exporter to add.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure"><inheritdoc cref="AddExporter{T}(ExportProcessorType, string?, Action{ExportLogRecordProcessorOptions}?)" path="/param[@name='configure']"/></param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddExporter(
+            ExportProcessorType exportProcessorType,
+            BaseExporter<LogRecord> exporter,
+            string? name,
+            Action<ExportLogRecordProcessorOptions>? configure)
         {
             Guard.ThrowIfNull(exporter);
-            Guard.ThrowIfNull(configure);
 
             this.ConfigureProvider((sp, provider)
                 => provider.AddProcessor(
-                    BuildExportProcessor(sp, exportProcessorType, exporter, configure)));
+                    BuildExportProcessor(sp, exportProcessorType, exporter, name, configure)));
 
             return this;
         }
@@ -168,16 +179,25 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds an exporter to the provider which will be retrieved using dependency injection.
         /// </summary>
-        /// <remarks>
-        /// Note: The type specified by <typeparamref name="T"/> will be
-        /// registered as a singleton service into application services.
-        /// </remarks>
+        /// <remarks><inheritdoc cref="AddExporter{T}(ExportProcessorType, string?, Action{ExportLogRecordProcessorOptions}?)" path="/remarks"/></remarks>
         /// <typeparam name="T">Exporter type.</typeparam>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddExporter<T>(ExportProcessorType exportProcessorType)
             where T : BaseExporter<LogRecord>
-            => this.AddExporter<T>(exportProcessorType, o => { });
+            => this.AddExporter<T>(exportProcessorType, name: null, configure: null);
+
+        /// <summary>
+        /// Adds an exporter to the provider which will be retrieved using dependency injection.
+        /// </summary>
+        /// <remarks><inheritdoc cref="AddExporter{T}(ExportProcessorType, string?, Action{ExportLogRecordProcessorOptions}?)" path="/remarks"/></remarks>
+        /// <typeparam name="T">Exporter type.</typeparam>
+        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <param name="configure"><inheritdoc cref="AddExporter{T}(ExportProcessorType, string?, Action{ExportLogRecordProcessorOptions}?)" path="/param[@name='configure']"/></param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddExporter<T>(ExportProcessorType exportProcessorType, Action<ExportLogRecordProcessorOptions> configure)
+            where T : BaseExporter<LogRecord>
+            => this.AddExporter<T>(exportProcessorType, name: null, configure);
 
         /// <summary>
         /// Adds an exporter to the provider which will be retrieved using dependency injection.
@@ -188,20 +208,22 @@ namespace OpenTelemetry.Logs
         /// </remarks>
         /// <typeparam name="T">Exporter type.</typeparam>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
         /// <param name="configure">Callback action to configure <see
         /// cref="ExportLogRecordProcessorOptions"/>. Only invoked when <paramref
         /// name="exportProcessorType"/> is <see
         /// cref="ExportProcessorType.Batch"/>.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-        public OpenTelemetryLoggerOptions AddExporter<T>(ExportProcessorType exportProcessorType, Action<ExportLogRecordProcessorOptions> configure)
+        public OpenTelemetryLoggerOptions AddExporter<T>(
+            ExportProcessorType exportProcessorType,
+            string? name,
+            Action<ExportLogRecordProcessorOptions>? configure)
             where T : BaseExporter<LogRecord>
         {
-            Guard.ThrowIfNull(configure);
-
             this.TryAddSingleton<T>();
             this.ConfigureProvider((sp, provider)
                 => provider.AddProcessor(
-                    BuildExportProcessor(sp, exportProcessorType, sp.GetRequiredService<T>(), configure)));
+                    BuildExportProcessor(sp, exportProcessorType, sp.GetRequiredService<T>(), name, configure)));
 
             return this;
         }
@@ -393,20 +415,21 @@ namespace OpenTelemetry.Logs
             IServiceProvider serviceProvider,
             ExportProcessorType exportProcessorType,
             BaseExporter<LogRecord> exporter,
-            Action<ExportLogRecordProcessorOptions> configure)
+            string? name,
+            Action<ExportLogRecordProcessorOptions>? configure)
         {
+            name ??= Options.DefaultName;
+
             switch (exportProcessorType)
             {
                 case ExportProcessorType.Simple:
                     return new SimpleLogRecordExportProcessor(exporter);
                 case ExportProcessorType.Batch:
-                    var options = new ExportLogRecordProcessorOptions
-                    {
-                        ExportProcessorType = ExportProcessorType.Batch,
-                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptions<BatchExportLogRecordProcessorOptions>>().Value,
-                    };
+                    var options = serviceProvider.GetRequiredService<IOptionsSnapshot<ExportLogRecordProcessorOptions>>().Get(name);
 
-                    configure(options);
+                    options.ExportProcessorType = ExportProcessorType.Batch;
+
+                    configure?.Invoke(options);
 
                     var batchOptions = options.BatchExportProcessorOptions;
 
@@ -426,10 +449,7 @@ namespace OpenTelemetry.Logs
         {
             var services = this.services;
 
-            if (services != null)
-            {
-                services.TryAddSingleton<T>();
-            }
+            services?.TryAddSingleton<T>();
         }
     }
 }
