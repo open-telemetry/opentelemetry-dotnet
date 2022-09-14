@@ -11,6 +11,9 @@ instead of 200, when no metrics are collected
   ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
 * Added support for OpenMetrics UNIT metadata
   ([#3651](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3651))
+* Added `"# EOF\n"` ending following the [OpenMetrics
+  specification](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md)
+  ([#3654](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3654))
 
 ## 1.4.0-alpha.2
 

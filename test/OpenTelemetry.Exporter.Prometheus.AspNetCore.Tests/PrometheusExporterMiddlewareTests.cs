@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -261,21 +262,18 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
 
                 string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                string[] lines = content.Split('\n');
+                var matches = Regex.Matches(
+                    content,
+                    ("^"
+                        + "# TYPE counter_double counter\n"
+                        + "counter_double{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+                        + "\n"
+                        + "# EOF\n"
+                        + "$").Replace('\'', '"'));
 
-                Assert.Equal(
-                    $"# TYPE counter_double counter",
-                    lines[0]);
+                Assert.Single(matches);
 
-                Assert.Contains(
-                    $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                    lines[1]);
-
-                var index = content.LastIndexOf(' ');
-
-                Assert.Equal('\n', content[^1]);
-
-                var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+                var timestamp = long.Parse(matches[0].Groups[1].Value);
 
                 Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
             }

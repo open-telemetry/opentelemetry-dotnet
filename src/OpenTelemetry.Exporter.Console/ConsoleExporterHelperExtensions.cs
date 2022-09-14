@@ -28,20 +28,43 @@ namespace OpenTelemetry.Trace
         /// Adds Console exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
+        public static TracerProviderBuilder AddConsoleExporter(this TracerProviderBuilder builder)
+            => AddConsoleExporter(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds Console exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddConsoleExporter(this TracerProviderBuilder builder, Action<ConsoleExporterOptions> configure)
+            => AddConsoleExporter(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds Console exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddConsoleExporter(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<ConsoleExporterOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             if (configure != null)
             {
-                builder.ConfigureServices(services => services.Configure(configure));
+                builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptions<ConsoleExporterOptions>>().Value;
+                var options = sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name);
 
                 builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
             });
