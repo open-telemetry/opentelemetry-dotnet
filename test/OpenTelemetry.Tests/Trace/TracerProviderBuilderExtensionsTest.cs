@@ -317,13 +317,13 @@ namespace OpenTelemetry.Trace.Tests
 
             builder.ConfigureServices(services =>
             {
-                services.Configure<BatchExportActivityProcessorOptions>(options =>
+                services.Configure<ExportActivityProcessorOptions>(options =>
                 {
                     // Note: This is testing options integration
 
                     optionsInvocations++;
 
-                    options.MaxExportBatchSize = 18;
+                    options.BatchExportProcessorOptions.MaxExportBatchSize = 18;
                 });
             });
 
@@ -375,9 +375,9 @@ namespace OpenTelemetry.Trace.Tests
 
             builder.ConfigureServices(services =>
             {
-                services.Configure<BatchExportActivityProcessorOptions>(o => defaultOptionsConfigureInvocations++);
+                services.Configure<ExportActivityProcessorOptions>(o => defaultOptionsConfigureInvocations++);
 
-                services.Configure<BatchExportActivityProcessorOptions>("Exporter2", o => namedOptionsConfigureInvocations++);
+                services.Configure<ExportActivityProcessorOptions>("Exporter2", o => namedOptionsConfigureInvocations++);
             });
 
             builder.AddExporter(ExportProcessorType.Batch, new MyExporter());
