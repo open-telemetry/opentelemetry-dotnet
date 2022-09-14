@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+* Changed the behavior of `ConsoleExporter`, the exporter will stop outputting
+  the data if it is disposed.
+  ([#3578](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3578))
+
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddConsoleExporter` extension to allow for more fine-grained options
+  management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
+* Added overloads which accept a name to the `OpenTelemetryLoggerOptions`
+  `AddConsoleExporter` extension to allow for more fine-grained options
+  management
+  ([#3657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3657))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddConsoleExporter` extension to allow for more fine-grained options
+  management
+  ([#3657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3657))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

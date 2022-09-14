@@ -396,6 +396,18 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(43, processorType, result);
         }
 
+        [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
+        public void OpenTelemetryLoggerProviderEvent(string message)
+        {
+            this.WriteEvent(44, message);
+        }
+
+        [Event(45, Message = "ForceFlush invoked for OpenTelemetryLoggerProvider with timeoutMilliseconds = '{0}'.", Level = EventLevel.Verbose)]
+        public void OpenTelemetryLoggerProviderForceFlushInvoked(int timeoutMilliseconds)
+        {
+            this.WriteEvent(45, timeoutMilliseconds);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -26,15 +28,46 @@ namespace OpenTelemetry.Logs
         /// Adds Console exporter with OpenTelemetryLoggerOptions.
         /// </summary>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-        public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure = null)
+        public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions)
+            => AddConsoleExporter(loggerOptions, name: null, configure: null);
+
+        /// <summary>
+        /// Adds Console exporter with OpenTelemetryLoggerOptions.
+        /// </summary>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure)
+            => AddConsoleExporter(loggerOptions, name: null, configure);
+
+        /// <summary>
+        /// Adds Console exporter with OpenTelemetryLoggerOptions.
+        /// </summary>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddConsoleExporter(
+            this OpenTelemetryLoggerOptions loggerOptions,
+            string name,
+            Action<ConsoleExporterOptions> configure)
         {
             Guard.ThrowIfNull(loggerOptions);
 
-            var options = new ConsoleExporterOptions();
-            configure?.Invoke(options);
-            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
+            name ??= Options.DefaultName;
+
+            if (configure != null)
+            {
+                loggerOptions.ConfigureServices(services => services.Configure(name, configure));
+            }
+
+            return loggerOptions.ConfigureProvider((sp, provider) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
+
+                provider.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
+            });
         }
     }
 }

@@ -69,8 +69,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
                 ("^"
-                    + "# HELP test_gauge Hello, world!\n"
                     + "# TYPE test_gauge gauge\n"
+                    + "# HELP test_gauge Hello, world!\n"
                     + "test_gauge 123 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
@@ -96,6 +96,34 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE test_gauge_seconds gauge\n"
+                    + "# UNIT test_gauge_seconds seconds\n"
+                    + "test_gauge_seconds 123 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void GaugeZeroDimensionWithDescriptionAndUnit()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            meter.CreateObservableGauge("test_gauge", () => 123, unit: "seconds", description: "Hello, world!");
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_gauge_seconds gauge\n"
+                    + "# UNIT test_gauge_seconds seconds\n"
+                    + "# HELP test_gauge_seconds Hello, world!\n"
                     + "test_gauge_seconds 123 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
@@ -183,6 +211,33 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 ("^"
                     + "# TYPE test_counter counter\n"
                     + "test_counter \\+Inf \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void SumNonMonotonicDouble()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
+            counter.Add(10);
+            counter.Add(-11);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_updown_counter gauge\n"
+                    + "test_updown_counter -1 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }

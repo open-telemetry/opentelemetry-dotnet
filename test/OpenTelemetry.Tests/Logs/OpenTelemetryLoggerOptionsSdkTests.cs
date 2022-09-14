@@ -57,8 +57,6 @@ public class OpenTelemetryLoggerOptionsSdkTests
             .ConfigureServices(services =>
             {
                 services.AddSingleton<TestClass1>();
-                services.AddSingleton<CustomProcessor>();
-                services.AddSingleton<BaseProcessor<LogRecord>, CustomProcessor>();
                 services.Configure<OpenTelemetryLoggerOptions>(o =>
                 {
                     optionsConfigureInvocations++;
@@ -108,7 +106,7 @@ public class OpenTelemetryLoggerOptionsSdkTests
             current = current.Next;
         }
 
-        Assert.Equal(3, count);
+        Assert.Equal(2, count);
     }
 
     private sealed class TestClass1

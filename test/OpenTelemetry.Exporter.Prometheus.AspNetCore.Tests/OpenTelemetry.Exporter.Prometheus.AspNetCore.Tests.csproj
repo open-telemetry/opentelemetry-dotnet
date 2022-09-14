@@ -3,8 +3,6 @@
     <Description>Unit test project for Prometheus Exporter AspNetCore for OpenTelemetry</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net6.0</TargetFrameworks>
-
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

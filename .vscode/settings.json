@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "appsettings",
     "asax",
     "cijo",
     "cncf",
@@ -8,6 +9,7 @@
     "contoso",
     "cref",
     "grafana",
+    "inheritdoc",
     "janotti",
     "kanzhelev",
     "liudmila",
@@ -36,6 +38,8 @@
     "struct",
     "tbody",
     "thead",
+    "tracestate",
+    "Tracestate",
     "triager",
     "umesan",
     "unencrypted",
