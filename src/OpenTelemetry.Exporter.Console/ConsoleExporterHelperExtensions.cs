@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
 
                 builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
             });

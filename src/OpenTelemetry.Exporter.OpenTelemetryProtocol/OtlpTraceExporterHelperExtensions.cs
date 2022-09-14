@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<OtlpExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
 
                 AddOtlpExporter(builder, options, sp);
             });

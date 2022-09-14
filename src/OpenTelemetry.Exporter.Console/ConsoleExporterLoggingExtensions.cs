@@ -64,7 +64,7 @@ namespace OpenTelemetry.Logs
 
             return loggerOptions.ConfigureProvider((sp, provider) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
 
                 provider.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
             });

@@ -70,7 +70,7 @@ namespace OpenTelemetry.Metrics
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<PrometheusHttpListenerOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<PrometheusHttpListenerOptions>>().Get(name);
 
                 AddPrometheusHttpListener(builder, options);
             });
