@@ -20,7 +20,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.SqlClient;
-using Moq;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -54,6 +54,27 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             this.fakeSqlClientDiagnosticSource.Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        [Fact]
+        public void AddSqlClientInstrumentationNamedOptionsSupported()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<SqlClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<SqlClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddSqlClientInstrumentation()
+                .AddSqlClientInstrumentation("Instrumentation2", configureSqlClientInstrumentationOptions: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
         }
 
         [Fact]

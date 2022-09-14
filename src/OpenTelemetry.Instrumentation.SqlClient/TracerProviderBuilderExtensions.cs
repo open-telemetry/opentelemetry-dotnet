@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.SqlClient;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Internal;
@@ -30,18 +32,57 @@ namespace OpenTelemetry.Trace
         /// Enables SqlClient instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddSqlClientInstrumentation(
+            this TracerProviderBuilder builder)
+            => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions: null);
+
+        /// <summary>
+        /// Enables SqlClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="configureSqlClientInstrumentationOptions">Callback action for configuring <see cref="SqlClientInstrumentationOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddSqlClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+            => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions);
+
+        /// <summary>
+        /// Enables SqlClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configureSqlClientInstrumentationOptions">Callback action for configuring <see cref="SqlClientInstrumentationOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddSqlClientInstrumentation(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
 
-            var sqlOptions = new SqlClientInstrumentationOptions();
-            configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    var options = sp.GetRequiredService<IOptionsMonitor<SqlClientInstrumentationOptions>>().Get(name ?? Options.DefaultName);
 
-            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
+                    AddSqlClientInstrumentation(builder, options, configureSqlClientInstrumentationOptions);
+                });
+            }
+
+            return AddSqlClientInstrumentation(builder, new SqlClientInstrumentationOptions(), configureSqlClientInstrumentationOptions);
+        }
+
+        private static TracerProviderBuilder AddSqlClientInstrumentation(
+            TracerProviderBuilder builder,
+            SqlClientInstrumentationOptions options,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+        {
+            configureSqlClientInstrumentationOptions?.Invoke(options);
+
+            builder.AddInstrumentation(() => new SqlClientInstrumentation(options));
             builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
 
             return builder;
