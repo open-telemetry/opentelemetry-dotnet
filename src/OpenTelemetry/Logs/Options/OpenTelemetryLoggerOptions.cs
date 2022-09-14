@@ -368,7 +368,12 @@ namespace OpenTelemetry.Logs
 
             this.services = null;
 
-            var serviceProvider = services.BuildServiceProvider();
+#if DEBUG
+            bool validateScopes = true;
+#else
+            bool validateScopes = false;
+#endif
+            var serviceProvider = services.BuildServiceProvider(validateScopes);
 
             var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
 
@@ -425,7 +430,7 @@ namespace OpenTelemetry.Logs
                 case ExportProcessorType.Simple:
                     return new SimpleLogRecordExportProcessor(exporter);
                 case ExportProcessorType.Batch:
-                    var options = serviceProvider.GetRequiredService<IOptionsSnapshot<ExportLogRecordProcessorOptions>>().Get(name);
+                    var options = serviceProvider.GetRequiredService<IOptionsMonitor<ExportLogRecordProcessorOptions>>().Get(name);
 
                     options.ExportProcessorType = ExportProcessorType.Batch;
 

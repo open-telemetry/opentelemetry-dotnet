@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<ZipkinExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>().Get(name);
 
                 AddZipkinExporter(builder, options, sp);
             });

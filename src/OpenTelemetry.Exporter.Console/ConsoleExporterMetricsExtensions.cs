@@ -73,8 +73,8 @@ namespace OpenTelemetry.Metrics
             {
                 AddConsoleExporter(
                     builder,
-                    sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name),
-                    sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name));
+                    sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name),
+                    sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name));
             });
         }
 
@@ -111,8 +111,8 @@ namespace OpenTelemetry.Metrics
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsSnapshot<ConsoleExporterOptions>>().Get(name);
-                var metricReaderOptions = sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name);
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
+                var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
