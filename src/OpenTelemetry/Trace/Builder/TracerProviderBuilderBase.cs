@@ -278,11 +278,9 @@ namespace OpenTelemetry.Trace
                 case ExportProcessorType.Simple:
                     return new SimpleActivityExportProcessor(exporter);
                 case ExportProcessorType.Batch:
-                    var options = new ExportActivityProcessorOptions
-                    {
-                        ExportProcessorType = ExportProcessorType.Batch,
-                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<BatchExportActivityProcessorOptions>>().Get(name),
-                    };
+                    var options = serviceProvider.GetRequiredService<IOptionsSnapshot<ExportActivityProcessorOptions>>().Get(name);
+
+                    options.ExportProcessorType = ExportProcessorType.Batch;
 
                     configure?.Invoke(options);
 
