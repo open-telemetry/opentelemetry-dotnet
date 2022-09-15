@@ -9,7 +9,7 @@
   `AddHttpClientInstrumentation` extension to allow for more fine-grained
   options management
   ([#3664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3664),
-  [#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  [#3667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3667))
 
 ## 1.0.0-rc9.6
 
