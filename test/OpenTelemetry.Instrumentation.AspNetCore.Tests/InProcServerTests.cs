@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async void ExampleTest()
         {
-            var res = await this.client.GetStringAsync("http://localhost:5000");
+            var res = await this.client.GetStringAsync("http://localhost:5000/");
             Assert.NotNull(res);
 
             this.tracerProvider.ForceFlush();
