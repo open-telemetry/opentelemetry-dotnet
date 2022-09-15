@@ -85,7 +85,7 @@ See this [example](../../examples/AspNetCore/) app for complete code.
 
 ## Tracing advanced configuration
 
-This instrumentation can be configured to change the default behavior by using
+The tracing instrumentation can be configured to change the default behavior by using
 `AspNetCoreInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
 
