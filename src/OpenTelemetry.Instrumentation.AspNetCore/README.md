@@ -48,7 +48,7 @@ is shutdown.
 
 Additionally, this examples sets up the OpenTelemetry Console exporter, which
 requires adding the package
-[`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.JConsole/README.md)
+[`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
 #### Tracing
@@ -81,7 +81,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-See this [example](../../examples/AspNetCore/) app for complete code.
+See this [example](../../examples/AspNetCore/Program.cs) app for complete code.
 
 ## Tracing advanced configuration
 
