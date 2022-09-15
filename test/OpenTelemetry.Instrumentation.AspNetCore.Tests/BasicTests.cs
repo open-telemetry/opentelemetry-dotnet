@@ -823,6 +823,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(0, numberOfExceptionCallbacks);
+
+            await app.DisposeAsync();
         }
 
         public void Dispose()
