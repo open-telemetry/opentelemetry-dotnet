@@ -61,22 +61,45 @@ namespace OpenTelemetry.Trace
         /// Enables HttpClient instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddHttpClientInstrumentation(this TracerProviderBuilder builder)
+            => AddHttpClientInstrumentation(builder, name: null, configureHttpClientInstrumentationOptions: null);
+
+        /// <summary>
+        /// Enables HttpClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">Callback action for configuring <see cref="HttpClientInstrumentationOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
+            => AddHttpClientInstrumentation(builder, name: null, configureHttpClientInstrumentationOptions);
+
+        /// <summary>
+        /// Enables HttpClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">Callback action for configuring <see cref="HttpClientInstrumentationOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddHttpClientInstrumentation(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
 
+            name ??= Options.DefaultName;
+
             if (configureHttpClientInstrumentationOptions != null)
             {
-                builder.ConfigureServices(services => services.Configure(configureHttpClientInstrumentationOptions));
+                builder.ConfigureServices(services => services.Configure(name, configureHttpClientInstrumentationOptions));
             }
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptions<HttpClientInstrumentationOptions>>().Value;
+                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
 
                 AddHttpClientInstrumentation(builder, new HttpClientInstrumentation(options));
             });

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Dropped `netstandard2.0` target and added `net6.0`
+  ([#3664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3664))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddHttpClientInstrumentation` extension to allow for more fine-grained
+  options management
+  ([#3664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3664))
+
 ## 1.0.0-rc9.6
 
 Released 2022-Aug-18
