@@ -36,13 +36,10 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
-            if (!string.IsNullOrWhiteSpace(metric.Description))
-            {
-                cursor = WriteHelpText(buffer, cursor, metric.Name, metric.Unit, metric.Description);
-            }
-
             int metricType = (int)metric.MetricType >> 4;
-            cursor = WriteTypeInfo(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
+            cursor = WriteTypeMetadata(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
+            cursor = WriteUnitMetadata(buffer, cursor, metric.Name, metric.Unit);
+            cursor = WriteHelpMetadata(buffer, cursor, metric.Name, metric.Unit, metric.Description);
 
             if (!metric.MetricType.IsHistogram())
             {

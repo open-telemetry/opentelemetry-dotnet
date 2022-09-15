@@ -317,13 +317,13 @@ namespace OpenTelemetry.Trace.Tests
 
             builder.ConfigureServices(services =>
             {
-                services.Configure<BatchExportActivityProcessorOptions>(options =>
+                services.Configure<ExportActivityProcessorOptions>(options =>
                 {
                     // Note: This is testing options integration
 
                     optionsInvocations++;
 
-                    options.MaxExportBatchSize = 18;
+                    options.BatchExportProcessorOptions.MaxExportBatchSize = 18;
                 });
             });
 
@@ -363,6 +363,34 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(secondProcessor is BatchActivityExportProcessor batchProcessor
                 && batchProcessor.Exporter is MyExporter
                 && batchProcessor.MaxExportBatchSize == 100);
+        }
+
+        [Fact]
+        public void AddExporterNamedOptionsTest()
+        {
+            var builder = Sdk.CreateTracerProviderBuilder();
+
+            int defaultOptionsConfigureInvocations = 0;
+            int namedOptionsConfigureInvocations = 0;
+
+            builder.ConfigureServices(services =>
+            {
+                services.Configure<ExportActivityProcessorOptions>(o => defaultOptionsConfigureInvocations++);
+
+                services.Configure<ExportActivityProcessorOptions>("Exporter2", o => namedOptionsConfigureInvocations++);
+            });
+
+            builder.AddExporter(ExportProcessorType.Batch, new MyExporter());
+            builder.AddExporter(ExportProcessorType.Batch, new MyExporter(), name: "Exporter2", configure: null);
+            builder.AddExporter<MyExporter>(ExportProcessorType.Batch);
+            builder.AddExporter<MyExporter>(ExportProcessorType.Batch, name: "Exporter2", configure: null);
+
+            using var provider = builder.Build() as TracerProviderSdk;
+
+            Assert.NotNull(provider);
+
+            Assert.Equal(1, defaultOptionsConfigureInvocations);
+            Assert.Equal(1, namedOptionsConfigureInvocations);
         }
 
         private static void RunBuilderServiceLifecycleTest(
