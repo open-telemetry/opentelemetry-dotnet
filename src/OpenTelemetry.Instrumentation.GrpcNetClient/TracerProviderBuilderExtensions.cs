@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Internal;
@@ -22,31 +24,59 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of gRPClient
+    /// Extension methods to simplify registering of gRPC client
     /// instrumentation.
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Enables gRPClient Instrumentation.
+        /// Enables gRPC client instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configure">GrpcClient configuration options.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddGrpcClientInstrumentation(this TracerProviderBuilder builder)
+            => AddGrpcClientInstrumentation(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Enables gRPC client instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="configure">Callback action for configuring <see cref="GrpcClientInstrumentationOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddGrpcClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<GrpcClientInstrumentationOptions> configure = null)
+            Action<GrpcClientInstrumentationOptions> configure)
+            => AddGrpcClientInstrumentation(builder, name: null, configure);
+
+        /// <summary>
+        /// Enables gRPC client instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="GrpcClientInstrumentationOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddGrpcClientInstrumentation(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<GrpcClientInstrumentationOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
-            var grpcOptions = new GrpcClientInstrumentationOptions();
-            configure?.Invoke(grpcOptions);
+            name ??= Options.DefaultName;
 
-            builder.AddInstrumentation(() => new GrpcClientInstrumentation(grpcOptions));
-            builder.AddSource(GrpcClientDiagnosticListener.ActivitySourceName);
-            builder.AddLegacySource("Grpc.Net.Client.GrpcOut");
+            if (configure != null)
+            {
+                builder.ConfigureServices(services => services.Configure(name, configure));
+            }
 
-            return builder;
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<GrpcClientInstrumentationOptions>>().Get(name);
+
+                builder.AddInstrumentation(() => new GrpcClientInstrumentation(options));
+                builder.AddSource(GrpcClientDiagnosticListener.ActivitySourceName);
+                builder.AddLegacySource("Grpc.Net.Client.GrpcOut");
+            });
         }
     }
 }
