@@ -37,17 +37,21 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 ### Step 2: Enable ASP.NET Core Instrumentation at application startup
 
 ASP.NET Core instrumentation must be enabled at application startup. This is
-typically done in the `ConfigureServices` of your `Startup` class. The example
-below enables this instrumentation by using an extension method on
+typically done in the `ConfigureServices` of your `Startup` class or `Program`
+class if you are using [minimal hosting
+model](https://docs.microsoft.com/aspnet/core/migration/50-to-60?view=aspnetcore-6.0&tabs=visual-studio#new-hosting-model).
+The example below enables this instrumentation by using an extension method on
 `IServiceCollection`. This extension method requires adding the package
 [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md)
 to the application. This ensures the instrumentation is disposed when the host
 is shutdown.
 
-Additionally, this examples sets up the OpenTelemetry Jaeger exporter, which
+Additionally, this examples sets up the OpenTelemetry Console exporter, which
 requires adding the package
-[`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md) to
-the application.
+[`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.JConsole/README.md)
+to the application.
+
+#### Tracing
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -57,21 +61,38 @@ public void ConfigureServices(IServiceCollection services)
 {
     services.AddOpenTelemetryTracing((builder) => builder
         .AddAspNetCoreInstrumentation()
-        .AddJaegerExporter()
+        .AddConsoleExporter()
     );
 }
 ```
 
-## Advanced configuration
+#### Metrics
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
+
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddOpenTelemetryMetrics((builder) => builder
+        .AddAspNetCoreInstrumentation()
+        .AddConsoleExporter()
+    );
+}
+```
+
+See this [example](../../examples/AspNetCore/) app for complete code.
+
+## Tracing advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
 `AspNetCoreInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
 
-// TODO: This section could be refined.
-When used with [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
-all configurations to `AspNetCoreInstrumentationOptions` can be done in the `ConfigureServices`
-method of you applications `Startup` class as shown below.
+// TODO: This section could be refined. When used with
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
+all configurations to `AspNetCoreInstrumentationOptions` can be done in the
+`ConfigureServices` method of you applications `Startup` class as shown below.
 
 ```csharp
 // Configure
@@ -95,12 +116,11 @@ services.AddOpenTelemetryTracing((builder) => builder
 This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using the `Filter` function in
 `AspNetCoreInstrumentationOptions`. This defines the condition for allowable
-requests. The Filter receives the `HttpContext` of the incoming
-request, and does not collect telemetry about the request if the Filter
-returns false or throws exception.
+requests. The Filter receives the `HttpContext` of the incoming request, and
+does not collect telemetry about the request if the Filter returns false or
+throws exception.
 
-The following code snippet shows how to use `Filter` to only allow GET
-requests.
+The following code snippet shows how to use `Filter` to only allow GET requests.
 
 ```csharp
 services.AddOpenTelemetryTracing((builder) => builder
@@ -120,13 +140,13 @@ and the `Filter` option does the filtering *after* the Sampler is invoked.
 
 ### Enrich
 
-This option allows one to enrich the activity with additional information
-from the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is
-called only when `activity.IsAllDataRequested` is `true`. It contains the
-activity itself (which can be enriched), the name of the event, and the
-actual raw object.
-For event name "OnStartActivity", the actual object will be `HttpRequest`.
-For event name "OnStopActivity", the actual object will be `HttpResponse`
+This option allows one to enrich the activity with additional information from
+the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is called
+only when `activity.IsAllDataRequested` is `true`. It contains the activity
+itself (which can be enriched), the name of the event, and the actual raw
+object. For event name "OnStartActivity", the actual object will be
+`HttpRequest`. For event name "OnStopActivity", the actual object will be
+`HttpResponse`
 
 The following code snippet shows how to add additional tags using `Enrich`.
 
@@ -154,10 +174,10 @@ services.AddOpenTelemetryTracing((builder) =>
 });
 ```
 
-[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
-is the general extensibility point to add additional properties to any activity.
-The `Enrich` option is specific to this instrumentation, and is provided to
-get access to `HttpRequest` and `HttpResponse`.
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor), is the
+general extensibility point to add additional properties to any activity. The
+`Enrich` option is specific to this instrumentation, and is provided to get
+access to `HttpRequest` and `HttpResponse`.
 
 ### RecordException
 
@@ -178,5 +198,6 @@ seeing these internal logs.
 
 * [Introduction to ASP.NET
   Core](https://docs.microsoft.com/aspnet/core/introduction-to-aspnet-core)
-* [gRPC services using ASP.NET Core](https://docs.microsoft.com/aspnet/core/grpc/aspnetcore)
+* [gRPC services using ASP.NET
+  Core](https://docs.microsoft.com/aspnet/core/grpc/aspnetcore)
 * [OpenTelemetry Project](https://opentelemetry.io/)
