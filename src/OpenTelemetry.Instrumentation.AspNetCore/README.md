@@ -40,7 +40,7 @@ ASP.NET Core instrumentation must be enabled at application startup. This is
 typically done in the `ConfigureServices` of your `Startup` class or `Program`
 class if you are using [minimal hosting
 model](https://docs.microsoft.com/aspnet/core/migration/50-to-60?view=aspnetcore-6.0&tabs=visual-studio#new-hosting-model).
-The example below enables this instrumentation by using an extension method on
+The example below enables this instrumentation by using extension methods on
 `IServiceCollection`. This extension method requires adding the package
 [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md)
 to the application. This ensures the instrumentation is disposed when the host
