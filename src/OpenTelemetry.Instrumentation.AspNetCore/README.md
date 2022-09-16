@@ -107,7 +107,7 @@ services.Configure<AspNetCoreInstrumentationOptions>(options =>
 
 services.AddOpenTelemetryTracing((builder) => builder
     .AddAspNetCoreInstrumentation()
-    .AddJaegerExporter()
+    .AddConsoleExporter()
 );
 ```
 
@@ -129,7 +129,7 @@ services.AddOpenTelemetryTracing((builder) => builder
         // only collect telemetry about HTTP GET requests
         return httpContext.Request.Method.Equals("GET");
     })
-    .AddJaegerExporter()
+    .AddConsoleExporter()
 );
 ```
 
