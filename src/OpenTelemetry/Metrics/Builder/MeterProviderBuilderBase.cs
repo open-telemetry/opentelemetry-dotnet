@@ -257,7 +257,12 @@ namespace OpenTelemetry.Metrics
 
             this.services = null;
 
-            var serviceProvider = services.BuildServiceProvider();
+#if DEBUG
+            bool validateScopes = true;
+#else
+            bool validateScopes = false;
+#endif
+            var serviceProvider = services.BuildServiceProvider(validateScopes);
 
             return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
         }

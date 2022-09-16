@@ -89,7 +89,7 @@ namespace OpenTelemetry.Metrics
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 AddInMemoryExporter(builder, exportedItems, options);
             });
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Metrics
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 AddInMemoryExporter(builder, exportedItems, options);
             });

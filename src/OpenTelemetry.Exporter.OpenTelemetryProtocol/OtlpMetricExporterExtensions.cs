@@ -69,8 +69,8 @@ namespace OpenTelemetry.Metrics
             {
                 AddOtlpExporter(
                     builder,
-                    sp.GetRequiredService<IOptionsSnapshot<OtlpExporterOptions>>().Get(name),
-                    sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name),
+                    sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name),
+                    sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name),
                     sp);
             });
         }
@@ -108,8 +108,8 @@ namespace OpenTelemetry.Metrics
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsSnapshot<OtlpExporterOptions>>().Get(name);
-                var metricReaderOptions = sp.GetRequiredService<IOptionsSnapshot<MetricReaderOptions>>().Get(name);
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
