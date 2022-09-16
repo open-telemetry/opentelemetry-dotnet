@@ -15,6 +15,8 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -45,7 +47,15 @@ namespace OpenTelemetry.Resources
             string[] rawAttributes = resourceAttributes.Split(AttributeListSplitter);
             foreach (string rawKeyValuePair in rawAttributes)
             {
+#if NET6_0 || NETSTANDARD2_1_OR_GREATER
+                string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter,2);
+#else
                 string[] keyValuePair = rawKeyValuePair.Split(AttributeKeyValueSplitter);
+                if(keyValuePair.Length > 2)
+                {
+                    keyValuePair = new string[] { keyValuePair[0], string.Join(AttributeKeyValueSplitter.ToString(), keyValuePair.Skip(1)) };
+                }
+#endif
                 if (keyValuePair.Length != 2)
                 {
                     continue;

@@ -75,5 +75,18 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Single(resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), resource.Attributes);
         }
+        [Fact]
+        public void OtelEnvResource_WithEnvVar_3()
+        {
+            // Arrange
+            var envVarValue = "Key1=Val1,Key2=https://localhost/val1=test1&val2=test2";
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+            var resource = new OtelEnvResourceDetector().Detect();
+
+            // Assert
+            Assert.NotEqual(Resource.Empty, resource);
+            Assert.Contains(new KeyValuePair<string, object>("Key1", "Val1"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("Key2", "https://localhost/val1=test1&val2=test2"), resource.Attributes);
+        }
     }
 }
