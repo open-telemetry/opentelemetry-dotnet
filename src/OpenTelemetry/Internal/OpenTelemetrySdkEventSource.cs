@@ -180,15 +180,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        [NonEvent]
-        public void ExporterErrorResult(ExportResult exportResult)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.ExporterErrorResult(exportResult.ToString());
-            }
-        }
-
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -202,7 +193,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(3, Message = "Exporter returned error '{0}'.", Level = EventLevel.Warning)]
-        public void ExporterErrorResult(string exportResult)
+        public void ExporterErrorResult(ExportResult exportResult)
         {
             this.WriteEvent(3, exportResult);
         }
