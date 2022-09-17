@@ -103,6 +103,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, string, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
         /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="ExportLogRecordProcessorOptions"/>.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddOtlpExporter(
