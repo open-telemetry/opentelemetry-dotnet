@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* **Breaking change** The following processor configuration options can no
+  longer be used to configure the `LogRecord` export processor:
+  `OtlpExporterOptions.ExportProcessorType` and
+  `OtlpExporterOptions.BatchExportProcessorOptions`.
+  When configuring the OTLP log exporter, `OtlpExporterOptions`
+  can only be used for configuring the exporter and not the
+  corresponding export processor. Configuring the export processor should now
+  be performed using `ExportLogRecordProcessorOptions`. New overloads of
+  `AddOtlpExporter` have been added to allow for configuring
+  `OtlpExporterOptions` and `ExportLogRecordProcessorOptions` independently.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 * `OtlpExporterOptions` can now be bound to `IConfiguation` and
   `HttpClientFactory` may be used to manage the `HttpClient` instance used when
   `HttpProtobuf` is configured

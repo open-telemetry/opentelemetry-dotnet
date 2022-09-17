@@ -64,6 +64,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Endpoint = new Uri($"http://{CollectorHostname}{endpoint}"),
                 Protocol = protocol,
+            };
+
+            var processorOptions = new ExportActivityProcessorOptions
+            {
                 ExportProcessorType = exportProcessorType,
                 BatchExportProcessorOptions = new()
                 {
@@ -82,6 +86,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             OtlpTraceExporterHelperExtensions.AddOtlpExporter(
                 builder,
                 exporterOptions,
+                processorOptions,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
@@ -112,7 +117,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     Assert.Single(exportResults);
                     Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
-                else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
+                else if (processorOptions.ExportProcessorType == ExportProcessorType.Batch)
                 {
                     Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
                     Assert.Single(exportResults);

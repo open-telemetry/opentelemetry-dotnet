@@ -630,11 +630,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             Sdk.CreateTracerProviderBuilder()
                 .AddOtlpExporter(
-                    o =>
+                    (exporterOptions, processorOptions) =>
                     {
-                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
-                        o.ExportProcessorType = ExportProcessorType.Batch;
-                        o.BatchExportProcessorOptions = null;
+                        exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        processorOptions.ExportProcessorType = ExportProcessorType.Batch;
+                        processorOptions.BatchExportProcessorOptions = null;
                     });
         }
     }

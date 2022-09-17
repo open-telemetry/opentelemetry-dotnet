@@ -68,15 +68,50 @@ namespace OpenTelemetry.Trace
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                AddOtlpExporter(
+                    builder,
+                    sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name),
+                    sp.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name),
+                    sp);
+            });
+        }
 
-                AddOtlpExporter(builder, options, sp);
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="ExportActivityProcessorOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions, ExportActivityProcessorOptions> configureExporterAndProcessor)
+            => AddOtlpExporter(builder, name: null, configureExporterAndProcessor);
+
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="ExportActivityProcessorOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, string name, Action<OtlpExporterOptions, ExportActivityProcessorOptions> configureExporterAndProcessor)
+        {
+            Guard.ThrowIfNull(builder);
+
+            name ??= Options.DefaultName;
+
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var processorOptions = sp.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name);
+
+                configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
+
+                AddOtlpExporter(builder, exporterOptions, processorOptions, sp);
             });
         }
 
         internal static TracerProviderBuilder AddOtlpExporter(
             TracerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
+            ExportActivityProcessorOptions processorOptions,
             IServiceProvider serviceProvider,
             Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null)
         {
@@ -89,21 +124,48 @@ namespace OpenTelemetry.Trace
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
-            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+            processorOptions = CoalesceProcessorOptions(exporterOptions, processorOptions);
+
+            if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
             }
             else
             {
-                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new();
-
                 return builder.AddProcessor(new BatchActivityExportProcessor(
                     otlpExporter,
-                    batchOptions.MaxQueueSize,
-                    batchOptions.ScheduledDelayMilliseconds,
-                    batchOptions.ExporterTimeoutMilliseconds,
-                    batchOptions.MaxExportBatchSize));
+                    processorOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    processorOptions.BatchExportProcessorOptions.MaxExportBatchSize));
             }
+        }
+
+        private static ExportActivityProcessorOptions CoalesceProcessorOptions(OtlpExporterOptions exporterOptions, ExportActivityProcessorOptions processorOptions)
+        {
+#pragma warning disable CS0618 // Using obsolete members
+            var defaultBatchOptions = new BatchExportActivityProcessorOptions();
+            var actualBatchOptions = exporterOptions.BatchExportProcessorOptions;
+
+            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple
+                || defaultBatchOptions.ExporterTimeoutMilliseconds != actualBatchOptions.ExporterTimeoutMilliseconds
+                || defaultBatchOptions.MaxExportBatchSize != actualBatchOptions.MaxExportBatchSize
+                || defaultBatchOptions.MaxQueueSize != actualBatchOptions.MaxQueueSize
+                || defaultBatchOptions.ScheduledDelayMilliseconds != actualBatchOptions.ScheduledDelayMilliseconds)
+            {
+                processorOptions = new ExportActivityProcessorOptions();
+                processorOptions.ExportProcessorType = exporterOptions.ExportProcessorType;
+                processorOptions.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions
+                {
+                    ExporterTimeoutMilliseconds = exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    MaxExportBatchSize = exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize,
+                    MaxQueueSize = exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    ScheduledDelayMilliseconds = exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                };
+            }
+
+            return processorOptions;
+#pragma warning restore CS0618 // Using obsolete members
         }
     }
 }

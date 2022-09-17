@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+* Marked the following processor configuration options `Obsolete`:
+  `OtlpExporterOptions.ExportProcessorType` and
+  `OtlpExporterOptions.BatchExportProcessorOptions`.
+  When configuring the OTLP trace exporter, `OtlpExporterOptions`
+  should now only be used for configuring the exporter and not the
+  corresponding export processor. Configuring the export processor should now
+  be performed using `ExportActivityProcessorOptions`. New overloads of
+  `AddOtlpExporter` have been added to allow for configuring
+  `OtlpExporterOptions` and `ExportActivityProcessorOptions` independently.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddOtlpExporter` extension to allow for more fine-grained options management
   ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
