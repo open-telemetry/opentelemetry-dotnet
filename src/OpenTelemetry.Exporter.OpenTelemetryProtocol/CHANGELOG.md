@@ -11,7 +11,7 @@
   be performed using `ExportActivityProcessorOptions`. New overloads of
   `AddOtlpExporter` have been added to allow for configuring
   `OtlpExporterOptions` and `ExportActivityProcessorOptions` independently.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#3671](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3671))
 
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddOtlpExporter` extension to allow for more fine-grained options management

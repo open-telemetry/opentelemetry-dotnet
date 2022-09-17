@@ -12,7 +12,7 @@
   be performed using `ExportLogRecordProcessorOptions`. New overloads of
   `AddOtlpExporter` have been added to allow for configuring
   `OtlpExporterOptions` and `ExportLogRecordProcessorOptions` independently.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#3671](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3671))
 
 * `OtlpExporterOptions` can now be bound to `IConfiguation` and
   `HttpClientFactory` may be used to manage the `HttpClient` instance used when
