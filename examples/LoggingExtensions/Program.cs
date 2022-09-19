@@ -21,8 +21,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using Serilog;
 
-var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
-    .SetIncludeFormattedMessage(true)
+var loggerProvider = Sdk.CreateLoggerProviderBuilder()
     .ConfigureResource(builder => builder.AddService("Examples.LoggingExtensions"))
     .AddConsoleExporter()
     .Build();
@@ -30,14 +29,14 @@ var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
 // Creates an OpenTelemetryEventSourceLogEmitter for routing ExampleEventSource
 // events into logs
 using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
-    openTelemetryLoggerProvider, // <- Events will be written to openTelemetryLoggerProvider
+    loggerProvider, // <- Events will be written to loggerProvider
     (name) => name == ExampleEventSource.EventSourceName ? EventLevel.Informational : null,
     disposeProvider: false); // <- Do not dispose the provider with OpenTelemetryEventSourceLogEmitter since in this case it is shared with Serilog
 
 // Configure Serilog global logger
 Log.Logger = new LoggerConfiguration()
     .WriteTo.OpenTelemetry(
-        openTelemetryLoggerProvider, // <- Register OpenTelemetry Serilog sink writing to openTelemetryLoggerProvider
+        loggerProvider, // <- Register OpenTelemetry Serilog sink writing to loggerProvider
         disposeProvider: false) // <- Do not dispose the provider with Serilog since in this case it is shared with OpenTelemetryEventSourceLogEmitter
     .CreateLogger();
 
@@ -51,5 +50,5 @@ programLogger.Information("Application started {Greeting} {Location}", "Hello", 
 // Note: For Serilog this call flushes all logs
 Log.CloseAndFlush();
 
-// Manually dispose OpenTelemetryLoggerProvider since it is being shared
-openTelemetryLoggerProvider.Dispose();
+// Manually dispose loggerProvider since it is being shared
+loggerProvider.Dispose();

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
@@ -26,23 +25,22 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(false)]
         public void VerifyOptionsCannotBeChangedAfterInit(bool initialValue)
         {
-            OpenTelemetryLoggerOptions options = null;
+            OpenTelemetryLoggerOptions options = new()
+            {
+                IncludeFormattedMessage = initialValue,
+                IncludeScopes = initialValue,
+                ParseStateValues = initialValue,
+            };
 
             using var provider = Sdk.CreateLoggerProviderBuilder()
-                .ConfigureServices(services => services.Configure<OpenTelemetryLoggerOptions>(o =>
-                {
-                    options = o;
-
-                    o.IncludeFormattedMessage = initialValue;
-                    o.IncludeScopes = initialValue;
-                    o.ParseStateValues = initialValue;
-                }))
                 .Build();
 
+            using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options, provider, disposeProvider: false);
+
             // Verify initial set
-            Assert.Equal(initialValue, provider.IncludeFormattedMessage);
-            Assert.Equal(initialValue, provider.IncludeScopes);
-            Assert.Equal(initialValue, provider.ParseStateValues);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeFormattedMessage);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeScopes);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.ParseStateValues);
 
             Assert.NotNull(options);
 
@@ -52,9 +50,9 @@ namespace OpenTelemetry.Logs.Tests
             options.ParseStateValues = !initialValue;
 
             // Verify processor is unchanged
-            Assert.Equal(initialValue, provider.IncludeFormattedMessage);
-            Assert.Equal(initialValue, provider.IncludeScopes);
-            Assert.Equal(initialValue, provider.ParseStateValues);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeFormattedMessage);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeScopes);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.ParseStateValues);
         }
     }
 }

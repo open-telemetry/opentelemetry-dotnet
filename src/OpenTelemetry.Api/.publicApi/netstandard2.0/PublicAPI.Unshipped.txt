@@ -1,1 +1,5 @@
+OpenTelemetry.Logs.LoggerProvider
+OpenTelemetry.Logs.LoggerProvider.LoggerProvider() -> void
+OpenTelemetry.Logs.LoggerProviderBuilder
+OpenTelemetry.Logs.LoggerProviderBuilder.LoggerProviderBuilder() -> void
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex, in System.Diagnostics.TagList tags) -> void

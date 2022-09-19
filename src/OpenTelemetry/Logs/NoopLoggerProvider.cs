@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryLoggerOptionsSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="NoopLoggerProvider.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,8 @@
 
 #nullable enable
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace OpenTelemetry.Logs;
 
-internal sealed class OpenTelemetryLoggerOptionsSdk : OpenTelemetryLoggerOptions
+internal sealed class NoopLoggerProvider : LoggerProvider
 {
-    public OpenTelemetryLoggerOptionsSdk()
-        : base(new ServiceCollection())
-    {
-        this.ConfigureServices(services => services.AddOptions());
-    }
 }

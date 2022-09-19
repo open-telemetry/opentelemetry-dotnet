@@ -25,6 +25,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Metrics.MeterProviderBuilderSdk,
+    OpenTelemetry.Metrics.MeterProviderSdk,
+    OpenTelemetry.Metrics.MeterProviderBuilderState>;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -50,7 +55,7 @@ namespace OpenTelemetry.Metrics
         // is bound to an external service collection.
         internal MeterProviderBuilderBase(IServiceCollection services)
         {
-            Guard.ThrowIfNull(services);
+            Debug.Assert(services != null, "services was null");
 
             services.AddOptions();
             services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
@@ -100,7 +105,7 @@ namespace OpenTelemetry.Metrics
             else
             {
                 this.ConfigureServices(services
-                    => MeterProviderBuilderServiceCollectionHelper.RegisterConfigureBuilderCallback(services, configure));
+                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
 
             return this;
@@ -289,7 +294,8 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                this.ConfigureServices(services => MeterProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
+                this.ConfigureServices(services =>
+                    CallbackHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;

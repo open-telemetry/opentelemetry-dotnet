@@ -87,7 +87,8 @@ builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configurati
 // Logging
 builder.Logging.ClearProviders();
 
-builder.Logging.AddOpenTelemetry(options =>
+// Note: See appsettings.json Logging:OpenTelemetry section for OpenTelemetryLoggerOptions bindings.
+builder.Logging.AddOpenTelemetry().WithConfiguration(options =>
 {
     options.ConfigureResource(configureResource);
 
@@ -105,13 +106,6 @@ builder.Logging.AddOpenTelemetry(options =>
             options.AddConsoleExporter();
             break;
     }
-});
-
-builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
-{
-    opt.IncludeScopes = true;
-    opt.ParseStateValues = true;
-    opt.IncludeFormattedMessage = true;
 });
 
 // Metrics

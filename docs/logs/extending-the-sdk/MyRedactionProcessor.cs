@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
@@ -22,9 +21,9 @@ internal class MyRedactionProcessor : BaseProcessor<LogRecord>
 {
     public override void OnEnd(LogRecord logRecord)
     {
-        if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listOfKvp)
+        if (logRecord.Attributes != null)
         {
-            logRecord.State = new MyClassWithRedactionEnumerator(listOfKvp);
+            logRecord.Attributes = new MyRedactedAttributeList(logRecord.Attributes);
         }
     }
 }

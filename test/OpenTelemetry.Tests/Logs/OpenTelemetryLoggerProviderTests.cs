@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,118 +27,79 @@ namespace OpenTelemetry.Logs.Tests
     public sealed class OpenTelemetryLoggerProviderTests
     {
         [Fact]
-        public void DefaultCtorTests()
+        public void OptionsCtorTests()
         {
             OpenTelemetryLoggerOptions defaults = new();
 
-            using OpenTelemetryLoggerProvider provider = new();
+            using OpenTelemetryLoggerProvider openTelemetryLoggerProvider = new(new TestOptions(new()));
 
-            Assert.Equal(defaults.IncludeScopes, provider.IncludeScopes);
-            Assert.Equal(defaults.IncludeFormattedMessage, provider.IncludeFormattedMessage);
-            Assert.Equal(defaults.ParseStateValues, provider.ParseStateValues);
+            Assert.Equal(defaults.IncludeAttributes, openTelemetryLoggerProvider.IncludeAttributes);
+            Assert.Equal(defaults.IncludeTraceState, openTelemetryLoggerProvider.IncludeTraceState);
+            Assert.Equal(defaults.IncludeScopes, openTelemetryLoggerProvider.IncludeScopes);
+            Assert.Equal(defaults.IncludeFormattedMessage, openTelemetryLoggerProvider.IncludeFormattedMessage);
+            Assert.Equal(defaults.ParseStateValues, openTelemetryLoggerProvider.ParseStateValues);
+
+            var provider = openTelemetryLoggerProvider.Provider as LoggerProviderSdk;
+
+            Assert.NotNull(provider);
+
             Assert.Null(provider.Processor);
             Assert.NotNull(provider.Resource);
         }
 
         [Fact]
-        public void ConfigureCtorTests()
+        public void OptionsCtorWithConfigurationTest()
         {
             OpenTelemetryLoggerOptions defaults = new();
 
-            using OpenTelemetryLoggerProvider provider = Sdk.CreateLoggerProviderBuilder()
-                .SetIncludeScopes(!defaults.IncludeScopes)
-                .SetIncludeFormattedMessage(!defaults.IncludeFormattedMessage)
-                .SetParseStateValues(!defaults.ParseStateValues)
+            var options = new OpenTelemetryLoggerOptions
+            {
+                IncludeAttributes = !defaults.IncludeAttributes,
+                IncludeTraceState = !defaults.IncludeTraceState,
+                IncludeScopes = !defaults.IncludeScopes,
+                IncludeFormattedMessage = !defaults.IncludeFormattedMessage,
+                ParseStateValues = !defaults.ParseStateValues,
+            };
+
+            options
                 .SetResourceBuilder(ResourceBuilder
                     .CreateEmpty()
                     .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }))
-                .AddInMemoryExporter(new List<LogRecord>())
-                .Build();
+                .AddInMemoryExporter(new List<LogRecord>());
 
-            Assert.Equal(!defaults.IncludeScopes, provider.IncludeScopes);
-            Assert.Equal(!defaults.IncludeFormattedMessage, provider.IncludeFormattedMessage);
-            Assert.Equal(!defaults.ParseStateValues, provider.ParseStateValues);
+            using OpenTelemetryLoggerProvider openTelemetryLoggerProvider = new(new TestOptions(options));
+
+            Assert.Equal(!defaults.IncludeAttributes, openTelemetryLoggerProvider.IncludeAttributes);
+            Assert.Equal(!defaults.IncludeTraceState, openTelemetryLoggerProvider.IncludeTraceState);
+            Assert.Equal(!defaults.IncludeScopes, openTelemetryLoggerProvider.IncludeScopes);
+            Assert.Equal(!defaults.IncludeFormattedMessage, openTelemetryLoggerProvider.IncludeFormattedMessage);
+            Assert.Equal(!defaults.ParseStateValues, openTelemetryLoggerProvider.ParseStateValues);
+
+            var provider = openTelemetryLoggerProvider.Provider as LoggerProviderSdk;
+
+            Assert.NotNull(provider);
+
             Assert.NotNull(provider.Processor);
             Assert.NotNull(provider.Resource);
             Assert.Contains(provider.Resource.Attributes, value => value.Key == "key1" && (string)value.Value == "value1");
         }
 
-        [Fact]
-        public void ForceFlushTest()
+        private sealed class TestOptions : IOptionsMonitor<OpenTelemetryLoggerOptions>
         {
-            using OpenTelemetryLoggerProvider provider = new();
+            private readonly OpenTelemetryLoggerOptions options;
 
-            Assert.True(provider.ForceFlush());
-
-            List<LogRecord> exportedItems = new();
-
-            provider.AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
-
-            var logger = provider.CreateLogger("TestLogger");
-
-            logger.LogInformation("hello world");
-
-            Assert.Empty(exportedItems);
-
-            Assert.True(provider.ForceFlush());
-
-            Assert.Single(exportedItems);
-        }
-
-        [Fact]
-        public void ThreadStaticPoolUsedByProviderTests()
-        {
-            using var provider1 = new OpenTelemetryLoggerProvider();
-
-            Assert.Equal(LogRecordThreadStaticPool.Instance, provider1.LogRecordPool);
-
-            using var provider2 = Sdk.CreateLoggerProviderBuilder()
-                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
-                .Build();
-
-            Assert.Equal(LogRecordThreadStaticPool.Instance, provider2.LogRecordPool);
-
-            using var provider3 = Sdk.CreateLoggerProviderBuilder()
-                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
-                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
-                .Build();
-
-            Assert.Equal(LogRecordThreadStaticPool.Instance, provider3.LogRecordPool);
-        }
-
-        [Fact]
-        public void SharedPoolUsedByProviderTests()
-        {
-            using var provider1 = Sdk.CreateLoggerProviderBuilder()
-                .AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()))
-                .Build();
-
-            Assert.Equal(LogRecordSharedPool.Current, provider1.LogRecordPool);
-
-            using var provider2 = Sdk.CreateLoggerProviderBuilder()
-                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
-                .AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()))
-                .Build();
-
-            Assert.Equal(LogRecordSharedPool.Current, provider2.LogRecordPool);
-
-            using var provider3 = Sdk.CreateLoggerProviderBuilder()
-                .AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()))
-                .AddProcessor(new CompositeProcessor<LogRecord>(new BaseProcessor<LogRecord>[]
-                {
-                    new SimpleLogRecordExportProcessor(new NoopExporter()),
-                    new BatchLogRecordExportProcessor(new NoopExporter()),
-                }))
-                .Build();
-
-            Assert.Equal(LogRecordSharedPool.Current, provider3.LogRecordPool);
-        }
-
-        private sealed class NoopExporter : BaseExporter<LogRecord>
-        {
-            public override ExportResult Export(in Batch<LogRecord> batch)
+            public TestOptions(OpenTelemetryLoggerOptions options)
             {
-                return ExportResult.Success;
+                this.options = options;
+            }
+
+            public OpenTelemetryLoggerOptions CurrentValue => this.options;
+
+            public OpenTelemetryLoggerOptions Get(string name) => this.options;
+
+            public IDisposable OnChange(Action<OpenTelemetryLoggerOptions, string> listener)
+            {
+                throw new NotImplementedException();
             }
         }
     }

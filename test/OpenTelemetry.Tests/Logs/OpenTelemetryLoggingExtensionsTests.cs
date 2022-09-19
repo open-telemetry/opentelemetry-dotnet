@@ -124,19 +124,14 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     {
         var serviceCollection = new ServiceCollection();
 
-        OpenTelemetryLoggerProvider? provider = null;
-
         serviceCollection.AddLogging(configure =>
         {
-            configure.AddOpenTelemetry(options
+            configure.AddOpenTelemetry().WithConfiguration(options
                 => options.ConfigureResource(
                     r => r.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" })));
-            configure.AddOpenTelemetry(options
+            configure.AddOpenTelemetry().WithConfiguration(options
                 => options.ConfigureResource(
                     r => r.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" })));
-
-            configure.AddOpenTelemetry(options
-                => options.ConfigureProvider((sp, p) => provider = p));
         });
 
         using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
@@ -144,6 +139,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
 
         Assert.NotNull(loggerFactory);
+
+        var provider = serviceProvider.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
 
@@ -154,7 +151,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [Fact]
     public void LoggingBuilderAddOpenTelemetryWithProviderTest()
     {
-        var provider = new WrappedOpenTelemetryLoggerProvider();
+        var provider = new WrappedLoggerProvider();
 
         var serviceCollection = new ServiceCollection();
 
@@ -183,13 +180,13 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [InlineData(false)]
     public void LoggingBuilderAddOpenTelemetryWithProviderAndDisposeSpecifiedTests(bool dispose)
     {
-        var provider = new WrappedOpenTelemetryLoggerProvider();
+        var provider = new WrappedLoggerProvider();
 
         var serviceCollection = new ServiceCollection();
 
         serviceCollection.AddLogging(configure =>
         {
-            configure.AddOpenTelemetry(provider, disposeProvider: dispose);
+            configure.AddOpenTelemetry(provider, configureOptions: null, disposeProvider: dispose);
         });
 
         using (ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider())
@@ -216,11 +213,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [InlineData(false)]
     public void LoggerFactoryCreateAddOpenTelemetryWithProviderAndDisposeSpecifiedTests(bool dispose)
     {
-        var provider = new WrappedOpenTelemetryLoggerProvider();
+        var provider = new WrappedLoggerProvider();
 
-        using (var factory = LoggerFactory.Create(configure =>
+        using (var factory = LoggerFactory.Create(builder =>
         {
-            configure.AddOpenTelemetry(provider, disposeProvider: dispose);
+            builder.AddOpenTelemetry(provider, configureOptions: null, disposeProvider: dispose);
         }))
         {
             Assert.False(provider.Disposed);
@@ -234,47 +231,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void LoggingBuilderAddOpenTelemetryServicesAvailableTest()
-    {
-        int invocationCount = 0;
-
-        var services = new ServiceCollection();
-
-        services.AddLogging(configure =>
-        {
-            configure.AddOpenTelemetry(options =>
-            {
-                invocationCount++;
-                Assert.NotNull(options.Services);
-            });
-        });
-
-        services.Configure<OpenTelemetryLoggerOptions>(options =>
-        {
-            invocationCount++;
-
-            // Note: Services are no longer available once OpenTelemetryLoggerOptions has been created
-
-            Assert.Null(options.Services);
-        });
-
-        using var serviceProvider = services.BuildServiceProvider();
-
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-
-        Assert.Equal(2, invocationCount);
-    }
-
-    [Fact]
     public void LoggingBuilderAddOpenTelemetryProcessorThroughDependencyTest()
     {
         CustomProcessor.InstanceCount = 0;
 
         var services = new ServiceCollection();
 
-        services.AddLogging(configure =>
+        services.AddLogging(builder =>
         {
-            configure.AddOpenTelemetry(options =>
+            builder.AddOpenTelemetry().WithConfiguration(options =>
             {
                 options.AddProcessor<CustomProcessor>();
             });
@@ -309,11 +274,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         CustomProcessor? customProcessor = null;
 
-        services.AddLogging(configure =>
+        services.AddLogging(builder =>
         {
-            configure.AddOpenTelemetry(options =>
+            builder.AddOpenTelemetry().WithConfiguration(options =>
             {
-                options.ConfigureProvider((sp, provider) =>
+                options.ConfigureBuilder((sp, builder) =>
                 {
                     var testClass = sp.GetRequiredService<TestClass>();
 
@@ -322,7 +287,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
                         TestClass = testClass,
                     };
 
-                    provider.AddProcessor(customProcessor);
+                    builder.AddProcessor(customProcessor);
                 });
             });
         });
@@ -337,11 +302,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [Fact]
     public void LoggingBuilderAddOpenTelemetryOptionsOrderingTest()
     {
-        int configureInvocationCount = 0;
-
         var services = new ServiceCollection();
-
-        OpenTelemetryLoggerProvider? provider = null;
 
         services.Configure<OpenTelemetryLoggerOptions>(options =>
         {
@@ -349,34 +310,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             options.IncludeFormattedMessage = true;
             options.IncludeScopes = true;
             options.ParseStateValues = true;
-
-            options.AddProcessor(new CustomProcessor(0));
-
-            options.ConfigureProvider((sp, p) =>
-            {
-                Assert.Null(provider);
-                provider = p;
-                configureInvocationCount++;
-            });
         });
 
-        services.AddLogging(configure =>
+        services.AddLogging(builder =>
         {
-            configure.AddOpenTelemetry(options =>
+            builder.AddOpenTelemetry(options =>
             {
-                // Note: This will run first, but be applied second to the final options
+                // Note: This will be applied second to the final options
                 options.IncludeFormattedMessage = false;
                 options.ParseStateValues = false;
-
-                options.AddProcessor(new CustomProcessor(1));
-
-                options.ConfigureProvider((sp, p) =>
-                {
-                    configureInvocationCount++;
-
-                    Assert.NotNull(provider);
-                    Assert.Equal(provider, p);
-                });
             });
         });
 
@@ -384,15 +326,69 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             // Note: This will be applied last to the final options
             options.ParseStateValues = true;
+        });
 
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+        Assert.False(finalOptions.IncludeFormattedMessage);
+        Assert.True(finalOptions.IncludeScopes);
+        Assert.True(finalOptions.ParseStateValues);
+    }
+
+    [Fact]
+    public void LoggingBuilderConfigureOpenTelemetryOrderingTest()
+    {
+        int configureInvocationCount = 0;
+
+        var services = new ServiceCollection();
+
+        LoggerProviderBuilder? builder = null;
+
+        services.ConfigureOpenTelemetryLogging(options =>
+        {
+            // Note: This will be applied first to the final options
+            options.AddProcessor(new CustomProcessor(0));
+
+            options.ConfigureBuilder((sp, b) =>
+            {
+                Assert.Null(builder);
+                builder = b;
+                configureInvocationCount++;
+            });
+        });
+
+        services.AddLogging(loggingBuilder =>
+        {
+            loggingBuilder.AddOpenTelemetry().WithConfiguration(options =>
+            {
+                // Note: This be applied second to the final options
+
+                options.AddProcessor(new CustomProcessor(1));
+
+                options.ConfigureBuilder((sp, b) =>
+                {
+                    configureInvocationCount++;
+
+                    Assert.NotNull(builder);
+                    Assert.Equal(builder, b);
+                });
+            });
+        });
+
+        services.ConfigureOpenTelemetryLogging(options =>
+        {
             options.AddProcessor(new CustomProcessor(2));
 
-            options.ConfigureProvider((sp, p) =>
+            options.ConfigureBuilder((sp, b) =>
             {
                 configureInvocationCount++;
 
-                Assert.NotNull(provider);
-                Assert.Equal(provider, p);
+                Assert.NotNull(builder);
+                Assert.Equal(builder, b);
             });
         });
 
@@ -400,14 +396,12 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-        Assert.NotNull(provider);
+        Assert.NotNull(builder);
         Assert.Equal(3, configureInvocationCount);
 
-        var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+        var provider = serviceProvider.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
 
-        Assert.False(finalOptions.IncludeFormattedMessage);
-        Assert.True(finalOptions.IncludeScopes);
-        Assert.True(finalOptions.ParseStateValues);
+        Assert.NotNull(provider);
 
         var processor = provider!.Processor as CompositeProcessor<LogRecord>;
 
@@ -432,24 +426,20 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     {
         var services = new ServiceCollection();
 
-        OpenTelemetryLoggerProvider? provider = null;
-
-        services.AddLogging(configure =>
+        services.AddLogging(builder =>
         {
-            configure.AddOpenTelemetry(options =>
+            builder.AddOpenTelemetry().WithConfiguration(options =>
             {
                 options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions"));
-
-                options.ConfigureProvider((sp, p) => provider = p);
             });
         });
 
-        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        services.ConfigureOpenTelemetryLogging(options =>
         {
             options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key1"] = "value1" }));
         });
 
-        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        services.ConfigureOpenTelemetryLogging(options =>
         {
             options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key2"] = "value2" }));
         });
@@ -457,6 +447,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        var provider = serviceProvider.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
 
@@ -478,7 +470,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         builder.AddExporter(ExportProcessorType.Simple, new CustomExporter());
         builder.AddExporter<CustomExporter>(ExportProcessorType.Batch);
 
-        using var provider = builder.Build();
+        using var provider = builder.Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
 
@@ -531,7 +523,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
                 options.BatchExportProcessorOptions.MaxExportBatchSize = 100;
             });
 
-        using var provider = builder.Build();
+        using var provider = builder.Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
 
@@ -578,7 +570,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Equal(1, namedOptionsConfigureInvocations);
     }
 
-    private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
+    private sealed class WrappedLoggerProvider : LoggerProvider
     {
         public bool Disposed { get; private set; }
 

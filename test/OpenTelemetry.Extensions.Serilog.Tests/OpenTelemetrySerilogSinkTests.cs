@@ -37,12 +37,12 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             var disposeTrackingProcessor = new DisposeTrackingProcessor();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-            using (var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddProcessor(disposeTrackingProcessor)
                 .Build())
             {
                 Log.Logger = new LoggerConfiguration()
-                    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: dispose)
+                    .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: dispose)
                     .CreateLogger();
 
                 Log.CloseAndFlush();
@@ -56,19 +56,21 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void SerilogBasicLogTests(bool includeFormattedMessage)
+        public void SerilogBasicLogTests(bool includeRenderedMessage)
         {
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
-                .SetIncludeFormattedMessage(includeFormattedMessage)
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .WriteTo.OpenTelemetry(
+                    loggerProvider,
+                    options: new() { IncludeRenderedMessage = includeRenderedMessage },
+                    disposeProvider: true)
                 .CreateLogger();
 
             Log.Logger.Information("Hello {greeting}", "World");
@@ -79,7 +81,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            if (!includeFormattedMessage)
+            if (!includeRenderedMessage)
             {
                 Assert.Equal("Hello {greeting}", logRecord.FormattedMessage);
             }
@@ -93,9 +95,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             Assert.Equal(LogLevel.Information, logRecord.LogLevel);
             Assert.Null(logRecord.CategoryName);
 
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Single(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Single(logRecord.Attributes);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
 
             Assert.Equal(default, logRecord.TraceId);
             Assert.Equal(default, logRecord.SpanId);
@@ -112,13 +114,13 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: true)
                 .CreateLogger();
 
             Log.Logger.Information("Hello {greeting}", "World");
@@ -143,13 +145,13 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: true)
                 .CreateLogger();
 
             // Note: Serilog ForContext API is used to set "CategoryName" on log messages
@@ -172,13 +174,13 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: true)
                 .CreateLogger();
 
             ComplexType complexType = new();
@@ -191,11 +193,11 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Equal(3, logRecord.StateValues!.Count); // Note: complexObj is currently not supported/ignored.
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "id" && (int?)kvp.Value == 18);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "complexStr" && (string?)kvp.Value == "ComplexTypeToString");
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Equal(3, logRecord.Attributes!.Count); // Note: complexObj is currently not supported/ignored.
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "id" && (int?)kvp.Value == 18);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "complexStr" && (string?)kvp.Value == "ComplexTypeToString");
         }
 
         [Fact]
@@ -204,13 +206,13 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: true)
                 .CreateLogger();
 
             ComplexType complexType = new();
@@ -227,12 +229,12 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "data" && kvp.Value is int[] typedArray && intArray.SequenceEqual(typedArray));
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "data" && kvp.Value is int[] typedArray && intArray.SequenceEqual(typedArray));
 
             logRecord = exportedItems[1];
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "data" && kvp.Value is object?[] typedArray && mixedArray.SequenceEqual(typedArray));
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "data" && kvp.Value is object?[] typedArray && mixedArray.SequenceEqual(typedArray));
         }
 
         [Fact]
@@ -243,13 +245,13 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             InvalidOperationException ex = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: true)
                 .CreateLogger();
 
             ComplexType complexType = new();

@@ -37,9 +37,9 @@ public class OpenTelemetryLoggerOptionsSdkTests
 
         Assert.NotNull(provider);
 
-        provider.CreateEmitter().Emit(new()
+        provider.GetLogger().EmitLog(new()
         {
-            Message = "Hello world",
+            Body = "Hello world",
         });
 
         Assert.Single(exportedItems);
@@ -48,49 +48,42 @@ public class OpenTelemetryLoggerOptionsSdkTests
     [Fact]
     public void CreateLoggerProviderBuilderExtensionPointsTest()
     {
-        int optionsConfigureInvocations = 0;
-        OpenTelemetryLoggerProvider? providerFromConfigureCallback = null;
+        int configureBuilderInvocations = 0;
 
-        var returnedOptions = Sdk.CreateLoggerProviderBuilder()
+        var returnedBuilder = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(new CustomProcessor())
             .AddProcessor<CustomProcessor>()
             .ConfigureServices(services =>
             {
                 services.AddSingleton<TestClass1>();
-                services.Configure<OpenTelemetryLoggerOptions>(o =>
-                {
-                    optionsConfigureInvocations++;
-
-                    Assert.Null(o.Services);
-
-                    Assert.Throws<NotSupportedException>(() => o.ConfigureServices(s => { }));
-
-                    o.ConfigureResource(r => r.AddAttributes(new Dictionary<string, object> { ["key1"] = "value1" }));
-
-                    o.ConfigureProvider((sp, p) => optionsConfigureInvocations++);
-                });
             })
-            .ConfigureProvider((sp, p) =>
+            .ConfigureBuilder((sp, o) =>
+            {
+                configureBuilderInvocations++;
+
+                Assert.Throws<NotSupportedException>(() => o.ConfigureServices(s => { }));
+
+                o.ConfigureResource(r => r.AddAttributes(new Dictionary<string, object> { ["key1"] = "value1" }));
+
+                o.ConfigureBuilder((sp, b) => configureBuilderInvocations++);
+            })
+            .ConfigureBuilder((sp, p) =>
             {
                 Assert.NotNull(sp);
-
-                providerFromConfigureCallback = p;
 
                 Assert.NotNull(sp.GetService<TestClass1>());
             });
 
-        using var provider = returnedOptions.Build();
+        using var provider = returnedBuilder.Build() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
 
-        Assert.Throws<NotSupportedException>(() => returnedOptions.ConfigureServices(s => { }));
-        Assert.Throws<NotSupportedException>(() => returnedOptions.ConfigureResource(r => { }));
-        Assert.Throws<NotSupportedException>(() => returnedOptions.ConfigureProvider((sp, p) => { }));
-        Assert.Throws<NotSupportedException>(() => returnedOptions.Build());
+        Assert.Throws<NotSupportedException>(() => returnedBuilder.ConfigureServices(s => { }));
+        Assert.Throws<NotSupportedException>(() => returnedBuilder.ConfigureResource(r => { }));
+        Assert.Throws<NotSupportedException>(() => returnedBuilder.ConfigureBuilder((sp, p) => { }));
+        Assert.Throws<NotSupportedException>(() => returnedBuilder.Build());
 
-        Assert.Equal(2, optionsConfigureInvocations);
-        Assert.NotNull(providerFromConfigureCallback);
-        Assert.Equal(provider, providerFromConfigureCallback);
+        Assert.Equal(2, configureBuilderInvocations);
 
         Assert.NotNull(provider.Resource?.Attributes);
         Assert.Contains(provider.Resource!.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");

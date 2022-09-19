@@ -24,6 +24,11 @@ using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Trace.TracerProviderBuilderSdk,
+    OpenTelemetry.Trace.TracerProviderSdk,
+    OpenTelemetry.Trace.TracerProviderBuilderState>;
+
 namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
@@ -49,9 +54,9 @@ namespace OpenTelemetry.Trace
                 Debug.Assert(this.OwnedServiceProvider != null, "serviceProvider was not IDisposable");
             }
 
-            var state = new TracerProviderBuilderState(serviceProvider);
+            var state = new TracerProviderBuilderState(serviceProvider, this);
 
-            TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
+            CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
                 serviceProvider,
                 state);
 

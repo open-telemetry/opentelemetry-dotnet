@@ -60,16 +60,17 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Creates a <see cref="OpenTelemetryLoggerOptions"/> which is used to build
-        /// an <see cref="OpenTelemetryLoggerProvider"/>. In a typical application, a single
-        /// <see cref="OpenTelemetryLoggerProvider"/> is created at application startup and disposed
-        /// at application shutdown. It is important to ensure that the provider is not
-        /// disposed too early.
+        /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
+        /// an <see cref="LoggerProvider"/>. In a typical application, a single
+        /// <see cref="LoggerProvider"/> is created at application startup and
+        /// disposed at application shutdown. It is important to ensure that the
+        /// provider is not disposed too early.
         /// </summary>
-        /// <returns><see cref="OpenTelemetryLoggerOptions"/> instance, which is used to build a <see cref="OpenTelemetryLoggerProvider"/>.</returns>
-        public static OpenTelemetryLoggerOptions CreateLoggerProviderBuilder()
+        /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
+        /// to build a <see cref="LoggerProvider"/>.</returns>
+        public static LoggerProviderBuilder CreateLoggerProviderBuilder()
         {
-            return new OpenTelemetryLoggerOptionsSdk();
+            return new LoggerProviderBuilderSdk();
         }
 
         /// <summary>

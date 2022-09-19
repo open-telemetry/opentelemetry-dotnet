@@ -33,18 +33,13 @@ namespace OpenTelemetry.Logs.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var logEmitter = provider.CreateEmitter();
+            var logger = provider.GetLogger("test");
 
-            Exception ex = new InvalidOperationException();
-
-            logEmitter.Emit(
+            logger.EmitLog(
                 new()
                 {
-                    CategoryName = "LogEmitter",
-                    Message = "Hello world",
-                    LogLevel = LogLevel.Warning,
-                    EventId = new EventId(18, "CustomEvent"),
-                    Exception = ex,
+                    Body = "Hello world",
+                    Severity = LogRecordSeverity.Warning,
                 },
                 new()
                 {
@@ -57,12 +52,13 @@ namespace OpenTelemetry.Logs.Tests
             var logRecord = exportedItems[0];
 
             Assert.NotNull(logRecord);
-            Assert.Equal("LogEmitter", logRecord.CategoryName);
-            Assert.Equal("Hello world", logRecord.FormattedMessage);
+            Assert.Null(logRecord.CategoryName);
+            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal("Hello world", logRecord.Body);
             Assert.Equal(LogLevel.Warning, logRecord.LogLevel);
-            Assert.Equal(18, logRecord.EventId.Id);
-            Assert.Equal("CustomEvent", logRecord.EventId.Name);
-            Assert.Equal(ex, logRecord.Exception);
+            Assert.Equal(LogRecordSeverity.Warning, logRecord.Severity);
+            Assert.Equal(default, logRecord.EventId);
+            Assert.Null(logRecord.Exception);
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
 
             Assert.Equal(default, logRecord.TraceId);
@@ -70,10 +66,10 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
             Assert.Null(logRecord.TraceState);
 
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Equal(2, logRecord.StateValues.Count);
-            Assert.Contains(logRecord.StateValues, item => item.Key == "key1" && (string)item.Value == "value1");
-            Assert.Contains(logRecord.StateValues, item => item.Key == "key2" && (string)item.Value == "value2");
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Equal(2, logRecord.Attributes.Count);
+            Assert.Contains(logRecord.Attributes, item => item.Key == "key1" && (string)item.Value == "value1");
+            Assert.Contains(logRecord.Attributes, item => item.Key == "key2" && (string)item.Value == "value2");
         }
 
         [Fact]
@@ -85,7 +81,7 @@ namespace OpenTelemetry.Logs.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var logEmitter = provider.CreateEmitter();
+            var logger = provider.GetLogger();
 
             using var activity = new Activity("Test");
 
@@ -94,7 +90,7 @@ namespace OpenTelemetry.Logs.Tests
             activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             activity.TraceStateString = "key1=value1";
 
-            logEmitter.Emit(new(activity));
+            logger.EmitLog(new(activity));
 
             Assert.Single(exportedItems);
 
@@ -105,9 +101,9 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(activity.TraceId, logRecord.TraceId);
             Assert.Equal(activity.SpanId, logRecord.SpanId);
             Assert.Equal(activity.ActivityTraceFlags, logRecord.TraceFlags);
-            Assert.Equal(activity.TraceStateString, logRecord.TraceState);
+            Assert.Null(logRecord.TraceState);
 
-            Assert.Null(logRecord.StateValues);
+            Assert.Null(logRecord.Attributes);
         }
 
         [Fact]
@@ -119,13 +115,13 @@ namespace OpenTelemetry.Logs.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var logEmitter = provider.CreateEmitter();
+            var logger = provider.GetLogger();
 
             DateTime timestamp = DateTime.SpecifyKind(
                 new DateTime(2022, 6, 30, 16, 0, 0),
                 DateTimeKind.Local);
 
-            logEmitter.Emit(new()
+            logger.EmitLog(new()
             {
                 Timestamp = timestamp,
             });
@@ -149,13 +145,13 @@ namespace OpenTelemetry.Logs.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var logEmitter = provider.CreateEmitter();
+            var logger = provider.GetLogger(new InstrumentationScope());
 
             DateTime timestamp = DateTime.SpecifyKind(
                 new DateTime(2022, 6, 30, 16, 0, 0),
                 DateTimeKind.Unspecified);
 
-            logEmitter.Emit(new()
+            logger.EmitLog(new()
             {
                 Timestamp = timestamp,
             });

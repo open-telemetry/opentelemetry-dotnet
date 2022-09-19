@@ -82,21 +82,28 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.FormattedMessage:",-RightPaddingLength}{logRecord.FormattedMessage}");
                 }
 
+                if (logRecord.Body != null)
+                {
+                    this.WriteLine($"{"LogRecord.Body:",-RightPaddingLength}{logRecord.Body}");
+                }
+
+#pragma warning disable CS0618 // Type or member is obsolete
                 if (logRecord.State != null)
                 {
                     this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
                 }
-                else if (logRecord.StateValues != null)
+#pragma warning restore CS0618 // Type or member is obsolete
+                else if (logRecord.Attributes != null)
                 {
-                    this.WriteLine("LogRecord.StateValues (Key:Value):");
-                    for (int i = 0; i < logRecord.StateValues.Count; i++)
+                    this.WriteLine("LogRecord.Attributes (Key:Value):");
+                    for (int i = 0; i < logRecord.Attributes.Count; i++)
                     {
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalFormat}")
-                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.StateValues[i].Value)
-                            : logRecord.StateValues[i];
+                        var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
+                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
+                            : logRecord.Attributes[i];
 
                         if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                         {

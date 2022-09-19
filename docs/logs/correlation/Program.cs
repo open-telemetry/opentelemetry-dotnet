@@ -32,7 +32,7 @@ public class Program
         // Setup Logging
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
+            builder.AddOpenTelemetry().WithConfiguration(options =>
             {
                 options.AddConsoleExporter();
             });

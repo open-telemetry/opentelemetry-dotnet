@@ -36,7 +36,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             services.AddLogging(configure =>
             {
-                configure.AddOpenTelemetry(options =>
+                configure.AddOpenTelemetry().WithConfiguration(options =>
                 {
                     options
                         .AddInMemoryExporter(exportedItems)
@@ -44,22 +44,14 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
                 });
             });
 
-            OpenTelemetryEventSourceLoggerOptionsExtensions.EventSourceManager? eventSourceManager = null;
-
             using (var serviceProvider = services.BuildServiceProvider())
             {
                 var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-
-                eventSourceManager = serviceProvider.GetRequiredService<OpenTelemetryEventSourceLoggerOptionsExtensions.EventSourceManager>();
-
-                Assert.Single(eventSourceManager.Emitters);
 
                 TestEventSource.Log.SimpleEvent();
             }
 
             Assert.Single(exportedItems);
-
-            Assert.Empty(eventSourceManager.Emitters);
         }
     }
 }

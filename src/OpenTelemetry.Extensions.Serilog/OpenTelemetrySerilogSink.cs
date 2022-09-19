@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -25,30 +24,30 @@ namespace OpenTelemetry.Logs
 {
     internal sealed class OpenTelemetrySerilogSink : ILogEventSink, IDisposable
     {
-        private readonly OpenTelemetryLoggerProvider openTelemetryLoggerProvider;
-        private readonly bool includeFormattedMessage;
-        private readonly LogEmitter logEmitter;
+        private readonly LoggerProvider loggerProvider;
+        private readonly bool includeRenderedMessage;
+        private readonly Logger logger;
         private readonly bool disposeProvider;
 
-        public OpenTelemetrySerilogSink(OpenTelemetryLoggerProvider openTelemetryLoggerProvider, bool disposeProvider)
+        public OpenTelemetrySerilogSink(
+            LoggerProvider loggerProvider,
+            OpenTelemetrySerilogSinkOptions? options,
+            bool disposeProvider)
         {
-            Debug.Assert(openTelemetryLoggerProvider != null, "openTelemetryLoggerProvider was null");
+            Debug.Assert(loggerProvider != null, "loggerProvider was null");
 
-            this.openTelemetryLoggerProvider = openTelemetryLoggerProvider!;
+            options ??= new();
+
+            this.loggerProvider = loggerProvider!;
             this.disposeProvider = disposeProvider;
 
-            var logEmitter = this.openTelemetryLoggerProvider.CreateEmitter();
-            Debug.Assert(logEmitter != null, "logEmitter was null");
+            this.logger = loggerProvider!.GetLogger(new LoggerOptions(
+                new InstrumentationScope("OpenTelemetry.Extensions.Serilog")
+                {
+                    Version = $"semver:{typeof(OpenTelemetrySerilogSink).Assembly.GetName().Version}",
+                }));
 
-            this.logEmitter = logEmitter!;
-
-            // TODO: This project can only access IncludeFormattedMessage
-            // because it can see SDK internals. At some point this is likely
-            // not to be the case. Need to figure out where to put
-            // IncludeFormattedMessage so that extensions can see it. Ideas:
-            // Make it public on OpenTelemetryLoggerProvider or expose it on
-            // LogEmitter instance.
-            this.includeFormattedMessage = this.openTelemetryLoggerProvider.IncludeFormattedMessage;
+            this.includeRenderedMessage = options.IncludeRenderedMessage;
         }
 
         public void Emit(LogEvent logEvent)
@@ -58,12 +57,23 @@ namespace OpenTelemetry.Logs
             LogRecordData data = new(Activity.Current)
             {
                 Timestamp = logEvent!.Timestamp.UtcDateTime,
-                LogLevel = (LogLevel)(int)logEvent.Level,
-                Message = this.includeFormattedMessage ? logEvent.RenderMessage() : logEvent.MessageTemplate.Text,
-                Exception = logEvent.Exception,
+                Severity = (LogRecordSeverity)(int)logEvent.Level,
+                Body = logEvent.MessageTemplate.Text,
             };
 
             LogRecordAttributeList attributes = default;
+
+            if (this.includeRenderedMessage)
+            {
+                attributes.Add("serilog.rendered_message", logEvent.RenderMessage());
+            }
+
+            var exception = logEvent.Exception;
+            if (exception != null)
+            {
+                attributes.RecordException(exception);
+            }
+
             foreach (KeyValuePair<string, LogEventPropertyValue> property in logEvent.Properties)
             {
                 // TODO: Serilog supports complex type logging. This is not yet
@@ -71,7 +81,7 @@ namespace OpenTelemetry.Logs
                 if (property.Key == Constants.SourceContextPropertyName
                     && property.Value is ScalarValue sourceContextValue)
                 {
-                    data.CategoryName = sourceContextValue.Value as string;
+                    attributes.Add("serilog.source_context", sourceContextValue.Value as string);
                 }
                 else if (property.Value is ScalarValue scalarValue)
                 {
@@ -121,14 +131,14 @@ namespace OpenTelemetry.Logs
                 }
             }
 
-            this.logEmitter.Emit(in data, in attributes);
+            this.logger.EmitLog(in data, in attributes);
         }
 
         public void Dispose()
         {
             if (this.disposeProvider)
             {
-                this.openTelemetryLoggerProvider.Dispose();
+                this.loggerProvider.Dispose();
             }
         }
     }

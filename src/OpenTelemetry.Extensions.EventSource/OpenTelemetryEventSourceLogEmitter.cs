@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
@@ -32,45 +31,50 @@ namespace OpenTelemetry.Logs
     public sealed class OpenTelemetryEventSourceLogEmitter : EventListener
     {
         private readonly bool includeFormattedMessage;
-        private readonly OpenTelemetryLoggerProvider openTelemetryLoggerProvider;
-        private readonly LogEmitter logEmitter;
+        private readonly LoggerProvider loggerProvider;
         private readonly object lockObj = new();
         private readonly Func<string, EventLevel?> shouldListenToFunc;
         private readonly List<EventSource> eventSources = new();
         private readonly List<EventSource>? eventSourcesBeforeConstructor = new();
         private readonly bool disposeProvider;
+        private readonly Logger logger;
 
         /// <summary>
         /// Initializes a new instance of the <see
         /// cref="OpenTelemetryEventSourceLogEmitter"/> class.
         /// </summary>
-        /// <param name="openTelemetryLoggerProvider"><see
-        /// cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <param name="loggerProvider"><see
+        /// cref="LoggerProvider"/>.</param>
         /// <param name="shouldListenToFunc">Callback function used to decide if
         /// events should be captured for a given <see
         /// cref="EventSource.Name"/>. Return <see langword="null"/> if no
         /// events should be captured.</param>
+        /// <param name="options"><see cref="OpenTelemetryEventSourceLogEmitterOptions"/>.</param>
         /// <param name="disposeProvider">Controls whether or not the supplied
-        /// <paramref name="openTelemetryLoggerProvider"/> will be disposed when
+        /// <paramref name="loggerProvider"/> will be disposed when
         /// the <see cref="EventListener"/> is disposed. Default value: <see
-        /// langword="true"/>.</param>
+        /// langword="false"/>.</param>
         public OpenTelemetryEventSourceLogEmitter(
-            OpenTelemetryLoggerProvider openTelemetryLoggerProvider,
+            LoggerProvider loggerProvider,
             Func<string, EventLevel?> shouldListenToFunc,
-            bool disposeProvider = true)
+            OpenTelemetryEventSourceLogEmitterOptions? options = null,
+            bool disposeProvider = false)
         {
-            Guard.ThrowIfNull(openTelemetryLoggerProvider);
+            Guard.ThrowIfNull(loggerProvider);
             Guard.ThrowIfNull(shouldListenToFunc);
 
-            this.includeFormattedMessage = openTelemetryLoggerProvider.IncludeFormattedMessage;
-            this.openTelemetryLoggerProvider = openTelemetryLoggerProvider!;
+            options ??= new();
+
+            this.includeFormattedMessage = options.IncludeFormattedMessage;
+            this.loggerProvider = loggerProvider!;
             this.disposeProvider = disposeProvider;
             this.shouldListenToFunc = shouldListenToFunc;
 
-            var logEmitter = this.openTelemetryLoggerProvider.CreateEmitter();
-            Debug.Assert(logEmitter != null, "logEmitter was null");
-
-            this.logEmitter = logEmitter!;
+            this.logger = loggerProvider.GetLogger(new LoggerOptions(
+                new InstrumentationScope("OpenTelemetry.Extensions.EventSource")
+                {
+                    Version = $"semver:{typeof(OpenTelemetryEventSourceLogEmitter).Assembly.GetName().Version}",
+                }));
 
             lock (this.lockObj)
             {
@@ -95,7 +99,7 @@ namespace OpenTelemetry.Logs
 
             if (this.disposeProvider)
             {
-                this.openTelemetryLoggerProvider.Dispose();
+                this.loggerProvider.Dispose();
             }
 
             base.Dispose();
@@ -143,13 +147,14 @@ namespace OpenTelemetry.Logs
 #if NETSTANDARD2_1_OR_GREATER
                 Timestamp = eventData.TimeStamp,
 #endif
-                EventId = new EventId(eventData.EventId, eventData.EventName),
-                LogLevel = ConvertEventLevelToLogLevel(eventData.Level),
+                Severity = ConvertEventLevelToLogLevel(eventData.Level),
             };
 
             LogRecordAttributeList attributes = default;
 
             attributes.Add("event_source.name", eventData.EventSource.Name);
+            attributes.Add("event_source.event_id", eventData.EventId);
+            attributes.Add("event_source.event_name", eventData.EventName);
 
             if (eventData.ActivityId != Guid.Empty)
             {
@@ -192,21 +197,21 @@ namespace OpenTelemetry.Logs
                 rawMessage = string.Format(CultureInfo.InvariantCulture, rawMessage, eventData.Payload!.ToArray());
             }
 
-            data.Message = rawMessage;
+            data.Body = rawMessage;
 
-            this.logEmitter.Emit(in data, in attributes);
+            this.logger.EmitLog(in data, in attributes);
         }
 #pragma warning restore CA1062 // Validate arguments of public methods
 
-        private static LogLevel ConvertEventLevelToLogLevel(EventLevel eventLevel)
+        private static LogRecordSeverity ConvertEventLevelToLogLevel(EventLevel eventLevel)
         {
             return eventLevel switch
             {
-                EventLevel.Informational => LogLevel.Information,
-                EventLevel.Warning => LogLevel.Warning,
-                EventLevel.Error => LogLevel.Error,
-                EventLevel.Critical => LogLevel.Critical,
-                _ => LogLevel.Trace,
+                EventLevel.Informational => LogRecordSeverity.Information,
+                EventLevel.Warning => LogRecordSeverity.Warning,
+                EventLevel.Error => LogRecordSeverity.Error,
+                EventLevel.Critical => LogRecordSeverity.Fatal,
+                _ => LogRecordSeverity.Trace,
             };
         }
 

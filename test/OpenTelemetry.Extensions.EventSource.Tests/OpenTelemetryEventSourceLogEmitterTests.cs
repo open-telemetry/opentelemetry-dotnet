@@ -138,8 +138,8 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Null(logRecord.TraceState);
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
 
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
         }
 
         [Fact]
@@ -184,14 +184,14 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
             var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
-                .SetIncludeFormattedMessage(formatMessage)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
                 openTelemetryLoggerProvider,
-                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
+                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null,
+                options: new() { IncludeFormattedMessage = formatMessage }))
             {
                 TestEventSource.Log.ComplexEvent("Test_Message", 18);
             }
@@ -222,10 +222,10 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Null(logRecord.TraceState);
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
 
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "arg1" && (string?)kvp.Value == "Test_Message");
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "arg2" && (int?)kvp.Value == 18);
+            Assert.NotNull(logRecord.Attributes);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "arg1" && (string?)kvp.Value == "Test_Message");
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "arg2" && (int?)kvp.Value == 18);
         }
 
         [Theory(Skip = "Not runnable in CI, see note.")]
@@ -250,13 +250,13 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+            var loggerProvider = Sdk.CreateLoggerProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
-                openTelemetryLoggerProvider,
+                loggerProvider,
                 (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
             {
                 TestEventSource.Log.WorkStart();
@@ -271,16 +271,16 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(4, exportedItems.Count);
 
             var logRecord = exportedItems[1];
-            Assert.NotNull(logRecord.StateValues);
+            Assert.NotNull(logRecord.Attributes);
             if (enableTplListener)
             {
-                Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.activity_id");
-                Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.related_activity_id");
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.activity_id");
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.related_activity_id");
             }
             else
             {
-                Assert.DoesNotContain(logRecord.StateValues, kvp => kvp.Key == "event_source.activity_id");
-                Assert.DoesNotContain(logRecord.StateValues, kvp => kvp.Key == "event_source.related_activity_id");
+                Assert.DoesNotContain(logRecord.Attributes, kvp => kvp.Key == "event_source.activity_id");
+                Assert.DoesNotContain(logRecord.Attributes, kvp => kvp.Key == "event_source.related_activity_id");
             }
         }
 
