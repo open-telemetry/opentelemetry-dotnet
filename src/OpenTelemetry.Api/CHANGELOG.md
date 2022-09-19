@@ -14,7 +14,7 @@ Released 2022-Aug-18
   build time). This is because .NET 5 reached EOL in May 2022 and .NET
   Core 3.1 reaches EOL in December 2022. End of support
   dates for .NET are published
-  [here](https://dotnet.microsoft.com/en-us/download/dotnet).
+  [here](https://dotnet.microsoft.com/download/dotnet).
 
   There is no guarantee that System.Diagnostics.DiagnosticSource will continue
   to work on older versions of .NET. However, the build warning can be
