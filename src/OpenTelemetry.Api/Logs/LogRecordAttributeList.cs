@@ -31,6 +31,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
 {
+    internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
     internal List<KeyValuePair<string, object?>>? OverflowAttributes;
     private KeyValuePair<string, object?> attribute1;
@@ -281,6 +282,8 @@ internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, obje
 
     private void MoveAttributesToTheOverflowList()
     {
+        Debug.Assert(this.count == OverflowMaxCount, "count did not match OverflowMaxCount");
+
         this.OverflowAttributes = new(OverflowAdditionalCapacity)
         {
             { this.attribute1 },

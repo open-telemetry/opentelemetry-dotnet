@@ -54,7 +54,7 @@ namespace OpenTelemetry.Logs.Tests
                 index++;
             }
 
-            if (attributes.Count <= LogRecordAttributeList.OverflowAdditionalCapacity)
+            if (attributes.Count <= LogRecordAttributeList.OverflowMaxCount)
             {
                 Assert.Null(attributes.OverflowAttributes);
             }

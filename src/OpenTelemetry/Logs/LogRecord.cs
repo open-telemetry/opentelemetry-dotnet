@@ -75,12 +75,13 @@ namespace OpenTelemetry.Logs
                 EventId = eventId,
                 Exception = exception,
                 State = state,
-                ScopeProvider = scopeProvider,
             };
 
             this.InstrumentationScope = null;
 
             this.Attributes = stateValues;
+
+            this.ScopeProvider = scopeProvider;
         }
 
         /// <summary>
@@ -251,11 +252,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         internal InstrumentationScope? InstrumentationScope { get; set; }
 
-        internal IExternalScopeProvider? ScopeProvider
-        {
-            get => this.ILoggerData.ScopeProvider;
-            set => this.ILoggerData.ScopeProvider = value;
-        }
+        internal IExternalScopeProvider? ScopeProvider { get; set; }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
@@ -342,7 +339,7 @@ namespace OpenTelemetry.Logs
             return new()
             {
                 Data = this.Data,
-                State = this.State,
+                ILoggerData = this.ILoggerData,
                 Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),
                 BufferedScopes = this.BufferedScopes == null ? null : new List<object?>(this.BufferedScopes),
             };
@@ -399,7 +396,6 @@ namespace OpenTelemetry.Logs
             public string? FormattedMessage;
             public Exception? Exception;
             public object? State;
-            public IExternalScopeProvider? ScopeProvider;
         }
 
         private readonly struct ScopeForEachState<TState>

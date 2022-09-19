@@ -75,11 +75,9 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             serviceCollection.Configure<OpenTelemetryLoggerOptions>(OptionsCallback);
         }
 
-        Assert.NotNull(optionsInstance);
+        Assert.Null(optionsInstance);
 
         using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
-
-        optionsInstance = null;
 
         ILoggerFactory? loggerFactory = serviceProvider.GetService<ILoggerFactory>();
 
@@ -157,7 +155,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         serviceCollection.AddLogging(configure =>
         {
-            configure.AddOpenTelemetry(provider);
+            configure.AddOpenTelemetry(provider, configureOptions: null, disposeProvider: true);
         });
 
         using (ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider())
