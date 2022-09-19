@@ -33,51 +33,80 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         [Fact]
-        public void AddOtlpLogExporterSetsParseStateValueToTrue()
+        public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse()
         {
+            bool optionsValidated = false;
+
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry().WithConfiguration(options =>
                 {
+                    options.ConfigureServices(services => services.Configure<OpenTelemetryLoggerOptions>(o =>
+                    {
+                        optionsValidated = true;
+                        Assert.True(o.IncludeAttributes);
+                        Assert.False(o.ParseStateValues);
+                    }));
                     options.AddInMemoryExporter(logRecords);
                     options.AddOtlpExporter();
                 });
             });
 
+            Assert.True(optionsValidated);
+
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
             logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
             Assert.Single(logRecords);
             var logRecord = logRecords[0];
+#pragma warning disable CS0618 // Type or member is obsolete
             Assert.Null(logRecord.State);
+#pragma warning restore CS0618 // Type or member is obsolete
             Assert.NotNull(logRecord.Attributes);
         }
 
-        [Fact]
-        public void AddOtlpLogExporterParseStateValueCanBeTurnedOff()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void AddOtlpLogExporterParseStateValueCanBeTurnedOff(bool parseState)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder
-                    .AddOpenTelemetry(options => options.ParseStateValues = false)
+                    .AddOpenTelemetry(options => options.ParseStateValues = parseState)
                     .WithConfiguration(builder => builder
                         .AddInMemoryExporter(logRecords)
                         .AddOtlpExporter());
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            logger.Log(LogLevel.Information, default, new { propertyA = "valueA" }, null, (s, e) => "Custom state log message");
             Assert.Single(logRecords);
+
             var logRecord = logRecords[0];
-            Assert.NotNull(logRecord.State);
-            Assert.Null(logRecord.Attributes);
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            if (parseState)
+            {
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.Attributes);
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+                Assert.Null(logRecord.Attributes);
+            }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
-        [Fact]
-        public void AddOtlpLogExporterParseStateValueCanBeTurnedOffHosting()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void AddOtlpLogExporterParseStateValueCanBeTurnedOffHosting(bool parseState)
         {
             var logRecords = new List<LogRecord>();
 
@@ -90,16 +119,29 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }));
 
             hostBuilder.ConfigureServices(services =>
-            services.Configure<OpenTelemetryLoggerOptions>(options => options.ParseStateValues = false));
+            services.Configure<OpenTelemetryLoggerOptions>(options => options.ParseStateValues = parseState));
 
             var host = hostBuilder.Build();
             var loggerFactory = host.Services.GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            logger.Log(LogLevel.Information, default, new { propertyA = "valueA" }, null, (s, e) => "Custom state log message");
             Assert.Single(logRecords);
+
             var logRecord = logRecords[0];
-            Assert.NotNull(logRecord.State);
-            Assert.Null(logRecord.Attributes);
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            if (parseState)
+            {
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.Attributes);
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+                Assert.Null(logRecord.Attributes);
+            }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         [Fact]
