@@ -126,9 +126,9 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             var logRecord = exportedItems[0];
 
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
-            Assert.Equal(TestEventSource.SimpleEventMessage, logRecord.FormattedMessage);
-            Assert.Equal(TestEventSource.SimpleEventId, logRecord.EventId.Id);
-            Assert.Equal(nameof(TestEventSource.SimpleEvent), logRecord.EventId.Name);
+            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal(TestEventSource.SimpleEventMessage, logRecord.Body);
+            Assert.Equal(default, logRecord.EventId);
             Assert.Equal(LogLevel.Warning, logRecord.LogLevel);
             Assert.Null(logRecord.CategoryName);
             Assert.Null(logRecord.Exception);
@@ -140,6 +140,8 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             Assert.NotNull(logRecord.Attributes);
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_id" && (int?)kvp.Value == TestEventSource.SimpleEventId);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_name" && (string?)kvp.Value == nameof(TestEventSource.SimpleEvent));
         }
 
         [Fact]
@@ -201,18 +203,11 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             var logRecord = exportedItems[0];
 
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
-            if (!formatMessage)
-            {
-                Assert.Equal(TestEventSource.ComplexEventMessageStructured, logRecord.FormattedMessage);
-            }
-            else
-            {
-                string expectedMessage = string.Format(CultureInfo.InvariantCulture, TestEventSource.ComplexEventMessage, "Test_Message", 18);
-                Assert.Equal(expectedMessage, logRecord.FormattedMessage);
-            }
 
-            Assert.Equal(TestEventSource.ComplexEventId, logRecord.EventId.Id);
-            Assert.Equal(nameof(TestEventSource.ComplexEvent), logRecord.EventId.Name);
+            Assert.Equal(TestEventSource.ComplexEventMessageStructured, logRecord.Body);
+            Assert.Null(logRecord.FormattedMessage);
+
+            Assert.Equal(default, logRecord.EventId);
             Assert.Equal(LogLevel.Information, logRecord.LogLevel);
             Assert.Null(logRecord.CategoryName);
             Assert.Null(logRecord.Exception);
@@ -226,6 +221,15 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "arg1" && (string?)kvp.Value == "Test_Message");
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "arg2" && (int?)kvp.Value == 18);
+
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_id" && (int?)kvp.Value == TestEventSource.ComplexEventId);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_name" && (string?)kvp.Value == nameof(TestEventSource.ComplexEvent));
+
+            if (formatMessage)
+            {
+                string expectedMessage = string.Format(CultureInfo.InvariantCulture, TestEventSource.ComplexEventMessage, "Test_Message", 18);
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.formatted_message" && (string?)kvp.Value == expectedMessage);
+            }
         }
 
         [Theory(Skip = "Not runnable in CI, see note.")]

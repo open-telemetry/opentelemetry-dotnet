@@ -174,7 +174,7 @@ namespace OpenTelemetry.Logs
                 {
                     string name = eventData.PayloadNames[i];
 
-                    if (!string.IsNullOrEmpty(rawMessage) && !this.includeFormattedMessage)
+                    if (!string.IsNullOrEmpty(rawMessage))
                     {
                         // TODO: This code converts the event message from
                         // string.Format syntax (eg: "Some message {0} {1}")
@@ -192,12 +192,15 @@ namespace OpenTelemetry.Logs
                 }
             }
 
-            if (!string.IsNullOrEmpty(rawMessage) && this.includeFormattedMessage && payloadCount > 0)
+            if (!string.IsNullOrEmpty(rawMessage))
             {
-                rawMessage = string.Format(CultureInfo.InvariantCulture, rawMessage, eventData.Payload!.ToArray());
-            }
+                data.Body = rawMessage;
 
-            data.Body = rawMessage;
+                if (this.includeFormattedMessage && payloadCount > 0)
+                {
+                    attributes.Add("event_source.formatted_message", string.Format(CultureInfo.InvariantCulture, eventData.Message!, eventData.Payload!.ToArray()));
+                }
+            }
 
             this.logger.EmitLog(in data, in attributes);
         }
