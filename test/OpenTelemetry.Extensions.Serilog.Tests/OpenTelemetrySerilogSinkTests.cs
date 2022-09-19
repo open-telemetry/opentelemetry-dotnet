@@ -19,7 +19,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Trace;
 using Serilog;
 using Xunit;
 using ILogger = Serilog.ILogger;
@@ -81,13 +83,19 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
+            Assert.Equal("Hello {greeting}", logRecord.Body);
+
+            Assert.Null(logRecord.FormattedMessage);
+
+            Assert.NotNull(logRecord.Attributes);
+
             if (!includeRenderedMessage)
             {
-                Assert.Equal("Hello {greeting}", logRecord.FormattedMessage);
+                Assert.Single(logRecord.Attributes);
             }
             else
             {
-                Assert.Equal("Hello \"World\"", logRecord.FormattedMessage);
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "serilog.rendered_message" && (string?)kvp.Value == "Hello \"World\"");
             }
 
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
@@ -95,8 +103,6 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             Assert.Equal(LogLevel.Information, logRecord.LogLevel);
             Assert.Null(logRecord.CategoryName);
 
-            Assert.NotNull(logRecord.Attributes);
-            Assert.Single(logRecord.Attributes);
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
 
             Assert.Equal(default, logRecord.TraceId);
@@ -165,7 +171,14 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            Assert.Equal("OpenTelemetry.Extensions.Serilog.Tests.OpenTelemetrySerilogSinkTests", logRecord.CategoryName);
+            Assert.Null(logRecord.CategoryName);
+
+            Assert.NotNull(logRecord.Attributes);
+
+            Assert.Contains(
+                logRecord.Attributes,
+                kvp => kvp.Key == "serilog.source_context"
+                    && (string?)kvp.Value == "OpenTelemetry.Extensions.Serilog.Tests.OpenTelemetrySerilogSinkTests");
         }
 
         [Fact]
@@ -254,8 +267,6 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
                 .WriteTo.OpenTelemetry(loggerProvider, disposeProvider: true)
                 .CreateLogger();
 
-            ComplexType complexType = new();
-
             Log.Logger.Information(ex, "Exception");
 
             Log.CloseAndFlush();
@@ -264,7 +275,13 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            Assert.Equal(ex, logRecord.Exception);
+            Assert.Null(logRecord.Exception);
+
+            Assert.NotNull(logRecord.Attributes);
+
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == SemanticConventions.AttributeExceptionType && (string?)kvp.Value == ex.GetType().Name);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == SemanticConventions.AttributeExceptionMessage && (string?)kvp.Value == ex.Message);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == SemanticConventions.AttributeExceptionStacktrace && (string?)kvp.Value == ex.ToInvariantString());
         }
 
         private sealed class DisposeTrackingProcessor : BaseProcessor<LogRecord>
