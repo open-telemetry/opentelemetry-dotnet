@@ -27,6 +27,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\EventSourceTest.cs" Link="Includes\EventSourceTest.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusCollectionManagerTests.cs" Link="Includes\PrometheusCollectionManagerTests.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusSerializerTests.cs" Link="Includes\PrometheusSerializerTests.cs" />
+
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
   </ItemGroup>
 
