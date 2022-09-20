@@ -9,9 +9,6 @@ OpenTelemetry.Logs.ExportLogRecordProcessorOptions.BatchExportProcessorOptions.s
 OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportLogRecordProcessorOptions() -> void
 OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportProcessorType.set -> void
-OpenTelemetry.Logs.LoggerProviderBuilderBase
-OpenTelemetry.Logs.LoggerProviderBuilderBase.Build() -> OpenTelemetry.Logs.LoggerProvider!
-OpenTelemetry.Logs.LoggerProviderBuilderBase.LoggerProviderBuilderBase() -> void
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
 OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Logs.LogRecord.Attributes.set -> void

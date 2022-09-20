@@ -38,9 +38,9 @@ public static class LoggerProviderBuilderExtensions
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder SetResourceBuilder(this LoggerProviderBuilder loggerProviderBuilder, ResourceBuilder resourceBuilder)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.SetResourceBuilder(resourceBuilder);
+            loggerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
         }
 
         return loggerProviderBuilder;
@@ -55,9 +55,9 @@ public static class LoggerProviderBuilderExtensions
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder ConfigureResource(this LoggerProviderBuilder loggerProviderBuilder, Action<ResourceBuilder> configure)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.ConfigureResource(configure);
+            loggerProviderBuilderSdk.ConfigureResource(configure);
         }
 
         return loggerProviderBuilder;
@@ -71,9 +71,9 @@ public static class LoggerProviderBuilderExtensions
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder AddProcessor(this LoggerProviderBuilder loggerProviderBuilder, BaseProcessor<LogRecord> processor)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.AddProcessor(processor);
+            loggerProviderBuilderSdk.AddProcessor(processor);
         }
 
         return loggerProviderBuilder;
@@ -92,9 +92,9 @@ public static class LoggerProviderBuilderExtensions
     public static LoggerProviderBuilder AddProcessor<T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : BaseProcessor<LogRecord>
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.AddProcessor<T>();
+            loggerProviderBuilderSdk.AddProcessor<T>();
         }
 
         return loggerProviderBuilder;
@@ -144,9 +144,9 @@ public static class LoggerProviderBuilderExtensions
         string? name,
         Action<ExportLogRecordProcessorOptions>? configure)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.AddExporter(exportProcessorType, exporter, name, configure);
+            loggerProviderBuilderSdk.AddExporter(exportProcessorType, exporter, name, configure);
         }
 
         return loggerProviderBuilder;
@@ -205,9 +205,9 @@ public static class LoggerProviderBuilderExtensions
         Action<ExportLogRecordProcessorOptions>? configure)
         where T : BaseExporter<LogRecord>
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.AddExporter<T>(exportProcessorType, name, configure);
+            loggerProviderBuilderSdk.AddExporter<T>(exportProcessorType, name, configure);
         }
 
         return loggerProviderBuilder;
@@ -226,9 +226,9 @@ public static class LoggerProviderBuilderExtensions
     public static LoggerProviderBuilder AddInstrumentation<T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : class
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.AddInstrumentation<T>();
+            loggerProviderBuilderSdk.AddInstrumentation<T>();
         }
 
         return loggerProviderBuilder;
@@ -246,9 +246,9 @@ public static class LoggerProviderBuilderExtensions
         Func<IServiceProvider, LoggerProvider, T> instrumentationFactory)
         where T : class
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.AddInstrumentation(instrumentationFactory);
+            loggerProviderBuilderSdk.AddInstrumentation(instrumentationFactory);
         }
 
         return loggerProviderBuilder;
@@ -269,9 +269,9 @@ public static class LoggerProviderBuilderExtensions
         this LoggerProviderBuilder loggerProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            loggerProviderBuilderBase.ConfigureServices(configure);
+            loggerProviderBuilderSdk.ConfigureServices(configure);
         }
 
         return loggerProviderBuilder;
@@ -304,9 +304,9 @@ public static class LoggerProviderBuilderExtensions
     /// <returns><see cref="LoggerProvider"/>.</returns>
     public static LoggerProvider Build(this LoggerProviderBuilder loggerProviderBuilder)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
+        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            return loggerProviderBuilderBase.InvokeBuild();
+            return loggerProviderBuilderSdk.Build();
         }
 
         return new NoopLoggerProvider();
