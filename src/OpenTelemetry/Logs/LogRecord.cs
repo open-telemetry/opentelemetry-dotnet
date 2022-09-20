@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 
@@ -65,17 +66,27 @@ namespace OpenTelemetry.Logs
             {
                 TimestampBacking = timestamp,
                 Severity = (LogRecordSeverity)logLevel,
-                Body = formattedMessage,
             };
 
             this.ILoggerData = new()
             {
                 TraceState = activity?.TraceStateString,
                 CategoryName = categoryName,
+                FormattedMessage = formattedMessage,
                 EventId = eventId,
                 Exception = exception,
                 State = state,
             };
+
+            if (stateValues != null && stateValues.Count > 0)
+            {
+                var lastAttribute = stateValues[stateValues.Count - 1];
+                this.Data.Body = lastAttribute.Key == "{OriginalFormat}"
+                   ? lastAttribute.Value as string
+                   : null;
+            }
+
+            this.Data.Body ??= formattedMessage;
 
             this.InstrumentationScope = null;
 
