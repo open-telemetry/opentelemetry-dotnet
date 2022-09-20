@@ -69,7 +69,6 @@ namespace OpenTelemetry.Logs
                     : null;
                 iloggerData.CategoryName = this.instrumentationScope.Name;
                 iloggerData.EventId = eventId;
-                iloggerData.FormattedMessage = iloggerProvider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
                 iloggerData.Exception = exception;
 
                 ref LogRecordData data = ref record.Data;
@@ -81,29 +80,33 @@ namespace OpenTelemetry.Logs
 
                 record.InstrumentationScope = this.instrumentationScope;
 
-                var attributes = record.Attributes = iloggerProvider.IncludeAttributes
+                var attributes = record.Attributes = iloggerProvider.IncludeState
                     ? ProcessState(record, state, iloggerProvider.ParseStateValues)
                     : null;
 
-                if (attributes != null)
+                if (attributes != null && attributes.Count > 0)
                 {
                     iloggerData.State = null;
 
-                    if (attributes.Count > 0)
-                    {
-                        var lastAttribute = attributes[attributes.Count - 1];
-                        data.Body = lastAttribute.Key == "{OriginalFormat}"
-                            ? lastAttribute.Value as string
-                            : null;
-                    }
-                    else
-                    {
-                        data.Body = null;
-                    }
+                    var lastAttribute = attributes[attributes.Count - 1];
+                    data.Body = lastAttribute.Key == "{OriginalFormat}"
+                        ? lastAttribute.Value as string
+                        : null;
                 }
                 else
                 {
                     iloggerData.State = !iloggerProvider.ParseStateValues ? state : null;
+
+                    data.Body = null;
+                }
+
+                if (data.Body == null)
+                {
+                    iloggerData.FormattedMessage = data.Body = formatter?.Invoke(state, exception);
+                }
+                else
+                {
+                    iloggerData.FormattedMessage = iloggerProvider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
                 }
 
                 record.ScopeProvider = iloggerProvider.IncludeScopes ? this.ScopeProvider : null;

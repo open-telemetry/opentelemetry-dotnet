@@ -87,11 +87,11 @@ namespace OpenTelemetry.Logs
             this.ownsProvider = disposeProvider;
         }
 
-        internal bool IncludeAttributes { get; private set; }
-
         internal bool IncludeFormattedMessage { get; private set; }
 
         internal bool IncludeScopes { get; private set; }
+
+        internal bool IncludeState { get; private set; }
 
         internal bool IncludeTraceState { get; private set; }
 
@@ -174,9 +174,9 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(options);
 
-            this.IncludeAttributes = options.IncludeAttributes;
             this.IncludeFormattedMessage = options.IncludeFormattedMessage;
             this.IncludeScopes = options.IncludeScopes;
+            this.IncludeState = options.IncludeState;
             this.IncludeTraceState = options.IncludeTraceState;
             this.ParseStateValues = options.ParseStateValues;
         }

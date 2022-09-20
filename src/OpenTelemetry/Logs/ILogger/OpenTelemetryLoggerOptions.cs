@@ -35,17 +35,16 @@ namespace OpenTelemetry.Logs
         internal ResourceBuilder? ResourceBuilder;
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not log attributes should
-        /// be included on generated <see cref="LogRecord"/>s. Default value:
-        /// <see langword="true"/>.
-        /// </summary>
-        public bool IncludeAttributes { get; set; } = true;
-
-        /// <summary>
         /// Gets or sets a value indicating whether or not formatted log message
         /// should be included on generated <see cref="LogRecord"/>s. Default
         /// value: <see langword="false"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: When set to <see langword="false"/> a formatted log message
+        /// will not be included if a message template can be found. If a
+        /// message template is not found, a formatted log message is always
+        /// included.
+        /// </remarks>
         public bool IncludeFormattedMessage { get; set; }
 
         /// <summary>
@@ -54,6 +53,13 @@ namespace OpenTelemetry.Logs
         /// <see langword="false"/>.
         /// </summary>
         public bool IncludeScopes { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not log state should
+        /// be included on generated <see cref="LogRecord"/>s. Default value:
+        /// <see langword="true"/>.
+        /// </summary>
+        public bool IncludeState { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see

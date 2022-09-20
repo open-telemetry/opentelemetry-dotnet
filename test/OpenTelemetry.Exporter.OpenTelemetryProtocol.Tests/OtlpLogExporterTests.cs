@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     options.ConfigureServices(services => services.Configure<OpenTelemetryLoggerOptions>(o =>
                     {
                         optionsValidated = true;
-                        Assert.True(o.IncludeAttributes);
+                        Assert.True(o.IncludeState);
                         Assert.False(o.ParseStateValues);
                     }));
                     options.AddInMemoryExporter(logRecords);
@@ -438,14 +438,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             otlpLogRecord = logRecord.ToOtlpLog();
 
             Assert.NotNull(otlpLogRecord);
-            if (includeFormattedMessage)
-            {
-                Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
-            }
-            else
-            {
-                Assert.Null(otlpLogRecord.Body);
-            }
+
+            // Formatter is always called if no template can be found.
+            Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            Assert.Equal(logRecord.Body, otlpLogRecord.Body.StringValue);
 
             logRecords.Clear();
 
@@ -461,14 +457,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             // There is no formatter, so no way to populate Body.
             // Exporter won't even attempt to do ToString() on State.
-            if (includeFormattedMessage)
-            {
-                Assert.Null(otlpLogRecord.Body);
-            }
-            else
-            {
-                Assert.Null(otlpLogRecord.Body);
-            }
+            Assert.Null(otlpLogRecord.Body);
         }
 
         [Fact]

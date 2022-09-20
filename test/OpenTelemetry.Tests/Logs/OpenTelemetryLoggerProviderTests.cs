@@ -16,9 +16,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using Xunit;
 
@@ -33,7 +31,7 @@ namespace OpenTelemetry.Logs.Tests
 
             using OpenTelemetryLoggerProvider openTelemetryLoggerProvider = new(new TestOptions(new()));
 
-            Assert.Equal(defaults.IncludeAttributes, openTelemetryLoggerProvider.IncludeAttributes);
+            Assert.Equal(defaults.IncludeState, openTelemetryLoggerProvider.IncludeState);
             Assert.Equal(defaults.IncludeTraceState, openTelemetryLoggerProvider.IncludeTraceState);
             Assert.Equal(defaults.IncludeScopes, openTelemetryLoggerProvider.IncludeScopes);
             Assert.Equal(defaults.IncludeFormattedMessage, openTelemetryLoggerProvider.IncludeFormattedMessage);
@@ -54,7 +52,7 @@ namespace OpenTelemetry.Logs.Tests
 
             var options = new OpenTelemetryLoggerOptions
             {
-                IncludeAttributes = !defaults.IncludeAttributes,
+                IncludeState = !defaults.IncludeState,
                 IncludeTraceState = !defaults.IncludeTraceState,
                 IncludeScopes = !defaults.IncludeScopes,
                 IncludeFormattedMessage = !defaults.IncludeFormattedMessage,
@@ -69,7 +67,7 @@ namespace OpenTelemetry.Logs.Tests
 
             using OpenTelemetryLoggerProvider openTelemetryLoggerProvider = new(new TestOptions(options));
 
-            Assert.Equal(!defaults.IncludeAttributes, openTelemetryLoggerProvider.IncludeAttributes);
+            Assert.Equal(!defaults.IncludeState, openTelemetryLoggerProvider.IncludeState);
             Assert.Equal(!defaults.IncludeTraceState, openTelemetryLoggerProvider.IncludeTraceState);
             Assert.Equal(!defaults.IncludeScopes, openTelemetryLoggerProvider.IncludeScopes);
             Assert.Equal(!defaults.IncludeFormattedMessage, openTelemetryLoggerProvider.IncludeFormattedMessage);

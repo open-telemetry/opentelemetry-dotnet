@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NETFRAMEWORK
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -116,10 +115,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Null(exportedItems[0].FormattedMessage);
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithTemplate()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithTemplate(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             const string message = "Hello from {name} {price}.";
@@ -148,7 +149,14 @@ namespace OpenTelemetry.Logs.Tests
 
             Assert.Equal(message, exportedItems[0].Body);
 
-            Assert.Equal($"Hello from tomato 2.99.", exportedItems[0].FormattedMessage);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal($"Hello from tomato 2.99.", exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
         [Fact]
@@ -331,14 +339,27 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(expectedStateValues, logRecord.StateValues);
         }
 
-        [Fact]
-        public void CheckFormattedMessageCanBeSet()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckFormattedMessageCanBeSet(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
             var logRecord = exportedItems[0];
+
+            Assert.Equal("OpenTelemetry {Greeting} {Subject}!", logRecord.Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(logRecord.FormattedMessage);
+            }
+
             var expectedFormattedMessage = "OpenTelemetry Good Night!";
             logRecord.FormattedMessage = expectedFormattedMessage;
 
@@ -454,10 +475,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
         }
 
-        [Fact]
-        public void CheckTraceIdForLogWithinActivityMarkedAsRecordAndSample()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckTraceIdForLogWithinActivityMarkedAsRecordAndSample(bool includeTraceState)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeTraceState = includeTraceState);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var sampler = new AlwaysOnSampler();
@@ -472,6 +495,10 @@ namespace OpenTelemetry.Logs.Tests
 
             using var activity = activitySource.StartActivity("Activity");
 
+            Assert.NotNull(activity);
+
+            activity!.TraceStateString = "key1=value1";
+
             logger.LogInformation("Log within activity marked as RecordAndSample");
             var logRecord = exportedItems[0];
 
@@ -480,32 +507,47 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
             Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
+            if (includeTraceState)
+            {
+                Assert.Equal(currentActivity.TraceStateString, logRecord.TraceState);
+            }
+            else
+            {
+                Assert.Null(logRecord.TraceState);
+            }
         }
 
-        [Fact]
-        public void VerifyIncludeFormattedMessage_False()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void VerifyIncludeFormattedMessage(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = false);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.LogInformation("OpenTelemetry!");
             var logRecord = exportedItems[0];
-            Assert.Null(logRecord.FormattedMessage);
-        }
 
-        [Fact]
-        public void VerifyIncludeFormattedMessage_True()
-        {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
-            var logger = loggerFactory.CreateLogger<LogRecordTest>();
-
-            logger.LogInformation("OpenTelemetry!");
-            var logRecord = exportedItems[0];
-            Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(logRecord.FormattedMessage);
+            }
 
             logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
             logRecord = exportedItems[1];
-            Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
+
+            if (includeFormattedMessage)
+            {
+                Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(logRecord.FormattedMessage);
+            }
         }
 
         [Fact]
@@ -662,6 +704,10 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
             Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year}!"), logRecord.StateValues[2]);
 
+            Assert.NotNull(logRecord.Body);
+            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal("{Product} {Year}!", logRecord.Body);
+
             var complex = new { Property = "Value" };
 
             logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
@@ -677,12 +723,18 @@ namespace OpenTelemetry.Logs.Tests
             KeyValuePair<string, object> actualComplex = logRecord.StateValues[2];
             Assert.Equal("Complex", actualComplex.Key);
             Assert.Same(complex, actualComplex.Value);
+
+            Assert.NotNull(logRecord.Body);
+            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal("{Product} {Year} {Complex}!", logRecord.Body);
         }
 
-        [Fact]
-        public void ParseStateValuesUsingStructTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ParseStateValuesUsingStructTest(bool parseStateValues)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = parseStateValues);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests struct IReadOnlyList<KeyValuePair<string, object>> parse path.
@@ -699,12 +751,18 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(1, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+
+            Assert.NotNull(logRecord.Body);
+            Assert.NotNull(logRecord.FormattedMessage);
+            Assert.Equal("OpenTelemetry!", logRecord.Body);
         }
 
-        [Fact]
-        public void ParseStateValuesUsingListTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ParseStateValuesUsingListTest(bool parseStateValues)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = parseStateValues);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests ref IReadOnlyList<KeyValuePair<string, object>> parse path.
@@ -721,12 +779,18 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(1, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+
+            Assert.NotNull(logRecord.Body);
+            Assert.NotNull(logRecord.FormattedMessage);
+            Assert.Equal("OpenTelemetry!", logRecord.Body);
         }
 
-        [Fact]
-        public void ParseStateValuesUsingIEnumerableTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ParseStateValuesUsingIEnumerableTest(bool parseStateValues)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = parseStateValues);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests IEnumerable<KeyValuePair<string, object>> parse path.
@@ -743,12 +807,66 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(1, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
+
+            Assert.NotNull(logRecord.Body);
+            Assert.NotNull(logRecord.FormattedMessage);
+            Assert.Equal("OpenTelemetry!", logRecord.Body);
         }
 
         [Fact]
-        public void ParseStateValuesUsingCustomTest()
+        public void ParseStateValuesWithOriginalFormatSetsBodyTest()
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(
+                out List<LogRecord> exportedItems,
+                configure: options =>
+                {
+                    options.ParseStateValues = false;
+                    options.IncludeFormattedMessage = false;
+                });
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new ListState(new KeyValuePair<string, object>("{OriginalFormat}", "Message_Template_Goes_Here")),
+                null,
+                (s, e) => "OpenTelemetry!");
+
+            var logRecord = exportedItems[0];
+
+            Assert.NotNull(logRecord.Body);
+            Assert.Equal("Message_Template_Goes_Here", logRecord.Body);
+            Assert.Null(logRecord.FormattedMessage);
+
+            exportedItems.Clear();
+
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new ListState(
+                    new KeyValuePair<string, object>("{OriginalFormat}", "Message_Template_Goes_Here"), // <- Ignored because it is not the last item
+                    new KeyValuePair<string, object>("Key1", "Value1")),
+                null,
+                (s, e) => "OpenTelemetry!");
+
+            logRecord = exportedItems[0];
+
+            Assert.Equal("OpenTelemetry!", logRecord.Body);
+            Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ParseStateValuesUsingCustomTest(bool parseStateValues)
+        {
+            using var loggerFactory = InitializeLoggerFactory(
+                out List<LogRecord> exportedItems,
+                configure: options =>
+                {
+                    options.ParseStateValues = parseStateValues;
+                    options.IncludeFormattedMessage = false;
+                });
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests unknown state parse path.
@@ -768,12 +886,24 @@ namespace OpenTelemetry.Logs.Tests
 
             var logRecord = exportedItems[0];
 
-            Assert.Null(logRecord.State);
-            Assert.NotNull(logRecord.Attributes);
-            Assert.Equal(2, logRecord.Attributes.Count);
+            if (parseStateValues)
+            {
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.Attributes);
+                Assert.Equal(2, logRecord.Attributes.Count);
 
-            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "Property1" && (string)kvp.Value == "Value1");
-            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "Property2" && (string)kvp.Value == "Value2");
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "Property1" && (string)kvp.Value == "Value1");
+                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "Property2" && (string)kvp.Value == "Value2");
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+                Assert.Null(logRecord.Attributes);
+            }
+
+            Assert.NotNull(logRecord.Body);
+            Assert.NotNull(logRecord.FormattedMessage);
+            Assert.Equal("OpenTelemetry!", logRecord.Body);
         }
 
         [Fact]
@@ -956,4 +1086,3 @@ namespace OpenTelemetry.Logs.Tests
         }
     }
 }
-#endif
