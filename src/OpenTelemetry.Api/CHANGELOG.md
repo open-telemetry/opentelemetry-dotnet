@@ -12,7 +12,9 @@ Released 2022-Aug-18
   warning at build time as described [here](https://github.com/dotnet/runtime/pull/72518)
   (note: building using older versions of the .NET SDK produces an error at
   build time). This is because .NET 5 reached EOL in May 2022 and .NET
-  Core 3.1 reaches EOL in December 2022.
+  Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet).
 
   There is no guarantee that System.Diagnostics.DiagnosticSource will continue
   to work on older versions of .NET. However, the build warning can be

@@ -32,24 +32,24 @@ namespace OpenTelemetry.Exporter
         {
             foreach (var activity in batch)
             {
-                this.WriteLine($"Activity.TraceId:          {activity.TraceId}");
-                this.WriteLine($"Activity.SpanId:           {activity.SpanId}");
-                this.WriteLine($"Activity.TraceFlags:           {activity.ActivityTraceFlags}");
+                this.WriteLine($"Activity.TraceId:            {activity.TraceId}");
+                this.WriteLine($"Activity.SpanId:             {activity.SpanId}");
+                this.WriteLine($"Activity.TraceFlags:         {activity.ActivityTraceFlags}");
                 if (!string.IsNullOrEmpty(activity.TraceStateString))
                 {
-                    this.WriteLine($"Activity.TraceState:    {activity.TraceStateString}");
+                    this.WriteLine($"Activity.TraceState:         {activity.TraceStateString}");
                 }
 
                 if (activity.ParentSpanId != default)
                 {
-                    this.WriteLine($"Activity.ParentSpanId:    {activity.ParentSpanId}");
+                    this.WriteLine($"Activity.ParentSpanId:       {activity.ParentSpanId}");
                 }
 
                 this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
-                this.WriteLine($"Activity.DisplayName: {activity.DisplayName}");
-                this.WriteLine($"Activity.Kind:        {activity.Kind}");
-                this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                this.WriteLine($"Activity.Duration:    {activity.Duration}");
+                this.WriteLine($"Activity.DisplayName:        {activity.DisplayName}");
+                this.WriteLine($"Activity.Kind:               {activity.Kind}");
+                this.WriteLine($"Activity.StartTime:          {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                this.WriteLine($"Activity.Duration:           {activity.Duration}");
                 var statusCode = string.Empty;
                 var statusDesc = string.Empty;
 
@@ -79,18 +79,18 @@ namespace OpenTelemetry.Exporter
 
                 if (activity.Status != ActivityStatusCode.Unset)
                 {
-                    this.WriteLine($"StatusCode : {activity.Status}");
+                    this.WriteLine($"StatusCode: {activity.Status}");
                     if (!string.IsNullOrEmpty(activity.StatusDescription))
                     {
-                        this.WriteLine($"Activity.StatusDescription : {activity.StatusDescription}");
+                        this.WriteLine($"Activity.StatusDescription:  {activity.StatusDescription}");
                     }
                 }
                 else if (!string.IsNullOrEmpty(statusCode))
                 {
-                    this.WriteLine($"   StatusCode : {statusCode}");
+                    this.WriteLine($"    StatusCode: {statusCode}");
                     if (!string.IsNullOrEmpty(statusDesc))
                     {
-                        this.WriteLine($"   Activity.StatusDescription : {statusDesc}");
+                        this.WriteLine($"    Activity.StatusDescription: {statusDesc}");
                     }
                 }
 
