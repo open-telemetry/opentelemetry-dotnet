@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusCollectionManagerTests
     {
-#if PROMETHEUS_HTTP_LISTNER
+#if PROMETHEUS_HTTP_LISTENER
         [Fact(Skip = "Might be flaky. Might be a bug. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/3679")]
 #else
         [Fact]
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using (var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-#if PROMETHEUS_HTTP_LISTNER
+#if PROMETHEUS_HTTP_LISTENER
                 .AddPrometheusHttpListener()
 #elif PROMETHEUS_ASPNETCORE
                 .AddPrometheusExporter()
