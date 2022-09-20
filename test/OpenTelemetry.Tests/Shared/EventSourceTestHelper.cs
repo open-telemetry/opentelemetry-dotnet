@@ -42,17 +42,24 @@ namespace OpenTelemetry.Tests
                 object[] eventArguments = GenerateEventArguments(eventMethod);
                 eventMethod.Invoke(eventSource, eventArguments);
 
-                EventWrittenEventArgs actualEvent = null;
+                EventWrittenEventArgs actualEvent = listener.Messages.FirstOrDefault(x => x.EventName == eventMethod.Name);
 
-                actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
+                if (actualEvent == null)
+                {
+                    // check for errors
+                    actualEvent = listener.Messages.FirstOrDefault(x => x.EventId == 0);
+                    if (actualEvent != null)
+                    {
+                        throw new Exception(actualEvent.Message);
+                    }
+
+                    // give up
+                    throw new Exception("Listener failed to collect event.");
+                }
 
                 VerifyEventId(eventMethod, actualEvent);
                 VerifyEventLevel(eventMethod, actualEvent);
-
-                if (eventMethod.Name != "ExporterErrorResult")
-                {
-                    VerifyEventMessage(eventMethod, actualEvent, eventArguments);
-                }
+                VerifyEventMessage(eventMethod, actualEvent, eventArguments);
             }
             catch (Exception e)
             {

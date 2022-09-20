@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-* Dropped `netstandard2.0` target and added `net6.0`
+* Dropped `netstandard2.0` target and added `net6.0`. .NET 5 reached EOL
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet).
+  The instrumentation for HttpClient now requires .NET 6 or later.
+  This does not affect applications targeting .NET Framework.
   ([#3664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3664))
 
 * Added overloads which accept a name to the `TracerProviderBuilder`
