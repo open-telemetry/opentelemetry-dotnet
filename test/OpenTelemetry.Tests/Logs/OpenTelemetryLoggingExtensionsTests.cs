@@ -460,114 +460,6 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Contains(resource.Attributes, kvp => kvp.Key == "key2");
     }
 
-    [Fact]
-    public void LoggingBuilderAddOpenTelemetryAddExporterTest()
-    {
-        var builder = Sdk.CreateLoggerProviderBuilder();
-
-        builder.AddExporter(ExportProcessorType.Simple, new CustomExporter());
-        builder.AddExporter<CustomExporter>(ExportProcessorType.Batch);
-
-        using var provider = builder.Build() as LoggerProviderSdk;
-
-        Assert.NotNull(provider);
-
-        var processor = provider.Processor as CompositeProcessor<LogRecord>;
-
-        Assert.NotNull(processor);
-
-        var firstProcessor = processor!.Head.Value;
-        var secondProcessor = processor.Head.Next?.Value;
-
-        Assert.True(firstProcessor is SimpleLogRecordExportProcessor simpleProcessor && simpleProcessor.Exporter is CustomExporter);
-        Assert.True(secondProcessor is BatchLogRecordExportProcessor batchProcessor && batchProcessor.Exporter is CustomExporter);
-    }
-
-    [Fact]
-    public void LoggingBuilderAddOpenTelemetryAddExporterWithOptionsTest()
-    {
-        int optionsInvocations = 0;
-
-        var builder = Sdk.CreateLoggerProviderBuilder();
-
-        builder.ConfigureServices(services =>
-        {
-            services.Configure<ExportLogRecordProcessorOptions>(options =>
-            {
-                // Note: This is testing options integration
-
-                optionsInvocations++;
-
-                options.BatchExportProcessorOptions.MaxExportBatchSize = 18;
-            });
-        });
-
-        builder.AddExporter(
-            ExportProcessorType.Simple,
-            new CustomExporter(),
-            options =>
-            {
-                // Note: Options delegate isn't invoked for simple processor type
-                Assert.True(false);
-            });
-        builder.AddExporter<CustomExporter>(
-            ExportProcessorType.Batch,
-            options =>
-            {
-                optionsInvocations++;
-
-                Assert.Equal(18, options.BatchExportProcessorOptions.MaxExportBatchSize);
-
-                options.BatchExportProcessorOptions.MaxExportBatchSize = 100;
-            });
-
-        using var provider = builder.Build() as LoggerProviderSdk;
-
-        Assert.NotNull(provider);
-
-        Assert.Equal(2, optionsInvocations);
-
-        var processor = provider.Processor as CompositeProcessor<LogRecord>;
-
-        Assert.NotNull(processor);
-
-        var firstProcessor = processor!.Head.Value;
-        var secondProcessor = processor.Head.Next?.Value;
-
-        Assert.True(firstProcessor is SimpleLogRecordExportProcessor simpleProcessor && simpleProcessor.Exporter is CustomExporter);
-        Assert.True(secondProcessor is BatchLogRecordExportProcessor batchProcessor
-            && batchProcessor.Exporter is CustomExporter
-            && batchProcessor.MaxExportBatchSize == 100);
-    }
-
-    [Fact]
-    public void LoggingBuilderAddOpenTelemetryAddExporterNamedOptionsTest()
-    {
-        var builder = Sdk.CreateLoggerProviderBuilder();
-
-        int defaultOptionsConfigureInvocations = 0;
-        int namedOptionsConfigureInvocations = 0;
-
-        builder.ConfigureServices(services =>
-        {
-            services.Configure<ExportLogRecordProcessorOptions>(o => defaultOptionsConfigureInvocations++);
-
-            services.Configure<ExportLogRecordProcessorOptions>("Exporter2", o => namedOptionsConfigureInvocations++);
-        });
-
-        builder.AddExporter(ExportProcessorType.Batch, new CustomExporter());
-        builder.AddExporter(ExportProcessorType.Batch, new CustomExporter(), name: "Exporter2", configure: null);
-        builder.AddExporter<CustomExporter>(ExportProcessorType.Batch);
-        builder.AddExporter<CustomExporter>(ExportProcessorType.Batch, name: "Exporter2", configure: null);
-
-        using var provider = builder.Build();
-
-        Assert.NotNull(provider);
-
-        Assert.Equal(1, defaultOptionsConfigureInvocations);
-        Assert.Equal(1, namedOptionsConfigureInvocations);
-    }
-
     private sealed class WrappedLoggerProvider : LoggerProvider
     {
         public bool Disposed { get; private set; }
@@ -601,14 +493,6 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             this.Disposed = true;
 
             base.Dispose(disposing);
-        }
-    }
-
-    private sealed class CustomExporter : BaseExporter<LogRecord>
-    {
-        public override ExportResult Export(in Batch<LogRecord> batch)
-        {
-            return ExportResult.Success;
         }
     }
 
