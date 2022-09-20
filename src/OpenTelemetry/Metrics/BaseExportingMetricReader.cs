@@ -44,8 +44,8 @@ namespace OpenTelemetry.Metrics
 
             this.exporter = exporter;
 
-            var exportorType = exporter.GetType();
-            var attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
+            var exporterType = exporter.GetType();
+            var attributes = exporterType.GetCustomAttributes(typeof(ExportModesAttribute), true);
             if (attributes.Length > 0)
             {
                 var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
