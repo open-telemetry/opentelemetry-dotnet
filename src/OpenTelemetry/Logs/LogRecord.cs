@@ -321,13 +321,6 @@ namespace OpenTelemetry.Logs
             this.BufferLogAttributes();
 
             this.BufferLogScopes();
-
-            // Note: There is no buffering of "State" only "Attributes". We
-            // don't inspect "object State" at all. It is undefined what
-            // exporters will do with "State". Some might ignore it, some might
-            // attempt to access it as a list. That is potentially dangerous.
-            // TODO: Investigate what to do here. Should we obsolete State and
-            // just use the Attributes design?
         }
 
         internal LogRecord Copy()
