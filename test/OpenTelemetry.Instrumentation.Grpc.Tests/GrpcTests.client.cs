@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.DependencyInjection;
 #if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
 #endif
@@ -441,6 +442,27 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             }
         }
 #endif
+
+        [Fact]
+        public void AddGrpcClientInstrumentationNamedOptionsSupported()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<GrpcClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<GrpcClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddGrpcClientInstrumentation()
+                .AddGrpcClientInstrumentation("Instrumentation2", configure: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
+        }
 
         [Fact]
         public void Grpc_BadArgs()

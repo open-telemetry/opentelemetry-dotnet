@@ -14,9 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics.Metrics;
-using OpenTelemetry.Internal;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -27,16 +29,58 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
+        /// Adds instrumentation to the provider.
+        /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
+        /// <typeparam name="T">Instrumentation type.</typeparam>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder)
+            where T : class
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.AddInstrumentation<T>();
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Adds a reader to the provider.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="reader"><see cref="MetricReader"/>.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, MetricReader reader)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderBase.AddReader(reader);
+                meterProviderBuilderBase.AddReader(reader);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds a reader to the provider.
+        /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
+        /// <typeparam name="T">Reader type.</typeparam>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder AddReader<T>(this MeterProviderBuilder meterProviderBuilder)
+            where T : MetricReader
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.AddReader<T>();
             }
 
             return meterProviderBuilder;
@@ -46,30 +90,16 @@ namespace OpenTelemetry.Metrics
         /// Add metric view, which can be used to customize the Metrics outputted
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
         /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
         {
-            if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
-            {
-                throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
-            }
-
-            if (instrumentName.IndexOf('*') != -1)
-            {
-                throw new ArgumentException(
-                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
-                    $"contains a wildcard character. This is not allowed when using a view to " +
-                    $"rename a metric stream as it would lead to conflicting metric stream names.",
-                    nameof(instrumentName));
-            }
-
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderBase.AddView(instrumentName, name);
+                meterProviderBuilderBase.AddView(instrumentName, name);
             }
 
             return meterProviderBuilder;
@@ -79,27 +109,16 @@ namespace OpenTelemetry.Metrics
         /// Add metric view, which can be used to customize the Metrics outputted
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
         /// <param name="metricStreamConfiguration">Aggregation configuration used to produce metrics stream.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            Guard.ThrowIfNull(metricStreamConfiguration);
-
-            if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
-            {
-                throw new ArgumentException(
-                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
-                    $"contains a wildcard character. This is not allowed when using a view to " +
-                    $"rename a metric stream as it would lead to conflicting metric stream names.",
-                    nameof(instrumentName));
-            }
-
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
+                meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
             }
 
             return meterProviderBuilder;
@@ -109,9 +128,6 @@ namespace OpenTelemetry.Metrics
         /// Add metric view, which can be used to customize the Metrics outputted
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
         /// <remarks>
         /// <list type="bullet">
         /// <item>Note: An invalid <see cref="MetricStreamConfiguration"/>
@@ -121,13 +137,14 @@ namespace OpenTelemetry.Metrics
         /// <item>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</item>
         /// </list>
         /// </remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration?> viewConfig)
         {
-            Guard.ThrowIfNull(viewConfig);
-
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderBase.AddView(viewConfig);
+                meterProviderBuilderBase.AddView(viewConfig);
             }
 
             return meterProviderBuilder;
@@ -140,13 +157,13 @@ namespace OpenTelemetry.Metrics
         /// When Views are configured, a single instrument can result in multiple metric streams,
         /// so this control the number of streams.
         /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         /// <remarks>
         /// If an instrument is created, but disposed later, this will still be contributing to the limit.
         /// This may change in the future.
         /// </remarks>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int maxMetricStreams)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
@@ -162,14 +179,14 @@ namespace OpenTelemetry.Metrics
         /// This limits the number of unique combinations of key/value pairs used
         /// for reporting measurements.
         /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         /// <remarks>
         /// If a particular key/value pair combination is used at least once,
         /// it will contribute to the limit for the life of the process.
         /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
         /// </remarks>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
@@ -186,14 +203,14 @@ namespace OpenTelemetry.Metrics
         /// You should usually use <see cref="ConfigureResource(MeterProviderBuilder, Action{ResourceBuilder})"/> instead
         /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.ResourceBuilder = resourceBuilder;
+                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return meterProviderBuilder;
@@ -203,17 +220,57 @@ namespace OpenTelemetry.Metrics
         /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from in-place.
         /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder ConfigureResource(this MeterProviderBuilder meterProviderBuilder, Action<ResourceBuilder> configure)
         {
-            Guard.ThrowIfNull(meterProviderBuilder, nameof(meterProviderBuilder));
-            Guard.ThrowIfNull(configure, nameof(configure));
-
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                configure(meterProviderBuilderBase.ResourceBuilder);
+                meterProviderBuilderBase.ConfigureResource(configure);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Register a callback action to configure the <see
+        /// cref="IServiceCollection"/> where metric services are configured.
+        /// </summary>
+        /// <remarks>
+        /// Note: Metric services are only available during the application
+        /// configuration phase.
+        /// </remarks>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder ConfigureServices(
+            this MeterProviderBuilder meterProviderBuilder,
+            Action<IServiceCollection> configure)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.ConfigureServices(configure);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Register a callback action to configure the <see
+        /// cref="MeterProviderBuilder"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder ConfigureBuilder(
+            this MeterProviderBuilder meterProviderBuilder,
+            Action<IServiceProvider, MeterProviderBuilder> configure)
+        {
+            if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                deferredMeterProviderBuilder.Configure(configure);
             }
 
             return meterProviderBuilder;
@@ -224,16 +281,11 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
+        public static MeterProvider? Build(this MeterProviderBuilder meterProviderBuilder)
         {
-            if (meterProviderBuilder is IDeferredMeterProviderBuilder)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
-            }
-
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                return meterProviderBuilderSdk.BuildSdk();
+                return meterProviderBuilderBase.InvokeBuild();
             }
 
             return null;

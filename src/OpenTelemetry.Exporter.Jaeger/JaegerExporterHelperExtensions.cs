@@ -17,6 +17,8 @@
 using System;
 using System.Net.Http;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -31,33 +33,54 @@ namespace OpenTelemetry.Trace
         /// Adds Jaeger exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
+        public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder)
+            => AddJaegerExporter(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds Jaeger exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="JaegerExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure)
+            => AddJaegerExporter(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds Jaeger exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="JaegerExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddJaegerExporter(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<JaegerExporterOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            name ??= Options.DefaultName;
+
+            if (configure != null)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddJaegerExporter(builder, sp.GetOptions<JaegerExporterOptions>(), configure, sp);
-                });
+                builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
-            return AddJaegerExporter(builder, new JaegerExporterOptions(), configure, serviceProvider: null);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<JaegerExporterOptions>>().Get(name);
+
+                AddJaegerExporter(builder, options, sp);
+            });
         }
 
         private static TracerProviderBuilder AddJaegerExporter(
             TracerProviderBuilder builder,
             JaegerExporterOptions options,
-            Action<JaegerExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            configure?.Invoke(options);
-
-            if (serviceProvider != null
-                && options.Protocol == JaegerExportProtocol.HttpBinaryThrift
+            if (options.Protocol == JaegerExportProtocol.HttpBinaryThrift
                 && options.HttpClientFactory == JaegerExporterOptions.DefaultHttpClientFactory)
             {
                 options.HttpClientFactory = () =>

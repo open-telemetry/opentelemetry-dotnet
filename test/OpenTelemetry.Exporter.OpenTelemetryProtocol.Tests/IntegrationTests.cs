@@ -82,7 +82,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             OtlpTraceExporterHelperExtensions.AddOtlpExporter(
                 builder,
                 exporterOptions,
-                configure: null,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
@@ -163,8 +162,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 builder,
                 exporterOptions,
                 readerOptions,
-                configureExporter: null,
-                configureExporterAndMetricReader: null,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {

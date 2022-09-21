@@ -6,12 +6,19 @@
   wouldn't be collected.
   ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
 
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddAspNetCoreInstrumentation` extension to allow for more fine-grained
+  options management
+  ([#3661](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3661))
+
 ## 1.0.0-rc9.6
 
 Released 2022-Aug-18
 
 * Removed `netstandard2.0` and `netstandard2.1` targets. .NET 5 reached EOL
-  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. The
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet). The
   instrumentation for ASP.NET Core now requires .NET 6 or later.
   ([#3567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
 
