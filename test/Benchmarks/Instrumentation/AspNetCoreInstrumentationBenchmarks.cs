@@ -27,23 +27,21 @@ using OpenTelemetry.Trace;
 /*
 // * Summary *
 
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22621
+BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.521)
 Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
 .NET SDK=7.0.100-preview.6.22275.1
-  [Host] : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT
+  [Host] : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT AVX2
 
 Job=InProcess  Toolchain=InProcessEmitToolchain
 
-|                                      Method | NumberOfApiCalls |         Mean |       Error |      StdDev |     Gen 0 | Allocated |
-|-------------------------------------------- |----------------- |-------------:|------------:|------------:|----------:|----------:|
-|                 UninstrumentedAspNetCoreApp |                1 |     172.2 us |     2.46 us |     2.18 us |    0.9766 |      5 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions |                1 |     179.8 us |     3.47 us |     3.25 us |    0.9766 |      5 KB |
-|                 UninstrumentedAspNetCoreApp |               10 |   1,580.1 us |    21.97 us |    19.47 us |    9.7656 |     46 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions |               10 |   1,618.9 us |    32.05 us |    43.87 us |    9.7656 |     46 KB |
-|                 UninstrumentedAspNetCoreApp |              100 |  15,828.0 us |   307.52 us |   410.54 us |   93.7500 |    453 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions |              100 |  15,912.5 us |   216.43 us |   191.86 us |   93.7500 |    458 KB |
-|                 UninstrumentedAspNetCoreApp |             1000 | 154,692.3 us | 1,363.54 us | 1,064.56 us |  750.0000 |  4,535 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions |             1000 | 161,231.2 us | 2,579.28 us | 3,860.55 us | 1000.0000 |  4,573 KB |
+|                                      Method | NumberOfApiCalls |        Mean |     Error |    StdDev |      Median |    Gen0 | Allocated |
+|-------------------------------------------- |----------------- |------------:|----------:|----------:|------------:|--------:|----------:|
+|                 UninstrumentedAspNetCoreApp |                1 |    146.8 us |   1.01 us |   0.85 us |    146.9 us |  0.9766 |   4.73 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |                1 |    161.0 us |   3.21 us |   6.84 us |    157.7 us |  0.9766 |   4.79 KB |
+|                 UninstrumentedAspNetCoreApp |               10 |  1,475.9 us |  13.42 us |  11.21 us |  1,478.3 us |  9.7656 |  45.58 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |               10 |  1,582.0 us |  30.42 us |  26.96 us |  1,580.0 us |  9.7656 |  45.96 KB |
+|                 UninstrumentedAspNetCoreApp |              100 | 16,023.2 us | 229.24 us | 203.21 us | 16,048.5 us | 93.7500 | 453.65 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |              100 | 17,576.0 us | 339.70 us | 377.57 us | 17,457.5 us | 93.7500 | 458.03 KB |
 */
 
 namespace Benchmarks.Instrumentation
@@ -55,7 +53,7 @@ namespace Benchmarks.Instrumentation
         private WebApplication app;
         private TracerProvider tracerProvider;
 
-        [Params(1, 10, 100, 1000)]
+        [Params(1, 10, 100)]
         public int NumberOfApiCalls { get; set; }
 
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
