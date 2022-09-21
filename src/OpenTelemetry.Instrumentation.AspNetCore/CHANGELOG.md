@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Performance improvement (Memory Allocation) - Updated DiagnosticSource event
-subscription to specific set of events.
+* Performance improvement (Reduced memory allocation) - Updated DiagnosticSource
+event subscription to specific set of events.
 ([#3519](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3519))
 
 * Added overloads which accept a name to the `TracerProviderBuilder`
