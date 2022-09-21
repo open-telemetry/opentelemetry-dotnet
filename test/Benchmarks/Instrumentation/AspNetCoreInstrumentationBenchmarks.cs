@@ -34,10 +34,16 @@ Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical 
 
 Job=InProcess  Toolchain=InProcessEmitToolchain
 
-|                                      Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
-|-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 164.7 us | 1.66 us | 1.39 us | 0.9766 |      5 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 178.7 us | 2.65 us | 2.35 us | 0.9766 |      5 KB |
+|                                      Method | NumberOfApiCalls |         Mean |       Error |      StdDev |     Gen 0 | Allocated |
+|-------------------------------------------- |----------------- |-------------:|------------:|------------:|----------:|----------:|
+|                 UninstrumentedAspNetCoreApp |                1 |     172.2 us |     2.46 us |     2.18 us |    0.9766 |      5 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |                1 |     179.8 us |     3.47 us |     3.25 us |    0.9766 |      5 KB |
+|                 UninstrumentedAspNetCoreApp |               10 |   1,580.1 us |    21.97 us |    19.47 us |    9.7656 |     46 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |               10 |   1,618.9 us |    32.05 us |    43.87 us |    9.7656 |     46 KB |
+|                 UninstrumentedAspNetCoreApp |              100 |  15,828.0 us |   307.52 us |   410.54 us |   93.7500 |    453 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |              100 |  15,912.5 us |   216.43 us |   191.86 us |   93.7500 |    458 KB |
+|                 UninstrumentedAspNetCoreApp |             1000 | 154,692.3 us | 1,363.54 us | 1,064.56 us |  750.0000 |  4,535 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions |             1000 | 161,231.2 us | 2,579.28 us | 3,860.55 us | 1000.0000 |  4,573 KB |
 */
 
 namespace Benchmarks.Instrumentation
@@ -48,6 +54,9 @@ namespace Benchmarks.Instrumentation
         private HttpClient httpClient;
         private WebApplication app;
         private TracerProvider tracerProvider;
+
+        [Params(1, 10, 100, 1000)]
+        public int NumberOfApiCalls { get; set; }
 
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
         public void UninstrumentedAspNetCoreAppGlobalSetup()
@@ -85,15 +94,21 @@ namespace Benchmarks.Instrumentation
         [Benchmark]
         public async Task UninstrumentedAspNetCoreApp()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
-            httpResponse.EnsureSuccessStatusCode();
+            for (int i = 0; i < this.NumberOfApiCalls; i++)
+            {
+                var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
+                httpResponse.EnsureSuccessStatusCode();
+            }
         }
 
         [Benchmark]
         public async Task InstrumentedAspNetCoreAppWithDefaultOptions()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
-            httpResponse.EnsureSuccessStatusCode();
+            for (int i = 0; i < this.NumberOfApiCalls; i++)
+            {
+                var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
+                httpResponse.EnsureSuccessStatusCode();
+            }
         }
 
         private void StartWebApplication()
