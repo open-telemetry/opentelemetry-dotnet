@@ -35,7 +35,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
         }
 
-        public override void OnCustom(string name, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
             switch (name)
             {

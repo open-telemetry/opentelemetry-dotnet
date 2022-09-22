@@ -46,7 +46,7 @@ namespace OpenTelemetry.Instrumentation
         /// </summary>
         /// <param name="name">Custom name.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
-        public virtual void OnCustom(string name, object payload)
+        public virtual void OnEventWritten(string name, object payload)
         {
         }
     }

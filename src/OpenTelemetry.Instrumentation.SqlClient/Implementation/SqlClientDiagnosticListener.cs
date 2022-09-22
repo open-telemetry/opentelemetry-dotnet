@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         public override bool SupportsNullActivity => true;
 
-        public override void OnCustom(string name, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
             var activity = Activity.Current;
             switch (name)
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                             try
                             {
-                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
+                                this.options.Enrich?.Invoke(activity, "OnEventWritten", command);
                             }
                             catch (Exception ex)
                             {

@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
         }
 
-        public override void OnCustom(string name, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
             switch (name)
             {
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                         HttpContext context = payload as HttpContext;
                         if (context == null)
                         {
-                            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnCustom));
+                            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
                             return;
                         }
 

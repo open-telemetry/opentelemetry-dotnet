@@ -116,7 +116,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         ///     .AddSqlClientInstrumentation(opt => opt.Enrich
         ///         = (activity, eventName, rawObject) =>
         ///      {
-        ///         if (eventName.Equals("OnCustom"))
+        ///         if (eventName.Equals("OnEventWritten"))
         ///         {
         ///             if (rawObject is SqlCommand cmd)
         ///             {

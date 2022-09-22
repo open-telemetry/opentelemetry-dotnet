@@ -178,7 +178,7 @@ called only when `activity.IsAllDataRequested` is `true`. It contains the
 activity itself (which can be enriched), the name of the event, and the actual
 raw object.
 
-Currently there is only one event name reported, "OnCustom". The actual object
+Currently there is only one event name reported, "OnEventWritten". The actual object
 is `Microsoft.Data.SqlClient.SqlCommand` for `Microsoft.Data.SqlClient` and
 `System.Data.SqlClient.SqlCommand` for `System.Data.SqlClient`.
 
@@ -189,7 +189,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(opt => opt.Enrich
         = (activity, eventName, rawObject) =>
     {
-        if (eventName.Equals("OnCustom"))
+        if (eventName.Equals("OnEventWritten"))
         {
             if (rawObject is SqlCommand cmd)
             {

@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             this.options = options;
         }
 
-        public override void OnCustom(string name, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
             switch (name)
             {

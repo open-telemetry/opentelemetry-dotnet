@@ -63,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.options = options;
         }
 
-        public override void OnCustom(string name, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
             switch (name)
             {

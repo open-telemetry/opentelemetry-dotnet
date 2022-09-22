@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation
 
             try
             {
-                this.handler.OnCustom(value.Key, value.Value);
+                this.handler.OnEventWritten(value.Key, value.Value);
             }
             catch (Exception ex)
             {

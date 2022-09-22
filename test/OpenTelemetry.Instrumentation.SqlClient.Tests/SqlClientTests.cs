@@ -405,7 +405,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             switch (method)
             {
-                case "OnCustom":
+                case "OnEventWritten":
                     Assert.True(obj is SqlCommand);
                     break;
 

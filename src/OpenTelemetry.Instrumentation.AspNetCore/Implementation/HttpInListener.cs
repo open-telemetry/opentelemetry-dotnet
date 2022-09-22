@@ -62,7 +62,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
         }
 
-        public override void OnCustom(string name, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
             switch (name)
             {
