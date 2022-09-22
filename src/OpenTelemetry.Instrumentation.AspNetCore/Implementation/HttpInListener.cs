@@ -36,12 +36,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
         internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
 #endif
+        internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
+        internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
+        internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
+        internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
+        internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
+
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
+
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
@@ -58,26 +66,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             switch (name)
             {
-                case AspNetCoreInstrumentation.OnStartEvent:
+                case OnStartEvent:
                     {
                         this.OnStartActivity(Activity.Current, payload);
                     }
 
                     break;
-                case AspNetCoreInstrumentation.OnStopEvent:
+                case OnStopEvent:
                     {
                         this.OnStopActivity(Activity.Current, payload);
                     }
 
                     break;
-                case AspNetCoreInstrumentation.OnMvcBeforeActionEvent:
+                case OnMvcBeforeActionEvent:
                     {
                         this.OnMvcBeforeAction(Activity.Current, payload);
                     }
 
                     break;
-                case AspNetCoreInstrumentation.OnUnhandledHostingExceptionEvent:
-                case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
+                case OnUnhandledHostingExceptionEvent:
+                case OnUnHandledDiagnosticsExceptionEvent:
                     {
                         this.OnException(Activity.Current, payload);
                     }

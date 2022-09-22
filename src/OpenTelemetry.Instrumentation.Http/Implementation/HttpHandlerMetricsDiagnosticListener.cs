@@ -24,6 +24,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
+        internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly Histogram<double> httpClientDuration;
 
@@ -37,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             switch (name)
             {
-                case HttpClientInstrumentation.OnStopEvent:
+                case OnStopEvent:
                     {
                         this.OnStopActivity(Activity.Current, payload);
                     }

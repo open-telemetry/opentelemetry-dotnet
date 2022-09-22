@@ -35,6 +35,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
+        private const string OnStartEvent = "System.Net.Http.HttpRequestOut.Start";
+        private const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+        private const string OnUnhandledExceptionEvent = "System.Net.Http.Exception";
+
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
@@ -63,19 +67,19 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             switch (name)
             {
-                case HttpClientInstrumentation.OnStartEvent:
+                case OnStartEvent:
                     {
                         this.OnStartActivity(Activity.Current, payload);
                     }
 
                     break;
-                case HttpClientInstrumentation.OnStopEvent:
+                case OnStopEvent:
                     {
                         this.OnStopActivity(Activity.Current, payload);
                     }
 
                     break;
-                case HttpClientInstrumentation.OnUnhandledHostingExceptionEvent:
+                case OnUnhandledExceptionEvent:
                     {
                         this.OnException(Activity.Current, payload);
                     }

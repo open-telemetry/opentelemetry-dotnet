@@ -23,11 +23,6 @@ namespace OpenTelemetry.Instrumentation.Http
     /// </summary>
     internal class HttpClientInstrumentation : IDisposable
     {
-        internal const string OnStartEvent = "start";
-        internal const string OnStopEvent = "stop";
-        internal const string OnUnhandledHostingExceptionEvent = "exception";
-        internal const string OnUnHandledDiagnosticsExceptionEvent = "exception1";
-
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)

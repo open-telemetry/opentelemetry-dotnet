@@ -26,7 +26,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     internal class AspNetCoreMetrics : IDisposable
     {
-        internal const string OnStopEvent = "stop";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string InstrumentationName = AssemblyName.Name;
         internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();

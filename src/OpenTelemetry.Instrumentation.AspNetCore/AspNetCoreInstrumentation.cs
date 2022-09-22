@@ -24,12 +24,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     internal class AspNetCoreInstrumentation : IDisposable
     {
-        internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
-        internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
-        internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
-        internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
-        internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
-
         private static readonly HashSet<string> DiagnosticSourceEvents = new()
         {
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",

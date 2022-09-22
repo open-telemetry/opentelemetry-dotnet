@@ -470,13 +470,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             {
                                 switch (name)
                                 {
-                                    case AspNetCoreInstrumentation.OnStartEvent:
+                                    case HttpInListener.OnStartEvent:
                                         {
                                             baggageCountAfterStart = Baggage.Current.Count;
                                         }
 
                                         break;
-                                    case AspNetCoreInstrumentation.OnStopEvent:
+                                    case HttpInListener.OnStopEvent:
                                         {
                                             baggageCountAfterStop = Baggage.Current.Count;
                                             stopSignal.Set();
@@ -721,7 +721,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             {
                                 switch (name)
                                 {
-                                    case AspNetCoreInstrumentation.OnMvcBeforeActionEvent:
+                                    case HttpInListener.OnMvcBeforeActionEvent:
                                         {
                                             actualCustomEventName = name;
                                             numberOfCustomCallbacks++;
@@ -766,8 +766,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                 {
                                     // TODO: Add test case for validating name for both the types
                                     // of exception event.
-                                    case AspNetCoreInstrumentation.OnUnhandledHostingExceptionEvent:
-                                    case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
+                                    case HttpInListener.OnUnhandledHostingExceptionEvent:
+                                    case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                         {
                                             numberOfExceptionCallbacks++;
                                         }
@@ -815,8 +815,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         {
                             switch (name)
                             {
-                                case AspNetCoreInstrumentation.OnUnhandledHostingExceptionEvent:
-                                case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
+                                case HttpInListener.OnUnhandledHostingExceptionEvent:
+                                case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                     {
                                         numberOfExceptionCallbacks++;
                                     }

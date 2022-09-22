@@ -31,6 +31,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
+        private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
+        private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
+
         private readonly GrpcClientInstrumentationOptions options;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
@@ -45,13 +48,13 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         {
             switch (name)
             {
-                case GrpcClientInstrumentation.OnStartEvent:
+                case OnStartEvent:
                     {
                         this.OnStartActivity(Activity.Current, payload);
                     }
 
                     break;
-                case GrpcClientInstrumentation.OnStopEvent:
+                case OnStopEvent:
                     {
                         this.OnStopActivity(Activity.Current, payload);
                     }

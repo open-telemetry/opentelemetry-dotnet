@@ -24,6 +24,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInMetricsListener : ListenerHandler
     {
+        private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
+
         private readonly Meter meter;
         private readonly Histogram<double> httpServerDuration;
 
@@ -38,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             switch (name)
             {
-                case AspNetCoreMetrics.OnStopEvent:
+                case OnStopEvent:
                     {
                         HttpContext context = payload as HttpContext;
                         if (context == null)
