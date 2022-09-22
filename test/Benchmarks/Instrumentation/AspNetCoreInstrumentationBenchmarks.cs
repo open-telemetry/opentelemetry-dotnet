@@ -27,17 +27,17 @@ using OpenTelemetry.Trace;
 /*
 // * Summary *
 
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22621
 Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
 .NET SDK=7.0.100-preview.6.22275.1
-  [Host] : .NET 6.0.8 (6.0.822.36306), X64 RyuJIT
+  [Host] : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT
 
 Job=InProcess  Toolchain=InProcessEmitToolchain
 
 |                                      Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
 |-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 155.6 us | 2.63 us | 2.33 us | 0.9766 |      5 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 176.8 us | 3.24 us | 2.70 us | 1.2207 |      7 KB |
+|                 UninstrumentedAspNetCoreApp | 164.7 us | 1.66 us | 1.39 us | 0.9766 |      5 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions | 178.7 us | 2.65 us | 2.35 us | 0.9766 |      5 KB |
 */
 
 namespace Benchmarks.Instrumentation
