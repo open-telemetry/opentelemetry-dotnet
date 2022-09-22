@@ -139,9 +139,9 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
 
             Assert.NotNull(logRecord.Attributes);
-            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event.domain" && (string?)kvp.Value == TestEventSource.EventSourceName);
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_id" && (int?)kvp.Value == TestEventSource.SimpleEventId);
-            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_name" && (string?)kvp.Value == nameof(TestEventSource.SimpleEvent));
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event.name" && (string?)kvp.Value == nameof(TestEventSource.SimpleEvent));
         }
 
         [Fact]
@@ -218,12 +218,12 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
 
             Assert.NotNull(logRecord.Attributes);
-            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event.domain" && (string?)kvp.Value == TestEventSource.EventSourceName);
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "arg1" && (string?)kvp.Value == "Test_Message");
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "arg2" && (int?)kvp.Value == 18);
 
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_id" && (int?)kvp.Value == TestEventSource.ComplexEventId);
-            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event_source.event_name" && (string?)kvp.Value == nameof(TestEventSource.ComplexEvent));
+            Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "event.name" && (string?)kvp.Value == nameof(TestEventSource.ComplexEvent));
 
             if (formatMessage)
             {
