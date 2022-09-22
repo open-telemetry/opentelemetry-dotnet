@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
@@ -33,13 +32,12 @@ namespace OpenTelemetry.Logs
     {
         private readonly bool includeFormattedMessage;
         private readonly LoggerProvider loggerProvider;
-        private readonly InstrumentationScope instrumentationScope;
         private readonly object lockObj = new();
         private readonly Func<string, EventLevel?> shouldListenToFunc;
         private readonly List<EventSource> eventSources = new();
         private readonly List<EventSource>? eventSourcesBeforeConstructor = new();
         private readonly bool disposeProvider;
-        private readonly ConcurrentDictionary<string, Logger> loggers = new();
+        private readonly Logger logger;
 
         /// <summary>
         /// Initializes a new instance of the <see
@@ -72,10 +70,11 @@ namespace OpenTelemetry.Logs
             this.disposeProvider = disposeProvider;
             this.shouldListenToFunc = shouldListenToFunc;
 
-            this.instrumentationScope = new InstrumentationScope("OpenTelemetry.Extensions.EventSource")
-            {
-                Version = $"semver:{typeof(OpenTelemetryEventSourceLogEmitter).Assembly.GetName().Version}",
-            };
+            this.logger = loggerProvider.GetLogger(new LoggerOptions(
+                new InstrumentationScope("OpenTelemetry.Extensions.EventSource")
+                {
+                    Version = $"semver:{typeof(OpenTelemetryEventSourceLogEmitter).Assembly.GetName().Version}",
+                }));
 
             lock (this.lockObj)
             {
@@ -141,21 +140,6 @@ namespace OpenTelemetry.Logs
         {
             Debug.Assert(eventData != null, "EventData was null.");
 
-            var eventSource = eventData!.EventSource;
-
-            Debug.Assert(eventSource != null, "eventSource was null.");
-
-            if (!this.loggers.TryGetValue(eventSource!.Name, out Logger? logger))
-            {
-                logger = this.loggerProvider.GetLogger(
-                    new LoggerOptions(this.instrumentationScope)
-                    {
-                        EventDomain = eventSource!.Name,
-                    });
-
-                this.loggers.TryAdd(eventSource.Name, logger);
-            }
-
             string? rawMessage = eventData!.Message;
 
             LogRecordData data = new(Activity.Current)
@@ -168,8 +152,9 @@ namespace OpenTelemetry.Logs
 
             LogRecordAttributeList attributes = default;
 
-            // todo: Should there be event.id in the spec?
+            attributes.Add("event_source.name", eventData.EventSource.Name);
             attributes.Add("event_source.event_id", eventData.EventId);
+            attributes.Add("event_source.event_name", eventData.EventName);
 
             if (eventData.ActivityId != Guid.Empty)
             {
@@ -217,10 +202,7 @@ namespace OpenTelemetry.Logs
                 }
             }
 
-            logger.EmitEvent(
-                eventData.EventName ?? $"{eventData.EventId}",
-                in data,
-                in attributes);
+            this.logger.EmitLog(in data, in attributes);
         }
 #pragma warning restore CA1062 // Validate arguments of public methods
 
