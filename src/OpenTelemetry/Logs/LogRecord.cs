@@ -166,7 +166,7 @@ namespace OpenTelemetry.Logs
         // [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
         public LogLevel LogLevel
         {
-            get => (LogLevel)this.Data.Severity;
+            get => (LogLevel)(this.Data.Severity ?? LogRecordSeverity.Trace);
             set => this.Data.Severity = (LogRecordSeverity)value;
         }
 
@@ -251,7 +251,7 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the log <see cref="LogRecordSeverity"/>.
         /// </summary>
-        internal LogRecordSeverity Severity
+        internal LogRecordSeverity? Severity
         {
             get => this.Data.Severity;
             set => this.Data.Severity = value;

@@ -92,7 +92,7 @@ internal struct LogRecordData
     /// <summary>
     /// Gets or sets the log severity.
     /// </summary>
-    public LogRecordSeverity Severity { get; set; } = LogRecordSeverity.Trace;
+    public LogRecordSeverity? Severity { get; set; } = null;
 
     /// <summary>
     /// Gets or sets the log body.
