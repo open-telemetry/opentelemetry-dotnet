@@ -14,6 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -21,6 +25,8 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricReaderOptions
 {
+    private PeriodicExportingMetricReaderOptions? periodicExportingMetricReaderOptions;
+
     /// <summary>
     /// Gets or sets the <see cref="MetricReaderTemporalityPreference" />.
     /// </summary>
@@ -29,5 +35,13 @@ public class MetricReaderOptions
     /// <summary>
     /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" />.
     /// </summary>
-    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
+    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions
+    {
+        get => this.periodicExportingMetricReaderOptions ??= new();
+        set
+        {
+            Guard.ThrowIfNull(value);
+            this.periodicExportingMetricReaderOptions = value;
+        }
+    }
 }

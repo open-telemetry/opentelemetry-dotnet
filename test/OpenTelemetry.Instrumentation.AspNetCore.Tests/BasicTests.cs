@@ -705,7 +705,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             AssertException(exportedItems);
         }
 
-        [Fact(Skip = "Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
+        [Fact]
         public async Task DiagnosticSourceCustomCallbacksAreReceivedOnlyForSubscribedEvents()
         {
             int numberOfCustomCallbacks = 0;
@@ -798,7 +798,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(1, numberOfExceptionCallbacks);
         }
 
-        [Fact(Skip = "Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
+        [Fact]
         public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
         {
             int numberOfExceptionCallbacks = 0;
@@ -857,6 +857,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(0, numberOfExceptionCallbacks);
+
+            await app.DisposeAsync();
         }
 
         public void Dispose()

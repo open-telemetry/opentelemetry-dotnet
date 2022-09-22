@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
@@ -28,12 +29,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         internal const string OnMvcBeforeAction = "error";
         internal const string OnUnhandledHostingExceptionEvent = "exception";
         internal const string OnUnHandledDiagnosticsExceptionEvent = "exception1";
+        private static readonly HashSet<string> DiagnosticSourceEvents = new()
+        {
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
+            "Microsoft.AspNetCore.Mvc.BeforeAction",
+            "Microsoft.AspNetCore.Diagnostics.UnhandledException",
+            "Microsoft.AspNetCore.Hosting.UnhandledException",
+        };
+
+        private readonly Func<string, object, object, bool> isEnabled = (eventName, obj1, obj2)
+            => DiagnosticSourceEvents.Contains(eventName);
 
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         public AspNetCoreInstrumentation(HttpInListener httpInListener)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
