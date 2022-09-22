@@ -144,7 +144,7 @@ namespace OpenTelemetry.Logs
 
             LogRecordData data = new(Activity.Current)
             {
-#if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if !NETFRAMEWORK
                 Timestamp = eventData.TimeStamp,
 #endif
                 Severity = ConvertEventLevelToLogLevel(eventData.Level),
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Logs
                         // into structured log format (eg: "Some message
                         // {propertyName1} {propertyName2}") but it is
                         // expensive. Probably needs a cache.
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
                         rawMessage = rawMessage.Replace($"{{{i}}}", $"{{{name}}}");
 #else
                         rawMessage = rawMessage.Replace($"{{{i}}}", $"{{{name}}}", StringComparison.Ordinal);
