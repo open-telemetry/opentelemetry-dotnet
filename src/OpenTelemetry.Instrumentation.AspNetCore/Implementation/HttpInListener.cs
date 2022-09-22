@@ -70,7 +70,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
 
                     break;
-                case AspNetCoreInstrumentation.OnMvcBeforeAction:
+                case AspNetCoreInstrumentation.OnMvcBeforeActionEvent:
                     {
                         this.OnMvcBeforeAction(Activity.Current, payload);
                     }

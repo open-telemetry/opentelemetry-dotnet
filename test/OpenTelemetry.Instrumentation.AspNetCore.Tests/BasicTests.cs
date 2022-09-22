@@ -721,7 +721,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             {
                                 switch (name)
                                 {
-                                    case AspNetCoreInstrumentation.OnMvcBeforeAction:
+                                    case AspNetCoreInstrumentation.OnMvcBeforeActionEvent:
                                         {
                                             actualCustomEventName = name;
                                             numberOfCustomCallbacks++;
@@ -764,6 +764,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             {
                                 switch (name)
                                 {
+                                    // TODO: Add test case for validating name for both the types
+                                    // of exception event.
+                                    case AspNetCoreInstrumentation.OnUnhandledHostingExceptionEvent:
                                     case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
                                         {
                                             numberOfExceptionCallbacks++;
@@ -812,6 +815,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         {
                             switch (name)
                             {
+                                case AspNetCoreInstrumentation.OnUnhandledHostingExceptionEvent:
                                 case AspNetCoreInstrumentation.OnUnHandledDiagnosticsExceptionEvent:
                                     {
                                         numberOfExceptionCallbacks++;
