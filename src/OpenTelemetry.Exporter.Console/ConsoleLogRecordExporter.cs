@@ -87,13 +87,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.Body:",-RightPaddingLength}{logRecord.Body}");
                 }
 
-#pragma warning disable CS0618 // Type or member is obsolete
-                if (logRecord.State != null)
-                {
-                    this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
-                }
-#pragma warning restore CS0618 // Type or member is obsolete
-                else if (logRecord.Attributes != null)
+                if (logRecord.Attributes != null)
                 {
                     this.WriteLine("LogRecord.Attributes (Key:Value):");
                     for (int i = 0; i < logRecord.Attributes.Count; i++)
