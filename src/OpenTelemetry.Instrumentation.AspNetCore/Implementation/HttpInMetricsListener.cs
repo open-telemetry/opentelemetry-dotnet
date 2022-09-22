@@ -38,70 +38,65 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnEventWritten(string name, object payload)
         {
-            switch (name)
+            if (name == OnStopEvent)
             {
-                case OnStopEvent:
+                HttpContext context = payload as HttpContext;
+                if (context == null)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    return;
+                }
+
+                // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
+                // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
+                // If we want to suppress activity from Prometheus then we should use SuppressInstrumentationScope.
+                if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("metrics"))
+                {
+                    return;
+                }
+
+                string host;
+
+                if (context.Request.Host.Port is null or 80 or 443)
+                {
+                    host = context.Request.Host.Host;
+                }
+                else
+                {
+                    host = context.Request.Host.Host + ":" + context.Request.Host.Port;
+                }
+
+                TagList tags;
+
+                var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+
+                // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
+                if (!string.IsNullOrEmpty(target))
+                {
+                    tags = new TagList
                     {
-                        HttpContext context = payload as HttpContext;
-                        if (context == null)
-                        {
-                            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
-                            return;
-                        }
+                        { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
+                        { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
+                        { SemanticConventions.AttributeHttpMethod, context.Request.Method },
+                        { SemanticConventions.AttributeHttpHost, host },
+                        { SemanticConventions.AttributeHttpTarget, target },
+                        { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
+                    };
+                }
+                else
+                {
+                    tags = new TagList
+                    {
+                        { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
+                        { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
+                        { SemanticConventions.AttributeHttpMethod, context.Request.Method },
+                        { SemanticConventions.AttributeHttpHost, host },
+                        { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
+                    };
+                }
 
-                        // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
-                        // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
-                        // If we want to suppress activity from Prometheus then we should use SuppressInstrumentationScope.
-                        if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("metrics"))
-                        {
-                            return;
-                        }
-
-                        string host;
-
-                        if (context.Request.Host.Port is null or 80 or 443)
-                        {
-                            host = context.Request.Host.Host;
-                        }
-                        else
-                        {
-                            host = context.Request.Host.Host + ":" + context.Request.Host.Port;
-                        }
-
-                        TagList tags;
-
-                        var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-
-                        // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
-                        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
-                        if (!string.IsNullOrEmpty(target))
-                        {
-                            tags = new TagList
-                            {
-                                { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
-                                { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
-                                { SemanticConventions.AttributeHttpMethod, context.Request.Method },
-                                { SemanticConventions.AttributeHttpHost, host },
-                                { SemanticConventions.AttributeHttpTarget, target },
-                                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
-                            };
-                        }
-                        else
-                        {
-                            tags = new TagList
-                            {
-                                { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
-                                { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
-                                { SemanticConventions.AttributeHttpMethod, context.Request.Method },
-                                { SemanticConventions.AttributeHttpHost, host },
-                                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
-                            };
-                        }
-
-                        this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
-                    }
-
-                    break;
+                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
         }
     }
