@@ -32,15 +32,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
-#if NET7_0_OR_GREATER
-        // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
-        internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
-#endif
         internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
         internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
         internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
         internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
         internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
+
+#if NET7_0_OR_GREATER
+        // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
+        internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
+#endif
 
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
