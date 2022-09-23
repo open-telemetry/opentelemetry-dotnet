@@ -38,10 +38,7 @@ public static class LoggerProviderBuilderExtensions
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder SetResourceBuilder(this LoggerProviderBuilder loggerProviderBuilder, ResourceBuilder resourceBuilder)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.SetResourceBuilder(resourceBuilder);
 
         return loggerProviderBuilder;
     }
@@ -55,10 +52,7 @@ public static class LoggerProviderBuilderExtensions
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder ConfigureResource(this LoggerProviderBuilder loggerProviderBuilder, Action<ResourceBuilder> configure)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.ConfigureResource(configure);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.ConfigureResource(configure);
 
         return loggerProviderBuilder;
     }
@@ -71,10 +65,7 @@ public static class LoggerProviderBuilderExtensions
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder AddProcessor(this LoggerProviderBuilder loggerProviderBuilder, BaseProcessor<LogRecord> processor)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.AddProcessor(processor);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.AddProcessor(processor);
 
         return loggerProviderBuilder;
     }
@@ -92,10 +83,7 @@ public static class LoggerProviderBuilderExtensions
     public static LoggerProviderBuilder AddProcessor<T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : BaseProcessor<LogRecord>
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.AddProcessor<T>();
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.AddProcessor<T>();
 
         return loggerProviderBuilder;
     }
@@ -144,10 +132,7 @@ public static class LoggerProviderBuilderExtensions
         string? name,
         Action<ExportLogRecordProcessorOptions>? configure)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.AddExporter(exportProcessorType, exporter, name, configure);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.AddExporter(exportProcessorType, exporter, name, configure);
 
         return loggerProviderBuilder;
     }
@@ -205,10 +190,7 @@ public static class LoggerProviderBuilderExtensions
         Action<ExportLogRecordProcessorOptions>? configure)
         where T : BaseExporter<LogRecord>
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.AddExporter<T>(exportProcessorType, name, configure);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.AddExporter<T>(exportProcessorType, name, configure);
 
         return loggerProviderBuilder;
     }
@@ -226,10 +208,7 @@ public static class LoggerProviderBuilderExtensions
     public static LoggerProviderBuilder AddInstrumentation<T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : class
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.AddInstrumentation<T>();
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.AddInstrumentation<T>();
 
         return loggerProviderBuilder;
     }
@@ -246,10 +225,7 @@ public static class LoggerProviderBuilderExtensions
         Func<IServiceProvider, LoggerProvider, T> instrumentationFactory)
         where T : class
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.AddInstrumentation(instrumentationFactory);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.AddInstrumentation(instrumentationFactory);
 
         return loggerProviderBuilder;
     }
@@ -269,10 +245,7 @@ public static class LoggerProviderBuilderExtensions
         this LoggerProviderBuilder loggerProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
-        {
-            loggerProviderBuilderSdk.ConfigureServices(configure);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.ConfigureServices(configure);
 
         return loggerProviderBuilder;
     }
@@ -289,10 +262,7 @@ public static class LoggerProviderBuilderExtensions
         this LoggerProviderBuilder loggerProviderBuilder,
         Action<IServiceProvider, LoggerProviderBuilder> configure)
     {
-        if (loggerProviderBuilder is IDeferredLoggerProviderBuilder deferredLoggerProviderBuilder)
-        {
-            deferredLoggerProviderBuilder.Configure(configure);
-        }
+        ResolveSdkBuilder(loggerProviderBuilder)?.ConfigureBuilder(configure);
 
         return loggerProviderBuilder;
     }
@@ -304,11 +274,22 @@ public static class LoggerProviderBuilderExtensions
     /// <returns><see cref="LoggerProvider"/>.</returns>
     public static LoggerProvider Build(this LoggerProviderBuilder loggerProviderBuilder)
     {
+        var provider = ResolveSdkBuilder(loggerProviderBuilder)?.Build();
+
+        return provider ?? new NoopLoggerProvider();
+    }
+
+    private static LoggerProviderBuilderSdk? ResolveSdkBuilder(LoggerProviderBuilder loggerProviderBuilder)
+    {
         if (loggerProviderBuilder is LoggerProviderBuilderSdk loggerProviderBuilderSdk)
         {
-            return loggerProviderBuilderSdk.Build();
+            return loggerProviderBuilderSdk;
+        }
+        else if (loggerProviderBuilder is OpenTelemetryLoggingBuilder openTelemetryLoggingBuilder)
+        {
+            return openTelemetryLoggingBuilder.InnerBuiler;
         }
 
-        return new NoopLoggerProvider();
+        return null;
     }
 }

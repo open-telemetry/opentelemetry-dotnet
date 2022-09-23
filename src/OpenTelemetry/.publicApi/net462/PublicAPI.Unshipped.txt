@@ -29,7 +29,6 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeTraceState.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeTraceState.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.Dispose() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggingBuilder
-OpenTelemetry.Logs.OpenTelemetryLoggingBuilder.WithConfiguration(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggingBuilder!
 OpenTelemetry.Logs.OpenTelemetryLoggingBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.LoggerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryLogging(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.LoggerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryLogging(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

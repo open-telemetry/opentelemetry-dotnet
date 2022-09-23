@@ -29,7 +29,7 @@ public class Program
                 options.IncludeScopes = true;
                 options.IncludeFormattedMessage = true;
             })
-            .WithConfiguration(builder => builder.AddConsoleExporter()));
+            .AddConsoleExporter());
 
         var logger = loggerFactory.CreateLogger<Program>();
 

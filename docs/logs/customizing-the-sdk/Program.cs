@@ -27,9 +27,10 @@ public class Program
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options => options.IncludeScopes = true).WithConfiguration(builder => builder
+            builder
+                .AddOpenTelemetry(options => options.IncludeScopes = true)
                 .ConfigureResource(r => r.AddService(serviceName: "MyService", serviceVersion: "1.0.0"))
-                .AddConsoleExporter());
+                .AddConsoleExporter();
         });
 
         var logger = loggerFactory.CreateLogger<Program>();

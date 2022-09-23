@@ -124,12 +124,10 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         serviceCollection.AddLogging(configure =>
         {
-            configure.AddOpenTelemetry().WithConfiguration(options
-                => options.ConfigureResource(
-                    r => r.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" })));
-            configure.AddOpenTelemetry().WithConfiguration(options
-                => options.ConfigureResource(
-                    r => r.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" })));
+            configure.AddOpenTelemetry().ConfigureResource(
+                r => r.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" }));
+            configure.AddOpenTelemetry().ConfigureResource(
+                r => r.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" }));
         });
 
         using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
@@ -237,10 +235,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         services.AddLogging(builder =>
         {
-            builder.AddOpenTelemetry().WithConfiguration(options =>
-            {
-                options.AddProcessor<CustomProcessor>();
-            });
+            builder.AddOpenTelemetry().AddProcessor<CustomProcessor>();
         });
 
         CustomProcessor? customProcessor = null;
@@ -274,19 +269,16 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         services.AddLogging(builder =>
         {
-            builder.AddOpenTelemetry().WithConfiguration(options =>
+            builder.AddOpenTelemetry().ConfigureBuilder((sp, builder) =>
             {
-                options.ConfigureBuilder((sp, builder) =>
+                var testClass = sp.GetRequiredService<TestClass>();
+
+                customProcessor = new CustomProcessor
                 {
-                    var testClass = sp.GetRequiredService<TestClass>();
+                    TestClass = testClass,
+                };
 
-                    customProcessor = new CustomProcessor
-                    {
-                        TestClass = testClass,
-                    };
-
-                    builder.AddProcessor(customProcessor);
-                });
+                builder.AddProcessor(customProcessor);
             });
         });
 
@@ -361,19 +353,18 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         services.AddLogging(loggingBuilder =>
         {
-            loggingBuilder.AddOpenTelemetry().WithConfiguration(options =>
+            var loggerBuilder = loggingBuilder.AddOpenTelemetry();
+
+            // Note: This be applied second to the final options
+
+            loggerBuilder.AddProcessor(new CustomProcessor(1));
+
+            loggerBuilder.ConfigureBuilder((sp, b) =>
             {
-                // Note: This be applied second to the final options
+                configureInvocationCount++;
 
-                options.AddProcessor(new CustomProcessor(1));
-
-                options.ConfigureBuilder((sp, b) =>
-                {
-                    configureInvocationCount++;
-
-                    Assert.NotNull(builder);
-                    Assert.Equal(builder, b);
-                });
+                Assert.NotNull(builder);
+                Assert.Equal(builder, b);
             });
         });
 
@@ -426,10 +417,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         services.AddLogging(builder =>
         {
-            builder.AddOpenTelemetry().WithConfiguration(options =>
-            {
-                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions"));
-            });
+            builder.AddOpenTelemetry().SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions"));
         });
 
         services.ConfigureOpenTelemetryLogging(options =>

@@ -75,21 +75,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, IDeferre
     /// <inheritdoc />
     LoggerProviderBuilder IDeferredLoggerProviderBuilder.Configure(
         Action<IServiceProvider, LoggerProviderBuilder> configure)
-    {
-        Guard.ThrowIfNull(configure);
-
-        if (this.State != null)
-        {
-            configure(this.State.ServiceProvider, this);
-        }
-        else
-        {
-            this.ConfigureServices(services
-                => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
-        }
-
-        return this;
-    }
+        => this.ConfigureBuilder(configure);
 
     public LoggerProviderBuilder AddExporter<T>(ExportProcessorType exportProcessorType, string? name, Action<ExportLogRecordProcessorOptions>? configure)
         where T : BaseExporter<LogRecord>
@@ -149,6 +135,23 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, IDeferre
     {
         this.TryAddSingleton<T>();
         this.ConfigureState((sp, state) => state.AddProcessor(sp.GetRequiredService<T>()));
+
+        return this;
+    }
+
+    public LoggerProviderBuilder ConfigureBuilder(Action<IServiceProvider, LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        if (this.State != null)
+        {
+            configure(this.State.ServiceProvider, this);
+        }
+        else
+        {
+            this.ConfigureServices(services
+                => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
+        }
 
         return this;
     }

@@ -88,25 +88,24 @@ builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configurati
 builder.Logging.ClearProviders();
 
 // Note: See appsettings.json Logging:OpenTelemetry section for OpenTelemetryLoggerOptions bindings.
-builder.Logging.AddOpenTelemetry().WithConfiguration(options =>
-{
-    options.ConfigureResource(configureResource);
+var loggerBuilder = builder.Logging.AddOpenTelemetry();
 
-    // Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
-    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-    switch (logExporter)
-    {
-        case "otlp":
-            options.AddOtlpExporter(otlpOptions =>
-            {
-                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
-            });
-            break;
-        default:
-            options.AddConsoleExporter();
-            break;
-    }
-});
+loggerBuilder.ConfigureResource(configureResource);
+
+// Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
+var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+switch (logExporter)
+{
+    case "otlp":
+        loggerBuilder.AddOtlpExporter(otlpOptions =>
+        {
+            otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+        });
+        break;
+    default:
+        loggerBuilder.AddConsoleExporter();
+        break;
+}
 
 // Metrics
 // Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.

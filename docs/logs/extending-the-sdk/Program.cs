@@ -26,12 +26,12 @@ public class Program
     public static void Main()
     {
         using var loggerFactory = LoggerFactory.Create(builder => builder
-            .AddOpenTelemetry(options => options.IncludeScopes = true).WithConfiguration(builder => builder
-                .AddProcessor(new MyRedactionProcessor())
-                .AddProcessor(new MyProcessor("ProcessorA"))
-                .AddProcessor(new MyProcessor("ProcessorB"))
-                .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
-                .AddMyExporter()));
+            .AddOpenTelemetry(options => options.IncludeScopes = true)
+            .AddProcessor(new MyRedactionProcessor())
+            .AddProcessor(new MyProcessor("ProcessorA"))
+            .AddProcessor(new MyProcessor("ProcessorB"))
+            .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
+            .AddMyExporter());
 
         var logger = loggerFactory.CreateLogger<Program>();
 

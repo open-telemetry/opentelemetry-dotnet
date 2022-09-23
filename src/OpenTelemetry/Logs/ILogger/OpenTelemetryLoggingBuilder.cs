@@ -16,42 +16,27 @@
 
 #nullable enable
 
-using System;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
 
 /// <summary>
 /// An <see cref="ILoggingBuilder"/> implementation that exposes methods for configuring OpenTelemetry.
 /// </summary>
-public sealed class OpenTelemetryLoggingBuilder : ILoggingBuilder
+public sealed class OpenTelemetryLoggingBuilder : LoggerProviderBuilder, ILoggingBuilder
 {
     internal OpenTelemetryLoggingBuilder(IServiceCollection services)
     {
-        this.Services = services;
+        Debug.Assert(services != null, "services was null");
+
+        this.InnerBuiler = new LoggerProviderBuilderSdk(services!);
+        this.Services = services!;
     }
 
     /// <inheritdoc />
     public IServiceCollection Services { get; }
 
-    /// <summary>
-    /// Register a callback action to configure the <see
-    /// cref="LoggerProviderBuilder"/> in the <see cref="IServiceCollection"/>
-    /// where the OpenTelemetry <see cref="ILoggerProvider"/> will be created.
-    /// </summary>
-    /// <param name="configure">Callback action to configure the <see
-    /// cref="LoggerProviderBuilder"/>.</param>
-    /// <returns>Supplied <see cref="OpenTelemetryLoggingBuilder"/> instance for chaining calls.</returns>
-    public OpenTelemetryLoggingBuilder WithConfiguration(Action<LoggerProviderBuilder> configure)
-    {
-        Guard.ThrowIfNull(configure);
-
-        var builder = new LoggerProviderBuilderSdk(this.Services);
-
-        configure(builder);
-
-        return this;
-    }
+    internal LoggerProviderBuilderSdk InnerBuiler { get; }
 }

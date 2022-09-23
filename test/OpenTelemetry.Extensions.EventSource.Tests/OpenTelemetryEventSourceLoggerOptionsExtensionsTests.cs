@@ -34,14 +34,12 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             var services = new ServiceCollection();
 
-            services.AddLogging(configure =>
+            services.AddLogging(builder =>
             {
-                configure.AddOpenTelemetry().WithConfiguration(options =>
-                {
-                    options
-                        .AddInMemoryExporter(exportedItems)
-                        .AddEventSourceLogEmitter((name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null);
-                });
+                builder
+                    .AddOpenTelemetry()
+                    .AddInMemoryExporter(exportedItems)
+                    .AddEventSourceLogEmitter((name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null);
             });
 
             using (var serviceProvider = services.BuildServiceProvider())
