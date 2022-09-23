@@ -29,11 +29,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusCollectionManagerTests
     {
-#if PROMETHEUS_HTTP_LISTENER
-        [Fact(Skip = "Might be flaky. Might be a bug. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/3679")]
-#else
         [Fact]
-#endif
         public async Task EnterExitCollectTest()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());

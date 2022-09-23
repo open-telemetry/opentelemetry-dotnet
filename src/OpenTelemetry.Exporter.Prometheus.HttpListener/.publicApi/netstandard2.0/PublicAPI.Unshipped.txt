@@ -2,6 +2,8 @@ OpenTelemetry.Exporter.PrometheusHttpListenerOptions
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeEndpointPath.get -> string
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.UriPrefixes.set -> void
 OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions

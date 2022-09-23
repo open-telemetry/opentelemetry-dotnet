@@ -25,12 +25,30 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class PrometheusHttpListenerOptions
     {
-        private IReadOnlyCollection<string> uriPrefixes = new string[] { "http://localhost:9464/" };
+        private int scrapeResponseCacheDurationMilliseconds = 300;
+        private IReadOnlyCollection<string> uriPrefixes = new[] { "http://localhost:9464/" };
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
         /// </summary>
         public string ScrapeEndpointPath { get; set; } = "/metrics";
+
+        /// <summary>
+        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
+        /// </summary>
+        /// <remarks>
+        /// Note: Specify 0 to disable response caching.
+        /// </remarks>
+        public int ScrapeResponseCacheDurationMilliseconds
+        {
+            get => this.scrapeResponseCacheDurationMilliseconds;
+            set
+            {
+                Guard.ThrowIfOutOfRange(value, min: 0);
+
+                this.scrapeResponseCacheDurationMilliseconds = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.

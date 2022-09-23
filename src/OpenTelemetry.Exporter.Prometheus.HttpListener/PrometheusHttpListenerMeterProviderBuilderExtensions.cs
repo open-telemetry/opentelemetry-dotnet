@@ -80,7 +80,7 @@ namespace OpenTelemetry.Metrics
             MeterProviderBuilder builder,
             PrometheusHttpListenerOptions options)
         {
-            var exporter = new PrometheusExporter();
+            var exporter = new PrometheusExporter(options.ScrapeResponseCacheDurationMilliseconds);
 
             var reader = new BaseExportingMetricReader(exporter)
             {
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Metrics
 
             try
             {
-                var listener = new PrometheusHttpListener(exporter, options);
+                var listener = new PrometheusHttpListener(exporter, options.ScrapeEndpointPath, options.UriPrefixes);
                 exporter.OnDispose = () => listener.Dispose();
                 listener.Start();
             }

@@ -5,6 +5,9 @@
 * Bug fix for Prometheus Exporter reporting StatusCode 204
   instead of 200, when no metrics are collected
   ([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
+* Bug fix, restore endpoint response caching feature &
+  `ScrapeResponseCacheDurationMilliseconds` option
+  ([#3694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3694))
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddPrometheusHttpListener` extension to allow for more fine-grained options
   management

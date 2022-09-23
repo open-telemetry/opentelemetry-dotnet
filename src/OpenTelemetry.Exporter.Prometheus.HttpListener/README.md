@@ -42,6 +42,12 @@ for more details.
 
 Defines the Prometheus scrape endpoint path. Default value: `"/metrics"`.
 
+### ScrapeResponseCacheDurationMilliseconds
+
+Configures scrape endpoint response caching. Multiple scrape requests within the
+cache duration time period will receive the same previously generated response.
+The default value is `300`. Set to `0` to disable response caching.
+
 ## Troubleshooting
 
 This component uses an

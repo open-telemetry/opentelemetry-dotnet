@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,16 +36,18 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
         /// </summary>
-        /// <param name="exporter"><see cref="PrometheusExporter"/>The exporter instance.</param>
-        /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
-        public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
+        /// <param name="exporter"><see cref="PrometheusExporter"/>The path to use for the scraping endpoint.</param>
+        /// <param name="scrapeEndpointPath">The configured HttpListener options.</param>
+        /// <param name="uriPrefixes">The URI (Uniform Resource Identifier) prefixes to use for the http listener.</param>
+        public PrometheusHttpListener(PrometheusExporter exporter, string scrapeEndpointPath, IEnumerable<string> uriPrefixes)
         {
             Guard.ThrowIfNull(exporter);
-            Guard.ThrowIfNull(options);
+            Guard.ThrowIfNullOrWhitespace(scrapeEndpointPath);
+            Guard.ThrowIfNull(uriPrefixes);
 
             this.exporter = exporter;
 
-            string path = options.ScrapeEndpointPath;
+            string path = scrapeEndpointPath;
 
             if (!path.StartsWith("/"))
             {
@@ -56,7 +59,7 @@ namespace OpenTelemetry.Exporter
                 path = $"{path}/";
             }
 
-            foreach (string uriPrefix in options.UriPrefixes)
+            foreach (string uriPrefix in uriPrefixes)
             {
                 this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
             }
