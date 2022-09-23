@@ -42,9 +42,12 @@ namespace OpenTelemetry
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
         private readonly Thread exporterThread;
+        private readonly AutoResetEvent hasDataTrigger = new(false);
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
         private readonly ManualResetEvent shutdownTrigger = new(false);
+        private readonly WaitHandle[] exporterProcOuterTriggers;
+        private readonly WaitHandle[] exporterProcInnerTriggers;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
@@ -74,6 +77,10 @@ namespace OpenTelemetry
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
+
+            this.exporterProcOuterTriggers = new WaitHandle[] { this.hasDataTrigger, this.shutdownTrigger };
+            this.exporterProcInnerTriggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
                 IsBackground = true,
@@ -102,15 +109,18 @@ namespace OpenTelemetry
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
-                if (this.circularBuffer.Count >= this.MaxExportBatchSize)
+                try
                 {
-                    try
+                    this.hasDataTrigger.Set();
+
+                    if (this.circularBuffer.Count >= this.MaxExportBatchSize)
                     {
                         this.exportTrigger.Set();
                     }
-                    catch (ObjectDisposedException)
-                    {
-                    }
+                }
+                catch (ObjectDisposedException)
+                {
+                    // the exporter is disposed while data is still flowing
                 }
 
                 return true; // enqueue succeeded
@@ -247,6 +257,7 @@ namespace OpenTelemetry
             {
                 if (disposing)
                 {
+                    this.hasDataTrigger.Dispose();
                     this.exportTrigger.Dispose();
                     this.dataExportedNotification.Dispose();
                     this.shutdownTrigger.Dispose();
@@ -260,22 +271,46 @@ namespace OpenTelemetry
 
         private void ExporterProc()
         {
-            var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
-
             while (true)
             {
+                try
+                {
+                    WaitHandle.WaitAny(this.exporterProcOuterTriggers);
+
+                    if (!this.ExporterDataAvailableProc())
+                    {
+                        break;
+                    }
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+            }
+        }
+
+        private bool ExporterDataAvailableProc()
+        {
+            while (true)
+            {
+                bool triggeredByDelay;
+
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.MaxExportBatchSize)
                 {
                     try
                     {
-                        WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                        triggeredByDelay = WaitHandle.WaitAny(this.exporterProcInnerTriggers, this.scheduledDelayMilliseconds) == WaitHandle.WaitTimeout;
                     }
                     catch (ObjectDisposedException)
                     {
                         // the exporter is somehow disposed before the worker thread could finish its job
-                        return;
+                        return false;
                     }
+                }
+                else
+                {
+                    triggeredByDelay = false;
                 }
 
                 if (this.circularBuffer.Count > 0)
@@ -293,13 +328,18 @@ namespace OpenTelemetry
                     catch (ObjectDisposedException)
                     {
                         // the exporter is somehow disposed before the worker thread could finish its job
-                        return;
+                        return false;
                     }
                 }
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
                 {
-                    return;
+                    return false;
+                }
+
+                if (triggeredByDelay && this.circularBuffer.Count <= 0)
+                {
+                    return true;
                 }
             }
         }
