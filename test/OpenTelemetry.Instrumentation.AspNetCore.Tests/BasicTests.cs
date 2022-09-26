@@ -466,14 +466,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
-                            OnStartActivityCallback = (activity, payload) =>
+                            OnEventWrittenCallback = (name, payload) =>
                             {
-                                baggageCountAfterStart = Baggage.Current.Count;
-                            },
-                            OnStopActivityCallback = (activity, payload) =>
-                            {
-                                baggageCountAfterStop = Baggage.Current.Count;
-                                stopSignal.Set();
+                                switch (name)
+                                {
+                                    case HttpInListener.OnStartEvent:
+                                        {
+                                            baggageCountAfterStart = Baggage.Current.Count;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnStopEvent:
+                                        {
+                                            baggageCountAfterStop = Baggage.Current.Count;
+                                            stopSignal.Set();
+                                        }
+
+                                        break;
+                                }
                             },
                         }))
                     .Build();
@@ -625,7 +635,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(activityName, middlewareActivity.OperationName);
             Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-            // tag http.route should not be added on activity started by asp.net core as it will not be found during oncustom event
+            // tag http.route should not be added on activity started by asp.net core as it will not be found during OnEventWritten event
             Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
             Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
@@ -707,10 +717,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
-                            OnCustomCallback = (name, activity, payload) =>
+                            OnEventWrittenCallback = (name, payload) =>
                             {
-                                actualCustomEventName = name;
-                                numberOfCustomCallbacks++;
+                                switch (name)
+                                {
+                                    case HttpInListener.OnMvcBeforeActionEvent:
+                                        {
+                                            actualCustomEventName = name;
+                                            numberOfCustomCallbacks++;
+                                        }
+
+                                        break;
+                                }
                             },
                         }))
                     .Build();
@@ -742,9 +760,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
-                            OnExceptionCallback = (activity, payload) =>
+                            OnEventWrittenCallback = (name, payload) =>
                             {
-                                numberOfExceptionCallbacks++;
+                                switch (name)
+                                {
+                                    // TODO: Add test case for validating name for both the types
+                                    // of exception event.
+                                    case HttpInListener.OnUnhandledHostingExceptionEvent:
+                                    case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
+                                        {
+                                            numberOfExceptionCallbacks++;
+                                        }
+
+                                        break;
+                                }
                             },
                         }))
                     .Build();
@@ -782,9 +811,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
                     new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                     {
-                        OnExceptionCallback = (activity, payload) =>
+                        OnEventWrittenCallback = (name, payload) =>
                         {
-                            numberOfExceptionCallbacks++;
+                            switch (name)
+                            {
+                                case HttpInListener.OnUnhandledHostingExceptionEvent:
+                                case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
+                                    {
+                                        numberOfExceptionCallbacks++;
+                                    }
+
+                                    break;
+                            }
                         },
                     }))
                     .Build();
@@ -954,45 +992,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private class TestHttpInListener : HttpInListener
         {
-            public Action<Activity, object> OnStartActivityCallback;
-
-            public Action<Activity, object> OnStopActivityCallback;
-
-            public Action<Activity, object> OnExceptionCallback;
-
-            public Action<string, Activity, object> OnCustomCallback;
+            public Action<string, object> OnEventWrittenCallback;
 
             public TestHttpInListener(AspNetCoreInstrumentationOptions options)
                 : base(options)
             {
             }
 
-            public override void OnStartActivity(Activity activity, object payload)
+            public override void OnEventWritten(string name, object payload)
             {
-                base.OnStartActivity(activity, payload);
+                base.OnEventWritten(name, payload);
 
-                this.OnStartActivityCallback?.Invoke(activity, payload);
-            }
-
-            public override void OnStopActivity(Activity activity, object payload)
-            {
-                base.OnStopActivity(activity, payload);
-
-                this.OnStopActivityCallback?.Invoke(activity, payload);
-            }
-
-            public override void OnCustom(string name, Activity activity, object payload)
-            {
-                base.OnCustom(name, activity, payload);
-
-                this.OnCustomCallback?.Invoke(name, activity, payload);
-            }
-
-            public override void OnException(Activity activity, object payload)
-            {
-                base.OnException(activity, payload);
-
-                this.OnExceptionCallback?.Invoke(activity, payload);
+                this.OnEventWrittenCallback?.Invoke(name, payload);
             }
         }
 
@@ -1013,7 +1024,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Setting the host activity i.e. activity started by asp.net core
                 // to null here will have no impact on middleware activity.
                 // This also means that asp.net core activity will not be found
-                // during OnCustom event.
+                // during OnEventWritten event.
                 Activity.Current = null;
                 this.activity = this.activitySource.StartActivity(this.activityName);
             }
