@@ -52,7 +52,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// </remarks>
         public bool RecordException { get; set; }
 
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
         /// <summary>
         /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
         /// </summary>
@@ -60,6 +59,5 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md.
         /// </remarks>
         public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
-#endif
     }
 }
