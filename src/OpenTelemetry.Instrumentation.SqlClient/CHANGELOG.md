@@ -2,9 +2,6 @@
 
 ## Unreleased
 
-* [Breaking] Enrich event name`OnCustom` is changed to `OnEventWritten`.
-([#3691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3691))
-
 ## 1.0.0-rc9.6
 
 Released 2022-Aug-18

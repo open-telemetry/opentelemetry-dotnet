@@ -122,7 +122,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                             try
                             {
-                                this.options.Enrich?.Invoke(activity, "OnEventWritten", command);
+                                this.options.Enrich?.Invoke(activity, "OnCustom", command);
                             }
                             catch (Exception ex)
                             {
