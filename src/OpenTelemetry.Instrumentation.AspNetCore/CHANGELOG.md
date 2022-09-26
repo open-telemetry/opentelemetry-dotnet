@@ -2,14 +2,18 @@
 
 ## Unreleased
 
-* Fix issue where when an application has an ExceptionFilter, the exception data
-  wouldn't be collected.
-  ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
+* Performance improvement (Reduced memory allocation) - Updated DiagnosticSource
+event subscription to specific set of events.
+([#3519](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3519))
 
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddAspNetCoreInstrumentation` extension to allow for more fine-grained
   options management
   ([#3661](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3661))
+
+* Fix issue where when an application has an ExceptionFilter, the exception data
+  wouldn't be collected.
+  ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
 
 ## 1.0.0-rc9.6
 

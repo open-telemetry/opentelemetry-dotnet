@@ -24,6 +24,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
+        internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly Histogram<double> httpClientDuration;
 
@@ -33,28 +35,32 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
-            if (Sdk.SuppressInstrumentation)
+            if (name == OnStopEvent)
             {
-                return;
-            }
-
-            if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
-            {
-                var request = response.RequestMessage;
-
-                // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-client
-                var tags = new KeyValuePair<string, object>[]
+                if (Sdk.SuppressInstrumentation)
                 {
-                    new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
-                    new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                    new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
-                    new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
-                };
+                    return;
+                }
 
-                this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                var activity = Activity.Current;
+                if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                {
+                    var request = response.RequestMessage;
+
+                    // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-client
+                    var tags = new KeyValuePair<string, object>[]
+                    {
+                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
+                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
+                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
+                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
+                    };
+
+                    this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                }
             }
         }
     }

@@ -2,7 +2,8 @@
   <PropertyGroup>
     <Description>Unit test project for Prometheus Exporter HttpListener for OpenTelemetry</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFrameworks>net6.0;net462</TargetFrameworks>
+    <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
   </ItemGroup>
 
