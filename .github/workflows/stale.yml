@@ -10,7 +10,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v5
+      - uses: actions/stale@v6
         with:
           stale-pr-message: 'This PR was marked stale due to lack of activity and will be closed in 7 days. Commenting or Pushing will instruct the bot to automatically remove the label. This bot runs once per day.'
           close-pr-message: 'Closed as inactive. Feel free to reopen if this PR is still being worked on.'

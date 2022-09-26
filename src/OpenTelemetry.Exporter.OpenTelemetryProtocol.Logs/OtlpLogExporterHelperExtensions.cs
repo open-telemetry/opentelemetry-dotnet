@@ -78,7 +78,7 @@ namespace OpenTelemetry.Logs
 
             return loggerOptions.ConfigureProvider((sp, provider) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<OtlpExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
 
                 AddOtlpExporter(provider, options, sp);
             });

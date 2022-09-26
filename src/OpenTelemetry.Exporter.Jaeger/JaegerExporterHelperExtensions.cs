@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsSnapshot<JaegerExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<JaegerExporterOptions>>().Get(name);
 
                 AddJaegerExporter(builder, options, sp);
             });

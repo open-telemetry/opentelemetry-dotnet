@@ -259,7 +259,12 @@ namespace OpenTelemetry.Trace
 
             this.services = null;
 
-            var serviceProvider = services.BuildServiceProvider();
+#if DEBUG
+            bool validateScopes = true;
+#else
+            bool validateScopes = false;
+#endif
+            var serviceProvider = services.BuildServiceProvider(validateScopes);
 
             return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
         }
@@ -278,11 +283,9 @@ namespace OpenTelemetry.Trace
                 case ExportProcessorType.Simple:
                     return new SimpleActivityExportProcessor(exporter);
                 case ExportProcessorType.Batch:
-                    var options = new ExportActivityProcessorOptions
-                    {
-                        ExportProcessorType = ExportProcessorType.Batch,
-                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<BatchExportActivityProcessorOptions>>().Get(name),
-                    };
+                    var options = serviceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name);
+
+                    options.ExportProcessorType = ExportProcessorType.Batch;
 
                     configure?.Invoke(options);
 
