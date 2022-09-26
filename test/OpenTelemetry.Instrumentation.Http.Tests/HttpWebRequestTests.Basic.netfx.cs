@@ -20,6 +20,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -252,17 +254,29 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
         }
 
-        [Fact]
-        public void AddHttpClientInstrumentationUsesHttpWebRequestInstrumentationOptions()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("CustomName")]
+        public void AddHttpClientInstrumentationUsesHttpWebRequestInstrumentationOptions(string name)
         {
+            name ??= Options.DefaultName;
+
+            int configurationDelegateInvocations = 0;
+
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<HttpWebRequestInstrumentationOptions>(name, o => configurationDelegateInvocations++);
+                })
                 .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(options =>
+                .AddHttpClientInstrumentation(name, options =>
                 {
                     Assert.IsType<HttpWebRequestInstrumentationOptions>(options);
                 })
                 .Build();
+
+            Assert.Equal(1, configurationDelegateInvocations);
         }
 
         [Fact]

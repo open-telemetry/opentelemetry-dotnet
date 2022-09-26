@@ -54,7 +54,7 @@ jobs:
     - name: Merging test results
       run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -assemblyFilters:"-microsoft.data.sqlclient*;-grpc.core*;-opentracing*"
 
-    - uses: codecov/codecov-action@v3.1.0
+    - uses: codecov/codecov-action@v3.1.1
       with:
         file: TestResults/Cobertura.xml
         env_vars: OS

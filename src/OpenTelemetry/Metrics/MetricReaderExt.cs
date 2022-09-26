@@ -156,7 +156,7 @@ namespace OpenTelemetry.Metrics
                     }
                     else
                     {
-                        bool histogramRecordMinMax = (metricStreamConfig as HistogramConfiguration).RecordMinMax;
+                        bool histogramRecordMinMax = (metricStreamConfig as HistogramConfiguration)?.RecordMinMax ?? true;
                         Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, histogramRecordMinMax);
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;

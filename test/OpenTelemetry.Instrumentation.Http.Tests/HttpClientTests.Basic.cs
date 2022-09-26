@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -45,6 +46,27 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var port);
 
             this.url = $"http://{host}:{port}/";
+        }
+
+        [Fact]
+        public void AddHttpClientInstrumentation_NamedOptions()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<HttpClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<HttpClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddHttpClientInstrumentation()
+                .AddHttpClientInstrumentation("Instrumentation2", configureHttpClientInstrumentationOptions: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
         }
 
         [Fact]

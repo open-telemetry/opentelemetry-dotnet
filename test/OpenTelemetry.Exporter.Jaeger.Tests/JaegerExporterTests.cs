@@ -34,6 +34,27 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
     public class JaegerExporterTests
     {
         [Fact]
+        public void AddJaegerExporterNamedOptionsSupported()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<JaegerExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<JaegerExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddJaegerExporter()
+                .AddJaegerExporter("Exporter2", o => { })
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
+        }
+
+        [Fact]
         public void JaegerExporter_BadArgs()
         {
             TracerProviderBuilder builder = null;

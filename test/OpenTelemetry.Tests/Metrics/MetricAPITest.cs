@@ -1356,26 +1356,26 @@ namespace OpenTelemetry.Metrics.Tests
             // for no tag point!
             // This may be changed later.
             counterLong.Add(10);
-            for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderState.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderState.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
             exportedItems.Clear();
             counterLong.Add(10);
-            for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderState.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderState.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
             counterLong.Add(10);
-            for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderState.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
@@ -1386,7 +1386,7 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderState.MaxMetricPointsPerMetricDefault, MetricPointCount());
         }
 
         [Fact]

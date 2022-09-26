@@ -6,6 +6,10 @@
   `TracerProvider` has been moved into the SDK.
   ([#3533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3533))
 
+* Dependency injection support when configuring
+  `MeterProvider` has been moved into the SDK.
+  ([#3646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3646))
+
 ## 1.0.0-rc9.6
 
 Released 2022-Aug-18
