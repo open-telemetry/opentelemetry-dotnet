@@ -4,7 +4,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="${SCRIPT_DIR}/../../"
 
 # freeze the spec & generator tools versions to make SemanticAttributes generation reproducible
-SPEC_VERSION=v1.12.0
+SPEC_VERSION=v1.13.0
 SCHEMA_URL=https://opentelemetry.io/schemas/$SPEC_VERSION
 GENERATOR_VERSION=0.14.0
 
