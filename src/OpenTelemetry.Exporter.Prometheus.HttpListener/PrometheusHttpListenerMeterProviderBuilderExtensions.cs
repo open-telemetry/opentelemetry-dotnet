@@ -89,7 +89,7 @@ namespace OpenTelemetry.Metrics
 
             try
             {
-                var listener = new PrometheusHttpListener(exporter, options.ScrapeEndpointPath, options.UriPrefixes);
+                var listener = new PrometheusHttpListener(exporter, options);
                 exporter.OnDispose = () => listener.Dispose();
                 listener.Start();
             }
