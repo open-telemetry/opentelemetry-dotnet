@@ -597,8 +597,8 @@ namespace OpenTelemetry.Metrics
                         this.histogramBuckets.RunningSum = 0;
                         if (hasMinMax)
                         {
-                            this.histogramBuckets.RunningMin = 0;
-                            this.histogramBuckets.RunningMax = 0;
+                            this.histogramBuckets.RunningMin = double.PositiveInfinity;
+                            this.histogramBuckets.RunningMax = double.NegativeInfinity;
                         }
                     }
 
