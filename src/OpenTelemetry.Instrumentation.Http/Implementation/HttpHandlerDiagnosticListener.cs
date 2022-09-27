@@ -35,6 +35,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
+        private const string OnStartEvent = "System.Net.Http.HttpRequestOut.Start";
+        private const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+        private const string OnUnhandledExceptionEvent = "System.Net.Http.Exception";
+
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
@@ -59,7 +63,32 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.options = options;
         }
 
-        public override void OnStartActivity(Activity activity, object payload)
+        public override void OnEventWritten(string name, object payload)
+        {
+            switch (name)
+            {
+                case OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnUnhandledExceptionEvent:
+                    {
+                        this.OnException(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what HttpClient library does is as below:
             // Activity.Start()
@@ -148,7 +177,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
             // For .NET7.0 or higher versions, activity is created using activity source
             // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
@@ -206,7 +235,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public override void OnException(Activity activity, object payload)
+        public void OnException(Activity activity, object payload)
         {
             // For .NET7.0 or higher versions, activity is created using activity source
             // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.

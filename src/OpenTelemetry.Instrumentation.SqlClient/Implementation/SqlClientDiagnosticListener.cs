@@ -49,8 +49,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         public override bool SupportsNullActivity => true;
 
-        public override void OnCustom(string name, Activity activity, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
+            var activity = Activity.Current;
             switch (name)
             {
                 case SqlDataBeforeExecuteCommand:
