@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Spans will now be exported even if the request was instrumented before. This
+is to enable exporting spans in case of retries as per the
+[spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md#http-retries-examples)
+where same request can be reused. Note: This change will not create a new span
+for each retry as per spec.
+([#3700](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3700))
+
 * Dropped `netstandard2.0` target and added `net6.0`. .NET 5 reached EOL
   in May 2022 and .NET Core 3.1 reaches EOL in December 2022. End of support
   dates for .NET are published
