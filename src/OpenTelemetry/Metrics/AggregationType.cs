@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics;
-
 namespace OpenTelemetry.Metrics
 {
     internal enum AggregationType
