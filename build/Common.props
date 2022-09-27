@@ -42,7 +42,7 @@
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
     <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>7.0.0-preview.7.22375.6</SystemDiagnosticSourcePkgVer>
+    <SystemDiagnosticSourcePkgVer>7.0.0-rc.1.22426.10</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
     <SystemTextJsonPkgVer>4.7.0</SystemTextJsonPkgVer>
     <SystemThreadingTasksExtensionsPkgVer>4.5.3</SystemThreadingTasksExtensionsPkgVer>
