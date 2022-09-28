@@ -21,6 +21,7 @@ However, referencing the latest version of OpenTelemetry .NET by an application
 targeting .NET Core 3.1 or .NET 5 will generate the following build warnings:
 
 > System.Diagnostics.DiagnosticSource doesn't support netcoreapp3.1. Consider updating your TargetFramework to net6.0 or later.
+
 > System.Diagnostics.DiagnosticSource doesn't support net5.0. Consider updating your TargetFramework to net6.0 or later.
 
 These warnings can be suppressed by setting the
