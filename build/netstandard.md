@@ -1,4 +1,4 @@
-# Dropping support for .NET Standard
+# The future of .NET Standard support
 
 ## Background
 
