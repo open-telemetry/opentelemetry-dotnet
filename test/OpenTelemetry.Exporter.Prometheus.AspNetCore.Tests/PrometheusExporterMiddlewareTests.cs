@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics_options",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
         }
 
         [Fact]
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = null));
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
         }
 
         [Fact]
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
         {
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics_predicate?enabled=true",
-                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(httpcontext => httpcontext.Request.Path == "/metrics_predicate" && httpcontext.Request.Query["enabled"] == "true"));
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(httpContext => httpContext.Request.Path == "/metrics_predicate" && httpContext.Request.Query["enabled"] == "true"));
         }
 
         [Fact]
@@ -96,14 +96,14 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                 "/metrics_predicate",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                     meterProvider: null,
-                    predicate: httpcontext => httpcontext.Request.Path == "/metrics_predicate",
+                    predicate: httpContext => httpContext.Request.Path == "/metrics_predicate",
                     path: "/metrics_path",
                     configureBranchedPipeline: branch => branch.Use((context, next) =>
                     {
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
                     })),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
                     if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
                     })),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
                     if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             Action<IServiceCollection> configureServices = null,
             Action<HttpResponseMessage> validateResponse = null,
             bool registerMeterProvider = true,
-            Action<PrometheusExporterOptions> configureOptions = null,
+            Action<PrometheusAspNetCoreOptions> configureOptions = null,
             bool skipMetrics = false)
         {
             using var host = await new HostBuilder()
