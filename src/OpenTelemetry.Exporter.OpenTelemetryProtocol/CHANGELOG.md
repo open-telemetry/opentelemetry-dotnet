@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Recording `Min` and `Max` for histograms is configurable, enabled by default.
+  ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
+
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddOtlpExporter` extension to allow for more fine-grained options management
   ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
