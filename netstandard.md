@@ -44,13 +44,30 @@ frameworks reach end of life, we will remove those targets during a major
 version release roughly aligned with the corresponding major version release
 of .NET.
 
-Given that dropping a framework from a package is a source breaking change, we
-will coordinate dropping .NET Standard targets with a major version release for
-all of our stable packages.
+For example:
+
+Currently the [OpenTelemetry SDK project](/blob/ee11de90a37915c68d9d44cdd283ba6047b394a3/src/OpenTelemetry/OpenTelemetry.csproj#L4)
+contains the following targets:
+
+```xml
+<TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
+```
+
+When .NET 6 reaches end of life November 2024, the net6.0 and .NET Standard targets
+will be removed and we will perform a major version release of the OpenTelemetry
+.NET SDK. Presumably, at that time .NET 8 will have been released, and the
+the project file may look like:
+
+```xml
+<TargetFrameworks>net8.0;net462</TargetFrameworks>
+```
+
+Since dropping a framework from a package is a source breaking change, the above
+example describes our process for all of our stable packages.
 
 That said, the OpenTelemetry .NET project offers a number of packages that have
 not yet had a stable release. We will be removing .NET Standard builds from the
-following packages now:
+following packages ing the next minor release:
 
 * `OpenTelemetry.Exporter.Prometheus.AspNetCore`
 * `OpenTelemetry.Exporter.Prometheus.HttpListener`
