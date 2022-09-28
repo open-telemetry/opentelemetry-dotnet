@@ -2,7 +2,7 @@
 
 ## Background
 
-The OpenTelemetry .NET project depends heavily on APIs provided by .NET.
+The OpenTelemetry .NET project depends heavily on APIs provided by [.NET Runtime](https://github.com/dotnet/runtime).
 Specifically, the APIs provided under `System.Diagnostics.DiagnosticSource`.
 
 With the release of .NET 6, [it was announced](https://github.com/dotnet/announcements/issues/190)
