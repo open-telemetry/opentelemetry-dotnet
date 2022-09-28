@@ -47,7 +47,7 @@ of .NET.
 
 For example:
 
-Currently the [OpenTelemetry SDK project](/blob/ee11de90a37915c68d9d44cdd283ba6047b394a3/src/OpenTelemetry/OpenTelemetry.csproj#L4)
+Currently the [OpenTelemetry SDK project](https://github.com/open-telemetry/opentelemetry-dotnet/blob/ee11de90a37915c68d9d44cdd283ba6047b394a3/src/OpenTelemetry/OpenTelemetry.csproj#L4)
 contains the following targets:
 
 ```xml
