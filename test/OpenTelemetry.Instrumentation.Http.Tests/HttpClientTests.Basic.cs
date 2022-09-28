@@ -39,7 +39,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    ctx.Response.StatusCode = 200;
+                    if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
+                    {
+                        ctx.Response.RedirectLocation = "/";
+                        ctx.Response.StatusCode = 302;
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 200;
+                    }
+
                     ctx.Response.OutputStream.Close();
                 },
                 out var host,
@@ -315,6 +324,28 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+        }
+
+        [Fact]
+        public async Task HttpClientRedirectTest()
+        {
+            var processor = new Mock<BaseProcessor<Activity>>();
+            using (Sdk.CreateTracerProviderBuilder()
+                       .AddHttpClientInstrumentation()
+                       .AddProcessor(processor.Object)
+                       .Build())
+            {
+                using var c = new HttpClient();
+                await c.GetAsync($"{this.url}redirect");
+            }
+
+            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnEnd/OnShutdown/Dispose called.
+
+            var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
+            Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 302);
+
+            var secondActivity = (Activity)processor.Invocations[4].Arguments[0]; // Second OnEnd
+            Assert.Contains(secondActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 200);
         }
 
         [Fact]
