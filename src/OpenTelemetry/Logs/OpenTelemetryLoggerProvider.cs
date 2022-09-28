@@ -53,7 +53,6 @@ namespace OpenTelemetry.Logs
         /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
         /// </summary>
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
-        // [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead")]
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
             : this(options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)))
         {
