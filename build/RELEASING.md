@@ -86,12 +86,16 @@ Only for Maintainers.
 
     If releasing both, push both tags above.
 
- 7. Open [Pack and publish to MyGet
-    workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    and manually trigger a build after selecting the tag that was pushed in Step
-    6 (if you pushed both core and non-core tags, use any one of them). At the
-    end of the workflow run, the packages would be published to MyGet. The
-    package names will be suffixed with the tag names used in Step 1.
+ 7. Go to the [list of
+    tags](https://github.com/open-telemetry/opentelemetry-dotnet/tags)
+    and find the tag created for the core components. Click the three
+    dots next to the tag and choose `Create release`.
+      * Give the release a name based on the tags created
+      (e.g., `1.4.0-beta.1 / 1.0.0-rc9.7`).
+      * Paste the contents of combined changelog from Step 2.
+      * Check "This is a pre-release" if applicable.
+      * Click "Publish release". This will kick off the [Pack and publish to
+      MyGet workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml).
 
  8. Validate using MyGet packages. Basic sanity checks :)
 
@@ -119,15 +123,9 @@ Only for Maintainers.
 
 15. Delete the API key generated in Step 11.
 
-16. Make the Github release with tag from Step 5 and contents of
-    combinedchangelog from Step 2.
-
-    TODO: Add tagging for Metrics release. TODO: Separate version for
-    instrumention/hosting/OTshim package.
-
-17. Update the OpenTelemetry.io document
+16. Update the OpenTelemetry.io document
     [here](https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/net)
     by sending a Pull Request.
 
-18. If a new stable version of the core packages were released, update
+17. If a new stable version of the core packages were released, update
     `OTelPreviousStableVer` in Common.props to the just released stable version.
