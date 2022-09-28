@@ -18,7 +18,8 @@ Therefore, OpenTelemetry .NET can technically be consumed by projects targeting
 out-of-support frameworks - even as far back as .NET Core 2.0.
 
 However, referencing the latest version of OpenTelemetry .NET by an application
-targeting .NET Core 3.1 or .NET 5 will generate the following build warnings:
+targeting .NET Core 3.1 or .NET 5, for example, will generate the following
+build warnings:
 
 > System.Diagnostics.DiagnosticSource doesn't support netcoreapp3.1. Consider updating your TargetFramework to net6.0 or later.
 
@@ -53,10 +54,10 @@ contains the following targets:
 <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
 ```
 
-When .NET 6 reaches end of life November 2024, the net6.0 and .NET Standard targets
+When .NET 6 reaches end of life November 2024, the `net6.0` and .NET Standard targets
 will be removed and we will perform a major version release of the OpenTelemetry
 .NET SDK. Presumably, at that time .NET 8 will have been released, and the
-the project file may look like:
+the project file may look like this:
 
 ```xml
 <TargetFrameworks>net8.0;net462</TargetFrameworks>
@@ -67,7 +68,7 @@ example describes our process for all of our stable packages.
 
 That said, the OpenTelemetry .NET project offers a number of packages that have
 not yet had a stable release. We will be removing .NET Standard builds from the
-following packages ing the next minor release:
+following packages in the next minor release:
 
 * `OpenTelemetry.Exporter.Prometheus.AspNetCore`
 * `OpenTelemetry.Exporter.Prometheus.HttpListener`
