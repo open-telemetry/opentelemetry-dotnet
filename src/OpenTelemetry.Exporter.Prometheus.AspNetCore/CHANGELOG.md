@@ -3,8 +3,8 @@
 ## Unreleased
 
 * Bug fix for Prometheus Exporter reporting StatusCode 204
-instead of 200, when no metrics are collected
-([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
+  instead of 200, when no metrics are collected
+  ([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddPrometheusExporter` extension to allow for more fine-grained options
   management
@@ -14,6 +14,9 @@ instead of 200, when no metrics are collected
 * Added `"# EOF\n"` ending following the [OpenMetrics
   specification](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md)
   ([#3654](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3654))
+* Changed configuration class name from `PrometheusExporterOptions`
+  to `PrometheusAspNetCoreOptions`
+  ([#3694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3694))
 
 ## 1.4.0-alpha.2
 
