@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -72,6 +73,8 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options, IServiceProvider? serviceProvider, bool ownsServiceProvider)
         {
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Building OpenTelemetryLoggerProvider.");
+
             Guard.ThrowIfNull(options);
 
             this.IncludeScopes = options.IncludeScopes;
@@ -102,11 +105,14 @@ namespace OpenTelemetry.Logs
                     configurationActions[i](serviceProvider, this);
                 }
 
+                OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent($"Number of actions configured = {configurationActions.Count}.");
                 options.ConfigurationActions = null;
             }
 
             this.Resource = this.ResourceBuilder.Build();
             this.ResourceBuilder = null;
+
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("OpenTelemetryLoggerProvider built successfully.");
         }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
@@ -173,6 +179,7 @@ namespace OpenTelemetry.Logs
         /// </remarks>
         public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderForceFlushInvoked(timeoutMilliseconds);
             return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
         }
 
@@ -188,25 +195,43 @@ namespace OpenTelemetry.Logs
         /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Started adding processor.");
+
             Guard.ThrowIfNull(processor);
 
             processor.SetParentProvider(this);
 
+            StringBuilder processorAdded = new StringBuilder();
+
             if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
             {
+                OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Using shared thread pool.");
+
                 this.threadStaticPool = null;
             }
 
             if (this.Processor == null)
             {
+                processorAdded.Append("Setting processor to ");
+                processorAdded.Append(processor);
+
                 this.Processor = processor;
             }
             else if (this.Processor is CompositeProcessor<LogRecord> compositeProcessor)
             {
+                processorAdded.Append("Adding processor ");
+                processorAdded.Append(processor);
+                processorAdded.Append(" to composite processor");
+
                 compositeProcessor.AddProcessor(processor);
             }
             else
             {
+                processorAdded.Append("Creating new composite processor with processor ");
+                processorAdded.Append(this.Processor);
+                processorAdded.Append(" and adding new processor ");
+                processorAdded.Append(processor);
+
                 var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
                 {
                     this.Processor,
@@ -215,6 +240,8 @@ namespace OpenTelemetry.Logs
                 newCompositeProcessor.AddProcessor(processor);
                 this.Processor = newCompositeProcessor;
             }
+
+            OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent($"Completed adding processor = \"{processorAdded}\".");
 
             return this;
         }

@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -38,13 +39,43 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    ctx.Response.StatusCode = 200;
+                    if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
+                    {
+                        ctx.Response.RedirectLocation = "/";
+                        ctx.Response.StatusCode = 302;
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 200;
+                    }
+
                     ctx.Response.OutputStream.Close();
                 },
                 out var host,
                 out var port);
 
             this.url = $"http://{host}:{port}/";
+        }
+
+        [Fact]
+        public void AddHttpClientInstrumentation_NamedOptions()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<HttpClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<HttpClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddHttpClientInstrumentation()
+                .AddHttpClientInstrumentation("Instrumentation2", configureHttpClientInstrumentationOptions: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
         }
 
         [Fact]
@@ -293,6 +324,28 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+        }
+
+        [Fact]
+        public async Task HttpClientRedirectTest()
+        {
+            var processor = new Mock<BaseProcessor<Activity>>();
+            using (Sdk.CreateTracerProviderBuilder()
+                       .AddHttpClientInstrumentation()
+                       .AddProcessor(processor.Object)
+                       .Build())
+            {
+                using var c = new HttpClient();
+                await c.GetAsync($"{this.url}redirect");
+            }
+
+            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnEnd/OnShutdown/Dispose called.
+
+            var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
+            Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 302);
+
+            var secondActivity = (Activity)processor.Invocations[4].Arguments[0]; // Second OnEnd
+            Assert.Contains(secondActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 200);
         }
 
         [Fact]

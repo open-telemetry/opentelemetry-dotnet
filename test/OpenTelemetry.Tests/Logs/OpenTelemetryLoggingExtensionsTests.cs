@@ -502,13 +502,13 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         builder.ConfigureServices(services =>
         {
-            services.Configure<BatchExportLogRecordProcessorOptions>(options =>
+            services.Configure<ExportLogRecordProcessorOptions>(options =>
             {
                 // Note: This is testing options integration
 
                 optionsInvocations++;
 
-                options.MaxExportBatchSize = 18;
+                options.BatchExportProcessorOptions.MaxExportBatchSize = 18;
             });
         });
 
@@ -548,6 +548,34 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.True(secondProcessor is BatchLogRecordExportProcessor batchProcessor
             && batchProcessor.Exporter is CustomExporter
             && batchProcessor.MaxExportBatchSize == 100);
+    }
+
+    [Fact]
+    public void LoggingBuilderAddOpenTelemetryAddExporterNamedOptionsTest()
+    {
+        var builder = Sdk.CreateLoggerProviderBuilder();
+
+        int defaultOptionsConfigureInvocations = 0;
+        int namedOptionsConfigureInvocations = 0;
+
+        builder.ConfigureServices(services =>
+        {
+            services.Configure<ExportLogRecordProcessorOptions>(o => defaultOptionsConfigureInvocations++);
+
+            services.Configure<ExportLogRecordProcessorOptions>("Exporter2", o => namedOptionsConfigureInvocations++);
+        });
+
+        builder.AddExporter(ExportProcessorType.Batch, new CustomExporter());
+        builder.AddExporter(ExportProcessorType.Batch, new CustomExporter(), name: "Exporter2", configure: null);
+        builder.AddExporter<CustomExporter>(ExportProcessorType.Batch);
+        builder.AddExporter<CustomExporter>(ExportProcessorType.Batch, name: "Exporter2", configure: null);
+
+        using var provider = builder.Build();
+
+        Assert.NotNull(provider);
+
+        Assert.Equal(1, defaultOptionsConfigureInvocations);
+        Assert.Equal(1, namedOptionsConfigureInvocations);
     }
 
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider

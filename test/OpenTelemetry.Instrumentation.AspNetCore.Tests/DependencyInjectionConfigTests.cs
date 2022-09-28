@@ -17,6 +17,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -32,19 +33,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             this.factory = factory;
         }
 
-        [Fact]
-        public void TestDIConfig()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("CustomName")]
+        public void TestDIConfig(string name)
         {
+            name ??= Options.DefaultName;
+
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
             {
                 services.AddOpenTelemetryTracing(
-                    builder =>
-                     {
-                         builder.AddAspNetCoreInstrumentation();
-                     });
+                    builder => builder.AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
 
-                services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                services.Configure<AspNetCoreInstrumentationOptions>(name, options =>
                 {
                     optionsPickedFromDI = true;
                 });

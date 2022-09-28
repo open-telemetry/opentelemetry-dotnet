@@ -123,8 +123,9 @@ services.AddOpenTelemetryTracing((builder) => builder
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
-you may also customize the named "OtlpTraceExporter" or "OtlpMetricExporter"
-`HttpClient` using the built-in `AddHttpClient` extension:
+you may also customize the named "OtlpTraceExporter", "OtlpMetricExporter",
+and/or "OtlpLogExporter" `HttpClient` using the built-in `AddHttpClient`
+extension:
 
 ```csharp
 services.AddHttpClient(

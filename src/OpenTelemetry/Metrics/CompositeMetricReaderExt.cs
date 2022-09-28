@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
         internal List<Metric> AddMetricsWithNoViews(Instrument instrument)
         {
             var metrics = new List<Metric>(this.count);
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 var metric = cur.Value.AddMetricWithNoViews(instrument);
                 metrics.Add(metric);
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(metrics.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
             int index = 0;
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (metrics[index] != null)
                 {
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(metrics.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
             int index = 0;
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (metrics[index] != null)
                 {
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Metrics
         internal List<List<Metric>> AddMetricsSuperListWithViews(Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
         {
             var metricsSuperList = new List<List<Metric>>(this.count);
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 var metrics = cur.Value.AddMetricsListWithViews(instrument, metricStreamConfigs);
                 metricsSuperList.Add(metrics);
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(metricsSuperList.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
             int index = 0;
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (metricsSuperList[index].Count > 0)
                 {
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(metricsSuperList.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
             int index = 0;
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (metricsSuperList[index].Count > 0)
                 {
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(metrics.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
             int index = 0;
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (metrics[index] != null)
                 {
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(metricsSuperList.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
             int index = 0;
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 if (metricsSuperList[index].Count > 0)
                 {
