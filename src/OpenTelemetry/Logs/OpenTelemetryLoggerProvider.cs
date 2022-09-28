@@ -80,6 +80,11 @@ namespace OpenTelemetry.Logs
 
             this.Resource = options.ResourceBuilder.Build();
 
+            foreach (var processor in options.Processors)
+            {
+                this.AddProcessor(processor);
+            }
+
             OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("OpenTelemetryLoggerProvider built successfully.");
         }
 
