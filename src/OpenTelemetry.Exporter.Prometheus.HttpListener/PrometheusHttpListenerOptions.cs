@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter
@@ -25,7 +26,6 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class PrometheusHttpListenerOptions
     {
-        private int scrapeResponseCacheDurationMilliseconds = 300;
         private IReadOnlyCollection<string> uriPrefixes = new[] { "http://localhost:9464/" };
 
         /// <summary>
@@ -41,13 +41,8 @@ namespace OpenTelemetry.Exporter
         /// </remarks>
         public int ScrapeResponseCacheDurationMilliseconds
         {
-            get => this.scrapeResponseCacheDurationMilliseconds;
-            set
-            {
-                Guard.ThrowIfOutOfRange(value, min: 0);
-
-                this.scrapeResponseCacheDurationMilliseconds = value;
-            }
+            get => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds;
+            set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
         }
 
         /// <summary>
@@ -69,5 +64,7 @@ namespace OpenTelemetry.Exporter
                 this.uriPrefixes = value;
             }
         }
+
+        internal PrometheusExporterOptions ExporterOptions { get; } = new();
     }
 }
