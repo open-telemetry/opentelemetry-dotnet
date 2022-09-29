@@ -180,6 +180,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void LoggerParseStateException<TState>(Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.LoggerParseStateException(typeof(TState).FullName, exception.ToInvariantString());
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -396,16 +405,16 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(43, processorType, result);
         }
 
-        [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
-        public void OpenTelemetryLoggerProviderEvent(string message)
+        [Event(44, Message = "LoggerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void LoggerProviderSdkEvent(string message)
         {
             this.WriteEvent(44, message);
         }
 
-        [Event(45, Message = "ForceFlush invoked for OpenTelemetryLoggerProvider with timeoutMilliseconds = '{0}'.", Level = EventLevel.Verbose)]
-        public void OpenTelemetryLoggerProviderForceFlushInvoked(int timeoutMilliseconds)
+        [Event(45, Message = "Exception thrown parsing log state of type '{0}'. Exception: '{1}'", Level = EventLevel.Error)]
+        public void LoggerParseStateException(string type, string error)
         {
-            this.WriteEvent(45, timeoutMilliseconds);
+            this.WriteEvent(45, type, error);
         }
 
 #if DEBUG

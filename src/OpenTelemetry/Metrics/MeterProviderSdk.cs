@@ -25,6 +25,11 @@ using System.Text;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Metrics.MeterProviderBuilderSdk,
+    OpenTelemetry.Metrics.MeterProviderSdk,
+    OpenTelemetry.Metrics.MeterProviderBuilderState>;
+
 namespace OpenTelemetry.Metrics
 {
     internal sealed class MeterProviderSdk : MeterProvider
@@ -52,9 +57,9 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-            var state = new MeterProviderBuilderState(serviceProvider);
+            var state = new MeterProviderBuilderState(serviceProvider, this);
 
-            MeterProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
+            CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
                 serviceProvider,
                 state);
 

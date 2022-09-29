@@ -20,50 +20,35 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
     /// Stores state used to build a <see cref="TracerProvider"/>.
     /// </summary>
-    internal sealed class TracerProviderBuilderState
+    internal sealed class TracerProviderBuilderState : ProviderBuilderState<TracerProviderBuilderSdk, TracerProviderSdk>
     {
-        internal readonly IServiceProvider ServiceProvider;
-        internal readonly List<InstrumentationRegistration> Instrumentation = new();
-        internal readonly List<BaseProcessor<Activity>> Processors = new();
-        internal readonly List<string> Sources = new();
-        internal readonly HashSet<string> LegacyActivityOperationNames = new(StringComparer.OrdinalIgnoreCase);
-        internal ResourceBuilder? ResourceBuilder;
-        internal Sampler? Sampler;
-        internal bool SetErrorStatusOnException;
-
         private TracerProviderBuilderSdk? builder;
 
-        public TracerProviderBuilderState(IServiceProvider serviceProvider)
+        public TracerProviderBuilderState(
+            IServiceProvider serviceProvider,
+            TracerProviderSdk provider)
+            : base(serviceProvider, provider)
         {
-            Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-            this.ServiceProvider = serviceProvider!;
         }
 
-        public TracerProviderBuilderSdk Builder => this.builder ??= new TracerProviderBuilderSdk(this);
+        public override TracerProviderBuilderSdk Builder
+            => this.builder ??= new TracerProviderBuilderSdk(this);
 
-        public void AddInstrumentation(
-            string instrumentationName,
-            string instrumentationVersion,
-            object instrumentation)
-        {
-            Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationName), "instrumentationName was null or whitespace");
-            Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationVersion), "instrumentationVersion was null or whitespace");
-            Debug.Assert(instrumentation != null, "instrumentation was null");
+        public List<BaseProcessor<Activity>> Processors { get; } = new();
 
-            this.Instrumentation.Add(
-                new InstrumentationRegistration(
-                    instrumentationName,
-                    instrumentationVersion,
-                    instrumentation!));
-        }
+        public List<string> Sources { get; } = new();
+
+        public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public Sampler? Sampler { get; private set; }
+
+        public bool SetErrorStatusOnException { get; set; }
 
         public void AddLegacySource(string operationName)
         {
@@ -93,22 +78,6 @@ namespace OpenTelemetry.Trace
             }
         }
 
-        public void ConfigureResource(Action<ResourceBuilder> configure)
-        {
-            Debug.Assert(configure != null, "configure was null");
-
-            var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
-
-            configure!(resourceBuilder);
-        }
-
-        public void SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
-            this.ResourceBuilder = resourceBuilder;
-        }
-
         public void SetSampler(Sampler sampler)
         {
             Debug.Assert(sampler != null, "sampler was null");
@@ -125,20 +94,6 @@ namespace OpenTelemetry.Trace
             catch (Exception ex)
             {
                 throw new NotSupportedException($"'{nameof(TracerProviderBuilderExtensions.SetErrorStatusOnException)}' is not supported on this platform", ex);
-            }
-        }
-
-        internal readonly struct InstrumentationRegistration
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly object Instance;
-
-            internal InstrumentationRegistration(string name, string version, object instance)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Instance = instance;
             }
         }
     }

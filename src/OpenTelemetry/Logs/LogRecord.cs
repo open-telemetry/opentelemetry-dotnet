@@ -32,6 +32,7 @@ namespace OpenTelemetry.Logs
     public sealed class LogRecord
     {
         internal LogRecordData Data;
+        internal LogRecordILoggerData ILoggerData;
         internal List<KeyValuePair<string, object?>>? AttributeStorage;
         internal List<object?>? BufferedScopes;
         internal int PoolReferenceCount = int.MaxValue;
@@ -58,20 +59,39 @@ namespace OpenTelemetry.Logs
             Exception? exception,
             IReadOnlyList<KeyValuePair<string, object?>>? stateValues)
         {
-            this.Data = new(Activity.Current)
+            var activity = Activity.Current;
+
+            this.Data = new(activity)
             {
                 TimestampBacking = timestamp,
-
-                CategoryName = categoryName,
-                LogLevel = logLevel,
-                EventId = eventId,
-                Message = formattedMessage,
-                Exception = exception,
+                Severity = (LogRecordSeverity)logLevel,
             };
 
+            this.ILoggerData = new()
+            {
+                TraceState = activity?.TraceStateString,
+                CategoryName = categoryName,
+                FormattedMessage = formattedMessage,
+                EventId = eventId,
+                Exception = exception,
+                State = state,
+            };
+
+            if (stateValues != null && stateValues.Count > 0)
+            {
+                var lastAttribute = stateValues[stateValues.Count - 1];
+                this.Data.Body = lastAttribute.Key == "{OriginalFormat}"
+                   ? lastAttribute.Value as string
+                   : null;
+            }
+
+            this.Data.Body ??= formattedMessage;
+
+            this.InstrumentationScope = null;
+
+            this.Attributes = stateValues;
+
             this.ScopeProvider = scopeProvider;
-            this.StateValues = stateValues;
-            this.State = state;
         }
 
         /// <summary>
@@ -116,48 +136,72 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Gets or sets the log trace state.
+        /// Gets or sets the log trace state. Only set if <see
+        /// cref="OpenTelemetryLoggerOptions.IncludeTraceState"/> is enabled.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="TraceState"/> is only set when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
         public string? TraceState
         {
-            get => this.Data.TraceState;
-            set => this.Data.TraceState = value;
+            get => this.ILoggerData.TraceState;
+            set => this.ILoggerData.TraceState = value;
         }
 
         /// <summary>
         /// Gets or sets the log category name.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="CategoryName"/> is only set when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
         public string? CategoryName
         {
-            get => this.Data.CategoryName;
-            set => this.Data.CategoryName = value;
+            get => this.ILoggerData.CategoryName;
+            set => this.ILoggerData.CategoryName = value;
         }
 
         /// <summary>
         /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
         /// </summary>
+        // [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
         public LogLevel LogLevel
         {
-            get => this.Data.LogLevel;
-            set => this.Data.LogLevel = value;
+            get => (LogLevel)(this.Data.Severity ?? LogRecordSeverity.Trace);
+            set => this.Data.Severity = (LogRecordSeverity)value;
         }
 
         /// <summary>
         /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="EventId"/> is only set when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
         public EventId EventId
         {
-            get => this.Data.EventId;
-            set => this.Data.EventId = value;
+            get => this.ILoggerData.EventId;
+            set => this.ILoggerData.EventId = value;
         }
 
         /// <summary>
-        /// Gets or sets the log formatted message.
+        /// Gets or sets the log formatted message. Only set if <see
+        /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is enabled.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="FormattedMessage"/> is only set when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
         public string? FormattedMessage
         {
-            get => this.Data.Message;
-            set => this.Data.Message = value;
+            get => this.ILoggerData.FormattedMessage;
+            set => this.ILoggerData.FormattedMessage = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the log body.
+        /// </summary>
+        public string? Body
+        {
+            get => this.Data.Body;
+            set => this.Data.Body = value;
         }
 
         /// <summary>
@@ -165,23 +209,58 @@ namespace OpenTelemetry.Logs
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object? State { get; set; }
+        /// <remarks>
+        /// Note: <see cref="State"/> is only set when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
+        [Obsolete("State cannot be accessed safely outside of an ILogger.Log call stack. It will be removed in a future version.")]
+        public object? State
+        {
+            get => this.ILoggerData.State;
+            set => this.ILoggerData.State = value;
+        }
 
         /// <summary>
         /// Gets or sets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object?>>? StateValues { get; set; }
+        [Obsolete("Use Attributes instead StateValues will be removed in a future version.")]
+        public IReadOnlyList<KeyValuePair<string, object?>>? StateValues
+        {
+            get => this.Attributes;
+            set => this.Attributes = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the attributes attached to the log.
+        /// </summary>
+        public IReadOnlyList<KeyValuePair<string, object?>>? Attributes { get; set; }
 
         /// <summary>
         /// Gets or sets the log <see cref="System.Exception"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="Exception"/> is only set when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
         public Exception? Exception
         {
-            get => this.Data.Exception;
-            set => this.Data.Exception = value;
+            get => this.ILoggerData.Exception;
+            set => this.ILoggerData.Exception = value;
         }
+
+        /// <summary>
+        /// Gets or sets the log <see cref="LogRecordSeverity"/>.
+        /// </summary>
+        internal LogRecordSeverity? Severity
+        {
+            get => this.Data.Severity;
+            set => this.Data.Severity = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the log <see cref="OpenTelemetry.InstrumentationScope"/>.
+        /// </summary>
+        internal InstrumentationScope? InstrumentationScope { get; set; }
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
 
@@ -191,6 +270,9 @@ namespace OpenTelemetry.Logs
         /// this method.
         /// </summary>
         /// <typeparam name="TState">State.</typeparam>
+        /// <remarks>
+        /// Note: Scopes are only supported when emitting logs through <see cref="ILogger"/>.
+        /// </remarks>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
         public void ForEachScope<TState>(Action<LogRecordScope, TState> callback, TState state)
@@ -206,9 +288,9 @@ namespace OpenTelemetry.Logs
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
             }
-            else if (this.ScopeProvider != null)
+            else
             {
-                this.ScopeProvider.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
+                this.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
             }
         }
 
@@ -243,19 +325,12 @@ namespace OpenTelemetry.Logs
         // can be safely processed outside of the log call chain.
         internal void Buffer()
         {
-            // Note: State values are buffered because some states are not safe
+            // Note: Attributes are buffered because some states are not safe
             // to access outside of the log call chain. See:
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905
-            this.BufferLogStateValues();
+            this.BufferLogAttributes();
 
             this.BufferLogScopes();
-
-            // Note: There is no buffering of "State" only "StateValues". We
-            // don't inspect "object State" at all. It is undefined what
-            // exporters will do with "State". Some might ignore it, some might
-            // attempt to access it as a list. That is potentially dangerous.
-            // TODO: Investigate what to do here. Should we obsolete State and
-            // just use the StateValues design?
         }
 
         internal LogRecord Copy()
@@ -267,8 +342,8 @@ namespace OpenTelemetry.Logs
             return new()
             {
                 Data = this.Data,
-                State = this.State,
-                StateValues = this.StateValues == null ? null : new List<KeyValuePair<string, object?>>(this.StateValues),
+                ILoggerData = this.ILoggerData,
+                Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),
                 BufferedScopes = this.BufferedScopes == null ? null : new List<object?>(this.BufferedScopes),
             };
         }
@@ -278,24 +353,24 @@ namespace OpenTelemetry.Logs
         /// they can be safely processed after the log message lifecycle has
         /// ended.
         /// </summary>
-        private void BufferLogStateValues()
+        private void BufferLogAttributes()
         {
-            var stateValues = this.StateValues;
-            if (stateValues == null || stateValues == this.AttributeStorage)
+            var attributes = this.Attributes;
+            if (attributes == null || attributes == this.AttributeStorage)
             {
                 return;
             }
 
-            var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateValues.Count);
+            var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
 
             // Note: AddRange here will copy all of the KeyValuePairs from
             // stateValues to AttributeStorage. This "captures" the state and
             // fixes issues where the values are generated at enumeration time
             // like
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905.
-            attributeStorage.AddRange(stateValues);
+            attributeStorage.AddRange(attributes);
 
-            this.StateValues = attributeStorage;
+            this.Attributes = attributeStorage;
         }
 
         /// <summary>
@@ -314,6 +389,16 @@ namespace OpenTelemetry.Logs
             this.ScopeProvider.ForEachScope(AddScopeToBufferedList, scopes);
 
             this.ScopeProvider = null;
+        }
+
+        internal struct LogRecordILoggerData
+        {
+            public string? TraceState;
+            public string? CategoryName;
+            public EventId EventId;
+            public string? FormattedMessage;
+            public Exception? Exception;
+            public object? State;
         }
 
         private readonly struct ScopeForEachState<TState>

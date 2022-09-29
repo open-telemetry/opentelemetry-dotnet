@@ -38,9 +38,9 @@ namespace OpenTelemetry
             {
                 return tracerProviderSdk.Resource;
             }
-            else if (baseProvider is OpenTelemetryLoggerProvider otelLoggerProvider)
+            else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
             {
-                return otelLoggerProvider.Resource;
+                return loggerProviderSdk.Resource;
             }
             else if (baseProvider is MeterProviderSdk meterProviderSdk)
             {

@@ -1,4 +1,4 @@
-// <copyright file="IsExternalInit.cs" company="OpenTelemetry Authors">
+// <copyright file="NoopLoggerProvider.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
-namespace System.Runtime.CompilerServices
+#nullable enable
+
+namespace OpenTelemetry.Logs;
+
+internal sealed class NoopLoggerProvider : LoggerProvider
 {
-    // This enabled "init" keyword in net462 + netstandard2.0 targets.
-    internal sealed class IsExternalInit
-    {
-    }
 }
-#endif
