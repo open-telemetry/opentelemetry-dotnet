@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Changed error handling, `InMemoryExporter` will now throw
   `ObjectDisposedException` if `Export` is invoked after the exporter is
   disposed.

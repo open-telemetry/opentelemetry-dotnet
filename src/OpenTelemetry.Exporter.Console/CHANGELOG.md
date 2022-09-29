@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Changed the behavior of `ConsoleExporter`, the exporter will stop outputting
   the data if it is disposed.
   ([#3578](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3578))

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * `OtlpExporterOptions` can now be bound to `IConfiguation` and
   `HttpClientFactory` may be used to manage the `HttpClient` instance used when
   `HttpProtobuf` is configured

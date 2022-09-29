@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddJaegerExporter` extension to allow for more fine-grained options
   management
