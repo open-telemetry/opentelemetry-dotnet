@@ -92,18 +92,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     bodyPopulatedFromFormattedMessage = true;
                 }
 
-                if (logRecord.StateValues != null)
+                if (logRecord.Attributes != null)
                 {
-                    foreach (var stateValue in logRecord.StateValues)
+                    foreach (var attribute in logRecord.Attributes)
                     {
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        if (stateValue.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
+                        if (attribute.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
                         {
-                            otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
+                            otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = attribute.Value as string };
                         }
-                        else if (OtlpKeyValueTransformer.Instance.TryTransformTag(stateValue, out var result))
+                        else if (OtlpKeyValueTransformer.Instance.TryTransformTag(attribute, out var result))
                         {
                             otlpLogRecord.Attributes.Add(result);
                         }
