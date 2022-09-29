@@ -153,6 +153,15 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void LoggerProviderException(string methodName, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.LoggerProviderException(methodName, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
@@ -415,6 +424,12 @@ namespace OpenTelemetry.Internal
         public void LoggerParseStateException(string type, string error)
         {
             this.WriteEvent(45, type, error);
+        }
+
+        [Event(46, Message = "Unknown error in LoggerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+        public void LoggerProviderException(string methodName, string ex)
+        {
+            this.WriteEvent(46, methodName, ex);
         }
 
 #if DEBUG

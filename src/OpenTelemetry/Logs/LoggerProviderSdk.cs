@@ -40,6 +40,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     private readonly ServiceProvider? ownedServiceProvider;
     private readonly List<object> instrumentations = new();
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
+    private int shutdownCount;
     private bool disposed;
 
     public LoggerProviderSdk(
@@ -136,10 +137,35 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     }
 
     public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
-        => this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
+    {
+        try
+        {
+            return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(LoggerProviderSdk.ForceFlush), ex);
+            return false;
+        }
+    }
 
     public bool Shutdown(int timeoutMilliseconds)
-        => this.Processor?.Shutdown(timeoutMilliseconds) ?? true;
+    {
+        if (Interlocked.Increment(ref this.shutdownCount) > 1)
+        {
+            return false; // shutdown already called
+        }
+
+        try
+        {
+            return this.Processor?.Shutdown(timeoutMilliseconds) ?? true;
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(LoggerProviderSdk.Shutdown), ex);
+            return false;
+        }
+    }
 
     public bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
     {

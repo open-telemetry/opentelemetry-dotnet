@@ -10,6 +10,7 @@ OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportLogRecordProcessorOptio
 OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportProcessorType.set -> void
 OpenTelemetry.Logs.LoggerProviderBuilderExtensions
+OpenTelemetry.Logs.LoggerProviderExtensions
 OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Logs.LogRecord.Attributes.set -> void
 OpenTelemetry.Logs.LogRecord.Body.get -> string?
@@ -54,6 +55,9 @@ static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.ConfigureBuilder(this 
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.ConfigureServices(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 static OpenTelemetry.Logs.LoggerProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Logs.LoggerProviderBuilder! loggerProviderBuilder, OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+static OpenTelemetry.Logs.LoggerProviderExtensions.AddProcessor(this OpenTelemetry.Logs.LoggerProvider! provider, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.LoggerProvider!
+static OpenTelemetry.Logs.LoggerProviderExtensions.ForceFlush(this OpenTelemetry.Logs.LoggerProvider! provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.Logs.LoggerProviderExtensions.Shutdown(this OpenTelemetry.Logs.LoggerProvider! provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureBuilder(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
