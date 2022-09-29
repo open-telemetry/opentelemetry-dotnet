@@ -68,7 +68,7 @@ namespace OpenTelemetry.Logs.Tests
             });
             var logger = loggerFactory.CreateLogger<LoggerFactoryAndResourceBuilderTests>();
 
-            var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
+            var provider = exporter.ParentProvider as LoggerProviderSdk;
             Assert.NotNull(provider);
             var resource = provider.GetResource();
             Assert.NotNull(resource);

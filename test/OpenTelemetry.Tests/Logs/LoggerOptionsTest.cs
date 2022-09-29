@@ -25,18 +25,22 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(false)]
         public void VerifyOptionsCannotBeChangedAfterInit(bool initialValue)
         {
-            var options = new OpenTelemetryLoggerOptions
+            OpenTelemetryLoggerOptions options = new()
             {
                 IncludeFormattedMessage = initialValue,
                 IncludeScopes = initialValue,
                 ParseStateValues = initialValue,
             };
-            var provider = new OpenTelemetryLoggerProvider(options);
+
+            using var provider = Sdk.CreateLoggerProviderBuilder()
+                .Build();
+
+            using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options, provider, disposeProvider: false);
 
             // Verify initial set
-            Assert.Equal(initialValue, provider.IncludeFormattedMessage);
-            Assert.Equal(initialValue, provider.IncludeScopes);
-            Assert.Equal(initialValue, provider.ParseStateValues);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeFormattedMessage);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeScopes);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.ParseStateValues);
 
             Assert.NotNull(options);
 
@@ -46,9 +50,9 @@ namespace OpenTelemetry.Logs.Tests
             options.ParseStateValues = !initialValue;
 
             // Verify processor is unchanged
-            Assert.Equal(initialValue, provider.IncludeFormattedMessage);
-            Assert.Equal(initialValue, provider.IncludeScopes);
-            Assert.Equal(initialValue, provider.ParseStateValues);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeFormattedMessage);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.IncludeScopes);
+            Assert.Equal(initialValue, openTelemetryLoggerProvider.ParseStateValues);
         }
     }
 }

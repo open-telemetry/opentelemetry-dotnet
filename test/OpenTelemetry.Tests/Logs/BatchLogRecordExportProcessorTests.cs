@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
@@ -110,4 +109,3 @@ namespace OpenTelemetry.Logs.Tests
         }
     }
 }
-#endif
