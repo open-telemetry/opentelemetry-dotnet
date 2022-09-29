@@ -1,0 +1,7 @@
+#nullable enable
+OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions
+OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.IncludeRenderedMessage.get -> bool
+OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.IncludeRenderedMessage.set -> void
+OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.OpenTelemetrySerilogSinkOptions() -> void
+Serilog.OpenTelemetrySerilogExtensions
+static Serilog.OpenTelemetrySerilogExtensions.OpenTelemetry(this Serilog.Configuration.LoggerSinkConfiguration! loggerConfiguration, OpenTelemetry.Logs.LoggerProvider! loggerProvider, OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions? options = null, bool disposeProvider = false) -> Serilog.LoggerConfiguration!

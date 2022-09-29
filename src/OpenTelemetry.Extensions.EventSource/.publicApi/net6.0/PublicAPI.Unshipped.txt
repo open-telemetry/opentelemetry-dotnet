@@ -1,0 +1,11 @@
+#nullable enable
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter.OpenTelemetryEventSourceLogEmitter(OpenTelemetry.Logs.LoggerProvider! loggerProvider, System.Func<string!, System.Diagnostics.Tracing.EventLevel?>! shouldListenToFunc, OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitterOptions? options = null, bool disposeProvider = false) -> void
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitterOptions
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitterOptions.IncludeFormattedMessage.get -> bool
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitterOptions.IncludeFormattedMessage.set -> void
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitterOptions.OpenTelemetryEventSourceLogEmitterOptions() -> void
+OpenTelemetry.Logs.OpenTelemetryEventSourceLoggerProviderBuilderExtensions
+override OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter.Dispose() -> void
+static OpenTelemetry.Logs.OpenTelemetryEventSourceLoggerProviderBuilderExtensions.AddEventSourceLogEmitter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, System.Func<string!, System.Diagnostics.Tracing.EventLevel?>! shouldListenToFunc) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+static OpenTelemetry.Logs.OpenTelemetryEventSourceLoggerProviderBuilderExtensions.AddEventSourceLogEmitter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, System.Func<string!, System.Diagnostics.Tracing.EventLevel?>! shouldListenToFunc, string? name, System.Action<OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitterOptions!>? configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
