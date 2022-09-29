@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
@@ -25,18 +26,39 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds InMemory exporter to the OpenTelemetryLoggerOptions.
         /// </summary>
-        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/>.</param>
         /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        [Obsolete("Call the AddInMemoryExporter extension using LoggerProviderBuilder instead this method will be removed in a future version.")]
         public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, ICollection<LogRecord> exportedItems)
         {
             Guard.ThrowIfNull(loggerOptions);
+            Guard.ThrowIfNull(exportedItems);
+            var logExporter = new InMemoryExporter<LogRecord>(
+                exportFunc: (in Batch<LogRecord> batch) => ExportLogRecord(in batch, exportedItems));
+
+            loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(logExporter));
+
+            return loggerOptions;
+        }
+
+        /// <summary>
+        /// Adds InMemory exporter to the LoggerProviderBuilder.
+        /// </summary>
+        /// <param name="builder"><see cref="LoggerProviderBuilder"/>.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
+        /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+        public static LoggerProviderBuilder AddInMemoryExporter(this LoggerProviderBuilder builder, ICollection<LogRecord> exportedItems)
+        {
+            Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(exportedItems);
 
             var logExporter = new InMemoryExporter<LogRecord>(
                 exportFunc: (in Batch<LogRecord> batch) => ExportLogRecord(in batch, exportedItems));
 
-            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(logExporter));
+            builder.AddProcessor(new SimpleLogRecordExportProcessor(logExporter));
+
+            return builder;
         }
 
         private static ExportResult ExportLogRecord(in Batch<LogRecord> batch, ICollection<LogRecord> exportedItems)
