@@ -17,4 +17,8 @@
     <PackageReference Include="Serilog" Version="$(SerilogPkgVer)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
+  </ItemGroup>
+
 </Project>
