@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -32,9 +31,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
-        private static readonly string[] LogLevels = new string[7]
+        private static readonly string[] SeverityTextMapping = new string[]
         {
-            "Trace", "Debug", "Information", "Warning", "Error", "Critical", "None",
+            null, "Trace", "Debug", "Information", "Warning", "Error", "Fatal",
         };
 
         internal static void AddBatch(
@@ -71,8 +70,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpLogRecord = new OtlpLogs.LogRecord
                 {
                     TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
-                    SeverityNumber = GetSeverityNumber(logRecord.LogLevel),
-                    SeverityText = LogLevels[(int)logRecord.LogLevel],
+                    SeverityNumber = GetSeverityNumber(logRecord.Severity),
+                    SeverityText = SeverityTextMapping[logRecord.Severity.HasValue ? ((int)logRecord.Severity.Value) + 1 : 0],
                 };
 
                 if (!string.IsNullOrEmpty(logRecord.CategoryName))
@@ -183,34 +182,36 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpLogs.SeverityNumber GetSeverityNumber(LogLevel logLevel)
+        private static OtlpLogs.SeverityNumber GetSeverityNumber(LogRecordSeverity? severity)
         {
-            // Maps the ILogger LogLevel to OpenTelemetry logging level.
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#appendix-b-severitynumber-example-mappings
+            if (!severity.HasValue)
+            {
+                return OtlpLogs.SeverityNumber.Unspecified;
+            }
+
             // TODO: for improving perf simply do ((int)loglevel * 4) + 1
             // or ((int)logLevel << 2) + 1
             // Current code is just for ease of reading.
-            switch (logLevel)
+            switch (severity.Value)
             {
-                case LogLevel.Trace:
+                case LogRecordSeverity.Trace:
                     return OtlpLogs.SeverityNumber.Trace;
-                case LogLevel.Debug:
+                case LogRecordSeverity.Debug:
                     return OtlpLogs.SeverityNumber.Debug;
-                case LogLevel.Information:
+                case LogRecordSeverity.Information:
                     return OtlpLogs.SeverityNumber.Info;
-                case LogLevel.Warning:
+                case LogRecordSeverity.Warning:
                     return OtlpLogs.SeverityNumber.Warn;
-                case LogLevel.Error:
+                case LogRecordSeverity.Error:
                     return OtlpLogs.SeverityNumber.Error;
-                case LogLevel.Critical:
+                case LogRecordSeverity.Fatal:
                     return OtlpLogs.SeverityNumber.Fatal;
 
                 // TODO:
-                // we reach default only for LogLevel.None
-                // but that is filtered out anyway.
-                // should we throw here then?
+                // we reach default only for invalid/unknown values should we
+                // throw here then?
                 default:
-                    return OtlpLogs.SeverityNumber.Debug;
+                    return OtlpLogs.SeverityNumber.Trace;
             }
         }
     }

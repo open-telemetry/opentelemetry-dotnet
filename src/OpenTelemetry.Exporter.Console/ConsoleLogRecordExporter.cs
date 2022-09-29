@@ -70,12 +70,20 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
                 }
 
+                if (logRecord.TraceState != null)
+                {
+                    this.WriteLine($"{"LogRecord.TraceState:",-RightPaddingLength}{logRecord.TraceState}");
+                }
+
                 if (logRecord.CategoryName != null)
                 {
                     this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 }
 
-                this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
+                if (logRecord.Severity.HasValue)
+                {
+                    this.WriteLine($"{"LogRecord.Severity:",-RightPaddingLength}{logRecord.Severity}");
+                }
 
                 if (logRecord.FormattedMessage != null)
                 {

@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -100,7 +99,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
             Assert.Equal(DateTimeKind.Utc, logRecord.Timestamp.Kind);
-            Assert.Equal(LogLevel.Information, logRecord.LogLevel);
+            Assert.Equal(LogRecordSeverity.Information, logRecord.Severity);
             Assert.Null(logRecord.CategoryName);
 
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");

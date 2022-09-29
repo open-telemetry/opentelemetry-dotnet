@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using Xunit;
 
@@ -129,7 +128,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Null(logRecord.FormattedMessage);
             Assert.Equal(TestEventSource.SimpleEventMessage, logRecord.Body);
             Assert.Equal(default, logRecord.EventId);
-            Assert.Equal(LogLevel.Warning, logRecord.LogLevel);
+            Assert.Equal(LogRecordSeverity.Warning, logRecord.Severity);
             Assert.Null(logRecord.CategoryName);
             Assert.Null(logRecord.Exception);
 
@@ -208,7 +207,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Null(logRecord.FormattedMessage);
 
             Assert.Equal(default, logRecord.EventId);
-            Assert.Equal(LogLevel.Information, logRecord.LogLevel);
+            Assert.Equal(LogRecordSeverity.Information, logRecord.Severity);
             Assert.Null(logRecord.CategoryName);
             Assert.Null(logRecord.Exception);
 
