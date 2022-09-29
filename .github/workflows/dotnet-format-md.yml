@@ -9,7 +9,7 @@ name: dotnet format
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ 'main*' ]
     paths-ignore:
     - '**.cs'
     - '.editorconfig'
