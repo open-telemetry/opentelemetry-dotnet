@@ -21,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
@@ -58,107 +57,14 @@ namespace Microsoft.Extensions.Logging
 
             builder.AddConfiguration();
 
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp =>
-            {
-                var finalOptions = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
-
-                return new OpenTelemetryLoggerProvider(finalOptions, sp, ownsServiceProvider: false);
-            }));
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());
 
             // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
             LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
 
             if (configure != null)
             {
-                /*
-                 * We do a two-phase configuration here.
-                 *
-                 * Step 1: Configure callback is first invoked immediately. This
-                 * is to make "Services" available for extension authors to
-                 * register additional dependencies into the collection if
-                 * needed.
-                 */
-
-                var options = new OpenTelemetryLoggerOptions(builder.Services);
-
-                configure(options);
-
-                /*
-                 * Step 2: When ServiceProvider is built from "Services" and the
-                 * LoggerFactory is created then the options pipeline runs and
-                 * builds a new OpenTelemetryLoggerOptions from configuration
-                 * and callbacks are executed. "Services" can no longer be
-                 * modified in this phase because the ServiceProvider is already
-                 * complete. We apply the inline options to the final instance
-                 * to bridge this gap.
-                 */
-
-                builder.Services.Configure<OpenTelemetryLoggerOptions>(finalOptions =>
-                {
-                    options.ApplyTo(finalOptions);
-                });
-            }
-
-            return builder;
-        }
-
-        /// <summary>
-        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
-        /// </summary>
-        /// <remarks>
-        /// Notes:
-        /// <list type="bullet">
-        /// <item>
-        /// The supplied <see cref="OpenTelemetryLoggerProvider"/> will
-        /// automatically be disposed when the <see cref="ILoggerFactory"/>
-        /// built from <paramref name="builder"/> is disposed.
-        /// </item>
-        /// <item>
-        /// Only a single<see cref="OpenTelemetryLoggerProvider"/> can be
-        /// registered for a given <see cref="IServiceCollection"/>. Additional
-        /// calls to this method will be ignored.
-        /// </item>
-        /// </list>
-        /// </remarks>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
-        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
-            => AddOpenTelemetry(builder, openTelemetryLoggerProvider, disposeProvider: true);
-
-        /// <summary>
-        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
-        /// </summary>
-        /// <remarks>
-        /// Note: Only a single <see cref="OpenTelemetryLoggerProvider"/> can be
-        /// registered for a given <see cref="IServiceCollection"/>. Additional
-        /// calls to this method will be ignored.
-        /// </remarks>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
-        /// <param name="disposeProvider">Controls whether or not the supplied
-        /// <paramref name="openTelemetryLoggerProvider"/> will be disposed when
-        /// the <see cref="ILoggerFactory"/> is disposed.</param>
-        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-        public static ILoggingBuilder AddOpenTelemetry(
-            this ILoggingBuilder builder,
-            OpenTelemetryLoggerProvider openTelemetryLoggerProvider,
-            bool disposeProvider)
-        {
-            Guard.ThrowIfNull(builder);
-            Guard.ThrowIfNull(openTelemetryLoggerProvider);
-
-            // Note: Currently if multiple OpenTelemetryLoggerProvider instances
-            // are added to the same ILoggingBuilder everything after the first
-            // is silently ignored.
-
-            if (disposeProvider)
-            {
-                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp => openTelemetryLoggerProvider));
-            }
-            else
-            {
-                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(openTelemetryLoggerProvider));
+                builder.Services.Configure(configure);
             }
 
             return builder;

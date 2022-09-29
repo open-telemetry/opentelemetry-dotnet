@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
@@ -26,18 +25,13 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(false)]
         public void VerifyOptionsCannotBeChangedAfterInit(bool initialValue)
         {
-            OpenTelemetryLoggerOptions options = null;
-
-            using var provider = Sdk.CreateLoggerProviderBuilder()
-                .ConfigureServices(services => services.Configure<OpenTelemetryLoggerOptions>(o =>
-                {
-                    options = o;
-
-                    o.IncludeFormattedMessage = initialValue;
-                    o.IncludeScopes = initialValue;
-                    o.ParseStateValues = initialValue;
-                }))
-                .Build();
+            var options = new OpenTelemetryLoggerOptions
+            {
+                IncludeFormattedMessage = initialValue,
+                IncludeScopes = initialValue,
+                ParseStateValues = initialValue,
+            };
+            var provider = new OpenTelemetryLoggerProvider(options);
 
             // Verify initial set
             Assert.Equal(initialValue, provider.IncludeFormattedMessage);
