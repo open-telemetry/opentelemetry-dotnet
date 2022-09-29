@@ -1,4 +1,4 @@
-// <copyright file="MyClassWithRedactionEnumerator.cs" company="OpenTelemetry Authors">
+// <copyright file="MyRedactedAttributeList.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,32 +17,38 @@
 using System.Collections;
 using System.Collections.Generic;
 
-internal class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<string, object>>
+internal class MyRedactedAttributeList : IReadOnlyList<KeyValuePair<string, object>>
 {
-    private readonly IReadOnlyList<KeyValuePair<string, object>> state;
+    private readonly IReadOnlyList<KeyValuePair<string, object>> attributes;
 
-    public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object>> state)
+    public MyRedactedAttributeList(IReadOnlyList<KeyValuePair<string, object>> attributes)
     {
-        this.state = state;
+        this.attributes = attributes;
     }
 
-    public int Count => this.state.Count;
+    public int Count => this.attributes.Count;
 
-    public KeyValuePair<string, object> this[int index] => this.state[index];
+    public KeyValuePair<string, object> this[int index]
+    {
+        get
+        {
+            var item = this.attributes[index];
+
+            var entryVal = item.Value;
+            if (entryVal != null && entryVal.ToString() != null && entryVal.ToString().Contains("<secret>"))
+            {
+                return new KeyValuePair<string, object>(item.Key, "newRedactedValueHere");
+            }
+
+            return item;
+        }
+    }
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
     {
-        foreach (var entry in this.state)
+        for (var i = 0; i < this.Count; i++)
         {
-            var entryVal = entry.Value;
-            if (entryVal != null && entryVal.ToString() != null && entryVal.ToString().Contains("<secret>"))
-            {
-                yield return new KeyValuePair<string, object>(entry.Key, "newRedactedValueHere");
-            }
-            else
-            {
-                yield return entry;
-            }
+            yield return this[i];
         }
     }
 

@@ -23,16 +23,13 @@ public class Program
 {
     public static void Main()
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
+        using var loggerFactory = LoggerFactory.Create(builder => builder
+            .AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.ParseStateValues = true;
                 options.IncludeFormattedMessage = true;
-                options.AddConsoleExporter();
-            });
-        });
+            })
+            .AddConsoleExporter());
 
         var logger = loggerFactory.CreateLogger<Program>();
 
