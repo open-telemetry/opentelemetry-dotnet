@@ -163,7 +163,7 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
         /// </summary>
-        // [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
+        [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
         public LogLevel LogLevel
         {
             get => (LogLevel)(this.Data.Severity ?? LogRecordSeverity.Trace);
@@ -251,16 +251,16 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the log <see cref="LogRecordSeverity"/>.
         /// </summary>
-        internal LogRecordSeverity? Severity
+        public LogRecordSeverity? Severity
         {
             get => this.Data.Severity;
             set => this.Data.Severity = value;
         }
 
         /// <summary>
-        /// Gets or sets the log <see cref="OpenTelemetry.InstrumentationScope"/>.
+        /// Gets the log <see cref="OpenTelemetry.InstrumentationScope"/>.
         /// </summary>
-        internal InstrumentationScope? InstrumentationScope { get; set; }
+        public InstrumentationScope? InstrumentationScope { get; internal set; }
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
 
@@ -292,15 +292,6 @@ namespace OpenTelemetry.Logs
             {
                 this.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
             }
-        }
-
-        /// <summary>
-        /// Gets a reference to the <see cref="LogRecordData"/> for the log message.
-        /// </summary>
-        /// <returns><see cref="LogRecordData"/>.</returns>
-        internal ref LogRecordData GetDataRef()
-        {
-            return ref this.Data;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

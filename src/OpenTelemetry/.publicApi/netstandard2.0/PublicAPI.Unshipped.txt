@@ -18,7 +18,10 @@ OpenTelemetry.Logs.LogRecord.Body.set -> void
 OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
 OpenTelemetry.Logs.LogRecord.EventId.set -> void
 OpenTelemetry.Logs.LogRecord.Exception.set -> void
+OpenTelemetry.Logs.LogRecord.InstrumentationScope.get -> OpenTelemetry.InstrumentationScope?
 OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
+OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
+OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SpanId.set -> void
 OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
 OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
