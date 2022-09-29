@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Contains options for the <see cref="Logger"/> class.
 /// </summary>
-internal sealed class LoggerOptions
+public sealed class LoggerOptions
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="LoggerOptions"/> class.

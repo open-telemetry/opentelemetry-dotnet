@@ -32,13 +32,27 @@ public class LoggerProvider : BaseProvider
     {
     }
 
-    internal Logger GetLogger()
+    /// <summary>
+    /// Gets a logger with the default options.
+    /// </summary>
+    /// <returns><see cref="Logger"/> instance.</returns>
+    public Logger GetLogger()
         => this.GetLogger(name: null);
 
-    internal Logger GetLogger(string? name)
-    => this.GetLogger(new LoggerOptions(name));
+    /// <summary>
+    /// Gets a logger with the default options.
+    /// </summary>
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    /// <returns><see cref="Logger"/> instance.</returns>
+    public Logger GetLogger(string? name)
+        => this.GetLogger(new LoggerOptions(name));
 
-    internal Logger GetLogger(InstrumentationScope instrumentationScope)
+    /// <summary>
+    /// Gets a logger with the default options.
+    /// </summary>
+    /// <param name="instrumentationScope"><see cref="InstrumentationScope"/>.</param>
+    /// <returns><see cref="Logger"/> instance.</returns>
+    public Logger GetLogger(InstrumentationScope instrumentationScope)
         => this.GetLogger(new LoggerOptions(instrumentationScope));
 
     /// <summary>
@@ -46,7 +60,7 @@ public class LoggerProvider : BaseProvider
     /// </summary>
     /// <param name="options">Optional <see cref="LoggerOptions"/>.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    internal virtual Logger GetLogger(LoggerOptions options)
+    public virtual Logger GetLogger(LoggerOptions options)
     {
         return this.noopLogger ??= new();
     }

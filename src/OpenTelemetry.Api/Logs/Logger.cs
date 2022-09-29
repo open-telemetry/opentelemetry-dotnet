@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Logger is the class responsible for creating log records.
 /// </summary>
-internal abstract class Logger
+public abstract class Logger
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Logger"/> class.

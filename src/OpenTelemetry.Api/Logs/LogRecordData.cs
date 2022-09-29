@@ -24,7 +24,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Stores details about a log record.
 /// </summary>
-internal struct LogRecordData
+public struct LogRecordData
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;
 

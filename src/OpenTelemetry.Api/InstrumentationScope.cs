@@ -20,7 +20,10 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry;
 
-internal sealed class InstrumentationScope
+/// <summary>
+/// Contains details about the library emitting telemetry.
+/// </summary>
+public sealed class InstrumentationScope
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="InstrumentationScope"/> class.

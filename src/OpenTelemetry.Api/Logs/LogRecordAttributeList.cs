@@ -29,7 +29,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Stores attributes to be added to a log record.
 /// </summary>
-internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
@@ -119,21 +119,6 @@ internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, obje
         // Note: This only exists to enable collection initializer syntax
         // like { ["key"] = value }.
         set => this.Add(new KeyValuePair<string, object?>(key, value));
-    }
-
-    /// <summary>
-    /// Create a <see cref="LogRecordAttributeList"/> collection from an enumerable.
-    /// </summary>
-    /// <param name="attributes">Source attributes.</param>
-    /// <returns><see cref="LogRecordAttributeList"/>.</returns>
-    public static LogRecordAttributeList CreateFromEnumerable(IEnumerable<KeyValuePair<string, object?>> attributes)
-    {
-        Guard.ThrowIfNull(attributes);
-
-        LogRecordAttributeList logRecordAttributes = default;
-        logRecordAttributes.OverflowAttributes = new(attributes);
-        logRecordAttributes.count = logRecordAttributes.OverflowAttributes.Count;
-        return logRecordAttributes;
     }
 
     /// <summary>
