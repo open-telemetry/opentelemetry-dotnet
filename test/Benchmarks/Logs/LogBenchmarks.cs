@@ -69,7 +69,7 @@ namespace Benchmarks.Logs
 
             var loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry()s
+                builder.AddOpenTelemetry()
                     .AddProcessor(new DummyLogProcessor())
                     .AddProcessor(new DummyLogProcessor())
                     .AddProcessor(new DummyLogProcessor());
