@@ -28,7 +28,12 @@ namespace OpenTelemetry.Logs
 {
     internal sealed class OpenTelemetryLogger : ILogger
     {
-        private readonly InstrumentationScope instrumentationScope;
+        private static readonly InstrumentationScope InstrumentationScope = new("OpenTelemetry")
+        {
+            Version = $"semver:{typeof(OpenTelemetryLogger).Assembly.GetName().Version}",
+        };
+
+        private readonly string categoryName;
         private readonly OpenTelemetryLoggerProvider iloggerProvider;
         private readonly LoggerProviderSdk? otelLoggerProvider;
 
@@ -37,7 +42,7 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(categoryName);
             Guard.ThrowIfNull(provider);
 
-            this.instrumentationScope = new(categoryName);
+            this.categoryName = categoryName;
             this.iloggerProvider = provider;
             this.otelLoggerProvider = provider.Provider as LoggerProviderSdk;
         }
@@ -67,7 +72,7 @@ namespace OpenTelemetry.Logs
                 iloggerData.TraceState = iloggerProvider.IncludeTraceState && activity != null
                     ? activity.TraceStateString
                     : null;
-                iloggerData.CategoryName = this.instrumentationScope.Name;
+                iloggerData.CategoryName = this.categoryName;
                 iloggerData.EventId = eventId;
                 iloggerData.Exception = exception;
 
@@ -78,7 +83,7 @@ namespace OpenTelemetry.Logs
 
                 LogRecordData.SetActivityContext(ref data, activity);
 
-                record.InstrumentationScope = this.instrumentationScope;
+                record.InstrumentationScope = InstrumentationScope;
 
                 var attributes = record.Attributes = iloggerProvider.IncludeState
                     ? ProcessState(record, state, iloggerProvider.ParseStateValues)
