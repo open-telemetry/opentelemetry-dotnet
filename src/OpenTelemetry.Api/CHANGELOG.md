@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased-Logs
+
+* Added `LoggerProvider` API from the OpenTelemetry specification
+  ([#3707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3707))
+
 ## Unreleased
 
 * Updated to System.Diagnostics.DiagnosticSource version `7.0.0-rc.1.22426.10`.

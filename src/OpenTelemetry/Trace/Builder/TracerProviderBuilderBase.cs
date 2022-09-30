@@ -24,6 +24,11 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Trace.TracerProviderBuilderSdk,
+    OpenTelemetry.Trace.TracerProviderSdk,
+    OpenTelemetry.Trace.TracerProviderBuilderState>;
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -49,7 +54,7 @@ namespace OpenTelemetry.Trace
         // is bound to an external service collection.
         internal TracerProviderBuilderBase(IServiceCollection services)
         {
-            Guard.ThrowIfNull(services);
+            Debug.Assert(services != null, "services was null");
 
             services.AddOptions();
             services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
@@ -109,7 +114,7 @@ namespace OpenTelemetry.Trace
             else
             {
                 this.ConfigureServices(services
-                    => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureBuilderCallback(services, configure));
+                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
 
             return this;
@@ -324,7 +329,8 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
+                this.ConfigureServices(services =>
+                    CallbackHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;

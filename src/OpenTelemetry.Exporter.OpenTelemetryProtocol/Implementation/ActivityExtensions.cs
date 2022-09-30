@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 spans = new ScopeSpans
                 {
-                    Scope = new InstrumentationScope
+                    Scope = new Proto.Common.V1.InstrumentationScope
                     {
                         Name = name, // Name is enforced to not be null, but it can be empty.
                         Version = version ?? string.Empty, // NRE throw by proto

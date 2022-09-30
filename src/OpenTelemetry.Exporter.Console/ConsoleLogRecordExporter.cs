@@ -70,33 +70,42 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
                 }
 
+                if (logRecord.TraceState != null)
+                {
+                    this.WriteLine($"{"LogRecord.TraceState:",-RightPaddingLength}{logRecord.TraceState}");
+                }
+
                 if (logRecord.CategoryName != null)
                 {
                     this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 }
 
-                this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
+                if (logRecord.Severity.HasValue)
+                {
+                    this.WriteLine($"{"LogRecord.Severity:",-RightPaddingLength}{logRecord.Severity}");
+                }
 
                 if (logRecord.FormattedMessage != null)
                 {
                     this.WriteLine($"{"LogRecord.FormattedMessage:",-RightPaddingLength}{logRecord.FormattedMessage}");
                 }
 
-                if (logRecord.State != null)
+                if (logRecord.Body != null)
                 {
-                    this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
+                    this.WriteLine($"{"LogRecord.Body:",-RightPaddingLength}{logRecord.Body}");
                 }
-                else if (logRecord.StateValues != null)
+
+                if (logRecord.Attributes != null)
                 {
-                    this.WriteLine("LogRecord.StateValues (Key:Value):");
-                    for (int i = 0; i < logRecord.StateValues.Count; i++)
+                    this.WriteLine("LogRecord.Attributes (Key:Value):");
+                    for (int i = 0; i < logRecord.Attributes.Count; i++)
                     {
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalFormat}")
-                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.StateValues[i].Value)
-                            : logRecord.StateValues[i];
+                        var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
+                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
+                            : logRecord.Attributes[i];
 
                         if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                         {

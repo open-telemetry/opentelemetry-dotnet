@@ -153,6 +153,15 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void LoggerProviderException(string methodName, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.LoggerProviderException(methodName, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
@@ -177,6 +186,15 @@ namespace OpenTelemetry.Internal
                 {
                     this.NoDroppedExportProcessorItems(exportProcessorName, exporterName);
                 }
+            }
+        }
+
+        [NonEvent]
+        public void LoggerParseStateException<TState>(Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.LoggerParseStateException(typeof(TState).FullName, exception.ToInvariantString());
             }
         }
 
@@ -396,16 +414,22 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(43, processorType, result);
         }
 
-        [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
-        public void OpenTelemetryLoggerProviderEvent(string message)
+        [Event(44, Message = "LoggerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void LoggerProviderSdkEvent(string message)
         {
             this.WriteEvent(44, message);
         }
 
-        [Event(45, Message = "ForceFlush invoked for OpenTelemetryLoggerProvider with timeoutMilliseconds = '{0}'.", Level = EventLevel.Verbose)]
-        public void OpenTelemetryLoggerProviderForceFlushInvoked(int timeoutMilliseconds)
+        [Event(45, Message = "Exception thrown parsing log state of type '{0}'. Exception: '{1}'", Level = EventLevel.Error)]
+        public void LoggerParseStateException(string type, string error)
         {
-            this.WriteEvent(45, timeoutMilliseconds);
+            this.WriteEvent(45, type, error);
+        }
+
+        [Event(46, Message = "Unknown error in LoggerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+        public void LoggerProviderException(string methodName, string ex)
+        {
+            this.WriteEvent(46, methodName, ex);
         }
 
 #if DEBUG

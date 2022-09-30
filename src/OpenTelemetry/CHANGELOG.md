@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased-Logs
+
+* Added `LoggerProvider` API from the OpenTelemetry specification
+  ([#3707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3707))
+
 ## Unreleased
 
 * Use binary search for histograms with 50 or more supplied boundaries.

@@ -29,10 +29,7 @@ public partial class Program
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddProcessor(new DummyProcessor());
-            });
+            builder.AddOpenTelemetry().AddProcessor(new DummyProcessor());
         });
 
         logger = loggerFactory.CreateLogger<Program>();

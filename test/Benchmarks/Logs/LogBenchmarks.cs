@@ -55,25 +55,24 @@ namespace Benchmarks.Logs
 
             var loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options => options
-                    .AddProcessor(new DummyLogProcessor()));
+                builder.AddOpenTelemetry().AddProcessor(new DummyLogProcessor());
             });
             this.loggerWithOneProcessor = loggerFactoryWithOneProcessor.CreateLogger<LogBenchmarks>();
 
             var loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options => options
+                builder.AddOpenTelemetry()
                     .AddProcessor(new DummyLogProcessor())
-                    .AddProcessor(new DummyLogProcessor()));
+                    .AddProcessor(new DummyLogProcessor());
             });
             this.loggerWithTwoProcessors = loggerFactoryWithTwoProcessor.CreateLogger<LogBenchmarks>();
 
             var loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options => options
+                builder.AddOpenTelemetry()
                     .AddProcessor(new DummyLogProcessor())
                     .AddProcessor(new DummyLogProcessor())
-                    .AddProcessor(new DummyLogProcessor()));
+                    .AddProcessor(new DummyLogProcessor());
             });
             this.loggerWithThreeProcessors = loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
         }

@@ -1,1 +1,73 @@
-static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex, in System.Diagnostics.TagList tags) -> void
+#nullable enable
+abstract OpenTelemetry.Logs.Logger.EmitEvent(string! name, in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes = default(OpenTelemetry.Logs.LogRecordAttributeList)) -> void
+abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes = default(OpenTelemetry.Logs.LogRecordAttributeList)) -> void
+OpenTelemetry.InstrumentationScope
+OpenTelemetry.InstrumentationScope.Attributes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>?
+OpenTelemetry.InstrumentationScope.Attributes.init -> void
+OpenTelemetry.InstrumentationScope.InstrumentationScope() -> void
+OpenTelemetry.InstrumentationScope.InstrumentationScope(string? name) -> void
+OpenTelemetry.InstrumentationScope.Name.get -> string!
+OpenTelemetry.InstrumentationScope.SchemaUrl.get -> string?
+OpenTelemetry.InstrumentationScope.SchemaUrl.init -> void
+OpenTelemetry.InstrumentationScope.Version.get -> string?
+OpenTelemetry.InstrumentationScope.Version.init -> void
+OpenTelemetry.Logs.IDeferredLoggerProviderBuilder
+OpenTelemetry.Logs.IDeferredLoggerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+OpenTelemetry.Logs.Logger
+OpenTelemetry.Logs.Logger.Logger(OpenTelemetry.Logs.LoggerOptions! options) -> void
+OpenTelemetry.Logs.Logger.Options.get -> OpenTelemetry.Logs.LoggerOptions!
+OpenTelemetry.Logs.LoggerOptions
+OpenTelemetry.Logs.LoggerOptions.EventDomain.get -> string?
+OpenTelemetry.Logs.LoggerOptions.EventDomain.init -> void
+OpenTelemetry.Logs.LoggerOptions.IncludeTraceContext.get -> bool
+OpenTelemetry.Logs.LoggerOptions.IncludeTraceContext.init -> void
+OpenTelemetry.Logs.LoggerOptions.InstrumentationScope.get -> OpenTelemetry.InstrumentationScope!
+OpenTelemetry.Logs.LoggerOptions.LoggerOptions() -> void
+OpenTelemetry.Logs.LoggerOptions.LoggerOptions(OpenTelemetry.InstrumentationScope! instrumentationScope) -> void
+OpenTelemetry.Logs.LoggerOptions.LoggerOptions(string? name) -> void
+OpenTelemetry.Logs.LoggerProvider
+OpenTelemetry.Logs.LoggerProvider.GetLogger() -> OpenTelemetry.Logs.Logger!
+OpenTelemetry.Logs.LoggerProvider.GetLogger(OpenTelemetry.InstrumentationScope! instrumentationScope) -> OpenTelemetry.Logs.Logger!
+OpenTelemetry.Logs.LoggerProvider.GetLogger(string? name) -> OpenTelemetry.Logs.Logger!
+OpenTelemetry.Logs.LoggerProvider.LoggerProvider() -> void
+OpenTelemetry.Logs.LoggerProviderBuilder
+OpenTelemetry.Logs.LoggerProviderBuilder.LoggerProviderBuilder() -> void
+OpenTelemetry.Logs.LogRecordAttributeList
+OpenTelemetry.Logs.LogRecordAttributeList.Add(string! key, object? value) -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Count.get -> int
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Dispose() -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Enumerator() -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.MoveNext() -> bool
+OpenTelemetry.Logs.LogRecordAttributeList.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
+OpenTelemetry.Logs.LogRecordAttributeList.LogRecordAttributeList() -> void
+OpenTelemetry.Logs.LogRecordAttributeList.RecordException(System.Exception! exception) -> void
+OpenTelemetry.Logs.LogRecordAttributeList.this[int index].get -> System.Collections.Generic.KeyValuePair<string!, object?>
+OpenTelemetry.Logs.LogRecordAttributeList.this[int index].set -> void
+OpenTelemetry.Logs.LogRecordAttributeList.this[string! key].set -> void
+OpenTelemetry.Logs.LogRecordData
+OpenTelemetry.Logs.LogRecordData.Body.get -> string?
+OpenTelemetry.Logs.LogRecordData.Body.set -> void
+OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
+OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void
+OpenTelemetry.Logs.LogRecordData.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
+OpenTelemetry.Logs.LogRecordData.Severity.set -> void
+OpenTelemetry.Logs.LogRecordData.SpanId.get -> System.Diagnostics.ActivitySpanId
+OpenTelemetry.Logs.LogRecordData.SpanId.set -> void
+OpenTelemetry.Logs.LogRecordData.Timestamp.get -> System.DateTime
+OpenTelemetry.Logs.LogRecordData.Timestamp.set -> void
+OpenTelemetry.Logs.LogRecordData.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
+OpenTelemetry.Logs.LogRecordData.TraceFlags.set -> void
+OpenTelemetry.Logs.LogRecordData.TraceId.get -> System.Diagnostics.ActivityTraceId
+OpenTelemetry.Logs.LogRecordData.TraceId.set -> void
+OpenTelemetry.Logs.LogRecordSeverity
+OpenTelemetry.Logs.LogRecordSeverity.Debug = 1 -> OpenTelemetry.Logs.LogRecordSeverity
+OpenTelemetry.Logs.LogRecordSeverity.Error = 4 -> OpenTelemetry.Logs.LogRecordSeverity
+OpenTelemetry.Logs.LogRecordSeverity.Fatal = 5 -> OpenTelemetry.Logs.LogRecordSeverity
+OpenTelemetry.Logs.LogRecordSeverity.Information = 2 -> OpenTelemetry.Logs.LogRecordSeverity
+OpenTelemetry.Logs.LogRecordSeverity.Trace = 0 -> OpenTelemetry.Logs.LogRecordSeverity
+OpenTelemetry.Logs.LogRecordSeverity.Warning = 3 -> OpenTelemetry.Logs.LogRecordSeverity
+~static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex, in System.Diagnostics.TagList tags) -> void
+virtual OpenTelemetry.Logs.LoggerProvider.GetLogger(OpenTelemetry.Logs.LoggerOptions! options) -> OpenTelemetry.Logs.Logger!

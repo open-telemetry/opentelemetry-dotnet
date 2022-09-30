@@ -54,7 +54,7 @@ namespace OpenTelemetry.Logs.Tests
                 index++;
             }
 
-            if (attributes.Count <= LogRecordAttributeList.OverflowAdditionalCapacity)
+            if (attributes.Count <= LogRecordAttributeList.OverflowMaxCount)
             {
                 Assert.Null(attributes.OverflowAttributes);
             }
@@ -79,20 +79,20 @@ namespace OpenTelemetry.Logs.Tests
                 attributes.Add($"key{i}", i);
             }
 
-            LogRecord logRecord = new();
+            List<KeyValuePair<string, object>> storage = null;
 
-            attributes.ApplyToLogRecord(logRecord);
+            var exportedAttributes = attributes.Export(ref storage, additionalCapacity: 0);
 
             if (numberOfItems == 0)
             {
-                Assert.Null(logRecord.StateValues);
+                Assert.Null(exportedAttributes);
                 return;
             }
 
-            Assert.NotNull(logRecord.StateValues);
+            Assert.NotNull(exportedAttributes);
 
             int index = 0;
-            foreach (KeyValuePair<string, object> item in logRecord.StateValues)
+            foreach (KeyValuePair<string, object> item in exportedAttributes)
             {
                 Assert.Equal($"key{index}", item.Key);
                 Assert.Equal(index, (int)item.Value);

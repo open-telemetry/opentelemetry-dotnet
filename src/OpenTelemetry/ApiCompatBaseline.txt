@@ -1,0 +1,3 @@
+Compat issues with assembly OpenTelemetry:
+MembersMustExist : Member 'public Microsoft.Extensions.Logging.ILoggingBuilder Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(Microsoft.Extensions.Logging.ILoggingBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions>)' does not exist in the implementation but it does exist in the contract.
+Total Issues: 1

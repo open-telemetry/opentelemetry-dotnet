@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -56,6 +57,20 @@ namespace OpenTelemetry
             Guard.ThrowIfNull(textMapPropagator);
 
             Propagators.DefaultTextMapPropagator = textMapPropagator;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
+        /// an <see cref="LoggerProvider"/>. In a typical application, a single
+        /// <see cref="LoggerProvider"/> is created at application startup and
+        /// disposed at application shutdown. It is important to ensure that the
+        /// provider is not disposed too early.
+        /// </summary>
+        /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
+        /// to build a <see cref="LoggerProvider"/>.</returns>
+        public static LoggerProviderBuilder CreateLoggerProviderBuilder()
+        {
+            return new LoggerProviderBuilderSdk();
         }
 
         /// <summary>

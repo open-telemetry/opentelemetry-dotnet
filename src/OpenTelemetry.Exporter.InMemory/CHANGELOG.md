@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased-Logs
+
+* Added `LoggerProviderBuilder` `AddInMemoryExporter` extension
+  ([#3707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3707))
+
 ## Unreleased
 
 * Changed error handling, `InMemoryExporter` will now throw

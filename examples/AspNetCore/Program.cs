@@ -87,25 +87,25 @@ builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configurati
 // Logging
 builder.Logging.ClearProviders();
 
-builder.Logging.AddOpenTelemetry(options =>
-{
-    options.ConfigureResource(configureResource);
+// Note: See appsettings.json Logging:OpenTelemetry section for OpenTelemetryLoggerOptions bindings.
+var loggerBuilder = builder.Logging.AddOpenTelemetry();
 
-    // Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
-    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-    switch (logExporter)
-    {
-        case "otlp":
-            options.AddOtlpExporter(otlpOptions =>
-            {
-                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
-            });
-            break;
-        default:
-            options.AddConsoleExporter();
-            break;
-    }
-});
+loggerBuilder.ConfigureResource(configureResource);
+
+// Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
+var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+switch (logExporter)
+{
+    case "otlp":
+        loggerBuilder.AddOtlpExporter(otlpOptions =>
+        {
+            otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+        });
+        break;
+    default:
+        loggerBuilder.AddConsoleExporter();
+        break;
+}
 
 builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 {

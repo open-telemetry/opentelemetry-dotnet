@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased-Logs
+
+* Added overloads which accept a name to the `LoggerProviderBuilder`
+  `AddOtlpExporter` extension to allow for more fine-grained options
+  management
+  ([#3707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3707))
+
 ## Unreleased
 
 * `OtlpExporterOptions` can now be bound to `IConfiguation` and

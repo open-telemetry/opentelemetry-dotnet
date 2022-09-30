@@ -85,8 +85,8 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(t
 ~static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 ~static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 ~static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
-~static OpenTelemetry.ProviderExtensions.GetDefaultResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
-~static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
+static OpenTelemetry.ProviderExtensions.GetDefaultResource(this OpenTelemetry.BaseProvider! baseProvider) -> OpenTelemetry.Resources.Resource!
+static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider! baseProvider) -> OpenTelemetry.Resources.Resource!
 ~static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
 ~static OpenTelemetry.Resources.ResourceBuilder.CreateDefault() -> OpenTelemetry.Resources.ResourceBuilder
 ~static OpenTelemetry.Resources.ResourceBuilder.CreateEmpty() -> OpenTelemetry.Resources.ResourceBuilder
