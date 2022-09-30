@@ -20,10 +20,10 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Logs
 {
     /// <summary>
-    /// Batch log processor options. OTEL_DOTNET_BLP_MAX_QUEUE_SIZE,
-    /// OTEL_DOTNET_BLP_MAX_EXPORT_BATCH_SIZE, OTEL_DOTNET_BLP_EXPORT_TIMEOUT,
-    /// OTEL_DOTNET_BLP_SCHEDULE_DELAY environment variables are parsed during
-    /// object construction.
+    /// Batch log processor options. OTEL_BLRP_MAX_QUEUE_SIZE,
+    /// OTEL_BLRP_MAX_EXPORT_BATCH_SIZE, OTEL_BLRP_EXPORT_TIMEOUT,
+    /// OTEL_BLRP_SCHEDULE_DELAY environment variables are parsed during object
+    /// construction.
     /// </summary>
     /// <remarks>
     /// Notes:
@@ -32,20 +32,20 @@ namespace OpenTelemetry.Logs
     /// to parse any of the supported environment variables.</item>
     /// <item>The environment variable keys are currently experimental and
     /// subject to change. See: <see
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#opentelemetry-environment-variable-specification">OpenTelemetry
-    /// Environment Variable Specification</see>.
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#batch-logrecord-processor">OpenTelemetry
+    /// Environment Variable Specification - Batch LogRecord Processor</see>.
     /// </item>
     /// </list>
     /// </remarks>
     public class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<LogRecord>
     {
-        internal const string MaxQueueSizeEnvVarKey = "OTEL_DOTNET_BLP_MAX_QUEUE_SIZE";
+        internal const string MaxQueueSizeEnvVarKey = "OTEL_BLRP_MAX_QUEUE_SIZE";
 
-        internal const string MaxExportBatchSizeEnvVarKey = "OTEL_DOTNET_BLP_MAX_EXPORT_BATCH_SIZE";
+        internal const string MaxExportBatchSizeEnvVarKey = "OTEL_BLRP_MAX_EXPORT_BATCH_SIZE";
 
-        internal const string ExporterTimeoutEnvVarKey = "OTEL_DOTNET_BLP_EXPORT_TIMEOUT";
+        internal const string ExporterTimeoutEnvVarKey = "OTEL_BLRP_EXPORT_TIMEOUT";
 
-        internal const string ScheduledDelayEnvVarKey = "OTEL_DOTNET_BLP_SCHEDULE_DELAY";
+        internal const string ScheduledDelayEnvVarKey = "OTEL_BLRP_SCHEDULE_DELAY";
 
         public BatchExportLogRecordProcessorOptions()
         {
