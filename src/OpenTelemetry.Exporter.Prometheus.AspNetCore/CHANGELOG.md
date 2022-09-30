@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Bug fix for Prometheus Exporter reporting StatusCode 204
 instead of 200, when no metrics are collected
 ([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))

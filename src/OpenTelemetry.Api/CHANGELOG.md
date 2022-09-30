@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Updated to System.Diagnostics.DiagnosticSource version `7.0.0-rc.1.22426.10`.
+([#3698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3698))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

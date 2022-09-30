@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
 * Performance improvement (Reduced memory allocation) - Updated DiagnosticSource
 event subscription to specific set of events.
 ([#3519](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3519))

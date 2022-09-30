@@ -1,13 +1,5 @@
 Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions
 Microsoft.Extensions.DependencyInjection.TracerProviderBuilderServiceCollectionExtensions
-OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
-OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions.BatchExportLogRecordProcessorOptions() -> void
-OpenTelemetry.Logs.ExportLogRecordProcessorOptions
-OpenTelemetry.Logs.ExportLogRecordProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions!
-OpenTelemetry.Logs.ExportLogRecordProcessorOptions.BatchExportProcessorOptions.set -> void
-OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportLogRecordProcessorOptions() -> void
-OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
-OpenTelemetry.Logs.ExportLogRecordProcessorOptions.ExportProcessorType.set -> void
 OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
 OpenTelemetry.Logs.LogRecord.EventId.set -> void
 OpenTelemetry.Logs.LogRecord.Exception.set -> void
@@ -17,22 +9,6 @@ OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
 OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
 OpenTelemetry.Logs.LogRecord.TraceId.set -> void
 OpenTelemetry.Logs.LogRecord.TraceState.set -> void
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddExporter(OpenTelemetry.ExportProcessorType exportProcessorType, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddExporter(OpenTelemetry.ExportProcessorType exportProcessorType, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter, string? name, System.Action<OpenTelemetry.Logs.ExportLogRecordProcessorOptions!>? configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddExporter(OpenTelemetry.ExportProcessorType exportProcessorType, OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter, System.Action<OpenTelemetry.Logs.ExportLogRecordProcessorOptions!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddExporter<T>(OpenTelemetry.ExportProcessorType exportProcessorType) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddExporter<T>(OpenTelemetry.ExportProcessorType exportProcessorType, string? name, System.Action<OpenTelemetry.Logs.ExportLogRecordProcessorOptions!>? configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddExporter<T>(OpenTelemetry.ExportProcessorType exportProcessorType, System.Action<OpenTelemetry.Logs.ExportLogRecordProcessorOptions!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor<T>() -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureProvider(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.OpenTelemetryLoggerProvider!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetIncludeFormattedMessage(bool enabled) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetIncludeScopes(bool enabled) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetParseStateValues(bool enabled) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.Logs.OpenTelemetryLoggerOptionsExtensions
-OpenTelemetry.Logs.OpenTelemetryLoggerProvider.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerProvider!
-OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
-OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 static Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -53,8 +29,6 @@ OpenTelemetry.Trace.ExportActivityProcessorOptions.ExportActivityProcessorOption
 OpenTelemetry.Trace.ExportActivityProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Trace.ExportActivityProcessorOptions.ExportProcessorType.set -> void
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, bool disposeProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddExporter(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.ExportProcessorType exportProcessorType, OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddExporter(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.ExportProcessorType exportProcessorType, OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter, System.Action<OpenTelemetry.Trace.ExportActivityProcessorOptions!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
@@ -65,8 +39,6 @@ static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor<T>(this 
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureBuilder(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureServices(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Logs.OpenTelemetryLoggerOptionsExtensions.Build(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! options) -> OpenTelemetry.Logs.OpenTelemetryLoggerProvider!
-static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 static Microsoft.Extensions.DependencyInjection.TracerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.TracerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
