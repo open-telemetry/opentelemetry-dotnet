@@ -40,7 +40,7 @@ jobs:
     - name: Publish Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ github.ref || 'main' }}-packages
+        name: ${{ github.ref_name }}-packages
         path: '**/bin/**/*.*nupkg'
 
     - name: Publish MyGet
