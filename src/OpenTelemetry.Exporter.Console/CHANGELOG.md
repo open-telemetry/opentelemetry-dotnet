@@ -5,7 +5,7 @@
 * Added overloads which accept a name to the `LoggerProviderBuilder`
   `AddConsoleExporter` extension to allow for more fine-grained options
   management
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3707))
 
 ## Unreleased
 
