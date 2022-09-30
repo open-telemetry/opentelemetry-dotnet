@@ -28,7 +28,7 @@ namespace OpenTelemetry.Logs
     /// An <see cref="ILoggerProvider"/> implementation for exporting logs using OpenTelemetry.
     /// </summary>
     [ProviderAlias("OpenTelemetry")]
-    public class OpenTelemetryLoggerProvider : ILoggerProvider, ISupportExternalScope
+    public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly LoggerProvider Provider;
         private readonly bool ownsProvider;
@@ -140,21 +140,7 @@ namespace OpenTelemetry.Logs
         }
 
         /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally
-        /// releases the managed resources.
-        /// </summary>
-        /// <param name="disposing">
-        /// <see langword="true"/> to release both managed and unmanaged resources;
-        /// <see langword="false"/> to release only unmanaged resources.
-        /// </param>
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!this.disposed)
             {
