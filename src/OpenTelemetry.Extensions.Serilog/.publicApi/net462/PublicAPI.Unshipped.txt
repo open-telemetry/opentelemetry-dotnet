@@ -5,3 +5,4 @@ OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.IncludeRenderedMessage.set ->
 OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.OpenTelemetrySerilogSinkOptions() -> void
 Serilog.OpenTelemetrySerilogExtensions
 static Serilog.OpenTelemetrySerilogExtensions.OpenTelemetry(this Serilog.Configuration.LoggerSinkConfiguration! loggerConfiguration, OpenTelemetry.Logs.LoggerProvider! loggerProvider, OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions? options = null, bool disposeProvider = false) -> Serilog.LoggerConfiguration!
+static Serilog.OpenTelemetrySerilogExtensions.WithOpenTelemetry(this Serilog.Configuration.LoggerEnrichmentConfiguration! loggerEnrichmentConfiguration) -> Serilog.LoggerConfiguration!
