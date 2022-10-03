@@ -35,7 +35,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // Sdk.Create* style or when manually creating a ServiceCollection. The
         // point of this registration is to make IConfiguration available in
         // those cases.
-        services.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+        services!.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
         return services!;
     }
