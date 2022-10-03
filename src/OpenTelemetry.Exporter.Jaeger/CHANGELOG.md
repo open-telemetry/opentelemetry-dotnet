@@ -4,7 +4,7 @@
 
 * Added support for loading environment variables from `IConfiguration` when
   using the `AddJaegerExporter` extension
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
 
 ## 1.4.0-beta.1
 
