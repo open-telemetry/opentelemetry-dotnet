@@ -37,6 +37,6 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // those cases.
         services.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
-        return services;
+        return services!;
     }
 }
