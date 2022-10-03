@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
@@ -158,18 +159,23 @@ namespace OpenTelemetry.Exporter
         /// </remarks>
         public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
 
-        internal sealed class JaegerExporterOptionsFactory : IOptionsFactory<JaegerExporterOptions>
+        internal sealed class JaegerExporterOptionsFactory : OptionsFactory<JaegerExporterOptions>
         {
             private readonly IConfiguration configuration;
 
-            public JaegerExporterOptionsFactory(IConfiguration configuration)
+            public JaegerExporterOptionsFactory(
+                IConfiguration configuration,
+                IEnumerable<IConfigureOptions<JaegerExporterOptions>> setups,
+                IEnumerable<IPostConfigureOptions<JaegerExporterOptions>> postConfigures,
+                IEnumerable<IValidateOptions<JaegerExporterOptions>> validations)
+                : base(setups, postConfigures, validations)
             {
                 Debug.Assert(configuration != null, "configuration was null");
 
                 this.configuration = configuration;
             }
 
-            public JaegerExporterOptions Create(string name)
+            protected override JaegerExporterOptions CreateInstance(string name)
                 => new(this.configuration);
         }
     }

@@ -18,6 +18,7 @@ using System;
 using System.Net.Http;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
@@ -69,7 +70,7 @@ namespace OpenTelemetry.Trace
                     services.Configure(name, configure);
                 }
 
-                services.AddSingleton<IOptionsFactory<JaegerExporterOptions>, JaegerExporterOptions.JaegerExporterOptionsFactory>();
+                services.TryAddSingleton<IOptionsFactory<JaegerExporterOptions>, JaegerExporterOptions.JaegerExporterOptionsFactory>();
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
