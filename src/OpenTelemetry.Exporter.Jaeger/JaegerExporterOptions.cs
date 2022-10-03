@@ -17,6 +17,8 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -43,37 +45,63 @@ namespace OpenTelemetry.Exporter
 
         internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JaegerExporterOptions"/> class.
+        /// </summary>
         public JaegerExporterOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar))
+        }
+
+        internal JaegerExporterOptions(IConfiguration configuration)
+        {
+            var protocol = configuration.GetValue<string>(OTelProtocolEnvVarKey, null);
+            if (!string.IsNullOrEmpty(protocol))
             {
-                if (JaegerExporterProtocolParser.TryParse(protocolEnvVar, out var protocol))
+                if (JaegerExporterProtocolParser.TryParse(protocol, out var parsedProtocol))
                 {
-                    this.Protocol = protocol;
+                    this.Protocol = parsedProtocol;
                 }
                 else
                 {
-                    throw new FormatException($"{OTelProtocolEnvVarKey} environment variable has an invalid value: '{protocolEnvVar}'");
+                    throw new FormatException($"{OTelProtocolEnvVarKey} environment variable has an invalid value: '{protocol}'");
                 }
             }
 
-            if (EnvironmentVariableHelper.LoadString(OTelAgentHostEnvVarKey, out string agentHostEnvVar))
+            var agentHost = configuration.GetValue<string>(OTelAgentHostEnvVarKey, null);
+            if (!string.IsNullOrEmpty(agentHost))
             {
-                this.AgentHost = agentHostEnvVar;
+                this.AgentHost = agentHost;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, out int agentPortEnvVar))
+            var agentPort = configuration.GetValue<string>(OTelAgentPortEnvVarKey, null);
+            if (!string.IsNullOrEmpty(agentPort))
             {
-                this.AgentPort = agentPortEnvVar;
+                if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, agentPort, out int parsedAgentPort))
+                {
+                    this.AgentPort = parsedAgentPort;
+                }
             }
 
-            if (EnvironmentVariableHelper.LoadString(OTelEndpointEnvVarKey, out string endpointEnvVar)
-                && Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out Uri endpoint))
+            var endpoint = configuration.GetValue<string>(OTelEndpointEnvVarKey, null);
+            if (!string.IsNullOrEmpty(endpoint))
             {
-                this.Endpoint = endpoint;
+                if (Uri.TryCreate(endpoint, UriKind.Absolute, out Uri parsedEndpoint))
+                {
+                    this.Endpoint = parsedEndpoint;
+                }
+                else
+                {
+                    throw new FormatException($"{OTelEndpointEnvVarKey} environment variable has an invalid value: '{endpoint}'");
+                }
             }
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="JaegerExportProtocol"/> to use when
+        /// communicating to Jaeger. Default value: <see
+        /// cref="JaegerExportProtocol.UdpCompactThrift"/>.
+        /// </summary>
         public JaegerExportProtocol Protocol { get; set; } = JaegerExportProtocol.UdpCompactThrift;
 
         /// <summary>
@@ -129,5 +157,20 @@ namespace OpenTelemetry.Exporter
         /// </list>
         /// </remarks>
         public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
+
+        internal sealed class JaegerExporterOptionsFactory : IOptionsFactory<JaegerExporterOptions>
+        {
+            private readonly IConfiguration configuration;
+
+            public JaegerExporterOptionsFactory(IConfiguration configuration)
+            {
+                Debug.Assert(configuration != null, "configuration was null");
+
+                this.configuration = configuration;
+            }
+
+            public JaegerExporterOptions Create(string name)
+                => new(this.configuration);
+        }
     }
 }
