@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter
@@ -52,7 +51,5 @@ namespace OpenTelemetry.Exporter
                 this.uriPrefixes = value;
             }
         }
-
-        internal PrometheusExporterOptions ExporterOptions { get; } = new();
     }
 }
