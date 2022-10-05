@@ -321,7 +321,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             await c.SendAsync(request);
 
             // number of exported spans should be 3(maxRetries)
-            Assert.Equal(3, exportedItems.Count());
+            Assert.Equal(maxRetries, exportedItems.Count());
 
             var spanid1 = exportedItems[0].SpanId;
             var spanid2 = exportedItems[1].SpanId;
