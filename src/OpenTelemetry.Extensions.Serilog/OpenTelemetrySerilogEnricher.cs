@@ -14,36 +14,52 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace OpenTelemetry.Logs
+namespace OpenTelemetry.Logs;
+
+internal sealed class OpenTelemetrySerilogEnricher : ILogEventEnricher
 {
-    internal sealed class OpenTelemetrySerilogEnricher : ILogEventEnricher
+    private readonly OpenTelemetrySerilogEnricherOptions options;
+
+    public OpenTelemetrySerilogEnricher(OpenTelemetrySerilogEnricherOptions options)
     {
-        public void Enrich(
-            LogEvent logEvent,
-            ILogEventPropertyFactory propertyFactory)
+        this.options = options ?? throw new ArgumentNullException(nameof(options));
+    }
+
+    public void Enrich(
+        LogEvent logEvent,
+        ILogEventPropertyFactory propertyFactory)
+    {
+        Debug.Assert(logEvent != null, "LogEvent was null.");
+        Debug.Assert(propertyFactory != null, "PropertyFactory was null.");
+
+        Activity? activity = Activity.Current;
+        if (activity == null)
         {
-            Debug.Assert(logEvent != null, "LogEvent was null.");
-            Debug.Assert(propertyFactory != null, "PropertyFactory was null.");
+            return;
+        }
 
-            Activity? activity = Activity.Current;
-            if (activity == null)
+        logEvent!.AddPropertyIfAbsent(propertyFactory!.CreateProperty(nameof(Activity.SpanId), activity.SpanId.ToHexString()));
+        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.TraceId), activity.TraceId.ToHexString()));
+
+        if (activity.ParentSpanId != default)
+        {
+            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.ParentSpanId), activity.ParentSpanId.ToHexString()));
+        }
+
+        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("TraceFlags", activity.ActivityTraceFlags));
+
+        if (this.options.IncludeTraceState)
+        {
+            var traceState = activity.TraceStateString;
+            if (!string.IsNullOrEmpty(traceState))
             {
-                return;
+                logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("TraceState", traceState));
             }
-
-            logEvent!.AddPropertyIfAbsent(propertyFactory!.CreateProperty(nameof(Activity.SpanId), activity.SpanId.ToHexString()));
-            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.TraceId), activity.TraceId.ToHexString()));
-
-            if (activity.ParentSpanId != default)
-            {
-                logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.ParentSpanId), activity.ParentSpanId.ToHexString()));
-            }
-
-            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("TraceFlags", activity.ActivityTraceFlags));
         }
     }
 }

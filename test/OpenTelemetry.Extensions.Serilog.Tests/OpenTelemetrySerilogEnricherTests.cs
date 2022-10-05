@@ -72,6 +72,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.TraceId), $"\"{activity.TraceId.ToHexString()}\"");
             Assert.False(logEvent.Properties.ContainsKey(nameof(Activity.ParentSpanId)));
             AssertPropertyExistsAndHaveValue(logEvent, "TraceFlags", activity.ActivityTraceFlags.ToString());
+            Assert.False(logEvent.Properties.ContainsKey("TraceState"));
         }
 
         [Fact]
@@ -105,6 +106,45 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.TraceId), $"\"{childActivity.TraceId.ToHexString()}\"");
             AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.ParentSpanId), $"\"{childActivity.ParentSpanId.ToHexString()}\"");
             AssertPropertyExistsAndHaveValue(logEvent, "TraceFlags", childActivity.ActivityTraceFlags.ToString());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("key1=value1")]
+        public void SerilogLogWithActivityAndTraceState(string? traceState)
+        {
+            using var activity = new Activity("Test");
+            activity.Start();
+            activity.TraceStateString = traceState;
+
+            List<LogEvent> emittedLogs = new();
+
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.WithOpenTelemetry(new() { IncludeTraceState = true })
+                .WriteTo.Sink(new InMemorySink(emittedLogs))
+                .CreateLogger();
+
+            Log.Logger.Information("Hello {greeting}", "World");
+
+            Log.CloseAndFlush();
+
+            Assert.Single(emittedLogs);
+
+            LogEvent logEvent = emittedLogs[0];
+
+            AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.SpanId), $"\"{activity.SpanId.ToHexString()}\"");
+            AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.TraceId), $"\"{activity.TraceId.ToHexString()}\"");
+            Assert.False(logEvent.Properties.ContainsKey(nameof(Activity.ParentSpanId)));
+            AssertPropertyExistsAndHaveValue(logEvent, "TraceFlags", activity.ActivityTraceFlags.ToString());
+
+            if (string.IsNullOrEmpty(traceState))
+            {
+                Assert.False(logEvent.Properties.ContainsKey("TraceState"));
+            }
+            else
+            {
+                AssertPropertyExistsAndHaveValue(logEvent, "TraceState", $"\"{traceState}\"");
+            }
         }
 
         private static void AssertPropertyExistsAndHaveValue(

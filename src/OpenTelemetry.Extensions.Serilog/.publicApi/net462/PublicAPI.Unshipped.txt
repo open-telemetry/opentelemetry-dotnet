@@ -1,8 +1,12 @@
 #nullable enable
+OpenTelemetry.Logs.OpenTelemetrySerilogEnricherOptions
+OpenTelemetry.Logs.OpenTelemetrySerilogEnricherOptions.IncludeTraceState.get -> bool
+OpenTelemetry.Logs.OpenTelemetrySerilogEnricherOptions.IncludeTraceState.set -> void
+OpenTelemetry.Logs.OpenTelemetrySerilogEnricherOptions.OpenTelemetrySerilogEnricherOptions() -> void
 OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions
 OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.IncludeRenderedMessage.get -> bool
 OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.IncludeRenderedMessage.set -> void
 OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions.OpenTelemetrySerilogSinkOptions() -> void
 Serilog.OpenTelemetrySerilogExtensions
 static Serilog.OpenTelemetrySerilogExtensions.OpenTelemetry(this Serilog.Configuration.LoggerSinkConfiguration! loggerConfiguration, OpenTelemetry.Logs.LoggerProvider! loggerProvider, OpenTelemetry.Logs.OpenTelemetrySerilogSinkOptions? options = null, bool disposeProvider = false) -> Serilog.LoggerConfiguration!
-static Serilog.OpenTelemetrySerilogExtensions.WithOpenTelemetry(this Serilog.Configuration.LoggerEnrichmentConfiguration! loggerEnrichmentConfiguration) -> Serilog.LoggerConfiguration!
+static Serilog.OpenTelemetrySerilogExtensions.WithOpenTelemetry(this Serilog.Configuration.LoggerEnrichmentConfiguration! loggerEnrichmentConfiguration, OpenTelemetry.Logs.OpenTelemetrySerilogEnricherOptions? options = null) -> Serilog.LoggerConfiguration!
