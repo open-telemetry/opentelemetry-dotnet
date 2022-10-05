@@ -35,7 +35,6 @@ namespace OpenTelemetry.Logs
         internal LogRecordILoggerData ILoggerData;
         internal List<KeyValuePair<string, object?>>? AttributeStorage;
         internal List<object?>? ScopeStorage;
-        internal List<object?>? BufferedScopes;
         internal int PoolReferenceCount = int.MaxValue;
 
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
@@ -76,6 +75,7 @@ namespace OpenTelemetry.Logs
                 EventId = eventId,
                 Exception = exception,
                 State = state,
+                ScopeProvider = scopeProvider,
             };
 
             if (stateValues != null && stateValues.Count > 0)
@@ -91,8 +91,6 @@ namespace OpenTelemetry.Logs
             this.InstrumentationScope = null;
 
             this.Attributes = stateValues;
-
-            this.ScopeProvider = scopeProvider;
         }
 
         /// <summary>
@@ -263,8 +261,6 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public InstrumentationScope? InstrumentationScope { get; internal set; }
 
-        internal IExternalScopeProvider? ScopeProvider { get; set; }
-
         /// <summary>
         /// Executes callback for each currently active scope objects in order
         /// of creation. All callbacks are guaranteed to be called inline from
@@ -282,16 +278,16 @@ namespace OpenTelemetry.Logs
 
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
-            if (this.BufferedScopes != null)
+            if (this.ILoggerData.BufferedScopes != null)
             {
-                foreach (object? scope in this.BufferedScopes)
+                foreach (object? scope in this.ILoggerData.BufferedScopes)
                 {
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
             }
             else
             {
-                this.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
+                this.ILoggerData.ScopeProvider?.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
             }
         }
 
@@ -331,13 +327,14 @@ namespace OpenTelemetry.Logs
             // directly below.
             this.BufferLogScopes();
 
-            return new()
+            var copy = new LogRecord()
             {
                 Data = this.Data,
-                ILoggerData = this.ILoggerData,
+                ILoggerData = this.ILoggerData.Copy(),
                 Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),
-                BufferedScopes = this.BufferedScopes == null ? null : new List<object?>(this.BufferedScopes),
             };
+
+            return copy;
         }
 
         /// <summary>
@@ -371,18 +368,19 @@ namespace OpenTelemetry.Logs
         /// </summary>
         private void BufferLogScopes()
         {
-            if (this.ScopeProvider == null)
+            var scopeProvider = this.ILoggerData.ScopeProvider;
+            if (scopeProvider == null)
             {
                 return;
             }
 
             var scopeStorage = this.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
 
-            this.ScopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
+            scopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
 
-            this.ScopeProvider = null;
+            this.ILoggerData.ScopeProvider = null;
 
-            this.BufferedScopes = scopeStorage;
+            this.ILoggerData.BufferedScopes = scopeStorage;
         }
 
         internal struct LogRecordILoggerData
@@ -393,6 +391,29 @@ namespace OpenTelemetry.Logs
             public string? FormattedMessage;
             public Exception? Exception;
             public object? State;
+            public IExternalScopeProvider? ScopeProvider;
+            public List<object?>? BufferedScopes;
+
+            public LogRecordILoggerData Copy()
+            {
+                var copy = new LogRecordILoggerData
+                {
+                    TraceState = this.TraceState,
+                    CategoryName = this.CategoryName,
+                    EventId = this.EventId,
+                    FormattedMessage = this.FormattedMessage,
+                    Exception = this.Exception,
+                    State = this.State,
+                };
+
+                var bufferedScopes = this.BufferedScopes;
+                if (bufferedScopes != null)
+                {
+                    copy.BufferedScopes = new List<object?>(bufferedScopes);
+                }
+
+                return copy;
+            }
         }
 
         private readonly struct ScopeForEachState<TState>

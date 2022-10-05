@@ -41,7 +41,7 @@ namespace OpenTelemetry.Logs.Tests
 
             var state = new LogRecordTest.DisposingState("Hello world");
 
-            logRecord.ScopeProvider = scopeProvider;
+            logRecord.ILoggerData.ScopeProvider = scopeProvider;
             logRecord.StateValues = state;
 
             processor.OnEnd(logRecord);
@@ -50,10 +50,10 @@ namespace OpenTelemetry.Logs.Tests
 
             Assert.Empty(exportedItems);
 
-            Assert.Null(logRecord.ScopeProvider);
+            Assert.Null(logRecord.ILoggerData.ScopeProvider);
             Assert.False(ReferenceEquals(state, logRecord.StateValues));
             Assert.NotNull(logRecord.AttributeStorage);
-            Assert.NotNull(logRecord.BufferedScopes);
+            Assert.NotNull(logRecord.ILoggerData.BufferedScopes);
 
             KeyValuePair<string, object> actualState = logRecord.StateValues[0];
 

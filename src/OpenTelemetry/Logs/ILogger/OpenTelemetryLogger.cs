@@ -75,6 +75,8 @@ namespace OpenTelemetry.Logs
                 iloggerData.CategoryName = this.categoryName;
                 iloggerData.EventId = eventId;
                 iloggerData.Exception = exception;
+                iloggerData.ScopeProvider = iloggerProvider.IncludeScopes ? this.ScopeProvider : null;
+                iloggerData.BufferedScopes = null;
 
                 ref LogRecordData data = ref record.Data;
 
@@ -114,9 +116,8 @@ namespace OpenTelemetry.Logs
                     iloggerData.FormattedMessage = iloggerProvider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
                 }
 
-                record.ScopeProvider = iloggerProvider.IncludeScopes ? this.ScopeProvider : null;
                 processor.OnEnd(record);
-                record.ScopeProvider = null;
+                iloggerData.ScopeProvider = null;
 
                 // Attempt to return the LogRecord to the pool. This will no-op
                 // if a batch exporter has added a reference.
