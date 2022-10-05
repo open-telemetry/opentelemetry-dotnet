@@ -57,19 +57,19 @@ namespace OpenTelemetry.Logs.Tests
                 new KeyValuePair<string, object?>("key1", "value1"),
                 new KeyValuePair<string, object?>("key2", "value2"),
             };
-            logRecord1.BufferedScopes = new List<object?>(8) { null, null };
+            logRecord1.ScopeStorage = new List<object?>(8) { null, null };
 
             LogRecordThreadStaticPool.Instance.Return(logRecord1);
 
             Assert.Empty(logRecord1.AttributeStorage);
             Assert.Equal(16, logRecord1.AttributeStorage.Capacity);
-            Assert.Empty(logRecord1.BufferedScopes);
-            Assert.Equal(8, logRecord1.BufferedScopes.Capacity);
+            Assert.Empty(logRecord1.ScopeStorage);
+            Assert.Equal(8, logRecord1.ScopeStorage.Capacity);
 
             logRecord1 = LogRecordThreadStaticPool.Instance.Rent();
 
             Assert.NotNull(logRecord1.AttributeStorage);
-            Assert.NotNull(logRecord1.BufferedScopes);
+            Assert.NotNull(logRecord1.ScopeStorage);
 
             for (int i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfAttributes; i++)
             {
@@ -78,13 +78,13 @@ namespace OpenTelemetry.Logs.Tests
 
             for (int i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfScopes; i++)
             {
-                logRecord1.BufferedScopes!.Add(null);
+                logRecord1.ScopeStorage!.Add(null);
             }
 
             LogRecordThreadStaticPool.Instance.Return(logRecord1);
 
             Assert.Null(logRecord1.AttributeStorage);
-            Assert.Null(logRecord1.BufferedScopes);
+            Assert.Null(logRecord1.ScopeStorage);
         }
     }
 }
