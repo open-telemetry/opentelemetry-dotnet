@@ -189,7 +189,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void SumDoubleInfinites()
+        public void SumDoubleInfinities()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -360,7 +360,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void HistogramInfinites()
+        public void HistogramInfinities()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();

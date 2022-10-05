@@ -68,7 +68,7 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
 
 ## Configuration
 
-The `PrometheusExporter` can be configured using the `PrometheusExporterOptions`
+The `PrometheusExporter` can be configured using the `PrometheusAspNetCoreOptions`
 properties.
 
 ### ScrapeEndpointPath
