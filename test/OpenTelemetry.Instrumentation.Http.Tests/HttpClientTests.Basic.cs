@@ -15,6 +15,7 @@
 // </copyright>
 #if !NETFRAMEWORK
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -300,30 +301,36 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
         }
 
-        [Fact]
-        public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3729")]
+        public async Task HttpClientInstrumentationExportsSpansCreatedForRetries()
         {
-            // TODO: Investigate why this feature is required.
-            var processor = new Mock<BaseProcessor<Activity>>();
-
+            var exportedItems = new List<Activity>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
-
-            using (Sdk.CreateTracerProviderBuilder()
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
-                   .AddProcessor(processor.Object)
-                   .Build())
-            {
-                using var c = new HttpClient();
-                await c.SendAsync(request);
-            }
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
 
-            Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+            int maxRetries = 3;
+            using var c = new HttpClient(new RetryHandler(new HttpClientHandler(), maxRetries));
+            await c.SendAsync(request);
+
+            // number of exported spans should be 3(maxRetries)
+            Assert.Equal(3, exportedItems.Count());
+
+            var spanid1 = exportedItems[0].SpanId;
+            var spanid2 = exportedItems[1].SpanId;
+            var spanid3 = exportedItems[2].SpanId;
+
+            // Validate span ids are different
+            Assert.NotEqual(spanid1, spanid2);
+            Assert.NotEqual(spanid3, spanid1);
+            Assert.NotEqual(spanid2, spanid3);
         }
 
         [Fact]
