@@ -934,6 +934,39 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Same("Hello world", actualState.Value);
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ReusedLogRecordScopeTest(bool buffer)
+        {
+            var processor = new ScopeProcessor(buffer);
+
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddProcessor(processor);
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("TestLogger");
+
+            using (var scope1 = logger.BeginScope("scope1"))
+            {
+                logger.LogInformation("message1");
+            }
+
+            using (var scope2 = logger.BeginScope("scope2"))
+            {
+                logger.LogInformation("message2");
+            }
+
+            Assert.Equal(2, processor.Scopes.Count);
+            Assert.Equal("scope1", processor.Scopes[0]);
+            Assert.Equal("scope2", processor.Scopes[1]);
+        }
+
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
             var items = exportedItems = new List<LogRecord>();
@@ -1083,6 +1116,33 @@ namespace OpenTelemetry.Logs.Tests
             public string Property2 { get; set; }
 
             public string Property3 { get; set; }
+        }
+
+        private class ScopeProcessor : BaseProcessor<LogRecord>
+        {
+            private readonly bool buffer;
+
+            public ScopeProcessor(bool buffer)
+            {
+                this.buffer = buffer;
+            }
+
+            public List<object> Scopes { get; } = new();
+
+            public override void OnEnd(LogRecord data)
+            {
+                data.ForEachScope<object>(
+                    (scope, state) =>
+                    {
+                        this.Scopes.Add(scope.Scope);
+                    },
+                    null);
+
+                if (this.buffer)
+                {
+                    data.Buffer();
+                }
+            }
         }
     }
 }
