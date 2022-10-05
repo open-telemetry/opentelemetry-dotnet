@@ -21,6 +21,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\MathHelper.cs" Link="Includes\MathHelper.cs" />
   </ItemGroup>
 
 </Project>

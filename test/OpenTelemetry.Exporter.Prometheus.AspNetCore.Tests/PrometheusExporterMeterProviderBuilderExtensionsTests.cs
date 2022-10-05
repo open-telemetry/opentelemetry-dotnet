@@ -31,9 +31,9 @@ public sealed class PrometheusExporterMeterProviderBuilderExtensionsTests
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<PrometheusExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<PrometheusAspNetCoreOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
 
-                services.Configure<PrometheusExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<PrometheusAspNetCoreOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
             })
             .AddPrometheusExporter()
             .AddPrometheusExporter("Exporter2", o => { })
