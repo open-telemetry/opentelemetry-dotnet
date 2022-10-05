@@ -45,10 +45,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         ctx.Response.RedirectLocation = "/";
                         ctx.Response.StatusCode = 302;
                     }
-                    else if (ctx.Request.Url.PathAndQuery.Contains("retry"))
-                    {
-                        ctx.Response.StatusCode = 500;
-                    }
                     else
                     {
                         ctx.Response.StatusCode = 200;
@@ -311,7 +307,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var exportedItems = new List<Activity>();
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri($"{this.url}retry"),
+                RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 

@@ -40,10 +40,6 @@ namespace OpenTelemetry.Tests
                 try
                 {
                     response = await base.SendAsync(request, cancellationToken);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return response;
-                    }
                 }
                 catch
                 {
