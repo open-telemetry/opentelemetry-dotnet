@@ -326,6 +326,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             // number of exported spans should be 3(maxRetries)
             Assert.Equal(3, exportedItems.Count());
+
+            var spanid1 = exportedItems[0].SpanId;
+            var spanid2 = exportedItems[1].SpanId;
+            var spanid3 = exportedItems[2].SpanId;
+
+            // Validate span ids are different
+            Assert.NotEqual(spanid1, spanid2);
+            Assert.NotEqual(spanid3, spanid1);
+            Assert.NotEqual(spanid2, spanid3);
         }
 
         [Fact]
