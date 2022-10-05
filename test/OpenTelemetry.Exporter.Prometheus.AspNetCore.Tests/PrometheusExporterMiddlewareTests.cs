@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics_options",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
         }
 
         [Fact]
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = null));
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
                     })),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
                     if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
                     })),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
                     if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             Action<IServiceCollection> configureServices = null,
             Action<HttpResponseMessage> validateResponse = null,
             bool registerMeterProvider = true,
-            Action<PrometheusExporterOptions> configureOptions = null,
+            Action<PrometheusAspNetCoreOptions> configureOptions = null,
             bool skipMetrics = false)
         {
             using var host = await new HostBuilder()
