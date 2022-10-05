@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Updated default buckets for Explicit Bucket Histogram to align with the latest spec.
+  ([#3722](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3722))
 
 ## 1.4.0-beta.1
 
