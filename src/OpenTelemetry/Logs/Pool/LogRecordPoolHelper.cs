@@ -41,19 +41,19 @@ namespace OpenTelemetry.Logs
                 }
             }
 
-            var bufferedScopes = logRecord.BufferedScopes;
-            if (bufferedScopes != null)
+            var scopeStorage = logRecord.ScopeStorage;
+            if (scopeStorage != null)
             {
-                if (bufferedScopes.Count > DefaultMaxNumberOfScopes)
+                if (scopeStorage.Count > DefaultMaxNumberOfScopes)
                 {
                     // Don't allow the pool to grow unconstained.
-                    logRecord.BufferedScopes = null;
+                    logRecord.ScopeStorage = null;
                 }
                 else
                 {
                     /* List<T>.Clear sets the count/size to 0 but it maintains the
                     underlying array (capacity). */
-                    bufferedScopes.Clear();
+                    scopeStorage.Clear();
                 }
             }
         }
