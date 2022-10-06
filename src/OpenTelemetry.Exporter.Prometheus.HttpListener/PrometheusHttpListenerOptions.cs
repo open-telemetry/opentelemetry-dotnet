@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class PrometheusHttpListenerOptions
     {
-        private IReadOnlyCollection<string> uriPrefixes = new string[] { "http://localhost:9464/" };
+        private IReadOnlyCollection<string> uriPrefixes = new[] { "http://localhost:9464/" };
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".

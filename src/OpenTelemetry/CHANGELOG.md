@@ -4,6 +4,11 @@
 * Updated default buckets for Explicit Bucket Histogram to align with the latest spec.
   ([#3722](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3722))
 
+* Fixed an issue where `LogRecord.ForEachScope` may return scopes from a
+  previous log if accessed in a custom processor before
+  `BatchLogRecordExportProcessor.OnEnd` is fired.
+  ([#3731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3731))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29

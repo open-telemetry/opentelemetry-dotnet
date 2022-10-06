@@ -21,6 +21,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporterEventSource.cs" Link="Includes/PrometheusExporterEventSource.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporterOptions.cs" Link="Includes/PrometheusExporterOptions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusSerializer.cs" Link="Includes/PrometheusSerializer.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusSerializerExt.cs" Link="Includes/PrometheusSerializerExt.cs" />
   </ItemGroup>
