@@ -301,7 +301,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
         }
 
-        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3729")]
+        [Fact]
         public async Task HttpClientInstrumentationExportsSpansCreatedForRetries()
         {
             var exportedItems = new List<Activity>();
@@ -321,7 +321,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             await c.SendAsync(request);
 
             // number of exported spans should be 3(maxRetries)
-            Assert.Equal(3, exportedItems.Count());
+            Assert.Equal(maxRetries, exportedItems.Count());
 
             var spanid1 = exportedItems[0].SpanId;
             var spanid2 = exportedItems[1].SpanId;
