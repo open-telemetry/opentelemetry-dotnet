@@ -36,7 +36,7 @@ namespace Microsoft.AspNetCore.Builder
         /// </summary>
         /// <remarks>Note: A branched pipeline is created for the route
         /// specified by <see
-        /// cref="PrometheusExporterOptions.ScrapeEndpointPath"/>.</remarks>
+        /// cref="PrometheusAspNetCoreOptions.ScrapeEndpointPath"/>.</remarks>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add
         /// middleware to.</param>
         /// <returns>A reference to the original <see
@@ -86,7 +86,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <remarks>Note: A branched pipeline is created based on the <paramref
         /// name="predicate"/> or <paramref name="path"/>. If neither <paramref
         /// name="predicate"/> nor <paramref name="path"/> are provided then
-        /// <see cref="PrometheusExporterOptions.ScrapeEndpointPath"/> is
+        /// <see cref="PrometheusAspNetCoreOptions.ScrapeEndpointPath"/> is
         /// used.</remarks>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add
         /// middleware to.</param>
@@ -111,8 +111,8 @@ namespace Microsoft.AspNetCore.Builder
             Action<IApplicationBuilder> configureBranchedPipeline)
         {
             // Note: Order is important here. MeterProvider is accessed before
-            // GetOptions<PrometheusExporterOptions> so that any changes made to
-            // PrometheusExporterOptions in deferred AddPrometheusExporter
+            // GetOptions<PrometheusAspNetCoreOptions> so that any changes made to
+            // PrometheusAspNetCoreOptions in deferred AddPrometheusExporter
             // configure actions are reflected.
             meterProvider ??= app.ApplicationServices.GetRequiredService<MeterProvider>();
 
@@ -120,9 +120,9 @@ namespace Microsoft.AspNetCore.Builder
             {
                 if (path == null)
                 {
-                    var options = app.ApplicationServices.GetRequiredService<IOptions<PrometheusExporterOptions>>().Value;
+                    var options = app.ApplicationServices.GetRequiredService<IOptions<PrometheusAspNetCoreOptions>>().Value;
 
-                    path = options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
+                    path = options.ScrapeEndpointPath ?? PrometheusAspNetCoreOptions.DefaultScrapeEndpointPath;
                 }
 
                 if (!path.StartsWith("/"))

@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusAspNetCoreOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Internal;
+using OpenTelemetry.Exporter.Prometheus;
 
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Prometheus exporter options.
     /// </summary>
-    public class PrometheusExporterOptions
+    public class PrometheusAspNetCoreOptions
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
-
-        private int scrapeResponseCacheDurationMilliseconds = 300;
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
@@ -40,13 +38,10 @@ namespace OpenTelemetry.Exporter
         /// </remarks>
         public int ScrapeResponseCacheDurationMilliseconds
         {
-            get => this.scrapeResponseCacheDurationMilliseconds;
-            set
-            {
-                Guard.ThrowIfOutOfRange(value, min: 0);
-
-                this.scrapeResponseCacheDurationMilliseconds = value;
-            }
+            get => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds;
+            set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
         }
+
+        internal PrometheusExporterOptions ExporterOptions { get; } = new();
     }
 }
