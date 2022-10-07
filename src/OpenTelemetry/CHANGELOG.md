@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Make recording of `Min` and `Max` for histograms configurable, enabled by
-  default. Adds a new `MetricType` named `HistogramWithMinMax`.
+  default.
   ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
 
 * Use binary search for histograms with 50 or more supplied boundaries.

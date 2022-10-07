@@ -239,7 +239,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     }
 
                 case MetricType.Histogram:
-                case MetricType.HistogramWithMinMax:
                     {
                         var histogram = new OtlpMetrics.Histogram
                         {
@@ -257,10 +256,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
                             dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
                             dataPoint.Sum = metricPoint.GetHistogramSum();
-                            if (metric.MetricType == MetricType.HistogramWithMinMax)
+
+                            var max = metricPoint.GetHistogramMax();
+                            if (!double.IsNegativeInfinity(max))
                             {
-                                dataPoint.Min = metricPoint.GetHistogramMin();
-                                dataPoint.Max = metricPoint.GetHistogramMax();
+                                dataPoint.Max = max;
+                            }
+
+                            var min = metricPoint.GetHistogramMin();
+                            if (!double.IsPositiveInfinity(min))
+                            {
+                                dataPoint.Min = min;
                             }
 
                             foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())

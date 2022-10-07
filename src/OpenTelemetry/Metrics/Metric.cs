@@ -117,7 +117,7 @@ namespace OpenTelemetry.Metrics
                 || instrumentIdentity.InstrumentType == typeof(Histogram<float>)
                 || instrumentIdentity.InstrumentType == typeof(Histogram<double>))
             {
-                this.MetricType = histogramRecordMinMax ? MetricType.HistogramWithMinMax : MetricType.Histogram;
+                this.MetricType = MetricType.Histogram;
 
                 aggType = histogramBounds != null && histogramBounds.Length == 0
                     ? (histogramRecordMinMax ? AggregationType.HistogramSumCountMinMax : AggregationType.HistogramSumCount)

@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Recording `Min` and `Max` for histograms is configurable, enabled by default.
+* OTLP histogram data points will now include `Min` and `Max` values when
+  they are present.
   ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
 
 * Added overloads which accept a name to the `MeterProviderBuilder`
