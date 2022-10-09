@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics;
 public enum MetricReaderTemporalityPreference
 {
     /// <summary>
-    /// All aggregations are performed using cumulative temporatlity.
+    /// All aggregations are performed using cumulative temporality.
     /// </summary>
     Cumulative = 1,
 
