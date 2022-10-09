@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
-* Updated default buckets for Explicit Bucket Histogram to align with the latest spec.
+
+* Changed default bucket boundaries for Explicit Bucket Histogram from [0, 5,
+10, 25, 50, 75, 100, 250, 500, 1000] to [0, 5, 10, 25, 50, 75, 100, 250, 500,
+750, 1000, 2500, 5000, 7500, 10000].
   ([#3722](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3722))
 
 * Fixed an issue where `LogRecord.ForEachScope` may return scopes from a
