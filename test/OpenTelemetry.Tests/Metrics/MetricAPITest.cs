@@ -1426,7 +1426,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
-            var values = new double[] { -1.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 800.0,  1001.0, 3000.0, 6000.0, 8000.0, 10001.0 };
+            var values = new double[] { -1.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 800.0, 1001.0, 3000.0, 6000.0, 8000.0, 10001.0 };
 
             this.MultithreadedHistogramTest(expected, values);
         }
