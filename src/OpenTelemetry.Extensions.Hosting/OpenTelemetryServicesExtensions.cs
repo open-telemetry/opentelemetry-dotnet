@@ -36,9 +36,20 @@ namespace Microsoft.Extensions.DependencyInjection
         /// cref="IServiceCollection" />.
         /// </summary>
         /// <remarks>
-        /// Note: This is safe to be called multiple times and by library
-        /// authors. Only a single <see cref="TracerProvider"/> will be created
-        /// for a given <see cref="IServiceCollection"/>.
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>
+        /// This is safe to be called multiple times. Only a single <see
+        /// cref="TracerProvider"/> will be created for a given <see
+        /// cref="IServiceCollection"/>.
+        /// </item>
+        /// <item>
+        /// This method should be called by application host code. Library
+        /// authors should call <see
+        /// cref="TracerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryTracing(IServiceCollection)"/>
+        /// instead.
+        /// </item>
+        /// </list>
         /// </remarks>
         /// <param name="services"><see cref="IServiceCollection"/>.</param>
         /// <returns>Supplied <see cref="IServiceCollection"/> for chaining
@@ -76,9 +87,20 @@ namespace Microsoft.Extensions.DependencyInjection
         /// cref="IServiceCollection" />.
         /// </summary>
         /// <remarks>
-        /// Note: This is safe to be called multiple times and by library
-        /// authors. Only a single <see cref="MeterProvider"/> will be created
-        /// for a given <see cref="IServiceCollection"/>.
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>
+        /// This is safe to be called multiple times. Only a single <see
+        /// cref="MeterProvider"/> will be created for a given <see
+        /// cref="IServiceCollection"/>.
+        /// </item>
+        /// <item>
+        /// This method should be called by application host code. Library
+        /// authors should call <see
+        /// cref="MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(IServiceCollection)"/>
+        /// instead.
+        /// </item>
+        /// </list>
         /// </remarks>
         /// <param name="services"><see cref="IServiceCollection"/>.</param>
         /// <returns>Supplied <see cref="IServiceCollection"/> for chaining
