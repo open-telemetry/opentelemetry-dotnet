@@ -414,7 +414,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(46, message);
         }
 
-
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
