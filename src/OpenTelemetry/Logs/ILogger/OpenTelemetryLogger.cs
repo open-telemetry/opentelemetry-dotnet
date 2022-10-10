@@ -135,14 +135,18 @@ namespace OpenTelemetry.Logs
 
         private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(LogRecord logRecord, TState state, bool parseStateValues)
         {
-            /* TODO: Enable this if/when LogRecordAttributeList becomes public.
-            if (state is LogRecordAttributeList logRecordAttributes)
+            if (typeof(TState) == typeof(LogRecordAttributeList))
             {
-                logRecordAttributes.ApplyToLogRecord(logRecord);
-                return logRecord.AttributeStorage!;
+                // Note: This block is written to be elided by the JIT when
+                // TState is not LogRecordAttributeList or optimized when it is.
+                // For users that pass LogRecordAttributeList as TState to
+                // ILogger.Log this will avoid boxing the struct.
+
+                var logRecordAttributes = (LogRecordAttributeList)(object)state!;
+
+                return logRecordAttributes.Export(ref logRecord.AttributeStorage);
             }
-            else*/
-            if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
+            else if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
             }
