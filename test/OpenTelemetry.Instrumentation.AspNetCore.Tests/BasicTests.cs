@@ -105,7 +105,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         if (shouldEnrich)
                         {
-                            options.Enrich = ActivityEnrichment;
+                            options.EnrichOnStart = (activity, request) => { activity.SetTag("enrichedOnStart", "yes"); };
+                            options.EnrichOnStop = (activity, response) => { activity.SetTag("enrichedOnStop", "yes"); };
                         }
                     })
                     .AddInMemoryExporter(exportedItems)
@@ -132,7 +133,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             if (shouldEnrich)
             {
-                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched" && tag.Value == "yes"));
+                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedOnStart" && tag.Value == "yes"));
+                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedOnStop" && tag.Value == "yes"));
             }
 
             ValidateAspNetCoreActivity(activity, "/api/values");
@@ -519,7 +521,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task FilterAndEnrichAreOnlyCalledWhenSampled(SamplingDecision samplingDecision, bool shouldFilterBeCalled, bool shouldEnrichBeCalled)
         {
             bool filterCalled = false;
-            bool enrichCalled = false;
+            bool enrichOnStartCalled = false;
+            bool enrichOnStopCalled = false;
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -531,9 +534,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             filterCalled = true;
                             return true;
                         };
-                        options.Enrich = (activity, methodName, request) =>
+                        options.EnrichOnStart = (activity, request) =>
                         {
-                            enrichCalled = true;
+                            enrichOnStartCalled = true;
+                        };
+                        options.EnrichOnStop = (activity, request) =>
+                        {
+                            enrichOnStopCalled = true;
                         };
                     })
                     .Build();
@@ -550,7 +557,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
-            Assert.Equal(shouldEnrichBeCalled, enrichCalled);
+            Assert.Equal(shouldEnrichBeCalled, enrichOnStartCalled);
+            Assert.Equal(shouldEnrichBeCalled, enrichOnStopCalled);
         }
 
         [Fact]
