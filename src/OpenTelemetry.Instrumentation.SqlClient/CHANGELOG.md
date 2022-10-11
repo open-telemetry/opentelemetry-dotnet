@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Updated to use Activity native support from `System.Diagnostics.DiagnosticSource`
+  to set activity status.
+  ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
+  ([#3751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3751))
+
 ## 1.0.0-rc9.7
 
 Released 2022-Sep-29
