@@ -4,8 +4,7 @@
 
 * Use `Activity.Status` and `Activity.StatusDescription` properties instead of
   `OpenTelemetry.Trace.Status` and `OpenTelemetry.Trace.Status.Description`
-  respectively.
-  to set activity status.
+  respectively to set activity status.
   ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
   ([#3751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3751))
 
