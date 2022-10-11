@@ -6,6 +6,10 @@
   they are present.
   ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
 
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddOtlpExporter` extension to allow for more fine-grained options management
   ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))

@@ -6,6 +6,15 @@
   default.
   ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
 
+* Fixed an issue where `LogRecord.ForEachScope` may return scopes from a
+  previous log if accessed in a custom processor before
+  `BatchLogRecordExportProcessor.OnEnd` is fired.
+  ([#3731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3731))
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Use binary search for histograms with 50 or more supplied boundaries.
   ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
 
@@ -15,13 +24,12 @@
 * Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
   ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
 
-* Added `AddExporter` `OpenTelemetryLoggerOptions` methods and further refined
-  the `OpenTelemetryLoggerProvider` dependency injection scenarios
-  ([#3596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3596))
-
 * Added support for dependency injection scenarios when configuring
   `MeterProvider`
   ([#3646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3646))
+
+* Revert new logging APIs pending OTel specification changes
+  ([#3702](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3702))
 
 ## 1.4.0-alpha.2
 

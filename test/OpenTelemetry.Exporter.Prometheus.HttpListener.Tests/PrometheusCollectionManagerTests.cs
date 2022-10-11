@@ -29,13 +29,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusCollectionManagerTests
     {
-#if PROMETHEUS_HTTP_LISTENER
-        [Fact(Skip = "Might be flaky. Might be a bug. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/3679")]
-#else
-        [Fact]
+        [Theory]
+        [InlineData(0)] // disable cache, default value for HttpListener
+#if PROMETHEUS_ASPNETCORE
+        [InlineData(300)] // default value for AspNetCore, no possibility to set on HttpListener
 #endif
-        public async Task EnterExitCollectTest()
+        public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds)
         {
+            bool cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
             using var meter = new Meter(Utils.GetCurrentMethodName());
 
             using (var provider = Sdk.CreateMeterProviderBuilder()
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 #if PROMETHEUS_HTTP_LISTENER
                 .AddPrometheusHttpListener()
 #elif PROMETHEUS_ASPNETCORE
-                .AddPrometheusExporter()
+                .AddPrometheusExporter(x => x.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds)
 #endif
                 .Build())
             {
@@ -108,9 +109,18 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 var response = await task.ConfigureAwait(false);
                 try
                 {
-                    Assert.Equal(1, runningCollectCount);
-                    Assert.True(response.FromCache);
-                    Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.GeneratedAtUtc);
+                    if (cacheEnabled)
+                    {
+                        Assert.Equal(1, runningCollectCount);
+                        Assert.True(response.FromCache);
+                        Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.GeneratedAtUtc);
+                    }
+                    else
+                    {
+                        Assert.Equal(2, runningCollectCount);
+                        Assert.False(response.FromCache);
+                        Assert.True(firstResponse.CollectionResponse.GeneratedAtUtc < response.GeneratedAtUtc);
+                    }
                 }
                 finally
                 {
@@ -143,7 +153,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 await Task.WhenAll(collectTasks).ConfigureAwait(false);
 
-                Assert.Equal(2, runningCollectCount);
+                Assert.Equal(cacheEnabled ? 2 : 3, runningCollectCount);
                 Assert.NotEqual(firstResponse.ViewPayload, collectTasks[0].Result.ViewPayload);
                 Assert.NotEqual(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[0].Result.CollectionResponse.GeneratedAtUtc);
 

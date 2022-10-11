@@ -114,32 +114,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void AddOtlpLogExporterNamedOptionsSupported()
-        {
-            int defaultExporterOptionsConfigureOptionsInvocations = 0;
-            int namedExporterOptionsConfigureOptionsInvocations = 0;
-
-            using var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options
-                        .ConfigureServices(services =>
-                        {
-                            services.Configure<OtlpExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
-
-                            services.Configure<OtlpExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
-                        })
-                        .AddOtlpExporter()
-                        .AddOtlpExporter("Exporter2", o => { });
-                });
-            });
-
-            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
-            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
-        }
-
-        [Fact]
         public void OtlpLogRecordTestWhenStateValuesArePopulated()
         {
             var logRecords = new List<LogRecord>();

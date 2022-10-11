@@ -26,6 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     {
         private static readonly HashSet<string> DiagnosticSourceEvents = new()
         {
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn",
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
             "Microsoft.AspNetCore.Mvc.BeforeAction",
