@@ -146,17 +146,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        try
-                        {
-                            if (activity.IsAllDataRequested)
-                            {
-                                activity.SetStatus(ActivityStatusCode.Unset);
-                            }
-                        }
-                        finally
-                        {
-                            activity.Stop();
-                        }
+                        activity.Stop();
                     }
 
                     break;
