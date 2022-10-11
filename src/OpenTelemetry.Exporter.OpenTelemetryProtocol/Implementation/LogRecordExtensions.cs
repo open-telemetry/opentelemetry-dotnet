@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
-using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
@@ -77,6 +76,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 };
 
                 var attributeValueLengthLimit = SdkConfiguration.Instance.AttributeValueLengthLimit;
+                var attributeCountLimit = SdkConfiguration.Instance.AttributeCountLimit ?? int.MaxValue;
+
+                // First add the generic attributes like category, eventid and exception, so they are less likely being dropped because of AttributeCountLimit
 
                 if (!string.IsNullOrEmpty(logRecord.CategoryName))
                 {
@@ -85,7 +87,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     // if it makes it to log data model.
                     // https://github.com/open-telemetry/opentelemetry-specification/issues/2398
                     // 2. Confirm if this name for attribute is good.
-                    otlpLogRecord.Attributes.AddStringAttribute("dotnet.ilogger.category", logRecord.CategoryName, attributeValueLengthLimit);
+                    otlpLogRecord.AddStringAttribute("dotnet.ilogger.category", logRecord.CategoryName, attributeValueLengthLimit, attributeCountLimit);
+                }
+
+                if (logRecord.EventId.Id != default)
+                {
+                    otlpLogRecord.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id, attributeValueLengthLimit, attributeCountLimit);
+                }
+
+                if (!string.IsNullOrEmpty(logRecord.EventId.Name))
+                {
+                    otlpLogRecord.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                }
+
+                if (logRecord.Exception != null)
+                {
+                    otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
+                    otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
+                    otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
                 }
 
                 bool bodyPopulatedFromFormattedMessage = false;
@@ -108,26 +127,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         }
                         else if (OtlpKeyValueTransformer.Instance.TryTransformTag(stateValue, out var result, attributeValueLengthLimit))
                         {
-                            otlpLogRecord.Attributes.Add(result);
+                            otlpLogRecord.AddAttribute(result, attributeCountLimit);
                         }
                     }
-                }
-
-                if (logRecord.EventId.Id != default)
-                {
-                    otlpLogRecord.Attributes.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id);
-                }
-
-                if (!string.IsNullOrEmpty(logRecord.EventId.Name))
-                {
-                    otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit);
-                }
-
-                if (logRecord.Exception != null)
-                {
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit);
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit);
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit);
                 }
 
                 if (logRecord.TraceId != default && logRecord.SpanId != default)
@@ -154,7 +156,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
                         if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItemWithDepthInfo, out var result, attributeValueLengthLimit))
                         {
-                            otlpLog.Attributes.Add(result);
+                            otlpLog.AddAttribute(result, attributeCountLimit);
                         }
                     }
                 }
@@ -167,25 +169,37 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpLogRecord;
         }
 
-        private static void AddStringAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, string value, int? maxLength)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddAttribute(this OtlpLogs.LogRecord logRecord, OtlpCommon.KeyValue attribute, int maxAttributeCount)
         {
-            var truncatedValue = maxLength.HasValue && value?.Length > maxLength
-                ? value.Substring(0, maxLength.Value)
-                : value;
-            repeatedField.Add(new OtlpCommon.KeyValue
+            if (logRecord.Attributes.Count < maxAttributeCount)
             {
-                Key = key,
-                Value = new OtlpCommon.AnyValue { StringValue = truncatedValue },
-            });
+                logRecord.Attributes.Add(attribute);
+            }
+            else
+            {
+                logRecord.DroppedAttributesCount++;
+            }
         }
 
-        private static void AddIntAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, int value)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddStringAttribute(this OtlpLogs.LogRecord logRecord, string key, string value, int? maxValueLength, int maxAttributeCount)
         {
-            repeatedField.Add(new OtlpCommon.KeyValue
+            var attributeItem = new KeyValuePair<string, object>(key, value);
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
             {
-                Key = key,
-                Value = new OtlpCommon.AnyValue { IntValue = value },
-            });
+                logRecord.AddAttribute(result, maxAttributeCount);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void AddIntAttribute(this OtlpLogs.LogRecord logRecord, string key, int value, int? maxValueLength, int maxAttributeCount)
+        {
+            var attributeItem = new KeyValuePair<string, object>(key, value);
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
+            {
+                logRecord.AddAttribute(result, maxAttributeCount);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
