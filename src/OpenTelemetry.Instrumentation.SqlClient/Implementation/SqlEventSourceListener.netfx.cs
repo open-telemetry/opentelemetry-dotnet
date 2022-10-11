@@ -181,7 +181,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 if (activity.IsAllDataRequested)
                 {
                     int compositeState = (int)eventData.Payload[1];
-                    if ((compositeState & 0b010) == 0b010)
+
+                    if ((compositeState & 0b001) == 0b001)
+                    {
+                        activity.SetStatus(ActivityStatusCode.Unset);
+                    }
+                    else if ((compositeState & 0b010) == 0b010)
                     {
                         var errorText = $"SqlExceptionNumber {eventData.Payload[2]} thrown.";
                         activity.SetStatus(ActivityStatusCode.Error, errorText);
