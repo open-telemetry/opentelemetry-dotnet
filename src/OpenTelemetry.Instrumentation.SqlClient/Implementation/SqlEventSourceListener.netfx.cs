@@ -183,16 +183,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     int compositeState = (int)eventData.Payload[1];
                     if ((compositeState & 0b001) == 0b001)
                     {
-                        activity.SetStatus(Status.Unset);
+                        activity.SetStatus(ActivityStatusCode.Unset);
                     }
                     else if ((compositeState & 0b010) == 0b010)
                     {
                         var errorText = $"SqlExceptionNumber {eventData.Payload[2]} thrown.";
-                        activity.SetStatus(Status.Error.WithDescription(errorText));
+                        activity.SetStatus(ActivityStatusCode.Error, errorText);
                     }
                     else
                     {
-                        activity.SetStatus(Status.Error.WithDescription("Unknown Sql failure."));
+                        activity.SetStatus(ActivityStatusCode.Error, "Unknown Sql failure.");
                     }
                 }
             }

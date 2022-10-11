@@ -150,7 +150,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         {
                             if (activity.IsAllDataRequested)
                             {
-                                activity.SetStatus(Status.Unset);
+                                activity.SetStatus(ActivityStatusCode.Unset);
                             }
                         }
                         finally
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             {
                                 if (this.exceptionFetcher.TryFetch(payload, out Exception exception) && exception != null)
                                 {
-                                    activity.SetStatus(Status.Error.WithDescription(exception.Message));
+                                    activity.SetStatus(ActivityStatusCode.Error, exception.Message);
 
                                     if (this.options.RecordException)
                                     {
