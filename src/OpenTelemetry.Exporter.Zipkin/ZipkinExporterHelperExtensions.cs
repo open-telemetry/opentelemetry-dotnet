@@ -62,10 +62,15 @@ namespace OpenTelemetry.Trace
 
             name ??= Options.DefaultName;
 
-            if (configure != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configure));
-            }
+                if (configure != null)
+                {
+                    services.Configure(name, configure);
+                }
+
+                services.RegisterOptionsFactory(configuration => new ZipkinExporterOptions(configuration));
+            });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
