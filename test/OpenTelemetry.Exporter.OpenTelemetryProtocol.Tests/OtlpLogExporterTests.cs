@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
@@ -457,6 +459,49 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
             Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordRespectsAttributeLimits()
+        {
+            var sdkLimitOptions = new SdkLimitOptions
+            {
+                AttributeCountLimit = 3, // 3 => LogCategory, exception.type and exception.message
+                AttributeValueLengthLimit = 8,
+            };
+
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation(new Exception("I'm the exception message."), "Exception Occurred");
+
+            var logRecord = logRecords[0];
+            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
+
+            Assert.NotNull(otlpLogRecord);
+            Assert.True(otlpLogRecord.DroppedAttributesCount > 0, "Attributes dropped count is unset");
+
+            var exceptionTypeAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType);
+            Assert.NotNull(exceptionTypeAtt);
+            Assert.Equal("Exceptio", exceptionTypeAtt.Value.StringValue);
+            var exceptionMessageAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage);
+            Assert.NotNull(exceptionMessageAtt);
+            Assert.Equal("I'm the ", exceptionMessageAtt.Value.StringValue);
+
+            var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
+            Assert.Null(exceptionStackTraceAtt);
+        }
+
+        private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
+        {
+            return record.Attributes.FirstOrDefault(att => att.Key == key);
         }
     }
 }
