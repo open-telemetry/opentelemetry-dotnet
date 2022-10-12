@@ -69,7 +69,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 TagList tags;
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
                 var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
 
                 // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
