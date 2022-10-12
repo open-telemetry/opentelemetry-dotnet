@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added support for loading environment variables from `IConfiguration` when
+  using the `AddZipkinExporter` extension
+  ([#3759](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3759))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29
