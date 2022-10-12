@@ -20,7 +20,7 @@ internal static class JaegerExporterProtocolParser
 {
     public static bool TryParse(string value, out JaegerExportProtocol result)
     {
-        switch (value?.Trim())
+        switch (value.Trim().ToLower())
         {
             case "udp/thrift.compact":
                 result = JaegerExportProtocol.UdpCompactThrift;

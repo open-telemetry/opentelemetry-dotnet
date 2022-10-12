@@ -76,6 +76,25 @@ namespace OpenTelemetry.Internal
                 return false;
             }
 
+            return LoadNumeric(envVarKey, value, out result);
+        }
+
+        /// <summary>
+        /// Reads an environment variable and parses is as a
+        /// <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#numeric-value">
+        /// numeric value</a> - a non-negative decimal integer.
+        /// </summary>
+        /// <param name="envVarKey">The name of the environment variable.</param>
+        /// <param name="value">The value of the environment variable.</param>
+        /// <param name="result">The parsed value of the environment variable.</param>
+        /// <returns>
+        /// Returns <c>true</c> when a non-empty value was read; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// Thrown when failed to parse the non-empty value.
+        /// </exception>
+        public static bool LoadNumeric(string envVarKey, string value, out int result)
+        {
             if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out result))
             {
                 throw new FormatException($"{envVarKey} environment variable has an invalid value: '{value}'");
