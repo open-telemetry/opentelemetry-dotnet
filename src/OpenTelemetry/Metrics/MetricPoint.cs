@@ -254,14 +254,11 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHistogramMin(out double min)
         {
-            if (this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
-            {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.TryGetHistogramMin));
-            }
-
             min = this.histogramBuckets.SnapshotMin;
-            return !double.IsPositiveInfinity(min);
+
+            return !double.IsPositiveInfinity(min) &&
+                   (this.aggType == AggregationType.HistogramMinMax ||
+                   this.aggType == AggregationType.HistogramSumCountMinMax);
         }
 
         /// <summary>
@@ -276,14 +273,11 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHistogramMax(out double max)
         {
-            if (this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
-            {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.TryGetHistogramMax));
-            }
-
             max = this.histogramBuckets.SnapshotMax;
-            return !double.IsNegativeInfinity(max);
+
+            return !double.IsNegativeInfinity(max) &&
+                   (this.aggType == AggregationType.HistogramMinMax ||
+                   this.aggType == AggregationType.HistogramSumCountMinMax);
         }
 
         internal readonly MetricPoint Copy()

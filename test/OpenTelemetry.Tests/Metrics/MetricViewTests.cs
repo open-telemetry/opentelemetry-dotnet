@@ -610,7 +610,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramMinMax), MemberType = typeof(MetricTestData))]
-        public void HistogramMinMaxThrows(double[] values, HistogramConfiguration histogramConfiguration)
+        public void HistogramMinMaxNotPresent(double[] values, HistogramConfiguration histogramConfiguration)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var histogram = meter.CreateHistogram<double>("MyHistogram");
@@ -636,11 +636,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             var histogramPoint = metricPoints[0];
 
-            var ex = Assert.Throws<NotSupportedException>(() => histogramPoint.TryGetHistogramMin(out var min));
-            Assert.Contains($"{nameof(histogramPoint.TryGetHistogramMin)} is not supported for this metric type.", ex.Message);
-
-            ex = Assert.Throws<NotSupportedException>(() => histogramPoint.TryGetHistogramMax(out var max));
-            Assert.Contains($"{nameof(histogramPoint.TryGetHistogramMax)} is not supported for this metric type.", ex.Message);
+            Assert.False(histogramPoint.TryGetHistogramMin(out var min));
+            Assert.False(histogramPoint.TryGetHistogramMax(out var max));
         }
 
         [Fact]
