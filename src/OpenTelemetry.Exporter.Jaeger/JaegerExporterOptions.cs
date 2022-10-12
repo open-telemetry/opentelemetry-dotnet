@@ -15,11 +15,9 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -56,45 +54,27 @@ namespace OpenTelemetry.Exporter
 
         internal JaegerExporterOptions(IConfiguration configuration)
         {
-            var protocol = configuration.GetValue<string>(OTelProtocolEnvVarKey, null);
-            if (!string.IsNullOrEmpty(protocol))
+            if (configuration.TryGetValue<JaegerExportProtocol>(
+                OTelProtocolEnvVarKey,
+                JaegerExporterProtocolParser.TryParse,
+                out var protocol))
             {
-                if (JaegerExporterProtocolParser.TryParse(protocol, out var parsedProtocol))
-                {
-                    this.Protocol = parsedProtocol;
-                }
-                else
-                {
-                    throw new FormatException($"{OTelProtocolEnvVarKey} environment variable has an invalid value: '{protocol}'");
-                }
+                this.Protocol = protocol;
             }
 
-            var agentHost = configuration.GetValue<string>(OTelAgentHostEnvVarKey, null);
-            if (!string.IsNullOrEmpty(agentHost))
+            if (configuration.TryGetStringValue(OTelAgentHostEnvVarKey, out var agentHost))
             {
                 this.AgentHost = agentHost;
             }
 
-            var agentPort = configuration.GetValue<string>(OTelAgentPortEnvVarKey, null);
-            if (!string.IsNullOrEmpty(agentPort))
+            if (configuration.TryGetIntValue(OTelAgentPortEnvVarKey, out var agentPort))
             {
-                if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, agentPort, out int parsedAgentPort))
-                {
-                    this.AgentPort = parsedAgentPort;
-                }
+                this.AgentPort = agentPort;
             }
 
-            var endpoint = configuration.GetValue<string>(OTelEndpointEnvVarKey, null);
-            if (!string.IsNullOrEmpty(endpoint))
+            if (configuration.TryGetUriValue(OTelEndpointEnvVarKey, out var endpoint))
             {
-                if (Uri.TryCreate(endpoint, UriKind.Absolute, out Uri parsedEndpoint))
-                {
-                    this.Endpoint = parsedEndpoint;
-                }
-                else
-                {
-                    throw new FormatException($"{OTelEndpointEnvVarKey} environment variable has an invalid value: '{endpoint}'");
-                }
+                this.Endpoint = endpoint;
             }
         }
 
@@ -158,25 +138,5 @@ namespace OpenTelemetry.Exporter
         /// </list>
         /// </remarks>
         public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
-
-        internal sealed class JaegerExporterOptionsFactory : OptionsFactory<JaegerExporterOptions>
-        {
-            private readonly IConfiguration configuration;
-
-            public JaegerExporterOptionsFactory(
-                IConfiguration configuration,
-                IEnumerable<IConfigureOptions<JaegerExporterOptions>> setups,
-                IEnumerable<IPostConfigureOptions<JaegerExporterOptions>> postConfigures,
-                IEnumerable<IValidateOptions<JaegerExporterOptions>> validations)
-                : base(setups, postConfigures, validations)
-            {
-                Debug.Assert(configuration != null, "configuration was null");
-
-                this.configuration = configuration;
-            }
-
-            protected override JaegerExporterOptions CreateInstance(string name)
-                => new(this.configuration);
-        }
     }
 }
