@@ -329,6 +329,7 @@ namespace OpenTelemetry.Logs
 
             var copy = new LogRecord()
             {
+                InstrumentationScope = this.InstrumentationScope,
                 Data = this.Data,
                 ILoggerData = this.ILoggerData.Copy(),
                 Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),

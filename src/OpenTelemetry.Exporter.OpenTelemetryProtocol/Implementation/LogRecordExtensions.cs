@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     {
         private static readonly string[] SeverityTextMapping = new string[]
         {
-            null, "Trace", "Debug", "Information", "Warning", "Error", "Fatal",
+            "Trace", "Debug", "Information", "Warning", "Error", "Fatal",
         };
 
         internal static void AddBatch(
@@ -41,21 +41,65 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<LogRecord> logRecordBatch)
         {
+            Dictionary<string, OtlpLogs.ScopeLogs> logsByLibrary = new Dictionary<string, OtlpLogs.ScopeLogs>();
             var resourceLogs = new OtlpLogs.ResourceLogs
             {
                 Resource = processResource,
             };
             request.ResourceLogs.Add(resourceLogs);
 
-            var scopeLogs = new OtlpLogs.ScopeLogs();
-            resourceLogs.ScopeLogs.Add(scopeLogs);
+            OtlpLogs.ScopeLogs currentScopeLogs = null;
 
             foreach (var logRecord in logRecordBatch)
             {
                 var otlpLogRecord = logRecord.ToOtlpLog();
                 if (otlpLogRecord != null)
                 {
-                    scopeLogs.LogRecords.Add(otlpLogRecord);
+                    var instrumentationScope = logRecord.InstrumentationScope;
+
+                    var instrumentationScopeName = instrumentationScope.Name ?? string.Empty;
+
+                    if (currentScopeLogs == null || currentScopeLogs.Scope.Name != instrumentationScopeName)
+                    {
+                        if (!logsByLibrary.TryGetValue(instrumentationScopeName, out var scopeLogs))
+                        {
+                            var scope = new OtlpCommon.InstrumentationScope()
+                            {
+                                Name = instrumentationScopeName,
+                            };
+
+                            if (instrumentationScope?.Version != null)
+                            {
+                                scope.Version = instrumentationScope.Version;
+                            }
+
+                            var attributes = instrumentationScope?.Attributes;
+                            if (attributes != null)
+                            {
+                                foreach (var attribute in attributes)
+                                {
+                                    if (OtlpKeyValueTransformer.Instance.TryTransformTag(
+                                        attribute,
+                                        out var otlpAttribute))
+                                    {
+                                        scope.Attributes.Add(otlpAttribute);
+                                    }
+                                }
+                            }
+
+                            scopeLogs = new OtlpLogs.ScopeLogs
+                            {
+                                Scope = scope,
+                            };
+
+                            logsByLibrary.Add(instrumentationScopeName, scopeLogs);
+                            resourceLogs.ScopeLogs.Add(scopeLogs);
+                        }
+
+                        currentScopeLogs = scopeLogs;
+                    }
+
+                    currentScopeLogs.LogRecords.Add(otlpLogRecord);
                 }
             }
         }
@@ -71,8 +115,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
                     SeverityNumber = GetSeverityNumber(logRecord.Severity),
-                    SeverityText = SeverityTextMapping[logRecord.Severity.HasValue ? ((int)logRecord.Severity.Value) + 1 : 0],
                 };
+
+                if (logRecord.Severity.HasValue)
+                {
+                    otlpLogRecord.SeverityText = SeverityTextMapping[(int)logRecord.Severity.Value];
+                }
 
                 if (!string.IsNullOrEmpty(logRecord.CategoryName))
                 {

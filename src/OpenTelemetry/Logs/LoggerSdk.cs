@@ -46,7 +46,7 @@ internal sealed class LoggerSdk : Logger
     {
         Guard.ThrowIfNullOrWhitespace(name);
 
-        string eventDomain = this.EnsureEventDomain();
+        this.EnsureEventDomain();
 
         var provider = this.loggerProvider;
         var processor = provider.Processor;
@@ -66,7 +66,6 @@ internal sealed class LoggerSdk : Logger
             Debug.Assert(exportedAttributes != null, "exportedAttributes was null");
 
             exportedAttributes!.Add(new KeyValuePair<string, object?>("event.name", name));
-            exportedAttributes!.Add(new KeyValuePair<string, object?>("event.domain", eventDomain));
 
             logRecord.Attributes = exportedAttributes;
 
@@ -104,7 +103,7 @@ internal sealed class LoggerSdk : Logger
         }
     }
 
-    private string EnsureEventDomain()
+    private void EnsureEventDomain()
     {
         string? eventDomain = this.eventDomain;
 
@@ -119,7 +118,5 @@ internal sealed class LoggerSdk : Logger
 
             this.eventDomain = eventDomain;
         }
-
-        return eventDomain!;
     }
 }
