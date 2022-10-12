@@ -15,6 +15,8 @@
 // </copyright>
 
 using System.Reflection;
+using Examples.AspNetCore;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
@@ -22,6 +24,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
+Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 var builder = WebApplication.CreateBuilder(args);
 
 // OpenTelemetry

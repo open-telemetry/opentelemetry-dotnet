@@ -20,21 +20,24 @@ namespace Examples.AspNetCore
 {
     public class MyCustomPropagator : TextMapPropagator
     {
+        private readonly DistributedContextPropagator current;
+
         public MyCustomPropagator()
         {
             DistributedContextPropagator.Current = new MyCustomDistributedContextPropagator();
+            this.current = DistributedContextPropagator.Current;
         }
 
         public override ISet<string> Fields => throw new NotImplementedException();
 
         public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            throw new NotImplementedException();
+            return default;
         }
 
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
-            throw new NotImplementedException();
+            // ignore
         }
     }
 }
