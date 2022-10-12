@@ -599,9 +599,11 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             var histogramPoint = metricPoints[0];
-            var min = histogramPoint.GetHistogramMin();
-            var max = histogramPoint.GetHistogramMax();
+            var hasMin = histogramPoint.TryGetHistogramMin(out var min);
+            var hasMax = histogramPoint.TryGetHistogramMax(out var max);
 
+            Assert.True(hasMin);
+            Assert.True(hasMax);
             Assert.Equal(expectedMin, min);
             Assert.Equal(expectedMax, max);
         }
@@ -634,11 +636,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             var histogramPoint = metricPoints[0];
 
-            var ex = Assert.Throws<NotSupportedException>(() => histogramPoint.GetHistogramMin());
-            Assert.Contains($"{nameof(histogramPoint.GetHistogramMin)} is not supported for this metric type.", ex.Message);
+            var ex = Assert.Throws<NotSupportedException>(() => histogramPoint.TryGetHistogramMin(out var min));
+            Assert.Contains($"{nameof(histogramPoint.TryGetHistogramMin)} is not supported for this metric type.", ex.Message);
 
-            ex = Assert.Throws<NotSupportedException>(() => histogramPoint.GetHistogramMax());
-            Assert.Contains($"{nameof(histogramPoint.GetHistogramMax)} is not supported for this metric type.", ex.Message);
+            ex = Assert.Throws<NotSupportedException>(() => histogramPoint.TryGetHistogramMax(out var max));
+            Assert.Contains($"{nameof(histogramPoint.TryGetHistogramMax)} is not supported for this metric type.", ex.Message);
         }
 
         [Fact]

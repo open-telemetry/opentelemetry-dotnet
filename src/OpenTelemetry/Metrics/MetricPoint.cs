@@ -243,41 +243,47 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Gets the minimum value of the histogram associated with the metric point.
+        /// Gets the minimum value of the histogram associated with the metric
+        /// point if present.
         /// </summary>
+        /// <param name="min">Output variable for the minimum value.</param>
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns>Minimum value.</returns>
+        /// <returns>A minimum value exists.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetHistogramMin()
+        public bool TryGetHistogramMin(out double min)
         {
             if (this.aggType != AggregationType.HistogramMinMax &&
                 this.aggType != AggregationType.HistogramSumCountMinMax)
             {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramMin));
+                this.ThrowNotSupportedMetricTypeException(nameof(this.TryGetHistogramMin));
             }
 
-            return this.histogramBuckets.SnapshotMin;
+            min = this.histogramBuckets.SnapshotMin;
+            return !double.IsPositiveInfinity(min);
         }
 
         /// <summary>
-        /// Gets the maximum value of the histogram associated with the metric point.
+        /// Gets the maximum value of the histogram associated with the metric
+        /// point if present.
         /// </summary>
+        /// <param name="max">Output variable for the maximum value.</param>
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns>Maximum value.</returns>
+        /// <returns>A maximum value exists.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetHistogramMax()
+        public bool TryGetHistogramMax(out double max)
         {
             if (this.aggType != AggregationType.HistogramMinMax &&
                 this.aggType != AggregationType.HistogramSumCountMinMax)
             {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramMax));
+                this.ThrowNotSupportedMetricTypeException(nameof(this.TryGetHistogramMax));
             }
 
-            return this.histogramBuckets.SnapshotMax;
+            max = this.histogramBuckets.SnapshotMax;
+            return !double.IsNegativeInfinity(max);
         }
 
         internal readonly MetricPoint Copy()

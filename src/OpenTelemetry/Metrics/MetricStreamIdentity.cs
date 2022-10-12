@@ -45,6 +45,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.MeterName.GetHashCode();
                 hash = (hash * 31) + this.MeterVersion.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
+                hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
                 hash = !this.ViewId.HasValue ? hash : (hash * 31) + this.ViewId.Value;
