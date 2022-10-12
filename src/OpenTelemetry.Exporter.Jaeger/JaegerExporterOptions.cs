@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -43,37 +44,45 @@ namespace OpenTelemetry.Exporter
 
         internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JaegerExporterOptions"/> class.
+        /// </summary>
         public JaegerExporterOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar))
+        }
+
+        internal JaegerExporterOptions(IConfiguration configuration)
+        {
+            if (configuration.TryGetValue<JaegerExportProtocol>(
+                OTelProtocolEnvVarKey,
+                JaegerExporterProtocolParser.TryParse,
+                out var protocol))
             {
-                if (JaegerExporterProtocolParser.TryParse(protocolEnvVar, out var protocol))
-                {
-                    this.Protocol = protocol;
-                }
-                else
-                {
-                    throw new FormatException($"{OTelProtocolEnvVarKey} environment variable has an invalid value: '{protocolEnvVar}'");
-                }
+                this.Protocol = protocol;
             }
 
-            if (EnvironmentVariableHelper.LoadString(OTelAgentHostEnvVarKey, out string agentHostEnvVar))
+            if (configuration.TryGetStringValue(OTelAgentHostEnvVarKey, out var agentHost))
             {
-                this.AgentHost = agentHostEnvVar;
+                this.AgentHost = agentHost;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, out int agentPortEnvVar))
+            if (configuration.TryGetIntValue(OTelAgentPortEnvVarKey, out var agentPort))
             {
-                this.AgentPort = agentPortEnvVar;
+                this.AgentPort = agentPort;
             }
 
-            if (EnvironmentVariableHelper.LoadString(OTelEndpointEnvVarKey, out string endpointEnvVar)
-                && Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out Uri endpoint))
+            if (configuration.TryGetUriValue(OTelEndpointEnvVarKey, out var endpoint))
             {
                 this.Endpoint = endpoint;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="JaegerExportProtocol"/> to use when
+        /// communicating to Jaeger. Default value: <see
+        /// cref="JaegerExportProtocol.UdpCompactThrift"/>.
+        /// </summary>
         public JaegerExportProtocol Protocol { get; set; } = JaegerExportProtocol.UdpCompactThrift;
 
         /// <summary>

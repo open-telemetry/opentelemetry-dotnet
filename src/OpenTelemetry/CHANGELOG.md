@@ -7,6 +7,10 @@
   `BatchLogRecordExportProcessor.OnEnd` is fired.
   ([#3731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3731))
 
+* Added support for loading environment variables from `IConfiguration` when
+  using `TracerProviderBuilder` or `MeterProviderBuilder`
+  ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29
