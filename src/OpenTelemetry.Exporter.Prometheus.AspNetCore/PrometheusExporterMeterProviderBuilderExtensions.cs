@@ -40,11 +40,11 @@ namespace OpenTelemetry.Metrics
         /// Adds <see cref="PrometheusExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Callback action for configuring <see cref="PrometheusExporterOptions"/>.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusAspNetCoreOptions"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddPrometheusExporter(
             this MeterProviderBuilder builder,
-            Action<PrometheusExporterOptions> configure)
+            Action<PrometheusAspNetCoreOptions> configure)
             => AddPrometheusExporter(builder, name: null, configure);
 
         /// <summary>
@@ -52,12 +52,12 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="name">Name which is used when retrieving options.</param>
-        /// <param name="configure">Callback action for configuring <see cref="PrometheusExporterOptions"/>.</param>
+        /// <param name="configure">Callback action for configuring <see cref="PrometheusAspNetCoreOptions"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddPrometheusExporter(
             this MeterProviderBuilder builder,
             string name,
-            Action<PrometheusExporterOptions> configure)
+            Action<PrometheusAspNetCoreOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
@@ -70,15 +70,15 @@ namespace OpenTelemetry.Metrics
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<PrometheusExporterOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<PrometheusAspNetCoreOptions>>().Get(name);
 
                 AddPrometheusExporter(builder, options);
             });
         }
 
-        private static MeterProviderBuilder AddPrometheusExporter(MeterProviderBuilder builder, PrometheusExporterOptions options)
+        private static MeterProviderBuilder AddPrometheusExporter(MeterProviderBuilder builder, PrometheusAspNetCoreOptions options)
         {
-            var exporter = new PrometheusExporter(scrapeResponseCacheDurationMilliseconds: options.ScrapeResponseCacheDurationMilliseconds);
+            var exporter = new PrometheusExporter(options.ExporterOptions);
 
             var reader = new BaseExportingMetricReader(exporter)
             {

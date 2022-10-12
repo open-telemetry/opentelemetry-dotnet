@@ -115,14 +115,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            // TODO: Investigate why this check is needed.
-            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
-            {
-                // this request is already instrumented, we should back off
-                activity.IsAllDataRequested = false;
-                return;
-            }
-
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (textMapPropagator is not TraceContextPropagator)

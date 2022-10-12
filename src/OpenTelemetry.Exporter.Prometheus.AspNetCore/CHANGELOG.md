@@ -2,13 +2,17 @@
 
 ## Unreleased
 
+* Changed configuration class name from `PrometheusExporterOptions`
+  to `PrometheusAspNetCoreOptions`
+  ([#3717](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3717))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29
 
 * Bug fix for Prometheus Exporter reporting StatusCode 204
-instead of 200, when no metrics are collected
-([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
+  instead of 200, when no metrics are collected
+  ([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
 * Added overloads which accept a name to the `MeterProviderBuilder`
   `AddPrometheusExporter` extension to allow for more fine-grained options
   management

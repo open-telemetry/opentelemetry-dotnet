@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fixed an issue where `LogRecord.ForEachScope` may return scopes from a
+  previous log if accessed in a custom processor before
+  `BatchLogRecordExportProcessor.OnEnd` is fired.
+  ([#3731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3731))
+
 * Added support for loading environment variables from `IConfiguration` when
   using `TracerProviderBuilder` or `MeterProviderBuilder`
   ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
