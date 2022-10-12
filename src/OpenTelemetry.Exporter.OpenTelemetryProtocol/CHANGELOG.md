@@ -4,7 +4,7 @@
 
 * Added support for loading environment variables from `IConfiguration` when
   using the `AddOtlpExporter` extensions
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3760))
 
 ## 1.4.0-beta.1
 
