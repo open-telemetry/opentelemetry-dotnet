@@ -281,8 +281,8 @@ namespace OpenTelemetry.Metrics
         {
             return (this.aggType == AggregationType.HistogramMinMax ||
                    this.aggType == AggregationType.HistogramSumCountMinMax) &&
-                   this.histogramBuckets.RunningMin != double.PositiveInfinity &&
-                   this.histogramBuckets.RunningMax != double.NegativeInfinity;
+                   !(this.histogramBuckets.RunningMin == double.PositiveInfinity &&
+                   this.histogramBuckets.RunningMax == double.NegativeInfinity);
         }
 
         internal readonly MetricPoint Copy()
