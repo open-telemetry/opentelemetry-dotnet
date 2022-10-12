@@ -244,40 +244,45 @@ namespace OpenTelemetry.Metrics
 
         /// <summary>
         /// Gets the minimum value of the histogram associated with the metric
-        /// point if present.
+        /// point if present. Check by using <see cref="HasMinMax"/>.
         /// </summary>
-        /// <param name="min">Output variable for the minimum value.</param>
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns>A minimum value exists.</returns>
+        /// <returns>A histogram's maximum value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetHistogramMin(out double min)
+        public double GetHistogramMin()
         {
-            min = this.histogramBuckets.SnapshotMin;
-
-            return !double.IsPositiveInfinity(min) &&
-                   (this.aggType == AggregationType.HistogramMinMax ||
-                   this.aggType == AggregationType.HistogramSumCountMinMax);
+            return this.histogramBuckets.SnapshotMin;
         }
 
         /// <summary>
         /// Gets the maximum value of the histogram associated with the metric
-        /// point if present.
+        /// point if present. Check by using <see cref="HasMinMax"/>.
         /// </summary>
-        /// <param name="max">Output variable for the maximum value.</param>
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns>A maximum value exists.</returns>
+        /// <returns>A histogram's maximum value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetHistogramMax(out double max)
+        public double GetHistogramMax()
         {
-            max = this.histogramBuckets.SnapshotMax;
+            return this.histogramBuckets.SnapshotMax;
+        }
 
-            return !double.IsNegativeInfinity(max) &&
-                   (this.aggType == AggregationType.HistogramMinMax ||
-                   this.aggType == AggregationType.HistogramSumCountMinMax);
+        /// <summary>
+        /// Gets whether the histogram has a valid Min and Max value.
+        /// Should be used before
+        /// <see cref="GetHistogramMin"/> and <see cref="GetHistogramMax"/> to
+        /// ensure a valid value is returned.
+        /// </summary>
+        /// <returns>A minimum and maximum value exist.</returns>
+        public bool HasMinMax()
+        {
+            return (this.aggType == AggregationType.HistogramMinMax ||
+                   this.aggType == AggregationType.HistogramSumCountMinMax) &&
+                   this.histogramBuckets.RunningMin != double.PositiveInfinity &&
+                   this.histogramBuckets.RunningMax != double.NegativeInfinity;
         }
 
         internal readonly MetricPoint Copy()
