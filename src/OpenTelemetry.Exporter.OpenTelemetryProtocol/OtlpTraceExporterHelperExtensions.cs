@@ -61,28 +61,35 @@ namespace OpenTelemetry.Trace
 
             name ??= Options.DefaultName;
 
-            if (configure != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configure));
-            }
+                if (configure != null)
+                {
+                    services.Configure(name, configure);
+                }
+
+                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+            });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var sdkOptions = sp.GetRequiredService<IOptionsMonitor<SdkOptions>>().Get(name);
 
-                AddOtlpExporter(builder, options, sp);
+                AddOtlpExporter(builder, exporterOptions, sdkOptions, sp);
             });
         }
 
         internal static TracerProviderBuilder AddOtlpExporter(
             TracerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
+            SdkOptions sdkOptions,
             IServiceProvider serviceProvider,
             Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null)
         {
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions);
+            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkOptions);
 
             if (configureExporterInstance != null)
             {

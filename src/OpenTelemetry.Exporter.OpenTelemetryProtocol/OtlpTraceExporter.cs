@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class OtlpTraceExporter : BaseExporter<Activity>
     {
+        private readonly SdkOptions sdkOptions;
         private readonly IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient;
 
         private OtlpResource.Resource processResource;
@@ -38,24 +39,33 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         /// <param name="options">Configuration options for the export.</param>
         public OtlpTraceExporter(OtlpExporterOptions options)
-            : this(options, null)
+            : this(options, new SdkOptions(), null)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for the export.</param>
+        /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
+        /// <param name="sdkOptions"><see cref="SdkOptions"/>.</param>
         /// <param name="exportClient">Client used for sending export request.</param>
-        internal OtlpTraceExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
+        internal OtlpTraceExporter(
+            OtlpExporterOptions exporterOptions,
+            SdkOptions sdkOptions,
+            IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
         {
+            Debug.Assert(exporterOptions != null, "exporterOptions was null");
+            Debug.Assert(sdkOptions != null, "sdkOptions was null");
+
+            this.sdkOptions = sdkOptions;
+
             if (exportClient != null)
             {
                 this.exportClient = exportClient;
             }
             else
             {
-                this.exportClient = options.GetTraceExportClient();
+                this.exportClient = exporterOptions.GetTraceExportClient();
             }
         }
 
@@ -71,7 +81,7 @@ namespace OpenTelemetry.Exporter
 
             try
             {
-                request.AddBatch(this.ProcessResource, activityBatch);
+                request.AddBatch(this.sdkOptions, this.ProcessResource, activityBatch);
 
                 if (!this.exportClient.SendExportRequest(request))
                 {

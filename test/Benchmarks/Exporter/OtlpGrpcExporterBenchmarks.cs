@@ -58,6 +58,7 @@ namespace Benchmarks.Exporter
             var options = new OtlpExporterOptions();
             this.exporter = new OtlpTraceExporter(
                 options,
+                new SdkOptions(),
                 new OtlpGrpcTraceExportClient(options, mockClient.Object));
 
             this.activity = ActivityHelper.CreateTestActivity();

@@ -36,6 +36,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpHttpTraceExportClientTests
     {
+        private static readonly SdkOptions DefaultSdkOptions = new();
+
         static OtlpHttpTraceExportClientTests()
         {
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -171,7 +173,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 var request = new OtlpCollector.ExportTraceServiceRequest();
 
-                request.AddBatch(resourceBuilder.Build().ToOtlpResource(), batch);
+                request.AddBatch(DefaultSdkOptions, resourceBuilder.Build().ToOtlpResource(), batch);
 
                 // Act
                 var result = exportClient.SendExportRequest(request);

@@ -1,4 +1,4 @@
-// <copyright file="SdkConfigurationTests.cs" company="OpenTelemetry Authors">
+// <copyright file="SdkOptionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,27 +17,25 @@
 using System;
 using Xunit;
 
-namespace OpenTelemetry.Configuration.Tests
+namespace OpenTelemetry.Tests
 {
-    [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
-    public class SdkConfigurationTests : IDisposable
+    [Collection("xUnitCollectionPreventingTestsThatDependOnSdkOptionsFromRunningInParallel")]
+    public class SdkOptionsTests : IDisposable
     {
-        public SdkConfigurationTests()
+        public SdkOptionsTests()
         {
             ClearEnvVars();
-            SdkConfiguration.Reset();
         }
 
         public void Dispose()
         {
             ClearEnvVars();
-            SdkConfiguration.Reset();
         }
 
         [Fact]
-        public void SdkConfigurationDefaults()
+        public void SdkOptionsDefaults()
         {
-            var config = SdkConfiguration.Instance;
+            var config = new SdkOptions();
 
             Assert.Null(config.AttributeValueLengthLimit);
             Assert.Null(config.AttributeCountLimit);
@@ -45,12 +43,12 @@ namespace OpenTelemetry.Configuration.Tests
             Assert.Null(config.SpanAttributeCountLimit);
             Assert.Null(config.SpanEventCountLimit);
             Assert.Null(config.SpanLinkCountLimit);
-            Assert.Null(config.EventAttributeCountLimit);
-            Assert.Null(config.LinkAttributeCountLimit);
+            Assert.Null(config.SpanEventAttributeCountLimit);
+            Assert.Null(config.SpanLinkAttributeCountLimit);
         }
 
         [Fact]
-        public void SdkConfigurationIsInitializedFromEnvironment()
+        public void SdkOptionsIsInitializedFromEnvironment()
         {
             Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "10");
             Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", "10");
@@ -61,8 +59,7 @@ namespace OpenTelemetry.Configuration.Tests
             Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "30");
             Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "30");
 
-            SdkConfiguration.Reset();
-            var config = SdkConfiguration.Instance;
+            var config = new SdkOptions();
 
             Assert.Equal(10, config.AttributeValueLengthLimit);
             Assert.Equal(10, config.AttributeCountLimit);
@@ -70,14 +67,14 @@ namespace OpenTelemetry.Configuration.Tests
             Assert.Equal(20, config.SpanAttributeCountLimit);
             Assert.Equal(10, config.SpanEventCountLimit);
             Assert.Equal(10, config.SpanLinkCountLimit);
-            Assert.Equal(30, config.EventAttributeCountLimit);
-            Assert.Equal(30, config.LinkAttributeCountLimit);
+            Assert.Equal(30, config.SpanEventAttributeCountLimit);
+            Assert.Equal(30, config.SpanLinkAttributeCountLimit);
         }
 
         [Fact]
         public void SpanAttributeValueLengthLimitFallback()
         {
-            var config = SdkConfiguration.Instance;
+            var config = new SdkOptions();
 
             config.AttributeValueLengthLimit = 10;
             Assert.Equal(10, config.AttributeValueLengthLimit);
@@ -91,31 +88,31 @@ namespace OpenTelemetry.Configuration.Tests
         [Fact]
         public void SpanAttributeCountLimitFallback()
         {
-            var config = SdkConfiguration.Instance;
+            var config = new SdkOptions();
 
             config.AttributeCountLimit = 10;
             Assert.Equal(10, config.AttributeCountLimit);
             Assert.Equal(10, config.SpanAttributeCountLimit);
-            Assert.Equal(10, config.EventAttributeCountLimit);
-            Assert.Equal(10, config.LinkAttributeCountLimit);
+            Assert.Equal(10, config.SpanEventAttributeCountLimit);
+            Assert.Equal(10, config.SpanLinkAttributeCountLimit);
 
             config.SpanAttributeCountLimit = 20;
             Assert.Equal(10, config.AttributeCountLimit);
             Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(20, config.EventAttributeCountLimit);
-            Assert.Equal(20, config.LinkAttributeCountLimit);
+            Assert.Equal(20, config.SpanEventAttributeCountLimit);
+            Assert.Equal(20, config.SpanLinkAttributeCountLimit);
 
-            config.EventAttributeCountLimit = 30;
+            config.SpanEventAttributeCountLimit = 30;
             Assert.Equal(10, config.AttributeCountLimit);
             Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(30, config.EventAttributeCountLimit);
-            Assert.Equal(20, config.LinkAttributeCountLimit);
+            Assert.Equal(30, config.SpanEventAttributeCountLimit);
+            Assert.Equal(20, config.SpanLinkAttributeCountLimit);
 
-            config.LinkAttributeCountLimit = 40;
+            config.SpanLinkAttributeCountLimit = 40;
             Assert.Equal(10, config.AttributeCountLimit);
             Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(30, config.EventAttributeCountLimit);
-            Assert.Equal(40, config.LinkAttributeCountLimit);
+            Assert.Equal(30, config.SpanEventAttributeCountLimit);
+            Assert.Equal(40, config.SpanLinkAttributeCountLimit);
         }
 
         private static void ClearEnvVars()

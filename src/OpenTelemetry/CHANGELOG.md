@@ -11,6 +11,9 @@
   using `TracerProviderBuilder` or `MeterProviderBuilder`
   ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
 
+* Added `SdkOptions` class which can be used to set data limits.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29

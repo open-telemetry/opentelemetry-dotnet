@@ -52,7 +52,8 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfNull(services);
 
-            services.AddOpenTelemetryProviderBuilderServices();
+            services.AddOpenTelemetryMeterProviderBuilderServices();
+
             services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
 
             this.services = services;
@@ -65,7 +66,7 @@ namespace OpenTelemetry.Metrics
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryProviderBuilderServices();
+            services.AddOpenTelemetryMeterProviderBuilderServices();
 
             this.services = services;
             this.ownsServices = true;

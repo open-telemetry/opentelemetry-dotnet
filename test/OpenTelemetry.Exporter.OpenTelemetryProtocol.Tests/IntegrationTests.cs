@@ -33,6 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     {
         private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
         private const int ExportIntervalMilliseconds = 10000;
+        private static readonly SdkOptions DefaultSdkOptions = new();
         private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
         private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
@@ -82,6 +83,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             OtlpTraceExporterHelperExtensions.AddOtlpExporter(
                 builder,
                 exporterOptions,
+                DefaultSdkOptions,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
