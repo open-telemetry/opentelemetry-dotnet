@@ -41,7 +41,7 @@ version releases. For example, in the recent past we removed `net461`,
 
 We do not declare universal support for .NET Standard as that would imply we have validated
 OpenTelemetry .NET against all .NET implementations that implement .NET Standard.
-Our official support will always be stated in terms of target-specific implementations of .NET
+Our official support will always be stated in terms of implementation specific target frameworks of .NET
 (see: https://github.com/open-telemetry/opentelemetry-dotnet#supported-net-versions).
 
 ## How users will be impacted
