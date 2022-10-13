@@ -14,14 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Tests;
-using OpenTelemetry.Trace;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using OpenTelemetry.Tests;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests
