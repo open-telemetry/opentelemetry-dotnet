@@ -39,19 +39,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
-                    {
-                        ctx.Response.RedirectLocation = "/";
-                        ctx.Response.StatusCode = 302;
-                    }
-                    else if (ctx.Request.Url.PathAndQuery.Contains("500"))
-                    {
-                        ctx.Response.StatusCode = 500;
-                    }
-                    else
-                    {
-                        ctx.Response.StatusCode = 200;
-                    }
+                    ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;
+                    ctx.Response.OutputStream.Close();
                 },
                 out var host,
                 out var port);
