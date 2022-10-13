@@ -15,7 +15,7 @@ page to view the end of support dates for each version of .NET.
 The core packages offered by OpenTelemetry .NET currently ship a .NET
 Standard build (i.e., `netstandard2.0` and/or `netstandard2.1`).
 Therefore, OpenTelemetry .NET can technically be consumed by projects targeting
-out-of-support frameworks - even as far back as .NET Core 2.0.
+out-of-support frameworks like .NET Core 3.1, and even as far back as .NET Core 2.0.
 
 However, referencing the latest version of OpenTelemetry .NET by an application
 targeting .NET Core 3.1 or .NET 5 will generate the following build warnings:
