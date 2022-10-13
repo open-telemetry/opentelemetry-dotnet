@@ -16,7 +16,7 @@
     <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
+  <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds;ResolvedMatchingContract" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <!-- Note: DispatchToInnerBuilds is called for projects with multiple
     targets defined to spawn a build process for each target framework being
     compiled. Executing BEFORE that step means this runs once for a project
