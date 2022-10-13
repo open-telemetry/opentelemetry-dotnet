@@ -61,13 +61,13 @@ target of OpenTelemetry .NET. We will not intentionally break older
 applications that fallback to a .NET Standard build, but we cannot make any
 guarantees.
 
-### Referencing OpenTelemetry packages from Xamarin and Mono projects
+### Referencing OpenTelemetry packages from projects targeting other implementations of .NET
 
-Technically, both Xamarin and Mono implement `netstandard2.0`. However,
-it is a known issue that OpenTelemetry does not currently support either
-despite currently offering a `netstandard2.0` build.
+Implementations such as Xamarin and Mono implement `netstandard2.0`. However,
+it has not been confirmed that OpenTelemetry .NET support these implementations
+despite currently offering a `netstandard2.0` build
+(see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/3763). 
 
-If in the future OpenTelemetry .NET supports the Xamarin and/or Mono
-frameworks, we may do so either via the `nestandard2.0` target or
-implementation specific targets (e.g., `xamarin.android`, `net6.0-android`,
-etc).
+If in the future OpenTelemetry .NET supports Xamarin and/or Mono, we may do so either 
+via the `nestandard2.0` target or implementation specific targets (e.g., `xamarin.android`,
+`net6.0-android`, etc).
