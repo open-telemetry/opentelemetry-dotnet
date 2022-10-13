@@ -1404,14 +1404,14 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedLongHistogramTest()
         {
-            var expected = new long[11];
+            var expected = new long[16];
             for (var i = 0; i < expected.Length; i++)
             {
                 expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
             }
 
-            // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
-            var values = new long[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 1001 };
+            // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+            var values = new long[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 800, 1001, 3000, 6000, 8000, 10001 };
 
             this.MultithreadedHistogramTest(expected, values);
         }
@@ -1419,14 +1419,14 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedDoubleHistogramTest()
         {
-            var expected = new long[11];
+            var expected = new long[16];
             for (var i = 0; i < expected.Length; i++)
             {
                 expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
             }
 
-            // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
-            var values = new double[] { -1.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 1001.0 };
+            // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000
+            var values = new double[] { -1.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 800.0, 1001.0, 3000.0, 6000.0, 8000.0, 10001.0 };
 
             this.MultithreadedHistogramTest(expected, values);
         }
