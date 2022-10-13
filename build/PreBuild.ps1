@@ -1,7 +1,7 @@
 param(
   [string]$package,
   [string]$version,
-  [string]$workDir = "..\LastMajorVersionBinaries"
+  [string]$workDir = ".\LastMajorVersionBinaries"
 )
 
 if (-Not (Test-Path $workDir))
