@@ -320,7 +320,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetAsync("https://www.invalidurl.com");
+                await c.GetAsync("https://10.0.0.0/invalidurl");
             }
             catch
             {
@@ -402,7 +402,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             try
             {
-                var request = (HttpWebRequest)WebRequest.Create("https://www.invalidurl.com");
+                var request = (HttpWebRequest)WebRequest.Create("https://10.0.0.0/invalidurl");
 
                 request.Method = "GET";
 

@@ -480,7 +480,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetAsync("https://www.invalidurl.com");
+                await c.GetAsync("https://10.0.0.0/invalidurl");
             }
             catch
             {
