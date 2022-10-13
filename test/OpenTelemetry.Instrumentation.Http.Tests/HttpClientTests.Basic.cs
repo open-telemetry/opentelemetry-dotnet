@@ -470,6 +470,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithClientGetAsync()
         {
             var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri("https://www.invalidurl.com"),
@@ -488,8 +489,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
             catch
             {
+                exceptionThrown = true;
             }
 
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
             Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
         }
 
@@ -514,6 +518,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 exceptionThrown = true;
             }
 
+            // Exception is not thrown and not collected as event
             Assert.False(exceptionThrown);
             Assert.Empty(exportedItems[0].Events);
         }
@@ -544,6 +549,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 exceptionThrown = true;
             }
 
+            // Exception is thrown and not collected as event
             Assert.True(exceptionThrown);
             Assert.Empty(exportedItems[0].Events);
         }
