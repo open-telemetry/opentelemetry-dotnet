@@ -221,6 +221,37 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+## Filter
+
+This option allows to filter out activities based on the properties of the
+`SqlCommand` object being instrumented using a `Func<object, bool>`.
+The function receives an instance of the raw `SqlCommand` and should return
+`true` if the telemetry is to be collected, and `false` if it should not.
+The parameter of the Func delegate is of type `object` and needs to
+be cast to the appropriate type of `SqlCommand`, either
+`Microsoft.Data.SqlClient.SqlCommand` or `System.Data.SqlClient.SqlCommand`.
+The example below filters out all commands that are not stored procedures.
+
+```csharp
+using var traceProvider = Sdk.CreateTracerProviderBuilder()
+   .AddSqlClientInstrumentation(
+       opt =>
+       {
+           opt.Filter = cmd =>
+           {
+               if (cmd is SqlCommand command)
+               {
+                   return command.CommandType == CommandType.StoredProcedure;
+               }
+
+               return false;
+           };
+       })
+   .AddConsoleExporter()
+   .Build();
+{
+```
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)

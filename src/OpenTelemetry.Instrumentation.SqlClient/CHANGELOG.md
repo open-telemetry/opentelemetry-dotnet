@@ -7,6 +7,8 @@
   respectively to set activity status.
   ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
   ([#3751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3751))
+* Add support for Filter option for non .NET Framework Targets
+  ([#3743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3743))
 
 ## 1.0.0-rc9.7
 
