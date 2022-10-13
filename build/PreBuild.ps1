@@ -1,6 +1,9 @@
-param([string]$package, [string]$version)
+param(
+  [string]$package,
+  [string]$version,
+  [string]$workDir = "..\LastMajorVersionBinaries"
+)
 
-$workDir = "..\LastMajorVersionBinaries"
 if (-Not (Test-Path $workDir))
 {
     Write-Host "Working directory for previous package versions not found, creating..."
@@ -16,6 +19,7 @@ else
     Write-Host "Retrieving $package @$version for compatibility check"
     Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/$package/$version -Outfile "$workDir\$package.$version.zip"
 }
+
 if (Test-Path -Path "$workDir\$package\$version\lib")
 {
     Write-Debug "Previous package version already extracted"
