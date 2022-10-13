@@ -307,15 +307,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithClientGetAsync()
+        public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithGetAsync()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
-            var request = new HttpRequestMessage
-            {
-                RequestUri = new Uri("https://www.invalidurl.com"),
-                Method = new HttpMethod("GET"),
-            };
 
             using var traceprovider = Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation(o => o.RecordException = true)
@@ -325,7 +320,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.SendAsync(request);
+                await c.GetAsync("https://www.invalidurl.com");
             }
             catch
             {
@@ -338,7 +333,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationDoesNotReportsExceptionEventOnErrorResponseWithClientGetAsync()
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetAsync()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
@@ -364,7 +359,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationReportsDoesNotReportExceptionEventOnErrorResponseWithClientGetStringAsync()
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
@@ -424,7 +419,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationDoesNotReportExceptionEventOnErrorResponse()
+        public async Task HttpWebRequestInstrumentationReportsExceptionEventOnErrorResponse()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
