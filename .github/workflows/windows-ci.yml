@@ -26,7 +26,7 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - uses: actions/setup-dotnet@v3.0.1
+    - uses: actions/setup-dotnet@v3.0.2
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true

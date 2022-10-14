@@ -45,15 +45,25 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(250);
             histogramPoint.Update(499);
             histogramPoint.Update(500);
-            histogramPoint.Update(999);
+            histogramPoint.Update(501);
+            histogramPoint.Update(750);
+            histogramPoint.Update(751);
             histogramPoint.Update(1000);
             histogramPoint.Update(1001);
+            histogramPoint.Update(2500);
+            histogramPoint.Update(2501);
+            histogramPoint.Update(5000);
+            histogramPoint.Update(5001);
+            histogramPoint.Update(7500);
+            histogramPoint.Update(7501);
+            histogramPoint.Update(10000);
+            histogramPoint.Update(10001);
             histogramPoint.Update(10000000);
             histogramPoint.TakeSnapshot(true);
 
             var count = histogramPoint.GetHistogramCount();
 
-            Assert.Equal(22, count);
+            Assert.Equal(32, count);
 
             int actualCount = 0;
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
