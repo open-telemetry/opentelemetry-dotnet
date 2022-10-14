@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* OTLP histogram data points will now include `Min` and `Max` values when
+  they are present.
+  ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
+
 * Adds support for limiting the length and count of attributes exported from
   the OTLP log exporter. These
   [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
