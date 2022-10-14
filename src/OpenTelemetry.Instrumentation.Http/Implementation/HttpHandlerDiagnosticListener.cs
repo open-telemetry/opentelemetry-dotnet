@@ -19,7 +19,6 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
@@ -113,13 +112,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
                 return;
-            }
-
-            // Propagate context irrespective of sampling decision
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (textMapPropagator is not TraceContextPropagator)
-            {
-                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
 
             // enrich Activity from payload only if sampling decision

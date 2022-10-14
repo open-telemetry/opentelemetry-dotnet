@@ -122,39 +122,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (textMapPropagator is not TraceContextPropagator)
-            {
-                var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
-
-                if (ctx.ActivityContext.IsValid()
-                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
-                {
-                    // Create a new activity with its parent set from the extracted context.
-                    // This makes the new activity as a "sibling" of the activity created by
-                    // Asp.Net Core.
-#if NET7_0_OR_GREATER
-                    // For NET7.0 onwards activity is created using ActivitySource so,
-                    // we will use the source of the activity to create the new one.
-                    Activity newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
-#else
-                    Activity newOne = new Activity(ActivityOperationName);
-                    newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
-#endif
-                    newOne.TraceStateString = ctx.ActivityContext.TraceState;
-
-                    newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
-
-                    // Starting the new activity make it the Activity.Current one.
-                    newOne.Start();
-
-                    // Set IsAllDataRequested to false for the activity created by the framework to only export the sibling activity and not the framework activity
-                    activity.IsAllDataRequested = false;
-                    activity = newOne;
-                }
-
-                Baggage.Current = ctx.Baggage;
-            }
 
             // enrich Activity from payload only if sampling decision
             // is favorable.
@@ -252,25 +219,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                 }
-            }
-
-            if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
-            {
-                // If instrumentation started a new Activity, it must
-                // be stopped here.
-                activity.SetTag("IsCreatedByInstrumentation", null);
-                activity.Stop();
-
-                // After the activity.Stop() code, Activity.Current becomes null.
-                // If Asp.Net Core uses Activity.Current?.Stop() - it'll not stop the activity
-                // it created.
-                // Currently Asp.Net core does not use Activity.Current, instead it stores a
-                // reference to its activity, and calls .Stop on it.
-
-                // TODO: Should we still restore Activity.Current here?
-                // If yes, then we need to store the asp.net core activity inside
-                // the one created by the instrumentation.
-                // And retrieve it here, and set it to Current.
             }
 
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
