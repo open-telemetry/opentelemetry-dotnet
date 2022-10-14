@@ -16,6 +16,8 @@
 
 using System.Diagnostics;
 using System.Net;
+using System.Text;
+using OpenTelemetry;
 
 namespace Examples.AspNetCore
 {
@@ -30,6 +32,8 @@ namespace Examples.AspNetCore
         private const char Semicolon = ';';
         private const string CommaWithSpace = ", ";
         private const string CorrelationContext = "Correlation-Context";
+        private const int MaxBaggageLength = 8192;
+        private const int MaxBaggageItems = 180;
 
         private static readonly char[] STrimmingSpaceCharacters = new char[] { Space, Tab };
 
@@ -70,6 +74,8 @@ namespace Examples.AspNetCore
                     setter(carrier, TraceState, activity.TraceStateString);
                 }
             }
+
+            this.InjectBaggage(Baggage.Current, carrier, setter);
         }
 
         public override IEnumerable<KeyValuePair<string, string?>>? ExtractBaggage(object? carrier, PropagatorGetterCallback? getter)
@@ -79,7 +85,7 @@ namespace Examples.AspNetCore
                 return null;
             }
 
-            getter(carrier, BaggageField, out string? theBaggage, out var baggagevalues);
+            getter(carrier, BaggageField, out string? theBaggage, out _);
 
             IEnumerable<KeyValuePair<string, string?>>? baggage = null;
             if (theBaggage is null || !TryExtractBaggage(theBaggage, out baggage))
@@ -89,6 +95,11 @@ namespace Examples.AspNetCore
                 {
                     TryExtractBaggage(theBaggage, out baggage);
                 }
+            }
+
+            if (baggage != null)
+            {
+                Baggage.Current = Baggage.SetBaggage(baggage);
             }
 
             return baggage;
@@ -197,6 +208,31 @@ namespace Examples.AspNetCore
 
             baggage = baggageList;
             return baggageList != null;
+        }
+
+        private void InjectBaggage(Baggage currentBaggage, object? carrier, PropagatorSetterCallback setter)
+        {
+            using var e = currentBaggage.GetEnumerator();
+
+            if (e.MoveNext() == true)
+            {
+                int itemCount = 0;
+                StringBuilder baggage = new StringBuilder();
+                do
+                {
+                    KeyValuePair<string, string> item = e.Current;
+                    if (string.IsNullOrEmpty(item.Value))
+                    {
+                        continue;
+                    }
+
+                    baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
+                }
+                while (e.MoveNext() && ++itemCount < MaxBaggageItems && baggage.Length < MaxBaggageLength);
+                baggage.Remove(baggage.Length - 1, 1);
+
+                setter(carrier, BaggageField, baggage.ToString());
+            }
         }
     }
 }
