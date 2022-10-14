@@ -279,10 +279,8 @@ namespace OpenTelemetry.Metrics
         /// <returns>A minimum and maximum value exist.</returns>
         public bool HasMinMax()
         {
-            return (this.aggType == AggregationType.HistogramMinMax ||
-                   this.aggType == AggregationType.HistogramSumCountMinMax) &&
-                   !(this.histogramBuckets.RunningMin == double.PositiveInfinity &&
-                   this.histogramBuckets.RunningMax == double.NegativeInfinity);
+            return this.aggType == AggregationType.HistogramMinMax ||
+                   this.aggType == AggregationType.HistogramSumCountMinMax;
         }
 
         internal readonly MetricPoint Copy()
