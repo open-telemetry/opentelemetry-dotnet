@@ -572,6 +572,74 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
+        [Theory]
+        [MemberData(nameof(MetricTestData.ValidHistogramMinMax), MemberType = typeof(MetricTestData))]
+        public void HistogramMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView(histogram.Name, histogramConfiguration)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            for (var i = 0; i < values.Length; i++)
+            {
+                histogram.Record(values[i]);
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            var histogramPoint = metricPoints[0];
+            var hasMinMax = histogramPoint.HasMinMax();
+            Assert.True(hasMinMax);
+
+            var min = histogramPoint.GetHistogramMin();
+            var max = histogramPoint.GetHistogramMax();
+
+            Assert.Equal(expectedMin, min);
+            Assert.Equal(expectedMax, max);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricTestData.InvalidHistogramMinMax), MemberType = typeof(MetricTestData))]
+        public void HistogramMinMaxNotPresent(double[] values, HistogramConfiguration histogramConfiguration)
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView(histogram.Name, histogramConfiguration)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            for (var i = 0; i < values.Length; i++)
+            {
+                histogram.Record(values[i]);
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            var histogramPoint = metricPoints[0];
+
+            Assert.False(histogramPoint.HasMinMax());
+        }
+
         [Fact]
         public void ViewToSelectTagKeys()
         {
