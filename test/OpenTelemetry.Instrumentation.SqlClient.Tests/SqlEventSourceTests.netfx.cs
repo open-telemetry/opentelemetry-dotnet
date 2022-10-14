@@ -276,13 +276,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             if (!isFailure)
             {
-                Assert.Equal(Status.Unset, activity.GetStatus());
+                Assert.Equal(ActivityStatusCode.Unset, activity.Status);
             }
             else
             {
-                var status = activity.GetStatus();
-                Assert.Equal(Status.Error.StatusCode, status.StatusCode);
-                Assert.NotNull(status.Description);
+                Assert.Equal(ActivityStatusCode.Error, activity.Status);
+                Assert.NotNull(activity.StatusDescription);
             }
         }
 

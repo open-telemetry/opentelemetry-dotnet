@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -44,8 +45,13 @@ namespace OpenTelemetry.Exporter
         /// Initializes zipkin endpoint.
         /// </summary>
         public ZipkinExporterOptions()
+             : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            if (EnvironmentVariableHelper.LoadUri(ZipkinEndpointEnvVar, out Uri endpoint))
+        }
+
+        internal ZipkinExporterOptions(IConfiguration configuration)
+        {
+            if (configuration.TryGetUriValue(ZipkinEndpointEnvVar, out var endpoint))
             {
                 this.Endpoint = endpoint;
             }
