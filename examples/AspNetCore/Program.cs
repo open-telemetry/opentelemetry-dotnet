@@ -171,4 +171,3 @@ if (metricsExporter.Equals("prometheus", StringComparison.OrdinalIgnoreCase))
 }
 
 app.Run();
-
