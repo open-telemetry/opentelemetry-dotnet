@@ -15,8 +15,6 @@
 // </copyright>
 
 using System.Reflection;
-using Examples.AspNetCore;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
@@ -24,7 +22,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 var builder = WebApplication.CreateBuilder(args);
 
 // OpenTelemetry
@@ -51,100 +48,99 @@ builder.Services.AddOpenTelemetryTracing(options =>
         .ConfigureResource(configureResource)
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
-        .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter();
+        .AddAspNetCoreInstrumentation();
 
-    //switch (tracingExporter)
-    //{
-    //    case "jaeger":
-    //        options.AddJaegerExporter();
+    switch (tracingExporter)
+    {
+        case "jaeger":
+            options.AddJaegerExporter();
 
-    //        builder.Services.Configure<JaegerExporterOptions>(builder.Configuration.GetSection("Jaeger"));
+            builder.Services.Configure<JaegerExporterOptions>(builder.Configuration.GetSection("Jaeger"));
 
-    //        // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
-    //        builder.Services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
-    //        break;
+            // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
+            builder.Services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+            break;
 
-    //    case "zipkin":
-    //        options.AddZipkinExporter();
+        case "zipkin":
+            options.AddZipkinExporter();
 
-    //        builder.Services.Configure<ZipkinExporterOptions>(builder.Configuration.GetSection("Zipkin"));
-    //        break;
+            builder.Services.Configure<ZipkinExporterOptions>(builder.Configuration.GetSection("Zipkin"));
+            break;
 
-    //    case "otlp":
-    //        options.AddOtlpExporter(otlpOptions =>
-    //            {
-    //                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
-    //            });
-    //        break;
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
+            break;
 
-    //    default:
-    //        options.AddConsoleExporter();
+        default:
+            options.AddConsoleExporter();
 
-    //        break;
-    //}
+            break;
+    }
 });
 
 // For options which can be bound from IConfiguration.
 builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
 
 // Logging
-//builder.Logging.ClearProviders();
+builder.Logging.ClearProviders();
 
-//builder.Logging.AddOpenTelemetry(options =>
-//{
-//    options.ConfigureResource(configureResource);
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.ConfigureResource(configureResource);
 
-//    // Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
-//    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-//    switch (logExporter)
-//    {
-//        case "otlp":
-//            options.AddOtlpExporter(otlpOptions =>
-//            {
-//                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
-//            });
-//            break;
-//        default:
-//            options.AddConsoleExporter();
-//            break;
-//    }
-//});
+    // Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
+    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+    switch (logExporter)
+    {
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
+            break;
+        default:
+            options.AddConsoleExporter();
+            break;
+    }
+});
 
-//builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
-//{
-//    opt.IncludeScopes = true;
-//    opt.ParseStateValues = true;
-//    opt.IncludeFormattedMessage = true;
-//});
+builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+{
+    opt.IncludeScopes = true;
+    opt.ParseStateValues = true;
+    opt.IncludeFormattedMessage = true;
+});
 
-//// Metrics
-//// Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
-//var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+// Metrics
+// Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
+var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
 
-//builder.Services.AddOpenTelemetryMetrics(options =>
-//{
-//    options.ConfigureResource(configureResource)
-//        .AddRuntimeInstrumentation()
-//        .AddHttpClientInstrumentation()
-//        .AddAspNetCoreInstrumentation();
+builder.Services.AddOpenTelemetryMetrics(options =>
+{
+    options.ConfigureResource(configureResource)
+        .AddRuntimeInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddAspNetCoreInstrumentation();
 
-//    switch (metricsExporter)
-//    {
-//        case "prometheus":
-//            options.AddPrometheusExporter();
-//            break;
-//        case "otlp":
-//            options.AddOtlpExporter(otlpOptions =>
-//            {
-//                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
-//            });
-//            break;
-//        default:
-//            options.AddConsoleExporter();
-//            break;
-//    }
-//});
+    switch (metricsExporter)
+    {
+        case "prometheus":
+            options.AddPrometheusExporter();
+            break;
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
+            break;
+        default:
+            options.AddConsoleExporter();
+            break;
+    }
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -169,9 +165,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-//if (metricsExporter.Equals("prometheus", StringComparison.OrdinalIgnoreCase))
-//{
-//    app.UseOpenTelemetryPrometheusScrapingEndpoint();
-//}
+if (metricsExporter.Equals("prometheus", StringComparison.OrdinalIgnoreCase))
+{
+    app.UseOpenTelemetryPrometheusScrapingEndpoint();
+}
 
 app.Run();
+
