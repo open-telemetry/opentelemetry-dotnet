@@ -894,9 +894,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedParentSpanId}-01");
-                request.Headers.Add("baggage", "key1=value1;key2=value2");
-                request.Headers.Add("tracestate", "rojo=1,congo=2");
                 var response = await client.SendAsync(request);
                 var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
@@ -908,6 +905,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 // Test Baggage Context Propagation
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
+                request.Headers.Add("baggage", "key1=value1,key2=value2");
 
                 response = await client.SendAsync(request);
                 var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
@@ -917,7 +915,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
                 Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
             }
-            catch
+            finally
             {
             }
         }
