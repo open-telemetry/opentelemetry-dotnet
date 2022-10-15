@@ -35,7 +35,6 @@ using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
 using TestApp.AspNetCore.Filters;
 using Xunit;
-using Xunit.Sdk;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
