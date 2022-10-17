@@ -505,6 +505,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal($"00-{expectedTraceId}-{expectedSpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
             Assert.Equal("b1=v1", baggages.Single());
+
+            DistributedContextPropagator.Current = DistributedContextPropagator.CreateDefaultPropagator();
         }
 
         [Fact]

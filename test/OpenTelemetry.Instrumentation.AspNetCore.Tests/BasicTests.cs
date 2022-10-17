@@ -916,6 +916,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
             finally
             {
+                DistributedContextPropagator.Current = DistributedContextPropagator.CreateDefaultPropagator();
             }
         }
 
