@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using Xunit;
 
@@ -113,6 +115,37 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(20, config.SpanAttributeCountLimit);
             Assert.Equal(30, config.SpanEventAttributeCountLimit);
             Assert.Equal(40, config.SpanLinkAttributeCountLimit);
+        }
+
+        [Fact]
+        public void SdkLimitOptionsUsingIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                ["OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT"] = "23",
+                ["OTEL_ATTRIBUTE_COUNT_LIMIT"] = "24",
+                ["OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT"] = "25",
+                ["OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT"] = "26",
+                ["OTEL_SPAN_EVENT_COUNT_LIMIT"] = "27",
+                ["OTEL_SPAN_LINK_COUNT_LIMIT"] = "28",
+                ["OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT"] = "29",
+                ["OTEL_LINK_ATTRIBUTE_COUNT_LIMIT"] = "30",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new SdkLimitOptions(configuration);
+
+            Assert.Equal(23, options.AttributeValueLengthLimit);
+            Assert.Equal(24, options.AttributeCountLimit);
+            Assert.Equal(25, options.SpanAttributeValueLengthLimit);
+            Assert.Equal(26, options.SpanAttributeCountLimit);
+            Assert.Equal(27, options.SpanEventCountLimit);
+            Assert.Equal(28, options.SpanLinkCountLimit);
+            Assert.Equal(29, options.SpanEventAttributeCountLimit);
+            Assert.Equal(30, options.SpanLinkAttributeCountLimit);
         }
 
         private static void ClearEnvVars()
