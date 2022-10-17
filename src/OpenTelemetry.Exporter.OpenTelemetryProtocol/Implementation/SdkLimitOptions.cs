@@ -1,4 +1,4 @@
-// <copyright file="SdkOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="SdkLimitOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +14,25 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
-/// <summary>
-/// Contains options for the OpenTelemetry SDK.
-/// </summary>
-public sealed class SdkOptions
+internal sealed class SdkLimitOptions
 {
     private int? spanAttributeValueLengthLimit;
     private int? spanAttributeCountLimit;
     private int? spanEventAttributeCountLimit;
     private int? spanLinkAttributeCountLimit;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SdkOptions"/> class.
-    /// </summary>
-    public SdkOptions()
+    internal SdkLimitOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
     }
 
-    internal SdkOptions(IConfiguration configuration)
+    internal SdkLimitOptions(IConfiguration configuration)
     {
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits
         SetIntConfigValue(configuration, "OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", value => this.AttributeValueLengthLimit = value);

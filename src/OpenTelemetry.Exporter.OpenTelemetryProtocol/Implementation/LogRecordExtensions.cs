@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
-            SdkOptions sdkOptions,
+            SdkLimitOptions sdkLimitOptions,
             OtlpResource.Resource processResource,
             in Batch<LogRecord> logRecordBatch)
         {
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var logRecord in logRecordBatch)
             {
-                var otlpLogRecord = logRecord.ToOtlpLog(sdkOptions);
+                var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
                 if (otlpLogRecord != null)
                 {
                     scopeLogs.LogRecords.Add(otlpLogRecord);
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkOptions sdkOptions)
+        internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions)
         {
             OtlpLogs.LogRecord otlpLogRecord = null;
 
@@ -75,8 +75,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     SeverityText = LogLevels[(int)logRecord.LogLevel],
                 };
 
-                var attributeValueLengthLimit = sdkOptions.AttributeValueLengthLimit;
-                var attributeCountLimit = sdkOptions.AttributeCountLimit ?? int.MaxValue;
+                var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
+                var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
 
                 // First add the generic attributes like category, eventid and exception, so they are less likely being dropped because of AttributeCountLimit
 

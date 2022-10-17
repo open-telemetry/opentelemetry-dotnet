@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class OtlpTraceExporter : BaseExporter<Activity>
     {
-        private readonly SdkOptions sdkOptions;
+        private readonly SdkLimitOptions sdkLimitOptions;
         private readonly IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient;
 
         private OtlpResource.Resource processResource;
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         /// <param name="options">Configuration options for the export.</param>
         public OtlpTraceExporter(OtlpExporterOptions options)
-            : this(options, new SdkOptions(), null)
+            : this(options, new(), null)
         {
         }
 
@@ -47,17 +47,17 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
         /// </summary>
         /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
-        /// <param name="sdkOptions"><see cref="SdkOptions"/>.</param>
+        /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
         /// <param name="exportClient">Client used for sending export request.</param>
         internal OtlpTraceExporter(
             OtlpExporterOptions exporterOptions,
-            SdkOptions sdkOptions,
+            SdkLimitOptions sdkLimitOptions,
             IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
         {
             Debug.Assert(exporterOptions != null, "exporterOptions was null");
-            Debug.Assert(sdkOptions != null, "sdkOptions was null");
+            Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-            this.sdkOptions = sdkOptions;
+            this.sdkLimitOptions = sdkLimitOptions;
 
             if (exportClient != null)
             {
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Exporter
 
             try
             {
-                request.AddBatch(this.sdkOptions, this.ProcessResource, activityBatch);
+                request.AddBatch(this.sdkLimitOptions, this.ProcessResource, activityBatch);
 
                 if (!this.exportClient.SendExportRequest(request))
                 {

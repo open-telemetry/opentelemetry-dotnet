@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
     public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
-        private static readonly SdkOptions DefaultSdkOptions = new();
+        private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
         static OtlpTraceExporterTests()
         {
@@ -188,9 +188,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(10, exportedItems.Count);
             var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
-            RunTest(DefaultSdkOptions, batch);
+            RunTest(DefaultSdkLimitOptions, batch);
 
-            void RunTest(SdkOptions sdkOptions, Batch<Activity> batch)
+            void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
             {
                 var request = new OtlpCollector.ExportTraceServiceRequest();
 
@@ -244,7 +244,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void SpanLimitsTest()
         {
-            var sdkOptions = new SdkOptions()
+            var sdkOptions = new SdkLimitOptions()
             {
                 AttributeValueLengthLimit = 4,
                 AttributeCountLimit = 3,
@@ -361,7 +361,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             rootActivity.TraceId.CopyTo(traceIdSpan);
             var traceId = traceIdSpan.ToArray();
 
-            var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan);
             Assert.Equal("root", otlpSpan.Name);
@@ -395,7 +395,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             rootActivity.Context.SpanId.CopyTo(parentIdSpan);
             var parentId = parentIdSpan.ToArray();
 
-            otlpSpan = childActivity.ToOtlpSpan(DefaultSdkOptions);
+            otlpSpan = childActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan);
             Assert.Equal("child", otlpSpan.Name);
@@ -434,7 +434,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var stringArr = new string[] { "test", string.Empty, null };
             rootActivity.SetTag("stringArray", stringArr);
 
-            var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan);
 
@@ -456,7 +456,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var activity = activitySource.StartActivity("Name");
             activity.SetStatus(expectedStatusCode, statusDescription);
 
-            var otlpSpan = activity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             if (expectedStatusCode == ActivityStatusCode.Unset)
             {
@@ -489,7 +489,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
 
-            var otlpSpan = activity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan.Status);
             Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
@@ -514,7 +514,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var activity = activitySource.StartActivity("Name");
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
-            var otlpSpan = activity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan.Status);
             Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
@@ -530,7 +530,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
 
-            var otlpSpan = activity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan.Status);
             Assert.Equal((int)ActivityStatusCode.Ok, (int)otlpSpan.Status.Code);
@@ -546,7 +546,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
 
-            var otlpSpan = activity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan.Status);
             Assert.Equal((int)ActivityStatusCode.Error, (int)otlpSpan.Status.Code);
@@ -562,7 +562,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             rootActivity.SetTag(SemanticConventions.AttributeHttpHost, "opentelemetry.io");
 
-            var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkOptions);
+            var otlpSpan = rootActivity.ToOtlpSpan(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpSpan);
 
@@ -620,7 +620,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var exportClientMock = new Mock<IExportClient<OtlpCollector.ExportTraceServiceRequest>>();
 
-            var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkOptions, exportClientMock.Object);
+            var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, exportClientMock.Object);
 
             var result = exporter.Shutdown();
 

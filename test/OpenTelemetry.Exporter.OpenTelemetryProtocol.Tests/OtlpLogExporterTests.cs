@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
-        private static readonly SdkOptions DefaultSdkOptions = new();
+        private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
         [Fact]
         public void AddOtlpLogExporterOptionsTest()
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
             Assert.NotNull(otlpLogRecord);
             Assert.Single(otlpLogRecord.Attributes);
 
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
             Assert.NotNull(otlpLogRecord);
             Assert.Empty(otlpLogRecord.Attributes);
         }
@@ -213,7 +213,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
@@ -230,7 +230,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
@@ -258,7 +258,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
             logger.LogInformation("Log when there is no activity.");
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.Null(Activity.Current);
             Assert.True(otlpLogRecord.TraceId.IsEmpty);
@@ -291,7 +291,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId.ToByteArray()).ToString());
             Assert.Equal(expectedSpanId.ToString(), ActivitySpanId.CreateFromBytes(otlpLogRecord.SpanId.ToByteArray()).ToString());
@@ -323,7 +323,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal(logRecord.LogLevel.ToString(), otlpLogRecord.SeverityText);
@@ -373,7 +373,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             if (includeFormattedMessage)
@@ -392,7 +392,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             if (includeFormattedMessage)
@@ -412,7 +412,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
 
@@ -445,7 +445,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var logRecord = logRecords[0];
             var loggedException = logRecord.Exception;
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();

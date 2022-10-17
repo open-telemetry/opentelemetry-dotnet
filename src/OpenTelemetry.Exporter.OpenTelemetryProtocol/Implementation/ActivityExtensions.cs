@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         internal static void AddBatch(
             this ExportTraceServiceRequest request,
-            SdkOptions sdkOptions,
+            SdkLimitOptions sdkLimitOptions,
             Resource processResource,
             in Batch<Activity> activityBatch)
         {
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var activity in activityBatch)
             {
-                Span span = activity.ToOtlpSpan(sdkOptions);
+                Span span = activity.ToOtlpSpan(sdkLimitOptions);
                 if (span == null)
                 {
                     OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Span ToOtlpSpan(this Activity activity, SdkOptions sdkOptions)
+        internal static Span ToOtlpSpan(this Activity activity, SdkLimitOptions sdkLimitOptions)
         {
             if (activity.IdFormat != ActivityIdFormat.W3C)
             {
@@ -157,10 +157,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             TagEnumerationState otlpTags = new()
             {
-                SdkOptions = sdkOptions,
+                SdkLimitOptions = sdkLimitOptions,
                 Span = otlpSpan,
             };
-            otlpTags.EnumerateTags(activity, sdkOptions.SpanAttributeCountLimit ?? int.MaxValue);
+            otlpTags.EnumerateTags(activity, sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue);
 
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
@@ -181,17 +181,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             EventEnumerationState otlpEvents = new()
             {
-                SdkOptions = sdkOptions,
+                SdkLimitOptions = sdkLimitOptions,
                 Span = otlpSpan,
             };
-            otlpEvents.EnumerateEvents(activity, sdkOptions.SpanEventCountLimit ?? int.MaxValue);
+            otlpEvents.EnumerateEvents(activity, sdkLimitOptions.SpanEventCountLimit ?? int.MaxValue);
 
             LinkEnumerationState otlpLinks = new()
             {
-                SdkOptions = sdkOptions,
+                SdkLimitOptions = sdkLimitOptions,
                 Span = otlpSpan,
             };
-            otlpLinks.EnumerateLinks(activity, sdkOptions.SpanLinkCountLimit ?? int.MaxValue);
+            otlpLinks.EnumerateLinks(activity, sdkLimitOptions.SpanLinkCountLimit ?? int.MaxValue);
 
             return otlpSpan;
         }
@@ -239,7 +239,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Span.Types.Link ToOtlpLink(in ActivityLink activityLink, SdkOptions sdkOptions)
+        private static Span.Types.Link ToOtlpLink(in ActivityLink activityLink, SdkLimitOptions sdkLimitOptions)
         {
             byte[] traceIdBytes = new byte[16];
             byte[] spanIdBytes = new byte[8];
@@ -253,10 +253,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
             };
 
-            int maxTags = sdkOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
+            int maxTags = sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
             foreach (ref readonly var tag in activityLink.EnumerateTagObjects())
             {
-                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, sdkOptions.AttributeValueLengthLimit))
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
                 {
                     if (otlpLink.Attributes.Count < maxTags)
                     {
@@ -273,7 +273,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Span.Types.Event ToOtlpEvent(in ActivityEvent activityEvent, SdkOptions sdkOptions)
+        private static Span.Types.Event ToOtlpEvent(in ActivityEvent activityEvent, SdkLimitOptions sdkLimitOptions)
         {
             var otlpEvent = new Span.Types.Event
             {
@@ -281,10 +281,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            int maxTags = sdkOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
+            int maxTags = sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
             foreach (ref readonly var tag in activityEvent.EnumerateTagObjects())
             {
-                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, sdkOptions.AttributeValueLengthLimit))
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, sdkLimitOptions.AttributeValueLengthLimit))
                 {
                     if (otlpEvent.Attributes.Count < maxTags)
                     {
@@ -323,7 +323,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         private struct TagEnumerationState : PeerServiceResolver.IPeerServiceState
         {
-            public SdkOptions SdkOptions;
+            public SdkLimitOptions SdkLimitOptions;
 
             public Span Span;
 
@@ -362,7 +362,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             continue;
                     }
 
-                    if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, this.SdkOptions.AttributeValueLengthLimit))
+                    if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, this.SdkLimitOptions.AttributeValueLengthLimit))
                     {
                         if (this.Span.Attributes.Count < maxTags)
                         {
@@ -389,7 +389,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         private struct EventEnumerationState
         {
-            public SdkOptions SdkOptions;
+            public SdkLimitOptions SdkLimitOptions;
 
             public Span Span;
 
@@ -399,7 +399,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     if (this.Span.Events.Count < maxEvents)
                     {
-                        this.Span.Events.Add(ToOtlpEvent(in @event, this.SdkOptions));
+                        this.Span.Events.Add(ToOtlpEvent(in @event, this.SdkLimitOptions));
                     }
                     else
                     {
@@ -411,7 +411,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         private struct LinkEnumerationState
         {
-            public SdkOptions SdkOptions;
+            public SdkLimitOptions SdkLimitOptions;
 
             public Span Span;
 
@@ -421,7 +421,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     if (this.Span.Links.Count < maxLinks)
                     {
-                        this.Span.Links.Add(ToOtlpLink(in link, this.SdkOptions));
+                        this.Span.Links.Add(ToOtlpLink(in link, this.SdkLimitOptions));
                     }
                     else
                     {

@@ -10,24 +10,6 @@ OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
 OpenTelemetry.Logs.LogRecord.TraceId.set -> void
 OpenTelemetry.Logs.LogRecord.TraceState.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-OpenTelemetry.SdkOptions
-OpenTelemetry.SdkOptions.AttributeCountLimit.get -> int?
-OpenTelemetry.SdkOptions.AttributeCountLimit.set -> void
-OpenTelemetry.SdkOptions.AttributeValueLengthLimit.get -> int?
-OpenTelemetry.SdkOptions.AttributeValueLengthLimit.set -> void
-OpenTelemetry.SdkOptions.SdkOptions() -> void
-OpenTelemetry.SdkOptions.SpanAttributeCountLimit.get -> int?
-OpenTelemetry.SdkOptions.SpanAttributeCountLimit.set -> void
-OpenTelemetry.SdkOptions.SpanAttributeValueLengthLimit.get -> int?
-OpenTelemetry.SdkOptions.SpanAttributeValueLengthLimit.set -> void
-OpenTelemetry.SdkOptions.SpanEventAttributeCountLimit.get -> int?
-OpenTelemetry.SdkOptions.SpanEventAttributeCountLimit.set -> void
-OpenTelemetry.SdkOptions.SpanEventCountLimit.get -> int?
-OpenTelemetry.SdkOptions.SpanEventCountLimit.set -> void
-OpenTelemetry.SdkOptions.SpanLinkAttributeCountLimit.get -> int?
-OpenTelemetry.SdkOptions.SpanLinkAttributeCountLimit.set -> void
-OpenTelemetry.SdkOptions.SpanLinkCountLimit.get -> int?
-OpenTelemetry.SdkOptions.SpanLinkCountLimit.set -> void
 static Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!

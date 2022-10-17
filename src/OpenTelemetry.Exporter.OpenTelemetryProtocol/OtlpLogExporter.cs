@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     internal class OtlpLogExporter : BaseExporter<LogRecord>
     {
-        private readonly SdkOptions sdkOptions;
+        private readonly SdkLimitOptions sdkLimitOptions;
         private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
 
         private OtlpResource.Resource processResource;
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         public OtlpLogExporter(OtlpExporterOptions options)
-            : this(options, new SdkOptions(), null)
+            : this(options, new SdkLimitOptions(), null)
         {
         }
 
@@ -48,17 +48,17 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
         /// </summary>
         /// <param name="exporterOptions">Configuration options for the exporter.</param>
-        /// <param name="sdkOptions"><see cref="SdkOptions"/>.</param>
+        /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
         /// <param name="exportClient">Client used for sending export request.</param>
         internal OtlpLogExporter(
             OtlpExporterOptions exporterOptions,
-            SdkOptions sdkOptions,
+            SdkLimitOptions sdkLimitOptions,
             IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient = null)
         {
             Debug.Assert(exporterOptions != null, "exporterOptions was null");
-            Debug.Assert(sdkOptions != null, "sdkOptions was null");
+            Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-            this.sdkOptions = sdkOptions;
+            this.sdkLimitOptions = sdkLimitOptions;
 
             if (exportClient != null)
             {
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Exporter
 
             try
             {
-                request.AddBatch(this.sdkOptions, this.ProcessResource, logRecordBatch);
+                request.AddBatch(this.sdkLimitOptions, this.ProcessResource, logRecordBatch);
 
                 if (!this.exportClient.SendExportRequest(request))
                 {

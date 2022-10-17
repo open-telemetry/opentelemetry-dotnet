@@ -19,6 +19,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -68,28 +69,29 @@ namespace OpenTelemetry.Trace
                     services.Configure(name, configure);
                 }
 
+                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
                 services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
-                var sdkOptions = sp.GetRequiredService<IOptionsMonitor<SdkOptions>>().Get(name);
+                var sdkOptionsManager = sp.GetRequiredService<SdkLimitOptions>();
 
-                AddOtlpExporter(builder, exporterOptions, sdkOptions, sp);
+                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
             });
         }
 
         internal static TracerProviderBuilder AddOtlpExporter(
             TracerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
-            SdkOptions sdkOptions,
+            SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
             Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null)
         {
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkOptions);
+            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
 
             if (configureExporterInstance != null)
             {

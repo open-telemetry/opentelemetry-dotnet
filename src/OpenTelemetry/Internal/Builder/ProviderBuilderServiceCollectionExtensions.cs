@@ -19,7 +19,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
@@ -39,8 +38,6 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // point of this registration is to make IConfiguration available in
         // those cases.
         services!.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
-
-        services!.RegisterOptionsFactory(configuration => new SdkOptions(configuration));
 
         return services!;
     }
