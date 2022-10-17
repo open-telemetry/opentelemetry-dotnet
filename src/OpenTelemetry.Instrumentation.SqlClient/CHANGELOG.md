@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
 * Use `Activity.Status` and `Activity.StatusDescription` properties instead of
   `OpenTelemetry.Trace.Status` and `OpenTelemetry.Trace.Status.Description`
   respectively to set activity status.
