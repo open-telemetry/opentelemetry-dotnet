@@ -1,4 +1,4 @@
-// <copyright file="SdkOptionsTests.cs" company="OpenTelemetry Authors">
+// <copyright file="SdkLimitOptionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +15,14 @@
 // </copyright>
 
 using System;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using Xunit;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    [Collection("xUnitCollectionPreventingTestsThatDependOnSdkOptionsFromRunningInParallel")]
-    public class SdkOptionsTests : IDisposable
+    public sealed class SdkLimitOptionsTests : IDisposable
     {
-        public SdkOptionsTests()
+        public SdkLimitOptionsTests()
         {
             ClearEnvVars();
         }
@@ -33,9 +33,9 @@ namespace OpenTelemetry.Tests
         }
 
         [Fact]
-        public void SdkOptionsDefaults()
+        public void SdkLimitOptionsDefaults()
         {
-            var config = new SdkOptions();
+            var config = new SdkLimitOptions();
 
             Assert.Null(config.AttributeValueLengthLimit);
             Assert.Null(config.AttributeCountLimit);
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Tests
         }
 
         [Fact]
-        public void SdkOptionsIsInitializedFromEnvironment()
+        public void SdkLimitOptionsIsInitializedFromEnvironment()
         {
             Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "10");
             Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", "10");
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Tests
             Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "30");
             Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "30");
 
-            var config = new SdkOptions();
+            var config = new SdkLimitOptions();
 
             Assert.Equal(10, config.AttributeValueLengthLimit);
             Assert.Equal(10, config.AttributeCountLimit);
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void SpanAttributeValueLengthLimitFallback()
         {
-            var config = new SdkOptions();
+            var config = new SdkLimitOptions();
 
             config.AttributeValueLengthLimit = 10;
             Assert.Equal(10, config.AttributeValueLengthLimit);
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void SpanAttributeCountLimitFallback()
         {
-            var config = new SdkOptions();
+            var config = new SdkLimitOptions();
 
             config.AttributeCountLimit = 10;
             Assert.Equal(10, config.AttributeCountLimit);
