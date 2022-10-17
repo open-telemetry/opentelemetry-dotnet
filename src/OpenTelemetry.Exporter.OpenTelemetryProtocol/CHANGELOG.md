@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
 * OTLP histogram data points will now include `Min` and `Max` values when
   they are present.
   ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
