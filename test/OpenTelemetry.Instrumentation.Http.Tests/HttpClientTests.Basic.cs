@@ -15,6 +15,7 @@
 // </copyright>
 #if !NETFRAMEWORK
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -39,7 +40,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
+                    if (ctx.Request.Url.PathAndQuery.Contains("500"))
+                    {
+                        ctx.Response.StatusCode = 500;
+                    }
+                    else if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
                     {
                         ctx.Response.RedirectLocation = "/";
                         ctx.Response.StatusCode = 302;
@@ -301,29 +306,35 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
+        public async Task HttpClientInstrumentationExportsSpansCreatedForRetries()
         {
-            // TODO: Investigate why this feature is required.
-            var processor = new Mock<BaseProcessor<Activity>>();
-
+            var exportedItems = new List<Activity>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
-
-            using (Sdk.CreateTracerProviderBuilder()
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation()
-                   .AddProcessor(processor.Object)
-                   .Build())
-            {
-                using var c = new HttpClient();
-                await c.SendAsync(request);
-            }
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
 
-            Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+            int maxRetries = 3;
+            using var c = new HttpClient(new RetryHandler(new HttpClientHandler(), maxRetries));
+            await c.SendAsync(request);
+
+            // number of exported spans should be 3(maxRetries)
+            Assert.Equal(maxRetries, exportedItems.Count());
+
+            var spanid1 = exportedItems[0].SpanId;
+            var spanid2 = exportedItems[1].SpanId;
+            var spanid3 = exportedItems[2].SpanId;
+
+            // Validate span ids are different
+            Assert.NotEqual(spanid1, spanid2);
+            Assert.NotEqual(spanid3, spanid1);
+            Assert.NotEqual(spanid2, spanid3);
         }
 
         [Fact]
@@ -453,6 +464,89 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
             Assert.Equal("b1=v1", baggages.Single());
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithGetAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
+            Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is not thrown and not collected as event
+            Assert.False(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri($"{this.url}500"),
+                Method = new HttpMethod("GET"),
+            };
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetStringAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and not collected as event
+            Assert.True(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
         }
 
         public void Dispose()

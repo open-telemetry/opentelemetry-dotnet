@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Added support for loading environment variables from `IConfiguration` when
+  using the `AddJaegerExporter` extension
+  ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddJaegerExporter` extension to allow for more fine-grained options
   management

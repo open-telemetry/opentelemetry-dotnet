@@ -15,13 +15,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using Xunit;
-using static OpenTelemetry.Extensions.Hosting.Tests.HostingTracerExtensionTests;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests
 {
@@ -193,6 +194,49 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var providers = serviceProvider.GetServices<MeterProvider>();
 
             Assert.Single(providers);
+        }
+
+        [Fact]
+        public async Task AddOpenTelemetryMetrics_HostConfigurationHonoredTest()
+        {
+            bool configureBuilderCalled = false;
+
+            var builder = new HostBuilder()
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        ["TEST_KEY"] = "TEST_KEY_VALUE",
+                    });
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddOpenTelemetryMetrics(builder =>
+                    {
+                        builder.ConfigureBuilder((sp, builder) =>
+                        {
+                            configureBuilderCalled = true;
+
+                            var configuration = sp.GetRequiredService<IConfiguration>();
+
+                            var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                            Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                        });
+                    });
+                });
+
+            var host = builder.Build();
+
+            Assert.False(configureBuilderCalled);
+
+            await host.StartAsync();
+
+            Assert.True(configureBuilderCalled);
+
+            await host.StopAsync();
+
+            host.Dispose();
         }
 
         private static MeterProviderBuilder AddMyFeature(MeterProviderBuilder meterProviderBuilder)

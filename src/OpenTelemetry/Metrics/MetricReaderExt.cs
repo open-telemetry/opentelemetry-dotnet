@@ -139,7 +139,7 @@ namespace OpenTelemetry.Metrics
                         OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
                             metricStreamIdentity.InstrumentName,
                             metricStreamIdentity.MeterName,
-                            "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
+                            "Metric instrument has the same name as an existing one but differs by description, unit, instrument type, or aggregation configuration (like histogram bounds, tag keys etc. ). Measurements from this instrument will still be exported but may result in conflicts.",
                             "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                     }
 
@@ -156,8 +156,7 @@ namespace OpenTelemetry.Metrics
                     }
                     else
                     {
-                        Metric metric;
-                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys);
+                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax);
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;

@@ -7,6 +7,14 @@ An [OpenTelemetry Prometheus exporter](https://github.com/open-telemetry/opentel
 that configures an [HttpListener](https://docs.microsoft.com/dotnet/api/system.net.httplistener)
 instance for Prometheus to scrape.
 
+**Warning**: this component is intended for dev inner-loop, there is no plan to
+make it production ready. Production environments should use
+[OpenTelemetry.Exporter.Prometheus.AspNetCore](../OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md),
+or a combination of
+[OpenTelemetry.Exporter.OpenTelemetryProtocol](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+and [OpenTelemetry
+Collector](https://github.com/open-telemetry/opentelemetry-collector).
+
 ## Prerequisite
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)

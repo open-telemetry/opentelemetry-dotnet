@@ -1,4 +1,4 @@
-// <copyright file="MetricReaderTemporalityPreference.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,11 @@
 
 namespace OpenTelemetry.Metrics;
 
-/// <summary>
-/// Defines the behavior of a <see cref="MetricReader" />
-/// with respect to <see cref="AggregationTemporality" />.
-/// </summary>
-public enum MetricReaderTemporalityPreference
+public class HistogramConfiguration : MetricStreamConfiguration
 {
     /// <summary>
-    /// All aggregations are performed using cumulative temporality.
+    /// Gets or sets a value indicating whether Min, Max
+    /// should be collected.
     /// </summary>
-    Cumulative = 1,
-
-    /// <summary>
-    /// All measurements that are monotonic in nature are aggregated using delta temporality.
-    /// Aggregations of non-monotonic measurements use cumulative temporality.
-    /// </summary>
-    Delta = 2,
+    public bool RecordMinMax { get; set; } = true;
 }

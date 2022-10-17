@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddGrpcClientInstrumentation` extension to allow for more fine-grained
   options management
