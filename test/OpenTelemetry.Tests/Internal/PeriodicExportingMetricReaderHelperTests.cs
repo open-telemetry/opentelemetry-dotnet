@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using Xunit;
@@ -105,6 +107,25 @@ namespace OpenTelemetry.Internal.Tests
             var reader = CreatePeriodicExportingMetricReader();
 
             Assert.Equal(value, reader.ExportTimeoutMilliseconds);
+        }
+
+        [Fact]
+        public void CreatePeriodicExportingMetricReader_FromIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey] = "18",
+                [PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey] = "19",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new MetricReaderOptions(configuration);
+
+            Assert.Equal(18, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+            Assert.Equal(19, options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds);
         }
 
         [Fact]
