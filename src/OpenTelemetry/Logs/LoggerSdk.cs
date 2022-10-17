@@ -44,6 +44,10 @@ internal sealed class LoggerSdk : Logger
     /// <inheritdoc />
     public override void EmitEvent(string name, in LogRecordData data, in LogRecordAttributeList attributes = default)
     {
+        // Note: This method will throw if event.name or event.domain is missing
+        // or null. This was done intentionally see discussion:
+        // https://github.com/open-telemetry/opentelemetry-specification/pull/2768#discussion_r972447436
+
         Guard.ThrowIfNullOrWhitespace(name);
 
         this.EnsureEventDomain();
