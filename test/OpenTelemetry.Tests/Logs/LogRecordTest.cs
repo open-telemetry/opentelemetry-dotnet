@@ -68,6 +68,8 @@ namespace OpenTelemetry.Logs.Tests
 
             var logLevelRecorded = exportedItems[0].LogLevel;
             Assert.Equal(logLevel, logLevelRecorded);
+            Assert.Equal((LogRecordSeverity)(int)logLevel, exportedItems[0].Severity);
+            Assert.Equal(logLevel.ToString(), exportedItems[0].SeverityText);
         }
 
         [Fact]

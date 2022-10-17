@@ -129,6 +129,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(TestEventSource.SimpleEventMessage, logRecord.Body);
             Assert.Equal(default, logRecord.EventId);
             Assert.Equal(LogRecordSeverity.Warning, logRecord.Severity);
+            Assert.Equal(nameof(EventLevel.Warning), logRecord.SeverityText);
             Assert.Null(logRecord.CategoryName);
             Assert.Null(logRecord.Exception);
 
