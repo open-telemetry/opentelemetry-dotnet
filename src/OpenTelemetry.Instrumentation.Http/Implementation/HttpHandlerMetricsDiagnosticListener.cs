@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
                         new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
+                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, HttpTagHelper.GetStatusCodeStringFromHttpStatusCode(response.StatusCode)),
                         new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
                     };
 
