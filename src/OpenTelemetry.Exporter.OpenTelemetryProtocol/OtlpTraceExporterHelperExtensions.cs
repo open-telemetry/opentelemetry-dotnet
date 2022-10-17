@@ -76,7 +76,11 @@ namespace OpenTelemetry.Trace
             return builder.ConfigureBuilder((sp, builder) =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
-                var sdkOptionsManager = sp.GetRequiredService<SdkLimitOptions>();
+
+                // Note: Not using name here for SdkLimitOptions. There should
+                // only be one provider for a given service collection so
+                // SdkLimitOptions is treated as a single default instance.
+                var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
                 AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
             });
