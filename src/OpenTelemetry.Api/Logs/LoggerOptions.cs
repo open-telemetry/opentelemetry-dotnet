@@ -16,7 +16,9 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs;
 
@@ -62,7 +64,45 @@ public sealed class LoggerOptions
     /// <summary>
     /// Gets the domain of events emitted by the instrumentation library.
     /// </summary>
-    public string? EventDomain { get; init; }
+    public string? EventDomain
+    {
+        get
+        {
+            var attributes = this.InstrumentationScope.AttributeBacking;
+            if (attributes != null && attributes.TryGetValue(SemanticConventions.AttributeLogEventDomain, out var eventDomain))
+            {
+                return eventDomain as string;
+            }
+
+            return null;
+        }
+
+        init
+        {
+            var attributes = this.InstrumentationScope.AttributeBacking;
+
+            Dictionary<string, object> newAttributes = new(attributes?.Count + 1 ?? 1);
+
+            if (attributes != null)
+            {
+                foreach (var kvp in attributes)
+                {
+                    newAttributes.Add(kvp.Key, kvp.Value);
+                }
+            }
+
+            if (value != null)
+            {
+                newAttributes[SemanticConventions.AttributeLogEventDomain] = value;
+            }
+            else
+            {
+                newAttributes.Remove(SemanticConventions.AttributeLogEventDomain);
+            }
+
+            this.InstrumentationScope.AttributeBacking = newAttributes;
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether or not trace context should

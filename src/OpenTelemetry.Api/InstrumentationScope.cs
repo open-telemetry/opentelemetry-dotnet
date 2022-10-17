@@ -25,6 +25,8 @@ namespace OpenTelemetry;
 /// </summary>
 public sealed class InstrumentationScope
 {
+    internal IReadOnlyDictionary<string, object>? AttributeBacking;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="InstrumentationScope"/> class.
     /// </summary>
@@ -63,5 +65,9 @@ public sealed class InstrumentationScope
     /// Gets the attributes which should be associated with log records created
     /// by the instrumentation library.
     /// </summary>
-    public IReadOnlyDictionary<string, object>? Attributes { get; init; }
+    public IReadOnlyDictionary<string, object>? Attributes
+    {
+        get => this.AttributeBacking;
+        init => this.AttributeBacking = value;
+    }
 }

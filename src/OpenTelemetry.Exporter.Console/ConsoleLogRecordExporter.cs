@@ -161,6 +161,29 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
+                var instrumentationScope = logRecord.InstrumentationScope;
+                if (instrumentationScope != null)
+                {
+                    this.WriteLine($"{"\nInstrumentationScope associated with LogRecord:",-RightPaddingLength}");
+                    this.WriteLine($"{"Name:",-RightPaddingLength}{logRecord.InstrumentationScope.Name}");
+                    if (instrumentationScope.Version != null)
+                    {
+                        this.WriteLine($"{"Version:",-RightPaddingLength}{logRecord.InstrumentationScope.Version}");
+                    }
+
+                    if (instrumentationScope.Attributes != null)
+                    {
+                        this.WriteLine("Attributes (Key:Value):");
+                        foreach (var attribute in instrumentationScope.Attributes)
+                        {
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
+                            {
+                                this.WriteLine($"{string.Empty,-4}{result}");
+                            }
+                        }
+                    }
+                }
+
                 this.WriteLine(string.Empty);
             }
 

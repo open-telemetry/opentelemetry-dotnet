@@ -23,6 +23,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Proto.Collector.Logs.V1;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -484,6 +485,54 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
             Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
+        }
+
+        [Fact]
+        public void CheckAddBatchInstrumentationScopeProcessed()
+        {
+            List<LogRecord> exportedLogRecords = new();
+
+            using (var provider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedLogRecords)
+                .Build())
+            {
+                var loggerA = provider.GetLogger(new InstrumentationScope("testLogger1")
+                {
+                    Attributes = new Dictionary<string, object> { ["mycustom.key1"] = "value1" },
+                });
+                var loggerB = provider.GetLogger(
+                    new LoggerOptions(
+                        new InstrumentationScope("testLogger2")
+                        {
+                            Attributes = new Dictionary<string, object> { ["mycustom.key2"] = "value2" },
+                        })
+                    {
+                        EventDomain = "testLogger2EventDomain",
+                    });
+
+                loggerA.EmitLog(default, default);
+                loggerB.EmitEvent("event1", default, default);
+            }
+
+            Assert.Equal(2, exportedLogRecords.Count);
+
+            var batch = new Batch<LogRecord>(exportedLogRecords.ToArray(), 2);
+
+            ExportLogsServiceRequest request = new();
+
+            request.AddBatch(new(), in batch);
+
+            Assert.Equal(2, request.ResourceLogs[0].ScopeLogs.Count);
+
+            Assert.Equal("testLogger1", request.ResourceLogs[0].ScopeLogs[0].Scope.Name);
+            Assert.Equal("mycustom.key1", request.ResourceLogs[0].ScopeLogs[0].Scope.Attributes[0].Key);
+            Assert.Equal("value1", request.ResourceLogs[0].ScopeLogs[0].Scope.Attributes[0].Value.StringValue);
+
+            Assert.Equal("testLogger2", request.ResourceLogs[0].ScopeLogs[1].Scope.Name);
+            Assert.Equal("mycustom.key2", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[0].Key);
+            Assert.Equal("value2", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[0].Value.StringValue);
+            Assert.Equal(SemanticConventions.AttributeLogEventDomain, request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[1].Key);
+            Assert.Equal("testLogger2EventDomain", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[1].Value.StringValue);
         }
     }
 }
