@@ -531,7 +531,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal("testLogger2", request.ResourceLogs[0].ScopeLogs[1].Scope.Name);
             Assert.Equal("mycustom.key2", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[0].Key);
             Assert.Equal("value2", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[0].Value.StringValue);
-            Assert.Equal("event.domain", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[1].Key);
+            Assert.Equal(SemanticConventions.AttributeLogEventDomain, request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[1].Key);
             Assert.Equal("testLogger2EventDomain", request.ResourceLogs[0].ScopeLogs[1].Scope.Attributes[1].Value.StringValue);
         }
     }

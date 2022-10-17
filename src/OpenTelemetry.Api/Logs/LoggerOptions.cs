@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs;
 
@@ -68,7 +69,7 @@ public sealed class LoggerOptions
         get
         {
             var attributes = this.InstrumentationScope.AttributeBacking;
-            if (attributes != null && attributes.TryGetValue("event.domain", out var eventDomain))
+            if (attributes != null && attributes.TryGetValue(SemanticConventions.AttributeLogEventDomain, out var eventDomain))
             {
                 return eventDomain as string;
             }
@@ -92,11 +93,11 @@ public sealed class LoggerOptions
 
             if (value != null)
             {
-                newAttributes["event.domain"] = value;
+                newAttributes[SemanticConventions.AttributeLogEventDomain] = value;
             }
             else
             {
-                newAttributes.Remove("event.domain");
+                newAttributes.Remove(SemanticConventions.AttributeLogEventDomain);
             }
 
             this.InstrumentationScope.AttributeBacking = newAttributes;

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs;
 
@@ -69,7 +70,7 @@ internal sealed class LoggerSdk : Logger
 
             Debug.Assert(exportedAttributes != null, "exportedAttributes was null");
 
-            exportedAttributes!.Add(new KeyValuePair<string, object?>("event.name", name));
+            exportedAttributes!.Add(new KeyValuePair<string, object?>(SemanticConventions.AttributeLogEventName, name));
 
             logRecord.Attributes = exportedAttributes;
 

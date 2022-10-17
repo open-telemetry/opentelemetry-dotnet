@@ -107,5 +107,8 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionType = "exception.type";
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
+
+        public const string AttributeLogEventDomain = "event.domain";
+        public const string AttributeLogEventName = "event.name";
     }
 }
