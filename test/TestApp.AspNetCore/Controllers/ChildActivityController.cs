@@ -31,7 +31,12 @@ namespace TestApp.AspNetCore.Controllers
             var activity = new Activity("ActivityInsideHttpRequest");
             activity.Start();
             result["TraceId"] = activity.Context.TraceId.ToString();
-            result["ParentSpanId"] = activity.ParentSpanId.ToString();
+            var parentSpanId = activity.Parent?.ParentSpanId.ToString();
+            if (parentSpanId != null)
+            {
+                result["ParentSpanId"] = parentSpanId;
+            }
+
             if (activity.Context.TraceState != null)
             {
                 result["TraceState"] = activity.Context.TraceState;

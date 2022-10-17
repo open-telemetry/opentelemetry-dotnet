@@ -900,7 +900,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
                 Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
-                Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
+                Assert.Equal(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]);
 
                 // Test Baggage Context Propagation
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
