@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         public OtlpLogExporter(OtlpExporterOptions options)
-            : this(options, new SdkLimitOptions(), null)
+            : this(options, new(), null)
         {
         }
 
