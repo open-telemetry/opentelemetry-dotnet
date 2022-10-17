@@ -84,7 +84,28 @@ namespace OpenTelemetry.Exporter
 
                 if (logRecord.State != null)
                 {
-                    this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
+                    if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listKvp)
+                    {
+                        this.WriteLine("LogRecord.State (Key:Value):");
+                        for (int i = 0; i < listKvp.Count; i++)
+                        {
+                            // Special casing {OriginalFormat}
+                            // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                            // for explanation.
+                            var valueToTransform = listKvp[i].Key.Equals("{OriginalFormat}")
+                                ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", listKvp[i].Value)
+                                : listKvp[i];
+
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(listKvp[i], out var result))
+                            {
+                                this.WriteLine($"{string.Empty,-4}{result}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
+                    }
                 }
                 else if (logRecord.StateValues != null)
                 {

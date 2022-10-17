@@ -28,8 +28,7 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.AddProcessor(new MyRedactionProcessor())
-                       .AddProcessor(new MyProcessor("ProcessorA"))
+                options.AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
                        .AddMyExporter();
