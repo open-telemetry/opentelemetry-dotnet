@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -49,11 +50,16 @@ namespace OpenTelemetry.Trace
                 Debug.Assert(this.OwnedServiceProvider != null, "serviceProvider was not IDisposable");
             }
 
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
+
             var state = new TracerProviderBuilderState(serviceProvider);
 
             TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
                 serviceProvider,
                 state);
+
+            StringBuilder processorsAdded = new StringBuilder();
+            StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
             if (state.SetErrorStatusOnException)
             {
@@ -79,11 +85,27 @@ namespace OpenTelemetry.Trace
             foreach (var processor in state.Processors)
             {
                 this.AddProcessor(processor);
+                processorsAdded.Append(processor.GetType());
+                processorsAdded.Append(';');
             }
 
             foreach (var instrumentation in state.Instrumentation)
             {
                 this.instrumentations.Add(instrumentation.Instance);
+                instrumentationFactoriesAdded.Append(instrumentation.Name);
+                instrumentationFactoriesAdded.Append(';');
+            }
+
+            if (processorsAdded.Length != 0)
+            {
+                processorsAdded.Remove(processorsAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Processors added = \"{processorsAdded}\".");
+            }
+
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
             }
 
             var listener = new ActivityListener();
@@ -264,6 +286,7 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
 
         internal Resource Resource { get; }

@@ -34,7 +34,8 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
-            string[] tagKeysInteresting = null)
+            string[] tagKeysInteresting = null,
+            bool histogramRecordMinMax = true)
         {
             this.InstrumentIdentity = instrumentIdentity;
 
@@ -118,15 +119,9 @@ namespace OpenTelemetry.Metrics
             {
                 this.MetricType = MetricType.Histogram;
 
-                if (histogramBounds != null
-                    && histogramBounds.Length == 0)
-                {
-                    aggType = AggregationType.HistogramSumCount;
-                }
-                else
-                {
-                    aggType = AggregationType.Histogram;
-                }
+                aggType = histogramBounds != null && histogramBounds.Length == 0
+                    ? (histogramRecordMinMax ? AggregationType.HistogramSumCountMinMax : AggregationType.HistogramSumCount)
+                    : (histogramRecordMinMax ? AggregationType.HistogramMinMax : AggregationType.Histogram);
             }
             else
             {
