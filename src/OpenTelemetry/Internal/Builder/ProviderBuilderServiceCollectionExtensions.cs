@@ -19,6 +19,8 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -38,5 +40,14 @@ internal static class ProviderBuilderServiceCollectionExtensions
         services!.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
         return services!;
+    }
+
+    public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
+    {
+        services.AddOpenTelemetryProviderBuilderServices();
+
+        services.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
+
+        return services;
     }
 }
