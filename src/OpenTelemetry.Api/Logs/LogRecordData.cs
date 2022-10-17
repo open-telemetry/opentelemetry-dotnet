@@ -90,6 +90,12 @@ public struct LogRecordData
     public ActivityTraceFlags TraceFlags { get; set; }
 
     /// <summary>
+    /// Gets or sets the original string representation of the severity as it is
+    /// known at the source.
+    /// </summary>
+    public string? SeverityText { get; set; } = null;
+
+    /// <summary>
     /// Gets or sets the log severity.
     /// </summary>
     public LogRecordSeverity? Severity { get; set; } = null;

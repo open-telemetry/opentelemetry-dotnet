@@ -248,6 +248,16 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
+        /// Gets or sets the original string representation of the severity as it is
+        /// known at the source.
+        /// </summary>
+        public string? SeverityText
+        {
+            get => this.Data.SeverityText;
+            set => this.Data.SeverityText = value;
+        }
+
+        /// <summary>
         /// Gets or sets the log <see cref="LogRecordSeverity"/>.
         /// </summary>
         public LogRecordSeverity? Severity
