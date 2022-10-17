@@ -367,7 +367,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpLogRecord = logRecord.ToOtlpLog();
 
             Assert.NotNull(otlpLogRecord);
-            Assert.Equal(logRecord.Severity.ToString(), otlpLogRecord.SeverityText);
+            Assert.Equal(logLevel.ToString(), otlpLogRecord.SeverityText);
             switch (logLevel)
             {
                 case LogLevel.Trace:
