@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added back `netstandard2.0` target.
+([]())
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17
