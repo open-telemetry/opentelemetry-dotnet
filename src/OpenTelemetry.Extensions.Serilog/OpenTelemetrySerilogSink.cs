@@ -71,7 +71,7 @@ internal sealed class OpenTelemetrySerilogSink : ILogEventSink, IDisposable
         };
 
         uint severityNumber = (uint)logEvent.Level;
-        if (severityNumber >= 0 && severityNumber < 6)
+        if (severityNumber < 6)
         {
             data.SeverityText = LogEventLevels[severityNumber];
             data.Severity = (LogRecordSeverity)severityNumber;

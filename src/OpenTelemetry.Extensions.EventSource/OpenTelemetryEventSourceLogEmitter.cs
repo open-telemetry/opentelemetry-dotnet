@@ -160,7 +160,7 @@ namespace OpenTelemetry.Logs
             };
 
             uint eventLevel = (uint)eventData.Level;
-            if (eventLevel > 0 && eventLevel < 6)
+            if (eventLevel < 6)
             {
                 Tuple<LogRecordSeverity, string> eventLevelMapping = EventLevels[eventLevel];
                 data.Severity = eventLevelMapping.Item1;

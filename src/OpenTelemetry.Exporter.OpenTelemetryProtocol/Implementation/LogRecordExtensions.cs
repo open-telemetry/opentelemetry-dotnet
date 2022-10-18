@@ -124,7 +124,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 else if (logRecord.Severity.HasValue)
                 {
                     uint severityNumber = (uint)logRecord.Severity.Value;
-                    if (severityNumber >= 0 && severityNumber < 6)
+                    if (severityNumber < 6)
                     {
                         otlpLogRecord.SeverityText = SeverityTextMapping[severityNumber];
                     }

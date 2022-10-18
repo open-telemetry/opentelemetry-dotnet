@@ -94,7 +94,7 @@ namespace OpenTelemetry.Logs
                 data.TimestampBacking = DateTime.UtcNow;
 
                 uint intLogLevel = (uint)logLevel;
-                if (intLogLevel >= 0 && intLogLevel < 6)
+                if (intLogLevel < 6)
                 {
                     data.Severity = (LogRecordSeverity)logLevel;
                     data.SeverityText = LogLevels[intLogLevel];
