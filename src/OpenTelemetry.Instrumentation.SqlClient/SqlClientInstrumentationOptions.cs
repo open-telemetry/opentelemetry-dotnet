@@ -131,6 +131,18 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
 #if !NETFRAMEWORK
         /// <summary>
+        /// Gets or sets a Filter function that determines whether or not to collect telemetry about a command
+        /// The Filter gets the SqlCommand, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
+        /// </summary>
+        /// <remarks>
+        /// <para>object: the raw <c>SqlCommand</c> object to interrogate for a decision on whether to trace or not.</para>
+        /// </remarks>
+        /// <returns>true to collect request, false to filter out.</returns>
+        public Func<object, bool> Filter { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
         /// </summary>
         /// <remarks>
