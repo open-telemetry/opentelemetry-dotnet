@@ -55,6 +55,8 @@ namespace OpenTelemetry.Exporter
             {
                 this.Endpoint = endpoint;
             }
+
+            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
         }
 
         /// <summary>
@@ -81,7 +83,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see
