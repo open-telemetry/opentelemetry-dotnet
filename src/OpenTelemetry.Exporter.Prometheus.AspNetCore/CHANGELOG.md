@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Support named options in `UseOpenTelemetryPrometheusScrapingEndpoint` &
+  `MapPrometheusScrapingEndpoint` extensions
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17
