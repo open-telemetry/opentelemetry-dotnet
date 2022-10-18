@@ -1,4 +1,4 @@
-name: Build
+name: ci
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
     - '**.md'
 
 jobs:
-  ci:
+  build-test:
     strategy:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
@@ -24,7 +24,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
