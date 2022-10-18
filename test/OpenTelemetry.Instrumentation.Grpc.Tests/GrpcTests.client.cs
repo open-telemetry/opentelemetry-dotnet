@@ -264,7 +264,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddHttpClientInstrumentation()
                     .AddAspNetCoreInstrumentation(options =>
                     {
-                        options.EnrichOnStart = (activity, request) =>
+                        options.EnrichWithHttpRequest = (activity, request) =>
                         {
                             activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
                         };
