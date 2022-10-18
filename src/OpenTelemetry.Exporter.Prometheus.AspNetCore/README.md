@@ -66,6 +66,10 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
                 && context.Connection.LocalPort == 5067);
     ```
 
+    This can be used in combination with
+    [configuring multiple ports on the ASP.NET application](https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/endpoints)
+    to expose the scraping endpoint on a different port.
+
 ## Configuration
 
 The `PrometheusExporter` can be configured using the `PrometheusAspNetCoreOptions`

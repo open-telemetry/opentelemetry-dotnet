@@ -58,11 +58,13 @@ namespace OpenTelemetry.Metrics
             this.deltaLastValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
-            if (this.aggType == AggregationType.Histogram)
+            if (this.aggType == AggregationType.Histogram ||
+                this.aggType == AggregationType.HistogramMinMax)
             {
                 this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
             }
-            else if (this.aggType == AggregationType.HistogramSumCount)
+            else if (this.aggType == AggregationType.HistogramSumCount ||
+                     this.aggType == AggregationType.HistogramSumCountMinMax)
             {
                 this.histogramBuckets = new HistogramBuckets(null);
             }
@@ -187,7 +189,10 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly long GetHistogramCount()
         {
-            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
+            if (this.aggType != AggregationType.Histogram &&
+                this.aggType != AggregationType.HistogramSumCount &&
+                this.aggType != AggregationType.HistogramMinMax &&
+                this.aggType != AggregationType.HistogramSumCountMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
             }
@@ -205,7 +210,10 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double GetHistogramSum()
         {
-            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
+            if (this.aggType != AggregationType.Histogram &&
+                this.aggType != AggregationType.HistogramSumCount &&
+                this.aggType != AggregationType.HistogramMinMax &&
+                this.aggType != AggregationType.HistogramSumCountMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
@@ -223,12 +231,56 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly HistogramBuckets GetHistogramBuckets()
         {
-            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
+            if (this.aggType != AggregationType.Histogram &&
+                this.aggType != AggregationType.HistogramSumCount &&
+                this.aggType != AggregationType.HistogramMinMax &&
+                this.aggType != AggregationType.HistogramSumCountMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
 
             return this.histogramBuckets;
+        }
+
+        /// <summary>
+        /// Gets the minimum value of the histogram associated with the metric
+        /// point if present. Check by using <see cref="HasMinMax"/>.
+        /// </summary>
+        /// <remarks>
+        /// Applies to <see cref="MetricType.Histogram"/> metric type.
+        /// </remarks>
+        /// <returns>A histogram's maximum value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double GetHistogramMin()
+        {
+            return this.histogramBuckets.SnapshotMin;
+        }
+
+        /// <summary>
+        /// Gets the maximum value of the histogram associated with the metric
+        /// point if present. Check by using <see cref="HasMinMax"/>.
+        /// </summary>
+        /// <remarks>
+        /// Applies to <see cref="MetricType.Histogram"/> metric type.
+        /// </remarks>
+        /// <returns>A histogram's maximum value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double GetHistogramMax()
+        {
+            return this.histogramBuckets.SnapshotMax;
+        }
+
+        /// <summary>
+        /// Gets whether the histogram has a valid Min and Max value.
+        /// Should be used before
+        /// <see cref="GetHistogramMin"/> and <see cref="GetHistogramMax"/> to
+        /// ensure a valid value is returned.
+        /// </summary>
+        /// <returns>A minimum and maximum value exist.</returns>
+        public bool HasMinMax()
+        {
+            return this.aggType == AggregationType.HistogramMinMax ||
+                   this.aggType == AggregationType.HistogramSumCountMinMax;
         }
 
         internal readonly MetricPoint Copy()
@@ -261,7 +313,9 @@ namespace OpenTelemetry.Metrics
                     }
 
                 case AggregationType.Histogram:
+                case AggregationType.HistogramMinMax:
                 case AggregationType.HistogramSumCount:
+                case AggregationType.HistogramSumCountMinMax:
                     {
                         this.Update((double)number);
 
@@ -364,6 +418,63 @@ namespace OpenTelemetry.Metrics
                                 {
                                     this.runningValue.AsLong++;
                                     this.histogramBuckets.RunningSum += number;
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramMinMax:
+                    {
+                        int i = this.histogramBuckets.FindBucketIndex(number);
+
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningBucketCounts[i]++;
+                                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramSumCountMinMax:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
                                 }
 
                                 // Release lock
@@ -501,6 +612,7 @@ namespace OpenTelemetry.Metrics
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
                                 this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
@@ -539,10 +651,88 @@ namespace OpenTelemetry.Metrics
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
                                 this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
                                     this.histogramBuckets.RunningSum = 0;
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramMinMax:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                                this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
+                                this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    this.histogramBuckets.RunningSum = 0;
+                                    this.histogramBuckets.RunningMin = double.PositiveInfinity;
+                                    this.histogramBuckets.RunningMax = double.NegativeInfinity;
+                                }
+
+                                for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
+                                {
+                                    this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
+                                    if (outputDelta)
+                                    {
+                                        this.histogramBuckets.RunningBucketCounts[i] = 0;
+                                    }
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramSumCountMinMax:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                                this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
+                                this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    this.histogramBuckets.RunningSum = 0;
+                                    this.histogramBuckets.RunningMin = double.PositiveInfinity;
+                                    this.histogramBuckets.RunningMax = double.NegativeInfinity;
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;

@@ -15,6 +15,7 @@
 // </copyright>
 #if NETFRAMEWORK
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -45,7 +46,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    ctx.Response.StatusCode = 200;
+                    if (ctx.Request.Url.PathAndQuery.Contains("500"))
+                    {
+                        ctx.Response.StatusCode = 500;
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 200;
+                    }
+
                     ctx.Response.OutputStream.Close();
                 },
                 out var host,
@@ -295,6 +304,147 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             await client.GetAsync(this.url).ConfigureAwait(false);
 
             Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithGetAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
+            Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is not thrown and not collected as event
+            Assert.False(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri($"{this.url}500"),
+                Method = new HttpMethod("GET"),
+            };
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetStringAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and not collected as event
+            Assert.True(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
+
+        [Fact]
+        public async Task HttpWebRequestInstrumentationReportsExceptionEventForNetworkFailures()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+
+                request.Method = "GET";
+
+                using var response = await request.GetResponseAsync();
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
+            Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
+        }
+
+        [Fact]
+        public async Task HttpWebRequestInstrumentationReportsExceptionEventOnErrorResponse()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create($"{this.url}500");
+
+                request.Method = "GET";
+
+                using var response = await request.GetResponseAsync();
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
+            Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
         }
     }
 }

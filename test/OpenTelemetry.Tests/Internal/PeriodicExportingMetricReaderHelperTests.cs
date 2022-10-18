@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using Xunit;
@@ -58,7 +60,7 @@ namespace OpenTelemetry.Internal.Tests
         [Fact]
         public void CreatePeriodicExportingMetricReader_ExportIntervalMilliseconds_FromOptions()
         {
-            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportIntervalEnvVarKey, "88888"); // should be ignored, as value set via options has higher priority
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, "88888"); // should be ignored, as value set via options has higher priority
             var value = 123;
             var reader = CreatePeriodicExportingMetricReader(new()
             {
@@ -74,7 +76,7 @@ namespace OpenTelemetry.Internal.Tests
         [Fact]
         public void CreatePeriodicExportingMetricReader_ExportTimeoutMilliseconds_FromOptions()
         {
-            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportTimeoutEnvVarKey, "99999"); // should be ignored, as value set via options has higher priority
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, "99999"); // should be ignored, as value set via options has higher priority
             var value = 456;
             var reader = CreatePeriodicExportingMetricReader(new()
             {
@@ -91,7 +93,7 @@ namespace OpenTelemetry.Internal.Tests
         public void CreatePeriodicExportingMetricReader_ExportIntervalMilliseconds_FromEnvVar()
         {
             var value = 789;
-            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportIntervalEnvVarKey, value.ToString());
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, value.ToString());
             var reader = CreatePeriodicExportingMetricReader();
 
             Assert.Equal(value, reader.ExportIntervalMilliseconds);
@@ -101,23 +103,42 @@ namespace OpenTelemetry.Internal.Tests
         public void CreatePeriodicExportingMetricReader_ExportTimeoutMilliseconds_FromEnvVar()
         {
             var value = 246;
-            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportTimeoutEnvVarKey, value.ToString());
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, value.ToString());
             var reader = CreatePeriodicExportingMetricReader();
 
             Assert.Equal(value, reader.ExportTimeoutMilliseconds);
         }
 
         [Fact]
+        public void CreatePeriodicExportingMetricReader_FromIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey] = "18",
+                [PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey] = "19",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new MetricReaderOptions(configuration);
+
+            Assert.Equal(18, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+            Assert.Equal(19, options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds);
+        }
+
+        [Fact]
         public void EnvironmentVariableNames()
         {
-            Assert.Equal("OTEL_METRIC_EXPORT_INTERVAL", PeriodicExportingMetricReaderHelper.OTelMetricExportIntervalEnvVarKey);
-            Assert.Equal("OTEL_METRIC_EXPORT_TIMEOUT", PeriodicExportingMetricReaderHelper.OTelMetricExportTimeoutEnvVarKey);
+            Assert.Equal("OTEL_METRIC_EXPORT_INTERVAL", PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey);
+            Assert.Equal("OTEL_METRIC_EXPORT_TIMEOUT", PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey);
         }
 
         private static void ClearEnvVars()
         {
-            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportIntervalEnvVarKey, null);
-            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportTimeoutEnvVarKey, null);
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, null);
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, null);
         }
 
         private static PeriodicExportingMetricReader CreatePeriodicExportingMetricReader(

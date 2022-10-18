@@ -1,4 +1,4 @@
-// <copyright file="MyRedactionProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using OpenTelemetry;
-using OpenTelemetry.Logs;
+namespace OpenTelemetry.Metrics;
 
-internal class MyRedactionProcessor : BaseProcessor<LogRecord>
+public class HistogramConfiguration : MetricStreamConfiguration
 {
-    public override void OnEnd(LogRecord logRecord)
-    {
-        if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listOfKvp)
-        {
-            logRecord.State = new MyClassWithRedactionEnumerator(listOfKvp);
-        }
-    }
+    /// <summary>
+    /// Gets or sets a value indicating whether Min, Max
+    /// should be collected.
+    /// </summary>
+    public bool RecordMinMax { get; set; } = true;
 }

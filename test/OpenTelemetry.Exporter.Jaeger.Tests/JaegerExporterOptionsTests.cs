@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests
@@ -91,6 +93,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_HOST", JaegerExporterOptions.OTelAgentHostEnvVarKey);
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_PORT", JaegerExporterOptions.OTelAgentPortEnvVarKey);
             Assert.Equal("OTEL_EXPORTER_JAEGER_ENDPOINT", JaegerExporterOptions.OTelEndpointEnvVarKey);
+        }
+
+        [Fact]
+        public void JaegerExporterOptions_FromConfigurationTest()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [JaegerExporterOptions.OTelProtocolEnvVarKey] = "http/thrift.binary",
+                [JaegerExporterOptions.OTelAgentHostEnvVarKey] = "jaeger-host",
+                [JaegerExporterOptions.OTelAgentPortEnvVarKey] = "123",
+                [JaegerExporterOptions.OTelEndpointEnvVarKey] = "http://custom-endpoint:12345",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new JaegerExporterOptions(configuration);
+
+            Assert.Equal("jaeger-host", options.AgentHost);
+            Assert.Equal(123, options.AgentPort);
+            Assert.Equal(JaegerExportProtocol.HttpBinaryThrift, options.Protocol);
+            Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
         }
 
         private static void ClearEnvVars()

@@ -257,6 +257,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
                             dataPoint.Sum = metricPoint.GetHistogramSum();
 
+                            if (metricPoint.HasMinMax())
+                            {
+                                dataPoint.Min = metricPoint.GetHistogramMin();
+                                dataPoint.Max = metricPoint.GetHistogramMax();
+                            }
+
                             foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
                                 dataPoint.BucketCounts.Add((ulong)histogramMeasurement.BucketCount);

@@ -31,12 +31,16 @@ namespace OpenTelemetry.Metrics
         internal readonly double[] ExplicitBounds;
 
         internal readonly long[] RunningBucketCounts;
-
         internal readonly long[] SnapshotBucketCounts;
 
         internal double RunningSum;
-
         internal double SnapshotSum;
+
+        internal double RunningMin = double.PositiveInfinity;
+        internal double SnapshotMin;
+
+        internal double RunningMax = double.NegativeInfinity;
+        internal double SnapshotMax;
 
         internal int IsCriticalSectionOccupied = 0;
 
