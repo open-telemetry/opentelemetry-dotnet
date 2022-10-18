@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Added back `netstandard2.0` target.
-([]())
+([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
 
 ## 1.0.0-rc9.8
 
