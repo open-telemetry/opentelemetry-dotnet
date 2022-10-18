@@ -7,6 +7,9 @@ that is passed in to enrich activity. The new callbacks are
 `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.
 ([#3749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3749))
 
+* Added back `netstandard2.0` and `netstandard2.1` targets.
+([#3755](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3755))
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17
