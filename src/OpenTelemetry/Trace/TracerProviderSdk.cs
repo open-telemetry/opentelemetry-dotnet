@@ -66,7 +66,10 @@ namespace OpenTelemetry.Trace
                 state.EnableErrorStatusOnException();
             }
 
-            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
+
             this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
             this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 

@@ -260,22 +260,22 @@ namespace OpenTelemetry.Trace.Tests
             {
                 configureInvocations++;
 
-                Assert.Single(builder.Resources);
+                Assert.Single(builder.ResourceDetectors);
 
                 builder.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" });
 
-                Assert.Equal(2, builder.Resources.Count);
+                Assert.Equal(2, builder.ResourceDetectors.Count);
             });
             builder.SetResourceBuilder(ResourceBuilder.CreateEmpty());
             builder.ConfigureResource(builder =>
             {
                 configureInvocations++;
 
-                Assert.Empty(builder.Resources);
+                Assert.Empty(builder.ResourceDetectors);
 
                 builder.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" });
 
-                Assert.Single(builder.Resources);
+                Assert.Single(builder.ResourceDetectors);
             });
 
             using var provider = builder.Build() as TracerProviderSdk;
