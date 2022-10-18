@@ -60,10 +60,15 @@ namespace OpenTelemetry.Metrics
 
             name ??= Options.DefaultName;
 
-            if (configureExporter != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configureExporter));
-            }
+                if (configureExporter != null)
+                {
+                    services.Configure(name, configureExporter);
+                }
+
+                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+            });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
@@ -105,6 +110,11 @@ namespace OpenTelemetry.Metrics
             Guard.ThrowIfNull(builder);
 
             name ??= Options.DefaultName;
+
+            builder.ConfigureServices(services =>
+            {
+                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+            });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {

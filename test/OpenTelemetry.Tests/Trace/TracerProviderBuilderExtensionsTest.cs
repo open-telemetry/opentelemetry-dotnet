@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Resources;
@@ -391,6 +392,60 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(1, defaultOptionsConfigureInvocations);
             Assert.Equal(1, namedOptionsConfigureInvocations);
+        }
+
+        [Fact]
+        public void ConfigureBuilderIConfigurationAvailableTest()
+        {
+            Environment.SetEnvironmentVariable("TEST_KEY", "TEST_KEY_VALUE");
+
+            bool configureBuilderCalled = false;
+
+            using var provider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureBuilder((sp, builder) =>
+                {
+                    var configuration = sp.GetRequiredService<IConfiguration>();
+
+                    configureBuilderCalled = true;
+
+                    var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                    Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                })
+                .Build();
+
+            Assert.True(configureBuilderCalled);
+
+            Environment.SetEnvironmentVariable("TEST_KEY", null);
+        }
+
+        [Fact]
+        public void ConfigureBuilderIConfigurationModifiableTest()
+        {
+            bool configureBuilderCalled = false;
+
+            using var provider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    var configuration = new ConfigurationBuilder()
+                        .AddInMemoryCollection(new Dictionary<string, string> { ["TEST_KEY_2"] = "TEST_KEY_2_VALUE" })
+                        .Build();
+
+                    services.AddSingleton<IConfiguration>(configuration);
+                })
+                .ConfigureBuilder((sp, builder) =>
+                {
+                    var configuration = sp.GetRequiredService<IConfiguration>();
+
+                    configureBuilderCalled = true;
+
+                    var testKey2Value = configuration.GetValue<string>("TEST_KEY_2", null);
+
+                    Assert.Equal("TEST_KEY_2_VALUE", testKey2Value);
+                })
+                .Build();
+
+            Assert.True(configureBuilderCalled);
         }
 
         private static void RunBuilderServiceLifecycleTest(

@@ -14,15 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry.Metrics;
 
 internal static class PeriodicExportingMetricReaderHelper
 {
-    internal const string OTelMetricExportIntervalEnvVarKey = "OTEL_METRIC_EXPORT_INTERVAL";
     internal const int DefaultExportIntervalMilliseconds = 60000;
-    internal const string OTelMetricExportTimeoutEnvVarKey = "OTEL_METRIC_EXPORT_TIMEOUT";
     internal const int DefaultExportTimeoutMilliseconds = 30000;
 
     internal static PeriodicExportingMetricReader CreatePeriodicExportingMetricReader(
@@ -31,15 +27,11 @@ internal static class PeriodicExportingMetricReaderHelper
         int defaultExportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
         int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
     {
-        var exportInterval = GetValue(
-            options.PeriodicExportingMetricReaderOptions?.ExportIntervalMilliseconds,
-            OTelMetricExportIntervalEnvVarKey,
-            defaultExportIntervalMilliseconds);
+        var exportInterval =
+            options.PeriodicExportingMetricReaderOptions?.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
 
-        var exportTimeout = GetValue(
-            options.PeriodicExportingMetricReaderOptions?.ExportTimeoutMilliseconds,
-            OTelMetricExportTimeoutEnvVarKey,
-            defaultExportTimeoutMilliseconds);
+        var exportTimeout =
+            options.PeriodicExportingMetricReaderOptions?.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
         var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
         {
@@ -47,20 +39,5 @@ internal static class PeriodicExportingMetricReaderHelper
         };
 
         return metricReader;
-    }
-
-    private static int GetValue(int? optionsValue, string envVarKey, int defaultValue)
-    {
-        if (optionsValue.HasValue)
-        {
-            return optionsValue.Value;
-        }
-
-        if (EnvironmentVariableHelper.LoadNumeric(envVarKey, out var envVarValue))
-        {
-            return envVarValue;
-        }
-
-        return defaultValue;
     }
 }

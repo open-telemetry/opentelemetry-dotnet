@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-* [Breaking] `Enrich` callback is split in to three different callbacks based on
-  `OnStart`, `OnStop` and `OnException` event.
-  ([#3749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3749))
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
 
 ## 1.0.0-rc9.7
 

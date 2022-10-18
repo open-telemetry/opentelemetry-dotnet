@@ -13,11 +13,17 @@
 
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
-    <ResolvedMatchingContract Include="..\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
+    <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
-    <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot;" />
+  <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds;ValidateApiCompatForSrc" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
+    <!-- Note: DispatchToInnerBuilds is called for projects with multiple
+    targets defined to spawn a build process for each target framework being
+    compiled. Executing BEFORE that step means this runs once for a project
+    instead of in parallel for each target framework defined. If we ever have a
+    project with only a single target, this will NOT run and an alternative
+    solution will be needed. -->
+    <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot; -workDir &quot;$(RepoRoot)\build\LastMajorVersionBinaries&quot;" />
   </Target>
 
   <Target Name="FindContractDependencyPaths" BeforeTargets="ValidateApiCompatForSrc" AfterTargets="ResolveAssemblyReferences" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
