@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
@@ -137,7 +138,7 @@ namespace OpenTelemetry.Exporter
 
                 if (logRecord.Exception != null)
                 {
-                    this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception?.Message}");
+                    this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception.ToInvariantString()}");
                 }
 
                 int scopeDepth = -1;
