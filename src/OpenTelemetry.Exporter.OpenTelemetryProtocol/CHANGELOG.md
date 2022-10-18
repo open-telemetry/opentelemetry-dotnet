@@ -16,6 +16,10 @@ Released 2022-Oct-17
   are configured via the environment variables defined in the specification.
   ([#3684](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3684))
 
+* Added support for loading environment variables from `IConfiguration` when
+  using the `AddOtlpExporter` extensions
+  ([#3760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3760))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29

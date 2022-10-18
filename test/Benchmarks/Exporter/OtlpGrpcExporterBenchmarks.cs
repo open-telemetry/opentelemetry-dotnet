@@ -26,6 +26,7 @@ using Moq;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
@@ -58,6 +59,7 @@ namespace Benchmarks.Exporter
             var options = new OtlpExporterOptions();
             this.exporter = new OtlpTraceExporter(
                 options,
+                new SdkLimitOptions(),
                 new OtlpGrpcTraceExportClient(options, mockClient.Object));
 
             this.activity = ActivityHelper.CreateTestActivity();
