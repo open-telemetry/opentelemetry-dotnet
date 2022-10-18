@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -25,7 +26,20 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricReaderOptions
 {
-    private PeriodicExportingMetricReaderOptions? periodicExportingMetricReaderOptions;
+    private PeriodicExportingMetricReaderOptions periodicExportingMetricReaderOptions;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MetricReaderOptions"/> class.
+    /// </summary>
+    public MetricReaderOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal MetricReaderOptions(IConfiguration configuration)
+    {
+        this.periodicExportingMetricReaderOptions = new PeriodicExportingMetricReaderOptions(configuration);
+    }
 
     /// <summary>
     /// Gets or sets the <see cref="MetricReaderTemporalityPreference" />.
@@ -33,11 +47,11 @@ public class MetricReaderOptions
     public MetricReaderTemporalityPreference TemporalityPreference { get; set; } = MetricReaderTemporalityPreference.Cumulative;
 
     /// <summary>
-    /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" />.
+    /// Gets or sets the <see cref="Metrics.PeriodicExportingMetricReaderOptions" />.
     /// </summary>
     public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions
     {
-        get => this.periodicExportingMetricReaderOptions ??= new();
+        get => this.periodicExportingMetricReaderOptions;
         set
         {
             Guard.ThrowIfNull(value);

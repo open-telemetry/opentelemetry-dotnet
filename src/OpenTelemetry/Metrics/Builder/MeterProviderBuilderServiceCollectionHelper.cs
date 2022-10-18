@@ -42,7 +42,7 @@ internal static class MeterProviderBuilderServiceCollectionHelper
         Debug.Assert(services != null, "services was null");
         Debug.Assert(configure != null, "configure was null");
 
-        return services.AddSingleton(new ConfigureMeterProviderBuilderStateCallbackRegistration(configure!));
+        return services!.AddSingleton(new ConfigureMeterProviderBuilderStateCallbackRegistration(configure!));
     }
 
     internal static void InvokeRegisteredConfigureStateCallbacks(
@@ -52,7 +52,7 @@ internal static class MeterProviderBuilderServiceCollectionHelper
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(state != null, "state was null");
 
-        var callbackRegistrations = serviceProvider.GetServices<ConfigureMeterProviderBuilderStateCallbackRegistration>();
+        var callbackRegistrations = serviceProvider!.GetServices<ConfigureMeterProviderBuilderStateCallbackRegistration>();
 
         foreach (var callbackRegistration in callbackRegistrations)
         {

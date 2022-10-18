@@ -408,6 +408,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(45, timeoutMilliseconds);
         }
 
+        [Event(46, Message = "TracerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void TracerProviderSdkEvent(string message)
+        {
+            this.WriteEvent(46, message);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

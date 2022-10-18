@@ -25,6 +25,7 @@ using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 namespace Benchmarks.Exporter
@@ -74,6 +75,7 @@ namespace Benchmarks.Exporter
             };
             this.exporter = new OtlpTraceExporter(
                 options,
+                new SdkLimitOptions(),
                 new OtlpHttpTraceExportClient(options, options.HttpClientFactory()));
 
             this.activity = ActivityHelper.CreateTestActivity();

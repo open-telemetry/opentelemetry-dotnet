@@ -42,7 +42,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
         Debug.Assert(services != null, "services was null");
         Debug.Assert(configure != null, "configure was null");
 
-        return services.AddSingleton(new ConfigureTracerProviderBuilderStateCallbackRegistration(configure!));
+        return services!.AddSingleton(new ConfigureTracerProviderBuilderStateCallbackRegistration(configure!));
     }
 
     internal static void InvokeRegisteredConfigureStateCallbacks(
@@ -52,7 +52,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(state != null, "state was null");
 
-        var callbackRegistrations = serviceProvider.GetServices<ConfigureTracerProviderBuilderStateCallbackRegistration>();
+        var callbackRegistrations = serviceProvider!.GetServices<ConfigureTracerProviderBuilderStateCallbackRegistration>();
 
         foreach (var callbackRegistration in callbackRegistrations)
         {
