@@ -11,7 +11,7 @@
 * Added dependency injection support in the `ResourceBuilder` class and added
   support for loading environment variables from `IConfiguration` for the
   `AddEnvironmentVariableDetector` extension
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3782](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3782))
 
 ## 1.4.0-beta.2
 
