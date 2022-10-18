@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
 * In case of .NET Core, additional spans created during retries will now be
 exported.
 ([[#3729](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3729)])

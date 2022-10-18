@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(services);
 
-            services.AddOpenTelemetryProviderBuilderServices();
+            services.AddOpenTelemetryTracerProviderBuilderServices();
             services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
 
             this.services = services;
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Trace
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryProviderBuilderServices();
+            services.AddOpenTelemetryTracerProviderBuilderServices();
 
             this.services = services;
             this.ownsServices = true;

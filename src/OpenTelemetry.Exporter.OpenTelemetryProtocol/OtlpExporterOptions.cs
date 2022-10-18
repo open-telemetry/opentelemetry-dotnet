@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -51,32 +52,33 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
         public OtlpExporterOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri parsedEndpoint))
+        }
+
+        internal OtlpExporterOptions(IConfiguration configuration)
+        {
+            if (configuration.TryGetUriValue(EndpointEnvVarName, out var endpoint))
             {
-                this.endpoint = parsedEndpoint;
+                this.endpoint = endpoint;
             }
 
-            if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))
+            if (configuration.TryGetStringValue(HeadersEnvVarName, out var headers))
             {
-                this.Headers = headersEnvVar;
+                this.Headers = headers;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(TimeoutEnvVarName, out int timeout))
+            if (configuration.TryGetIntValue(TimeoutEnvVarName, out var timeout))
             {
                 this.TimeoutMilliseconds = timeout;
             }
 
-            if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
+            if (configuration.TryGetValue<OtlpExportProtocol>(
+                ProtocolEnvVarName,
+                OtlpExportProtocolParser.TryParse,
+                out var protocol))
             {
-                if (OtlpExportProtocolParser.TryParse(protocolEnvVar, out var protocol))
-                {
-                    this.Protocol = protocol;
-                }
-                else
-                {
-                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '{protocolEnvVar}'");
-                }
+                this.Protocol = protocol;
             }
 
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
@@ -86,6 +88,8 @@ namespace OpenTelemetry.Exporter
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
                 };
             };
+
+            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
         }
 
         /// <summary>
@@ -140,7 +144,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see

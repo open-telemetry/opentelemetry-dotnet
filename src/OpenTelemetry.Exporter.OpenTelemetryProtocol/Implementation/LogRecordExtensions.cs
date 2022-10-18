@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -39,6 +38,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
+            SdkLimitOptions sdkLimitOptions,
             OtlpResource.Resource processResource,
             in Batch<LogRecord> logRecordBatch)
         {
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var logRecord in logRecordBatch)
             {
-                var otlpLogRecord = logRecord.ToOtlpLog();
+                var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
                 if (otlpLogRecord != null)
                 {
                     scopeLogs.LogRecords.Add(otlpLogRecord);
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord)
+        internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions)
         {
             OtlpLogs.LogRecord otlpLogRecord = null;
 
@@ -75,8 +75,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     SeverityText = LogLevels[(int)logRecord.LogLevel],
                 };
 
-                var attributeValueLengthLimit = SdkConfiguration.Instance.AttributeValueLengthLimit;
-                var attributeCountLimit = SdkConfiguration.Instance.AttributeCountLimit ?? int.MaxValue;
+                var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
+                var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
 
                 // First add the generic attributes like category, eventid and exception, so they are less likely being dropped because of AttributeCountLimit
 

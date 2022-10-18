@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -308,6 +309,63 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
+
+        [Fact]
+        public void ShouldCollectTelemetryWhenFilterEvaluatesToTrue()
+        {
+            var activities = this.RunCommandWithFilter(
+                cmd =>
+                {
+                    cmd.CommandText = "select 2";
+                },
+                cmd =>
+                {
+                    if (cmd is SqlCommand command)
+                    {
+                        return command.CommandText == "select 2";
+                    }
+
+                    return true;
+                });
+
+            Assert.Single(activities);
+            Assert.True(activities[0].IsAllDataRequested);
+            Assert.True(activities[0].ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+
+        [Fact]
+        public void ShouldNotCollectTelemetryWhenFilterEvaluatesToFalse()
+        {
+            var activities = this.RunCommandWithFilter(
+                cmd =>
+                {
+                    cmd.CommandText = "select 1";
+                },
+                cmd =>
+                {
+                    if (cmd is SqlCommand command)
+                    {
+                        return command.CommandText == "select 2";
+                    }
+
+                    return true;
+                });
+
+            Assert.Empty(activities);
+        }
+
+        [Fact]
+        public void ShouldNotCollectTelemetryAndShouldNotPropagateExceptionWhenFilterThrowsException()
+        {
+            var activities = this.RunCommandWithFilter(
+                cmd =>
+                {
+                    cmd.CommandText = "select 1";
+                },
+                cmd => throw new InvalidOperationException("foobar"));
+
+            Assert.Empty(activities);
+        }
 #endif
 
         private static void VerifyActivityData(
@@ -413,6 +471,52 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     break;
             }
         }
+
+#if !NETFRAMEWORK
+        private Activity[] RunCommandWithFilter(Action<SqlCommand> sqlCommandSetup, Func<object, bool> filter)
+        {
+            using var sqlConnection = new SqlConnection(TestConnectionString);
+            using var sqlCommand = sqlConnection.CreateCommand();
+
+            var activities = new List<Activity>();
+            using (Sdk.CreateTracerProviderBuilder()
+               .AddSqlClientInstrumentation(
+                   options =>
+                   {
+                       options.Filter = filter;
+                   })
+               .AddInMemoryExporter(activities)
+               .Build())
+            {
+                var operationId = Guid.NewGuid();
+                sqlCommandSetup(sqlCommand);
+
+                var beforeExecuteEventData = new
+                {
+                    OperationId = operationId,
+                    Command = sqlCommand,
+                    Timestamp = (long?)1000000L,
+                };
+
+                this.fakeSqlClientDiagnosticSource.Write(
+                    SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand,
+                    beforeExecuteEventData);
+
+                var afterExecuteEventData = new
+                {
+                    OperationId = operationId,
+                    Command = sqlCommand,
+                    Timestamp = 2000000L,
+                };
+
+                this.fakeSqlClientDiagnosticSource.Write(
+                    SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand,
+                    afterExecuteEventData);
+            }
+
+            return activities.ToArray();
+        }
+#endif
 
         private class FakeSqlClientDiagnosticSource : IDisposable
         {

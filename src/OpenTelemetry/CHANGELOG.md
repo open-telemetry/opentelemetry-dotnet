@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* Added support for loading environment variables from `IConfiguration` when
+  using the `MetricReaderOptions` & `BatchExportActivityProcessorOptions`
+  classes.
+  ([#3760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3760),
+  [#3776](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3776))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
 * Make recording of `Min` and `Max` for histograms configurable, enabled by
   default.
   ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))

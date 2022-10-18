@@ -19,12 +19,33 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 internal static class ProviderBuilderServiceCollectionExtensions
 {
-    public static IServiceCollection AddOpenTelemetryProviderBuilderServices(this IServiceCollection services)
+    public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
+    {
+        services.AddOpenTelemetryProviderBuilderServices();
+
+        services.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
+
+        return services;
+    }
+
+    public static IServiceCollection AddOpenTelemetryTracerProviderBuilderServices(this IServiceCollection services)
+    {
+        services.AddOpenTelemetryProviderBuilderServices();
+
+        services.RegisterOptionsFactory(configuration => new ExportActivityProcessorOptions(configuration));
+
+        return services;
+    }
+
+    private static IServiceCollection AddOpenTelemetryProviderBuilderServices(this IServiceCollection services)
     {
         Debug.Assert(services != null, "services was null");
 
