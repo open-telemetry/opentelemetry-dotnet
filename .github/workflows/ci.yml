@@ -1,4 +1,4 @@
-name: Windows
+name: Build
 
 on:
   push:
@@ -12,16 +12,19 @@ on:
 
 jobs:
   build-test:
-    runs-on: windows-latest
-    env:
-      # https://github.com/actions/setup-dotnet/issues/122
-      DOTNET_MULTILEVEL_LOOKUP: 1
-
     strategy:
       matrix:
-        version: [net462,net6.0,net7.0]
+        os: [ windows-latest, ubuntu-latest ]
+        version: [ net462, net6.0, net7.0 ]
+        exclude:
+        - os: ubuntu-latest
+          version: net462
+        - os: ubuntu-latest
+          version: net7.0
 
+    runs-on: ${{ matrix.os }}
     steps:
+
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
@@ -38,4 +41,4 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
-      run: dotnet test **\bin\**\${{ matrix.version }}\*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
+      run: dotnet test **/bin/**/${{ matrix.version }}/*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
