@@ -45,15 +45,25 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(250);
             histogramPoint.Update(499);
             histogramPoint.Update(500);
-            histogramPoint.Update(999);
+            histogramPoint.Update(501);
+            histogramPoint.Update(750);
+            histogramPoint.Update(751);
             histogramPoint.Update(1000);
             histogramPoint.Update(1001);
+            histogramPoint.Update(2500);
+            histogramPoint.Update(2501);
+            histogramPoint.Update(5000);
+            histogramPoint.Update(5001);
+            histogramPoint.Update(7500);
+            histogramPoint.Update(7501);
+            histogramPoint.Update(10000);
+            histogramPoint.Update(10001);
             histogramPoint.Update(10000000);
             histogramPoint.TakeSnapshot(true);
 
             var count = histogramPoint.GetHistogramCount();
 
-            Assert.Equal(22, count);
+            Assert.Equal(32, count);
 
             int actualCount = 0;
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
@@ -102,6 +112,46 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             Assert.Equal(boundaries.Length + 1, actualCount);
+        }
+
+        [Fact]
+        public void HistogramBinaryBucketTest()
+        {
+            // Arrange
+            // Bounds = (-Inf, 0] (0, 1], ... (49, +Inf)
+            var boundaries = new double[HistogramBuckets.DefaultBoundaryCountForBinarySearch];
+            for (var i = 0; i < boundaries.Length; i++)
+            {
+                boundaries[i] = i;
+            }
+
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries);
+
+            // Act
+            histogramPoint.Update(-1);
+            histogramPoint.Update(boundaries[0]);
+            histogramPoint.Update(boundaries[boundaries.Length - 1]);
+            for (var i = 0.5; i < boundaries.Length; i++)
+            {
+                histogramPoint.Update(i);
+            }
+
+            histogramPoint.TakeSnapshot(true);
+
+            // Assert
+            var index = 0;
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                var expectedCount = 1;
+
+                if (index == 0 || index == boundaries.Length - 1)
+                {
+                    expectedCount = 2;
+                }
+
+                Assert.Equal(expectedCount, histogramMeasurement.BucketCount);
+                index++;
+            }
         }
 
         [Fact]

@@ -18,6 +18,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -36,7 +37,7 @@ namespace Microsoft.AspNetCore.Builder
         /// </summary>
         /// <remarks>Note: A branched pipeline is created for the route
         /// specified by <see
-        /// cref="PrometheusExporterOptions.ScrapeEndpointPath"/>.</remarks>
+        /// cref="PrometheusAspNetCoreOptions.ScrapeEndpointPath"/>.</remarks>
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add
         /// middleware to.</param>
         /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
@@ -64,7 +65,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add
         /// middleware to.</param>
         /// <param name="path">Optional path to use for the branched pipeline.
-        /// If not provided then <see cref="PrometheusExporterOptions.ScrapeEndpointPath"/>
+        /// If not provided then <see cref="PrometheusAspNetCoreOptions.ScrapeEndpointPath"/>
         /// is used.</param>
         /// <param name="meterProvider">Optional <see cref="MeterProvider"/>
         /// containing a Prometheus exporter otherwise the primary SDK provider
@@ -82,15 +83,16 @@ namespace Microsoft.AspNetCore.Builder
             var builder = endpoints.CreateApplicationBuilder();
 
             // Note: Order is important here. MeterProvider is accessed before
-            // GetOptions<PrometheusExporterOptions> so that any changes made to
-            // PrometheusExporterOptions in deferred AddPrometheusExporter
+            // GetOptions<PrometheusAspNetCoreOptions> so that any changes made to
+            // PrometheusAspNetCoreOptions in deferred AddPrometheusExporter
             // configure actions are reflected.
             meterProvider ??= endpoints.ServiceProvider.GetRequiredService<MeterProvider>();
 
             if (path == null)
             {
-                var options = endpoints.ServiceProvider.GetOptions<PrometheusExporterOptions>();
-                path = options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
+                var options = endpoints.ServiceProvider.GetRequiredService<IOptions<PrometheusAspNetCoreOptions>>().Value;
+
+                path = options.ScrapeEndpointPath ?? PrometheusAspNetCoreOptions.DefaultScrapeEndpointPath;
             }
 
             if (!path.StartsWith("/"))

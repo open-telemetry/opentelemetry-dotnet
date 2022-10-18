@@ -195,7 +195,7 @@ namespace OpenTelemetry.Internal
         [Event(3, Message = "Exporter returned error '{0}'.", Level = EventLevel.Warning)]
         public void ExporterErrorResult(ExportResult exportResult)
         {
-            this.WriteEvent(3, exportResult.ToString());
+            this.WriteEvent(3, exportResult);
         }
 
         [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
@@ -394,6 +394,24 @@ namespace OpenTelemetry.Internal
         public void ProcessorForceFlushInvoked(string processorType, bool result)
         {
             this.WriteEvent(43, processorType, result);
+        }
+
+        [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
+        public void OpenTelemetryLoggerProviderEvent(string message)
+        {
+            this.WriteEvent(44, message);
+        }
+
+        [Event(45, Message = "ForceFlush invoked for OpenTelemetryLoggerProvider with timeoutMilliseconds = '{0}'.", Level = EventLevel.Verbose)]
+        public void OpenTelemetryLoggerProviderForceFlushInvoked(int timeoutMilliseconds)
+        {
+            this.WriteEvent(45, timeoutMilliseconds);
+        }
+
+        [Event(46, Message = "TracerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void TracerProviderSdkEvent(string message)
+        {
+            this.WriteEvent(46, message);
         }
 
 #if DEBUG

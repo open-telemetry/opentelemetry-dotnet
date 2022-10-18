@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -51,7 +52,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics_options",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
         }
 
         [Fact]
@@ -60,7 +61,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             return RunPrometheusExporterMiddlewareIntegrationTest(
                 "/metrics",
                 app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = null));
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
         }
 
         [Fact]
@@ -102,7 +103,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
                     })),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
                     if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
@@ -128,7 +129,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
                     })),
-                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
                     if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
@@ -209,7 +210,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
             Action<IServiceCollection> configureServices = null,
             Action<HttpResponseMessage> validateResponse = null,
             bool registerMeterProvider = true,
-            Action<PrometheusExporterOptions> configureOptions = null,
+            Action<PrometheusAspNetCoreOptions> configureOptions = null,
             bool skipMetrics = false)
         {
             using var host = await new HostBuilder()
@@ -261,27 +262,24 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
 
                 string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                string[] lines = content.Split('\n');
+                var matches = Regex.Matches(
+                    content,
+                    ("^"
+                        + "# TYPE counter_double counter\n"
+                        + "counter_double{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+                        + "\n"
+                        + "# EOF\n"
+                        + "$").Replace('\'', '"'));
 
-                Assert.Equal(
-                    $"# TYPE counter_double counter",
-                    lines[0]);
+                Assert.Single(matches);
 
-                Assert.Contains(
-                    $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                    lines[1]);
-
-                var index = content.LastIndexOf(' ');
-
-                Assert.Equal('\n', content[^1]);
-
-                var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+                var timestamp = long.Parse(matches[0].Groups[1].Value);
 
                 Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
             }
             else
             {
-                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
 
             validateResponse?.Invoke(response);

@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
@@ -23,6 +25,10 @@ namespace OpenTelemetry.Exporter
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         private const int RightPaddingLength = 35;
+        private readonly object syncObject = new();
+        private bool disposed;
+        private string disposedStackTrace;
+        private bool isDisposeMessageSent;
 
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
@@ -31,6 +37,29 @@ namespace OpenTelemetry.Exporter
 
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
+            if (this.disposed)
+            {
+                if (!this.isDisposeMessageSent)
+                {
+                    lock (this.syncObject)
+                    {
+                        if (this.isDisposeMessageSent)
+                        {
+                            return ExportResult.Failure;
+                        }
+
+                        this.isDisposeMessageSent = true;
+                    }
+
+                    this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be due to the application's incorrect lifecycle management of the LoggerFactory/OpenTelemetry .NET SDK.");
+                    this.WriteLine(Environment.StackTrace);
+                    this.WriteLine(Environment.NewLine + "Dispose was called on the following stack trace:");
+                    this.WriteLine(this.disposedStackTrace);
+                }
+
+                return ExportResult.Failure;
+            }
+
             foreach (var logRecord in batch)
             {
                 this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
@@ -56,7 +85,28 @@ namespace OpenTelemetry.Exporter
 
                 if (logRecord.State != null)
                 {
-                    this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
+                    if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listKvp)
+                    {
+                        this.WriteLine("LogRecord.State (Key:Value):");
+                        for (int i = 0; i < listKvp.Count; i++)
+                        {
+                            // Special casing {OriginalFormat}
+                            // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                            // for explanation.
+                            var valueToTransform = listKvp[i].Key.Equals("{OriginalFormat}")
+                                ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", listKvp[i].Value)
+                                : listKvp[i];
+
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(listKvp[i], out var result))
+                            {
+                                this.WriteLine($"{string.Empty,-4}{result}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
+                    }
                 }
                 else if (logRecord.StateValues != null)
                 {
@@ -88,7 +138,7 @@ namespace OpenTelemetry.Exporter
 
                 if (logRecord.Exception != null)
                 {
-                    this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception?.Message}");
+                    this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception.ToInvariantString()}");
                 }
 
                 int scopeDepth = -1;
@@ -128,6 +178,17 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                this.disposed = true;
+                this.disposedStackTrace = Environment.StackTrace;
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

@@ -23,6 +23,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
@@ -82,6 +83,27 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         {
             this.testServer.Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        [Fact]
+        public void AddAddZipkinExporterNamedOptionsSupported()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<ZipkinExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<ZipkinExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddZipkinExporter()
+                .AddZipkinExporter("Exporter2", o => { })
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
         }
 
         [Fact]
@@ -184,6 +206,23 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
             }
+        }
+
+        [Fact]
+        public void EndpointConfigurationUsingIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [ZipkinExporterOptions.ZipkinEndpointEnvVar] = "http://custom-endpoint:12345",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new ZipkinExporterOptions(configuration);
+
+            Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
         }
 
         [Fact]

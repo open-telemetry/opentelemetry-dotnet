@@ -36,6 +36,7 @@ namespace OpenTelemetry.Metrics
             this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
             this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
             this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
+            this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
             unchecked
             {
@@ -44,6 +45,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.MeterName.GetHashCode();
                 hash = (hash * 31) + this.MeterVersion.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
+                hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
                 hash = !this.ViewId.HasValue ? hash : (hash * 31) + this.ViewId.Value;
@@ -81,6 +83,8 @@ namespace OpenTelemetry.Metrics
 
         public double[] HistogramBucketBounds { get; }
 
+        public bool HistogramRecordMinMax { get; }
+
         public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
         public static bool operator !=(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
@@ -99,6 +103,7 @@ namespace OpenTelemetry.Metrics
                 && this.Unit == other.Unit
                 && this.Description == other.Description
                 && this.ViewId == other.ViewId
+                && this.HistogramRecordMinMax == other.HistogramRecordMinMax
                 && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
                 && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
         }

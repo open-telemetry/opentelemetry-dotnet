@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
+* Performance improvement (Reduced memory allocation) - Updated DiagnosticSource
+event subscription to specific set of events.
+([#3519](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3519))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddAspNetCoreInstrumentation` extension to allow for more fine-grained
+  options management
+  ([#3661](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3661))
+
 * Fix issue where when an application has an ExceptionFilter, the exception data
   wouldn't be collected.
   ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
@@ -11,7 +28,9 @@
 Released 2022-Aug-18
 
 * Removed `netstandard2.0` and `netstandard2.1` targets. .NET 5 reached EOL
-  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. The
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet). The
   instrumentation for ASP.NET Core now requires .NET 6 or later.
   ([#3567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
 

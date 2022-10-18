@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+LogRecordExporter to print full exception details instead of just Message, when
+using `ILogger` to log exception.
+([#3784](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3784))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Changed the behavior of `ConsoleExporter`, the exporter will stop outputting
+  the data if it is disposed.
+  ([#3578](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3578))
+
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddConsoleExporter` extension to allow for more fine-grained options
+  management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddConsoleExporter` extension to allow for more fine-grained options
+  management
+  ([#3657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3657))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

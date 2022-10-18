@@ -143,10 +143,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             switch (metric.MetricType)
             {
                 case MetricType.LongSum:
+                case MetricType.LongSumNonMonotonic:
                     {
                         var sum = new OtlpMetrics.Sum
                         {
-                            IsMonotonic = true,
+                            IsMonotonic = metric.MetricType == MetricType.LongSum,
                             AggregationTemporality = temporality,
                         };
 
@@ -169,10 +170,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     }
 
                 case MetricType.DoubleSum:
+                case MetricType.DoubleSumNonMonotonic:
                     {
                         var sum = new OtlpMetrics.Sum
                         {
-                            IsMonotonic = true,
+                            IsMonotonic = metric.MetricType == MetricType.DoubleSum,
                             AggregationTemporality = temporality,
                         };
 
@@ -254,6 +256,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
                             dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
                             dataPoint.Sum = metricPoint.GetHistogramSum();
+
+                            if (metricPoint.HasMinMax())
+                            {
+                                dataPoint.Min = metricPoint.GetHistogramMin();
+                                dataPoint.Max = metricPoint.GetHistogramMax();
+                            }
 
                             foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {

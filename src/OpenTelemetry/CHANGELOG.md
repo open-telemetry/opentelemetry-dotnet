@@ -2,6 +2,54 @@
 
 ## Unreleased
 
+* Added support for loading environment variables from `IConfiguration` when
+  using the `MetricReaderOptions` & `BatchExportActivityProcessorOptions`
+  classes.
+  ([#3760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3760),
+  [#3776](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3776))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+* Make recording of `Min` and `Max` for histograms configurable, enabled by
+  default.
+  ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
+
+* Changed default bucket boundaries for Explicit Bucket Histogram from [0, 5,
+  10, 25, 50, 75, 100, 250, 500, 1000] to [0, 5, 10, 25, 50, 75, 100, 250, 500,
+  750, 1000, 2500, 5000, 7500, 10000].
+  ([#3722](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3722))
+
+* Fixed an issue where `LogRecord.ForEachScope` may return scopes from a
+  previous log if accessed in a custom processor before
+  `BatchLogRecordExportProcessor.OnEnd` is fired.
+  ([#3731](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3731))
+
+* Added support for loading environment variables from `IConfiguration` when
+  using `TracerProviderBuilder` or `MeterProviderBuilder`
+  ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Use binary search for histograms with 50 or more supplied boundaries.
+  ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
+
+* Allows samplers the ability to modify tracestate if desired.
+  ([#3610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3610))
+
+* Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
+  ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
+
+* Added support for dependency injection scenarios when configuring
+  `MeterProvider`
+  ([#3646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3646))
+
+* Revert new logging APIs pending OTel specification changes
+  ([#3702](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3702))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
@@ -9,6 +57,10 @@ Released 2022-Aug-18
 * Added `Sdk.CreateLoggerProviderBuilder` method and support for dependency
   injection scenarios when configuring `OpenTelemetryLoggerProvider`
   ([#3504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3504))
+
+* Added support for dependency injection scenarios when configuring
+  `TracerProvider`
+  ([#3533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3533))
 
 ## 1.4.0-alpha.1
 
@@ -54,7 +106,7 @@ Released 2022-June-1
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
 * Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
   in most cases and has greater flexibility (applies to
-  TracerProvicerBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  TracerProviderBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
   ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0-beta.2
@@ -63,7 +115,7 @@ Released 2022-May-16
 
 * Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`,
   and `LogRecord.FormattedMessage`.
- ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
+  ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
 
 ## 1.3.0-beta.1
 

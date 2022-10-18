@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Changed error handling, `InMemoryExporter` will now throw
+  `ObjectDisposedException` if `Export` is invoked after the exporter is
+  disposed.
+  ([#3607](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3607))
+
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddInMemoryExporter` extension to allow for more fine-grained options
+  management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18

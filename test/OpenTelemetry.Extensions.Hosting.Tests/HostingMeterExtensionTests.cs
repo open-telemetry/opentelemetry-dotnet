@@ -15,8 +15,10 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
@@ -90,7 +92,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetryMetrics(builder =>
             {
-                builder.Configure(
+                builder.ConfigureBuilder(
                     (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
             });
 
@@ -114,7 +116,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.Throws<ArgumentNullException>(() =>
                 services.AddOpenTelemetryMetrics(builder =>
                 {
-                    builder.Configure(
+                    builder.ConfigureBuilder(
                         (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
                 }));
         }
@@ -138,10 +140,10 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             int configureCalls = 0;
             var services = new ServiceCollection();
             services.AddOpenTelemetryMetrics(builder => builder
-                .Configure((sp1, builder1) =>
+                .ConfigureBuilder((sp1, builder1) =>
                 {
                     configureCalls++;
-                    builder1.Configure((sp2, builder2) =>
+                    builder1.ConfigureBuilder((sp2, builder2) =>
                     {
                         configureCalls++;
                     });
@@ -163,7 +165,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton<TestReader>();
 
             services.AddOpenTelemetryMetrics(builder => builder
-                .Configure((sp1, builder1) =>
+                .ConfigureBuilder((sp1, builder1) =>
                 {
                     builder1
                         .AddInstrumentation<TestInstrumentation>()
@@ -178,40 +180,68 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.True(meterProvider.Reader is TestReader);
         }
 
-        [Fact(Skip = "Known limitation. See issue 1215.")]
-        public void AddOpenTelemetryMeterProvider_Idempotent()
+        [Fact]
+        public void AddOpenTelemetryMetrics_MultipleCallsConfigureSingleProvider()
         {
-            var testInstrumentation1 = new TestInstrumentation();
-            var testInstrumentation2 = new TestInstrumentation();
-
             var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation1);
-            services.AddOpenTelemetryMetrics(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation1);
-            });
 
-            services.AddOpenTelemetryMetrics(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation2);
-            });
+            services.AddOpenTelemetryMetrics(builder => builder.AddMeter("TestSourceBuilder1"));
+            services.AddOpenTelemetryMetrics();
+            services.AddOpenTelemetryMetrics(builder => builder.AddMeter("TestSourceBuilder2"));
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
-            var meterFactory = serviceProvider.GetRequiredService<MeterProvider>();
-            Assert.NotNull(meterFactory);
+            var providers = serviceProvider.GetServices<MeterProvider>();
 
-            Assert.False(testInstrumentation1.Disposed);
-            Assert.False(testInstrumentation2.Disposed);
-            serviceProvider.Dispose();
-            Assert.True(testInstrumentation1.Disposed);
-            Assert.True(testInstrumentation2.Disposed);
+            Assert.Single(providers);
+        }
+
+        [Fact]
+        public async Task AddOpenTelemetryMetrics_HostConfigurationHonoredTest()
+        {
+            bool configureBuilderCalled = false;
+
+            var builder = new HostBuilder()
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        ["TEST_KEY"] = "TEST_KEY_VALUE",
+                    });
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddOpenTelemetryMetrics(builder =>
+                    {
+                        builder.ConfigureBuilder((sp, builder) =>
+                        {
+                            configureBuilderCalled = true;
+
+                            var configuration = sp.GetRequiredService<IConfiguration>();
+
+                            var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                            Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                        });
+                    });
+                });
+
+            var host = builder.Build();
+
+            Assert.False(configureBuilderCalled);
+
+            await host.StartAsync();
+
+            Assert.True(configureBuilderCalled);
+
+            await host.StopAsync();
+
+            host.Dispose();
         }
 
         private static MeterProviderBuilder AddMyFeature(MeterProviderBuilder meterProviderBuilder)
         {
-            (meterProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting MeterProviderBuilder instance."))
-                .AddSingleton<TestReader>();
+            meterProviderBuilder.ConfigureServices(services => services.AddSingleton<TestReader>());
 
             return meterProviderBuilder.AddReader<TestReader>();
         }

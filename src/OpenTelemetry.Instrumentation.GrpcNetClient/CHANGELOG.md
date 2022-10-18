@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddGrpcClientInstrumentation` extension to allow for more fine-grained
+  options management
+  ([#3665](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3665))
+
 ## 1.0.0-rc9.6
 
 Released 2022-Aug-18

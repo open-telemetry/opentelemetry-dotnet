@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Bug fix for Prometheus Exporter reporting StatusCode 204
+  instead of 200, when no metrics are collected
+  ([#3643](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3643))
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddPrometheusHttpListener` extension to allow for more fine-grained options
+  management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+* Added support for OpenMetrics UNIT metadata
+  ([#3651](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3651))
+* Added `"# EOF\n"` ending following the [OpenMetrics
+  specification](https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md)
+  ([#3654](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3654))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
@@ -32,10 +53,8 @@ Released 2022-Apr-15
 * Added `IApplicationBuilder` extension methods to help with Prometheus
   middleware configuration on ASP.NET Core
   ([#3029](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3029))
-
 * Changed Prometheus exporter to return 204 No Content and log a warning event
   if there are no metrics to collect.
-
 * Removes .NET Framework 4.6.1. The minimum .NET Framework
   version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
 

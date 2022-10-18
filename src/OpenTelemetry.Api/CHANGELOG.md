@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Updated to System.Diagnostics.DiagnosticSource version `7.0.0-rc.2.22472.3`.
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Updated to System.Diagnostics.DiagnosticSource version `7.0.0-rc.1.22426.10`.
+([#3698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3698))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
@@ -12,7 +25,9 @@ Released 2022-Aug-18
   warning at build time as described [here](https://github.com/dotnet/runtime/pull/72518)
   (note: building using older versions of the .NET SDK produces an error at
   build time). This is because .NET 5 reached EOL in May 2022 and .NET
-  Core 3.1 reaches EOL in December 2022.
+  Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet).
 
   There is no guarantee that System.Diagnostics.DiagnosticSource will continue
   to work on older versions of .NET. However, the build warning can be

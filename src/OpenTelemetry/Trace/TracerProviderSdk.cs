@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -26,65 +29,97 @@ namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
     {
+        internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
+        internal bool Disposed;
 
         private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
-        private BaseProcessor<Activity> processor;
-        private bool disposed;
+        private BaseProcessor<Activity>? processor;
 
         internal TracerProviderSdk(
-            Resource resource,
-            IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
-            Sampler sampler,
-            List<BaseProcessor<Activity>> processors,
-            HashSet<string> legacyActivityOperationNames)
+            IServiceProvider serviceProvider,
+            bool ownsServiceProvider)
         {
-            this.Resource = resource;
-            this.sampler = sampler;
-            this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
+            if (ownsServiceProvider)
+            {
+                this.OwnedServiceProvider = serviceProvider as IDisposable;
+                Debug.Assert(this.OwnedServiceProvider != null, "serviceProvider was not IDisposable");
+            }
+
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
+
+            var state = new TracerProviderBuilderState(serviceProvider);
+
+            TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
+                serviceProvider,
+                state);
+
+            StringBuilder processorsAdded = new StringBuilder();
+            StringBuilder instrumentationFactoriesAdded = new StringBuilder();
+
+            if (state.SetErrorStatusOnException)
+            {
+                state.EnableErrorStatusOnException();
+            }
+
+            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+            this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
             bool legacyActivityWildcardMode = false;
             var legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex();
-            foreach (var legacyName in legacyActivityOperationNames)
+            foreach (var legacyName in state.LegacyActivityOperationNames)
             {
                 if (WildcardHelper.ContainsWildcard(legacyName))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(legacyActivityOperationNames);
+                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(state.LegacyActivityOperationNames);
                     break;
                 }
             }
 
-            foreach (var processor in processors)
+            foreach (var processor in state.Processors)
             {
                 this.AddProcessor(processor);
+                processorsAdded.Append(processor.GetType());
+                processorsAdded.Append(';');
             }
 
-            if (instrumentationFactories.Any())
+            foreach (var instrumentation in state.Instrumentation)
             {
-                foreach (var instrumentationFactory in instrumentationFactories)
-                {
-                    this.instrumentations.Add(instrumentationFactory.Factory());
-                }
+                this.instrumentations.Add(instrumentation.Instance);
+                instrumentationFactoriesAdded.Append(instrumentation.Name);
+                instrumentationFactoriesAdded.Append(';');
+            }
+
+            if (processorsAdded.Length != 0)
+            {
+                processorsAdded.Remove(processorsAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Processors added = \"{processorsAdded}\".");
+            }
+
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
             }
 
             var listener = new ActivityListener();
 
             if (this.supportLegacyActivity)
             {
-                Func<Activity, bool> legacyActivityPredicate = null;
+                Func<Activity, bool>? legacyActivityPredicate = null;
                 if (legacyActivityWildcardMode)
                 {
                     legacyActivityPredicate = activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
                 }
                 else
                 {
-                    legacyActivityPredicate = activity => legacyActivityOperationNames.Contains(activity.OperationName);
+                    legacyActivityPredicate = activity => state.LegacyActivityOperationNames.Contains(activity.OperationName);
                 }
 
                 listener.ActivityStarted = activity =>
@@ -100,7 +135,7 @@ namespace OpenTelemetry.Trace
                             // unless suppressed.
                             if (!Sdk.SuppressInstrumentation)
                             {
-                                this.getRequestedDataAction(activity);
+                                this.getRequestedDataAction!(activity);
                             }
                             else
                             {
@@ -190,13 +225,13 @@ namespace OpenTelemetry.Trace
                 };
             }
 
-            if (sampler is AlwaysOnSampler)
+            if (this.sampler is AlwaysOnSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
-            else if (sampler is AlwaysOffSampler)
+            else if (this.sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent) : ActivitySamplingResult.None;
@@ -206,19 +241,19 @@ namespace OpenTelemetry.Trace
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.sampler) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
             // Sources can be null. This happens when user
             // is only interested in InstrumentationLibraries
             // which do not depend on ActivitySources.
-            if (sources.Any())
+            if (state.Sources.Any())
             {
                 // Validation of source name is already done in builder.
-                if (sources.Any(s => WildcardHelper.ContainsWildcard(s)))
+                if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
                 {
-                    var regex = WildcardHelper.GetWildcardRegex(sources);
+                    var regex = WildcardHelper.GetWildcardRegex(state.Sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
@@ -229,7 +264,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
+                    var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
 
                     if (this.supportLegacyActivity)
                     {
@@ -251,13 +286,14 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
 
         internal Resource Resource { get; }
 
         internal List<object> Instrumentations => this.instrumentations;
 
-        internal BaseProcessor<Activity> Processor => this.processor;
+        internal BaseProcessor<Activity>? Processor => this.processor;
 
         internal Sampler Sampler => this.sampler;
 
@@ -331,7 +367,7 @@ namespace OpenTelemetry.Trace
 
         protected override void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (!this.Disposed)
             {
                 if (disposing)
                 {
@@ -355,9 +391,11 @@ namespace OpenTelemetry.Trace
                     // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
                     // sessions that were open.
                     this.listener?.Dispose();
+
+                    this.OwnedServiceProvider?.Dispose();
                 }
 
-                this.disposed = true;
+                this.Disposed = true;
                 OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
             }
 
@@ -365,7 +403,7 @@ namespace OpenTelemetry.Trace
         }
 
         private static ActivitySamplingResult ComputeActivitySamplingResult(
-            in ActivityCreationOptions<ActivityContext> options,
+            ref ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
             var samplingParameters = new SamplingParameters(
@@ -376,9 +414,9 @@ namespace OpenTelemetry.Trace
                 options.Tags,
                 options.Links);
 
-            var shouldSample = sampler.ShouldSample(samplingParameters);
+            var samplingResult = sampler.ShouldSample(samplingParameters);
 
-            var activitySamplingResult = shouldSample.Decision switch
+            var activitySamplingResult = samplingResult.Decision switch
             {
                 SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
                 SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
@@ -387,9 +425,26 @@ namespace OpenTelemetry.Trace
 
             if (activitySamplingResult != ActivitySamplingResult.PropagationData)
             {
-                foreach (var att in shouldSample.Attributes)
+                foreach (var att in samplingResult.Attributes)
                 {
                     options.SamplingTags.Add(att.Key, att.Value);
+                }
+
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
+                // Spec requires clearing Tracestate if empty Tracestate is returned.
+                // Since .NET did not have this capability, it'll break
+                // existing samplers if we did that. So the following is
+                // adopted to remain spec-compliant and backward compat.
+                // The behavior is:
+                // if sampler returns null, its treated as if it has no intend
+                // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
+                // so all existing samplers will get this behavior.
+                // if sampler returns non-null, then it'll be used as the
+                // new value for Tracestate
+                // A sampler can return string.Empty if it intends to clear the state.
+                if (samplingResult.TraceStateString != null)
+                {
+                    options = options with { TraceState = samplingResult.TraceStateString };
                 }
 
                 return activitySamplingResult;
@@ -477,6 +532,11 @@ namespace OpenTelemetry.Trace
                 foreach (var att in samplingResult.Attributes)
                 {
                     activity.SetTag(att.Key, att.Value);
+                }
+
+                if (samplingResult.TraceStateString != null)
+                {
+                    activity.TraceStateString = samplingResult.TraceStateString;
                 }
             }
         }
