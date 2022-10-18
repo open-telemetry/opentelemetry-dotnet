@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* `Enrich` callback is now split into 3 different callbacks based on the object
-that is passed in to enrich activity. The new callbacks are
+* **[Breaking]** `Enrich` callback is now split into 3 different callbacks based
+on the object that is passed in to enrich activity. The new callbacks are
 `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.
 ([#3749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3749))
 
