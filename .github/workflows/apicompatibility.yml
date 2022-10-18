@@ -11,8 +11,7 @@ jobs:
     runs-on: windows-latest
     env:
       CheckAPICompatibility: true
-      # https://github.com/actions/setup-dotnet/issues/122
-      DOTNET_MULTILEVEL_LOOKUP: 1
+
     steps:
     - uses: actions/checkout@v3
       with:

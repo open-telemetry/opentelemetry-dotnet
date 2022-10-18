@@ -13,9 +13,6 @@ on:
 jobs:
   build-test:
     runs-on: windows-latest
-    env:
-      # https://github.com/actions/setup-dotnet/issues/122
-      DOTNET_MULTILEVEL_LOOKUP: 1
 
     strategy:
       matrix:

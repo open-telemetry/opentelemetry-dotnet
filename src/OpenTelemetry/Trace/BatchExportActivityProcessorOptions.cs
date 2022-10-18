@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -39,26 +42,36 @@ namespace OpenTelemetry.Trace
 
         internal const string ScheduledDelayEnvVarKey = "OTEL_BSP_SCHEDULE_DELAY";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BatchExportActivityProcessorOptions"/> class.
+        /// </summary>
         public BatchExportActivityProcessorOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            int value;
+        }
 
-            if (EnvironmentVariableHelper.LoadNumeric(ExporterTimeoutEnvVarKey, out value))
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BatchExportActivityProcessorOptions"/> class.
+        /// </summary>
+        /// <param name="configuration"><see cref="IConfiguration"/>.</param>
+        public BatchExportActivityProcessorOptions(IConfiguration configuration)
+        {
+            if (configuration.TryGetIntValue(ExporterTimeoutEnvVarKey, out int value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(MaxExportBatchSizeEnvVarKey, out value))
+            if (configuration.TryGetIntValue(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(MaxQueueSizeEnvVarKey, out value))
+            if (configuration.TryGetIntValue(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(ScheduledDelayEnvVarKey, out value))
+            if (configuration.TryGetIntValue(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }

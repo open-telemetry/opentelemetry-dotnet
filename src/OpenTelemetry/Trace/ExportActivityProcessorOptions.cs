@@ -16,13 +16,30 @@
 
 #nullable enable
 
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace;
 
+/// <summary>
+/// Options for configuring either a <see cref="SimpleActivityExportProcessor"/> or <see cref="BatchActivityExportProcessor"/>.
+/// </summary>
 public class ExportActivityProcessorOptions
 {
-    private BatchExportActivityProcessorOptions? batchExportProcessorOptions;
+    private BatchExportActivityProcessorOptions batchExportProcessorOptions;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExportActivityProcessorOptions"/> class.
+    /// </summary>
+    public ExportActivityProcessorOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal ExportActivityProcessorOptions(IConfiguration configuration)
+    {
+        this.batchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+    }
 
     /// <summary>
     /// Gets or sets the export processor type to be used. The default value is <see cref="ExportProcessorType.Batch"/>.
@@ -34,7 +51,7 @@ public class ExportActivityProcessorOptions
     /// </summary>
     public BatchExportActivityProcessorOptions BatchExportProcessorOptions
     {
-        get => this.batchExportProcessorOptions ??= new();
+        get => this.batchExportProcessorOptions;
         set
         {
             Guard.ThrowIfNull(value);
