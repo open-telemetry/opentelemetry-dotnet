@@ -11,7 +11,7 @@ on:
     - '**.md'
 
 jobs:
-  build-test:
+  ci:
     strategy:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
