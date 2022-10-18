@@ -162,7 +162,7 @@ namespace OpenTelemetry.Resources
             return this;
         }
 
-        private sealed class WrapperResourceDetector : IResourceDetector
+        internal sealed class WrapperResourceDetector : IResourceDetector
         {
             private readonly Resource resource;
 

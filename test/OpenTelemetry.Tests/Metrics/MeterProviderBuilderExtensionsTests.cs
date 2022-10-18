@@ -168,6 +168,7 @@ namespace OpenTelemetry.Metrics.Tests
             var builder = Sdk.CreateMeterProviderBuilder();
 
             int configureInvocations = 0;
+            bool serviceProviderTestExecuted = false;
 
             builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("Test"));
             builder.ConfigureResource(builder =>
@@ -187,13 +188,19 @@ namespace OpenTelemetry.Metrics.Tests
 
                 Assert.Empty(builder.ResourceDetectors);
 
-                builder.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" });
+                builder.AddDetector(sp =>
+                {
+                    serviceProviderTestExecuted = true;
+                    Assert.NotNull(sp);
+                    return new ResourceBuilder.WrapperResourceDetector(new Resource(new Dictionary<string, object>() { ["key2"] = "value2" }));
+                });
 
                 Assert.Single(builder.ResourceDetectors);
             });
 
             using var provider = builder.Build() as MeterProviderSdk;
 
+            Assert.True(serviceProviderTestExecuted);
             Assert.Equal(2, configureInvocations);
 
             Assert.Single(provider.Resource.Attributes);
