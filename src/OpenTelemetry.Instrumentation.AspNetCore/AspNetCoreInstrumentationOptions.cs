@@ -34,7 +34,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public Func<HttpContext, bool> Filter { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity during start event.
+        /// Gets or sets an action to enrich an Activity.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public Action<Activity, HttpRequest> EnrichWithHttpRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity during stop event.
+        /// Gets or sets an action to enrich an Activity.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public Action<Activity, HttpResponse> EnrichWithHttpResponse { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity during exception event.
+        /// Gets or sets an action to enrich an Activity.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>

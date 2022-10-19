@@ -145,7 +145,7 @@ services.AddOpenTelemetryTracing((builder) =>
         };
         o.EnrichWithException = (activity, exception) =>
         {
-            activity.RecordException(exception);
+            activity.SetTag("exceptionType", exception.GetType().ToString());
         };
     })
 });
