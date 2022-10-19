@@ -15,21 +15,29 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
 {
-    internal class OtelEnvResourceDetector : IResourceDetector
+    internal sealed class OtelEnvResourceDetector : IResourceDetector
     {
         public const string EnvVarKey = "OTEL_RESOURCE_ATTRIBUTES";
         private const char AttributeListSplitter = ',';
         private const char AttributeKeyValueSplitter = '=';
 
+        private readonly IConfiguration configuration;
+
+        public OtelEnvResourceDetector(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
         public Resource Detect()
         {
             var resource = Resource.Empty;
 
-            if (EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue))
+            if (this.configuration.TryGetStringValue(EnvVarKey, out string envResourceAttributeValue))
             {
                 var attributes = ParseResourceAttributes(envResourceAttributeValue);
                 resource = new Resource(attributes);

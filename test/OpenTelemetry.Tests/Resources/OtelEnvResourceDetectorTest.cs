@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
@@ -43,7 +44,9 @@ namespace OpenTelemetry.Resources.Tests
         public void OtelEnvResource_NullEnvVar()
         {
             // Arrange
-            var resource = new OtelEnvResourceDetector().Detect();
+            var resource = new OtelEnvResourceDetector(
+                new ConfigurationBuilder().AddEnvironmentVariables().Build())
+                .Detect();
 
             // Assert
             Assert.Equal(Resource.Empty, resource);
@@ -55,7 +58,9 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             var envVarValue = "Key1=Val1,Key2=Val2";
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
-            var resource = new OtelEnvResourceDetector().Detect();
+            var resource = new OtelEnvResourceDetector(
+                new ConfigurationBuilder().AddEnvironmentVariables().Build())
+                .Detect();
 
             // Assert
             Assert.NotEqual(Resource.Empty, resource);
@@ -68,11 +73,32 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             var envVarValue = "Key1,Key2=Val2";
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
-            var resource = new OtelEnvResourceDetector().Detect();
+            var resource = new OtelEnvResourceDetector(
+                new ConfigurationBuilder().AddEnvironmentVariables().Build())
+                .Detect();
 
             // Assert
             Assert.NotEqual(Resource.Empty, resource);
             Assert.Single(resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), resource.Attributes);
+        }
+
+        [Fact]
+        public void OtelEnvResource_UsingIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [OtelEnvResourceDetector.EnvVarKey] = "Key1=Val1,Key2=Val2",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var resource = new OtelEnvResourceDetector(configuration).Detect();
+
+            Assert.NotEqual(Resource.Empty, resource);
+            Assert.Contains(new KeyValuePair<string, object>("Key1", "Val1"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>("Key2", "Val2"), resource.Attributes);
         }
     }
