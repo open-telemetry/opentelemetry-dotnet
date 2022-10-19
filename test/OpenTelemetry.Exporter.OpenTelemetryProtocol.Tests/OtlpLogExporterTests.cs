@@ -480,19 +480,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation(new Exception("I'm the exception message."), "Exception Occurred");
+            logger.LogInformation(new NotSupportedException("I'm the exception message."), "Exception Occurred");
 
             var logRecord = logRecords[0];
             var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
-            Assert.True(otlpLogRecord.DroppedAttributesCount > 0, "Attributes dropped count is unset");
+            Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
 
             var exceptionTypeAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType);
             Assert.NotNull(exceptionTypeAtt);
-            Assert.Equal("Exceptio", exceptionTypeAtt.Value.StringValue);
+
+            // "NotSuppo" == first 8 chars from the exception typename "NotSupportedException"
+            Assert.Equal("NotSuppo", exceptionTypeAtt.Value.StringValue);
             var exceptionMessageAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage);
             Assert.NotNull(exceptionMessageAtt);
+
+            // "I'm the " == first 8 chars from the exception message
             Assert.Equal("I'm the ", exceptionMessageAtt.Value.StringValue);
 
             var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
