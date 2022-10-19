@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpRequest"/>: the HttpRequest object from which additional information can be extracted to enrich the activity during request start event.</para>
+        /// <para><see cref="HttpRequest"/>: the HttpRequest object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpRequest> EnrichWithHttpRequest { get; set; }
 
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpResponse"/>: the HttpResponse object from which additional information can be extracted to enrich the activity during request stop event.</para>
+        /// <para><see cref="HttpResponse"/>: the HttpResponse object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpResponse> EnrichWithHttpResponse { get; set; }
 
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="Exception"/>: the Exception object from which additional information can be extracted to enrich the activity on exception during request.</para>
+        /// <para><see cref="Exception"/>: the Exception object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, Exception> EnrichWithException { get; set; }
 
