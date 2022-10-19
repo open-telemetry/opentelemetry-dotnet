@@ -19,11 +19,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
+#endif
 using Microsoft.AspNetCore.Http;
+#if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Mvc.Diagnostics;
+#endif
 using OpenTelemetry.Context.Propagation;
+#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
+#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -52,6 +58,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string UnknownHostName = "UNKNOWN-HOST";
 
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
+#if !NET6_0_OR_GREATER
+        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
+        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
+        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
+#endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
 
@@ -235,6 +246,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
+#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
@@ -243,6 +255,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
+#else
+                if (activity.Status == ActivityStatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
+                }
+#endif
 
                 try
                 {
@@ -310,8 +328,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (activity.IsAllDataRequested)
             {
+#if !NET6_0_OR_GREATER
+                _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
+                _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
+                _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
+#else
                 var beforeActionEventData = payload as BeforeActionEventData;
                 var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
+#endif
                 if (!string.IsNullOrEmpty(template))
                 {
                     // override the span name that was previously set to the path part of URL.
@@ -368,6 +392,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
                          + path.Length + queryString.Length;
 
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
             return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
             {
                 CopyTo(ref span, parts.scheme);
@@ -386,8 +411,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
             });
+#else
+            return new System.Text.StringBuilder(length)
+                .Append(scheme)
+                .Append(Uri.SchemeDelimiter)
+                .Append(host)
+                .Append(pathBase)
+                .Append(path)
+                .Append(queryString)
+                .ToString();
+#endif
         }
 
+#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
@@ -435,5 +471,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
         }
+#endif
     }
 }
