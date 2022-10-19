@@ -17,6 +17,7 @@ OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.set -> void
 OpenTelemetry.Metrics.MetricPoint.GetHistogramMax() -> double
 OpenTelemetry.Metrics.MetricPoint.GetHistogramMin() -> double
 OpenTelemetry.Metrics.MetricPoint.HasMinMax() -> bool
+OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider?, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> void
 static Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
