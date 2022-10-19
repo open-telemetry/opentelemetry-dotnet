@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* [Placeholder]
+* **Placeholder**.
 ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
 
 * Added back `netstandard2.0` target.
