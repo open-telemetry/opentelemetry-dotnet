@@ -262,11 +262,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.False(enrichWithHttpResponseMessageCalled);
             }
         }
-
-        private static void ActivityEnrichmentCounter(Activity activity, string method, object obj)
-        {
-            counter++;
-        }
     }
 }
 #endif

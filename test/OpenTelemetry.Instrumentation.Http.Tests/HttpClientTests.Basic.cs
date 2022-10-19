@@ -590,33 +590,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Activity.Current = null;
             GC.SuppressFinalize(this);
         }
-
-        private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
-        {
-            ActivityEnrichment(activity, method, obj);
-            activity.SetTag("enriched", "yes");
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequestMessage);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponseMessage);
-                    break;
-
-                case "OnException":
-                    Assert.True(obj is Exception);
-                    break;
-
-                default:
-                    break;
-            }
-        }
     }
 }
 #endif
