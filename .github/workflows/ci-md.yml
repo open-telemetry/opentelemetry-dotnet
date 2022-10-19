@@ -14,8 +14,17 @@ on:
     - '**.md'
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
+    build-test:
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        version: [ net462, net6.0, net7.0 ]
+        exclude:
+        - os: ubuntu-latest
+          version: net462
+        - os: ubuntu-latest
+          version: net7.0
 
+    runs-on: ubuntu-latest
     steps:
-      - run: 'echo "No build required"'
+    - run: 'echo "No build required"'
