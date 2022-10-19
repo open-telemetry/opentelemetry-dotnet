@@ -5,7 +5,7 @@
 
 # IMPORTANT: This workflow MUST use the same 'name' as the non -md workflow.
 
-name: ci
+name: Build
 
 on:
   pull_request:
