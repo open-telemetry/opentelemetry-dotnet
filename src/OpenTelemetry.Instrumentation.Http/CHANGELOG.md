@@ -5,6 +5,12 @@
 * Added back `netstandard2.0` target.
 ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
 
+* The same API is now exposed for `net462` and `netstandard2.0` targets. The
+  `Filter` property on options is now exposed as `FilterHttpRequestMessage`
+  (called for .NET & .NET Core) and `FilterHttpWebRequest` (called for .NET
+  Framework).
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17
