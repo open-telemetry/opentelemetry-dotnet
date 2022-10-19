@@ -118,6 +118,7 @@ If you have trouble accessing the doc, please get in touch on
 
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Robert Paj&#x105;k](https://github.com/pellared), Splunk
+* [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
