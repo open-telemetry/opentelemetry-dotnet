@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -28,12 +29,48 @@ namespace OpenTelemetry.Instrumentation.Http
     public class HttpClientInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
-        /// The Filter gets the HttpRequestMessage, and should return a boolean.
-        /// If Filter returns true, the request is collected.
-        /// If Filter returns false or throw exception, the request is filtered out.
+        /// Gets or sets a filter function that determines whether or not to
+        /// collect telemetry about requests on a per request basis.
         /// </summary>
-        public Func<HttpRequestMessage, bool> Filter { get; set; }
+        /// <remarks>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item><b>FilterHttpRequestMessage is only executed on .NET and .NET
+        /// Core runtimes. <see cref="HttpClient"/> and <see
+        /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
+        /// using <see cref="HttpRequestMessage"/>.</b></item>
+        /// <item>The return value for the filter function is interpreted as:
+        /// <list type="bullet">
+        /// <item>If filter returns <see langword="true" />, the request is
+        /// collected.</item>
+        /// <item>If filter returns <see langword="false" /> or throws an
+        /// exception the request is NOT collected.</item>
+        /// </list></item>
+        /// </list>
+        /// </remarks>
+        public Func<HttpRequestMessage, bool> FilterHttpRequestMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets a filter function that determines whether or not to
+        /// collect telemetry about requests on a per request basis.
+        /// </summary>
+        /// <remarks>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item><b>FilterHttpWebRequest is only executed on .NET Framework
+        /// runtimes. <see cref="HttpClient"/> and <see cref="HttpWebRequest"/>
+        /// on .NET Framework are both implemented using <see
+        /// cref="HttpWebRequest"/>.</b></item>
+        /// <item>The return value for the filter function is interpreted as:
+        /// <list type="bullet">
+        /// <item>If filter returns <see langword="true" />, the request is
+        /// collected.</item>
+        /// <item>If filter returns <see langword="false" /> or throws an
+        /// exception the request is NOT collected.</item>
+        /// </list></item>
+        /// </list>
+        /// </remarks>
+        public Func<HttpWebRequest, bool> FilterHttpWebRequest { get; set; }
 
         /// <summary>
         /// Gets or sets an action to enrich an Activity.
@@ -47,22 +84,35 @@ namespace OpenTelemetry.Instrumentation.Http
         public Action<Activity, string, object> Enrich { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether exception will be recorded as ActivityEvent or not.
+        /// Gets or sets a value indicating whether exception will be recorded as an <see cref="ActivityEvent"/> or not.
         /// </summary>
         /// <remarks>
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
+        /// See: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md" />.
         /// </remarks>
         public bool RecordException { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool EventFilter(string activityName, object arg1)
+        internal bool EventFilterHttpRequestMessage(string activityName, object arg1)
         {
             try
             {
                 return
-                    this.Filter == null ||
+                    this.FilterHttpRequestMessage == null ||
                     !TryParseHttpRequestMessage(activityName, arg1, out HttpRequestMessage requestMessage) ||
-                    this.Filter(requestMessage);
+                    this.FilterHttpRequestMessage(requestMessage);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
+        }
+
+        internal bool EventFilterHttpWebRequest(HttpWebRequest request)
+        {
+            try
+            {
+                return this.FilterHttpWebRequest?.Invoke(request) ?? true;
             }
             catch (Exception ex)
             {

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 #if NETFRAMEWORK
 using System;
 using System.Collections.Generic;
@@ -236,7 +237,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
-                    c => c.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                    c => c.FilterHttpWebRequest = (req) => !req.RequestUri.OriginalString.Contains(this.url))
                 .Build();
 
             using var c = new HttpClient();
@@ -252,7 +253,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
-                    c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
+                    c => c.FilterHttpWebRequest = (req) => throw new Exception("From Instrumentation filter"))
                 .Build();
 
             using var c = new HttpClient();
@@ -276,12 +277,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .ConfigureServices(services =>
                 {
-                    services.Configure<HttpWebRequestInstrumentationOptions>(name, o => configurationDelegateInvocations++);
+                    services.Configure<HttpClientInstrumentationOptions>(name, o => configurationDelegateInvocations++);
                 })
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(name, options =>
                 {
-                    Assert.IsType<HttpWebRequestInstrumentationOptions>(options);
+                    Assert.IsType<HttpClientInstrumentationOptions>(options);
                 })
                 .Build();
 

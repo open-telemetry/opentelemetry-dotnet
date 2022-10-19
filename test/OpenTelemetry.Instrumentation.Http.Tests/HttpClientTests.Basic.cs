@@ -364,10 +364,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation(
-                        (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
-                               .AddProcessor(processor.Object)
-                               .Build())
+                .AddHttpClientInstrumentation(
+                    (opt) => opt.FilterHttpRequestMessage = (req) => !req.RequestUri.OriginalString.Contains(this.url))
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
@@ -381,10 +381,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation(
-                        (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
-                               .AddProcessor(processor.Object)
-                               .Build())
+                .AddHttpClientInstrumentation(
+                    (opt) => opt.FilterHttpRequestMessage = (req) => throw new Exception("From InstrumentationFilter"))
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
                 using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
