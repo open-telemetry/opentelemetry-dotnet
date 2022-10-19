@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Updated to System.Diagnostics.DiagnosticSource version `7.0.0-rc.2.22472.3`.
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17

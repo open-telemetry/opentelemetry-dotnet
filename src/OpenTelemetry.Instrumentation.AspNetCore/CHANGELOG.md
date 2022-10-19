@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added back `netstandard2.0` and `netstandard2.1` targets.
+([#3755](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3755))
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17
