@@ -29,6 +29,7 @@ namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
     {
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
         internal bool Disposed;
@@ -44,6 +45,10 @@ namespace OpenTelemetry.Trace
             IServiceProvider serviceProvider,
             bool ownsServiceProvider)
         {
+            Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+            this.ServiceProvider = serviceProvider!;
+
             if (ownsServiceProvider)
             {
                 this.OwnedServiceProvider = serviceProvider as IDisposable;
@@ -52,10 +57,10 @@ namespace OpenTelemetry.Trace
 
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-            var state = new TracerProviderBuilderState(serviceProvider);
+            var state = new TracerProviderBuilderState(serviceProvider!);
 
             TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider,
+                serviceProvider!,
                 state);
 
             StringBuilder processorsAdded = new StringBuilder();
