@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -42,9 +45,11 @@ namespace OpenTelemetry.Trace
             ActivityTraceId traceId,
             string name,
             ActivityKind kind,
-            IEnumerable<KeyValuePair<string, object>> tags = null,
-            IEnumerable<ActivityLink> links = null)
+            IEnumerable<KeyValuePair<string, object?>>? tags = null,
+            IEnumerable<ActivityLink>? links = null)
         {
+            Guard.ThrowIfNullOrWhitespace(name);
+
             this.ParentContext = parentContext;
             this.TraceId = traceId;
             this.Name = name;
@@ -81,11 +86,11 @@ namespace OpenTelemetry.Trace
         /// Gets the tags to be associated to the span/activity to be created.
         /// These are the tags provided at the time of Activity creation.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Tags { get; }
+        public IEnumerable<KeyValuePair<string, object?>>? Tags { get; }
 
         /// <summary>
         /// Gets the links to be added to the activity to be created.
         /// </summary>
-        public IEnumerable<ActivityLink> Links { get; }
+        public IEnumerable<ActivityLink>? Links { get; }
     }
 }
