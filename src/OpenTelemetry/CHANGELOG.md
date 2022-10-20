@@ -12,7 +12,7 @@
   support for loading environment variables from `IConfiguration` for the
   `AddEnvironmentVariableDetector` extension
   ([#3782](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3782),
-  [#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  [#3798](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3798))
 
 ## 1.4.0-beta.2
 
