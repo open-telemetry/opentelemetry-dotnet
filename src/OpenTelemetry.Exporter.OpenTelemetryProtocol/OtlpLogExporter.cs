@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpLogExporter : BaseExporter<LogRecord>
+    internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
     {
         private readonly SdkLimitOptions sdkLimitOptions;
         private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;

@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
     /// This is used for internal logging of this library.
     /// </summary>
     [EventSource(Name = "OpenTelemetry.Extensions.Propagators")]
-    internal class OpenTelemetryPropagatorsEventSource : EventSource
+    internal sealed class OpenTelemetryPropagatorsEventSource : EventSource
     {
         public static OpenTelemetryPropagatorsEventSource Log = new();
 

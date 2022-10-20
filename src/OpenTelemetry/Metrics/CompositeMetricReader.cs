@@ -179,7 +179,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal class DoublyLinkedListNode
+        internal sealed class DoublyLinkedListNode
         {
             public readonly MetricReader Value;
 

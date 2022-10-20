@@ -22,7 +22,7 @@ using System.Text.RegularExpressions;
 
 namespace OpenTelemetry.Internal
 {
-    internal class SelfDiagnosticsConfigParser
+    internal sealed class SelfDiagnosticsConfigParser
     {
         public const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
         private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
