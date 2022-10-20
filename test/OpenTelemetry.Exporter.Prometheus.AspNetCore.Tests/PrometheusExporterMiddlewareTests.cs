@@ -82,6 +82,23 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
         }
 
         [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_WithPathNamedOptionsOverride()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_override",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
+                    meterProvider: null,
+                    predicate: null,
+                    path: null,
+                    configureBranchedPipeline: null,
+                    optionsName: "myOptions"),
+                services =>
+                {
+                    services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_override");
+                });
+        }
+
+        [Fact]
         public Task PrometheusExporterMiddlewareIntegration_Predicate()
         {
             return RunPrometheusExporterMiddlewareIntegrationTest(
@@ -102,7 +119,8 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                     {
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
-                    })),
+                    }),
+                    optionsName: null),
                 services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
@@ -128,7 +146,8 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                     {
                         context.Response.Headers.Add("X-MiddlewareExecuted", "true");
                         return next();
-                    })),
+                    }),
+                    optionsName: null),
                 services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
                 validateResponse: rsp =>
                 {
@@ -155,7 +174,8 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                     meterProvider: meterProvider,
                     predicate: null,
                     path: null,
-                    configureBranchedPipeline: null),
+                    configureBranchedPipeline: null,
+                    optionsName: null),
                 registerMeterProvider: false).ConfigureAwait(false);
         }
 
@@ -187,6 +207,23 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
         }
 
         [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathNamedOptionsOverride()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_path",
+                app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint(
+                    path: null,
+                    meterProvider: null,
+                    configureBranchedPipeline: null,
+                    optionsName: "myOptions")),
+                services =>
+                {
+                    services.AddRouting();
+                    services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_path");
+                });
+        }
+
+        [Fact]
         public async Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithMeterProvider()
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -199,7 +236,8 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                 app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint(
                     path: null,
                     meterProvider: meterProvider,
-                    configureBranchedPipeline: null)),
+                    configureBranchedPipeline: null,
+                    optionsName: null)),
                 services => services.AddRouting(),
                 registerMeterProvider: false).ConfigureAwait(false);
         }
