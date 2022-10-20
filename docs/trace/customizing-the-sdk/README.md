@@ -182,7 +182,7 @@ exporting purposes, the SDK provides the following built-in processors:
   `FormatException` is thrown in case of an invalid value for any of the
   supported environment variables.
 
-* [CompositeProcessor&lt;T&gt;](../../src/OpenTelemetry/CompositeProcessor.cs)
+* [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
   : This is a processor which can be composed from multiple processors. This is
   typically used to construct multiple processing pipelines, each ending with
   its own exporter.
@@ -191,7 +191,7 @@ exporting purposes, the SDK provides the following built-in processors:
   : This is an exporting processor which passes telemetry to the configured
   exporter without any batching.
 
-Follow [this](../../docs/trace/extending-the-sdk/README.md#processor) document
+Follow [this](../extending-the-sdk/README.md#processor) document
 to learn about how to write own processors.
 
 *The processors shipped from this SDK are generics, and supports tracing and
