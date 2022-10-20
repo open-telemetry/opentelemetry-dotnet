@@ -188,7 +188,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
-            Assert.Equal("unknown_service:testhost", process.ServiceName);
+            Assert.StartsWith("unknown_service:", process.ServiceName);
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 

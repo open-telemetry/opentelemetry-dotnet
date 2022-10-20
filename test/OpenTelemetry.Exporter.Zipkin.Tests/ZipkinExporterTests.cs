@@ -299,7 +299,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
-            Assert.Equal("unknown_service:testhost", zipkinExporter.LocalEndpoint.ServiceName);
+            Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint.ServiceName);
         }
 
         [Fact]
