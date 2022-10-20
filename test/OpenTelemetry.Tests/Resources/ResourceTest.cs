@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
@@ -499,6 +500,45 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains(new KeyValuePair<string, object>("service.name", "from-code"), attributes);
         }
 
+        [Fact]
+        public void ResourceBuilder_ServiceProvider_Available()
+        {
+            var builder = ResourceBuilder.CreateDefault();
+
+            bool nullTestRun = false;
+
+            builder.AddDetector(sp =>
+            {
+                nullTestRun = true;
+                Assert.Null(sp);
+                return new NoopResourceDetector();
+            });
+
+            builder.Build();
+
+            Assert.True(nullTestRun);
+
+            builder = ResourceBuilder.CreateDefault();
+
+            bool validTestRun = false;
+
+            var serviceCollection = new ServiceCollection();
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            builder.ServiceProvider = serviceProvider;
+
+            builder.AddDetector(sp =>
+            {
+                validTestRun = true;
+                Assert.NotNull(sp);
+                return new NoopResourceDetector();
+            });
+
+            builder.Build();
+
+            Assert.True(validTestRun);
+        }
+
         private static void ClearEnvVars()
         {
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
@@ -551,6 +591,11 @@ namespace OpenTelemetry.Resources.Tests
             var attributes = new Dictionary<string, object>();
             AddAttributes(attributes, attributeCount, startIndex);
             return attributes;
+        }
+
+        private sealed class NoopResourceDetector : IResourceDetector
+        {
+            public Resource Detect() => Resource.Empty;
         }
     }
 }

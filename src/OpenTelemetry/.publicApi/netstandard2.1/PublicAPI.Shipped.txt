@@ -42,9 +42,9 @@ OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.s
 ~OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 ~OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
 ~OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
-~OpenTelemetry.Resources.ResourceBuilder.AddDetector(OpenTelemetry.Resources.IResourceDetector resourceDetector) -> OpenTelemetry.Resources.ResourceBuilder
-~OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resource
-~OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder
+OpenTelemetry.Resources.ResourceBuilder.AddDetector(OpenTelemetry.Resources.IResourceDetector! resourceDetector) -> OpenTelemetry.Resources.ResourceBuilder!
+OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resource!
+OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder!
 ~OpenTelemetry.SimpleActivityExportProcessor.SimpleActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity> exporter) -> void
 OpenTelemetry.SimpleExportProcessor<T>
 OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseExporter<T!>! exporter) -> void
@@ -88,12 +88,12 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(t
 ~static OpenTelemetry.ProviderExtensions.GetDefaultResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
 ~static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
 ~static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
-~static OpenTelemetry.Resources.ResourceBuilder.CreateDefault() -> OpenTelemetry.Resources.ResourceBuilder
-~static OpenTelemetry.Resources.ResourceBuilder.CreateEmpty() -> OpenTelemetry.Resources.ResourceBuilder
-~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> OpenTelemetry.Resources.ResourceBuilder
-~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
-~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder, string serviceName, string serviceNamespace = null, string serviceVersion = null, bool autoGenerateServiceInstanceId = true, string serviceInstanceId = null) -> OpenTelemetry.Resources.ResourceBuilder
-~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddTelemetrySdk(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
+static OpenTelemetry.Resources.ResourceBuilder.CreateDefault() -> OpenTelemetry.Resources.ResourceBuilder!
+static OpenTelemetry.Resources.ResourceBuilder.CreateEmpty() -> OpenTelemetry.Resources.ResourceBuilder!
+static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> OpenTelemetry.Resources.ResourceBuilder!
+static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder!
+static OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, string! serviceName, string? serviceNamespace = null, string? serviceVersion = null, bool autoGenerateServiceInstanceId = true, string? serviceInstanceId = null) -> OpenTelemetry.Resources.ResourceBuilder!
+static OpenTelemetry.Resources.ResourceBuilderExtensions.AddTelemetrySdk(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator! textMapPropagator) -> void
