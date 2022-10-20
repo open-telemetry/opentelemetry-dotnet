@@ -97,7 +97,14 @@ namespace OpenTelemetry.Exporter
                         var bucketsBuilder = new StringBuilder();
                         var sum = metricPoint.GetHistogramSum();
                         var count = metricPoint.GetHistogramCount();
-                        bucketsBuilder.Append($"Sum: {sum} Count: {count} \n");
+                        if (metricPoint.HasMinMax())
+                        {
+                            bucketsBuilder.Append($"Sum: {sum} Count: {count} Min: {metricPoint.GetHistogramMin()} Max: {metricPoint.GetHistogramMax()} \n");
+                        }
+                        else
+                        {
+                            bucketsBuilder.Append($"Sum: {sum} Count: {count} \n");
+                        }
 
                         bool isFirstIteration = true;
                         double previousExplicitBound = default;

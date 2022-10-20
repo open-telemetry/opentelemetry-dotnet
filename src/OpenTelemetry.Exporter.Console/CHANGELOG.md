@@ -10,6 +10,8 @@ LogRecordExporter to print full exception details instead of just Message, when
 using `ILogger` to log exception.
 ([#3784](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3784))
 
+Added support to print Histogram Min, Max in MetricExporter.
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17
