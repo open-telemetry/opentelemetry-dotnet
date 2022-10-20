@@ -61,7 +61,10 @@ namespace OpenTelemetry.Metrics
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
+
             this.viewConfigs = state.ViewConfigs;
 
             foreach (var reader in state.Readers)
