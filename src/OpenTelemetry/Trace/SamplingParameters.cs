@@ -48,14 +48,15 @@ namespace OpenTelemetry.Trace
             IEnumerable<KeyValuePair<string, object?>>? tags = null,
             IEnumerable<ActivityLink>? links = null)
         {
-            Guard.ThrowIfNullOrWhitespace(name);
-
             this.ParentContext = parentContext;
             this.TraceId = traceId;
-            this.Name = name;
             this.Kind = kind;
             this.Tags = tags;
             this.Links = links;
+
+            // Note: myActivitySource.StartActivity(name: null) is currently
+            // allowed even though OTel spec says span name is required.
+            this.Name = name ?? string.Empty;
         }
 
         /// <summary>
