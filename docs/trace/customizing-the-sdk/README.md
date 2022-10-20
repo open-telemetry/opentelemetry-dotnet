@@ -205,7 +205,7 @@ is the immutable representation of the entity producing the telemetry. If no
 [default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
 resource is used to indicate the
 [Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
-The `ConfigureResource` method on `TracerProviderBuilder` can be used to set a
+The `ConfigureResource` method on `TracerProviderBuilder` can be used to
 configure the resource on the provider. When the provider is built, it
 automatically builds the final `Resource` from the configured `ResourceBuilder`.
 There can only be a single `Resource` associated with a
