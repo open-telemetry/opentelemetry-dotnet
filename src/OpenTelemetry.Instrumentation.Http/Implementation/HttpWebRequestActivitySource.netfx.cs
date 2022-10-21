@@ -105,7 +105,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 try
                 {
-                    Options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    Options.EnrichWithHttpWebRequest?.Invoke(activity, request);
                 }
                 catch (Exception ex)
                 {
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 try
                 {
-                    Options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    Options.EnrichWithHttpWebResponse?.Invoke(activity, response);
                 }
                 catch (Exception ex)
                 {
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             try
             {
-                Options.Enrich?.Invoke(activity, "OnException", exception);
+                Options.EnrichWithException?.Invoke(activity, exception);
             }
             catch (Exception ex)
             {

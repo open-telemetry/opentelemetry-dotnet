@@ -264,17 +264,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddHttpClientInstrumentation()
                     .AddAspNetCoreInstrumentation(options =>
                     {
-                        options.Enrich = (activity, eventName, obj) =>
+                        options.EnrichWithHttpRequest = (activity, request) =>
                         {
-                            switch (eventName)
-                            {
-                                case "OnStartActivity":
-                                    var request = (HttpRequest)obj;
-                                    activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
-                                    break;
-                                default:
-                                    break;
-                            }
+                            activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
                         };
                     }) // Instrumenting the server side as well
                     .AddProcessor(processor.Object)

@@ -21,6 +21,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -96,7 +97,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
-            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
+            {
+                c.SetTag("enrichedWithHttpRequestMessage", "no");
+                c.SetTag("enrichedWithHttpResponseMessage", "no");
+            });
+
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -131,7 +137,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         {
                             if (shouldEnrich)
                             {
-                                o.Enrich = ActivityEnrichmentSetTag;
+                                o.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                                {
+                                    activity.SetTag("enrichedWithHttpRequestMessage", "yes");
+                                };
+
+                                o.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                                {
+                                    activity.SetTag("enrichedWithHttpResponseMessage", "yes");
+                                };
                             }
                         })
                         .AddProcessor(processor.Object)
@@ -158,8 +172,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
 
-            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
         }
 
         [Theory]
@@ -167,6 +183,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData(false)]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
@@ -196,7 +215,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                    {
                        if (shouldEnrich)
                        {
-                           opt.Enrich = ActivityEnrichment;
+                           opt.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                           opt.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                        }
                    })
                    .AddProcessor(processor.Object)
@@ -227,6 +247,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 new TraceContextPropagator(),
                 new BaggagePropagator(),
             }));
+
+            if (shouldEnrich)
+            {
+                Assert.True(enrichWithHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
         }
 
         [Fact]
@@ -400,6 +426,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
             using var parent = new Activity("w3c activity");
             parent.SetIdFormat(ActivityIdFormat.W3C);
             parent.AddBaggage("k1", "v1");
@@ -409,7 +438,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Baggage.SetBaggage("k2", "v2");
 
             using (Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichment)
+                .AddHttpClientInstrumentation(options =>
+                {
+                    options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                    options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                })
                 .AddProcessor(activityProcessor.Object)
                 .Build())
             {
@@ -418,6 +451,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(5, activityProcessor.Invocations.Count);
+            Assert.True(enrichWithHttpRequestMessageCalled);
+            Assert.True(enrichWithHttpResponseMessageCalled);
         }
 
         [Fact]
@@ -554,33 +589,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
             GC.SuppressFinalize(this);
-        }
-
-        private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
-        {
-            ActivityEnrichment(activity, method, obj);
-            activity.SetTag("enriched", "yes");
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequestMessage);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponseMessage);
-                    break;
-
-                case "OnException":
-                    Assert.True(obj is Exception);
-                    break;
-
-                default:
-                    break;
-            }
         }
     }
 }

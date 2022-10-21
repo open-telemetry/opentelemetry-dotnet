@@ -42,7 +42,7 @@ namespace Microsoft.AspNetCore.Builder
         /// middleware to.</param>
         /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
         public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints)
-            => MapPrometheusScrapingEndpoint(endpoints, path: null, meterProvider: null, configureBranchedPipeline: null);
+            => MapPrometheusScrapingEndpoint(endpoints, path: null, meterProvider: null, configureBranchedPipeline: null, optionsName: null);
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -55,7 +55,7 @@ namespace Microsoft.AspNetCore.Builder
         public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints, string path)
         {
             Guard.ThrowIfNull(path);
-            return MapPrometheusScrapingEndpoint(endpoints, path, meterProvider: null, configureBranchedPipeline: null);
+            return MapPrometheusScrapingEndpoint(endpoints, path, meterProvider: null, configureBranchedPipeline: null, optionsName: null);
         }
 
         /// <summary>
@@ -73,12 +73,15 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="configureBranchedPipeline">Optional callback to
         /// configure the branched pipeline. Called before registration of the
         /// Prometheus middleware.</param>
+        /// <param name="optionsName">Optional name used to retrieve <see
+        /// cref="PrometheusAspNetCoreOptions"/>.</param>
         /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
         public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(
             this IEndpointRouteBuilder endpoints,
-            string path = null,
-            MeterProvider meterProvider = null,
-            Action<IApplicationBuilder> configureBranchedPipeline = null)
+            string path,
+            MeterProvider meterProvider,
+            Action<IApplicationBuilder> configureBranchedPipeline,
+            string optionsName)
         {
             var builder = endpoints.CreateApplicationBuilder();
 
@@ -90,7 +93,7 @@ namespace Microsoft.AspNetCore.Builder
 
             if (path == null)
             {
-                var options = endpoints.ServiceProvider.GetRequiredService<IOptions<PrometheusAspNetCoreOptions>>().Value;
+                var options = endpoints.ServiceProvider.GetRequiredService<IOptionsMonitor<PrometheusAspNetCoreOptions>>().Get(optionsName ?? Options.DefaultName);
 
                 path = options.ScrapeEndpointPath ?? PrometheusAspNetCoreOptions.DefaultScrapeEndpointPath;
             }

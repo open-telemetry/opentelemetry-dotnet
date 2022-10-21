@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+* *Breaking change** The `Enrich` callback option has been removed. For better
+  usability, it has been replaced by three separate options: In case of
+  `HttpClient` the new options are `EnrichWithHttpRequestMessage`,
+  `EnrichWithHttpResponseMessage` and `EnrichWithException` and in case of
+  `HttpWebRequest` the new options are `EnrichWithHttpWebRequest`,
+  `EnrichWithHttpWebResponse` and `EnrichWithException`. Previously, the single
+  `Enrich` callback required the consumer to detect which event triggered the
+  callback to be invoked (e.g., request start, response end, or an exception)
+  and then cast the object received to the appropriate type:
+  `HttpRequestMessage`, `HttpResponsemessage`, or `Exception` in case of
+  `HttpClient` and `HttpWebRequest`,`HttpWebResponse` and `Exception` in case of
+  `HttpWebRequest`. The separate callbacks make it clear what event triggers
+  them and there is no longer the need to cast the argument to the expected
+type.
+([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
+
 * Added back `netstandard2.0` target.
 ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
 

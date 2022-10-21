@@ -45,12 +45,18 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out var host,
                 out var port);
 
+            bool enrichWithHttpWebRequestCalled = false;
+            bool enrichWithHttpWebResponseCalled = false;
+            bool enrichWithExceptionCalled = false;
+
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(options =>
                 {
-                    options.Enrich = ActivityEnrichment;
+                    options.EnrichWithHttpWebRequest = (activity, httpWebRequest) => { enrichWithHttpWebRequestCalled = true; };
+                    options.EnrichWithHttpWebResponse = (activity, httpWebResponse) => { enrichWithHttpWebResponseCalled = true; };
+                    options.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
                     options.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
                 })
                 .Build();
@@ -128,9 +134,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(value, tagValue);
             }
 
+            Assert.True(enrichWithHttpWebRequestCalled);
+            if (tc.ResponseExpected)
+            {
+                Assert.True(enrichWithHttpWebResponseCalled);
+            }
+
             if (tc.RecordException.HasValue && tc.RecordException.Value)
             {
                 Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
+                Assert.True(enrichWithExceptionCalled);
             }
         }
 
@@ -164,27 +177,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         private static void ValidateHttpWebRequestActivity(Activity activityToValidate)
         {
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpWebRequest);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpWebResponse);
-                    break;
-
-                case "OnException":
-                    Assert.True(obj is Exception);
-                    break;
-
-                default:
-                    break;
-            }
         }
     }
 }
