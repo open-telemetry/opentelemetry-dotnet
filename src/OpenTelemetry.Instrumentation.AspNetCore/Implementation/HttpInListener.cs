@@ -222,7 +222,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    this.options.EnrichWithHttpRequest?.Invoke(activity, request);
                 }
                 catch (Exception ex)
                 {
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    this.options.EnrichWithHttpResponse?.Invoke(activity, response);
                 }
                 catch (Exception ex)
                 {
@@ -369,7 +369,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                    this.options.EnrichWithException?.Invoke(activity, exc);
                 }
                 catch (Exception ex)
                 {

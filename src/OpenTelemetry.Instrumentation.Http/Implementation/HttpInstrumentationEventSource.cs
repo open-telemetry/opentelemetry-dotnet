@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Instrumentation-Http")]
-    internal class HttpInstrumentationEventSource : EventSource
+    internal sealed class HttpInstrumentationEventSource : EventSource
     {
         public static HttpInstrumentationEventSource Log = new();
 

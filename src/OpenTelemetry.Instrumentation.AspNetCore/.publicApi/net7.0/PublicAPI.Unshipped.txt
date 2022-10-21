@@ -2,8 +2,12 @@ OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.AspNetCoreInstrumentationOptions() -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.get -> bool
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.set -> void
-OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
-OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Enrich.set -> void
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithException.get -> System.Action<System.Diagnostics.Activity, System.Exception>
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithException.set -> void
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpRequest.get -> System.Action<System.Diagnostics.Activity, Microsoft.AspNetCore.Http.HttpRequest>
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpRequest.set -> void
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpResponse.get -> System.Action<System.Diagnostics.Activity, Microsoft.AspNetCore.Http.HttpResponse>
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpResponse.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Filter.get -> System.Func<Microsoft.AspNetCore.Http.HttpContext, bool>
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Filter.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.RecordException.get -> bool

@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
     {
-        internal readonly IServiceProvider? ServiceProvider;
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
         internal bool Disposed;
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace
             var state = serviceProvider!.GetRequiredService<TracerProviderBuilderState>();
             state.CheckForCircularBuild();
 
-            this.ServiceProvider = serviceProvider;
+            this.ServiceProvider = serviceProvider!;
 
             if (ownsServiceProvider)
             {
