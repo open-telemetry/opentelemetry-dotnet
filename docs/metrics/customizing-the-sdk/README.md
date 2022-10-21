@@ -446,8 +446,8 @@ The snippet below shows configuring the `Resource` associated with the provider.
 
 ```csharp
 using OpenTelemetry;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .ConfigureResource(r => r.AddService("MyServiceName"))
