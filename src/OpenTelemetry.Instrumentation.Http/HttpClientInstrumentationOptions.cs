@@ -51,6 +51,42 @@ namespace OpenTelemetry.Instrumentation.Http
         public Func<HttpRequestMessage, bool> FilterHttpRequestMessage { get; set; }
 
         /// <summary>
+        /// Gets or sets an action to enrich an Activity with <see cref="HttpRequestMessage"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para><b>EnrichWithHttpRequestMessage is only executed on .NET and .NET
+        /// Core runtimes. <see cref="HttpClient"/> and <see
+        /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
+        /// using <see cref="HttpRequestMessage"/>.</b></para>
+        /// <para><see cref="Activity"/>: the activity being enriched.</para>
+        /// <para><see cref="HttpRequestMessage"/> object from which additional information can be extracted to enrich the activity.</para>
+        /// </remarks>
+        public Action<Activity, HttpRequestMessage> EnrichWithHttpRequestMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets an action to enrich an Activity with <see cref="HttpResponseMessage"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para><b>EnrichWithHttpResponseMessage is only executed on .NET and .NET
+        /// Core runtimes. <see cref="HttpClient"/> and <see
+        /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
+        /// using <see cref="HttpRequestMessage"/>.</b></para>
+        /// <para><see cref="Activity"/>: the activity being enriched.</para>
+        /// <para><see cref="HttpResponseMessage"/> object from which additional information can be extracted to enrich the activity.</para>
+        /// </remarks>
+        public Action<Activity, HttpResponseMessage> EnrichWithHttpResponseMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets an action to enrich an Activity with <see cref="Exception"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para><b>EnrichWithException is called for all runtimes.</b></para>
+        /// <para><see cref="Activity"/>: the activity being enriched.</para>
+        /// <para><see cref="Exception"/> object from which additional information can be extracted to enrich the activity.</para>
+        /// </remarks>
+        public Action<Activity, Exception> EnrichWithException { get; set; }
+
+        /// <summary>
         /// Gets or sets a filter function that determines whether or not to
         /// collect telemetry about requests on a per request basis.
         /// </summary>
@@ -73,31 +109,30 @@ namespace OpenTelemetry.Instrumentation.Http
         public Func<HttpWebRequest, bool> FilterHttpWebRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpRequestMessage"/>.
+        /// Gets or sets an action to enrich an Activity with <see cref="HttpWebRequest"/>.
         /// </summary>
         /// <remarks>
+        /// <para><b>EnrichWithHttpWebRequest is only executed on .NET Framework
+        /// runtimes. <see cref="HttpClient"/> and <see cref="HttpWebRequest"/>
+        /// on .NET Framework are both implemented using <see
+        /// cref="HttpWebRequest"/>.</b></para>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpRequestMessage"/> object from which additional information can be extracted to enrich the activity.</para>
+        /// <para><see cref="HttpWebRequest"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
-        public Action<Activity, HttpRequestMessage> EnrichWithHttpRequestMessage { get; set; }
+        public Action<Activity, HttpWebRequest> EnrichWithHttpWebRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpResponseMessage"/>.
+        /// Gets or sets an action to enrich an Activity with <see cref="HttpWebResponse"/>.
         /// </summary>
         /// <remarks>
+        /// <para><b>EnrichWithHttpWebResponse is only executed on .NET Framework
+        /// runtimes. <see cref="HttpClient"/> and <see cref="HttpWebRequest"/>
+        /// on .NET Framework are both implemented using <see
+        /// cref="HttpWebRequest"/>.</b></para>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpResponseMessage"/> object from which additional information can be extracted to enrich the activity.</para>
+        /// <para><see cref="HttpWebResponse"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
-        public Action<Activity, HttpResponseMessage> EnrichWithHttpResponseMessage { get; set; }
-
-        /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="Exception"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="Exception"/> object from which additional information can be extracted to enrich the activity.</para>
-        /// </remarks>
-        public Action<Activity, Exception> EnrichWithException { get; set; }
+        public Action<Activity, HttpWebResponse> EnrichWithHttpWebResponse { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether exception will be recorded as an <see cref="ActivityEvent"/> or not.
