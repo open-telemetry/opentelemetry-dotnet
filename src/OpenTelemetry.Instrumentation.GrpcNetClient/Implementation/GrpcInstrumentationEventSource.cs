@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Instrumentation-Grpc")]
-    internal class GrpcInstrumentationEventSource : EventSource
+    internal sealed class GrpcInstrumentationEventSource : EventSource
     {
         public static GrpcInstrumentationEventSource Log = new();
 

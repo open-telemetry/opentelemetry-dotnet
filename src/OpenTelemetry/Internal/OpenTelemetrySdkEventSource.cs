@@ -29,7 +29,7 @@ namespace OpenTelemetry.Internal
     /// EventSource implementation for OpenTelemetry SDK implementation.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Sdk")]
-    internal class OpenTelemetrySdkEventSource : EventSource
+    internal sealed class OpenTelemetrySdkEventSource : EventSource
     {
         public static OpenTelemetrySdkEventSource Log = new();
 #if DEBUG

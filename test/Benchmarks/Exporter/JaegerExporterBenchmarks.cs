@@ -51,10 +51,7 @@ namespace Benchmarks.Exporter
             using JaegerExporter exporter = new JaegerExporter(
                 new JaegerExporterOptions(),
                 new TCompactProtocol.Factory(),
-                new NoopJaegerClient())
-            {
-                Process = new Jaeger::OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService"),
-            };
+                new NoopJaegerClient());
 
             for (int i = 0; i < this.NumberOfBatches; i++)
             {

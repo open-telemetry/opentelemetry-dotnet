@@ -105,7 +105,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         if (shouldEnrich)
                         {
-                            options.Enrich = ActivityEnrichment;
+                            options.EnrichWithHttpRequest = (activity, request) => { activity.SetTag("enrichedOnStart", "yes"); };
+                            options.EnrichWithHttpResponse = (activity, response) => { activity.SetTag("enrichedOnStop", "yes"); };
                         }
                     })
                     .AddInMemoryExporter(exportedItems)
@@ -132,7 +133,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             if (shouldEnrich)
             {
-                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched" && tag.Value == "yes"));
+                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedOnStart" && tag.Value == "yes"));
+                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedOnStop" && tag.Value == "yes"));
             }
 
             ValidateAspNetCoreActivity(activity, "/api/values");
@@ -519,7 +521,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task FilterAndEnrichAreOnlyCalledWhenSampled(SamplingDecision samplingDecision, bool shouldFilterBeCalled, bool shouldEnrichBeCalled)
         {
             bool filterCalled = false;
-            bool enrichCalled = false;
+            bool enrichWithHttpRequestCalled = false;
+            bool enrichWithHttpResponseCalled = false;
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -531,9 +534,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             filterCalled = true;
                             return true;
                         };
-                        options.Enrich = (activity, methodName, request) =>
+                        options.EnrichWithHttpRequest = (activity, request) =>
                         {
-                            enrichCalled = true;
+                            enrichWithHttpRequestCalled = true;
+                        };
+                        options.EnrichWithHttpResponse = (activity, request) =>
+                        {
+                            enrichWithHttpResponseCalled = true;
                         };
                     })
                     .Build();
@@ -550,7 +557,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
-            Assert.Equal(shouldEnrichBeCalled, enrichCalled);
+            Assert.Equal(shouldEnrichBeCalled, enrichWithHttpRequestCalled);
+            Assert.Equal(shouldEnrichBeCalled, enrichWithHttpResponseCalled);
         }
 
         [Fact]

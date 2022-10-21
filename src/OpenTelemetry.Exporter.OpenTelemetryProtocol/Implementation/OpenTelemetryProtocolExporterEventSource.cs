@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
-    internal class OpenTelemetryProtocolExporterEventSource : EventSource
+    internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
     {
         public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 

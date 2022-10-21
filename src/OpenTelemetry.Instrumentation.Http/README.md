@@ -112,22 +112,19 @@ and the `Filter` option does the filtering *after* the Sampler is invoked.
 
 ### Enrich
 
-This option allows one to enrich the activity with additional information from
-the raw request and response objects. The `Enrich` action is called only when
-`activity.IsAllDataRequested` is `true`. It contains the activity itself (which
-can be enriched), the name of the event, and the actual raw object. The object
-type is different for `HttpClientInstrumentationOptions` vs
+This instrumentation library provides options that can be used to
+enrich the activity with additional information. These actions are called
+only when `activity.IsAllDataRequested` is `true`. It contains the activity
+itself (which can be enriched) and the actual raw object. The options
+are different for `HttpClientInstrumentationOptions` vs
 `HttpWebRequestInstrumentationOptions` and is detailed below.
 
 #### HttpClientInstrumentationOptions
 
-For event name "OnStartActivity", the actual object will be
-`HttpRequestMessage`.
-
-For event name "OnStopActivity", the actual object will be
-`HttpResponseMessage`.
-
-For event name "OnException", the actual object will be `Exception`.
+HttpClientInstrumentationOptions provides 3 enrich options,
+`EnrichWithHttpRequestMessage`, `EnrichWithHttpResponseMessage` and
+`EnrichWithException`. These are based on the raw object that is passed in to
+the action to enrich the activity.
 
 Example:
 
@@ -135,40 +132,30 @@ Example:
 using System.Net.Http;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddHttpClientInstrumentation((options) => options.Enrich
-    = (activity, eventName, rawObject) =>
+    .AddHttpClientInstrumentation((options) =>
     {
-        if (eventName.Equals("OnStartActivity"))
+        options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
         {
-            if (rawObject is HttpRequestMessage request)
-            {
-                activity.SetTag("requestVersion", request.Version);
-            }
-        }
-        else if (eventName.Equals("OnStopActivity"))
+            activity.SetTag("requestVersion", httpRequestMessage.Version);
+        };
+        options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
         {
-            if (rawObject is HttpResponseMessage response)
-            {
-                activity.SetTag("responseVersion", response.Version);
-            }
-        }
-        else if (eventName.Equals("OnException"))
+            activity.SetTag("responseVersion", httpResponseMessage.Version);
+        };
+        options.EnrichWithException = (activity, exception) =>
         {
-            if (rawObject is Exception exception)
-            {
-                activity.SetTag("stackTrace", exception.StackTrace);
-            }
-        }
-    }).Build();
+            activity.SetTag("stackTrace", exception.StackTrace);
+        };
+    })
+    .Build();
 ```
 
 #### HttpWebRequestInstrumentationOptions
 
-For event name "OnStartActivity", the actual object will be `HttpWebRequest`.
-
-For event name "OnStopActivity", the actual object will be `HttpWebResponse`.
-
-For event name "OnException", the actual object will be `Exception`.
+HttpClientInstrumentationOptions provides 3 enrich options,
+`EnrichWithHttpWebRequest`, `EnrichWithHttpWebResponse` and
+`EnrichWithException`. These are based on the raw object that is passed in to
+the action to enrich the activity.
 
 Example:
 
@@ -176,31 +163,22 @@ Example:
 using System.Net;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddHttpClientInstrumentation((options) => options.Enrich
-    = (activity, eventName, rawObject) =>
+    .AddHttpClientInstrumentation((options) =>
     {
-        if (eventName.Equals("OnStartActivity"))
+        options.EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
         {
-            if (rawObject is HttpWebRequest request)
-            {
-                activity.SetTag("requestVersion", request.ProtocolVersion);
-            }
-        }
-        else if (eventName.Equals("OnStopActivity"))
+            activity.SetTag("requestVersion", httpWebRequest.Version);
+        };
+        options.EnrichWithHttpWebResponse = (activity, httpWebResponse) =>
         {
-            if (rawObject is HttpWebResponse response)
-            {
-                activity.SetTag("responseVersion", response.ProtocolVersion);
-            }
-        }
-        else if (eventName.Equals("OnException"))
+            activity.SetTag("responseVersion", httpWebResponse.Version);
+        };
+        options.EnrichWithException = (activity, exception) =>
         {
-            if (rawObject is Exception exception)
-            {
-                activity.SetTag("stackTrace", exception.StackTrace);
-            }
-        }
-    }).Build();
+            activity.SetTag("stackTrace", exception.StackTrace);
+        };
+    })
+    .Build();
 ```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor), is the
