@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
-    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
+    internal sealed class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
         private readonly ListenerHandler handler;
 
