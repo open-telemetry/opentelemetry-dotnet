@@ -203,7 +203,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
-                    .AddGrpcClientInstrumentation()
+                    .AddGrpcClientInstrumentation(o => o.SuppressDownstreamInstrumentation = true)
                     .AddHttpClientInstrumentation()
                     .AddProcessor(processor.Object)
                     .Build())
