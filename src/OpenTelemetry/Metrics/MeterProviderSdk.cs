@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -47,6 +48,9 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
+            var state = serviceProvider!.GetRequiredService<MeterProviderBuilderState>();
+            state.CheckForCircularBuild();
+
             this.ServiceProvider = serviceProvider!;
 
             if (ownsServiceProvider)
@@ -56,8 +60,6 @@ namespace OpenTelemetry.Metrics
             }
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
-
-            var state = new MeterProviderBuilderState(serviceProvider!);
 
             MeterProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
                 serviceProvider!,

@@ -261,6 +261,56 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.True(configureBuilderCalled);
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MeterProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
+        {
+            bool innerTestExecuted = false;
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    if (callNestedConfigure)
+                    {
+                        services.ConfigureOpenTelemetryMetrics();
+                    }
+                })
+                .ConfigureBuilder((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+                })
+                .Build();
+
+            Assert.True(innerTestExecuted);
+
+            Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<MeterProvider>());
+        }
+
+        [Fact]
+        public void MeterProviderNestedResolutionUsingConfigureTest()
+        {
+            bool innerTestExecuted = false;
+
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection.ConfigureOpenTelemetryMetrics(builder =>
+            {
+                builder.ConfigureBuilder((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+                });
+            });
+
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
+
+            Assert.True(innerTestExecuted);
+        }
+
         private static void RunBuilderServiceLifecycleTest(
             MeterProviderBuilder builder,
             Func<MeterProviderSdk> buildFunc,

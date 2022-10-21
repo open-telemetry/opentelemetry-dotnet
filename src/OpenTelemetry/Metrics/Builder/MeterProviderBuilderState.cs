@@ -41,6 +41,7 @@ namespace OpenTelemetry.Metrics
         internal int MaxMetricStreams = MaxMetricsDefault;
         internal int MaxMetricPointsPerMetricStream = MaxMetricPointsPerMetricDefault;
 
+        private bool hasEnteredBuildPhase;
         private MeterProviderBuilderSdk? builder;
 
         public MeterProviderBuilderState(IServiceProvider serviceProvider)
@@ -51,6 +52,16 @@ namespace OpenTelemetry.Metrics
         }
 
         public MeterProviderBuilderSdk Builder => this.builder ??= new MeterProviderBuilderSdk(this);
+
+        public void CheckForCircularBuild()
+        {
+            if (this.hasEnteredBuildPhase)
+            {
+                throw new NotSupportedException("MeterProvider cannot be accessed while build is executing.");
+            }
+
+            this.hasEnteredBuildPhase = true;
+        }
 
         public void AddInstrumentation(
             string instrumentationName,
