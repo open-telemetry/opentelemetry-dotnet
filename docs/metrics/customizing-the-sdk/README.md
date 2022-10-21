@@ -427,4 +427,37 @@ Refer to the individual exporter docs to learn how to use them:
 
 ### Resource
 
-// TODO
+[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+is the immutable representation of the entity producing the telemetry. If no
+`Resource` is explicitly configured, the
+[default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
+The `ConfigureResource` method on `MeterProviderBuilder` can be used to set a
+configure the resource on the provider. When the provider is built, it
+automatically builds the final `Resource` from the configured `ResourceBuilder`.
+There can only be a single `Resource` associated with a
+provider. It is not possible to change the resource builder *after* the provider
+is built, by calling the `Build()` method on the `MeterProviderBuilder`.
+`ResourceBuilder` offers various methods to construct resource comprising of
+multiple attributes from various sources.
+
+The snippet below shows configuring the `Resource` associated with the provider.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .ConfigureResource(r => r.AddService("MyServiceName"))
+    .Build();
+```
+
+It is also possible to configure the `Resource` by using following
+environmental variables:
+
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
+| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
