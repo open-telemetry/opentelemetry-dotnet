@@ -1,7 +1,5 @@
 # Customizing OpenTelemetry .NET SDK
 
-**This doc is work-in-progress.**
-
 ## TracerProvider
 
 As shown in the [getting-started](../getting-started/README.md) doc, a valid
