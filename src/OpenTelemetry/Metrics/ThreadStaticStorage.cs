@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class ThreadStaticStorage
+    internal sealed class ThreadStaticStorage
     {
         private const int MaxTagCacheSize = 8;
 
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal class TagStorage
+        internal sealed class TagStorage
         {
             // Used to split into Key sequence, Value sequence.
             internal readonly string[] TagKeys;
