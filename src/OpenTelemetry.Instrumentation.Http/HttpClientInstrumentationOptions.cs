@@ -40,9 +40,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para>string: the name of the event.</para>
-        /// <para><see cref="HttpRequestMessage"/> object from which additional information can be extracted to enrich the activity.
-        /// The type of this object depends on the event, which is given by the above parameter.</para>
+        /// <para><see cref="HttpRequestMessage"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpRequestMessage> EnrichWithHttpRequestMessage { get; set; }
 
@@ -51,9 +49,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para>string: the name of the event.</para>
-        /// <para><see cref="HttpResponseMessage"/> object from which additional information can be extracted to enrich the activity.
-        /// The type of this object depends on the event, which is given by the above parameter.</para>
+        /// <para><see cref="HttpResponseMessage"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpResponseMessage> EnrichWithHttpResponseMessage { get; set; }
 
@@ -62,9 +58,7 @@ namespace OpenTelemetry.Instrumentation.Http
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para>string: the name of the event.</para>
-        /// <para><see cref="Exception"/> object from which additional information can be extracted to enrich the activity.
-        /// The type of this object depends on the event, which is given by the above parameter.</para>
+        /// <para><see cref="Exception"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, Exception> EnrichWithException { get; set; }
 
