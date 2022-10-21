@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
     /// <summary>
     /// Stores the activity information aggregated according to activity name.
     /// </summary>
-    internal class ZPagesActivityAggregate
+    internal sealed class ZPagesActivityAggregate
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesActivityAggregate"/> class.
