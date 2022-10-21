@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
         public bool SuppressDownstreamInstrumentation { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpRequestMessage"/>.
+        /// Gets or sets an action to enrich the Activity with <see cref="HttpRequestMessage"/>.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
