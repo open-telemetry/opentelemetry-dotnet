@@ -104,9 +104,8 @@ This instrumentation library provides `EnrichWithHttpRequestMessage` and
 with additional information from the raw `HttpRequestMessage` and
 `HttpResponseMessage` objects respectively. These actions are called only when
 `activity.IsAllDataRequested` is `true`.. It contains the activity itself (which
-can be enriched), the name of the event, and the actual raw object. 
-
-The following code snippet shows how to add additional tags using these options.
+can be enriched), the name of the event, and the actual raw object. The
+following code snippet shows how to add additional tags using these options.
 
 ```csharp
 services.AddOpenTelemetryTracing((builder) =>
