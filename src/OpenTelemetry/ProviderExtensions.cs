@@ -64,7 +64,7 @@ namespace OpenTelemetry
             return builder.Build();
         }
 
-        internal static IServiceProvider GetServiceProvider(this BaseProvider baseProvider)
+        internal static IServiceProvider? GetServiceProvider(this BaseProvider baseProvider)
         {
             if (baseProvider is TracerProviderSdk tracerProviderSdk)
             {
