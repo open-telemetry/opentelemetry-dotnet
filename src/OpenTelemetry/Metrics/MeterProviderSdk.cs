@@ -29,6 +29,7 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class MeterProviderSdk : MeterProvider
     {
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
         internal bool Disposed;
@@ -44,6 +45,10 @@ namespace OpenTelemetry.Metrics
             IServiceProvider serviceProvider,
             bool ownsServiceProvider)
         {
+            Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+            this.ServiceProvider = serviceProvider!;
+
             if (ownsServiceProvider)
             {
                 this.OwnedServiceProvider = serviceProvider as IDisposable;
@@ -52,10 +57,10 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-            var state = new MeterProviderBuilderState(serviceProvider);
+            var state = new MeterProviderBuilderState(serviceProvider!);
 
             MeterProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider,
+                serviceProvider!,
                 state);
 
             StringBuilder exportersAdded = new StringBuilder();

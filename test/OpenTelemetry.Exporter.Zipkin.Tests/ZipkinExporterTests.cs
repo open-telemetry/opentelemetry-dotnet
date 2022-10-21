@@ -292,6 +292,42 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             Assert.Equal(1, invocations);
         }
 
+        [Fact]
+        public void UpdatesServiceNameFromDefaultResource()
+        {
+            var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
+
+            zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
+
+            Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint.ServiceName);
+        }
+
+        [Fact]
+        public void UpdatesServiceNameFromIConfiguration()
+        {
+            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    Dictionary<string, string> configuration = new()
+                    {
+                        ["OTEL_SERVICE_NAME"] = "myservicename",
+                    };
+
+                    services.AddSingleton<IConfiguration>(
+                        new ConfigurationBuilder().AddInMemoryCollection(configuration).Build());
+                });
+
+            var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
+
+            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, zipkinExporter);
+
+            using var provider = tracerProviderBuilder.Build();
+
+            zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
+
+            Assert.Equal("myservicename", zipkinExporter.LocalEndpoint.ServiceName);
+        }
+
         [Theory]
         [InlineData(true, false, false)]
         [InlineData(false, false, false)]
