@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -62,7 +64,7 @@ namespace OpenTelemetry
             return builder.Build();
         }
 
-        internal static IServiceProvider GetServiceProvider(this BaseProvider baseProvider)
+        internal static IServiceProvider? GetServiceProvider(this BaseProvider baseProvider)
         {
             if (baseProvider is TracerProviderSdk tracerProviderSdk)
             {
@@ -76,7 +78,7 @@ namespace OpenTelemetry
             return null;
         }
 
-        internal static Action GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
+        internal static Action? GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
         {
             if (baseProvider is MeterProviderSdk meterProviderSdk)
             {

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -42,15 +44,19 @@ namespace OpenTelemetry.Trace
             ActivityTraceId traceId,
             string name,
             ActivityKind kind,
-            IEnumerable<KeyValuePair<string, object>> tags = null,
-            IEnumerable<ActivityLink> links = null)
+            IEnumerable<KeyValuePair<string, object?>>? tags = null,
+            IEnumerable<ActivityLink>? links = null)
         {
             this.ParentContext = parentContext;
             this.TraceId = traceId;
-            this.Name = name;
             this.Kind = kind;
             this.Tags = tags;
             this.Links = links;
+
+            // Note: myActivitySource.StartActivity(name: null) is currently
+            // allowed even though OTel spec says span name is required. See:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3802
+            this.Name = name ?? string.Empty;
         }
 
         /// <summary>
@@ -81,11 +87,11 @@ namespace OpenTelemetry.Trace
         /// Gets the tags to be associated to the span/activity to be created.
         /// These are the tags provided at the time of Activity creation.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, object>> Tags { get; }
+        public IEnumerable<KeyValuePair<string, object?>>? Tags { get; }
 
         /// <summary>
         /// Gets the links to be added to the activity to be created.
         /// </summary>
-        public IEnumerable<ActivityLink> Links { get; }
+        public IEnumerable<ActivityLink>? Links { get; }
     }
 }
