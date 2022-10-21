@@ -33,6 +33,17 @@ namespace OpenTelemetry.Logs
             Version = $"semver:{typeof(OpenTelemetryLogger).Assembly.GetName().Version}",
         };
 
+        private static readonly string[] LogLevels = new string[]
+        {
+            nameof(LogLevel.Trace),
+            nameof(LogLevel.Debug),
+            nameof(LogLevel.Information),
+            nameof(LogLevel.Warning),
+            nameof(LogLevel.Error),
+            nameof(LogLevel.Critical),
+            nameof(LogLevel.None),
+        };
+
         private readonly string categoryName;
         private readonly OpenTelemetryLoggerProvider iloggerProvider;
         private readonly LoggerProviderSdk? otelLoggerProvider;
@@ -81,7 +92,13 @@ namespace OpenTelemetry.Logs
                 ref LogRecordData data = ref record.Data;
 
                 data.TimestampBacking = DateTime.UtcNow;
-                data.Severity = (LogRecordSeverity)logLevel;
+
+                uint intLogLevel = (uint)logLevel;
+                if (intLogLevel < 6)
+                {
+                    data.Severity = (LogRecordSeverity)logLevel;
+                    data.SeverityText = LogLevels[intLogLevel];
+                }
 
                 LogRecordData.SetActivityContext(ref data, activity);
 

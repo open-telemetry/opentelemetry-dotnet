@@ -54,6 +54,8 @@ OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
 OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void
 OpenTelemetry.Logs.LogRecordData.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
 OpenTelemetry.Logs.LogRecordData.Severity.set -> void
+OpenTelemetry.Logs.LogRecordData.SeverityText.get -> string?
+OpenTelemetry.Logs.LogRecordData.SeverityText.set -> void
 OpenTelemetry.Logs.LogRecordData.SpanId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Logs.LogRecordData.SpanId.set -> void
 OpenTelemetry.Logs.LogRecordData.Timestamp.get -> System.DateTime

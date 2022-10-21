@@ -117,9 +117,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     SeverityNumber = GetSeverityNumber(logRecord.Severity),
                 };
 
-                if (logRecord.Severity.HasValue)
+                if (!string.IsNullOrWhiteSpace(logRecord.SeverityText))
                 {
-                    otlpLogRecord.SeverityText = SeverityTextMapping[(int)logRecord.Severity.Value];
+                    otlpLogRecord.SeverityText = logRecord.SeverityText;
+                }
+                else if (logRecord.Severity.HasValue)
+                {
+                    uint severityNumber = (uint)logRecord.Severity.Value;
+                    if (severityNumber < 6)
+                    {
+                        otlpLogRecord.SeverityText = SeverityTextMapping[severityNumber];
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(logRecord.CategoryName))

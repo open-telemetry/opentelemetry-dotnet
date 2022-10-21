@@ -30,6 +30,16 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class OpenTelemetryEventSourceLogEmitter : EventListener
     {
+        private static readonly Tuple<LogRecordSeverity, string>[] EventLevels = new Tuple<LogRecordSeverity, string>[]
+        {
+            new((LogRecordSeverity)(-1), nameof(EventLevel.LogAlways)),
+            new(LogRecordSeverity.Fatal, nameof(EventLevel.Critical)),
+            new(LogRecordSeverity.Error, nameof(EventLevel.Error)),
+            new(LogRecordSeverity.Warning, nameof(EventLevel.Warning)),
+            new(LogRecordSeverity.Information, nameof(EventLevel.Informational)),
+            new(LogRecordSeverity.Trace, nameof(EventLevel.Verbose)),
+        };
+
         private readonly bool includeFormattedMessage;
         private readonly LoggerProvider loggerProvider;
         private readonly object lockObj = new();
@@ -147,8 +157,15 @@ namespace OpenTelemetry.Logs
 #if !NETFRAMEWORK
                 Timestamp = eventData.TimeStamp,
 #endif
-                Severity = ConvertEventLevelToLogLevel(eventData.Level),
             };
+
+            uint eventLevel = (uint)eventData.Level;
+            if (eventLevel < 6)
+            {
+                Tuple<LogRecordSeverity, string> eventLevelMapping = EventLevels[eventLevel];
+                data.Severity = eventLevelMapping.Item1;
+                data.SeverityText = eventLevelMapping.Item2;
+            }
 
             LogRecordAttributeList attributes = default;
 
@@ -205,18 +222,6 @@ namespace OpenTelemetry.Logs
             this.logger.EmitLog(in data, in attributes);
         }
 #pragma warning restore CA1062 // Validate arguments of public methods
-
-        private static LogRecordSeverity ConvertEventLevelToLogLevel(EventLevel eventLevel)
-        {
-            return eventLevel switch
-            {
-                EventLevel.Informational => LogRecordSeverity.Information,
-                EventLevel.Warning => LogRecordSeverity.Warning,
-                EventLevel.Error => LogRecordSeverity.Error,
-                EventLevel.Critical => LogRecordSeverity.Fatal,
-                _ => LogRecordSeverity.Trace,
-            };
-        }
 
         private void ProcessSource(EventSource eventSource)
         {

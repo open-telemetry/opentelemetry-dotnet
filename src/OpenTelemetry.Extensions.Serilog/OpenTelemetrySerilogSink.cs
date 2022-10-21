@@ -24,6 +24,16 @@ namespace OpenTelemetry.Logs;
 
 internal sealed class OpenTelemetrySerilogSink : ILogEventSink, IDisposable
 {
+    private static readonly string[] LogEventLevels = new string[]
+    {
+        nameof(LogEventLevel.Verbose),
+        nameof(LogEventLevel.Debug),
+        nameof(LogEventLevel.Information),
+        nameof(LogEventLevel.Warning),
+        nameof(LogEventLevel.Error),
+        nameof(LogEventLevel.Fatal),
+    };
+
     private readonly LoggerProvider loggerProvider;
     private readonly bool includeRenderedMessage;
     private readonly Logger logger;
@@ -57,9 +67,15 @@ internal sealed class OpenTelemetrySerilogSink : ILogEventSink, IDisposable
         LogRecordData data = new(Activity.Current)
         {
             Timestamp = logEvent!.Timestamp.UtcDateTime,
-            Severity = (LogRecordSeverity)(int)logEvent.Level,
             Body = logEvent.MessageTemplate.Text,
         };
+
+        uint severityNumber = (uint)logEvent.Level;
+        if (severityNumber < 6)
+        {
+            data.SeverityText = LogEventLevels[severityNumber];
+            data.Severity = (LogRecordSeverity)severityNumber;
+        }
 
         LogRecordAttributeList attributes = default;
 

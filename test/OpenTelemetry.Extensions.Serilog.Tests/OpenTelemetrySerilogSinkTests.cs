@@ -22,6 +22,7 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Events;
 using Xunit;
 using ILogger = Serilog.ILogger;
 
@@ -100,6 +101,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
             Assert.Equal(DateTimeKind.Utc, logRecord.Timestamp.Kind);
             Assert.Equal(LogRecordSeverity.Information, logRecord.Severity);
+            Assert.Equal(nameof(LogEventLevel.Information), logRecord.SeverityText);
             Assert.Null(logRecord.CategoryName);
 
             Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
