@@ -92,7 +92,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 if (logRecord.EventId.Id != default)
                 {
-                    otlpLogRecord.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id, attributeValueLengthLimit, attributeCountLimit);
+                    otlpLogRecord.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id, attributeCountLimit);
                 }
 
                 if (!string.IsNullOrEmpty(logRecord.EventId.Name))
@@ -193,10 +193,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void AddIntAttribute(this OtlpLogs.LogRecord logRecord, string key, int value, int? maxValueLength, int maxAttributeCount)
+        private static void AddIntAttribute(this OtlpLogs.LogRecord logRecord, string key, int value, int maxAttributeCount)
         {
             var attributeItem = new KeyValuePair<string, object>(key, value);
-            if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result))
             {
                 logRecord.AddAttribute(result, maxAttributeCount);
             }

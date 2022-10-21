@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Exporter-ZPages")]
-    internal class ZPagesExporterEventSource : EventSource
+    internal sealed class ZPagesExporterEventSource : EventSource
     {
         public static ZPagesExporterEventSource Log = new();
 

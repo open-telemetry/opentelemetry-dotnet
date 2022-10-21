@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.Http
     /// <summary>
     /// HttpClient instrumentation.
     /// </summary>
-    internal class HttpClientMetrics : IDisposable
+    internal sealed class HttpClientMetrics : IDisposable
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpClientMetrics).Assembly.GetName();
         internal static readonly string InstrumentationName = AssemblyName.Name;

@@ -19,7 +19,7 @@ using System.Text.Json;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
-    internal class ZipkinEndpoint
+    internal sealed class ZipkinEndpoint
     {
         public ZipkinEndpoint(string serviceName)
             : this(serviceName, null, null, null, null)

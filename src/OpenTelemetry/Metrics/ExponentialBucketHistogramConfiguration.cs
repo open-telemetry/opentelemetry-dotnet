@@ -19,7 +19,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Stores configuration for a histogram metric stream with exponential bucket boundaries.
 /// </summary>
-internal class ExponentialBucketHistogramConfiguration : MetricStreamConfiguration
+internal sealed class ExponentialBucketHistogramConfiguration : MetricStreamConfiguration
 {
     /// <summary>
     /// Gets or sets the maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket.
