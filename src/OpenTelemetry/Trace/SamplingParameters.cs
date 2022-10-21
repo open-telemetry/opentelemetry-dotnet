@@ -54,7 +54,8 @@ namespace OpenTelemetry.Trace
             this.Links = links;
 
             // Note: myActivitySource.StartActivity(name: null) is currently
-            // allowed even though OTel spec says span name is required.
+            // allowed even though OTel spec says span name is required. See:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3802
             this.Name = name ?? string.Empty;
         }
 
