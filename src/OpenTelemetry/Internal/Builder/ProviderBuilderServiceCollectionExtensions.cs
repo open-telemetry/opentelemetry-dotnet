@@ -41,6 +41,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
         services.AddOpenTelemetryProviderBuilderServices();
 
         services.RegisterOptionsFactory(configuration => new ExportActivityProcessorOptions(configuration));
+        services.TryAddSingleton<TracerProviderBuilderState>();
 
         return services;
     }
