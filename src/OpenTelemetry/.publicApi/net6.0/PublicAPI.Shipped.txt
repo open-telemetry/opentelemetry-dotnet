@@ -10,10 +10,10 @@ OpenTelemetry.Batch<T>
 OpenTelemetry.Batch<T>.Batch(T![]! items, int count) -> void
 OpenTelemetry.Batch<T>.Enumerator.Current.get -> T!
 ~OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
-~OpenTelemetry.BatchActivityExportProcessor.BatchActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity> exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
+OpenTelemetry.BatchActivityExportProcessor.BatchActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.BatchExportProcessor<T>
 OpenTelemetry.BatchExportProcessor<T>.BatchExportProcessor(OpenTelemetry.BaseExporter<T!>! exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
-~OpenTelemetry.BatchExportProcessorOptions<T>
+OpenTelemetry.BatchExportProcessorOptions<T>
 OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T>! processor) -> OpenTelemetry.CompositeProcessor<T>!
 OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>!>! processors) -> void
 ~OpenTelemetry.Metrics.BaseExportingMetricReader.BaseExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter) -> void
@@ -37,37 +37,37 @@ OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.s
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> string[]
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
 ~OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
-~OpenTelemetry.ReadOnlyTagCollection.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string, object>
-~OpenTelemetry.Resources.IResourceDetector.Detect() -> OpenTelemetry.Resources.Resource
-~OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
-~OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource other) -> OpenTelemetry.Resources.Resource
-~OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
+OpenTelemetry.ReadOnlyTagCollection.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object!>
+OpenTelemetry.Resources.IResourceDetector.Detect() -> OpenTelemetry.Resources.Resource!
+OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>!
+OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource! other) -> OpenTelemetry.Resources.Resource!
+OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> void
 OpenTelemetry.Resources.ResourceBuilder.AddDetector(OpenTelemetry.Resources.IResourceDetector! resourceDetector) -> OpenTelemetry.Resources.ResourceBuilder!
 OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resource!
 OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder!
-~OpenTelemetry.SimpleActivityExportProcessor.SimpleActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity> exporter) -> void
+OpenTelemetry.SimpleActivityExportProcessor.SimpleActivityExportProcessor(OpenTelemetry.BaseExporter<System.Diagnostics.Activity!>! exporter) -> void
 OpenTelemetry.SimpleExportProcessor<T>
 OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseExporter<T!>! exporter) -> void
-~OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler) -> void
-~OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler rootSampler, OpenTelemetry.Trace.Sampler remoteParentSampled = null, OpenTelemetry.Trace.Sampler remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler localParentSampled = null, OpenTelemetry.Trace.Sampler localParentNotSampled = null) -> void
-~OpenTelemetry.Trace.Sampler.Description.get -> string
-~OpenTelemetry.Trace.Sampler.Description.set -> void
-~OpenTelemetry.Trace.SamplingParameters.Links.get -> System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink>
-~OpenTelemetry.Trace.SamplingParameters.Name.get -> string
-~OpenTelemetry.Trace.SamplingParameters.SamplingParameters(System.Diagnostics.ActivityContext parentContext, System.Diagnostics.ActivityTraceId traceId, string name, System.Diagnostics.ActivityKind kind, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> tags = null, System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink> links = null) -> void
-~OpenTelemetry.Trace.SamplingParameters.Tags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
-~OpenTelemetry.Trace.SamplingResult.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
-~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
+OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
+OpenTelemetry.Trace.ParentBasedSampler.ParentBasedSampler(OpenTelemetry.Trace.Sampler! rootSampler, OpenTelemetry.Trace.Sampler? remoteParentSampled = null, OpenTelemetry.Trace.Sampler? remoteParentNotSampled = null, OpenTelemetry.Trace.Sampler? localParentSampled = null, OpenTelemetry.Trace.Sampler? localParentNotSampled = null) -> void
+OpenTelemetry.Trace.Sampler.Description.get -> string!
+OpenTelemetry.Trace.Sampler.Description.set -> void
+OpenTelemetry.Trace.SamplingParameters.Links.get -> System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink>?
+OpenTelemetry.Trace.SamplingParameters.Name.get -> string!
+OpenTelemetry.Trace.SamplingParameters.SamplingParameters(System.Diagnostics.ActivityContext parentContext, System.Diagnostics.ActivityTraceId traceId, string! name, System.Diagnostics.ActivityKind kind, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? tags = null, System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink>? links = null) -> void
+OpenTelemetry.Trace.SamplingParameters.Tags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
+OpenTelemetry.Trace.SamplingResult.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>!
+OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> void
 OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string! instrumentationName, string! instrumentationVersion, System.Func<object!>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider!
 override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T! data) -> void
-~override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
+override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity! data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnExport(T! data) -> void
 ~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string![]! names) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-~override OpenTelemetry.SimpleActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
+override OpenTelemetry.SimpleActivityExportProcessor.OnEnd(System.Diagnostics.Activity! data) -> void
 override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T! data) -> void
-~override OpenTelemetry.Trace.SamplingResult.Equals(object obj) -> bool
+override OpenTelemetry.Trace.SamplingResult.Equals(object? obj) -> bool
 ~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string! operationName) -> OpenTelemetry.Trace.TracerProviderBuilder!
 override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string![]! names) -> OpenTelemetry.Trace.TracerProviderBuilder!
@@ -85,9 +85,9 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(t
 ~static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 ~static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 ~static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
-~static OpenTelemetry.ProviderExtensions.GetDefaultResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
-~static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider baseProvider) -> OpenTelemetry.Resources.Resource
-~static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource
+static OpenTelemetry.ProviderExtensions.GetDefaultResource(this OpenTelemetry.BaseProvider! baseProvider) -> OpenTelemetry.Resources.Resource!
+static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvider! baseProvider) -> OpenTelemetry.Resources.Resource!
+static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource!
 static OpenTelemetry.Resources.ResourceBuilder.CreateDefault() -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Resources.ResourceBuilder.CreateEmpty() -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> OpenTelemetry.Resources.ResourceBuilder!
@@ -97,7 +97,7 @@ static OpenTelemetry.Resources.ResourceBuilderExtensions.AddTelemetrySdk(this Op
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator! textMapPropagator) -> void
-~static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable
+static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>! processor) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider?
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder!

@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -47,6 +48,9 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
+            var state = serviceProvider!.GetRequiredService<TracerProviderBuilderState>();
+            state.CheckForCircularBuild();
+
             this.ServiceProvider = serviceProvider!;
 
             if (ownsServiceProvider)
@@ -56,8 +60,6 @@ namespace OpenTelemetry.Trace
             }
 
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
-
-            var state = new TracerProviderBuilderState(serviceProvider!);
 
             TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
                 serviceProvider!,

@@ -38,6 +38,7 @@ namespace OpenTelemetry.Trace
         internal Sampler? Sampler;
         internal bool SetErrorStatusOnException;
 
+        private bool hasEnteredBuildPhase;
         private TracerProviderBuilderSdk? builder;
 
         public TracerProviderBuilderState(IServiceProvider serviceProvider)
@@ -48,6 +49,16 @@ namespace OpenTelemetry.Trace
         }
 
         public TracerProviderBuilderSdk Builder => this.builder ??= new TracerProviderBuilderSdk(this);
+
+        public void CheckForCircularBuild()
+        {
+            if (this.hasEnteredBuildPhase)
+            {
+                throw new NotSupportedException("TracerProvider cannot be accessed while build is executing.");
+            }
+
+            this.hasEnteredBuildPhase = true;
+        }
 
         public void AddInstrumentation(
             string instrumentationName,
