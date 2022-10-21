@@ -11,7 +11,7 @@
   and `HttpResponseMessage`. The separate callbacks make it clear what event
   triggers them and there is no longer the need to cast the argument to the
   expected type.
-  ([#]())
+  ([#3804](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3804))
 
 ## 1.0.0-rc9.8
 
