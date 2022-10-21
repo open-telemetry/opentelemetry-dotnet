@@ -120,39 +120,36 @@ and the `Filter` option does the filtering *after* the Sampler is invoked.
 
 ### Enrich
 
-This option allows one to enrich the activity with additional information
-from the raw `HttpRequest`, `HttpResponse` objects. The `Enrich` action is
-called only when `activity.IsAllDataRequested` is `true`. It contains the
-activity itself (which can be enriched), the name of the event, and the
-actual raw object.
-For event name "OnStartActivity", the actual object will be `HttpRequest`.
-For event name "OnStopActivity", the actual object will be `HttpResponse`
+This instrumentation library provides `EnrichWithHttpRequest`,
+`EnrichWithHttpResponse` and `EnrichWithException` options that can be used to
+enrich the activity with additional information from the raw `HttpRequest`,
+`HttpResponse` and `Exception` objects respectively. These actions are called
+only when `activity.IsAllDataRequested` is `true`. It contains the activity
+itself (which can be enriched) and the actual raw object.
 
-The following code snippet shows how to add additional tags using `Enrich`.
+The following code snippet shows how to enrich the activity using all 3
+different options.
 
 ```csharp
 services.AddOpenTelemetryTracing((builder) =>
 {
-    builder.AddAspNetCoreInstrumentation((options) => options.Enrich
-        = (activity, eventName, rawObject) =>
+    builder.AddAspNetCoreInstrumentation(o =>
     {
-        if (eventName.Equals("OnStartActivity"))
+        o.EnrichWithHttpRequest = (activity, httpRequest) =>
         {
-            if (rawObject is HttpRequest httpRequest)
-            {
-                activity.SetTag("requestProtocol", httpRequest.Protocol);
-            }
-        }
-        else if (eventName.Equals("OnStopActivity"))
+            activity.SetTag("requestProtocol", httpRequest.Protocol);
+        };
+        o.EnrichWithHttpResponse = (activity, httpResponse) =>
         {
-            if (rawObject is HttpResponse httpResponse)
-            {
-                activity.SetTag("responseLength", httpResponse.ContentLength);
-            }
-        }
+            activity.SetTag("responseLength", httpResponse.ContentLength);
+        };
+        o.EnrichWithException = (activity, exception) =>
+        {
+            activity.SetTag("exceptionType", exception.GetType().ToString());
+        };
     })
 });
-```
+
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor),
 is the general extensibility point to add additional properties to any activity.
