@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Http
         public Func<HttpWebRequest, bool> Filter { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity.
+        /// Gets or sets an action to enrich an Activity with <see cref="HttpWebRequest"/>.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Instrumentation.Http
         public Action<Activity, HttpWebRequest> EnrichWithHttpWebRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity.
+        /// Gets or sets an action to enrich an Activity with <see cref="HttpWebResponse"/>.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.Http
         public Action<Activity, HttpWebResponse> EnrichWithHttpWebResponse { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity.
+        /// Gets or sets an action to enrich an Activity with <see cref="Exception"/>.
         /// </summary>
         /// <remarks>
         /// <para><see cref="Activity"/>: the activity being enriched.</para>
