@@ -43,7 +43,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             HttpWebRequestInstrumentationOptions options = new HttpWebRequestInstrumentationOptions
             {
-                Enrich = ActivityEnrichment,
+                EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
+                {
+                    VerifyHeaders(httpWebRequest);
+
+                    if (validateBaggage)
+                    {
+                        ValidateBaggage(httpWebRequest);
+                    }
+                },
             };
 
             HttpWebRequestActivitySource.Options = options;

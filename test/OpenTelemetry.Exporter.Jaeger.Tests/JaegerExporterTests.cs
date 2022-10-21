@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Exporter.Jaeger.Implementation.Tests;
@@ -185,11 +186,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            process.ServiceName = "TestService";
-
             jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
-            Assert.Equal("TestService", process.ServiceName);
+            Assert.StartsWith("unknown_service:", process.ServiceName);
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 
@@ -249,6 +248,34 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             }).Build());
 
             Assert.Null(process.Tags);
+        }
+
+        [Fact]
+        public void JaegerTraceExporter_SetResource_UpdatesServiceNameFromIConfiguration()
+        {
+            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    Dictionary<string, string> configuration = new()
+                    {
+                        ["OTEL_SERVICE_NAME"] = "myservicename",
+                    };
+
+                    services.AddSingleton<IConfiguration>(
+                        new ConfigurationBuilder().AddInMemoryCollection(configuration).Build());
+                });
+
+            var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
+
+            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, jaegerTraceExporter);
+
+            using var provider = tracerProviderBuilder.Build();
+
+            var process = jaegerTraceExporter.Process;
+
+            jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
+
+            Assert.Equal("myservicename", process.ServiceName);
         }
 
         [Fact]
