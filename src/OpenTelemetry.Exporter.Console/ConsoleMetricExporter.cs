@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter
                             bucketsBuilder.Append($"Min: {metricPoint.GetHistogramMin()} Max: {metricPoint.GetHistogramMax()} ");
                         }
 
-                        bucketsBuilder.Append("\n\r");
+                        bucketsBuilder.AppendLine();
 
                         bool isFirstIteration = true;
                         double previousExplicitBound = default;
