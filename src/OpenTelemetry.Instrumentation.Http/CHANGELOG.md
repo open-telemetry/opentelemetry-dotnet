@@ -5,7 +5,7 @@
 * Added back `netstandard2.0` target.
 ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
 
-* **Breaking change** The `Enrich` callback option has been removed. For better
+* **Breaking change**: The `Enrich` callback option has been removed. For better
   usability, it has been replaced by three separate options: In case of
   `HttpClient` the new options are `EnrichWithHttpRequestMessage`,
   `EnrichWithHttpResponseMessage` and `EnrichWithException` and in case of
@@ -18,10 +18,10 @@
   `HttpClient` and `HttpWebRequest`,`HttpWebResponse` and `Exception` in case of
   `HttpWebRequest`. The separate callbacks make it clear what event triggers
   them and there is no longer the need to cast the argument to the expected
-type.
-([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
+  type.
+  ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
 
-* **Breaking change** The same API is now exposed for `net462` and
+* **Breaking change**: The same API is now exposed for `net462` and
   `netstandard2.0` targets. The `Filter` property on options is now exposed as
   `FilterHttpRequestMessage` (called for .NET & .NET Core) and
   `FilterHttpWebRequest` (called for .NET Framework).
