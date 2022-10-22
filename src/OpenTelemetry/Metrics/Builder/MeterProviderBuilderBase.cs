@@ -25,6 +25,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Metrics.MeterProviderBuilderSdk,
+    OpenTelemetry.Metrics.MeterProviderSdk,
+    OpenTelemetry.Metrics.MeterProviderBuilderState>;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -103,7 +108,7 @@ namespace OpenTelemetry.Metrics
             else
             {
                 this.ConfigureServices(services
-                    => MeterProviderBuilderServiceCollectionHelper.RegisterConfigureBuilderCallback(services, configure));
+                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
 
             return this;
@@ -292,7 +297,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                this.ConfigureServices(services => MeterProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
+                this.ConfigureServices(services => CallbackHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;
