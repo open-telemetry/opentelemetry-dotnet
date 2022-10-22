@@ -149,7 +149,7 @@ services.AddOpenTelemetryTracing((builder) =>
         };
     })
 });
-
+```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor),
 is the general extensibility point to add additional properties to any activity.
