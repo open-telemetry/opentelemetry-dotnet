@@ -415,6 +415,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     {
         var services = new ServiceCollection();
 
+        bool serviceProviderTestExecuted = false;
+
         services.AddLogging(builder =>
         {
             builder.AddOpenTelemetry().SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions"));
@@ -427,7 +429,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         services.ConfigureOpenTelemetryLogging(options =>
         {
-            options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key2"] = "value2" }));
+            options.ConfigureResource(builder =>
+            {
+                builder.AddDetector(sp =>
+                {
+                    serviceProviderTestExecuted = true;
+                    Assert.NotNull(sp);
+                    return new ResourceBuilder.WrapperResourceDetector(new Resource(new Dictionary<string, object>() { ["key2"] = "value2" }));
+                });
+            });
         });
 
         using var serviceProvider = services.BuildServiceProvider();
@@ -437,6 +447,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         var provider = serviceProvider.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
 
         Assert.NotNull(provider);
+        Assert.True(serviceProviderTestExecuted);
 
         var resource = provider!.Resource;
 

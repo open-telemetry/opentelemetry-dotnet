@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -37,7 +36,8 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 internal sealed class LoggerProviderSdk : LoggerProvider
 {
-    private readonly ServiceProvider? ownedServiceProvider;
+    internal readonly IServiceProvider ServiceProvider;
+    private readonly IDisposable? ownedServiceProvider;
     private readonly List<object> instrumentations = new();
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
     private int shutdownCount;
@@ -47,21 +47,29 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
+        Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
         OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building LoggerProviderSdk.");
+
+        this.ServiceProvider = serviceProvider!;
 
         if (ownsServiceProvider)
         {
-            this.ownedServiceProvider = serviceProvider as ServiceProvider;
+            this.ownedServiceProvider = serviceProvider as IDisposable;
 
             Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
         }
 
-        var state = new LoggerProviderBuilderState(serviceProvider);
+        var state = new LoggerProviderBuilderState(serviceProvider!);
         state.RegisterProvider(nameof(LoggerProvider), this);
 
         CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
-            serviceProvider,
+            serviceProvider!,
             state);
+
+        var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+        resourceBuilder.ServiceProvider = serviceProvider;
+        this.Resource = resourceBuilder.Build();
 
         foreach (var processor in state.Processors)
         {
@@ -72,8 +80,6 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         {
             this.instrumentations.Add(instrumentation.Instance);
         }
-
-        this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
 
         OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("LoggerProviderSdk built successfully.");
     }
