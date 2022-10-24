@@ -25,6 +25,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Metrics.MeterProviderBuilderSdk,
+    OpenTelemetry.Metrics.MeterProviderSdk,
+    OpenTelemetry.Metrics.MeterProviderBuilderState>;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -46,14 +51,14 @@ namespace OpenTelemetry.Metrics
             this.State = state;
         }
 
-        // This ctor is for AddOpenTelemetryTracing scenario where the builder
-        // is bound to an external service collection.
+        // This ctor is for ConfigureOpenTelemetryMetrics +
+        // AddOpenTelemetryMetrics scenarios where the builder is bound to an
+        // external service collection.
         internal MeterProviderBuilderBase(IServiceCollection services)
         {
             Guard.ThrowIfNull(services);
 
             services.AddOpenTelemetryMeterProviderBuilderServices();
-
             services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
 
             this.services = services;
@@ -67,6 +72,8 @@ namespace OpenTelemetry.Metrics
             var services = new ServiceCollection();
 
             services.AddOpenTelemetryMeterProviderBuilderServices();
+            services.AddSingleton<MeterProvider>(
+                sp => throw new NotSupportedException("External MeterProvider created through Sdk.CreateMeterProviderBuilder cannot be accessed using service provider."));
 
             this.services = services;
             this.ownsServices = true;
@@ -101,7 +108,7 @@ namespace OpenTelemetry.Metrics
             else
             {
                 this.ConfigureServices(services
-                    => MeterProviderBuilderServiceCollectionHelper.RegisterConfigureBuilderCallback(services, configure));
+                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
 
             return this;
@@ -290,7 +297,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                this.ConfigureServices(services => MeterProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
+                this.ConfigureServices(services => CallbackHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;

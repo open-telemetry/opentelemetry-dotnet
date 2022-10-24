@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Exporter-Zipkin")]
-    internal class ZipkinExporterEventSource : EventSource
+    internal sealed class ZipkinExporterEventSource : EventSource
     {
         public static ZipkinExporterEventSource Log = new();
 

@@ -24,6 +24,11 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Trace.TracerProviderBuilderSdk,
+    OpenTelemetry.Trace.TracerProviderSdk,
+    OpenTelemetry.Trace.TracerProviderBuilderState>;
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -45,8 +50,9 @@ namespace OpenTelemetry.Trace
             this.State = state;
         }
 
-        // This ctor is for AddOpenTelemetryTracing scenario where the builder
-        // is bound to an external service collection.
+        // This ctor is for ConfigureOpenTelemetryTracing +
+        // AddOpenTelemetryTracing scenarios where the builder is bound to an
+        // external service collection.
         internal TracerProviderBuilderBase(IServiceCollection services)
         {
             Guard.ThrowIfNull(services);
@@ -65,6 +71,8 @@ namespace OpenTelemetry.Trace
             var services = new ServiceCollection();
 
             services.AddOpenTelemetryTracerProviderBuilderServices();
+            services.AddSingleton<TracerProvider>(
+                sp => throw new NotSupportedException("External TracerProvider created through Sdk.CreateTracerProviderBuilder cannot be accessed using service provider."));
 
             this.services = services;
             this.ownsServices = true;
@@ -109,7 +117,7 @@ namespace OpenTelemetry.Trace
             else
             {
                 this.ConfigureServices(services
-                    => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureBuilderCallback(services, configure));
+                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
 
             return this;
@@ -324,7 +332,8 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
+                this.ConfigureServices(services =>
+                    CallbackHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;

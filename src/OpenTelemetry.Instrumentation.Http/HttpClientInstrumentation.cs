@@ -21,7 +21,7 @@ namespace OpenTelemetry.Instrumentation.Http
     /// <summary>
     /// HttpClient instrumentation.
     /// </summary>
-    internal class HttpClientInstrumentation : IDisposable
+    internal sealed class HttpClientInstrumentation : IDisposable
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 

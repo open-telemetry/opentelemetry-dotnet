@@ -270,7 +270,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
             }
         }
 
-        internal class SqlConnectionDetails
+        internal sealed class SqlConnectionDetails
         {
             public string ServerHostName { get; set; }
 

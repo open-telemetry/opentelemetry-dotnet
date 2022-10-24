@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
-    internal class HttpInMetricsListener : ListenerHandler
+    internal sealed class HttpInMetricsListener : ListenerHandler
     {
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
