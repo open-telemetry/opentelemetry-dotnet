@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -49,6 +50,9 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     {
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
+        var state = serviceProvider!.GetRequiredService<LoggerProviderBuilderState>();
+        state.RegisterProvider(nameof(LoggerProvider), this);
+
         OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building LoggerProviderSdk.");
 
         this.ServiceProvider = serviceProvider!;
@@ -59,9 +63,6 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
             Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
         }
-
-        var state = new LoggerProviderBuilderState(serviceProvider!);
-        state.RegisterProvider(nameof(LoggerProvider), this);
 
         CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
             serviceProvider!,

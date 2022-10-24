@@ -140,7 +140,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
 
         using (var provider = Sdk.CreateLoggerProviderBuilder()
             .AddInstrumentation<CustomInstrumentation>()
-            .AddInstrumentation((sp, provider) => new CustomInstrumentation(provider))
+            .AddInstrumentation((sp, provider) => new CustomInstrumentation() { Provider = provider })
             .Build() as LoggerProviderSdk)
         {
             Assert.NotNull(provider);
@@ -160,6 +160,56 @@ public sealed class LoggerProviderBuilderExtensionsTests
         Assert.True(((CustomInstrumentation)instrumentation[1]).Disposed);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LoggerProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
+    {
+        bool innerTestExecuted = false;
+
+        using var provider = Sdk.CreateLoggerProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                if (callNestedConfigure)
+                {
+                    services.ConfigureOpenTelemetryLogging();
+                }
+            })
+            .ConfigureBuilder((sp, builder) =>
+            {
+                innerTestExecuted = true;
+                Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
+            })
+            .Build();
+
+        Assert.True(innerTestExecuted);
+
+        Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<LoggerProvider>());
+    }
+
+    [Fact]
+    public void LoggerProviderNestedResolutionUsingConfigureTest()
+    {
+        bool innerTestExecuted = false;
+
+        var serviceCollection = new ServiceCollection();
+
+        serviceCollection.ConfigureOpenTelemetryLogging(builder =>
+        {
+            builder.ConfigureBuilder((sp, builder) =>
+            {
+                innerTestExecuted = true;
+                Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
+            });
+        });
+
+        using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+        var resolvedProvider = serviceProvider.GetRequiredService<LoggerProvider>();
+
+        Assert.True(innerTestExecuted);
+    }
+
     private sealed class CustomInstrumentation : IDisposable
     {
         public bool Disposed;
@@ -167,11 +217,6 @@ public sealed class LoggerProviderBuilderExtensionsTests
 
         public CustomInstrumentation()
         {
-        }
-
-        public CustomInstrumentation(LoggerProvider provider)
-        {
-            this.Provider = provider;
         }
 
         public void Dispose()

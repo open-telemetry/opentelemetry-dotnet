@@ -67,6 +67,8 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, IDeferre
         var services = new ServiceCollection();
 
         services.AddOpenTelemetryLoggerProviderBuilderServices();
+        services.AddSingleton<LoggerProvider>(
+            sp => throw new NotSupportedException("External LoggerProvider created through Sdk.CreateLoggerProviderBuilder cannot be accessed using service provider."));
 
         this.services = services;
         this.ownsServices = true;
