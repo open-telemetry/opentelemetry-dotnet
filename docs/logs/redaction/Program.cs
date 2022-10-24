@@ -23,12 +23,10 @@ public class Program
 {
     public static void Main()
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddProcessor(new MyRedactionProcessor());
-                options.AddConsoleExporter();
-            }));
+        using var loggerFactory = LoggerFactory.Create(builder => builder
+            .AddOpenTelemetry()
+            .AddProcessor(new MyRedactionProcessor())
+            .AddConsoleExporter());
 
         var logger = loggerFactory.CreateLogger<Program>();
 

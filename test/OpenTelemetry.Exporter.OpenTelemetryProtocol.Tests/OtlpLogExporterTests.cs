@@ -524,7 +524,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             ExportLogsServiceRequest request = new();
 
-            request.AddBatch(new(), in batch);
+            request.AddBatch(DefaultSdkLimitOptions, new(), in batch);
 
             Assert.Equal(2, request.ResourceLogs[0].ScopeLogs.Count);
 
@@ -551,10 +551,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(logRecords);
-                });
+                builder.AddOpenTelemetry().AddInMemoryExporter(logRecords);
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
