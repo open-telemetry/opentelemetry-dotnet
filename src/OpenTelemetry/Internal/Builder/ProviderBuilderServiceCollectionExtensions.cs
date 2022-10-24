@@ -27,6 +27,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 internal static class ProviderBuilderServiceCollectionExtensions
 {
+    public static IServiceCollection AddOpenTelemetryLoggerProviderBuilderServices(this IServiceCollection services)
+    {
+        services.AddOpenTelemetryProviderBuilderServices();
+
+        return services;
+    }
+
     public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
     {
         services.AddOpenTelemetryProviderBuilderServices();
