@@ -217,7 +217,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using (var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
                         {
-                            builder.ConfigureTestServices(services => { Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                            builder.ConfigureTestServices(services =>
+                            {
+                                Sdk.SetDefaultTextMapPropagator(propagator.Object);
                                 this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation().AddInMemoryExporter(exportedItems).Build();
                             });
                             builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
