@@ -24,6 +24,11 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Trace.TracerProviderBuilderSdk,
+    OpenTelemetry.Trace.TracerProviderSdk,
+    OpenTelemetry.Trace.TracerProviderBuilderState>;
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -112,7 +117,7 @@ namespace OpenTelemetry.Trace
             else
             {
                 this.ConfigureServices(services
-                    => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureBuilderCallback(services, configure));
+                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
 
             return this;
@@ -327,7 +332,8 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
+                this.ConfigureServices(services =>
+                    CallbackHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;

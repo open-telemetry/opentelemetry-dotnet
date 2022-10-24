@@ -21,63 +21,36 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Stores state used to build a <see cref="MeterProvider"/>.
     /// </summary>
-    internal sealed class MeterProviderBuilderState
+    internal sealed class MeterProviderBuilderState : ProviderBuilderState<MeterProviderBuilderSdk, MeterProviderSdk>
     {
-        internal const int MaxMetricsDefault = 1000;
-        internal const int MaxMetricPointsPerMetricDefault = 2000;
-        internal readonly IServiceProvider ServiceProvider;
-        internal readonly List<InstrumentationRegistration> Instrumentation = new();
-        internal readonly List<MetricReader> Readers = new();
-        internal readonly List<string> MeterSources = new();
-        internal readonly List<Func<Instrument, MetricStreamConfiguration?>> ViewConfigs = new();
-        internal ResourceBuilder? ResourceBuilder;
-        internal int MaxMetricStreams = MaxMetricsDefault;
-        internal int MaxMetricPointsPerMetricStream = MaxMetricPointsPerMetricDefault;
+        public const int MaxMetricsDefault = 1000;
+        public const int MaxMetricPointsPerMetricDefault = 2000;
 
-        private bool hasEnteredBuildPhase;
         private MeterProviderBuilderSdk? builder;
 
         public MeterProviderBuilderState(IServiceProvider serviceProvider)
+            : base(serviceProvider)
         {
-            Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-            this.ServiceProvider = serviceProvider!;
         }
 
-        public MeterProviderBuilderSdk Builder => this.builder ??= new MeterProviderBuilderSdk(this);
+        public override MeterProviderBuilderSdk Builder
+            => this.builder ??= new MeterProviderBuilderSdk(this);
 
-        public void CheckForCircularBuild()
-        {
-            if (this.hasEnteredBuildPhase)
-            {
-                throw new NotSupportedException("MeterProvider cannot be accessed while build is executing.");
-            }
+        public List<MetricReader> Readers { get; } = new();
 
-            this.hasEnteredBuildPhase = true;
-        }
+        public List<string> MeterSources { get; } = new();
 
-        public void AddInstrumentation(
-            string instrumentationName,
-            string instrumentationVersion,
-            object instrumentation)
-        {
-            Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationName), "instrumentationName was null or whitespace");
-            Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationVersion), "instrumentationVersion was null or whitespace");
-            Debug.Assert(instrumentation != null, "instrumentation was null");
+        public List<Func<Instrument, MetricStreamConfiguration?>> ViewConfigs { get; } = new();
 
-            this.Instrumentation.Add(
-                new InstrumentationRegistration(
-                    instrumentationName,
-                    instrumentationVersion,
-                    instrumentation!));
-        }
+        public int MaxMetricStreams { get; set; } = MaxMetricsDefault;
+
+        public int MaxMetricPointsPerMetricStream { get; set; } = MaxMetricPointsPerMetricDefault;
 
         public void AddMeter(params string[] names)
         {
@@ -103,36 +76,6 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(viewConfig != null, "viewConfig was null");
 
             this.ViewConfigs.Add(viewConfig!);
-        }
-
-        public void ConfigureResource(Action<ResourceBuilder> configure)
-        {
-            Debug.Assert(configure != null, "configure was null");
-
-            var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
-
-            configure!(resourceBuilder);
-        }
-
-        public void SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
-            this.ResourceBuilder = resourceBuilder;
-        }
-
-        internal readonly struct InstrumentationRegistration
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly object Instance;
-
-            internal InstrumentationRegistration(string name, string version, object instance)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Instance = instance;
-            }
         }
     }
 }

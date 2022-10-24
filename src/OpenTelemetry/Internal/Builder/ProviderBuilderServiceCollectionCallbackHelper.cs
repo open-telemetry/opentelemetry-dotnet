@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilderServiceCollectionHelper.cs" company="OpenTelemetry Authors">
+// <copyright file="ProviderBuilderServiceCollectionCallbackHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,14 @@ using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OpenTelemetry.Trace;
+namespace OpenTelemetry;
 
-internal static class TracerProviderBuilderServiceCollectionHelper
+internal static class ProviderBuilderServiceCollectionCallbackHelper<TBuilder, TProvider, TState>
+    where TState : ProviderBuilderState<TBuilder, TProvider>
 {
-    internal static IServiceCollection RegisterConfigureBuilderCallback(
+    public static IServiceCollection RegisterConfigureBuilderCallback(
         IServiceCollection services,
-        Action<IServiceProvider, TracerProviderBuilder> configure)
+        Action<IServiceProvider, TBuilder> configure)
     {
         Debug.Assert(configure != null, "configure was null");
 
@@ -35,24 +36,25 @@ internal static class TracerProviderBuilderServiceCollectionHelper
             (sp, state) => configure!(sp, state.Builder));
     }
 
-    internal static IServiceCollection RegisterConfigureStateCallback(
+    public static IServiceCollection RegisterConfigureStateCallback(
         IServiceCollection services,
-        Action<IServiceProvider, TracerProviderBuilderState> configure)
+        Action<IServiceProvider, TState> configure)
     {
         Debug.Assert(services != null, "services was null");
         Debug.Assert(configure != null, "configure was null");
 
-        return services!.AddSingleton(new ConfigureTracerProviderBuilderStateCallbackRegistration(configure!));
+        return services!.AddSingleton(
+            new ConfigureProviderBuilderStateCallbackRegistration(configure!));
     }
 
-    internal static void InvokeRegisteredConfigureStateCallbacks(
+    public static void InvokeRegisteredConfigureStateCallbacks(
         IServiceProvider serviceProvider,
-        TracerProviderBuilderState state)
+        TState state)
     {
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(state != null, "state was null");
 
-        var callbackRegistrations = serviceProvider!.GetServices<ConfigureTracerProviderBuilderStateCallbackRegistration>();
+        var callbackRegistrations = serviceProvider!.GetServices<ConfigureProviderBuilderStateCallbackRegistration>();
 
         foreach (var callbackRegistration in callbackRegistrations)
         {
@@ -60,17 +62,17 @@ internal static class TracerProviderBuilderServiceCollectionHelper
         }
     }
 
-    private sealed class ConfigureTracerProviderBuilderStateCallbackRegistration
+    private sealed class ConfigureProviderBuilderStateCallbackRegistration
     {
-        private readonly Action<IServiceProvider, TracerProviderBuilderState> configure;
+        private readonly Action<IServiceProvider, TState> configure;
 
-        public ConfigureTracerProviderBuilderStateCallbackRegistration(
-            Action<IServiceProvider, TracerProviderBuilderState> configure)
+        public ConfigureProviderBuilderStateCallbackRegistration(
+            Action<IServiceProvider, TState> configure)
         {
             this.configure = configure;
         }
 
-        public void Configure(IServiceProvider serviceProvider, TracerProviderBuilderState state)
+        public void Configure(IServiceProvider serviceProvider, TState state)
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
             Debug.Assert(state != null, "state was null");
