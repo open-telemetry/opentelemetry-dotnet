@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -34,6 +35,7 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class MeterProviderSdk : MeterProvider
     {
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
         internal bool Disposed;
@@ -49,6 +51,13 @@ namespace OpenTelemetry.Metrics
             IServiceProvider serviceProvider,
             bool ownsServiceProvider)
         {
+            Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+            var state = serviceProvider!.GetRequiredService<MeterProviderBuilderState>();
+            state.RegisterProvider(nameof(MeterProvider), this);
+
+            this.ServiceProvider = serviceProvider!;
+
             if (ownsServiceProvider)
             {
                 this.OwnedServiceProvider = serviceProvider as IDisposable;
@@ -57,16 +66,17 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-            var state = new MeterProviderBuilderState(serviceProvider, this);
-
             CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider,
+                serviceProvider!,
                 state);
 
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
+
             this.viewConfigs = state.ViewConfigs;
 
             foreach (var reader in state.Readers)

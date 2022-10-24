@@ -51,14 +51,15 @@ namespace OpenTelemetry.Metrics
             this.State = state;
         }
 
-        // This ctor is for AddOpenTelemetryTracing scenario where the builder
-        // is bound to an external service collection.
+        // This ctor is for ConfigureOpenTelemetryMetrics +
+        // AddOpenTelemetryMetrics scenarios where the builder is bound to an
+        // external service collection.
         internal MeterProviderBuilderBase(IServiceCollection services)
         {
             Debug.Assert(services != null, "services was null");
 
-            services.AddOptions();
-            services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+            services!.AddOpenTelemetryMeterProviderBuilderServices();
+            services!.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
 
             this.services = services;
             this.ownsServices = false;
@@ -70,7 +71,9 @@ namespace OpenTelemetry.Metrics
         {
             var services = new ServiceCollection();
 
-            services.AddOptions();
+            services.AddOpenTelemetryMeterProviderBuilderServices();
+            services.AddSingleton<MeterProvider>(
+                sp => throw new NotSupportedException("External MeterProvider created through Sdk.CreateMeterProviderBuilder cannot be accessed using service provider."));
 
             this.services = services;
             this.ownsServices = true;

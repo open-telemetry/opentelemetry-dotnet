@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public sealed class Metric
     {
-        internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+        internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
 
         private readonly AggregatorStore aggStore;
 
@@ -34,7 +34,8 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
-            string[] tagKeysInteresting = null)
+            string[] tagKeysInteresting = null,
+            bool histogramRecordMinMax = true)
         {
             this.InstrumentIdentity = instrumentIdentity;
 
@@ -118,15 +119,9 @@ namespace OpenTelemetry.Metrics
             {
                 this.MetricType = MetricType.Histogram;
 
-                if (histogramBounds != null
-                    && histogramBounds.Length == 0)
-                {
-                    aggType = AggregationType.HistogramSumCount;
-                }
-                else
-                {
-                    aggType = AggregationType.Histogram;
-                }
+                aggType = histogramBounds != null && histogramBounds.Length == 0
+                    ? (histogramRecordMinMax ? AggregationType.HistogramSumCountMinMax : AggregationType.HistogramSumCount)
+                    : (histogramRecordMinMax ? AggregationType.HistogramMinMax : AggregationType.Histogram);
             }
             else
             {

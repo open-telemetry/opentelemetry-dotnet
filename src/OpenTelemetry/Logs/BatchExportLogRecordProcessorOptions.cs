@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
@@ -47,26 +48,32 @@ namespace OpenTelemetry.Logs
 
         internal const string ScheduledDelayEnvVarKey = "OTEL_BLRP_SCHEDULE_DELAY";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BatchExportLogRecordProcessorOptions"/> class.
+        /// </summary>
         public BatchExportLogRecordProcessorOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            int value;
+        }
 
-            if (EnvironmentVariableHelper.LoadNumeric(ExporterTimeoutEnvVarKey, out value))
+        internal BatchExportLogRecordProcessorOptions(IConfiguration configuration)
+        {
+            if (configuration.TryGetIntValue(ExporterTimeoutEnvVarKey, out var value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(MaxExportBatchSizeEnvVarKey, out value))
+            if (configuration.TryGetIntValue(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(MaxQueueSizeEnvVarKey, out value))
+            if (configuration.TryGetIntValue(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNumeric(ScheduledDelayEnvVarKey, out value))
+            if (configuration.TryGetIntValue(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }

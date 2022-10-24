@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
@@ -25,7 +28,8 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class ResourceBuilder
     {
-        internal readonly List<Resource> Resources = new();
+        internal readonly List<IResourceDetector> ResourceDetectors = new();
+        private static readonly Resource DefaultResource;
 
         static ResourceBuilder()
         {
@@ -54,7 +58,7 @@ namespace OpenTelemetry.Resources
         {
         }
 
-        private static Resource DefaultResource { get; }
+        internal IServiceProvider? ServiceProvider { get; set; }
 
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
@@ -83,7 +87,7 @@ namespace OpenTelemetry.Resources
         /// <returns><see cref="ResourceBuilder"/> for chaining.</returns>
         public ResourceBuilder Clear()
         {
-            this.Resources.Clear();
+            this.ResourceDetectors.Clear();
 
             return this;
         }
@@ -96,24 +100,55 @@ namespace OpenTelemetry.Resources
         {
             Resource finalResource = Resource.Empty;
 
-            foreach (Resource resource in this.Resources)
+            foreach (IResourceDetector resourceDetector in this.ResourceDetectors)
             {
-                finalResource = finalResource.Merge(resource);
+                if (resourceDetector is ResolvingResourceDetector resolvingResourceDetector)
+                {
+                    resolvingResourceDetector.Resolve(this.ServiceProvider);
+                }
+
+                var resource = resourceDetector.Detect();
+                if (resource != null)
+                {
+                    finalResource = finalResource.Merge(resource);
+                }
             }
 
             return finalResource;
         }
 
+        /// <summary>
+        /// Add a <see cref="IResourceDetector"/> to the builder.
+        /// </summary>
+        /// <param name="resourceDetector"><see cref="IResourceDetector"/>.</param>
+        /// <returns>Supplied <see cref="ResourceBuilder"/> for call chaining.</returns>
         public ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
             Guard.ThrowIfNull(resourceDetector);
 
-            Resource resource = resourceDetector.Detect();
+            this.ResourceDetectors.Add(resourceDetector);
 
-            if (resource != null)
-            {
-                this.Resources.Add(resource);
-            }
+            return this;
+        }
+
+        /// <summary>
+        /// Add a <see cref="IResourceDetector"/> to the builder which will be resolved using the application <see cref="IServiceProvider"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: The supplied <paramref name="resourceDetectorFactory"/> may be
+        /// called with a <see langword="null"/> <see cref="IServiceProvider"/>
+        /// for detached <see cref="ResourceBuilder"/> instances. Factories
+        /// should either throw if a <see langword="null"/> cannot be handled,
+        /// or return a default <see cref="IResourceDetector"/> when <see
+        /// cref="IServiceProvider"/> is not available.
+        /// </remarks>
+        /// <param name="resourceDetectorFactory">Resource detector factory.</param>
+        /// <returns>Supplied <see cref="ResourceBuilder"/> for call chaining.</returns>
+        public ResourceBuilder AddDetector(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
+        {
+            Guard.ThrowIfNull(resourceDetectorFactory);
+
+            this.ResourceDetectors.Add(new ResolvingResourceDetector(resourceDetectorFactory));
 
             return this;
         }
@@ -122,9 +157,47 @@ namespace OpenTelemetry.Resources
         {
             Guard.ThrowIfNull(resource);
 
-            this.Resources.Add(resource);
+            this.ResourceDetectors.Add(new WrapperResourceDetector(resource));
 
             return this;
+        }
+
+        internal sealed class WrapperResourceDetector : IResourceDetector
+        {
+            private readonly Resource resource;
+
+            public WrapperResourceDetector(Resource resource)
+            {
+                this.resource = resource;
+            }
+
+            public Resource Detect() => this.resource;
+        }
+
+        private sealed class ResolvingResourceDetector : IResourceDetector
+        {
+            private readonly Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory;
+            private IResourceDetector? resourceDetector;
+
+            public ResolvingResourceDetector(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
+            {
+                this.resourceDetectorFactory = resourceDetectorFactory;
+            }
+
+            public void Resolve(IServiceProvider? serviceProvider)
+            {
+                this.resourceDetector = this.resourceDetectorFactory(serviceProvider)
+                    ?? throw new InvalidOperationException("ResourceDetector factory did not return a ResourceDetector instance.");
+            }
+
+            public Resource Detect()
+            {
+                var detector = this.resourceDetector;
+
+                Debug.Assert(detector != null, "detector was null");
+
+                return detector?.Detect() ?? Resource.Empty;
+            }
         }
     }
 }

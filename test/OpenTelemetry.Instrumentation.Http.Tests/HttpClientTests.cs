@@ -33,14 +33,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     public partial class HttpClientTests
     {
-        private static int counter;
-
         public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
 
         [Theory]
         [MemberData(nameof(TestData))]
         public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
         {
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+            bool enrichWithExceptionCalled = false;
+
             var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
@@ -65,7 +67,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (Sdk.CreateTracerProviderBuilder()
                         .AddHttpClientInstrumentation((opt) =>
                         {
-                            opt.Enrich = ActivityEnrichment;
+                            opt.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                            opt.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                            opt.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
                             opt.RecordException = tc.RecordException ?? false;
                         })
                         .AddProcessor(processor.Object)
@@ -109,6 +113,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(ActivityKind.Client, activity.Kind);
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
+            Assert.True(enrichWithHttpRequestMessageCalled);
+            if (tc.ResponseExpected)
+            {
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
+
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(tc.SpanStatus, activity.Status.ToString());
 
@@ -131,6 +141,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             if (tc.RecordException.HasValue && tc.RecordException.Value)
             {
                 Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
+                Assert.True(enrichWithExceptionCalled);
             }
 
             if (tc.ResponseExpected)
@@ -214,17 +225,23 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task CheckEnrichmentWhenSampling()
         {
-            await CheckEnrichment(new AlwaysOffSampler(), 0, this.url).ConfigureAwait(false);
-            await CheckEnrichment(new AlwaysOnSampler(), 2, this.url).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
         }
 
-        private static async Task CheckEnrichment(Sampler sampler, int expect, string url)
+        private static async Task CheckEnrichment(Sampler sampler, bool enrichExpected, string url)
         {
-            counter = 0;
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
             var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                 .SetSampler(sampler)
-                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
+                .AddHttpClientInstrumentation(options =>
+                {
+                    options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                    options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                })
                 .AddProcessor(processor.Object)
                 .Build())
             {
@@ -232,12 +249,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 using var r = await c.GetAsync(url).ConfigureAwait(false);
             }
 
-            Assert.Equal(expect, counter);
-        }
-
-        private static void ActivityEnrichmentCounter(Activity activity, string method, object obj)
-        {
-            counter++;
+            if (enrichExpected)
+            {
+                Assert.True(enrichWithHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
+            else
+            {
+                Assert.False(enrichWithHttpRequestMessageCalled);
+                Assert.False(enrichWithHttpResponseMessageCalled);
+            }
         }
     }
 }

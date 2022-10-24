@@ -31,10 +31,11 @@
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.3]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[17.3.0]</MicrosoftCodeCoveragePkgVer>
+    <MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>[3.1.0,)</MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingConfigurationPkgVer>
-    <MicrosoftExtensionsOptionsPkgVer>[3.1.0,)</MicrosoftExtensionsOptionsPkgVer>
+    <MicrosoftExtensionsOptionsPkgVer>[5.0.0,)</MicrosoftExtensionsOptionsPkgVer>
     <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
     <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
@@ -42,10 +43,10 @@
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
     <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>7.0.0-rc.1.22426.10</SystemDiagnosticSourcePkgVer>
+    <SystemDiagnosticSourcePkgVer>7.0.0-rc.2.22472.3</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
-    <SystemTextJsonPkgVer>4.7.0</SystemTextJsonPkgVer>
-    <SystemThreadingTasksExtensionsPkgVer>4.5.3</SystemThreadingTasksExtensionsPkgVer>
+    <SystemTextJsonPkgVer>4.7.2</SystemTextJsonPkgVer>
+    <SystemThreadingTasksExtensionsPkgVer>4.5.4</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
   <ItemGroup>

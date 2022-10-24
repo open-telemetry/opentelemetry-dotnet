@@ -212,6 +212,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "source-generation", "docs\l
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-grafana", "docs\metrics\getting-started-prometheus-grafana\getting-started-prometheus-grafana.csproj", "{41B784AA-3301-4126-AF9F-1D59BD04B0BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators", "src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj", "{E91B2E40-E428-43B3-8A43-09709F0E69E4}"
@@ -243,6 +245,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.EventSource.Tests", "test\OpenTelemetry.Extensions.EventSource.Tests\OpenTelemetry.Extensions.EventSource.Tests.csproj", "{2A896854-8537-4BD6-8E1C-2B66B1160258}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Serilog.Tests", "test\OpenTelemetry.Extensions.Serilog.Tests\OpenTelemetry.Extensions.Serilog.Tests.csproj", "{3B3C3571-6116-49D6-B28F-2A541E003577}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\redaction\redaction.csproj", "{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -442,6 +446,10 @@ Global
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -506,6 +514,10 @@ Global
 		{3B3C3571-6116-49D6-B28F-2A541E003577}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B3C3571-6116-49D6-B28F-2A541E003577}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B3C3571-6116-49D6-B28F-2A541E003577}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -543,6 +555,7 @@ Global
 		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{5FDAF679-DE5A-4C73-A49B-8ABCF2399229} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{7642798D-12D4-403A-BB92-B6BEF67C9D4F} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
@@ -65,6 +67,29 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "http/protobuf");
 
             var options = new OtlpExporterOptions();
+
+            Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
+            Assert.Equal("A=2,B=3", options.Headers);
+            Assert.Equal(2000, options.TimeoutMilliseconds);
+            Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        }
+
+        [Fact]
+        public void OtlpExporterOptions_UsingIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+                [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
+                [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
+                [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new OtlpExporterOptions(configuration);
 
             Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
             Assert.Equal("A=2,B=3", options.Headers);

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Internal
     /// EventSource implementation for OpenTelemetry SDK implementation.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Sdk")]
-    internal class OpenTelemetrySdkEventSource : EventSource
+    internal sealed class OpenTelemetrySdkEventSource : EventSource
     {
         public static OpenTelemetrySdkEventSource Log = new();
 #if DEBUG
@@ -430,6 +430,12 @@ namespace OpenTelemetry.Internal
         public void LoggerProviderException(string methodName, string ex)
         {
             this.WriteEvent(46, methodName, ex);
+        }
+
+        [Event(47, Message = "TracerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void TracerProviderSdkEvent(string message)
+        {
+            this.WriteEvent(47, message);
         }
 
 #if DEBUG

@@ -54,7 +54,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, IDeferre
         Debug.Assert(services != null, "services was null");
 
         services.AddOptions();
-        services.TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
+        services!.TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
 
         this.services = services;
         this.ownsServices = false;

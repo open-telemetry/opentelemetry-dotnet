@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Resources;
@@ -167,36 +168,147 @@ namespace OpenTelemetry.Metrics.Tests
             var builder = Sdk.CreateMeterProviderBuilder();
 
             int configureInvocations = 0;
+            bool serviceProviderTestExecuted = false;
 
             builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("Test"));
             builder.ConfigureResource(builder =>
             {
                 configureInvocations++;
 
-                Assert.Single(builder.Resources);
+                Assert.Single(builder.ResourceDetectors);
 
                 builder.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" });
 
-                Assert.Equal(2, builder.Resources.Count);
+                Assert.Equal(2, builder.ResourceDetectors.Count);
             });
             builder.SetResourceBuilder(ResourceBuilder.CreateEmpty());
             builder.ConfigureResource(builder =>
             {
                 configureInvocations++;
 
-                Assert.Empty(builder.Resources);
+                Assert.Empty(builder.ResourceDetectors);
 
-                builder.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" });
+                builder.AddDetector(sp =>
+                {
+                    serviceProviderTestExecuted = true;
+                    Assert.NotNull(sp);
+                    return new ResourceBuilder.WrapperResourceDetector(new Resource(new Dictionary<string, object>() { ["key2"] = "value2" }));
+                });
 
-                Assert.Single(builder.Resources);
+                Assert.Single(builder.ResourceDetectors);
             });
 
             using var provider = builder.Build() as MeterProviderSdk;
 
+            Assert.True(serviceProviderTestExecuted);
             Assert.Equal(2, configureInvocations);
 
             Assert.Single(provider.Resource.Attributes);
             Assert.Contains(provider.Resource.Attributes, kvp => kvp.Key == "key2" && (string)kvp.Value == "value2");
+        }
+
+        [Fact]
+        public void ConfigureBuilderIConfigurationAvailableTest()
+        {
+            Environment.SetEnvironmentVariable("TEST_KEY", "TEST_KEY_VALUE");
+
+            bool configureBuilderCalled = false;
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureBuilder((sp, builder) =>
+                {
+                    var configuration = sp.GetRequiredService<IConfiguration>();
+
+                    configureBuilderCalled = true;
+
+                    var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                    Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                })
+                .Build();
+
+            Assert.True(configureBuilderCalled);
+
+            Environment.SetEnvironmentVariable("TEST_KEY", null);
+        }
+
+        [Fact]
+        public void ConfigureBuilderIConfigurationModifiableTest()
+        {
+            bool configureBuilderCalled = false;
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    var configuration = new ConfigurationBuilder()
+                        .AddInMemoryCollection(new Dictionary<string, string> { ["TEST_KEY_2"] = "TEST_KEY_2_VALUE" })
+                        .Build();
+
+                    services.AddSingleton<IConfiguration>(configuration);
+                })
+                .ConfigureBuilder((sp, builder) =>
+                {
+                    var configuration = sp.GetRequiredService<IConfiguration>();
+
+                    configureBuilderCalled = true;
+
+                    var testKey2Value = configuration.GetValue<string>("TEST_KEY_2", null);
+
+                    Assert.Equal("TEST_KEY_2_VALUE", testKey2Value);
+                })
+                .Build();
+
+            Assert.True(configureBuilderCalled);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MeterProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
+        {
+            bool innerTestExecuted = false;
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    if (callNestedConfigure)
+                    {
+                        services.ConfigureOpenTelemetryMetrics();
+                    }
+                })
+                .ConfigureBuilder((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+                })
+                .Build();
+
+            Assert.True(innerTestExecuted);
+
+            Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<MeterProvider>());
+        }
+
+        [Fact]
+        public void MeterProviderNestedResolutionUsingConfigureTest()
+        {
+            bool innerTestExecuted = false;
+
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection.ConfigureOpenTelemetryMetrics(builder =>
+            {
+                builder.ConfigureBuilder((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+                });
+            });
+
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
+
+            Assert.True(innerTestExecuted);
         }
 
         private static void RunBuilderServiceLifecycleTest(

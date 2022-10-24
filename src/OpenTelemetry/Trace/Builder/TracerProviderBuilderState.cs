@@ -30,10 +30,8 @@ namespace OpenTelemetry.Trace
     {
         private TracerProviderBuilderSdk? builder;
 
-        public TracerProviderBuilderState(
-            IServiceProvider serviceProvider,
-            TracerProviderSdk provider)
-            : base(serviceProvider, provider)
+        public TracerProviderBuilderState(IServiceProvider serviceProvider)
+            : base(serviceProvider)
         {
         }
 

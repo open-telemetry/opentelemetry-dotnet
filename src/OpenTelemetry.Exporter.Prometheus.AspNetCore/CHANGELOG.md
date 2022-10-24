@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Support named options in `UseOpenTelemetryPrometheusScrapingEndpoint` &
+  `MapPrometheusScrapingEndpoint` extensions
+  ([#3780](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3780))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
 * Changed configuration class name from `PrometheusExporterOptions`
   to `PrometheusAspNetCoreOptions`
   ([#3717](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3717))

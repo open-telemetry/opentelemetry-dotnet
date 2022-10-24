@@ -19,6 +19,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -61,28 +62,40 @@ namespace OpenTelemetry.Trace
 
             name ??= Options.DefaultName;
 
-            if (configure != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configure));
-            }
+                if (configure != null)
+                {
+                    services.Configure(name, configure);
+                }
+
+                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+            });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
 
-                AddOtlpExporter(builder, options, sp);
+                // Note: Not using name here for SdkLimitOptions. There should
+                // only be one provider for a given service collection so
+                // SdkLimitOptions is treated as a single default instance.
+                var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
             });
         }
 
         internal static TracerProviderBuilder AddOtlpExporter(
             TracerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
+            SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
             Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null)
         {
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions);
+            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
 
             if (configureExporterInstance != null)
             {

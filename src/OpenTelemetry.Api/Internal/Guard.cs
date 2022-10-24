@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -198,7 +199,13 @@ namespace OpenTelemetry.Internal
             {
                 var minMessage = minName != null ? $": {minName}" : string.Empty;
                 var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
-                var exMessage = message ?? $"Must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+                var exMessage = message ?? string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Must be in the range: [{0}{1}, {2}{3}]",
+                    min,
+                    minMessage,
+                    max,
+                    maxMessage);
                 throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }

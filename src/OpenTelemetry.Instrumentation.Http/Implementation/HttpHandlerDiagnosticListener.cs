@@ -115,14 +115,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            // TODO: Investigate why this check is needed.
-            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
-            {
-                // this request is already instrumented, we should back off
-                activity.IsAllDataRequested = false;
-                return;
-            }
-
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (textMapPropagator is not TraceContextPropagator)
@@ -168,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    this.options.EnrichWithHttpRequestMessage?.Invoke(activity, request);
                 }
                 catch (Exception ex)
                 {
@@ -225,7 +217,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                     try
                     {
-                        this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                        this.options.EnrichWithHttpResponseMessage?.Invoke(activity, response);
                     }
                     catch (Exception ex)
                     {
@@ -266,7 +258,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                    this.options.EnrichWithException?.Invoke(activity, exc);
                 }
                 catch (Exception ex)
                 {

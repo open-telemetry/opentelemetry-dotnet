@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     /// Helper class to hold common properties used by both SqlClientDiagnosticListener on .NET Core
     /// and SqlEventSourceListener on .NET Framework.
     /// </summary>
-    internal class SqlActivitySourceHelper
+    internal sealed class SqlActivitySourceHelper
     {
         public const string MicrosoftSqlServerDatabaseSystemName = "mssql";
 

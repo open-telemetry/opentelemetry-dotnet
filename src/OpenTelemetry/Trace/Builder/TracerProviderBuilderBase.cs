@@ -50,14 +50,15 @@ namespace OpenTelemetry.Trace
             this.State = state;
         }
 
-        // This ctor is for AddOpenTelemetryTracing scenario where the builder
-        // is bound to an external service collection.
+        // This ctor is for ConfigureOpenTelemetryTracing +
+        // AddOpenTelemetryTracing scenarios where the builder is bound to an
+        // external service collection.
         internal TracerProviderBuilderBase(IServiceCollection services)
         {
             Debug.Assert(services != null, "services was null");
 
-            services.AddOptions();
-            services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+            services!.AddOpenTelemetryTracerProviderBuilderServices();
+            services!.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
 
             this.services = services;
             this.ownsServices = false;
@@ -69,7 +70,9 @@ namespace OpenTelemetry.Trace
         {
             var services = new ServiceCollection();
 
-            services.AddOptions();
+            services.AddOpenTelemetryTracerProviderBuilderServices();
+            services.AddSingleton<TracerProvider>(
+                sp => throw new NotSupportedException("External TracerProvider created through Sdk.CreateTracerProviderBuilder cannot be accessed using service provider."));
 
             this.services = services;
             this.ownsServices = true;

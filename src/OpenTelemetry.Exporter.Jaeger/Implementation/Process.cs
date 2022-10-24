@@ -23,14 +23,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal sealed class Process
     {
-        public Process(string serviceName)
-        {
-            this.ServiceName = serviceName;
-        }
+        public string ServiceName { get; set; }
 
-        public string ServiceName { get; internal set; }
-
-        internal Dictionary<string, JaegerTag> Tags { get; set; }
+        public Dictionary<string, JaegerTag> Tags { get; set; }
 
         public override string ToString()
         {
@@ -48,7 +43,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return sb.ToString();
         }
 
-        internal void Write(TProtocol oprot)
+        public void Write(TProtocol oprot)
         {
             oprot.IncrementRecursionDepth();
 

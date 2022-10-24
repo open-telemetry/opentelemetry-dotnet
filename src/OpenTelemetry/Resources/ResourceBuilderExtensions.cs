@@ -14,9 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -49,10 +53,10 @@ namespace OpenTelemetry.Resources
         public static ResourceBuilder AddService(
             this ResourceBuilder resourceBuilder,
             string serviceName,
-            string serviceNamespace = null,
-            string serviceVersion = null,
+            string? serviceNamespace = null,
+            string? serviceVersion = null,
             bool autoGenerateServiceInstanceId = true,
-            string serviceInstanceId = null)
+            string? serviceInstanceId = null)
         {
             Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
 
@@ -62,12 +66,12 @@ namespace OpenTelemetry.Resources
 
             if (!string.IsNullOrEmpty(serviceNamespace))
             {
-                resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceNamespace, serviceNamespace);
+                resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceNamespace, serviceNamespace!);
             }
 
             if (!string.IsNullOrEmpty(serviceVersion))
             {
-                resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceVersion, serviceVersion);
+                resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceVersion, serviceVersion!);
             }
 
             if (serviceInstanceId == null && autoGenerateServiceInstanceId)
@@ -117,7 +121,11 @@ namespace OpenTelemetry.Resources
         /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
         public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
         {
-            return resourceBuilder.AddDetector(new OtelEnvResourceDetector()).AddDetector(new OtelServiceNameEnvVarDetector());
+            Lazy<IConfiguration> configuration = new Lazy<IConfiguration>(() => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+
+            return resourceBuilder
+                .AddDetector(sp => new OtelEnvResourceDetector(sp?.GetService<IConfiguration>() ?? configuration.Value))
+                .AddDetector(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
         }
 
         private static string GetFileVersion()

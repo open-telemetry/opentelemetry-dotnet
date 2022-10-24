@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Bumped the minimum required version of `System.Text.Json` to 4.7.2 in response
+to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+([#3789](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3789))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+* Added support for loading environment variables from `IConfiguration` when
+  using the `AddZipkinExporter` extension
+  ([#3759](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3759))
+
 ## 1.4.0-beta.1
 
 Released 2022-Sep-29

@@ -21,6 +21,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -40,7 +41,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
+                    if (ctx.Request.Url.PathAndQuery.Contains("500"))
+                    {
+                        ctx.Response.StatusCode = 500;
+                    }
+                    else if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
                     {
                         ctx.Response.RedirectLocation = "/";
                         ctx.Response.StatusCode = 302;
@@ -92,7 +97,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
-            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
+            {
+                c.SetTag("enrichedWithHttpRequestMessage", "no");
+                c.SetTag("enrichedWithHttpResponseMessage", "no");
+            });
+
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -127,7 +137,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         {
                             if (shouldEnrich)
                             {
-                                o.Enrich = ActivityEnrichmentSetTag;
+                                o.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                                {
+                                    activity.SetTag("enrichedWithHttpRequestMessage", "yes");
+                                };
+
+                                o.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                                {
+                                    activity.SetTag("enrichedWithHttpResponseMessage", "yes");
+                                };
                             }
                         })
                         .AddProcessor(processor.Object)
@@ -154,8 +172,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
 
-            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
         }
 
         [Theory]
@@ -163,6 +183,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData(false)]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
@@ -192,7 +215,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                    {
                        if (shouldEnrich)
                        {
-                           opt.Enrich = ActivityEnrichment;
+                           opt.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                           opt.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                        }
                    })
                    .AddProcessor(processor.Object)
@@ -223,6 +247,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 new TraceContextPropagator(),
                 new BaggagePropagator(),
             }));
+
+            if (shouldEnrich)
+            {
+                Assert.True(enrichWithHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
         }
 
         [Fact]
@@ -301,7 +331,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
         }
 
-        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3729")]
+        [Fact]
         public async Task HttpClientInstrumentationExportsSpansCreatedForRetries()
         {
             var exportedItems = new List<Activity>();
@@ -321,7 +351,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             await c.SendAsync(request);
 
             // number of exported spans should be 3(maxRetries)
-            Assert.Equal(3, exportedItems.Count());
+            Assert.Equal(maxRetries, exportedItems.Count());
 
             var spanid1 = exportedItems[0].SpanId;
             var spanid2 = exportedItems[1].SpanId;
@@ -396,6 +426,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
             using var parent = new Activity("w3c activity");
             parent.SetIdFormat(ActivityIdFormat.W3C);
             parent.AddBaggage("k1", "v1");
@@ -405,7 +438,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Baggage.SetBaggage("k2", "v2");
 
             using (Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichment)
+                .AddHttpClientInstrumentation(options =>
+                {
+                    options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                    options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                })
                 .AddProcessor(activityProcessor.Object)
                 .Build())
             {
@@ -414,6 +451,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             Assert.Equal(5, activityProcessor.Invocations.Count);
+            Assert.True(enrichWithHttpRequestMessageCalled);
+            Assert.True(enrichWithHttpResponseMessageCalled);
         }
 
         [Fact]
@@ -462,38 +501,94 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal("b1=v1", baggages.Single());
         }
 
+        [Fact]
+        public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithGetAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
+            Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is not thrown and not collected as event
+            Assert.False(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
+
+        [Fact]
+        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri($"{this.url}500"),
+                Method = new HttpMethod("GET"),
+            };
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                   .AddHttpClientInstrumentation(o => o.RecordException = true)
+                   .AddInMemoryExporter(exportedItems)
+                   .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetStringAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is thrown and not collected as event
+            Assert.True(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
+
         public void Dispose()
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
             GC.SuppressFinalize(this);
-        }
-
-        private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
-        {
-            ActivityEnrichment(activity, method, obj);
-            activity.SetTag("enriched", "yes");
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequestMessage);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponseMessage);
-                    break;
-
-                case "OnException":
-                    Assert.True(obj is Exception);
-                    break;
-
-                default:
-                    break;
-            }
         }
     }
 }

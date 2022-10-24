@@ -29,10 +29,8 @@ internal sealed class LoggerProviderBuilderState : ProviderBuilderState<LoggerPr
 {
     private LoggerProviderBuilderSdk? builder;
 
-    public LoggerProviderBuilderState(
-        IServiceProvider serviceProvider,
-        LoggerProviderSdk provider)
-        : base(serviceProvider, provider)
+    public LoggerProviderBuilderState(IServiceProvider serviceProvider)
+        : base(serviceProvider)
     {
     }
 

@@ -23,6 +23,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
@@ -208,6 +209,23 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Fact]
+        public void EndpointConfigurationUsingIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [ZipkinExporterOptions.ZipkinEndpointEnvVar] = "http://custom-endpoint:12345",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var options = new ZipkinExporterOptions(configuration);
+
+            Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
+        }
+
+        [Fact]
         public void UserHttpFactoryCalled()
         {
             ZipkinExporterOptions options = new ZipkinExporterOptions();
@@ -272,6 +290,42 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
 
             Assert.Equal(1, invocations);
+        }
+
+        [Fact]
+        public void UpdatesServiceNameFromDefaultResource()
+        {
+            var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
+
+            zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
+
+            Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint.ServiceName);
+        }
+
+        [Fact]
+        public void UpdatesServiceNameFromIConfiguration()
+        {
+            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    Dictionary<string, string> configuration = new()
+                    {
+                        ["OTEL_SERVICE_NAME"] = "myservicename",
+                    };
+
+                    services.AddSingleton<IConfiguration>(
+                        new ConfigurationBuilder().AddInMemoryCollection(configuration).Build());
+                });
+
+            var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
+
+            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, zipkinExporter);
+
+            using var provider = tracerProviderBuilder.Build();
+
+            zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
+
+            Assert.Equal("myservicename", zipkinExporter.LocalEndpoint.ServiceName);
         }
 
         [Theory]
