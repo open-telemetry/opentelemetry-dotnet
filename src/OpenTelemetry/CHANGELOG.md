@@ -8,7 +8,7 @@
 * Added dependency injection support in the `ResourceBuilder` class and added
   support for loading environment variables from `IConfiguration` for the
   `AddEnvironmentVariableDetector` extension when using `LoggerProvider`
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3813](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3813))
 
 ## Unreleased
 
