@@ -7,6 +7,10 @@
   management
   ([#3707](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3707))
 
+* `OtlpExporterOptions` can now be bound to `IConfiguation` when using the
+  `OtlpLogExporterHelperExtensions.AddOtlpExporter` extension
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## Unreleased
 
 ## 1.4.0-beta.2

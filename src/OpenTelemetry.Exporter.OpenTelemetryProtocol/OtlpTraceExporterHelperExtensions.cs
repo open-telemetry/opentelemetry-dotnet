@@ -80,9 +80,9 @@ namespace OpenTelemetry.Trace
                 // Note: Not using name here for SdkLimitOptions. There should
                 // only be one provider for a given service collection so
                 // SdkLimitOptions is treated as a single default instance.
-                var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+                var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
+                AddOtlpExporter(builder, exporterOptions, sdkLimitOptions, sp);
             });
         }
 

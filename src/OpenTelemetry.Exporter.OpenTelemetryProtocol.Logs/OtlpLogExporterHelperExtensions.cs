@@ -18,6 +18,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
@@ -102,16 +103,27 @@ namespace OpenTelemetry.Logs
 
             name ??= Options.DefaultName;
 
-            if (configure != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configure));
-            }
+                if (configure != null)
+                {
+                    services.Configure(name, configure);
+                }
+
+                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+            });
 
             builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
 
-                AddOtlpExporter(builder, options, sp);
+                // Note: Not using name here for SdkLimitOptions. There should
+                // only be one provider for a given service collection so
+                // SdkLimitOptions is treated as a single default instance.
+                var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+                AddOtlpExporter(builder, exporterOptions, sdkLimitOptions, sp);
             });
 
             return builder;
@@ -120,10 +132,12 @@ namespace OpenTelemetry.Logs
         private static void AddOtlpExporter(
             LoggerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
+            SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider)
         {
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
-            var otlpExporter = new OtlpLogExporter(exporterOptions);
+
+            var otlpExporter = new OtlpLogExporter(exporterOptions, sdkLimitOptions);
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {

@@ -53,7 +53,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, IDeferre
     {
         Debug.Assert(services != null, "services was null");
 
-        services.AddOptions();
+        services!.AddOpenTelemetryLoggerProviderBuilderServices();
         services!.TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
 
         this.services = services;
@@ -66,7 +66,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, IDeferre
     {
         var services = new ServiceCollection();
 
-        services.AddOptions();
+        services.AddOpenTelemetryLoggerProviderBuilderServices();
 
         this.services = services;
         this.ownsServices = true;
