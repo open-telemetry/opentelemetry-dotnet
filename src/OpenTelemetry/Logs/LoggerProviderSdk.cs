@@ -56,7 +56,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
         }
 
-        var state = new LoggerProviderBuilderState(serviceProvider, this);
+        var state = new LoggerProviderBuilderState(serviceProvider);
+        state.RegisterProvider(nameof(LoggerProvider), this);
 
         CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
             serviceProvider,

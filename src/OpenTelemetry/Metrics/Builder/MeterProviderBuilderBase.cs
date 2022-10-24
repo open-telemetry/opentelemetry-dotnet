@@ -58,8 +58,8 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(services != null, "services was null");
 
-            services.AddOpenTelemetryMeterProviderBuilderServices();
-            services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+            services!.AddOpenTelemetryMeterProviderBuilderServices();
+            services!.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
 
             this.services = services;
             this.ownsServices = false;

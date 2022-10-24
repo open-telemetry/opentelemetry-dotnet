@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -23,6 +24,19 @@ namespace OpenTelemetry.Logs;
 public class ExportLogRecordProcessorOptions
 {
     private BatchExportLogRecordProcessorOptions? batchExportProcessorOptions;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExportLogRecordProcessorOptions"/> class.
+    /// </summary>
+    public ExportLogRecordProcessorOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal ExportLogRecordProcessorOptions(IConfiguration configuration)
+    {
+        this.batchExportProcessorOptions = new BatchExportLogRecordProcessorOptions(configuration);
+    }
 
     /// <summary>
     /// Gets or sets the export processor type to be used. The default value is <see cref="ExportProcessorType.Batch"/>.
