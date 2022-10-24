@@ -59,8 +59,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
-        [Fact]
-        public async Task StatusIsUnsetOn200Response()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task StatusIsUnsetOn200Response(bool disableLogging)
         {
             var exportedItems = new List<Activity>();
             void ConfigureTestServices(IServiceCollection services)
@@ -76,7 +78,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                 {
                     builder.ConfigureTestServices(ConfigureTestServices);
-                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                    if (disableLogging)
+                    {
+                        builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                    }
                 })
                 .CreateClient())
             {
