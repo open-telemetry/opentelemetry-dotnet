@@ -34,10 +34,8 @@ namespace OpenTelemetry.Metrics
 
         private MeterProviderBuilderSdk? builder;
 
-        public MeterProviderBuilderState(
-            IServiceProvider serviceProvider,
-            MeterProviderSdk provider)
-            : base(serviceProvider, provider)
+        public MeterProviderBuilderState(IServiceProvider serviceProvider)
+            : base(serviceProvider)
         {
         }
 

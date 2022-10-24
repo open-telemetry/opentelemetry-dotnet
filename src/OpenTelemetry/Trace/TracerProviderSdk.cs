@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -33,6 +35,7 @@ namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
     {
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
         internal bool Disposed;
@@ -48,24 +51,37 @@ namespace OpenTelemetry.Trace
             IServiceProvider serviceProvider,
             bool ownsServiceProvider)
         {
+            Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+            var state = serviceProvider!.GetRequiredService<TracerProviderBuilderState>();
+            state.RegisterProvider(nameof(TracerProvider), this);
+
+            this.ServiceProvider = serviceProvider!;
+
             if (ownsServiceProvider)
             {
                 this.OwnedServiceProvider = serviceProvider as IDisposable;
                 Debug.Assert(this.OwnedServiceProvider != null, "serviceProvider was not IDisposable");
             }
 
-            var state = new TracerProviderBuilderState(serviceProvider, this);
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
             CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider,
+                serviceProvider!,
                 state);
+
+            StringBuilder processorsAdded = new StringBuilder();
+            StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
             if (state.SetErrorStatusOnException)
             {
                 state.EnableErrorStatusOnException();
             }
 
-            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
+
             this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
             this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
@@ -84,11 +100,27 @@ namespace OpenTelemetry.Trace
             foreach (var processor in state.Processors)
             {
                 this.AddProcessor(processor);
+                processorsAdded.Append(processor.GetType());
+                processorsAdded.Append(';');
             }
 
             foreach (var instrumentation in state.Instrumentation)
             {
                 this.instrumentations.Add(instrumentation.Instance);
+                instrumentationFactoriesAdded.Append(instrumentation.Name);
+                instrumentationFactoriesAdded.Append(';');
+            }
+
+            if (processorsAdded.Length != 0)
+            {
+                processorsAdded.Remove(processorsAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Processors added = \"{processorsAdded}\".");
+            }
+
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
             }
 
             var listener = new ActivityListener();
@@ -269,6 +301,7 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
 
         internal Resource Resource { get; }

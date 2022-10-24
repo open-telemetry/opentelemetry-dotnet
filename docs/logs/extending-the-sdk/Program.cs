@@ -27,7 +27,6 @@ public class Program
     {
         using var loggerFactory = LoggerFactory.Create(builder => builder
             .AddOpenTelemetry(options => options.IncludeScopes = true)
-            .AddProcessor(new MyRedactionProcessor())
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
             .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))

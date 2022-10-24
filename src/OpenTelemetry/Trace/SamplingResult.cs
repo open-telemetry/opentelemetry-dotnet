@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,17 +25,15 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Sampling result.
     /// </summary>
-    public readonly struct SamplingResult : System.IEquatable<SamplingResult>
+    public readonly struct SamplingResult : IEquatable<SamplingResult>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
         /// <param name="decision"> indicates whether an activity object is recorded and sampled.</param>
         public SamplingResult(SamplingDecision decision)
+            : this(decision, attributes: null, traceStateString: null)
         {
-            this.Decision = decision;
-            this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
-            this.TraceStateString = null;
         }
 
         /// <summary>
@@ -40,10 +41,8 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="isSampled"> True if sampled, false otherwise.</param>
         public SamplingResult(bool isSampled)
+            : this(decision: isSampled ? SamplingDecision.RecordAndSample : SamplingDecision.Drop, attributes: null, traceStateString: null)
         {
-            this.Decision = isSampled ? SamplingDecision.RecordAndSample : SamplingDecision.Drop;
-            this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
-            this.TraceStateString = null;
         }
 
         /// <summary>
@@ -53,14 +52,8 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes)
+            : this(decision, attributes, traceStateString: null)
         {
-            this.Decision = decision;
-
-            // Note: Decision object takes ownership of the collection.
-            // Current implementation has no means to ensure the collection will not be modified by the caller.
-            // If this behavior will be abused we must switch to cloning of the collection.
-            this.Attributes = attributes;
-            this.TraceStateString = null;
         }
 
         /// <summary>
@@ -69,10 +62,8 @@ namespace OpenTelemetry.Trace
         /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
         /// <param name="traceStateString">traceStateString associated with the created Activity.</param>
         public SamplingResult(SamplingDecision decision, string traceStateString)
+            : this(decision, attributes: null, traceStateString)
         {
-            this.Decision = decision;
-            this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
-            this.TraceStateString = traceStateString;
         }
 
         /// <summary>
@@ -82,14 +73,14 @@ namespace OpenTelemetry.Trace
         /// <param name="attributes">attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         /// <param name="traceStateString">traceStateString associated with the created Activity.</param>
-        public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes, string traceStateString)
+        public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>>? attributes, string? traceStateString)
         {
             this.Decision = decision;
 
             // Note: Decision object takes ownership of the collection.
             // Current implementation has no means to ensure the collection will not be modified by the caller.
             // If this behavior will be abused we must switch to cloning of the collection.
-            this.Attributes = attributes;
+            this.Attributes = attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
 
             this.TraceStateString = traceStateString;
         }
@@ -107,7 +98,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the tracestate.
         /// </summary>
-        public string TraceStateString { get; }
+        public string? TraceStateString { get; }
 
         /// <summary>
         /// Compare two <see cref="SamplingResult"/> for equality.
@@ -124,16 +115,8 @@ namespace OpenTelemetry.Trace
         public static bool operator !=(SamplingResult decision1, SamplingResult decision2) => !decision1.Equals(decision2);
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
-        {
-            if (obj is not SamplingResult)
-            {
-                return false;
-            }
-
-            var that = (SamplingResult)obj;
-            return this.Decision == that.Decision && this.Attributes == that.Attributes && this.TraceStateString == that.TraceStateString;
-        }
+        public override bool Equals(object? obj)
+            => obj is SamplingResult other && this.Equals(other);
 
         /// <inheritdoc/>
         public override int GetHashCode()
@@ -148,7 +131,9 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public bool Equals(SamplingResult other)
         {
-            return this.Decision == other.Decision && this.Attributes.SequenceEqual(other.Attributes) && this.TraceStateString == other.TraceStateString;
+            return this.Decision == other.Decision
+                && this.Attributes.SequenceEqual(other.Attributes)
+                && this.TraceStateString == other.TraceStateString;
         }
     }
 }

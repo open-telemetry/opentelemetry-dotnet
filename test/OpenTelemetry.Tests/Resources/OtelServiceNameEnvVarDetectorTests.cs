@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace OpenTelemetry.Resources.Tests
@@ -43,7 +44,9 @@ namespace OpenTelemetry.Resources.Tests
         public void OtelServiceNameEnvVar_Null()
         {
             // Act
-            var resource = new OtelServiceNameEnvVarDetector().Detect();
+            var resource = new OtelServiceNameEnvVarDetector(
+                new ConfigurationBuilder().AddEnvironmentVariables().Build())
+                .Detect();
 
             // Assert
             Assert.Equal(Resource.Empty, resource);
@@ -57,11 +60,31 @@ namespace OpenTelemetry.Resources.Tests
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, envVarValue);
 
             // Act
-            var resource = new OtelServiceNameEnvVarDetector().Detect();
+            var resource = new OtelServiceNameEnvVarDetector(
+                new ConfigurationBuilder().AddEnvironmentVariables().Build())
+                .Detect();
 
             // Assert
             Assert.NotEqual(Resource.Empty, resource);
             Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, envVarValue), resource.Attributes);
+        }
+
+        [Fact]
+        public void OtelServiceNameEnvVar_UsingIConfiguration()
+        {
+            var values = new Dictionary<string, string>()
+            {
+                [OtelServiceNameEnvVarDetector.EnvVarKey] = "my-service",
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values)
+                .Build();
+
+            var resource = new OtelServiceNameEnvVarDetector(configuration).Detect();
+
+            Assert.NotEqual(Resource.Empty, resource);
+            Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
         }
     }
 }

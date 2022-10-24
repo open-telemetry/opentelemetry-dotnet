@@ -1146,5 +1146,32 @@ namespace OpenTelemetry.Logs.Tests
                 }
             }
         }
+
+        private class ScopeProcessor : BaseProcessor<LogRecord>
+        {
+            private readonly bool buffer;
+
+            public ScopeProcessor(bool buffer)
+            {
+                this.buffer = buffer;
+            }
+
+            public List<object> Scopes { get; } = new();
+
+            public override void OnEnd(LogRecord data)
+            {
+                data.ForEachScope<object>(
+                    (scope, state) =>
+                    {
+                        this.Scopes.Add(scope.Scope);
+                    },
+                    null);
+
+                if (this.buffer)
+                {
+                    data.Buffer();
+                }
+            }
+        }
     }
 }

@@ -43,7 +43,7 @@ internal static class ProviderBuilderServiceCollectionCallbackHelper<TBuilder, T
         Debug.Assert(services != null, "services was null");
         Debug.Assert(configure != null, "configure was null");
 
-        return services.AddSingleton(
+        return services!.AddSingleton(
             new ConfigureProviderBuilderStateCallbackRegistration(configure!));
     }
 
@@ -54,7 +54,7 @@ internal static class ProviderBuilderServiceCollectionCallbackHelper<TBuilder, T
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
         Debug.Assert(state != null, "state was null");
 
-        var callbackRegistrations = serviceProvider.GetServices<ConfigureProviderBuilderStateCallbackRegistration>();
+        var callbackRegistrations = serviceProvider!.GetServices<ConfigureProviderBuilderStateCallbackRegistration>();
 
         foreach (var callbackRegistration in callbackRegistrations)
         {

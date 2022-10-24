@@ -25,26 +25,39 @@ namespace OpenTelemetry;
 
 internal abstract class ProviderBuilderState<TBuilder, TProvider>
 {
-    protected ProviderBuilderState(
-        IServiceProvider serviceProvider,
-        TProvider provider)
+    private TProvider? provider;
+
+    protected ProviderBuilderState(IServiceProvider serviceProvider)
     {
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
-        Debug.Assert(provider != null, "provider was null");
 
         this.ServiceProvider = serviceProvider!;
-        this.Provider = provider;
     }
 
     public IServiceProvider ServiceProvider { get; }
 
     public abstract TBuilder Builder { get; }
 
-    public TProvider Provider { get; }
+    public TProvider Provider
+    {
+        get => this.provider ?? throw new InvalidOperationException("Provider has not been set on state.");
+    }
 
     public List<InstrumentationRegistration> Instrumentation { get; } = new();
 
     public ResourceBuilder? ResourceBuilder { get; protected set; }
+
+    public void RegisterProvider(string providerTypeName, TProvider provider)
+    {
+        Debug.Assert(provider != null, "provider was null");
+
+        if (this.provider != null)
+        {
+            throw new NotSupportedException($"{providerTypeName} cannot be accessed while build is executing.");
+        }
+
+        this.provider = provider;
+    }
 
     public void AddInstrumentation(
         string instrumentationName,
