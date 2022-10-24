@@ -4,9 +4,6 @@
 
     <PackProjects Include="src\**\*.csproj" />
 
-    <!-- Windows specific projects -->
-    <PackProjects Remove="src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj" Condition="'$(OS)' != 'Windows_NT'" />
-
     <!-- Not pack SemanticConventions project for now -->
     <SolutionProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
     <PackProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" Condition="'$(OS)' != 'Windows_NT'" />
