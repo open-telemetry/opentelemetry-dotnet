@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The OTLP exporter is not used. This project reference only provides access to the generated proto code. -->
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
+    <PackageReference Include="Grpc.AspNetCore" Version="$(GrpcAspNetCorePkgVer)" />
+  </ItemGroup>
+
+</Project>
