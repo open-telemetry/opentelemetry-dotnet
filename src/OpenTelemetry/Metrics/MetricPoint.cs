@@ -58,13 +58,13 @@ namespace OpenTelemetry.Metrics
             this.deltaLastValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
-            if (this.aggType == AggregationType.Histogram ||
-                this.aggType == AggregationType.HistogramMinMax)
+            if (this.aggType == AggregationType.HistogramWithBuckets ||
+                this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
                 this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
             }
-            else if (this.aggType == AggregationType.HistogramSumCount ||
-                     this.aggType == AggregationType.HistogramSumCountMinMax)
+            else if (this.aggType == AggregationType.Histogram ||
+                     this.aggType == AggregationType.HistogramWithMinMax)
             {
                 this.histogramBuckets = new HistogramBuckets(null);
             }
@@ -189,10 +189,10 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly long GetHistogramCount()
         {
-            if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramSumCount &&
-                this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
+            if (this.aggType != AggregationType.HistogramWithBuckets &&
+                this.aggType != AggregationType.Histogram &&
+                this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
+                this.aggType != AggregationType.HistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
             }
@@ -210,10 +210,10 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double GetHistogramSum()
         {
-            if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramSumCount &&
-                this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
+            if (this.aggType != AggregationType.HistogramWithBuckets &&
+                this.aggType != AggregationType.Histogram &&
+                this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
+                this.aggType != AggregationType.HistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
@@ -231,10 +231,10 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly HistogramBuckets GetHistogramBuckets()
         {
-            if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramSumCount &&
-                this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
+            if (this.aggType != AggregationType.HistogramWithBuckets &&
+                this.aggType != AggregationType.Histogram &&
+                this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
+                this.aggType != AggregationType.HistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
@@ -279,8 +279,8 @@ namespace OpenTelemetry.Metrics
         /// <returns>A minimum and maximum value exist.</returns>
         public bool HasMinMax()
         {
-            return this.aggType == AggregationType.HistogramMinMax ||
-                   this.aggType == AggregationType.HistogramSumCountMinMax;
+            return this.aggType == AggregationType.HistogramWithMinMaxBuckets ||
+                   this.aggType == AggregationType.HistogramWithMinMax;
         }
 
         internal readonly MetricPoint Copy()
@@ -312,10 +312,10 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
+                case AggregationType.HistogramWithBuckets:
+                case AggregationType.HistogramWithMinMaxBuckets:
                 case AggregationType.Histogram:
-                case AggregationType.HistogramMinMax:
-                case AggregationType.HistogramSumCount:
-                case AggregationType.HistogramSumCountMinMax:
+                case AggregationType.HistogramWithMinMax:
                     {
                         this.Update((double)number);
 
@@ -378,7 +378,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.Histogram:
+                case AggregationType.HistogramWithBuckets:
                     {
                         int i = this.histogramBuckets.FindBucketIndex(number);
 
@@ -406,7 +406,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramSumCount:
+                case AggregationType.Histogram:
                     {
                         var sw = default(SpinWait);
                         while (true)
@@ -431,7 +431,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramMinMax:
+                case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         int i = this.histogramBuckets.FindBucketIndex(number);
 
@@ -461,7 +461,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramSumCountMinMax:
+                case AggregationType.HistogramWithMinMax:
                     {
                         var sw = default(SpinWait);
                         while (true)
@@ -602,7 +602,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.Histogram:
+                case AggregationType.HistogramWithBuckets:
                     {
                         var sw = default(SpinWait);
                         while (true)
@@ -641,7 +641,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramSumCount:
+                case AggregationType.Histogram:
                     {
                         var sw = default(SpinWait);
                         while (true)
@@ -671,7 +671,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramMinMax:
+                case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         var sw = default(SpinWait);
                         while (true)
@@ -714,7 +714,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramSumCountMinMax:
+                case AggregationType.HistogramWithMinMax:
                     {
                         var sw = default(SpinWait);
                         while (true)

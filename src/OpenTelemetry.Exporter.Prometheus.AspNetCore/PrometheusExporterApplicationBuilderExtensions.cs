@@ -42,7 +42,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: null, configureBranchedPipeline: null);
+            => UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: null, configureBranchedPipeline: null, optionsName: null);
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -58,7 +58,7 @@ namespace Microsoft.AspNetCore.Builder
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string path)
         {
             Guard.ThrowIfNull(path);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: path, configureBranchedPipeline: null);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: path, configureBranchedPipeline: null, optionsName: null);
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Microsoft.AspNetCore.Builder
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool> predicate)
         {
             Guard.ThrowIfNull(predicate);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: predicate, path: null, configureBranchedPipeline: null);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: predicate, path: null, configureBranchedPipeline: null, optionsName: null);
         }
 
         /// <summary>
@@ -101,6 +101,8 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="configureBranchedPipeline">Optional callback to
         /// configure the branched pipeline. Called before registration of the
         /// Prometheus middleware.</param>
+        /// <param name="optionsName">Optional name used to retrieve <see
+        /// cref="PrometheusAspNetCoreOptions"/>.</param>
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(
@@ -108,7 +110,8 @@ namespace Microsoft.AspNetCore.Builder
             MeterProvider meterProvider,
             Func<HttpContext, bool> predicate,
             string path,
-            Action<IApplicationBuilder> configureBranchedPipeline)
+            Action<IApplicationBuilder> configureBranchedPipeline,
+            string optionsName)
         {
             // Note: Order is important here. MeterProvider is accessed before
             // GetOptions<PrometheusAspNetCoreOptions> so that any changes made to
@@ -120,7 +123,7 @@ namespace Microsoft.AspNetCore.Builder
             {
                 if (path == null)
                 {
-                    var options = app.ApplicationServices.GetRequiredService<IOptions<PrometheusAspNetCoreOptions>>().Value;
+                    var options = app.ApplicationServices.GetRequiredService<IOptionsMonitor<PrometheusAspNetCoreOptions>>().Get(optionsName ?? Options.DefaultName);
 
                     path = options.ScrapeEndpointPath ?? PrometheusAspNetCoreOptions.DefaultScrapeEndpointPath;
                 }

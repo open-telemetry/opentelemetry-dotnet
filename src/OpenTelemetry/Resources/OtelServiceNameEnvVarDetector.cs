@@ -14,24 +14,34 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
 {
-    internal class OtelServiceNameEnvVarDetector : IResourceDetector
+    internal sealed class OtelServiceNameEnvVarDetector : IResourceDetector
     {
         public const string EnvVarKey = "OTEL_SERVICE_NAME";
+
+        private readonly IConfiguration configuration;
+
+        public OtelServiceNameEnvVarDetector(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
 
         public Resource Detect()
         {
             var resource = Resource.Empty;
 
-            if (EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue))
+            if (this.configuration.TryGetStringValue(EnvVarKey, out string? envResourceAttributeValue))
             {
                 resource = new Resource(new Dictionary<string, object>
                 {
-                    [ResourceSemanticConventions.AttributeServiceName] = envResourceAttributeValue,
+                    [ResourceSemanticConventions.AttributeServiceName] = envResourceAttributeValue!,
                 });
             }
 

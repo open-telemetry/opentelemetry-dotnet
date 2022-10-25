@@ -22,7 +22,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
-    internal class HttpHandlerMetricsDiagnosticListener : ListenerHandler
+    internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
         internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
