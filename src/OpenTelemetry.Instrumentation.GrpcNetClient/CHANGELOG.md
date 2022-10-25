@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+ **Breaking change** The `Enrich` callback option has been removed. For better
+  usability, it has been replaced by two separate options:
+  `EnrichWithHttpRequestMessage`and `EnrichWithHttpResponseMessage`. Previously,
+  the single `Enrich` callback required the consumer to detect which event
+  triggered the callback to be invoked (e.g., request start or response end) and
+  then cast the object received to the appropriate type: `HttpRequestMessage`
+  and `HttpResponseMessage`. The separate callbacks make it clear what event
+  triggers them and there is no longer the need to cast the argument to the
+  expected type.
+  ([#3804](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3804))
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17

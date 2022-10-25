@@ -1,7 +1,5 @@
 # Customizing OpenTelemetry .NET SDK
 
-**This doc is work-in-progress.**
-
 ## TracerProvider
 
 As shown in the [getting-started](../getting-started/README.md) doc, a valid
@@ -23,15 +21,21 @@ Once built, changes to its configuration is not allowed, with the exception of
 adding more processors. In most cases, a single `TracerProvider` is created at
 the application startup, and is disposed when application shuts down.
 
-The snippet below shows how to build a basic `TracerProvider`. This will create
-a provider with default configuration, and is not particularly useful. The
-subsequent sections shows how to build a more useful provider.
+The snippet below shows how to build a basic `TracerProvider` and dispose it at
+the end of the application. This will create a provider with default
+configuration, and is not particularly useful. The subsequent sections shows how
+to build a more useful provider.
 
 ```csharp
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
+var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
+// ....
+
+// Dispose at application shutdown
+tracerProvider.Dispose()
+
 ```
 
 In a typical application, a single `TracerProvider` is created at application
@@ -67,7 +71,7 @@ leveraging the built-in Dependency Injection container as shown
 
 `ActivitySource` denotes a
 [`Tracer`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer),
-which is used to start activities. The SDK follows an explicit opt-in model for
+which is used to create activities. The SDK follows an explicit opt-in model for
 listening to activity sources. i.e, by default, it listens to no sources. Every
 activity source which produce telemetry must be explicitly added to the tracer
 provider to start collecting traces from them.
@@ -87,7 +91,7 @@ The snippet below shows how to add activity sources to the provider.
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
     // The following subscribes to activities from Activity Source
     // named "MyCompany.MyProduct.MyLibrary" only.
     .AddSource("MyCompany.MyProduct.MyLibrary")
@@ -142,7 +146,7 @@ it is built.
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddProcessor(new MyProcessor1())
     .AddProcessor(new MyProcessor2()))
     .Build();
@@ -206,13 +210,24 @@ is the immutable representation of the entity producing the telemetry. If no
 resource is used to indicate the
 [Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
 The `ConfigureResource` method on `TracerProviderBuilder` can be used to
-configure the resource on the provider. When the provider is built, it
-automatically builds the final `Resource` from the configured `ResourceBuilder`.
-There can only be a single `Resource` associated with a
-provider. It is not possible to change the resource builder *after* the provider
-is built, by calling the `Build()` method on the `TracerProviderBuilder`.
+configure the resource on the provider. `ConfigureResource` accepts an `Action`
+to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
+made. When the provider is built, it builds the final `Resource` combining all
+the `ConfigureResource` calls. There can only be a single `Resource` associated
+with a provider. It is not possible to change the resource builder *after* the
+provider is built, by calling the `Build()` method on the
+`TracerProviderBuilder`.
+
 `ResourceBuilder` offers various methods to construct resource comprising of
-multiple attributes from various sources.
+multiple attributes from various sources. Examples include `AddTelemetrySdk()`
+which adds [Telemetry
+Sdk](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#telemetry-sdk)
+resource, and `AddService()` which adds
+[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service)
+resource. It also allows adding `ResourceDetector`s.
+
+Follow [this](../extending-the-sdk/README.md#resource-detector) document
+to learn about how to write own resource detectors.
 
 The snippet below shows configuring the `Resource` associated with the provider.
 
@@ -221,8 +236,9 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .ConfigureResource(r => r.AddService("MyServiceName"))
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureResource(resourceBuilder => resourceBuilder.AddTelemetrySdk())
+    .ConfigureResource(resourceBuilder => resourceBuilder.AddService("service-name"))
     .Build();
 ```
 
@@ -252,12 +268,19 @@ The snippet below shows configuring a custom sampler to the provider.
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetSampler(new TraceIdRatioBasedSampler(0.25))
     .Build();
 ```
+
+Follow [this](../extending-the-sdk/README.md#sampler) document
+to learn about how to write own samplers.
 
 ## Context Propagation
 
 // TODO: OpenTelemetry Sdk contents about Context. // TODO: Links to built-in
 instrumentations doing Propagation.
+
+## Configuration using Dependency Injection
+
+// TODO: Placeholder
