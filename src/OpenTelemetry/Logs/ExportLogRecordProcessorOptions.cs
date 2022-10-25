@@ -21,6 +21,9 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
 
+/// <summary>
+/// Options for configuring either a <see cref="SimpleLogRecordExportProcessor"/> or <see cref="BatchLogRecordExportProcessor"/>.
+/// </summary>
 public class ExportLogRecordProcessorOptions
 {
     private BatchExportLogRecordProcessorOptions? batchExportProcessorOptions;
