@@ -248,7 +248,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) =>
+                    {
+                        if (ctx.Request.Path != "/api/values/2")
+                        {
+                            return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
+                        }
+
+                        return AspNetCoreInstrumentationFilterResultType.ExcludeRequest;
+                    })
                     .AddInMemoryExporter(exportedItems)
                     .Build();
             }
@@ -293,7 +301,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         }
                         else
                         {
-                            return true;
+                            return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
                         }
                     })
                     .AddInMemoryExporter(exportedItems)
@@ -412,7 +420,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                     options.Filter = context =>
                                     {
                                         isFilterCalled = true;
-                                        return false;
+                                        return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
                                     };
                                 })
                                 .Build();
@@ -532,7 +540,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         options.Filter = (context) =>
                         {
                             filterCalled = true;
-                            return true;
+                            return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
                         };
                         options.EnrichWithHttpRequest = (activity, request) =>
                         {
