@@ -252,10 +252,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         if (ctx.Request.Path != "/api/values/2")
                         {
-                            return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
+                            return AspNetCoreInstrumentationFilterResultType.Collect;
                         }
 
-                        return AspNetCoreInstrumentationFilterResultType.ExcludeRequest;
+                        return AspNetCoreInstrumentationFilterResultType.Drop;
                     })
                     .AddInMemoryExporter(exportedItems)
                     .Build();
@@ -301,7 +301,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         }
                         else
                         {
-                            return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
+                            return AspNetCoreInstrumentationFilterResultType.Collect;
                         }
                     })
                     .AddInMemoryExporter(exportedItems)
@@ -420,7 +420,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                     options.Filter = context =>
                                     {
                                         isFilterCalled = true;
-                                        return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
+                                        return AspNetCoreInstrumentationFilterResultType.Collect;
                                     };
                                 })
                                 .Build();
@@ -540,7 +540,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         options.Filter = (context) =>
                         {
                             filterCalled = true;
-                            return AspNetCoreInstrumentationFilterResultType.IncludeRequest;
+                            return AspNetCoreInstrumentationFilterResultType.Collect;
                         };
                         options.EnrichWithHttpRequest = (activity, request) =>
                         {

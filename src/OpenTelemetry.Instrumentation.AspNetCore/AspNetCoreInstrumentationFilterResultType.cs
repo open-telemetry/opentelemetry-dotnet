@@ -24,11 +24,11 @@ namespace OpenTelemetry
         /// <summary>
         /// Specifies if the request should be collected.
         /// </summary>
-        IncludeRequest,
+        Collect,
 
         /// <summary>
         /// Specifies if the request should be filtered out.
         /// </summary>
-        ExcludeRequest,
+        Drop,
     }
 }

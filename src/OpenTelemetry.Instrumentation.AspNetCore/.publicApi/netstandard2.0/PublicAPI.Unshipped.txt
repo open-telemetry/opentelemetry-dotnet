@@ -1,6 +1,6 @@
 OpenTelemetry.AspNetCoreInstrumentationFilterResultType
-OpenTelemetry.AspNetCoreInstrumentationFilterResultType.ExcludeRequest = 1 -> OpenTelemetry.AspNetCoreInstrumentationFilterResultType
-OpenTelemetry.AspNetCoreInstrumentationFilterResultType.IncludeRequest = 0 -> OpenTelemetry.AspNetCoreInstrumentationFilterResultType
+OpenTelemetry.AspNetCoreInstrumentationFilterResultType.Drop = 1 -> OpenTelemetry.AspNetCoreInstrumentationFilterResultType
+OpenTelemetry.AspNetCoreInstrumentationFilterResultType.Collect = 0 -> OpenTelemetry.AspNetCoreInstrumentationFilterResultType
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.AspNetCoreInstrumentationOptions() -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithException.get -> System.Action<System.Diagnostics.Activity, System.Exception>

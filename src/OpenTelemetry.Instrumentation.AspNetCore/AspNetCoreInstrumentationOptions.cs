@@ -28,8 +28,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
         /// The Filter gets the HttpContext, and should return <see cref="AspNetCoreInstrumentationFilterResultType"/>
-        /// If Filter returns <see cref="AspNetCoreInstrumentationFilterResultType.IncludeRequest"/>, the request is collected.
-        /// If Filter returns <see cref="AspNetCoreInstrumentationFilterResultType.ExcludeRequest"/> or throw exception, the request is not collected.
+        /// If Filter returns <see cref="AspNetCoreInstrumentationFilterResultType.Collect"/>, the request is collected.
+        /// If Filter returns <see cref="AspNetCoreInstrumentationFilterResultType.Drop"/> or throw exception, the request is not collected.
         /// </summary>
         public Func<HttpContext, AspNetCoreInstrumentationFilterResultType> Filter { get; set; }
 
