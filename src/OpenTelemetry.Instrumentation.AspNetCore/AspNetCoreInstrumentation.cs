@@ -34,7 +34,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
             "Microsoft.AspNetCore.Hosting.UnhandledException",
         };
 
-        private readonly Func<string, object, object, bool> isEnabled = (eventName, obj1, obj2)
+        private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
             => DiagnosticSourceEvents.Contains(eventName);
 
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
