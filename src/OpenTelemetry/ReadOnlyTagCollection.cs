@@ -14,7 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenTelemetry
 {
@@ -28,16 +32,18 @@ namespace OpenTelemetry
         private readonly string[] keys;
         private readonly object[] values;
 
-        internal ReadOnlyTagCollection(string[] keys, object[] values)
+        internal ReadOnlyTagCollection(string[]? keys, object[]? values)
         {
-            this.keys = keys;
-            this.values = values;
+            this.keys = keys ?? Array.Empty<string>();
+            this.values = values ?? Array.Empty<object>();
+
+            Debug.Assert(this.keys.Length == this.values.Length, "Array length mismatch");
         }
 
         /// <summary>
         /// Gets the number of tags in the collection.
         /// </summary>
-        public int Count => this.keys?.Length ?? 0;
+        public int Count => this.keys.Length;
 
         /// <summary>
         /// Returns an enumerator that iterates through the tags.

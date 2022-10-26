@@ -377,7 +377,7 @@ namespace OpenTelemetry
             return baggageHolder;
         }
 
-        private class BaggageHolder
+        private sealed class BaggageHolder
         {
             public Baggage Baggage;
         }

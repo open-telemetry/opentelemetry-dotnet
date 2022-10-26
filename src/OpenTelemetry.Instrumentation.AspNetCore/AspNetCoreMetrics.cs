@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -24,11 +25,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// <summary>
     /// Asp.Net Core Requests instrumentation.
     /// </summary>
-    internal class AspNetCoreMetrics : IDisposable
+    internal sealed class AspNetCoreMetrics : IDisposable
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string InstrumentationName = AssemblyName.Name;
         internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();
+
+        private static readonly HashSet<string> DiagnosticSourceEvents = new()
+        {
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn",
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
+        };
+
+        private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
+            => DiagnosticSourceEvents.Contains(eventName);
 
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
         private readonly Meter meter;
@@ -39,7 +50,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public AspNetCoreMetrics()
         {
             this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", this.meter), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", this.meter), this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

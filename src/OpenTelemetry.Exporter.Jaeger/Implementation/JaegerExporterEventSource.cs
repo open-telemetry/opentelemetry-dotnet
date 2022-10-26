@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Exporter-Jaeger")]
-    internal class JaegerExporterEventSource : EventSource
+    internal sealed class JaegerExporterEventSource : EventSource
     {
         public static JaegerExporterEventSource Log = new();
 

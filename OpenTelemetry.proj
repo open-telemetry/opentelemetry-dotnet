@@ -4,6 +4,10 @@
 
     <PackProjects Include="src\**\*.csproj" />
 
+    <!-- Not pack SemanticConventions project for now -->
+    <SolutionProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
+    <PackProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" Condition="'$(OS)' != 'Windows_NT'" />
+
   </ItemGroup>
 
   <Target Name="Build">

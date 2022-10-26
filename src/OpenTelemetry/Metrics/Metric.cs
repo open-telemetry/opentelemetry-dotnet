@@ -120,8 +120,8 @@ namespace OpenTelemetry.Metrics
                 this.MetricType = MetricType.Histogram;
 
                 aggType = histogramBounds != null && histogramBounds.Length == 0
-                    ? (histogramRecordMinMax ? AggregationType.HistogramSumCountMinMax : AggregationType.HistogramSumCount)
-                    : (histogramRecordMinMax ? AggregationType.HistogramMinMax : AggregationType.Histogram);
+                    ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
+                    : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
             }
             else
             {

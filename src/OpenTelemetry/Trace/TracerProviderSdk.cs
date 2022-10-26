@@ -22,13 +22,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+
+using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
+    OpenTelemetry.Trace.TracerProviderBuilderSdk,
+    OpenTelemetry.Trace.TracerProviderSdk,
+    OpenTelemetry.Trace.TracerProviderBuilderState>;
 
 namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
     {
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
         internal bool Disposed;
@@ -44,6 +51,13 @@ namespace OpenTelemetry.Trace
             IServiceProvider serviceProvider,
             bool ownsServiceProvider)
         {
+            Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+            var state = serviceProvider!.GetRequiredService<TracerProviderBuilderState>();
+            state.RegisterProvider(nameof(TracerProvider), this);
+
+            this.ServiceProvider = serviceProvider!;
+
             if (ownsServiceProvider)
             {
                 this.OwnedServiceProvider = serviceProvider as IDisposable;
@@ -52,10 +66,8 @@ namespace OpenTelemetry.Trace
 
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-            var state = new TracerProviderBuilderState(serviceProvider);
-
-            TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider,
+            CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
+                serviceProvider!,
                 state);
 
             StringBuilder processorsAdded = new StringBuilder();
@@ -66,7 +78,10 @@ namespace OpenTelemetry.Trace
                 state.EnableErrorStatusOnException();
             }
 
-            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
+
             this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
             this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 

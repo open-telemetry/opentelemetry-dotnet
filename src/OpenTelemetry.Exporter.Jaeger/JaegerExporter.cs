@@ -78,14 +78,12 @@ namespace OpenTelemetry.Exporter
             this.batchWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes * 2);
             this.spanWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes);
 
-            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(
-                pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
-            this.Process = new Process(serviceName);
+            this.Process = new();
 
             client.Connect();
         }
 
-        internal Process Process { get; set; }
+        internal Process Process { get; }
 
         internal EmitBatchArgs EmitBatchArgs { get; private set; }
 
@@ -156,19 +154,21 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
-            if (serviceName != null)
+            if (!string.IsNullOrWhiteSpace(serviceName))
             {
                 serviceName = string.IsNullOrEmpty(serviceNamespace)
                     ? serviceName
                     : serviceNamespace + "." + serviceName;
             }
-
-            if (!string.IsNullOrEmpty(serviceName))
+            else
             {
-                process.ServiceName = serviceName;
+                serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
             }
 
-            this.Batch = new Batch(this.Process, this.batchWriter);
+            process.ServiceName = serviceName;
+
+            this.Batch = new Batch(process, this.batchWriter);
             if (this.sendUsingEmitBatchArgs)
             {
                 this.EmitBatchArgs = new EmitBatchArgs(this.batchWriter);

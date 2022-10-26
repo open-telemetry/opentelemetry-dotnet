@@ -45,8 +45,8 @@
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
     <SystemDiagnosticSourcePkgVer>7.0.0-rc.2.22472.3</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
-    <SystemTextJsonPkgVer>4.7.0</SystemTextJsonPkgVer>
-    <SystemThreadingTasksExtensionsPkgVer>4.5.3</SystemThreadingTasksExtensionsPkgVer>
+    <SystemTextJsonPkgVer>4.7.2</SystemTextJsonPkgVer>
+    <SystemThreadingTasksExtensionsPkgVer>4.5.4</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
   <ItemGroup>

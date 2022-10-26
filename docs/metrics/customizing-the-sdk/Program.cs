@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace CustomizingTheSdk;
 
@@ -29,6 +30,7 @@ public class Program
     public static void Main()
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource(res => res.AddService("example-service"))
             .AddMeter(Meter1.Name)
             .AddMeter(Meter2.Name)
 

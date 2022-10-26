@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
     /// This is used for internal logging of this library.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Api")]
-    internal class OpenTelemetryApiEventSource : EventSource
+    internal sealed class OpenTelemetryApiEventSource : EventSource
     {
         public static OpenTelemetryApiEventSource Log = new();
 
