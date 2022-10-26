@@ -128,6 +128,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
                 {
                     contentFromPropagator = context.ActivityContext;
+
+                    action(message, "traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+                    action(message, "tracestate", Activity.Current.TraceStateString);
                 });
 
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
