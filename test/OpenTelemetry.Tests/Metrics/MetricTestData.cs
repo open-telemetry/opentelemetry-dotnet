@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { "1first-char-not-alphabetic" },
                     new object[] { "invalid+separator" },
                     new object[] { new string('m', 64) },
-                    new object[] { "aµ" },
+                    new object[] { "a\xb5" }, // `\xb5` is the Micro character
            };
 
         public static IEnumerable<object[]> ValidInstrumentNames
