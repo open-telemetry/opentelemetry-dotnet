@@ -126,19 +126,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     isNullActivitySource || IsNet7OrGreater,
                     "activity source was invalid");
 
+                // Note: When sample decision is drop...
+                //  * On .NET 7 activity has empty source and is NOT updated by
+                //    the legacy logic. Recorded is just mirrored from the
+                //    parent.
+                //
+                //  * On .NET 6 activity is updated by the legacy logic and Recorded can be trusted.
                 if (isNullActivitySource
-                    && (
-                        (IsNet7OrGreater && activity.Kind == ActivityKind.Internal)
-                        || (!IsNet7OrGreater && !activity.Recorded)))
+                    && (IsNet7OrGreater || !activity.Recorded))
                 {
-                    // Note: When sample decision is drop...
-                    //  * On .NET 7 activity is created with Kind = Internal, IsAllDataRequested = true.
-                    //  * On .NET 6 activity is Recorded = false, IsAllDataRequested = false.
-                    Debug.Assert(
-                        (IsNet7OrGreater && activity.IsAllDataRequested)
-                        || (!IsNet7OrGreater && !activity.IsAllDataRequested),
-                        "activity state was invalid");
-
                     var parent = activity.Parent;
                     if (parent != null)
                     {
