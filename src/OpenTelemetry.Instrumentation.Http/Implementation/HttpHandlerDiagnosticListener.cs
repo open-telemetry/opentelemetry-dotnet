@@ -124,12 +124,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // sample decision was drop.
                 Debug.Assert(
                     isNullActivitySource || IsNet7OrGreater,
-                    "activity state was invalid");
+                    "activity source was invalid");
 
-                if (isNullActivitySource && !activity.Recorded)
+                if (isNullActivitySource
+                    && (
+                        (IsNet7OrGreater && activity.Kind == ActivityKind.Internal)
+                        || (!IsNet7OrGreater && !activity.Recorded)))
                 {
-                    // Note: We check Recorded above because when sample decision is drop...
-                    //  * On .NET 7 activity is Recorded = false, IsAllDataRequested = true.
+                    // Note: When sample decision is drop...
+                    //  * On .NET 7 activity is created with Kind = Internal, IsAllDataRequested = true.
                     //  * On .NET 6 activity is Recorded = false, IsAllDataRequested = false.
                     Debug.Assert(
                         (IsNet7OrGreater && activity.IsAllDataRequested)

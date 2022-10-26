@@ -621,7 +621,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (var traceprovider = Sdk.CreateTracerProviderBuilder()
                .AddHttpClientInstrumentation()
                .AddInMemoryExporter(exportedItems)
-               .SetSampler(sample ? new AlwaysOnSampler() : new AlwaysOffSampler())
+               .SetSampler(sample ? new ParentBasedSampler(new AlwaysOnSampler()) : new AlwaysOffSampler())
                .Build())
             {
                 Activity parent = null;
@@ -632,7 +632,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         .Start();
 
                     parent.TraceStateString = "k1=v1,k2=v2";
-                    parent.ActivityTraceFlags = ActivityTraceFlags.None;
+                    parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
                     parentContext = parent.Context;
                 }
