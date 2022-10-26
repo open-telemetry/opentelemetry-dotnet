@@ -664,12 +664,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     // If we created a parent, make sure that is what was injected.
                     // Not the .NET 7 legacy activity.
-                    Assert.True(parentContext != default);
-                    Assert.True(contextFromPropagator != default);
-
-                    Assert.Equal(parentContext.TraceId, contextFromPropagator.TraceId);
-                    Assert.Equal(parentContext.SpanId, contextFromPropagator.SpanId);
-                    Assert.NotEqual(default, contextFromPropagator.SpanId);
+                    Assert.True(parentContext == contextFromPropagator);
                 }
                 else
                 {
