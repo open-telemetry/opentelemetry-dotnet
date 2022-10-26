@@ -56,21 +56,21 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Histogram with sum, count, buckets.
         /// </summary>
-        Histogram = 6,
+        HistogramWithBuckets = 6,
 
         /// <summary>
         /// Histogram with sum, count, min, max, buckets.
         /// </summary>
-        HistogramMinMax = 7,
+        HistogramWithMinMaxBuckets = 7,
 
         /// <summary>
         /// Histogram with sum, count.
         /// </summary>
-        HistogramSumCount = 8,
+        Histogram = 8,
 
         /// <summary>
         /// Histogram with sum, count, min, max.
         /// </summary>
-        HistogramSumCountMinMax = 9,
+        HistogramWithMinMax = 9,
     }
 }
