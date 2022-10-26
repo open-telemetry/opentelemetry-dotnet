@@ -4,7 +4,7 @@
 
 * Added back `netstandard2.0` target.
   ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
- 
+
 * **Breaking change**: The `Enrich` callback option has been removed. For better
   usability, it has been replaced by three separate options: In case of
   `HttpClient` the new options are `EnrichWithHttpRequestMessage`,
