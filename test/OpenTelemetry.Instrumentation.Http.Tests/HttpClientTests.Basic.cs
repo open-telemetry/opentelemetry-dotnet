@@ -598,13 +598,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task CustomPropagatorCalled(bool sample, bool createParentActivity)
         {
             ActivityContext parentContext = default;
-            ActivityContext contentFromPropagator = default;
+            ActivityContext contextFromPropagator = default;
 
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
-                    contentFromPropagator = context.ActivityContext;
+                    contextFromPropagator = context.ActivityContext;
 
                     string traceparent = $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01";
 
@@ -665,21 +665,26 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     // If we created a parent, make sure that is what was injected.
                     // Not the .NET 7 legacy activity.
                     Assert.True(parentContext != default);
-                    Assert.True(contentFromPropagator != default);
+                    Assert.True(contextFromPropagator != default);
 
-                    Assert.Equal(parentContext.TraceId, contentFromPropagator.TraceId);
-                    Assert.Equal(parentContext.SpanId, contentFromPropagator.SpanId);
-                    Assert.NotEqual(default, contentFromPropagator.SpanId);
+                    Assert.Equal(parentContext.TraceId, contextFromPropagator.TraceId);
+                    Assert.Equal(parentContext.SpanId, contextFromPropagator.SpanId);
+                    Assert.NotEqual(default, contextFromPropagator.SpanId);
                 }
                 else
                 {
-                    Assert.True(contentFromPropagator != parentContext);
+                    Assert.True(contextFromPropagator != parentContext);
+                    Assert.Equal(contextFromPropagator, exportedItems[0].Context);
                 }
             }
             else
             {
                 // Make sure custom propagator was called.
-                Assert.True(contentFromPropagator != default);
+                Assert.True(contextFromPropagator != default);
+                if (sample)
+                {
+                    Assert.Equal(contextFromPropagator, exportedItems[0].Context);
+                }
             }
 
             Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
