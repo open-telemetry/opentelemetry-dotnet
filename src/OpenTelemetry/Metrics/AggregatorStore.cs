@@ -191,6 +191,16 @@ namespace OpenTelemetry.Metrics
 
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                     {
+                        aggregatorIndex = this.metricPointIndex;
+                        if (aggregatorIndex >= this.maxMetricPoints)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
+
                         // Note: We are using storage from ThreadStatic for both the input order of tags and the sorted order of tags,
                         // so we need to make a deep copy for Dictionary storage.
                         var givenKeys = new string[length];
@@ -207,16 +217,6 @@ namespace OpenTelemetry.Metrics
 
                         givenTags = new Tags(givenKeys, givenValues);
                         sortedTags = new Tags(sortedTagKeys, sortedTagValues);
-
-                        aggregatorIndex = this.metricPointIndex;
-                        if (aggregatorIndex >= this.maxMetricPoints)
-                        {
-                            // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
-                            return -1;
-                        }
 
                         lock (this.tagsToMetricPointIndexDictionary)
                         {
