@@ -115,40 +115,38 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (textMapPropagator is not TraceContextPropagator)
+
+            var context = activity.Context;
+
+            // Note: isNullActivitySource is true for all .NET 6 and prior
+            // spans. isNullActivitySource is true for .NET 7+ only when
+            // sample decision was drop.
+            Debug.Assert(
+                isNullActivitySource || IsNet7OrGreater,
+                "activity source was invalid");
+
+            // Note: When sample decision is drop...
+            //  * On .NET 7 activity has empty source and is NOT updated by
+            //    the legacy logic. Recorded is just mirrored from the
+            //    parent.
+            //
+            //  * On .NET 6 activity is updated by the legacy logic and Recorded can be trusted.
+            if (isNullActivitySource
+                && (IsNet7OrGreater || !activity.Recorded))
             {
-                var context = activity.Context;
-
-                // Note: isNullActivitySource is true for all .NET 6 and prior
-                // spans. isNullActivitySource is true for .NET 7+ only when
-                // sample decision was drop.
-                Debug.Assert(
-                    isNullActivitySource || IsNet7OrGreater,
-                    "activity source was invalid");
-
-                // Note: When sample decision is drop...
-                //  * On .NET 7 activity has empty source and is NOT updated by
-                //    the legacy logic. Recorded is just mirrored from the
-                //    parent.
-                //
-                //  * On .NET 6 activity is updated by the legacy logic and Recorded can be trusted.
-                if (isNullActivitySource
-                    && (IsNet7OrGreater || !activity.Recorded))
+                var parent = activity.Parent;
+                if (parent != null)
                 {
-                    var parent = activity.Parent;
-                    if (parent != null)
-                    {
-                        // If the runtime created a span regardless of sampling
-                        // decision send the parent (root) if we have one so
-                        // that we don't create broken traces.
-                        context = parent.Context;
+                    // If the runtime created a span regardless of sampling
+                    // decision send the parent (root) if we have one so
+                    // that we don't create broken traces.
+                    context = parent.Context;
 
-                        Debug.Assert(parent.Parent == null, "parent was not root");
-                    }
+                    Debug.Assert(parent.Parent == null, "parent was not root");
                 }
-
-                textMapPropagator.Inject(new PropagationContext(context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
+
+            textMapPropagator.Inject(new PropagationContext(context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
 
             // For .NET7.0 or higher versions, activity is created using activity source
             // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
