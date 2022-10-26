@@ -119,8 +119,23 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 var context = activity.Context;
 
+                // Note: isNullActivitySource is true for all .NET 6 and prior
+                // spans. isNullActivitySource is true for .NET 7+ only when
+                // sample decision was drop.
+                Debug.Assert(
+                    isNullActivitySource || IsNet7OrGreater,
+                    "activity state was invalid");
+
                 if (isNullActivitySource && !activity.Recorded)
                 {
+                    // Note: We check Recorded above because when sample decision is drop...
+                    //  * On .NET 7 activity is Recorded = false, IsAllDataRequested = true.
+                    //  * On .NET 6 activity is Recorded = false, IsAllDataRequested = false.
+                    Debug.Assert(
+                        (IsNet7OrGreater && activity.IsAllDataRequested)
+                        || (!IsNet7OrGreater && !activity.IsAllDataRequested),
+                        "activity state was invalid");
+
                     var parent = activity.Parent;
                     if (parent != null)
                     {
