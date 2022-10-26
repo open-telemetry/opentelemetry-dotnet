@@ -19,8 +19,6 @@ jobs:
         exclude:
         - os: ubuntu-latest
           version: net462
-        - os: ubuntu-latest
-          version: net7.0
 
     runs-on: ${{ matrix.os }}
     steps:
