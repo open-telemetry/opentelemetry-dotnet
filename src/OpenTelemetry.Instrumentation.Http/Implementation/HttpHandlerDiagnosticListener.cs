@@ -100,11 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
+            if (Sdk.SuppressInstrumentation)
             {
                 return;
             }
@@ -115,16 +111,40 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
+            bool isNullActivitySource = string.IsNullOrEmpty(activity.Source.Name);
+
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (textMapPropagator is not TraceContextPropagator)
             {
-                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
+                var context = activity.Context;
+
+                if (isNullActivitySource && !activity.Recorded)
+                {
+                    var parent = activity.Parent;
+                    if (parent != null)
+                    {
+                        // If the runtime created a span regardless of sampling
+                        // decision send the parent (root) if we have one so
+                        // that we don't create broken traces.
+                        context = parent.Context;
+
+                        Debug.Assert(parent.Parent == null, "parent was not root");
+                    }
+                }
+
+                textMapPropagator.Inject(new PropagationContext(context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
+
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            bool isNet7LegacyActivity = IsNet7OrGreater && isNullActivitySource;
 
             // enrich Activity from payload only if sampling decision
             // is favorable.
-            if (activity.IsAllDataRequested)
+            if (activity.IsAllDataRequested && !isNet7LegacyActivity)
             {
                 try
                 {

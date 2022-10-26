@@ -41,7 +41,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    if (ctx.Request.Url.PathAndQuery.Contains("500"))
+                    string expectedTraceparent = ctx.Request.QueryString["expectedTraceparent"];
+                    if (!string.IsNullOrEmpty(expectedTraceparent) && ctx.Request.Headers["traceparent"] != expectedTraceparent)
+                    {
+                        ctx.Response.StatusCode = 500;
+                        ctx.Response.StatusDescription = "Traceparent mismatch";
+                    }
+                    else if (ctx.Request.Url.PathAndQuery.Contains("500"))
                     {
                         ctx.Response.StatusCode = 500;
                     }
@@ -582,6 +588,105 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Exception is thrown and not collected as event
             Assert.True(exceptionThrown);
             Assert.Empty(exportedItems[0].Events);
+        }
+
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public async Task CustomPropagatorCalled(bool sample, bool createParentActivity)
+        {
+            ActivityContext parentContext = default;
+            ActivityContext contentFromPropagator = default;
+
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                {
+                    contentFromPropagator = context.ActivityContext;
+
+                    string traceparent = $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01";
+
+                    message.RequestUri = new Uri(message.RequestUri.OriginalString + $"?expectedTraceparent={traceparent}");
+
+                    action(message, "traceparent", traceparent);
+                    action(message, "tracestate", Activity.Current.TraceStateString);
+                });
+
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
+            var exportedItems = new List<Activity>();
+
+            using (var traceprovider = Sdk.CreateTracerProviderBuilder()
+               .AddHttpClientInstrumentation()
+               .AddInMemoryExporter(exportedItems)
+               .SetSampler(sample ? new AlwaysOnSampler() : new AlwaysOffSampler())
+               .Build())
+            {
+                Activity parent = null;
+                if (createParentActivity)
+                {
+                    parent = new Activity("parent")
+                        .SetIdFormat(ActivityIdFormat.W3C)
+                        .Start();
+
+                    parent.TraceStateString = "k1=v1,k2=v2";
+                    parent.ActivityTraceFlags = ActivityTraceFlags.None;
+
+                    parentContext = parent.Context;
+                }
+
+                var request = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(this.url),
+                    Method = new HttpMethod("GET"),
+                };
+
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+
+                parent?.Stop();
+            }
+
+            if (!sample)
+            {
+                Assert.Empty(exportedItems);
+            }
+            else
+            {
+                Assert.Single(exportedItems);
+            }
+
+            if (createParentActivity)
+            {
+                if (!sample)
+                {
+                    // If we created a parent, make sure that is what was injected.
+                    // Not the .NET 7 legacy activity.
+                    Assert.True(parentContext != default);
+                    Assert.True(contentFromPropagator != default);
+
+                    Assert.Equal(parentContext.TraceId, contentFromPropagator.TraceId);
+                    Assert.Equal(parentContext.SpanId, contentFromPropagator.SpanId);
+                    Assert.NotEqual(default, contentFromPropagator.SpanId);
+                }
+                else
+                {
+                    Assert.True(contentFromPropagator != parentContext);
+                }
+            }
+            else
+            {
+                // Make sure custom propagator was called.
+                Assert.True(contentFromPropagator != default);
+            }
+
+            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            {
+                new TraceContextPropagator(),
+                new BaggagePropagator(),
+            }));
         }
 
         public void Dispose()
