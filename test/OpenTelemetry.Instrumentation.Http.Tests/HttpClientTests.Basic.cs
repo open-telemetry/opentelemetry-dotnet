@@ -596,14 +596,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
                 {
                     contextFromPropagator = context.ActivityContext;
 
-                    action(message, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                    action(message, "custom_tracestate", contextFromPropagator.TraceState);
+                    setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
+                    setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
                 });
 
+            var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
             var exportedItems = new List<Activity>();
@@ -655,11 +656,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(contextFromPropagator, exportedItems[0].Context);
             }
 
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
+            Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
         }
 
         public void Dispose()
