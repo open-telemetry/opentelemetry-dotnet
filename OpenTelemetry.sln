@@ -212,7 +212,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "source-generation", "docs\l
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-grafana", "docs\metrics\getting-started-prometheus-grafana\getting-started-prometheus-grafana.csproj", "{41B784AA-3301-4126-AF9F-1D59BD04B0BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
 EndProject
@@ -237,6 +237,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore", "test\TestApp.AspNetCore\TestApp.AspNetCore.csproj", "{5FDAF679-DE5A-4C73-A49B-8ABCF2399229}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\redaction\redaction.csproj", "{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AutoConfiguration", "src\OpenTelemetry.AutoConfiguration\OpenTelemetry.AutoConfiguration.csproj", "{E60F624A-B239-4CF2-B336-703EA52033B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -488,6 +490,10 @@ Global
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E60F624A-B239-4CF2-B336-703EA52033B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E60F624A-B239-4CF2-B336-703EA52033B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E60F624A-B239-4CF2-B336-703EA52033B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E60F624A-B239-4CF2-B336-703EA52033B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
