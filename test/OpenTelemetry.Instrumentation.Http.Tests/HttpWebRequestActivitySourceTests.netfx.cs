@@ -38,6 +38,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         private readonly string testServerHost;
         private readonly int testServerPort;
         private readonly string hostNameAndPort;
+        private readonly string netPeerName;
+        private readonly int netPeerPort;
 
         static HttpWebRequestActivitySourceTests()
         {
@@ -73,6 +75,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 out this.testServerPort);
 
             this.hostNameAndPort = $"{this.testServerHost}:{this.testServerPort}";
+            this.netPeerName = this.testServerHost;
+            this.netPeerPort = this.testServerPort;
 
             void ProcessServerRequest(HttpListenerContext context)
             {
@@ -197,7 +201,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Check to make sure: The first record must be a request, the next record must be a response.
             Activity activity = AssertFirstEventWasStart(eventRecords);
 
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            VerifyActivityStartTags(this.netPeerName, this.netPeerPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
@@ -377,7 +381,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Check to make sure: The first record must be a request, the next record must be a response.
             Activity activity = AssertFirstEventWasStart(eventRecords);
 
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            VerifyActivityStartTags(this.netPeerName, this.netPeerPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
@@ -483,7 +487,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Check to make sure: The first record must be a request, the next record must be a response.
             Activity activity = AssertFirstEventWasStart(eventRecords);
 
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            VerifyActivityStartTags(this.netPeerName, this.netPeerPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out var stopEvent));
             Assert.Equal("Stop", stopEvent.Key);
@@ -522,9 +526,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData("POST")]
         public async Task TestRequestWithException(string method)
         {
+            string host = Guid.NewGuid().ToString() + ".com";
             string url = method == "GET"
-                ? $"http://{Guid.NewGuid()}.com"
-                : $"http://{Guid.NewGuid()}.com";
+                ? $"http://{host}"
+                : $"http://{host}";
 
             using var eventRecords = new ActivitySourceRecorder();
 
@@ -547,7 +552,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             // Check to make sure: The first record must be a request, the next record must be an exception.
             Activity activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(null, method, url, activity);
+            VerifyActivityStartTags(host, null, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -586,7 +591,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             Activity activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            VerifyActivityStartTags(this.netPeerName, this.netPeerPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -625,7 +630,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             Activity activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(null, method, url, activity);
+            VerifyActivityStartTags("expired.badssl.com", null, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -667,7 +672,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             Activity activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            VerifyActivityStartTags(this.netPeerName, this.netPeerPort, method, url, activity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -777,14 +782,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Matches("^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", traceparent);
         }
 
-        private static void VerifyActivityStartTags(string hostNameAndPort, string method, string url, Activity activity)
+        private static void VerifyActivityStartTags(string netPeerName, int? netPeerPort, string method, string url, Activity activity)
         {
             Assert.NotNull(activity.TagObjects);
             Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
-            if (hostNameAndPort != null)
+            if (netPeerPort != null)
             {
-                Assert.Equal(hostNameAndPort, activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+                Assert.Equal(netPeerPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
             }
+
+            Assert.Equal(netPeerName, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
 
             Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
         }

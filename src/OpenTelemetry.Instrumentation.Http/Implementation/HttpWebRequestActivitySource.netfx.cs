@@ -98,7 +98,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (activity.IsAllDataRequested)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+                if (!request.RequestUri.IsDefaultPort)
+                {
+                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
 

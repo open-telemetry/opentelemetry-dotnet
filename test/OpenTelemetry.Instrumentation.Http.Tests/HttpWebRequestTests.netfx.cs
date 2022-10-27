@@ -163,7 +163,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 ""setHttpFlavor"": true,
                 ""spanAttributes"": {
                   ""http.method"": ""GET"",
-                  ""http.host"": ""{host}:{port}"",
+                  ""net.peer.name"": ""{host}"",
+                  ""net.peer.port"": ""{port}"",
                   ""http.flavor"": ""2.0"",
                   ""http.status_code"": ""200"",
                   ""http.url"": ""http://{host}:{port}/""
