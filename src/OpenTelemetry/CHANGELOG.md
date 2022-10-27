@@ -14,6 +14,13 @@
   ([#3782](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3782),
   [#3798](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3798))
 
+* Breaking: MetricPoint API to retrieve Histogram Min, Max changed. The existing
+  pattern of checking if Min/Max is available with `HasMinMax()` and then
+  retrieving the same using `GetHistogramMin()`, `GetHistogramMax()` is replaced
+  with a single API `TryGetHistogramMinMaxValues(out double min, out double
+  max)`.
+  ([#3822](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3822))
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17
