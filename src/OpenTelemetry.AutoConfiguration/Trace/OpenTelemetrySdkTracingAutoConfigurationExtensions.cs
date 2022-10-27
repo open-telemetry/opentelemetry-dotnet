@@ -21,28 +21,30 @@ namespace OpenTelemetry.Trace;
 
 public static class OpenTelemetrySdkTracingAutoConfigurationExtensions
 {
-    public static TracerProviderBuilder AddAutoConfiguration(this TracerProviderBuilder tracerProviderBuilder)
-        => AddAutoConfiguration(tracerProviderBuilder, configure: null, name: null);
+    public static TracerProviderBuilder UseAutoConfiguration(this TracerProviderBuilder tracerProviderBuilder)
+        => UseAutoConfiguration(tracerProviderBuilder, configure: null, name: null);
 
-    public static TracerProviderBuilder AddAutoConfiguration(this TracerProviderBuilder tracerProviderBuilder, Action<TracerProviderAutoConfigurationBuilder> configure)
+    public static TracerProviderBuilder UseAutoConfiguration(this TracerProviderBuilder tracerProviderBuilder, Action<TracerProviderAutoConfigurationBuilder> configure)
     {
         Guard.ThrowIfNull(configure);
 
-        return AddAutoConfiguration(tracerProviderBuilder, configure, name: null);
+        return UseAutoConfiguration(tracerProviderBuilder, configure, name: null);
     }
 
-    public static TracerProviderBuilder AddAutoConfiguration(this TracerProviderBuilder tracerProviderBuilder, Action<TracerProviderAutoConfigurationBuilder>? configure, string? name)
+    public static TracerProviderBuilder UseAutoConfiguration(this TracerProviderBuilder tracerProviderBuilder, Action<TracerProviderAutoConfigurationBuilder>? configure, string? name)
     {
         Guard.ThrowIfNull(tracerProviderBuilder);
 
         tracerProviderBuilder.ConfigureServices(services =>
         {
             TraceSamplerDetectionHelper.ConfigureServices(services);
+            TraceExporterDetectionHelper.ConfigureServices(services);
         });
 
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             TraceSamplerDetectionHelper.ConfigureBuilder(sp, builder, name);
+            TraceExporterDetectionHelper.ConfigureBuilder(sp, builder, name);
         });
 
         if (configure != null)
