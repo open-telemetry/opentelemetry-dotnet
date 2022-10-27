@@ -1,3 +1,19 @@
+// <copyright file="TraceSamplerDetectionHelper.cs" company="OpenTelemetry Authors">
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -20,9 +36,11 @@ internal static class TraceSamplerDetectionHelper
         services.TryAddSingleton<ITraceSamplerDetector, TraceParentBasedIdRatioSamplerDetector>();
     }
 
-    public static void ConfigureBuilder(IServiceProvider serviceProvider, TracerProviderBuilder tracerProviderBuilder, string name)
+    public static void ConfigureBuilder(IServiceProvider serviceProvider, TracerProviderBuilder tracerProviderBuilder, string? name)
     {
-        var samplerConfigurationOptions = serviceProvider.GetRequiredService<IOptionsMonitor<TraceSamplerConfigurationOptions>>().Get(name ?? Options.DefaultName);
+        name ??= Options.DefaultName;
+
+        var samplerConfigurationOptions = serviceProvider.GetRequiredService<IOptionsMonitor<TraceSamplerConfigurationOptions>>().Get(name);
 
         if (!string.IsNullOrWhiteSpace(samplerConfigurationOptions.TraceSamplerName))
         {
@@ -33,7 +51,7 @@ internal static class TraceSamplerDetectionHelper
             {
                 if (string.Equals(samplerConfigurationOptions.TraceSamplerName, samplerDetector.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    var sampler = samplerDetector.Create(serviceProvider, samplerConfigurationOptions.TraceSamplerArgument);
+                    var sampler = samplerDetector.Create(serviceProvider, name, samplerConfigurationOptions.TraceSamplerArgument);
                     if (sampler != null)
                     {
                         tracerProviderBuilder.SetSampler(sampler);

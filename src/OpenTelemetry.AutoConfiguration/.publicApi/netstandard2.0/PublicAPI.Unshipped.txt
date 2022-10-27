@@ -1,0 +1,25 @@
+OpenTelemetry.Trace.ITraceExporterDetector
+OpenTelemetry.Trace.ITraceExporterDetector.Create(System.IServiceProvider! serviceProvider, string! optionsName) -> OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>?
+OpenTelemetry.Trace.ITraceExporterDetector.Name.get -> string!
+OpenTelemetry.Trace.ITraceSamplerDetector
+OpenTelemetry.Trace.ITraceSamplerDetector.Create(System.IServiceProvider! serviceProvider, string! optionsName, string? argument) -> OpenTelemetry.Trace.Sampler?
+OpenTelemetry.Trace.ITraceSamplerDetector.Name.get -> string!
+OpenTelemetry.Trace.OpenTelemetrySdkTracingAutoConfigurationExtensions
+OpenTelemetry.Trace.TraceExporterConfigurationOptions
+OpenTelemetry.Trace.TraceExporterConfigurationOptions.TraceExporterConfigurationOptions() -> void
+OpenTelemetry.Trace.TraceExporterConfigurationOptions.TraceExporterName.get -> string?
+OpenTelemetry.Trace.TraceExporterConfigurationOptions.TraceExporterName.set -> void
+OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder
+OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder.AddTraceExporterDetector<T>() -> OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder!
+OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder.AddTraceSamplerDetector<T>() -> OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder!
+OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder.ConfigureBuilder(System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder!
+OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder!
+OpenTelemetry.Trace.TraceSamplerConfigurationOptions
+OpenTelemetry.Trace.TraceSamplerConfigurationOptions.TraceSamplerArgument.get -> string?
+OpenTelemetry.Trace.TraceSamplerConfigurationOptions.TraceSamplerArgument.set -> void
+OpenTelemetry.Trace.TraceSamplerConfigurationOptions.TraceSamplerConfigurationOptions() -> void
+OpenTelemetry.Trace.TraceSamplerConfigurationOptions.TraceSamplerName.get -> string?
+OpenTelemetry.Trace.TraceSamplerConfigurationOptions.TraceSamplerName.set -> void
+static OpenTelemetry.Trace.OpenTelemetrySdkTracingAutoConfigurationExtensions.AddAutoConfiguration(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.OpenTelemetrySdkTracingAutoConfigurationExtensions.AddAutoConfiguration(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.OpenTelemetrySdkTracingAutoConfigurationExtensions.AddAutoConfiguration(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Trace.TracerProviderAutoConfigurationBuilder!>? configure, string? name) -> OpenTelemetry.Trace.TracerProviderBuilder!

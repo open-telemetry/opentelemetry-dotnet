@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,19 +70,23 @@ namespace OpenTelemetry.Trace
                     services.Configure(name, configure);
                 }
 
-                services.RegisterOptionsFactory(configuration => new JaegerExporterOptions(configuration));
+                AddJaegerExporterServices(services);
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<JaegerExporterOptions>>().Get(name);
 
-                AddJaegerExporter(builder, options, sp);
+                builder.AddProcessor(CreateJaegerExporter(options, sp));
             });
         }
 
-        private static TracerProviderBuilder AddJaegerExporter(
-            TracerProviderBuilder builder,
+        internal static void AddJaegerExporterServices(IServiceCollection services)
+        {
+            services.RegisterOptionsFactory(configuration => new JaegerExporterOptions(configuration));
+        }
+
+        internal static BaseProcessor<Activity> CreateJaegerExporter(
             JaegerExporterOptions options,
             IServiceProvider serviceProvider)
         {
@@ -117,16 +122,16 @@ namespace OpenTelemetry.Trace
 
             if (options.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(jaegerExporter));
+                return new SimpleActivityExportProcessor(jaegerExporter);
             }
             else
             {
-                return builder.AddProcessor(new BatchActivityExportProcessor(
+                return new BatchActivityExportProcessor(
                     jaegerExporter,
                     options.BatchExportProcessorOptions.MaxQueueSize,
                     options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
                     options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    options.BatchExportProcessorOptions.MaxExportBatchSize));
+                    options.BatchExportProcessorOptions.MaxExportBatchSize);
             }
         }
     }

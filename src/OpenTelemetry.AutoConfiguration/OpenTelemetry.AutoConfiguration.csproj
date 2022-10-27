@@ -2,8 +2,9 @@
 
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK auto-configuration</Description>
+    <PackageTags>$(PackageTags);auto-configuration</PackageTags>
     <Nullable>enable</Nullable>
     <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>

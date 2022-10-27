@@ -1,4 +1,4 @@
-// <copyright file="TraceParentBasedAlwaysOffSamplerDetector.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerTraceExporterDetector.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,21 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Trace;
 
-internal sealed class TraceParentBasedAlwaysOffSamplerDetector : ITraceSamplerDetector
+internal sealed class JaegerTraceExporterDetector : ITraceExporterDetector
 {
-    public string Name => "parentbased_always_off";
+    public string Name => "jaeger";
 
-    public Sampler? Create(IServiceProvider serviceProvider, string optionsName, string? argument) => new ParentBasedSampler(new AlwaysOffSampler());
+    public BaseProcessor<Activity>? Create(IServiceProvider serviceProvider, string optionsName)
+    {
+        var options = serviceProvider.GetRequiredService<IOptionsMonitor<JaegerExporterOptions>>().Get(optionsName);
+
+        return JaegerExporterHelperExtensions.CreateJaegerExporter(options, serviceProvider);
+    }
 }

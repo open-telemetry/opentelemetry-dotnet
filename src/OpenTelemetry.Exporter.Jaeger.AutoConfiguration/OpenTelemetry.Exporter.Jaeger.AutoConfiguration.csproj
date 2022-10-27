@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <Description>Jaeger exporter for OpenTelemetry .NET auto-configuration</Description>
+    <PackageTags>$(PackageTags);Jaeger;distributed-tracing;auto-configuration</PackageTags>
+    <Nullable>enable</Nullable>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.AutoConfiguration\OpenTelemetry.AutoConfiguration.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
+  </ItemGroup>
+
+</Project>

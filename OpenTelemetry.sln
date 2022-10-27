@@ -240,6 +240,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\reda
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AutoConfiguration", "src\OpenTelemetry.AutoConfiguration\OpenTelemetry.AutoConfiguration.csproj", "{E60F624A-B239-4CF2-B336-703EA52033B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Jaeger.AutoConfiguration", "src\OpenTelemetry.Exporter.Jaeger.AutoConfiguration\OpenTelemetry.Exporter.Jaeger.AutoConfiguration.csproj", "{B5DA0B4D-02DC-44AE-AA1B-6C30BE7D3E65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -494,6 +496,10 @@ Global
 		{E60F624A-B239-4CF2-B336-703EA52033B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E60F624A-B239-4CF2-B336-703EA52033B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E60F624A-B239-4CF2-B336-703EA52033B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5DA0B4D-02DC-44AE-AA1B-6C30BE7D3E65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5DA0B4D-02DC-44AE-AA1B-6C30BE7D3E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5DA0B4D-02DC-44AE-AA1B-6C30BE7D3E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5DA0B4D-02DC-44AE-AA1B-6C30BE7D3E65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
