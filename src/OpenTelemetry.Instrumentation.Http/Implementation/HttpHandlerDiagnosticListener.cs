@@ -111,52 +111,25 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            bool isNullActivitySource = string.IsNullOrEmpty(activity.Source.Name);
-
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-
-            var context = activity.Context;
-
-            // Note: isNullActivitySource is true for all .NET 6 and prior
-            // spans. isNullActivitySource is true for .NET 7+ only when
-            // sample decision was drop.
-            Debug.Assert(
-                isNullActivitySource || IsNet7OrGreater,
-                "activity source was invalid");
-
-            // Note: When sample decision is drop...
-            //  * On .NET 7 activity has empty source and is NOT updated by
-            //    the legacy logic. Recorded is just mirrored from the
-            //    parent.
-            //
-            //  * On .NET 6 activity is updated by the legacy logic and Recorded can be trusted.
-            if (isNullActivitySource
-                && (IsNet7OrGreater || !activity.Recorded))
+            if (textMapPropagator is not TraceContextPropagator)
             {
-                var parent = activity.Parent;
-                if (parent != null)
-                {
-                    // If the runtime created a span regardless of sampling
-                    // decision send the parent (root) if we have one so
-                    // that we don't create broken traces.
-                    context = parent.Context;
-
-                    Debug.Assert(parent.Parent == null, "parent was not root");
-                }
+                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
 
-            textMapPropagator.Inject(new PropagationContext(context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
-
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // For .NET7.0 or higher versions, activity is created using activity source.
+            // However the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
             // To prevent processing such activities we first check the source name to confirm if it was created using
             // activity source or not.
-            bool isNet7LegacyActivity = IsNet7OrGreater && isNullActivitySource;
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                activity.IsAllDataRequested = false;
+            }
 
             // enrich Activity from payload only if sampling decision
             // is favorable.
-            if (activity.IsAllDataRequested && !isNet7LegacyActivity)
+            if (activity.IsAllDataRequested)
             {
                 try
                 {
@@ -203,15 +176,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public void OnStopActivity(Activity activity, object payload)
         {
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
@@ -261,15 +225,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public void OnException(Activity activity, object payload)
         {
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)

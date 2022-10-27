@@ -21,9 +21,8 @@
   type.
   ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
 
-* Fixed an issue which may prevent custom propagators from being called and may
-  cause broken traces when making outgoing calls using `HttpClient` on .NET &
-  .NET Core runtimes.
+* Fixed an issue which prevented custom propagators from being called on .NET 7+
+  runtimes for non-sampled outgoing `HttpClient` spans.
   ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
 
 ## 1.0.0-rc9.8
