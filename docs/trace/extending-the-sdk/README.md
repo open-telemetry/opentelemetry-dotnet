@@ -270,20 +270,19 @@ capabilities such as offering easy access to more context (library specific).
 ### Filtering Processor
 
 Another common use case of writing custom processor is to filter Activities from
-being exported. Such a "FilteringProcessor" can be written as a wrapper around
-an underlying processor. An example "FilteringProcessor" is shown
+being exported. Such a "FilteringProcessor" can be written to toggle the
+`Activity.Recorded` flag. An example "FilteringProcessor" is shown
 [here](./MyFilteringProcessor.cs).
 
-When using such a filtering processor, instead of using extension method to
-register the exporter, they must be registered manually as shown below:
+When using such a filtering processor if should be registered BEFORE the
+processor containing the exporter which should be bypassed:
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetSampler(new MySampler())
     .AddSource("OTel.Demo")
-    .AddProcessor(new MyFilteringProcessor(
-        new SimpleActivityExportProcessor(new MyExporter("ExporterX")),
-        (act) => true))
+    .AddProcessor(new MyFilteringProcessor(activity => true))
+    .AddProcessor(new SimpleActivityExportProcessor(new MyExporter("ExporterX")))
     .Build();
 ```
 
