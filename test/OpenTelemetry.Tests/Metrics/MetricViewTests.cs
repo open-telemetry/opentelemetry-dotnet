@@ -599,14 +599,15 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             var histogramPoint = metricPoints[0];
-            var hasMinMax = histogramPoint.HasMinMax();
-            Assert.True(hasMinMax);
-
-            var min = histogramPoint.GetHistogramMin();
-            var max = histogramPoint.GetHistogramMax();
-
-            Assert.Equal(expectedMin, min);
-            Assert.Equal(expectedMax, max);
+            if (histogramPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+            {
+                Assert.Equal(expectedMin, min);
+                Assert.Equal(expectedMax, max);
+            }
+            else
+            {
+                Assert.Fail("MinMax expected");
+            }
         }
 
         [Theory]
@@ -636,8 +637,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             var histogramPoint = metricPoints[0];
-
-            Assert.False(histogramPoint.HasMinMax());
+            Assert.False(histogramPoint.TryGetHistogramMinMaxValues(out double _, out double _));
         }
 
         [Fact]

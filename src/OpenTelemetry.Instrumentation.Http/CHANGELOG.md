@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Added back `netstandard2.0` target.
-([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
+  ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
 
 * **Breaking change**: The `Enrich` callback option has been removed. For better
   usability, it has been replaced by three separate options: In case of
@@ -20,6 +20,10 @@
   them and there is no longer the need to cast the argument to the expected
   type.
   ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
+
+* Fixed an issue which prevented custom propagators from being called on .NET 7+
+  runtimes for non-sampled outgoing `HttpClient` spans.
+  ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
 
 * **Breaking change**: The same API is now exposed for `net462` and
   `netstandard2.0` targets. The `Filter` property on options is now exposed as
