@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
+using System.Collections.Generic;
 
 namespace CustomizingTheSdk;
 
@@ -37,15 +38,18 @@ public class Program
 
         var logger = loggerFactory.CreateLogger<Program>();
 
-        logger.LogInformation("Hello Information");
-        logger.LogWarning("Hello Warning");
-        logger.LogError("Hello Error");
+        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogWarning("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogError("Hello from {name} {price}.", "tomato", 2.99);
 
         // log with scopes
-        using (logger.BeginScope("operation"))
-        using (logger.BeginScope("hardware"))
+        using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            logger.LogError("{name} is broken.", "refrigerator");
+            new KeyValuePair<string, object>("key1", "value1"),
+            new KeyValuePair<string, object>("key", "value2"),
+        }))
+        {
+            logger.LogInformation("Hello from {food} {price}.", "tomato", 2.99);
         }
     }
 }
