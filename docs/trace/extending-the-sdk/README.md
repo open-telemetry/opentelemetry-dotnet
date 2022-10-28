@@ -274,7 +274,7 @@ being exported. Such a "FilteringProcessor" can be written to toggle the
 `Activity.Recorded` flag. An example "FilteringProcessor" is shown
 [here](./MyFilteringProcessor.cs).
 
-When using such a filtering processor if should be registered BEFORE the
+When using such a filtering processor it should be registered BEFORE the
 processor containing the exporter which should be bypassed:
 
 ```csharp
