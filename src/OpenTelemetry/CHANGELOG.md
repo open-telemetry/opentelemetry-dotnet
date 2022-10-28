@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fix instrument naming enforcement implementation to match the spec.
+  ([#3821](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3821))
+
 * Added support for loading environment variables from `IConfiguration` when
   using the `MetricReaderOptions` & `BatchExportActivityProcessorOptions`
   classes.
