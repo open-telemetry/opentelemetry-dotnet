@@ -584,6 +584,81 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Empty(exportedItems[0].Events);
         }
 
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public async Task CustomPropagatorCalled(bool sample, bool createParentActivity)
+        {
+            ActivityContext parentContext = default;
+            ActivityContext contextFromPropagator = default;
+
+            var propagator = new Mock<TextMapPropagator>();
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
+                {
+                    contextFromPropagator = context.ActivityContext;
+
+                    setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
+                    setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
+                });
+
+            var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
+            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
+            var exportedItems = new List<Activity>();
+
+            using (var traceprovider = Sdk.CreateTracerProviderBuilder()
+               .AddHttpClientInstrumentation()
+               .AddInMemoryExporter(exportedItems)
+               .SetSampler(sample ? new ParentBasedSampler(new AlwaysOnSampler()) : new AlwaysOffSampler())
+               .Build())
+            {
+                Activity parent = null;
+                if (createParentActivity)
+                {
+                    parent = new Activity("parent")
+                        .SetIdFormat(ActivityIdFormat.W3C)
+                        .Start();
+
+                    parent.TraceStateString = "k1=v1,k2=v2";
+                    parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+                    parentContext = parent.Context;
+                }
+
+                var request = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(this.url),
+                    Method = new HttpMethod("GET"),
+                };
+
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+
+                parent?.Stop();
+            }
+
+            if (!sample)
+            {
+                Assert.Empty(exportedItems);
+            }
+            else
+            {
+                Assert.Single(exportedItems);
+            }
+
+            // Make sure custom propagator was called.
+            Assert.True(contextFromPropagator != default);
+            if (sample)
+            {
+                Assert.Equal(contextFromPropagator, exportedItems[0].Context);
+            }
+
+            Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
+        }
+
         public void Dispose()
         {
             this.serverLifeTime?.Dispose();
