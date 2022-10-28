@@ -18,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#if NETFRAMEWORK
 using System.Net;
+#endif
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -102,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
+        public async Task InjectsHeadersAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
             processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
@@ -197,7 +199,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat()
+        public async Task InjectsHeadersAsync_CustomFormat()
         {
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
@@ -263,7 +265,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationRespectsSuppress()
+        public async Task RespectsSuppress()
         {
             try
             {
@@ -292,9 +294,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
                 using (Sdk.CreateTracerProviderBuilder()
-                       .AddHttpClientInstrumentation()
-                       .AddProcessor(processor.Object)
-                       .Build())
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(processor.Object)
+                    .Build())
                 {
                     using var c = new HttpClient();
                     using (SuppressInstrumentationScope.Begin())
@@ -320,26 +322,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
-        {
-            var processor = new Mock<BaseProcessor<Activity>>();
-
-            using (Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation()
-                .AddProcessor(processor.Object)
-                .Build())
-            {
-                using var c = new HttpClient();
-                await c.GetAsync(this.url);
-            }
-
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnStart"));
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
-        }
-
-        [Fact]
-        public async Task HttpClientInstrumentationExportsSpansCreatedForRetries()
+        public async Task ExportsSpansCreatedForRetries()
         {
             var exportedItems = new List<Activity>();
             var request = new HttpRequestMessage
@@ -371,7 +354,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientRedirectTest()
+        public async Task RedirectTest()
         {
             var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
@@ -470,7 +453,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationReportsExceptionEventForNetworkFailuresWithGetAsync()
+        public async Task ReportsExceptionEventForNetworkFailuresWithGetAsync()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
@@ -496,7 +479,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetAsync()
+        public async Task DoesNotReportExceptionEventOnErrorResponseWithGetAsync()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
@@ -522,7 +505,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationDoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
+        public async Task DoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
@@ -584,9 +567,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 #endif
 
-            var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-
             var exportedItems = new List<Activity>();
 
             using (var traceprovider = Sdk.CreateTracerProviderBuilder()
@@ -595,6 +575,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                .SetSampler(sample ? new ParentBasedSampler(new AlwaysOnSampler()) : new AlwaysOffSampler())
                .Build())
             {
+                var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
+                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
                 Activity parent = null;
                 if (createParentActivity)
                 {
@@ -618,6 +601,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
 
                 parent?.Stop();
+
+                Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
             }
 
             if (!sample)
@@ -643,8 +628,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(parentContext.SpanId, contextFromPropagator.SpanId);
             }
 #endif
-
-            Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
         }
 
         public void Dispose()

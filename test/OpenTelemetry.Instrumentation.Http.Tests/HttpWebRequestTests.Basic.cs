@@ -19,15 +19,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+#if !NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
 
 namespace OpenTelemetry.Instrumentation.Http.Tests
 {
@@ -45,10 +50,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    string traceparent = ctx.Request.Headers["traceparent"];
-                    string custom_traceparent = ctx.Request.Headers["custom_traceparent"];
-                    if (string.IsNullOrWhiteSpace(traceparent)
-                        && string.IsNullOrWhiteSpace(custom_traceparent))
+                    if (string.IsNullOrWhiteSpace(ctx.Request.Headers["traceparent"])
+                        && string.IsNullOrWhiteSpace(ctx.Request.Headers["custom_traceparent"])
+                        && ctx.Request.QueryString["bypassHeaderCheck"] != "true")
                     {
                         ctx.Response.StatusCode = 500;
                         ctx.Response.StatusDescription = "Missing trace context";
@@ -76,7 +80,106 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationInjectsHeadersAsync()
+        public async Task BacksOffIfAlreadyInstrumented()
+        {
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpClientInstrumentation()
+                .Build();
+
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = "GET";
+
+            request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
+
+            using var response = await request.GetResponseAsync();
+
+#if NETFRAMEWORK
+            // Note: Back-off is part of the .NET Framework reflection only and
+            // is needed to prevent issues when the same request is re-used for
+            // things like redirects or SSL negotiation.
+            Assert.Equal(1, activityProcessor.Invocations.Count); // SetParentProvider called
+#else
+            Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
+#endif
+        }
+
+        [Fact]
+        public async Task RequestNotCollectedWhenInstrumentationFilterApplied()
+        {
+            bool httpWebRequestFilterApplied = false;
+            bool httpRequestMessageFilterApplied = false;
+
+            List<Activity> exportedItems = new();
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .AddHttpClientInstrumentation(
+                    options =>
+                    {
+                        options.FilterHttpWebRequest = (req) =>
+                        {
+                            httpWebRequestFilterApplied = true;
+                            return !req.RequestUri.OriginalString.Contains(this.url);
+                        };
+                        options.FilterHttpRequestMessage = (req) =>
+                        {
+                            httpRequestMessageFilterApplied = true;
+                            return !req.RequestUri.OriginalString.Contains(this.url);
+                        };
+                    })
+                .Build();
+
+            var request = (HttpWebRequest)WebRequest.Create($"{this.url}?bypassHeaderCheck=true");
+
+            request.Method = "GET";
+
+            using var response = await request.GetResponseAsync();
+
+#if NETFRAMEWORK
+            Assert.True(httpWebRequestFilterApplied);
+            Assert.False(httpRequestMessageFilterApplied);
+#else
+            Assert.False(httpWebRequestFilterApplied);
+            Assert.True(httpRequestMessageFilterApplied);
+#endif
+
+            Assert.Empty(exportedItems);
+        }
+
+        [Fact]
+        public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
+        {
+            List<Activity> exportedItems = new();
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .AddHttpClientInstrumentation(
+                    c =>
+                    {
+                        c.FilterHttpWebRequest = (req) => throw new Exception("From Instrumentation filter");
+                        c.FilterHttpRequestMessage = (req) => throw new Exception("From Instrumentation filter");
+                    })
+                .Build();
+
+            using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
+            {
+                var request = (HttpWebRequest)WebRequest.Create($"{this.url}?bypassHeaderCheck=true");
+
+                request.Method = "GET";
+
+                using var response = await request.GetResponseAsync();
+
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
+            }
+
+            Assert.Empty(exportedItems);
+        }
+
+        [Fact]
+        public async Task InjectsHeadersAsync()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -150,9 +253,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 #endif
 
-            var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-
             var exportedItems = new List<Activity>();
 
             using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -161,6 +261,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .SetSampler(sample ? new ParentBasedSampler(new AlwaysOnSampler()) : new AlwaysOffSampler())
                 .Build())
             {
+                var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
+                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
                 Activity parent = null;
                 if (createParentActivity)
                 {
@@ -181,6 +284,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 using var response = await request.GetResponseAsync();
 
                 parent?.Stop();
+
+                Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
             }
 
             if (!sample)
@@ -205,8 +310,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(parentContext.SpanId, contextFromPropagator.SpanId);
             }
 #endif
-
-            Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
         }
 
         [Theory]
@@ -235,15 +338,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationReportsExceptionEventForNetworkFailures()
+        public async Task ReportsExceptionEventForNetworkFailures()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
 
             using var traceprovider = Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation(o => o.RecordException = true)
-                   .AddInMemoryExporter(exportedItems)
-                   .Build();
+                .AddHttpClientInstrumentation(o => o.RecordException = true)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
             try
             {
@@ -264,7 +367,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationReportsExceptionEventOnErrorResponse()
+        public async Task ReportsExceptionEventOnErrorResponse()
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;

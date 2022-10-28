@@ -1,4 +1,4 @@
-// <copyright file="HttpWebRequestTests.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpWebRequestTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,8 @@ using Moq;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
 
 namespace OpenTelemetry.Instrumentation.Http.Tests
 {
@@ -61,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     options.EnrichWithHttpRequestMessage = (activity, request) => { enrichWithHttpRequestMessageCalled = true; };
                     options.EnrichWithHttpResponseMessage = (activity, response) => { enrichWithHttpResponseMessageCalled = true; };
                     options.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
-                    options.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
+                    options.RecordException = tc.RecordException ?? false;
                 })
                 .Build();
 
