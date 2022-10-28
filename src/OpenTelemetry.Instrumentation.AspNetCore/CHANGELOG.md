@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* **Breaking change** The `Filter` function return type has been change from
+boolean to an enum called `AspNetCoreInstrumentationFilterResultType`. To drop
+the request `Filter` now expects a return value of
+`AspNetCoreInstrumentationFilterResultType.Drop`. For request collection the
+expected return value is `AspNetCoreInstrumentationFilterResultType.Collect`.
+([#3816](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3816))
+
 * **Breaking change** The `Enrich` callback option has been removed.
   For better usability, it has been replaced by three separate options:
   `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.

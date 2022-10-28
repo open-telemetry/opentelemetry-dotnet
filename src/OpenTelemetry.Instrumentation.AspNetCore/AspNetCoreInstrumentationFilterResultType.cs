@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry
+namespace OpenTelemetry.Instrumentation.AspNetCore
 {
     /// <summary>
     /// Represents request filtering result.
@@ -27,7 +27,7 @@ namespace OpenTelemetry
         Collect,
 
         /// <summary>
-        /// Specifies if the request should be filtered out.
+        /// Specifies if the request should be dropped.
         /// </summary>
         Drop,
     }
