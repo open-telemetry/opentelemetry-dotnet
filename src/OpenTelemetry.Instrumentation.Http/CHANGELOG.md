@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-* *Breaking change** The `Enrich` callback option has been removed. For better
+* Added back `netstandard2.0` target.
+  ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
+
+* **Breaking change**: The `Enrich` callback option has been removed. For better
   usability, it has been replaced by three separate options: In case of
   `HttpClient` the new options are `EnrichWithHttpRequestMessage`,
   `EnrichWithHttpResponseMessage` and `EnrichWithException` and in case of
@@ -15,11 +18,12 @@
   `HttpClient` and `HttpWebRequest`,`HttpWebResponse` and `Exception` in case of
   `HttpWebRequest`. The separate callbacks make it clear what event triggers
   them and there is no longer the need to cast the argument to the expected
-type.
-([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
+  type.
+  ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
 
-* Added back `netstandard2.0` target.
-([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
+* Fixed an issue which prevented custom propagators from being called on .NET 7+
+  runtimes for non-sampled outgoing `HttpClient` spans.
+  ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
 
 ## 1.0.0-rc9.8
 
