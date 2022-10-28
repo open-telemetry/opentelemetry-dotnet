@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -562,6 +563,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             ActivityContext contextFromPropagator = default;
 
             var propagator = new Mock<TextMapPropagator>();
+
+#if NETFRAMEWORK
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
+                {
+                    contextFromPropagator = context.ActivityContext;
+
+                    setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
+                    setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
+                });
+#else
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
                 {
@@ -570,6 +582,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
                     setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
                 });
+#endif
 
             var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
