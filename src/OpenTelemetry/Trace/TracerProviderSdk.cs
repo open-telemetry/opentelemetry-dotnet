@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -249,7 +248,7 @@ namespace OpenTelemetry.Trace
             else if (this.sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ActivitySamplingResult.PropagationData : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
             }
             else
@@ -461,23 +460,9 @@ namespace OpenTelemetry.Trace
                 {
                     options = options with { TraceState = samplingResult.TraceStateString };
                 }
-
-                return activitySamplingResult;
             }
 
-            return PropagateOrIgnoreData(options.Parent);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ActivitySamplingResult PropagateOrIgnoreData(in ActivityContext parentContext)
-        {
-            var isRootSpan = parentContext.TraceId == default;
-
-            // If it is the root span or the parent is remote select PropagationData so the trace ID is preserved
-            // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-            return (isRootSpan || parentContext.IsRemote)
-                ? ActivitySamplingResult.PropagationData
-                : ActivitySamplingResult.None;
+            return activitySamplingResult;
         }
 
         private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
