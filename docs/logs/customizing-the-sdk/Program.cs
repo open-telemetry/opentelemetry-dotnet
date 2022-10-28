@@ -44,7 +44,7 @@ public class Program
         // log with scopes
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("store", "seattle"),
+            new KeyValuePair<string, object>("store", "Seattle"),
         }))
         {
             logger.LogInformation("Hello from {food} {price}.", "tomato", 2.99);
