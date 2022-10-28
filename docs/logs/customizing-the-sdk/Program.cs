@@ -14,11 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
-using System.Collections.Generic;
 
 namespace CustomizingTheSdk;
 
@@ -45,8 +44,7 @@ public class Program
         // log with scopes
         using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("key1", "value1"),
-            new KeyValuePair<string, object>("key", "value2"),
+            new KeyValuePair<string, object>("store", "seattle"),
         }))
         {
             logger.LogInformation("Hello from {food} {price}.", "tomato", 2.99);
