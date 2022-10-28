@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
@@ -33,9 +34,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public sealed class IntegrationTests : IDisposable
     {
         private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
+        private const string MockCollectorHostnameEnvVarName = "OTEL_MOCK_COLLECTOR_HOSTNAME";
         private const int ExportIntervalMilliseconds = 10000;
         private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
         private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
+        private static readonly string MockCollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(MockCollectorHostnameEnvVarName);
         private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
         public IntegrationTests(ITestOutputHelper outputHelper)
@@ -210,6 +213,53 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Single(exportResults);
                 Assert.Equal(ExportResult.Success, exportResults[0]);
             }
+        }
+
+        [Trait("CategoryName", "CollectorIntegrationTests")]
+        [SkipUnlessEnvVarFoundFact(MockCollectorHostnameEnvVarName)]
+        public async Task TestRecoveryAfterFailedExport()
+        {
+            var exportResults = new List<ExportResult>();
+            var configEndpoint = $"http://{MockCollectorHostname}:8080";
+
+            using var httpClient = new System.Net.Http.HttpClient();
+            var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
+            await httpClient.GetAsync($"{configEndpoint}/MockCollector/SetResponseCodes?responseCodes={string.Join(",", codes.Select(x => (int)x))}");
+
+            var exporterOptions = new OtlpExporterOptions
+            {
+                Endpoint = new Uri($"http://{MockCollectorHostname}:4317"),
+            };
+
+            var otlpExporter = new OtlpTraceExporter(exporterOptions);
+            var delegatingExporter = new DelegatingExporter<Activity>
+            {
+                OnExportFunc = (batch) =>
+                {
+                    var result = otlpExporter.Export(batch);
+                    exportResults.Add(result);
+                    return result;
+                },
+            };
+
+            var activitySourceName = "otel.mock.collector.test";
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(activitySourceName)
+                .AddProcessor(new SimpleActivityExportProcessor(delegatingExporter))
+                .Build();
+
+            using var source = new ActivitySource(activitySourceName);
+
+            source.StartActivity().Stop();
+
+            Assert.Single(exportResults);
+            Assert.Equal(ExportResult.Failure, exportResults[0]);
+
+            source.StartActivity().Stop();
+
+            Assert.Equal(2, exportResults.Count);
+            Assert.Equal(ExportResult.Success, exportResults[1]);
         }
 
         [Trait("CategoryName", "CollectorIntegrationTests")]
