@@ -125,15 +125,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
                 {
                     contentFromPropagator = context.ActivityContext;
 
-                    action(message, "traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
-                    action(message, "tracestate", Activity.Current.TraceStateString);
+                    setter(carrier, "traceparent", $"00/{contentFromPropagator.TraceId}/{contentFromPropagator.SpanId}/01");
+                    setter(carrier, "tracestate", contentFromPropagator.TraceState);
                 });
 
+            var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
@@ -161,11 +163,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(default, contentFromPropagator.SpanId);
 
             parent.Stop();
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
+
+            Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
         }
 
         [Fact]
@@ -173,14 +172,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
                 {
-                    action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
-                    action(message, "custom_tracestate", Activity.Current.TraceStateString);
+                    setter(carrier, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+                    setter(carrier, "custom_tracestate", context.ActivityContext.TraceState);
                 });
 
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
@@ -220,11 +221,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 #endif
 
             parent.Stop();
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
+
+            Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
         }
 
         [Theory]
