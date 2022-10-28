@@ -97,7 +97,7 @@ namespace OpenTelemetry.Exporter
                                 ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", listKvp[i].Value)
                                 : listKvp[i];
 
-                            if (ConsoleTagTransformer.Instance.TryTransformTag(listKvp[i], out var result))
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                             {
                                 this.WriteLine($"{string.Empty,-4}{result}");
                             }
