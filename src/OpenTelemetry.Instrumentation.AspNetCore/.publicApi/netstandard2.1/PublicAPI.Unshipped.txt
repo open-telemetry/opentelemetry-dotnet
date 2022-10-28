@@ -1,6 +1,6 @@
-OpenTelemetry.AspNetCoreInstrumentationFilterResultType
-OpenTelemetry.AspNetCoreInstrumentationFilterResultType.Drop = 1 -> OpenTelemetry.AspNetCoreInstrumentationFilterResultType
-OpenTelemetry.AspNetCoreInstrumentationFilterResultType.Collect = 0 -> OpenTelemetry.AspNetCoreInstrumentationFilterResultType
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationFilterResultType
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationFilterResultType.Drop = 1 -> OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationFilterResultType
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationFilterResultType.Collect = 0 -> OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationFilterResultType
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.AspNetCoreInstrumentationOptions() -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.get -> bool
@@ -11,7 +11,7 @@ OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Enrich
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpRequest.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpResponse.get -> System.Action<System.Diagnostics.Activity, Microsoft.AspNetCore.Http.HttpResponse>
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpResponse.set -> void
-OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Filter.get -> System.Func<Microsoft.AspNetCore.Http.HttpContext, OpenTelemetry.AspNetCoreInstrumentationFilterResultType>
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Filter.get -> System.Func<Microsoft.AspNetCore.Http.HttpContext, OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationFilterResultType>
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Filter.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.RecordException.get -> bool
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.RecordException.set -> void
