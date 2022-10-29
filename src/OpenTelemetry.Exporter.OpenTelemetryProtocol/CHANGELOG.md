@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Log Exporter to export ILogger scopes as attributes
+  without prefixing with scope-depth.
+  Empty keys and {OriginalFormat} key will be ignored
+  from scopes.
+  ([3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17

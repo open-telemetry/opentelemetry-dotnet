@@ -151,9 +151,29 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     foreach (var scopeItem in scope)
                     {
-                        // Ignore {OriginalFormat} for scopes
-                        // TODO: Write why here!
-                        if (!scopeItem.Key.Equals("{OriginalFormat}"))
+                        if (scopeItem.Key.Equals("{OriginalFormat}") || string.IsNullOrEmpty(scopeItem.Key))
+                        {
+                            // Ignore if the scope key is empty.
+                            // Ignore if the scope key is {OriginalFormat}
+                            // Attributes should not contain duplicates,
+                            // and it is expensive to de-dup, so this
+                            // exporter is going to pass the scope items as is.
+                            // {OriginalFormat} is going to be the key
+                            // if one uses formatted string for scopes
+                            // and if there are nested scopes, this is
+                            // guaranteed to create duplicate keys.
+                            // Similar for empty keys, which is what the
+                            // key is going to be if user simply
+                            // passes a string as scope.
+                            // To summarize this exporter only allows
+                            // IReadOnlyList<KeyValuePair<string, object?>>
+                            // or IEnumerable<KeyValuePair<string, object?>>.
+                            // and expect users to provide unique keys.
+                            // Note: It is possible that we allow users
+                            // to override this feature. So not blocking
+                            // empty/{OriginalFormat} in the SDK itself.
+                        }
+                        else
                         {
                             if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
                             {
