@@ -145,18 +145,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
                 }
 
-                int scopeDepth = -1;
                 logRecord.ForEachScope(ProcessScope, otlpLogRecord);
 
                 void ProcessScope(LogRecordScope scope, OtlpLogs.LogRecord otlpLog)
                 {
-                    scopeDepth++;
                     foreach (var scopeItem in scope)
                     {
-                        var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
-                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItemWithDepthInfo, out var result, attributeValueLengthLimit))
+                        // Ignore {OriginalFormat} for scopes
+                        // TODO: Write why here!
+                        if (!scopeItem.Key.Equals("{OriginalFormat}"))
                         {
-                            otlpLog.AddAttribute(result, attributeCountLimit);
+                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
+                            {
+                                otlpLog.AddAttribute(result, attributeCountLimit);
+                            }
                         }
                     }
                 }
