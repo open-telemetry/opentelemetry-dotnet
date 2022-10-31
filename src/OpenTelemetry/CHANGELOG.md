@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix handling of `null` values for tags in counters. Previously, when the
+  tags contained a `null` value, the aggregated value of the counter would
+  stay at `1` and never increase.
+
 * Fix instrument naming enforcement implementation to match the spec.
   ([#3821](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3821))
 
