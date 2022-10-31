@@ -170,7 +170,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             // or IEnumerable<KeyValuePair<string, object?>>.
                             // and expect users to provide unique keys.
                             // Note: It is possible that we allow users
-                            // to override this feature. So not blocking
+                            // to override this exporter feature. So not blocking
                             // empty/{OriginalFormat} in the SDK itself.
                         }
                         else
