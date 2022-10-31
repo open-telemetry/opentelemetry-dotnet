@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -22,6 +23,56 @@ namespace OpenTelemetry.Metrics.Tests
     public class AggregatorTest
     {
         private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+
+        [Fact]
+        public void CounterWithTags()
+        {
+            var aggregatorStore = new AggregatorStore("test", AggregationType.LongSumIncomingDelta, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+            aggregatorStore.Update(1, new ReadOnlySpan<KeyValuePair<string, object>>(new[] {
+                new KeyValuePair<string, object>("foo", "junk"),
+                new KeyValuePair<string, object>("bar", "other"),
+            }));
+            aggregatorStore.Update(1, new ReadOnlySpan<KeyValuePair<string, object>>(new[] {
+                new KeyValuePair<string, object>("foo", "junk"),
+                new KeyValuePair<string, object>("bar", "other"),
+            }));
+
+            aggregatorStore.Snapshot();
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (var metricPoint in aggregatorStore.GetMetricPoints())
+            {
+                metricPoints.Add(metricPoint);
+            }
+
+            Assert.Single(metricPoints);
+            Assert.Equal(2, metricPoints[0].GetSumLong());
+        }
+
+        [Fact]
+        public void CounterWithNullTags()
+        {
+            var aggregatorStore = new AggregatorStore("test", AggregationType.LongSumIncomingDelta, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+            aggregatorStore.Update(1, new ReadOnlySpan<KeyValuePair<string, object>>(new[] {
+                new KeyValuePair<string, object>("foo", "junk"),
+                new KeyValuePair<string, object>("bar", null),
+            }));
+            aggregatorStore.Update(1, new ReadOnlySpan<KeyValuePair<string, object>>(new[] {
+                new KeyValuePair<string, object>("foo", "junk"),
+                new KeyValuePair<string, object>("bar", null),
+            }));
+
+            aggregatorStore.Snapshot();
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (var metricPoint in aggregatorStore.GetMetricPoints())
+            {
+                metricPoints.Add(metricPoint);
+            }
+
+            Assert.Single(metricPoints);
+            Assert.Equal(2, metricPoints[0].GetSumLong());
+        }
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()

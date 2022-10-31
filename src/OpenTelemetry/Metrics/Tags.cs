@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
                 var hash = 17;
                 for (int i = 0; i < this.Keys.Length; i++)
                 {
-                    hash = (hash * 31) + this.Keys[i].GetHashCode() + this.Values[i]?.GetHashCode() ?? 0;
+                    hash = (hash * 31) + this.Keys[i].GetHashCode() + (this.Values[i]?.GetHashCode() ?? 0);
                 }
 
                 this.hashCode = hash;
@@ -82,7 +82,14 @@ namespace OpenTelemetry.Metrics
 
             for (int i = 0; i < valuesLength; i++)
             {
-                if (!this.Values[i].Equals(other.Values[i]))
+                if (this.Values[i] == null)
+                {
+                    if (other.Values[i] != null)
+                    {
+                        return false;
+                    }
+                }
+                else if (!this.Values[i].Equals(other.Values[i]))
                 {
                     return false;
                 }
