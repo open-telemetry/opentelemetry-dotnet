@@ -78,7 +78,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
                 var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
 
-                // First add the generic attributes like category, eventid and exception, so they are less likely being dropped because of AttributeCountLimit
+                // First add the generic attributes like Category, EventId and Exception,
+                // so they are less likely being dropped because of AttributeCountLimit.
 
                 if (!string.IsNullOrEmpty(logRecord.CategoryName))
                 {
