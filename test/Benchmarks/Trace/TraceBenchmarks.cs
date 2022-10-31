@@ -19,6 +19,32 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+/*
+// * Summary *
+
+BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2130/21H2/November2021Update)
+Intel Core i7-4790 CPU 3.60GHz(Haswell), 1 CPU, 8 logical and 4 physical cores
+.NET SDK= 7.0.100-preview.7.22377.5
+    [Host]     : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
+    DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
+
+
+|                           Method |      Mean |    Error |   StdDev |   Gen0 | Allocated |
+|--------------------------------- |----------:|---------:|---------:|-------:|----------:|
+|                       NoListener |  20.86 ns | 0.379 ns | 0.336 ns |      - |         - |
+|           PropagationDataListner | 376.51 ns | 1.361 ns | 1.273 ns | 0.0992 |     416 B |
+|                   AllDataListner | 377.38 ns | 2.715 ns | 2.407 ns | 0.0992 |     416 B |
+|        AllDataAndRecordedListner | 375.79 ns | 3.393 ns | 3.008 ns | 0.0992 |     416 B |
+|                     OneProcessor | 432.98 ns | 1.562 ns | 1.461 ns | 0.0992 |     416 B |
+|                    TwoProcessors | 430.16 ns | 2.538 ns | 2.250 ns | 0.0992 |     416 B |
+|                  ThreeProcessors | 427.39 ns | 3.243 ns | 2.875 ns | 0.0992 |     416 B |
+|               OneInstrumentation | 411.56 ns | 2.310 ns | 2.161 ns | 0.0992 |     416 B |
+|              TwoInstrumentations | 422.27 ns | 3.304 ns | 2.929 ns | 0.0992 |     416 B |
+|    LegacyActivity_ExactMatchMode | 726.59 ns | 4.852 ns | 4.301 ns | 0.0992 |     416 B |
+| LegacyActivity_WildcardMatchMode | 825.79 ns | 7.846 ns | 6.955 ns | 0.0992 |     416 B |
+
+*/
+
 namespace Benchmarks.Trace
 {
     public class TraceBenchmarks
