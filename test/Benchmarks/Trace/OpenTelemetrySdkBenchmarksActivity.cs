@@ -20,8 +20,6 @@ using Benchmarks.Helper;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-namespace Benchmarks.Trace
-{
 /*
 // * Summary *
 
@@ -40,6 +38,9 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 |              CreateActivity_WithAttributes_NoopProcessor | 541.4 ns | 3.32 ns | 2.94 ns | 0.1488 |     624 B |
 |                    CreateActiviti_WithKind_NoopProcessor | 437.5 ns | 2.05 ns | 1.92 ns | 0.0992 |     416 B |
 */
+
+namespace Benchmarks.Trace
+{
     public class OpenTelemetrySdkBenchmarksActivity
     {
         private readonly ActivitySource benchmarkSource = new("Benchmark");

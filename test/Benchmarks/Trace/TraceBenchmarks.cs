@@ -19,8 +19,6 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-namespace Benchmarks.Trace
-{
 /*
 // * Summary *
 
@@ -46,6 +44,9 @@ Intel Core i7-4790 CPU 3.60GHz(Haswell), 1 CPU, 8 logical and 4 physical cores
 | LegacyActivity_WildcardMatchMode | 825.79 ns | 7.846 ns | 6.955 ns | 0.0992 |     416 B |
 
 */
+
+namespace Benchmarks.Trace
+{
     public class TraceBenchmarks
     {
         private readonly ActivitySource sourceWithNoListener = new("Benchmark.NoListener");
