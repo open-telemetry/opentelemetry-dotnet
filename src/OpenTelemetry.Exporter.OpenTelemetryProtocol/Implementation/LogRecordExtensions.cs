@@ -78,7 +78,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
                 var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
 
-                // First add the generic attributes like category, eventid and exception, so they are less likely being dropped because of AttributeCountLimit
+                // First add the generic attributes like Category, EventId and Exception,
+                // so they are less likely being dropped because of AttributeCountLimit.
 
                 if (!string.IsNullOrEmpty(logRecord.CategoryName))
                 {
@@ -145,18 +146,40 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
                 }
 
-                int scopeDepth = -1;
                 logRecord.ForEachScope(ProcessScope, otlpLogRecord);
 
                 void ProcessScope(LogRecordScope scope, OtlpLogs.LogRecord otlpLog)
                 {
-                    scopeDepth++;
                     foreach (var scopeItem in scope)
                     {
-                        var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
-                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItemWithDepthInfo, out var result, attributeValueLengthLimit))
+                        if (scopeItem.Key.Equals("{OriginalFormat}") || string.IsNullOrEmpty(scopeItem.Key))
                         {
-                            otlpLog.AddAttribute(result, attributeCountLimit);
+                            // Ignore if the scope key is empty.
+                            // Ignore if the scope key is {OriginalFormat}
+                            // Attributes should not contain duplicates,
+                            // and it is expensive to de-dup, so this
+                            // exporter is going to pass the scope items as is.
+                            // {OriginalFormat} is going to be the key
+                            // if one uses formatted string for scopes
+                            // and if there are nested scopes, this is
+                            // guaranteed to create duplicate keys.
+                            // Similar for empty keys, which is what the
+                            // key is going to be if user simply
+                            // passes a string as scope.
+                            // To summarize this exporter only allows
+                            // IReadOnlyList<KeyValuePair<string, object?>>
+                            // or IEnumerable<KeyValuePair<string, object?>>.
+                            // and expect users to provide unique keys.
+                            // Note: It is possible that we allow users
+                            // to override this exporter feature. So not blocking
+                            // empty/{OriginalFormat} in the SDK itself.
+                        }
+                        else
+                        {
+                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
+                            {
+                                otlpLog.AddAttribute(result, attributeCountLimit);
+                            }
                         }
                     }
                 }
