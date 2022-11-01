@@ -134,7 +134,7 @@ exact method name.
 
 Follow [this](../extending-the-sdk/README.md#instrumentation-library) document
 to learn about the instrumentation libraries shipped from this repo and writing
-custom instrumentation.
+custom instrumentation libraries.
 
 ### Processors & Exporters
 
