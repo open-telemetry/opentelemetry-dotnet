@@ -42,9 +42,9 @@ namespace OpenTelemetry.Instrumentation
         public virtual bool SupportsNullActivity { get; }
 
         /// <summary>
-        /// Method called for an event which does not have 'Start', 'Stop' or 'Exception' as suffix.
+        /// Method called for event.
         /// </summary>
-        /// <param name="name">Custom name.</param>
+        /// <param name="name">Event name.</param>
         /// <param name="payload">An object that represent the value being passed as a payload for the event.</param>
         public virtual void OnEventWritten(string name, object payload)
         {
