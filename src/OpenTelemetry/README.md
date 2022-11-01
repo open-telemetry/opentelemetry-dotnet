@@ -34,10 +34,8 @@ and enable the SDK, when they install a particular exporter.
 
 ## Getting started with Logging
 
-If you are new to logging, it is recommended to follow [get started in 5
-minutes](../../docs/logs/getting-started/README.md) to get up and running with
-logging integration with
-[`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger).
+If you are new to logging, it is recommended to first follow the [getting started in 5
+minutes](../../docs/logs/getting-started/README.md) guide to get up and running.
 
 While [OpenTelemetry
 logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
@@ -54,8 +52,9 @@ OpenTelemetry logging.
 
 If you are new to
 [metrics](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md),
-it is recommended to follow [get started in 5
-minutes](../../docs/metrics/getting-started/README.md) to get up and running.
+it is first recommended to follow the [getting started in 5
+minutes](../../docs/metrics/getting-started/README.md) guide to get up and
+running.
 
 For a more detailed explanation of SDK metric features see [Customizing
 OpenTelemetry .NET SDK for
@@ -65,8 +64,9 @@ Metrics](../../docs/metrics/customizing-the-sdk/README.md).
 
 If you are new to
 [traces](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md),
-it is recommended to follow [get started in 5
-minutes](../../docs/trace/getting-started/README.md) to get up and running.
+it is recommended to first follow the [getting started in 5
+minutes](../../docs/trace/getting-started/README.md) guide to get up and
+running.
 
 For a more detailed explanation of SDK tracing features see [Customizing
 OpenTelemetry .NET SDK for
