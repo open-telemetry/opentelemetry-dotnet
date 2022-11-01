@@ -28,6 +28,7 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { "1first-char-not-alphabetic" },
                     new object[] { "invalid+separator" },
                     new object[] { new string('m', 64) },
+                    new object[] { "a\xb5" }, // `\xb5` is the Micro character
            };
 
         public static IEnumerable<object[]> ValidInstrumentNames
@@ -39,6 +40,7 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { "my.metric" },
                     new object[] { "my_metric2" },
                     new object[] { new string('m', 63) },
+                    new object[] { "CaSe-InSeNsItIvE" },
            };
 
         public static IEnumerable<object[]> InvalidHistogramBoundaries

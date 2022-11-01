@@ -52,17 +52,5 @@ namespace Benchmarks.Helper
             activity?.SetTag("tag3", true);
             activity?.Stop();
         }
-
-        public static void CreateActivityWithAttributesAndCustomProperty(ActivitySource source)
-        {
-            using var activity = source.StartActivity("name");
-            activity?.SetTag("tag1", "string");
-            activity?.SetTag("tag2", 1);
-
-            // use custom property instead of tags
-            // activity?.SetTag("customPropTag1", "somecustomValue");
-            activity?.SetCustomProperty("customPropTag1", "somecustomValue");
-            activity?.Stop();
-        }
     }
 }

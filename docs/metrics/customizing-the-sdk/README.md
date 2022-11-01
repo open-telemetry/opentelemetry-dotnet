@@ -204,7 +204,7 @@ with the metric are of interest to you.
         instrumentName: "MyFruitCounter",
         metricStreamConfiguration: new MetricStreamConfiguration
         {
-            TagKeys = new string[] { },
+            TagKeys = Array.Empty<string>(),
         })
 
     ...
@@ -255,7 +255,7 @@ default boundaries. This requires the use of
     // There are no buckets exported in this case.
     .AddView(
         instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
+        new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
 ```csharp

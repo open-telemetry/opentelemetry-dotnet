@@ -24,18 +24,18 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
-Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
-.NET Core SDK=5.0.401
-  [Host]     : .NET Core 5.0.10 (CoreCLR 5.0.1021.41214, CoreFX 5.0.1021.41214), X64 RyuJIT
-  DefaultJob : .NET Core 5.0.10 (CoreCLR 5.0.1021.41214, CoreFX 5.0.1021.41214), X64 RyuJIT
+BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2130/21H2/November2021Update)
+Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
+.NET SDK=7.0.100-preview.7.22377.5
+  [Host]     : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
+  DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
 
 
-|                                   Method |           ViewConfig |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
-|----------------------------------------- |--------------------- |---------:|---------:|---------:|------:|------:|------:|----------:|
-| CounterMeasurementRecordingWithThreeTags |               NoView | 503.2 ns |  8.36 ns |  7.82 ns |     - |     - |     - |         - |
-| CounterMeasurementRecordingWithThreeTags |    ViewNoInstrSelect | 552.7 ns | 10.98 ns | 19.24 ns |     - |     - |     - |         - |
-| CounterMeasurementRecordingWithThreeTags |     ViewSelectsInstr | 556.0 ns | 11.12 ns | 24.18 ns |     - |     - |     - |         - |
+|                                   Method |        ViewConfig |     Mean |   Error |  StdDev | Allocated |
+|----------------------------------------- |------------------ |---------:|--------:|--------:|----------:|
+| CounterMeasurementRecordingWithThreeTags |            NoView | 188.1 ns | 1.73 ns | 1.54 ns |         - |
+| CounterMeasurementRecordingWithThreeTags | ViewNoInstrSelect | 193.3 ns | 0.66 ns | 0.61 ns |         - |
+| CounterMeasurementRecordingWithThreeTags |  ViewSelectsInstr | 271.3 ns | 2.18 ns | 1.94 ns |         - |
 */
 
 namespace Benchmarks.Metrics
