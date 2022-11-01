@@ -17,16 +17,15 @@
 using System;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// The Exemplar Filter which never samples any measurements.
+/// </summary>
+internal sealed class NoneExemplarFilter : IExemplarFilter
 {
-    /// <summary>
-    /// The Exemplar Filter which never samples any measurements.
-    /// </summary>
-    internal sealed class NoneExemplarFilter : IExemplarFilter
+    public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
-        public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-        {
-            return false;
-        }
+        return false;
     }
 }

@@ -18,17 +18,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// The Exemplar Filter which samples measurement done inside context
+/// of sampled activity (span).
+/// </summary>
+internal sealed class SampledTraceExemplarFilter : IExemplarFilter
 {
-    /// <summary>
-    /// The Exemplar Filter which samples measurement done inside context
-    /// of sampled activity (span).
-    /// </summary>
-    internal sealed class SampledTraceExemplarFilter : IExemplarFilter
+    public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
-        public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-        {
-            return Activity.Current?.Recorded ?? false;
-        }
+        return Activity.Current?.Recorded ?? false;
     }
 }

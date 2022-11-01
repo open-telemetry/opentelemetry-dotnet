@@ -14,27 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// Provides access to built-in ExemplarFilters.
+/// </summary>
+internal static class ExemplarFilters
 {
     /// <summary>
-    /// Provides access to built-in ExemplarFilters.
+    /// Gets the ExemplarFilter which never samples any measurements.
     /// </summary>
-    internal static class ExemplarFilters
-    {
-        /// <summary>
-        /// Gets the ExemplarFilter which never samples any measurements.
-        /// </summary>
-        public static IExemplarFilter None { get; } = new NoneExemplarFilter();
+    public static IExemplarFilter None { get; } = new NoneExemplarFilter();
 
-        /// <summary>
-        /// Gets the ExemplarFilter which samples all measurements.
-        /// </summary>
-        public static IExemplarFilter All { get; } = new AllExemplarFilter();
+    /// <summary>
+    /// Gets the ExemplarFilter which samples all measurements.
+    /// </summary>
+    public static IExemplarFilter All { get; } = new AllExemplarFilter();
 
-        /// <summary>
-        /// Gets the ExemplarFilter which samples all measurements that are made
-        /// inside context of a sampled Activity.
-        /// </summary>
-        public static IExemplarFilter WithSampledTrace { get; } = new SampledTraceExemplarFilter();
-    }
+    /// <summary>
+    /// Gets the ExemplarFilter which samples all measurements that are made
+    /// inside context of a sampled Activity.
+    /// </summary>
+    public static IExemplarFilter WithSampledTrace { get; } = new SampledTraceExemplarFilter();
 }
