@@ -34,8 +34,9 @@ and enable the SDK, when they install a particular exporter.
 
 ## Getting started with Logging
 
-If you are new to logging, it is recommended to first follow the [getting started in 5
-minutes](../../docs/logs/getting-started/README.md) guide to get up and running.
+If you are new to logging, it is recommended to first follow the [getting
+started in 5 minutes](../../docs/logs/getting-started/README.md) guide to get up
+and running.
 
 While [OpenTelemetry
 logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
