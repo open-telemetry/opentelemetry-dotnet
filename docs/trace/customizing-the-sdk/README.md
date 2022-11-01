@@ -1,4 +1,4 @@
-# Customizing OpenTelemetry .NET SDK
+# Customizing OpenTelemetry .NET SDK for Tracing
 
 ## TracerProvider
 
@@ -35,8 +35,14 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 
 // Dispose at application shutdown
 tracerProvider.Dispose()
-
 ```
+
+**Note:** The `Sdk.CreateTracerProviderBuilder()` API is available for all
+runtimes. Additionally, for `ASP.NET Core` and [.NET Generic
+Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users,
+helper extensions are provided in the
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
+package to simplify configuration and management of the `TracerProvider`.
 
 In a typical application, a single `TracerProvider` is created at application
 startup and disposed at application shutdown. It is important to ensure that the
@@ -53,7 +59,7 @@ leveraging the built-in Dependency Injection container as shown
 
 `TracerProvider` holds the tracing configuration, which includes the following:
 
-1. The list of `ActivitySource`s (aka Tracers) from which traces are collected.
+1. The list of `ActivitySource`s (aka `Tracer`s) from which traces are collected.
 2. The list of instrumentations enabled via
    [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
 3. The list of
@@ -127,9 +133,10 @@ refer to corresponding documentation of the instrumentation library to know the
 exact method name.
 
 Follow [this](../extending-the-sdk/README.md#instrumentation-library) document
-to learn about the instrumentation libraries shipped from this repo.
+to learn about the instrumentation libraries shipped from this repo and writing
+custom instrumentation libraries.
 
-### Processor
+### Processors & Exporters
 
 [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
 allows hooks for start and end of `Activity`. If no processors are configured,
@@ -195,8 +202,10 @@ exporting purposes, the SDK provides the following built-in processors:
   : This is an exporting processor which passes telemetry to the configured
   exporter without any batching.
 
-Follow [this](../extending-the-sdk/README.md#processor) document
-to learn about how to write own processors.
+Follow [this](../extending-the-sdk/README.md#processor) document to learn about
+writing custom processors. Follow
+[this](../extending-the-sdk/README.md#exporter) document to learn about writing
+custom exporters.
 
 *The processors shipped from this SDK are generics, and supports tracing and
 logging, by supporting `Activity` and `LogRecord` respectively.*
@@ -227,7 +236,7 @@ resource, and `AddService()` which adds
 resource. It also allows adding `ResourceDetector`s.
 
 Follow [this](../extending-the-sdk/README.md#resource-detector) document
-to learn about how to write own resource detectors.
+to learn about writing custom resource detectors.
 
 The snippet below shows configuring the `Resource` associated with the provider.
 
@@ -250,7 +259,7 @@ environmental variables:
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
 | `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
 
-### Sampler
+### Samplers
 
 [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)
 are used to control the noise and overhead introduced by OpenTelemetry by
@@ -274,13 +283,26 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 ```
 
 Follow [this](../extending-the-sdk/README.md#sampler) document
-to learn about how to write own samplers.
+to learn about writing custom samplers.
 
 ## Context Propagation
 
-// TODO: OpenTelemetry Sdk contents about Context. // TODO: Links to built-in
-instrumentations doing Propagation.
+The OpenTelemetry API exposes a method to obtain the default propagator which is
+no-op, by default. This SDK replaces the no-op with a [composite
+propagator](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md#composite-propagator)
+containing the Baggage Propagator and TraceContext propagator. This default
+propagator can be overridden with the below snippet.
 
-## Configuration using Dependency Injection
+```csharp
+using OpenTelemetry;
 
-// TODO: Placeholder
+Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
+```
+
+## Dependency Injection Support
+
+// TODO: Add details here
+
+## Configuration files and Environment Variables
+
+// TODO: Add details here
