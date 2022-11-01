@@ -39,8 +39,8 @@ tracerProvider.Dispose()
 
 **Note:** The `Sdk.CreateTracerProviderBuilder()` API is available for all
 runtimes. Additionally, for `ASP.NET Core` and [.NET Generic
-Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users
-helper extensions are also provided in the
+Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users,
+helper extensions are provided in the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package to simplify configuration and management of the `TracerProvider`.
 
