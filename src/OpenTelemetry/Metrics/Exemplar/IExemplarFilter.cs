@@ -20,7 +20,7 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// The interface defining Exemplar Filter/>.
+    /// The interface defining Exemplar Filter.
     /// </summary>
     internal interface IExemplarFilter
     {

@@ -20,7 +20,7 @@ using System.Collections.Generic;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// The Exemplar Filter which never samples any measurements./>
+    /// The Exemplar Filter which never samples any measurements.
     /// </summary>
     internal sealed class NoneExemplarFilter : IExemplarFilter
     {

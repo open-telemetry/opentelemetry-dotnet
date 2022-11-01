@@ -17,17 +17,17 @@
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Provides access to built-in ExemplarFilters./>
+    /// Provides access to built-in ExemplarFilters.
     /// </summary>
     internal static class ExemplarFilters
     {
         /// <summary>
-        /// Gets the ExemplarFilter which never samples any measurements
+        /// Gets the ExemplarFilter which never samples any measurements.
         /// </summary>
         public static IExemplarFilter None { get; } = new NoneExemplarFilter();
 
         /// <summary>
-        /// Gets the ExemplarFilter which samples all measurements
+        /// Gets the ExemplarFilter which samples all measurements.
         /// </summary>
         public static IExemplarFilter All { get; } = new AllExemplarFilter();
 
