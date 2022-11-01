@@ -30,4 +30,9 @@ internal sealed class SampledTraceExemplarFilter : IExemplarFilter
     {
         return Activity.Current?.Recorded ?? false;
     }
+
+    public bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    {
+        return Activity.Current?.Recorded ?? false;
+    }
 }

@@ -28,4 +28,9 @@ internal sealed class AllExemplarFilter : IExemplarFilter
     {
         return true;
     }
+
+    public bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    {
+        return true;
+    }
 }

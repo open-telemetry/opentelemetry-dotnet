@@ -28,4 +28,9 @@ internal sealed class NoneExemplarFilter : IExemplarFilter
     {
         return false;
     }
+
+    public bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    {
+        return false;
+    }
 }
