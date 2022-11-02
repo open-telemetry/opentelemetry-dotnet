@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Breaking change** `http.host` will no longer be populated. `net.host.name`
+  and `net.host.port` attributes will be populated instead.
+
 * **Breaking change** The `Enrich` callback option has been removed.
   For better usability, it has been replaced by three separate options:
   `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.
