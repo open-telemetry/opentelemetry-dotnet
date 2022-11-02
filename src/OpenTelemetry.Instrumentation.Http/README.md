@@ -81,7 +81,7 @@ govern what options are used. On .NET Framework, `HttpClient` uses the
 
 ### .NET & .NET Core
 
-#### Filter
+#### Filter HttpClient API
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `FilterHttpRequestMessage` function
@@ -100,7 +100,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
         (options) => options.FilterHttpRequestMessage =
             (httpRequestMessage) =>
             {
-                // only collect telemetry about HTTP GET requests
+                // Example: Only collect telemetry about HTTP GET requests.
                 return httpRequestMessage.Method.Equals(HttpMethod.Get);
             })
     .AddConsoleExporter()
@@ -113,7 +113,7 @@ to this instrumentation. OpenTelemetry has a concept of a
 and the `FilterHttpRequestMessage` option does the filtering *after* the Sampler
 is invoked.
 
-#### Enrich
+#### Enrich HttpClient API 
 
 This instrumentation library provides options that can be used to
 enrich the activity with additional information. These actions are called
@@ -154,7 +154,7 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ### .NET Framework
 
-#### Filter
+#### Filter HttpWebRequest API
 
 This instrumentation by default collects all the outgoing HTTP requests. It
 allows filtering of requests by using the `FilterHttpWebRequest` function
@@ -169,11 +169,11 @@ GET requests.
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
-        // Note: Only called on .NET Framework
+        // Note: Only called on .NET Framework.
         (options) => options.FilterHttpWebRequest =
             (httpWebRequest) =>
             {
-                // only collect telemetry about HTTP GET requests
+                // Example: Only collect telemetry about HTTP GET requests.
                 return httpWebRequest.Method.Equals(HttpMethod.Get.Method);
             })
     .AddConsoleExporter()
@@ -186,7 +186,7 @@ this instrumentation. OpenTelemetry has a concept of a
 and the `FilterHttpWebRequest` option does the filtering *after* the Sampler is
 invoked.
 
-#### Enrich
+#### Enrich HttpWebRequest API
 
 This instrumentation library provides options that can be used to
 enrich the activity with additional information. These actions are called
@@ -206,12 +206,12 @@ using System.Net;
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation((options) =>
     {
-        // Note: Only called on .NET Framework
+        // Note: Only called on .NET Framework.
         options.EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
         {
             activity.SetTag("requestVersion", httpWebRequest.Version);
         };
-        // Note: Only called on .NET Framework
+        // Note: Only called on .NET Framework.
         options.EnrichWithHttpWebResponse = (activity, httpWebResponse) =>
         {
             activity.SetTag("responseVersion", httpWebResponse.Version);
