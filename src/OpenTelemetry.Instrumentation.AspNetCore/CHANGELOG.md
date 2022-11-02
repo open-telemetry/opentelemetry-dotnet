@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Breaking change** `http.url` attribute will no longer be populated.
+([#3859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3859))
+
 * **Breaking change** The `Enrich` callback option has been removed.
   For better usability, it has been replaced by three separate options:
   `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.
