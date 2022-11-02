@@ -20,7 +20,8 @@ These conventions are
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
 Until a [stable
 version](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/telemetry-stability.md)
-is released, there can be [breaking changes](./CHANGELOG.md). You can track the progress from
+is released, there can be [breaking changes](./CHANGELOG.md). You can track the
+progress from
 [milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).**
 
 ## Steps to enable OpenTelemetry.Instrumentation.Http
@@ -113,7 +114,7 @@ to this instrumentation. OpenTelemetry has a concept of a
 and the `FilterHttpRequestMessage` option does the filtering *after* the Sampler
 is invoked.
 
-#### Enrich HttpClient API 
+#### Enrich HttpClient API
 
 This instrumentation library provides options that can be used to
 enrich the activity with additional information. These actions are called
