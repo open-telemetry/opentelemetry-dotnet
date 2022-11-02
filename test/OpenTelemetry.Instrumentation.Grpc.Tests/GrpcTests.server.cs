@@ -109,7 +109,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
-            Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
 
