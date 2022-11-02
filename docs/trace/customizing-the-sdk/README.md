@@ -215,7 +215,7 @@ For exporting purposes, the SDK provides the following built-in processors:
 
 **Note** A special processor
 [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
-is used by the SDK to chain mutliple processors together and may be used as
+is used by the SDK to chain multiple processors together and may be used as
 needed by users to define sub-pipelines.
 
 **Note** The processors shipped from this SDK are generic implementations and
