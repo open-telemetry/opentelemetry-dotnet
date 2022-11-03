@@ -1,4 +1,4 @@
-// <copyright file="HttpWebRequestTests.netfx.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpWebRequestTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETFRAMEWORK
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,6 +25,8 @@ using Moq;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
 
 namespace OpenTelemetry.Instrumentation.Http.Tests
 {
@@ -47,6 +49,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             bool enrichWithHttpWebRequestCalled = false;
             bool enrichWithHttpWebResponseCalled = false;
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
             bool enrichWithExceptionCalled = false;
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
@@ -56,8 +60,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     options.EnrichWithHttpWebRequest = (activity, httpWebRequest) => { enrichWithHttpWebRequestCalled = true; };
                     options.EnrichWithHttpWebResponse = (activity, httpWebResponse) => { enrichWithHttpWebResponseCalled = true; };
+                    options.EnrichWithHttpRequestMessage = (activity, request) => { enrichWithHttpRequestMessageCalled = true; };
+                    options.EnrichWithHttpResponseMessage = (activity, response) => { enrichWithHttpResponseMessageCalled = true; };
                     options.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
-                    options.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
+                    options.RecordException = tc.RecordException ?? false;
                 })
                 .Build();
 
@@ -98,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 x => x.Key,
                 x =>
                 {
-                    if (x.Key == "http.flavor" && x.Value == "2.0")
+                    if (x.Key == "http.flavor")
                     {
                         return "1.1";
                     }
@@ -134,11 +140,23 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Equal(value, tagValue);
             }
 
+#if NETFRAMEWORK
             Assert.True(enrichWithHttpWebRequestCalled);
+            Assert.False(enrichWithHttpRequestMessageCalled);
             if (tc.ResponseExpected)
             {
                 Assert.True(enrichWithHttpWebResponseCalled);
+                Assert.False(enrichWithHttpResponseMessageCalled);
             }
+#else
+            Assert.False(enrichWithHttpWebRequestCalled);
+            Assert.True(enrichWithHttpRequestMessageCalled);
+            if (tc.ResponseExpected)
+            {
+                Assert.False(enrichWithHttpWebResponseCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
+#endif
 
             if (tc.RecordException.HasValue && tc.RecordException.Value)
             {
@@ -162,9 +180,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 ""spanKind"": ""Client"",
                 ""setHttpFlavor"": true,
                 ""spanAttributes"": {
+                  ""http.scheme"": ""http"",
                   ""http.method"": ""GET"",
                   ""http.host"": ""{host}:{port}"",
-                  ""http.flavor"": ""2.0"",
+                  ""http.flavor"": ""1.1"",
                   ""http.status_code"": ""200"",
                   ""http.url"": ""http://{host}:{port}/""
                 }
@@ -180,4 +199,3 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
     }
 }
-#endif
