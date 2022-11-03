@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
@@ -46,7 +47,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         public static string NormalizeValues(string value, string host, int port)
         {
-            return value.Replace("{host}", host).Replace("{port}", port.ToString());
+            return value
+                .Replace("{host}", host)
+                .Replace("{port}", port.ToString())
+#if NETFRAMEWORK
+                .Replace("{flavor}", "1.1");
+#else
+                .Replace("{flavor}", "2.0");
+#endif
         }
 
         public class HttpOutTestCase

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 #if NETFRAMEWORK
 using System;
 using System.Collections;
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
-        internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
+        internal static HttpClientInstrumentationOptions Options = new HttpClientInstrumentationOptions();
 
         private static readonly Version Version = AssemblyName.Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
@@ -98,6 +99,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (activity.IsAllDataRequested)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
@@ -208,7 +210,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         private static void ProcessRequest(HttpWebRequest request)
         {
-            if (!WebRequestActivitySource.HasListeners() || !Options.EventFilter(request))
+            if (!WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request))
             {
                 // No subscribers to the ActivitySource or User provider Filter is
                 // filtering this request.

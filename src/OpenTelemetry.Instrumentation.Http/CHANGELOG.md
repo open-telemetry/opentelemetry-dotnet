@@ -25,6 +25,12 @@
   runtimes for non-sampled outgoing `HttpClient` spans.
   ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
 
+* **Breaking change**: The same API is now exposed for `net462` and
+  `netstandard2.0` targets. The `Filter` property on options is now exposed as
+  `FilterHttpRequestMessage` (called for .NET & .NET Core) and
+  `FilterHttpWebRequest` (called for .NET Framework).
+  ([#3793](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3793))
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17
