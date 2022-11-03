@@ -139,12 +139,24 @@ custom instrumentation libraries.
 ### Processors & Exporters
 
 [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
-allows hooks for start and end of `Activity`. If no processors are configured,
-then traces are simply dropped by the SDK. `AddProcessor` method on
-`TracerProviderBuilder` should be used to add a processor. There can be any
-number of processors added to the provider, and they are invoked in the same
-order as they are added. Unlike `Sampler` or `Resource`, processors can be added
-to the provider even *after* it is built.
+expose hooks for start and end processing of `Activity` instances. If no
+processors are configured then traces are simply dropped by the SDK. The
+`AddProcessor` method on `TracerProviderBuilder` is provided to add a processor
+to the SDK pipeline. There can be any number of processors added to the provider
+and they are invoked in the same order as they are added. Unlike `Sampler` and
+`Resource`, processors can be added to the provider even *after* it is built.
+
+[Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-exporter)
+expose hooks for exporting batches of completed `Activity` instances (a batch
+may contain a single or many records) and are called by processors. Two base
+processor classes `SimpleExportProcessor` & `BatchExportProcessor` are provided
+to support invoking exporters through the processor pipeline and implement the
+standard behaviors prescribed by the OpenTelemetry specification.
+
+**Note** The SDK only ever invokes processors and has no direct knowledge of any
+registered exporters.
+
+#### Processor Configuration
 
 The snippet below shows how to add processors to the provider before and after
 it is built.
@@ -163,18 +175,22 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 tracerProvider.AddProcessor(new MyProcessor3());
 ```
 
-A `TracerProvider` assumes ownership of any processors added to it. This means
-that, provider will call `Shutdown` method on the processor, when it is
-shutdown, and disposes the processor when it is disposed. If multiple providers
-are being setup in an application, then separate instances of processors must be
-configured on them. Otherwise, shutting down one provider can cause the
-processor in other provider to be shut down as well, leading to undesired
-results.
+**Note** A `TracerProvider` assumes ownership of **all** processors added to it.
+This means that the provider will call the `Shutdown` method on all registered
+processors when it is shutting down and call the `Dispose` method on all
+registered processors when it is disposed. If multiple providers are being set
+up in an application then separate instances of processors **MUST** be
+registered on each provider. Otherwise shutting down one provider will cause the
+shared processor(s) in other providers to be shut down as well which may lead to
+undesired results.
 
-Processors can be used for enriching the telemetry and exporting the telemetry
-to an exporter. For enriching purposes, one must write a custom processor, and
-override the `OnStart` or `OnEnd` method with logic to enrich the telemetry. For
-exporting purposes, the SDK provides the following built-in processors:
+Processors can be used for enriching. exporting, and/or filtering telemetry.
+
+To enrich telemetry, users may write custom processors overriding the `OnStart`
+and/or `OnEnd` methods (as needed) to implement custom logic to change the data
+before it is passed to the next processor in the pipeline.
+
+For exporting purposes, the SDK provides the following built-in processors:
 
 * [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#batching-processor)
   : This is an exporting processor which batches the telemetry before sending to
@@ -193,22 +209,66 @@ exporting purposes, the SDK provides the following built-in processors:
   `FormatException` is thrown in case of an invalid value for any of the
   supported environment variables.
 
-* [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
-  : This is a processor which can be composed from multiple processors. This is
-  typically used to construct multiple processing pipelines, each ending with
-  its own exporter.
-
 * [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor)
   : This is an exporting processor which passes telemetry to the configured
-  exporter without any batching.
+  exporter immediately without any batching.
+
+**Note** A special processor
+[CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
+is used by the SDK to chain multiple processors together and may be used as
+needed by users to define sub-pipelines.
+
+**Note** The processors shipped from this SDK are generic implementations and
+support tracing and logging by implementing `Activity` and `LogRecord`
+respectively.
 
 Follow [this](../extending-the-sdk/README.md#processor) document to learn about
-writing custom processors. Follow
-[this](../extending-the-sdk/README.md#exporter) document to learn about writing
-custom exporters.
+writing custom processors.
 
-*The processors shipped from this SDK are generics, and supports tracing and
-logging, by supporting `Activity` and `LogRecord` respectively.*
+#### Exporter Configuration
+
+The snippet below shows how to add export processors to the provider before it
+is built.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddProcessor(new BatchActivityExportProcessor(new MyExporter1()))
+    .AddProcessor(new SimpleActivityExportProcessor(new MyExporter2()))
+    .Build();
+```
+
+To make exporter registration easier an `AddExporter` extension is also
+provided. The snippet below shows how to add an export processor using
+ `AddExporter` to the provider before it is built.
+
+ ```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddExporter<MyExporter>(ExportProcessorType.Batch)
+    .Build();
+```
+
+It is also common for exporters to provide their own extensions to simplify
+registration. The snippet below shows how to add the
+[JaegerExporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md) to the
+provider before it is built.
+
+ ```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddJaegerExporter()
+    .Build();
+```
+
+Follow [this](../extending-the-sdk/README.md#exporter) document to learn about
+writing custom exporters.
 
 ### Resource
 
