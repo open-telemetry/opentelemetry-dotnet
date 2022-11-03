@@ -34,10 +34,10 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 
 |         Method |           ViewConfig |     Mean |   Error |  StdDev | Allocated |
 |--------------- |--------------------- |---------:|--------:|--------:|----------:|
-| CounterHotPath |               NoView | 284.7 ns | 2.25 ns | 2.00 ns |         - |
-| CounterHotPath |    ViewNoInstrSelect | 294.0 ns | 3.69 ns | 3.27 ns |         - |
-| CounterHotPath |     ViewSelectsInstr | 366.7 ns | 4.83 ns | 4.52 ns |         - |
-| CounterHotPath | ViewS(...)names [26] | 293.1 ns | 1.51 ns | 1.18 ns |         - |
+| CounterHotPath |               NoView | 290.1 ns | 2.49 ns | 2.08 ns |         - |
+| CounterHotPath |    ViewNoInstrSelect | 294.1 ns | 1.64 ns | 1.45 ns |         - |
+| CounterHotPath |     ViewSelectsInstr | 306.5 ns | 3.56 ns | 3.15 ns |         - |
+| CounterHotPath | ViewS(...)names [26] | 301.1 ns | 2.13 ns | 1.89 ns |         - |
 */
 
 namespace Benchmarks.Metrics
