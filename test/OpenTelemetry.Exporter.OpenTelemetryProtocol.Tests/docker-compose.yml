@@ -24,4 +24,3 @@ services:
       - OTEL_MOCK_COLLECTOR_HOSTNAME=mock-otel-collector
     depends_on:
       - otel-collector
-      - mock-otel-collector
