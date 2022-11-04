@@ -371,6 +371,8 @@ The SDK implementation of `TracerProviderBuilder` is backed by an
 generally known as [dependency
 injection](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection).
 
+### Examples
+
 For the below examples imagine an exporter with this constructor:
 
 ```csharp
@@ -388,7 +390,7 @@ public class MyCustomExporter : BaseExporter<Activity>
 We want to inject the `ILogger<MyCustomExporter>` and `MyCustomService`
 dependencies into our `MyCustomExporter` instance.
 
-### Using Sdk.CreateTracerProviderBuilder()
+#### Using Sdk.CreateTracerProviderBuilder()
 
 To register `MyCustomExporter` and `MyCustomService` we can use the
 `ConfigureServices` and `AddExporter` methods:
@@ -412,7 +414,7 @@ registered into that collection.
 `TracerProvider`. See [Building a TracerProvider](#building-a-tracerprovider)
 for details.
 
-### Using the OpenTelemetry.Extensions.Hosting package
+#### Using the OpenTelemetry.Extensions.Hosting package
 
 **Note** If you are authoring an ASP.NET Core application or using the [.NET
 Generic Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
@@ -443,7 +445,7 @@ shutdown.
 `TracerProvider`. Only a single `TraceProvider` may exist in an
 `IServiceCollection` \ `IServiceProvider`.
 
-### Dependency injection `TracerProviderBuilder` extension methods
+### Dependency injection `TracerProviderBuilder` extension method reference
 
 * `AddExporter<T>`: Adds an export processor for the type `T` (must derive from
   `BaseExporter<Activity>`) into the `TracerProvider`.
@@ -453,6 +455,9 @@ shutdown.
 
 * `AddProcessor<T>`: Adds a processor of type `T` (must derive from
   `BaseProcessor<Activity>`) into the `TracerProvider`.
+
+* `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
+  for the `TracerProvider`.
 
 * `ConfigureServices`: Registers a callback function for configuring the
   `IServiceCollection` used by the `TracerProviderBuilder`. **Note**
@@ -480,9 +485,6 @@ shutdown.
   primarily by library authors. Services may NOT be added to the
   `IServiceCollection` during `ConfigureBuilder` because the `IServiceProvider`
   has already been created.
-
-* `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
-  for the `TracerProvider`.
 
 ### Guidance for library authors
 
