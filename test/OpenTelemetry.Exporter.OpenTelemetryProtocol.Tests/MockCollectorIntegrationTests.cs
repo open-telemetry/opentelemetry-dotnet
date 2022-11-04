@@ -18,11 +18,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
@@ -39,8 +39,12 @@ public sealed class MockCollectorIntegrationTests
     public async Task TestRecoveryAfterFailedExport()
     {
         using var host = await new HostBuilder()
-           .ConfigureWebHost(webBuilder => webBuilder
-               .UseTestServer()
+           .ConfigureWebHostDefaults(webBuilder => webBuilder
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenLocalhost(5050, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                })
                .ConfigureServices(services =>
                {
                    services.AddSingleton(new MockCollectorState());
@@ -65,13 +69,13 @@ public sealed class MockCollectorIntegrationTests
                 }))
            .StartAsync();
 
-        var httpClient = host.GetTestClient();
+        var httpClient = new HttpClient() { BaseAddress = new System.Uri("http://localhost:5050") }; // host.GetTestClient();
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
         await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
 
         var exportResults = new List<ExportResult>();
-        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { HttpClientFactory = () => httpClient });
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new System.Uri("http://localhost:4317") });
         var delegatingExporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = (batch) =>
