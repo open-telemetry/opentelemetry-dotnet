@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
@@ -31,11 +32,12 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
   DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
 
 
-|                                   Method |        ViewConfig |     Mean |   Error |  StdDev | Allocated |
-|----------------------------------------- |------------------ |---------:|--------:|--------:|----------:|
-| CounterMeasurementRecordingWithThreeTags |            NoView | 188.1 ns | 1.73 ns | 1.54 ns |         - |
-| CounterMeasurementRecordingWithThreeTags | ViewNoInstrSelect | 193.3 ns | 0.66 ns | 0.61 ns |         - |
-| CounterMeasurementRecordingWithThreeTags |  ViewSelectsInstr | 271.3 ns | 2.18 ns | 1.94 ns |         - |
+|         Method |           ViewConfig |     Mean |   Error |  StdDev | Allocated |
+|--------------- |--------------------- |---------:|--------:|--------:|----------:|
+| CounterHotPath |               NoView | 290.1 ns | 2.49 ns | 2.08 ns |         - |
+| CounterHotPath |    ViewNoInstrSelect | 294.1 ns | 1.64 ns | 1.45 ns |         - |
+| CounterHotPath |     ViewSelectsInstr | 306.5 ns | 3.56 ns | 3.15 ns |         - |
+| CounterHotPath | ViewS(...)names [26] | 301.1 ns | 2.13 ns | 1.89 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -65,15 +67,23 @@ namespace Benchmarks.Metrics
             ViewNoInstrSelect,
 
             /// <summary>
-            /// Provider has view registered and it does select the instrument.
+            /// Provider has view registered and it does select the instrument
+            /// and keeps the subset of tags.
             /// </summary>
             ViewSelectsInstr,
+
+            /// <summary>
+            /// Provider has view registered and it does select the instrument
+            /// and renames.
+            /// </summary>
+            ViewSelectsInstrAndRenames,
         }
 
         [Params(
             ViewConfiguration.NoView,
             ViewConfiguration.ViewNoInstrSelect,
-            ViewConfiguration.ViewSelectsInstr)]
+            ViewConfiguration.ViewSelectsInstr,
+            ViewConfiguration.ViewSelectsInstrAndRenames)]
         public ViewConfiguration ViewConfig { get; set; }
 
         [GlobalSetup]
@@ -106,6 +116,14 @@ namespace Benchmarks.Metrics
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
+            else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstrAndRenames)
+            {
+                this.provider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(this.meter.Name)
+                    .AddView(this.counter.Name, "newname")
+                    .AddInMemoryExporter(this.metrics)
+                    .Build();
+            }
         }
 
         [GlobalCleanup]
@@ -116,14 +134,21 @@ namespace Benchmarks.Metrics
         }
 
         [Benchmark]
-        public void CounterMeasurementRecordingWithThreeTags()
+        public void CounterHotPath()
         {
             var random = ThreadLocalRandom.Value;
+            var tags = new TagList
+            {
+                { "DimName1", DimensionValues[random.Next(0, 2)] },
+                { "DimName2", DimensionValues[random.Next(0, 2)] },
+                { "DimName3", DimensionValues[random.Next(0, 5)] },
+                { "DimName4", DimensionValues[random.Next(0, 5)] },
+                { "DimName5", DimensionValues[random.Next(0, 10)] },
+            };
+
             this.counter?.Add(
                 100,
-                new KeyValuePair<string, object>("DimName1", DimensionValues[random.Next(0, DimensionsValuesLength)]),
-                new KeyValuePair<string, object>("DimName2", DimensionValues[random.Next(0, DimensionsValuesLength)]),
-                new KeyValuePair<string, object>("DimName3", DimensionValues[random.Next(0, DimensionsValuesLength)]));
+                tags);
         }
     }
 }
