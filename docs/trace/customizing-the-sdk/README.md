@@ -240,8 +240,8 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-To make exporter registration easier an `AddExporter` extension is also
-provided. The snippet below shows how to add an export processor using
+To make exporter registration easier an `AddExporter` extension is also provided
+(as of 1.4.0). The snippet below shows how to add an export processor using
  `AddExporter` to the provider before it is built.
 
  ```csharp
@@ -359,10 +359,143 @@ using OpenTelemetry;
 Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 ```
 
-## Dependency Injection Support
+## Dependency injection support
+
+### Overview
+
+**Note** This information applies to the OpenTelemetry SDK version 1.4.0 and
+newer only.
+
+The SDK implementation of `TracerProviderBuilder` is backed by an
+`IServiceCollection` and supports a wide range of APIs to enable what is
+generally known as [dependency
+injection](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection).
+
+For the below examples imagine an exporter with this constructor:
+
+```csharp
+    public class MyCustomExporter : BaseExporter<Activity>
+    {
+        public MyCustomExporter(
+            ILogger<MyCustomExporter> logger,
+            MyCustomService myCustomService)
+        {
+            // Implementation not important
+        }
+    }
+```
+
+We want to inject the `ILogger<MyCustomExporter>` and `MyCustomService`
+dependencies into our `MyCustomExporter` instance.
+
+#### Using Sdk.CreateTracerProviderBuilder()
+
+To register `MyCustomExporter` and `MyCustomService` we can use the
+`ConfigureServices` and `AddExporter` methods:
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureServices(services =>
+    {
+        services.AddLogging();
+        services.AddSingleton<MyCustomService>();
+    })
+    .AddExporter<MyCustomExporter>(ExportProcessorType.Batch)
+    .Build();
+```
+
+When using the `Sdk.CreateTracerProviderBuilder` method the `TracerProvider`
+owns its own `IServiceCollection`. It will only be able to see services
+registered into that collection.
+
+#### Using the [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md) package
+
+**Note** If you are authoring an ASP.NET Core application or using the [.NET
+Generic Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
+this is the recommended mechanism.
+
+```csharp
+builder.Services.AddSingleton<MyCustomService>();
+
+builder.Services.AddOpenTelemetryTracing(builder => builder
+    .AddExporter<MyCustomExporter>(ExportProcessorType.Batch));
+```
+
+When using the `AddOpenTelemetryTracing` method the `TracerProvider` does not
+own its `IServiceCollection` and instead registers into an existing collection.
+It will be able to access all services registered into that collection.
+Typically the collection used is the one managed by the application host.
+
+**Note** Multiple calls to `AddOpenTelemetryTracing` will configure the same
+`TracerProvider`. Only a single `TraceProvider` may exist in an
+`IServiceCollection` \ `IServiceProvider`.
+
+#### Using an external `IServiceCollection`
+
+To configure tracing in an external `IServiceCollection` use the
+`ConfigureOpenTelemetryTracing` extension:
+
+```csharp
+var services = new ServiceCollection();
+
+services.AddLogging();
+services.AddSingleton<MyCustomService>();
+
+services.ConfigureOpenTelemetryTracing(builder => builder
+    .AddExporter<MyCustomExporter>(ExportProcessorType.Batch));
+
+using var serviceProvider = services.BuildServiceProvider();
+
+var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+```
+
+**Note** Multiple calls to `ConfigureOpenTelemetryTracing` will configure the
+same `TracerProvider`. Only a single `TraceProvider` may exist in an
+`IServiceCollection` \ `IServiceProvider`.
+
+### Dependency injection `TracerProviderBuilder` extension methods
+
+* `AddExporter<T>`: Adds an export processor for the type `T` (must derive from
+  `BaseExporter<Activity>`) into the `TracerProvider`.
+
+* `AddInstrumentation<T>`: Adds instrumentation of type `T` into the
+  `TracerProvider`.
+
+* `AddProcessor<T>`: Adds a processor of type `T` (must derive from
+  `BaseProcessor<Activity>`) into the `TracerProvider`.
+
+* `ConfigureServices`: Registers a callback function for configuring the
+  `IServiceCollection` used by the `TracerProviderBuilder`. **Note**
+  `ConfigureServices` may only be called before the `IServiceProvider` has been
+  created after which point service can no longer be added.
+
+* `ConfigureBuilder`: Registers a callback function for configuring the
+  `TracerProviderBuilder` once the `IServiceProvider` is available.
+
+  ```csharp
+      builder.Services.AddOpenTelemetryTracing(builder => builder
+        .ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddProcessor(
+                new MyCustomProcessor(
+                    // Note: This example uses the final IServiceProvider once it is available.
+                    sp.GetRequiredService<MyCustomService>(),
+                    sp.GetRequiredService<IOptions<MyOptions>>().Value));
+        }));
+  ```
+
+  **Note** `ConfigureBuilder` is an advanced API and is expected to be used
+  primarily by library authors. Services may NOT be added to the
+  `IServiceCollection` during `ConfigureBuilder` because the `IServiceProvider`
+  has already been created.
+
+* `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
+  for the `TracerProvider`.
+
+### Guidance for library authors
 
 // TODO: Add details here
 
-## Configuration files and Environment Variables
+## Configuration files and environment variables
 
 // TODO: Add details here
