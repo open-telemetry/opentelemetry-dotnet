@@ -14,14 +14,6 @@ services:
       - "4317:4317"
       - "4318:4318"
 
-  mock-otel-collector:
-    build:
-      context: .
-      dockerfile: ./test/MockOpenTelemetryCollector/Dockerfile
-    ports:
-      - "4317"
-      - "8080"
-
   tests:
     build:
       context: .
