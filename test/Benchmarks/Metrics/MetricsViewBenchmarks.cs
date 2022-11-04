@@ -32,12 +32,13 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
   DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
 
 
-|         Method |           ViewConfig |     Mean |   Error |  StdDev | Allocated |
-|--------------- |--------------------- |---------:|--------:|--------:|----------:|
-| CounterHotPath |               NoView | 290.1 ns | 2.49 ns | 2.08 ns |         - |
-| CounterHotPath |    ViewNoInstrSelect | 294.1 ns | 1.64 ns | 1.45 ns |         - |
-| CounterHotPath |     ViewSelectsInstr | 306.5 ns | 3.56 ns | 3.15 ns |         - |
-| CounterHotPath | ViewS(...)names [26] | 301.1 ns | 2.13 ns | 1.89 ns |         - |
+|         Method |   ViewConfig |     Mean |   Error |   StdDev |   Median | Allocated |
+|--------------- |------------- |---------:|--------:|---------:|---------:|----------:|
+| CounterHotPath |       NoView | 289.3 ns | 5.80 ns |  9.20 ns | 285.0 ns |         - |
+| CounterHotPath |       ViewNA | 295.7 ns | 5.91 ns | 11.38 ns | 289.6 ns |         - |
+| CounterHotPath |  ViewApplied | 298.7 ns | 2.54 ns |  2.12 ns | 298.6 ns |         - |
+| CounterHotPath | ViewToRename | 294.7 ns | 2.15 ns |  1.80 ns | 294.5 ns |         - |
+| CounterHotPath |  ViewZeroTag | 112.4 ns | 1.83 ns |  1.96 ns | 111.5 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -64,26 +65,33 @@ namespace Benchmarks.Metrics
             /// This tests the perf impact View has on hot path, for those
             /// instruments not participating in View feature.
             /// </summary>
-            ViewNoInstrSelect,
+            ViewNA,
 
             /// <summary>
             /// Provider has view registered and it does select the instrument
             /// and keeps the subset of tags.
             /// </summary>
-            ViewSelectsInstr,
+            ViewApplied,
 
             /// <summary>
             /// Provider has view registered and it does select the instrument
             /// and renames.
             /// </summary>
-            ViewSelectsInstrAndRenames,
+            ViewToRename,
+
+            /// <summary>
+            /// Provider has view registered and it does select the instrument
+            /// and drops every tag.
+            /// </summary>
+            ViewZeroTag,
         }
 
         [Params(
             ViewConfiguration.NoView,
-            ViewConfiguration.ViewNoInstrSelect,
-            ViewConfiguration.ViewSelectsInstr,
-            ViewConfiguration.ViewSelectsInstrAndRenames)]
+            ViewConfiguration.ViewNA,
+            ViewConfiguration.ViewApplied,
+            ViewConfiguration.ViewToRename,
+            ViewConfiguration.ViewZeroTag)]
         public ViewConfiguration ViewConfig { get; set; }
 
         [GlobalSetup]
@@ -100,7 +108,7 @@ namespace Benchmarks.Metrics
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewNoInstrSelect)
+            else if (this.ViewConfig == ViewConfiguration.ViewNA)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
@@ -108,7 +116,7 @@ namespace Benchmarks.Metrics
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
+            else if (this.ViewConfig == ViewConfiguration.ViewApplied)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
@@ -116,11 +124,19 @@ namespace Benchmarks.Metrics
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstrAndRenames)
+            else if (this.ViewConfig == ViewConfiguration.ViewToRename)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView(this.counter.Name, "newname")
+                    .AddInMemoryExporter(this.metrics)
+                    .Build();
+            }
+            else if (this.ViewConfig == ViewConfiguration.ViewZeroTag)
+            {
+                this.provider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(this.meter.Name)
+                    .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() })
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
