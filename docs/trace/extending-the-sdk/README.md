@@ -15,7 +15,7 @@ Quick links:
 
 Library authors are encouraged to provide extension methods on the
 `TracerProviderBuilder` class for registering custom OpenTelemetry components.
-Targetting `TracerProviderBuilder` will allow users to discover extensions using
+Targeting `TracerProviderBuilder` will allow users to discover extensions using
 IDE helpers such as `IntelliSense` (in Visual Studio or Visual Studio Code)
 while configuring the builder(s) in their applications.
 
@@ -171,7 +171,7 @@ configure OpenTelemetry as well as register its services.
 This pattern may seem superior to the attached style above however the loss of
 discoverability is significant for many end users. This pattern is generally
 only recommended for enterprise platforms where separate libraries are plugging
-into a greater platform where a shared known telemetry library is guranteed to
+into a greater platform where a shared known telemetry library is guaranteed to
 start & stop the correct provider(s).
 
 **Note** `ConfigureOpenTelemetryTracing` does not automatically start
