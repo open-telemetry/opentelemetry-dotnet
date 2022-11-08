@@ -353,6 +353,14 @@ The following example shows how to register a custom exporter with options
 support.
 
 ```csharp
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MyLibrary;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 namespace OpenTelemetry.Trace
 {
     public static class MyLibraryTracerProviderBuilderRegistrationExtensions
