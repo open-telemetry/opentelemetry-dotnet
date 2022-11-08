@@ -5,6 +5,10 @@
 * Fix handling of `null` values for tags. Previously, when the tags contained
   a `null` value, the aggregated value would stay at `1` and never increase.
 
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
 * Fix instrument naming enforcement implementation to match the spec.
   ([#3821](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3821))
 

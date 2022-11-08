@@ -19,67 +19,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-#if !NETFRAMEWORK
 using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Extension methods to simplify registering of httpclient instrumentation.
+    /// Extension methods to simplify registering of HttpClient instrumentation.
     /// </summary>
     public static class TracerProviderBuilderExtensions
     {
-#if NETFRAMEWORK
-        /// <summary>
-        /// Enables HttpClient and HttpWebRequest instrumentation.
-        /// </summary>
-        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddHttpClientInstrumentation(this TracerProviderBuilder builder)
-            => AddHttpClientInstrumentation(builder, name: null, configureHttpWebRequestInstrumentationOptions: null);
-
-        /// <summary>
-        /// Enables HttpClient and HttpWebRequest instrumentation.
-        /// </summary>
-        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureHttpWebRequestInstrumentationOptions">Callback action for configuring <see cref="HttpWebRequestInstrumentationOptions"/>.</param>
-        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddHttpClientInstrumentation(
-            this TracerProviderBuilder builder,
-            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions)
-            => AddHttpClientInstrumentation(builder, name: null, configureHttpWebRequestInstrumentationOptions);
-
-        /// <summary>
-        /// Enables HttpClient and HttpWebRequest instrumentation.
-        /// </summary>
-        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="name">Name which is used when retrieving options.</param>
-        /// <param name="configureHttpWebRequestInstrumentationOptions">Callback action for configuring <see cref="HttpWebRequestInstrumentationOptions"/>.</param>
-        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddHttpClientInstrumentation(
-            this TracerProviderBuilder builder,
-            string name,
-            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions)
-        {
-            name ??= Options.DefaultName;
-
-            if (configureHttpWebRequestInstrumentationOptions != null)
-            {
-                builder.ConfigureServices(services => services.Configure(name, configureHttpWebRequestInstrumentationOptions));
-            }
-
-            return builder.ConfigureBuilder((sp, builder) =>
-            {
-                var options = sp.GetRequiredService<IOptionsMonitor<HttpWebRequestInstrumentationOptions>>().Get(name);
-
-                HttpWebRequestActivitySource.Options = options;
-
-                builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
-            });
-        }
-
-#else
         /// <summary>
         /// Enables HttpClient instrumentation.
         /// </summary>
@@ -124,10 +72,17 @@ namespace OpenTelemetry.Trace
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
 
+#if NETFRAMEWORK
+                HttpWebRequestActivitySource.Options = options;
+
+                builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
+#else
                 AddHttpClientInstrumentation(builder, new HttpClientInstrumentation(options));
+#endif
             });
         }
 
+#if !NETFRAMEWORK
         internal static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
             HttpClientInstrumentation instrumentation)
