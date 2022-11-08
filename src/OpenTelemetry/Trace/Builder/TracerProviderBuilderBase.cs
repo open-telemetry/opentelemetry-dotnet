@@ -126,10 +126,21 @@ namespace OpenTelemetry.Trace
         internal TracerProviderBuilder AddExporter<T>(ExportProcessorType exportProcessorType, string? name, Action<ExportActivityProcessorOptions>? configure)
             where T : BaseExporter<Activity>
         {
+            name ??= Options.DefaultName;
+
             this.TryAddSingleton<T>();
+
+            if (configure != null)
+            {
+                this.ConfigureServices(services =>
+                {
+                    services.Configure(name, configure);
+                });
+            }
+
             this.ConfigureState((sp, state)
                 => state.AddProcessor(
-                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, sp.GetRequiredService<T>(), name, configure)));
+                    BuildExportProcessor(exportProcessorType, sp.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name), sp.GetRequiredService<T>())));
 
             return this;
         }
@@ -138,9 +149,19 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(exporter);
 
+            name ??= Options.DefaultName;
+
+            if (configure != null)
+            {
+                this.ConfigureServices(services =>
+                {
+                    services.Configure(name, configure);
+                });
+            }
+
             this.ConfigureState((sp, state)
                 => state.AddProcessor(
-                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, exporter, name, configure)));
+                    BuildExportProcessor(exportProcessorType, sp.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name), exporter)));
 
             return this;
         }
@@ -278,26 +299,16 @@ namespace OpenTelemetry.Trace
         }
 
         private static BaseProcessor<Activity> BuildExportProcessor(
-            IServiceProvider serviceProvider,
             ExportProcessorType exportProcessorType,
-            BaseExporter<Activity> exporter,
-            string? name,
-            Action<ExportActivityProcessorOptions>? configure)
+            ExportActivityProcessorOptions processorOptions,
+            BaseExporter<Activity> exporter)
         {
-            name ??= Options.DefaultName;
-
             switch (exportProcessorType)
             {
                 case ExportProcessorType.Simple:
                     return new SimpleActivityExportProcessor(exporter);
                 case ExportProcessorType.Batch:
-                    var options = serviceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name);
-
-                    options.ExportProcessorType = ExportProcessorType.Batch;
-
-                    configure?.Invoke(options);
-
-                    var batchOptions = options.BatchExportProcessorOptions;
+                    var batchOptions = processorOptions.BatchExportProcessorOptions;
 
                     return new BatchActivityExportProcessor(
                         exporter,
