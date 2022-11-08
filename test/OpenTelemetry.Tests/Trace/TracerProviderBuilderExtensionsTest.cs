@@ -21,6 +21,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using Xunit;
 
@@ -319,17 +320,19 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void AddExporterWithOptionsTest()
         {
-            int optionsInvocations = 0;
+            int allOptionsInvocations = 0;
+            int exporter1Invocations = 0;
+            int exporter2Invocations = 0;
 
             var builder = Sdk.CreateTracerProviderBuilder();
 
             builder.ConfigureServices(services =>
             {
-                services.Configure<ExportActivityProcessorOptions>(options =>
+                services.ConfigureAll<ExportActivityProcessorOptions>(options =>
                 {
-                    // Note: This is testing options integration
+                    // Note: This fires for exporter1 & exporter2.
 
-                    optionsInvocations++;
+                    allOptionsInvocations++;
 
                     options.BatchExportProcessorOptions.MaxExportBatchSize = 18;
                 });
@@ -338,18 +341,29 @@ namespace OpenTelemetry.Trace.Tests
             builder.AddExporter(
                 ExportProcessorType.Simple,
                 new MyExporter(),
+                "exporter1",
                 options =>
                 {
-                    // Note: Options delegate isn't invoked for simple processor type
-                    Assert.True(false);
+                    exporter1Invocations++;
+
+                    Assert.Equal(18, options.BatchExportProcessorOptions.MaxExportBatchSize);
+
+                    // Note: This will be ignored. Type can't be changed from what is passed to AddExporter.
+                    options.ExportProcessorType = ExportProcessorType.Batch;
+
+                    options.BatchExportProcessorOptions.MaxExportBatchSize = 19;
                 });
             builder.AddExporter<MyExporter>(
                 ExportProcessorType.Batch,
+                "exporter2",
                 options =>
                 {
-                    optionsInvocations++;
+                    exporter2Invocations++;
 
                     Assert.Equal(18, options.BatchExportProcessorOptions.MaxExportBatchSize);
+
+                    // Note: This will be ignored. Type can't be changed from what is passed to AddExporter.
+                    options.ExportProcessorType = ExportProcessorType.Simple;
 
                     options.BatchExportProcessorOptions.MaxExportBatchSize = 100;
                 });
@@ -358,7 +372,21 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotNull(provider);
 
-            Assert.Equal(2, optionsInvocations);
+            var unknownOptions = provider.ServiceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get("unknownExporter");
+
+            Assert.Equal(18, unknownOptions.BatchExportProcessorOptions.MaxExportBatchSize);
+
+            var exporter1Options = provider.ServiceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get("exporter1");
+
+            Assert.Equal(19, exporter1Options.BatchExportProcessorOptions.MaxExportBatchSize);
+
+            var exporter2Options = provider.ServiceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get("exporter2");
+
+            Assert.Equal(100, exporter2Options.BatchExportProcessorOptions.MaxExportBatchSize);
+
+            Assert.Equal(3, allOptionsInvocations);
+            Assert.Equal(1, exporter1Invocations);
+            Assert.Equal(1, exporter2Invocations);
 
             var processor = provider.Processor as CompositeProcessor<Activity>;
 
