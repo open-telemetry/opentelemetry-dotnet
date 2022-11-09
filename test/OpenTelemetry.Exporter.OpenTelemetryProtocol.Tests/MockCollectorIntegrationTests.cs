@@ -71,7 +71,7 @@ public sealed class MockCollectorIntegrationTests
 
         var httpClient = new HttpClient() { BaseAddress = new System.Uri("http://localhost:5050") };
 
-        var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
+        var codes = new[] { Grpc.Core.StatusCode.Unimplemented };
         await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
 
         var exportResults = new List<ExportResult>();
@@ -110,25 +110,25 @@ public sealed class MockCollectorIntegrationTests
 
     [Theory]
     [InlineData(1, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Cancelled })]
-    [InlineData(1, ExportResult.Success, new[] { Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.DeadlineExceeded, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.ResourceExhausted, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Aborted, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.OutOfRange, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Unavailable, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.DataLoss, Grpc.Core.StatusCode.OK })]
+    [InlineData(1, ExportResult.Success, new Grpc.Core.StatusCode[] { })]
+    [InlineData(2, ExportResult.Success, new Grpc.Core.StatusCode[] { })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Cancelled })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.DeadlineExceeded })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.ResourceExhausted })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Aborted })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.OutOfRange })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Unavailable })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.DataLoss })]
     [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.Cancelled })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unknown, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.InvalidArgument, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.NotFound, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.AlreadyExists, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.PermissionDenied, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.FailedPrecondition, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Internal, Grpc.Core.StatusCode.OK })]
-    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unauthenticated, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unknown })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.InvalidArgument })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.NotFound })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.AlreadyExists })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.PermissionDenied })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.FailedPrecondition })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unimplemented })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Internal })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unauthenticated })]
 
     public async Task TestOtlpExporterRetry(int maxAttempts, ExportResult result, Grpc.Core.StatusCode[] codes)
     {
