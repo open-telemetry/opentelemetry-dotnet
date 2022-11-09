@@ -70,8 +70,10 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
-See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
-more exporters.
+See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) and
+[OpenTelemetry .NET Contrib
+repo](https://github.com/open-telemetry/opentelemetry-dotnet-contrib) for more
+components.
 
 ## Extensibility
 
