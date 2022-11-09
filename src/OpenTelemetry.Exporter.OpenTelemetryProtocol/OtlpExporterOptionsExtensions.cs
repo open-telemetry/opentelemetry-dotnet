@@ -21,6 +21,7 @@ using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
+using Grpc.Net.Client.Configuration;
 #endif
 using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -42,7 +43,40 @@ namespace OpenTelemetry.Exporter
             }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-            return GrpcChannel.ForAddress(options.Endpoint);
+            if (options.RetryMaxAttempts <= 1) {
+                return GrpcChannel.ForAddress(options.Endpoint);
+            }
+
+            var retryPolicy = new RetryPolicy
+            {
+                MaxAttempts = options.RetryMaxAttempts,
+                InitialBackoff = options.RetryInitialBackoff,
+                MaxBackoff = options.RetryMaxBackoff,
+                BackoffMultiplier = options.RetryBackoffMultiplier,
+   
+                RetryableStatusCodes =
+                {
+                    StatusCode.Cancelled,
+                    StatusCode.DeadlineExceeded,
+                    StatusCode.ResourceExhausted, // TODO: Investigate this one.
+                    StatusCode.Aborted,
+                    StatusCode.OutOfRange,
+                    StatusCode.Unavailable,
+                    StatusCode.DataLoss,
+                },
+            };
+
+            var methodConfig = new MethodConfig
+            {
+                Names = { MethodName.Default },
+                RetryPolicy = retryPolicy,
+            };
+
+            var serviceConfig = new ServiceConfig { MethodConfigs = { methodConfig } };
+
+            var channelOptions = new GrpcChannelOptions { ServiceConfig = serviceConfig };
+
+            return GrpcChannel.ForAddress(options.Endpoint, channelOptions);
 #else
             ChannelCredentials channelCredentials;
             if (options.Endpoint.Scheme == Uri.UriSchemeHttps)

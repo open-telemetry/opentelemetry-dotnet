@@ -108,6 +108,97 @@ public sealed class MockCollectorIntegrationTests
         await host.StopAsync().ConfigureAwait(false);
     }
 
+    [Theory]
+    [InlineData(1, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Cancelled })]
+    [InlineData(1, ExportResult.Success, new[] { Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.DeadlineExceeded, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.ResourceExhausted, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Aborted, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.OutOfRange, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.Unavailable, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Success, new[] { Grpc.Core.StatusCode.DataLoss, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.Cancelled })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unknown, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.InvalidArgument, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.NotFound, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.AlreadyExists, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.PermissionDenied, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.FailedPrecondition, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Internal, Grpc.Core.StatusCode.OK })]
+    [InlineData(2, ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unauthenticated, Grpc.Core.StatusCode.OK })]
+
+    public async Task TestOtlpExporterRetry(int maxAttempts, ExportResult result, Grpc.Core.StatusCode[] codes)
+    {
+        using var host = await new HostBuilder()
+           .ConfigureWebHostDefaults(webBuilder => webBuilder
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenLocalhost(5050, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                })
+               .ConfigureServices(services =>
+               {
+                   services.AddSingleton(new MockCollectorState());
+                   services.AddGrpc();
+               })
+               .Configure(app =>
+               {
+                   app.UseRouting();
+
+                   app.UseEndpoints(endpoints =>
+                   {
+                       endpoints.MapGet(
+                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                           (MockCollectorState collectorState, string responseCodesCsv) =>
+                           {
+                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x)).ToArray();
+                               collectorState.SetStatusCodes(codes);
+                           });
+
+                       endpoints.MapGrpcService<MockTraceService>();
+                   });
+               }))
+           .StartAsync();
+
+        var httpClient = new HttpClient() { BaseAddress = new System.Uri("http://localhost:5050") };
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+
+        var exportResults = new List<ExportResult>();
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions()
+        {
+            Endpoint = new System.Uri("http://localhost:4317"),
+            RetryMaxAttempts = maxAttempts,
+        });
+        var delegatingExporter = new DelegatingExporter<Activity>
+        {
+            OnExportFunc = (batch) =>
+            {
+                var result = otlpExporter.Export(batch);
+                exportResults.Add(result);
+                return result;
+            },
+        };
+
+        var activitySourceName = "otel.mock.collector.test";
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .AddProcessor(new SimpleActivityExportProcessor(delegatingExporter))
+            .Build();
+
+        using var source = new ActivitySource(activitySourceName);
+
+        source.StartActivity().Stop();
+
+        Assert.Single(exportResults);
+        Assert.Equal(result, exportResults[0]);
+
+        await host.StopAsync().ConfigureAwait(false);
+    }
+
     private class MockCollectorState
     {
         private Grpc.Core.StatusCode[] statusCodes = { };

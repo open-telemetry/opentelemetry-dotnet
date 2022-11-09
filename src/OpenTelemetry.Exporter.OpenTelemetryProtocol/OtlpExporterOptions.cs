@@ -180,6 +180,35 @@ namespace OpenTelemetry.Exporter
         public Func<HttpClient> HttpClientFactory { get; set; }
 
         /// <summary>
+        /// Gets or sets the maximum number of call attempts. This value
+        /// includes the original attempt. Used to set
+        /// <c>Grpc.Net.Client.Configuration.RetryPolicy.MaxAttempts</c>.
+        /// </summary>
+        /// <remarks>
+        /// Setting this value to less than 2 will disable retry attempts.
+        /// </remarks>
+        public int RetryMaxAttempts { get; set; } = 5;
+
+        /// <summary>
+        /// Gets or sets the initial backoff. Used to set
+        /// <c>Grpc.Net.Client.Configuration.RetryPolicy.InitialBackoff</c>.
+        /// </summary>
+        public TimeSpan RetryInitialBackoff { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Gets or sets the maximum backoff. Used to set
+        /// <c>Grpc.Net.Client.Configuration.RetryPolicy.MaxBackoff</c>.
+        /// </summary>
+        public TimeSpan RetryMaxBackoff { get; set; } = TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// Gets or sets the backoff multiplier. The backoff will be multiplied
+        /// by <c>RetryBackoffMultiplier</c> after each retry attempt. Used to
+        /// set <c>Grpc.Net.Client.Configuration.RetryPolicy.BackoffMultiplier</c>.
+        /// </summary>
+        public double RetryBackoffMultiplier { get; set; } = 1.5;
+
+        /// <summary>
         /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
         /// </summary>
         internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
