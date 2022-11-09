@@ -8,14 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.1" />
 
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />

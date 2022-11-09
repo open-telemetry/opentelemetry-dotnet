@@ -39,9 +39,6 @@ namespace OpenTelemetry.Exporter
                 options.Endpoint,
                 new GrpcChannelOptions
                 {
-#if NET462_OR_GREATER
-                    HttpHandler = new WinHttpHandler(),
-#endif
                     HttpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null."),
                     DisposeHttpClient = true,
                 });
