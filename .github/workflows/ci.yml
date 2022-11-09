@@ -1,4 +1,4 @@
-name: Windows
+name: Build
 
 on:
   push:
@@ -12,12 +12,15 @@ on:
 
 jobs:
   build-test:
-    runs-on: windows-latest
-
     strategy:
       matrix:
-        version: [net462,net6.0,net7.0]
+        os: [ windows-latest, ubuntu-latest ]
+        version: [ net462, net6.0, net7.0 ]
+        exclude:
+        - os: ubuntu-latest
+          version: net462
 
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -34,4 +37,4 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
-      run: dotnet test **\bin\**\${{ matrix.version }}\*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
+      run: dotnet test **/bin/**/${{ matrix.version }}/*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
