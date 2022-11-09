@@ -8,7 +8,7 @@
   ([3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
 
 * Add ability to retry failed exports to the gRPC version of the exporter.
-  ([#xxx](https://github.com/open-telemetry/opentelemetry-dotnet/pull/xxx))
+  ([#3883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3883))
 
 ## 1.4.0-beta.2
 
