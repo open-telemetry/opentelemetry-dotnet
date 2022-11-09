@@ -7,6 +7,9 @@
   scopes.
   ([3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
 
+* Add ability to retry failed exports to the gRPC version of the exporter.
+  ([#xxx](https://github.com/open-telemetry/opentelemetry-dotnet/pull/xxx))
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17
