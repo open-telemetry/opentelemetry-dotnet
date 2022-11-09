@@ -201,22 +201,25 @@ namespace OpenTelemetry.Metrics
                             return -1;
                         }
 
-                        // Note: We are using storage from ThreadStatic for both the input order of tags and the sorted order of tags,
+                        // Note: We are using storage from ThreadStatic (for upto MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
                         // so we need to make a deep copy for Dictionary storage.
-                        var givenKeys = new string[length];
-                        tagKeys.CopyTo(givenKeys, 0);
+                        if (length <= ThreadStaticStorage.MaxTagCacheSize)
+                        {
+                            var givenKeys = new string[length];
+                            tagKeys.CopyTo(givenKeys, 0);
 
-                        var givenValues = new object[length];
-                        tagValues.CopyTo(givenValues, 0);
+                            var givenValues = new object[length];
+                            tagValues.CopyTo(givenValues, 0);
 
-                        var sortedTagKeys = new string[length];
-                        tempSortedTagKeys.CopyTo(sortedTagKeys, 0);
+                            var sortedTagKeys = new string[length];
+                            tempSortedTagKeys.CopyTo(sortedTagKeys, 0);
 
-                        var sortedTagValues = new object[length];
-                        tempSortedTagValues.CopyTo(sortedTagValues, 0);
+                            var sortedTagValues = new object[length];
+                            tempSortedTagValues.CopyTo(sortedTagValues, 0);
 
-                        givenTags = new Tags(givenKeys, givenValues);
-                        sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                            givenTags = new Tags(givenKeys, givenValues);
+                            sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                        }
 
                         lock (this.tagsToMetricPointIndexDictionary)
                         {
@@ -249,15 +252,7 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    var givenKeys = new string[length];
-                    var givenValues = new object[length];
-
-                    tagKeys.CopyTo(givenKeys, 0);
-                    tagValues.CopyTo(givenValues, 0);
-
-                    givenTags = new Tags(givenKeys, givenValues);
-
+                    // This else block is for tag length = 1
                     aggregatorIndex = this.metricPointIndex;
                     if (aggregatorIndex >= this.maxMetricPoints)
                     {
@@ -267,6 +262,15 @@ namespace OpenTelemetry.Metrics
                         // we can re-claim them here.
                         return -1;
                     }
+
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                    var givenKeys = new string[length];
+                    var givenValues = new object[length];
+
+                    tagKeys.CopyTo(givenKeys, 0);
+                    tagValues.CopyTo(givenValues, 0);
+
+                    givenTags = new Tags(givenKeys, givenValues);
 
                     lock (this.tagsToMetricPointIndexDictionary)
                     {

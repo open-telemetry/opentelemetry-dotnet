@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
 * Added back `netstandard2.0` target.
   ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
 
@@ -24,6 +28,12 @@
 * Fixed an issue which prevented custom propagators from being called on .NET 7+
   runtimes for non-sampled outgoing `HttpClient` spans.
   ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
+
+* **Breaking change**: The same API is now exposed for `net462` and
+  `netstandard2.0` targets. The `Filter` property on options is now exposed as
+  `FilterHttpRequestMessage` (called for .NET & .NET Core) and
+  `FilterHttpWebRequest` (called for .NET Framework).
+  ([#3793](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3793))
 
 ## 1.0.0-rc9.8
 

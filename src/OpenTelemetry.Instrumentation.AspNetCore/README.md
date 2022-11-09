@@ -31,7 +31,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package OpenTelemetry.Instrumentation.AspNetCore
+dotnet add package --prerelease OpenTelemetry.Instrumentation.AspNetCore
 ```
 
 ### Step 2: Enable ASP.NET Core Instrumentation at application startup
