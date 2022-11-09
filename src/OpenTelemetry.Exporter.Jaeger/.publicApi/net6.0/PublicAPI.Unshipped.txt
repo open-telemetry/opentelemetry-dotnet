@@ -1,0 +1,4 @@
+*REMOVED*static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder

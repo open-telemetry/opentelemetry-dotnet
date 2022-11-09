@@ -16,7 +16,6 @@
 
 using System;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -28,34 +27,52 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
         /// </summary>
+        /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-        public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<OtlpExporterOptions> configure = null)
-        {
-            Guard.ThrowIfNull(loggerOptions);
+        public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
+            => AddOtlpExporter(loggerOptions, configure: null);
 
-            return AddOtlpExporter(loggerOptions, new OtlpExporterOptions(), configure);
-        }
+        /// <summary>
+        /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+        /// </summary>
+        /// <remarks>
+        /// Note: AddOtlpExporter automatically sets <see
+        /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> to <see
+        /// langword="true"/>.
+        /// </remarks>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddOtlpExporter(
+            this OpenTelemetryLoggerOptions loggerOptions,
+            Action<OtlpExporterOptions> configure)
+            => AddOtlpExporter(loggerOptions, new(), configure);
 
-        private static OpenTelemetryLoggerOptions AddOtlpExporter(OpenTelemetryLoggerOptions loggerOptions, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
+        private static OpenTelemetryLoggerOptions AddOtlpExporter(
+            OpenTelemetryLoggerOptions loggerOptions,
+            OtlpExporterOptions exporterOptions,
+            Action<OtlpExporterOptions> configure)
         {
             configure?.Invoke(exporterOptions);
+
             var otlpExporter = new OtlpLogExporter(exporterOptions);
             loggerOptions.ParseStateValues = true;
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
+                loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
             }
             else
             {
-                return loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+                loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
                     otlpExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
                     exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
                     exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
             }
+
+            return loggerOptions;
         }
     }
 }

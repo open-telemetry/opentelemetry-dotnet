@@ -49,8 +49,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         public override bool SupportsNullActivity => true;
 
-        public override void OnCustom(string name, Activity activity, object payload)
+        public override void OnEventWritten(string name, object payload)
         {
+            var activity = Activity.Current;
             switch (name)
             {
                 case SqlDataBeforeExecuteCommand:
@@ -79,6 +80,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                         if (activity.IsAllDataRequested)
                         {
+                            try
+                            {
+                                if (this.options.Filter?.Invoke(command) == false)
+                                {
+                                    SqlClientInstrumentationEventSource.Log.CommandIsFilteredOut(activity.OperationName);
+                                    activity.IsAllDataRequested = false;
+                                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.CommandFilterException(ex);
+                                activity.IsAllDataRequested = false;
+                                activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+                                return;
+                            }
+
                             _ = this.connectionFetcher.TryFetch(command, out var connection);
                             _ = this.databaseFetcher.TryFetch(connection, out var database);
 
@@ -145,17 +164,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        try
-                        {
-                            if (activity.IsAllDataRequested)
-                            {
-                                activity.SetStatus(Status.Unset);
-                            }
-                        }
-                        finally
-                        {
-                            activity.Stop();
-                        }
+                        activity.Stop();
                     }
 
                     break;
@@ -179,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             {
                                 if (this.exceptionFetcher.TryFetch(payload, out Exception exception) && exception != null)
                                 {
-                                    activity.SetStatus(Status.Error.WithDescription(exception.Message));
+                                    activity.SetStatus(ActivityStatusCode.Error, exception.Message);
 
                                     if (this.options.RecordException)
                                     {

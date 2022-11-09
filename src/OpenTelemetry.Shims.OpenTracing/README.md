@@ -13,7 +13,7 @@ OpenTracing Tracer providing a compatible shim on top of the OpenTelemetry API.
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Shims.OpenTracing
+dotnet add package --prerelease OpenTelemetry.Shims.OpenTracing
 ```
 
 See

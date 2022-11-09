@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
@@ -46,6 +46,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData("http://[::1]", false)]
         public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress, bool shouldEnrich = true)
         {
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
             var uri = new Uri($"{baseAddress}:1234");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
@@ -69,7 +72,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     {
                         if (shouldEnrich)
                         {
-                            options.Enrich = ActivityEnrichment;
+                            options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                            options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                         }
                     })
                     .AddProcessor(processor.Object)
@@ -115,9 +119,15 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
             Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
             Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+
+            if (shouldEnrich)
+            {
+                Assert.True(enrichWithHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
         }
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -125,7 +135,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
             var processor = new Mock<BaseProcessor<Activity>>();
-            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
+            {
+                c.SetTag("enrichedWithHttpRequestMessage", "no");
+                c.SetTag("enrichedWithHttpResponseMessage", "no");
+            });
+
             var parent = new Activity("parent")
                 .Start();
 
@@ -135,7 +150,15 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     {
                         if (shouldEnrich)
                         {
-                            options.Enrich = ActivityEnrichment;
+                            options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                            {
+                                activity.SetTag("enrichedWithHttpRequestMessage", "yes");
+                            };
+
+                            options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                            {
+                                activity.SetTag("enrichedWithHttpResponseMessage", "yes");
+                            };
                         }
                     })
                     .AddHttpClientInstrumentation()
@@ -163,14 +186,14 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal($"HTTP POST", httpSpan.DisplayName);
             Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
 
-            Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enriched"));
-            Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+            Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
+            Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation(bool shouldEnrich)
+        [Fact]
+        public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
             var processor = new Mock<BaseProcessor<Activity>>();
@@ -180,14 +203,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using (Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new AlwaysOnSampler())
-                    .AddGrpcClientInstrumentation(o =>
-                    {
-                        o.SuppressDownstreamInstrumentation = true;
-                        if (shouldEnrich)
-                        {
-                            o.Enrich = ActivityEnrichment;
-                        }
-                    })
+                    .AddGrpcClientInstrumentation(o => o.SuppressDownstreamInstrumentation = true)
                     .AddHttpClientInstrumentation()
                     .AddProcessor(processor.Object)
                     .Build())
@@ -261,17 +277,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddHttpClientInstrumentation()
                     .AddAspNetCoreInstrumentation(options =>
                     {
-                        options.Enrich = (activity, eventName, obj) =>
+                        options.EnrichWithHttpRequest = (activity, request) =>
                         {
-                            switch (eventName)
-                            {
-                                case "OnStartActivity":
-                                    var request = (HttpRequest)obj;
-                                    activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
-                                    break;
-                                default:
-                                    break;
-                            }
+                            activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
                         };
                     }) // Instrumenting the server side as well
                     .AddProcessor(processor.Object)
@@ -441,6 +449,27 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 #endif
 
         [Fact]
+        public void AddGrpcClientInstrumentationNamedOptionsSupported()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<GrpcClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<GrpcClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddGrpcClientInstrumentation()
+                .AddGrpcClientInstrumentation("Instrumentation2", configure: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
+        }
+
+        [Fact]
         public void Grpc_BadArgs()
         {
             TracerProviderBuilder builder = null;
@@ -452,26 +481,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(GrpcClientDiagnosticListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(GrpcClientDiagnosticListener.Version.ToString(), activityToValidate.Source.Version);
             Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            Assert.True(activity.IsAllDataRequested);
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequestMessage);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponseMessage);
-                    break;
-
-                default:
-                    break;
-            }
-
-            activity.SetTag("enriched", "yes");
         }
 
         private static Predicate<IInvocation> GeneratePredicateForMoqProcessorActivity(string methodName, string activityOperationName)

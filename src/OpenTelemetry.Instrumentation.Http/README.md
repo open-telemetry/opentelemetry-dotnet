@@ -20,7 +20,8 @@ These conventions are
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
 Until a [stable
 version](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/telemetry-stability.md)
-is released, there can be breaking changes. You can track the progress from
+is released, there can be [breaking changes](./CHANGELOG.md). You can track the
+progress from
 [milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).**
 
 ## Steps to enable OpenTelemetry.Instrumentation.Http
@@ -32,7 +33,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package OpenTelemetry.Instrumentation.Http
+dotnet add package --prerelease OpenTelemetry.Instrumentation.Http
 ```
 
 ### Step 2: Enable HTTP Instrumentation at application startup
@@ -72,62 +73,58 @@ For an ASP.NET application, adding instrumentation is typically done in the
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`HttpClientInstrumentationOptions` (.NET/.NET Core applications) or
-`HttpWebRequestInstrumentationOptions` (.NET Framework applications). It is
-important to note that even if `HttpClient` is used in .NET Framework
-applications, it underneath uses `HttpWebRequest`. Because of this,
-`HttpWebRequestInstrumentationOptions` is the configuration option for .NET
-Framework applications, irrespective of whether `HttpWebRequest` or `HttpClient`
-is used.
+`HttpClientInstrumentationOptions`. It is important to note that there are
+differences between .NET Framework and newer .NET/.NET Core runtimes which
+govern what options are used. On .NET Framework, `HttpClient` uses the
+`HttpWebRequest` API. On .NET & .NET Core, `HttpWebRequest` uses the
+`HttpClient` API. As such, depending on the runtime, only one half of the
+"filter" & "enrich" options are used.
 
-### Filter
+### .NET & .NET Core
+
+#### Filter HttpClient API
 
 This instrumentation by default collects all the outgoing HTTP requests. It
-allows filtering of requests by using the `Filter` function option. This defines
-the condition for allowable requests. The Filter receives the request object -
-`HttpRequestMessage` (when using `HttpClientInstrumentationOptions`) and
-`HttpWebRequest` (when using `HttpWebRequestInstrumentationOptions`) -
-representing the outgoing request and does not collect telemetry about the
-request if the Filter returns false or throws exception.
+allows filtering of requests by using the `FilterHttpRequestMessage` function
+option. This defines the condition for allowable requests. The filter function
+receives the request object (`HttpRequestMessage`) representing the outgoing
+request and does not collect telemetry about the request if the filter function
+returns `false` or throws an exception.
 
-The following code snippet shows how to use `Filter` to only allow GET requests.
+The following code snippet shows how to use `FilterHttpRequestMessage` to only
+allow GET requests.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddHttpClientInstrumentation(
-        (options) => options.Filter =
+        // Note: Only called on .NET & .NET Core runtimes.
+        (options) => options.FilterHttpRequestMessage =
             (httpRequestMessage) =>
             {
-                // only collect telemetry about HTTP GET requests
+                // Example: Only collect telemetry about HTTP GET requests.
                 return httpRequestMessage.Method.Equals(HttpMethod.Get);
             })
     .AddConsoleExporter()
     .Build();
 ```
 
-It is important to note that this `Filter` option is specific to this
-instrumentation. OpenTelemetry has a concept of a
+It is important to note that this `FilterHttpRequestMessage` option is specific
+to this instrumentation. OpenTelemetry has a concept of a
 [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
-and the `Filter` option does the filtering *after* the Sampler is invoked.
+and the `FilterHttpRequestMessage` option does the filtering *after* the Sampler
+is invoked.
 
-### Enrich
+#### Enrich HttpClient API
 
-This option allows one to enrich the activity with additional information from
-the raw request and response objects. The `Enrich` action is called only when
-`activity.IsAllDataRequested` is `true`. It contains the activity itself (which
-can be enriched), the name of the event, and the actual raw object. The object
-type is different for `HttpClientInstrumentationOptions` vs
-`HttpWebRequestInstrumentationOptions` and is detailed below.
+This instrumentation library provides options that can be used to
+enrich the activity with additional information. These actions are called
+only when `activity.IsAllDataRequested` is `true`. It contains the activity
+itself (which can be enriched) and the actual raw object.
 
-#### HttpClientInstrumentationOptions
-
-For event name "OnStartActivity", the actual object will be
-`HttpRequestMessage`.
-
-For event name "OnStopActivity", the actual object will be
-`HttpResponseMessage`.
-
-For event name "OnException", the actual object will be `Exception`.
+`HttpClientInstrumentationOptions` provides 3 enrich options:
+`EnrichWithHttpRequestMessage`, `EnrichWithHttpResponseMessage` and
+`EnrichWithException`. These are based on the raw object that is passed in to
+the action to enrich the activity.
 
 Example:
 
@@ -135,40 +132,72 @@ Example:
 using System.Net.Http;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddHttpClientInstrumentation((options) => options.Enrich
-    = (activity, eventName, rawObject) =>
+    .AddHttpClientInstrumentation((options) =>
     {
-        if (eventName.Equals("OnStartActivity"))
+        // Note: Only called on .NET & .NET Core runtimes.
+        options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
         {
-            if (rawObject is HttpRequestMessage request)
-            {
-                activity.SetTag("requestVersion", request.Version);
-            }
-        }
-        else if (eventName.Equals("OnStopActivity"))
+            activity.SetTag("requestVersion", httpRequestMessage.Version);
+        };
+        // Note: Only called on .NET & .NET Core runtimes.
+        options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
         {
-            if (rawObject is HttpResponseMessage response)
-            {
-                activity.SetTag("responseVersion", response.Version);
-            }
-        }
-        else if (eventName.Equals("OnException"))
+            activity.SetTag("responseVersion", httpResponseMessage.Version);
+        };
+        // Note: Called for all runtimes.
+        options.EnrichWithException = (activity, exception) =>
         {
-            if (rawObject is Exception exception)
-            {
-                activity.SetTag("stackTrace", exception.StackTrace);
-            }
-        }
-    }).Build();
+            activity.SetTag("stackTrace", exception.StackTrace);
+        };
+    })
+    .Build();
 ```
 
-#### HttpWebRequestInstrumentationOptions
+### .NET Framework
 
-For event name "OnStartActivity", the actual object will be `HttpWebRequest`.
+#### Filter HttpWebRequest API
 
-For event name "OnStopActivity", the actual object will be `HttpWebResponse`.
+This instrumentation by default collects all the outgoing HTTP requests. It
+allows filtering of requests by using the `FilterHttpWebRequest` function
+option. This defines the condition for allowable requests. The filter function
+receives the request object (`HttpWebRequest`) representing the outgoing request
+and does not collect telemetry about the request if the filter function returns
+`false` or throws an exception.
 
-For event name "OnException", the actual object will be `Exception`.
+The following code snippet shows how to use `FilterHttpWebRequest` to only allow
+GET requests.
+
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddHttpClientInstrumentation(
+        // Note: Only called on .NET Framework.
+        (options) => options.FilterHttpWebRequest =
+            (httpWebRequest) =>
+            {
+                // Example: Only collect telemetry about HTTP GET requests.
+                return httpWebRequest.Method.Equals(HttpMethod.Get.Method);
+            })
+    .AddConsoleExporter()
+    .Build();
+```
+
+It is important to note that this `FilterHttpWebRequest` option is specific to
+this instrumentation. OpenTelemetry has a concept of a
+[Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
+and the `FilterHttpWebRequest` option does the filtering *after* the Sampler is
+invoked.
+
+#### Enrich HttpWebRequest API
+
+This instrumentation library provides options that can be used to
+enrich the activity with additional information. These actions are called
+only when `activity.IsAllDataRequested` is `true`. It contains the activity
+itself (which can be enriched) and the actual raw object.
+
+`HttpClientInstrumentationOptions` provides 3 enrich options:
+`EnrichWithHttpWebRequest`, `EnrichWithHttpWebResponse` and
+`EnrichWithException`. These are based on the raw object that is passed in to
+the action to enrich the activity.
 
 Example:
 
@@ -176,31 +205,25 @@ Example:
 using System.Net;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddHttpClientInstrumentation((options) => options.Enrich
-    = (activity, eventName, rawObject) =>
+    .AddHttpClientInstrumentation((options) =>
     {
-        if (eventName.Equals("OnStartActivity"))
+        // Note: Only called on .NET Framework.
+        options.EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
         {
-            if (rawObject is HttpWebRequest request)
-            {
-                activity.SetTag("requestVersion", request.ProtocolVersion);
-            }
-        }
-        else if (eventName.Equals("OnStopActivity"))
+            activity.SetTag("requestVersion", httpWebRequest.Version);
+        };
+        // Note: Only called on .NET Framework.
+        options.EnrichWithHttpWebResponse = (activity, httpWebResponse) =>
         {
-            if (rawObject is HttpWebResponse response)
-            {
-                activity.SetTag("responseVersion", response.ProtocolVersion);
-            }
-        }
-        else if (eventName.Equals("OnException"))
+            activity.SetTag("responseVersion", httpWebResponse.Version);
+        };
+        // Note: Called for all runtimes.
+        options.EnrichWithException = (activity, exception) =>
         {
-            if (rawObject is Exception exception)
-            {
-                activity.SetTag("stackTrace", exception.StackTrace);
-            }
-        }
-    }).Build();
+            activity.SetTag("stackTrace", exception.StackTrace);
+        };
+    })
+    .Build();
 ```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor), is the

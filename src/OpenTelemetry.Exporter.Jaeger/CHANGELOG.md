@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
+* Bumped the minimum required version of `System.Text.Json` to 4.7.2 in response
+to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+([#3789](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3789))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+* Added support for loading environment variables from `IConfiguration` when
+  using the `AddJaegerExporter` extension
+  ([#3720](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3720))
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddJaegerExporter` extension to allow for more fine-grained options
+  management
+  ([#3656](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3656))
+
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
 ## 1.4.0-alpha.1
 
 Released 2022-Aug-02

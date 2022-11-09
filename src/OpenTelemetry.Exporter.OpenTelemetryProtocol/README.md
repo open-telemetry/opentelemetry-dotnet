@@ -77,13 +77,14 @@ supported environment variables.
 
 ## OTLP Logs
 
-This package currently only supports exporting traces and metrics. Once the
-[OTLP log data model](https://github.com/open-telemetry/opentelemetry-proto#maturity-level)
-is deemed stable, the OTLP log exporter will be folded into this package.
-
-In the meantime, support for exporting logs is provided by installing the
+This package currently only supports exporting traces and metrics. Support for
+exporting logs is provided by installing the
 [`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/README.md)
 package.
+
+Once the OTLP log exporter is stable, it'll be folded into this package. Check
+[this](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/35)
+milestone for tracking.
 
 ## Special case when using insecure channel
 
@@ -123,7 +124,7 @@ services.AddOpenTelemetryTracing((builder) => builder
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
-you may also customize the named "OtlpTraceExporter" or "OtlpMetricExporter"
+you may also customize the named "OtlpTraceExporter" and/or "OtlpMetricExporter"
 `HttpClient` using the built-in `AddHttpClient` extension:
 
 ```csharp

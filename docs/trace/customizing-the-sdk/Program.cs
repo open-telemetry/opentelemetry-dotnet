@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace CustomizingTheSdk;
@@ -36,7 +37,7 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
             // The following adds subscription to activities from Activity Source
             // named "MyCompany.MyProduct.MyLibrary" only.
@@ -45,6 +46,8 @@ public class Program
             // The following adds subscription to activities from all Activity Sources
             // whose name starts with "AbcCompany.XyzProduct.".
             .AddSource("AbcCompany.XyzProduct.*")
+            .ConfigureResource(resourceBuilder => resourceBuilder.AddTelemetrySdk())
+            .ConfigureResource(r => r.AddService("MyServiceName"))
             .AddConsoleExporter()
             .Build();
 
@@ -76,5 +79,7 @@ public class Program
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
         }
+
+        tracerProvider.Dispose();
     }
 }

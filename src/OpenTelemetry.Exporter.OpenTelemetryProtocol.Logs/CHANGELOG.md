@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* `OtlpExporterOptions` can now be bound to `IConfiguation` and
+  `HttpClientFactory` may be used to manage the `HttpClient` instance used when
+  `HttpProtobuf` is configured
+  ([#3640](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3640))
+
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
 ## 1.4.0-alpha.1
 
 Released 2022-Aug-02

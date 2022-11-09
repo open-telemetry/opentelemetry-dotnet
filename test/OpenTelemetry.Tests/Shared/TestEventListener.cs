@@ -26,8 +26,11 @@ namespace OpenTelemetry.Tests
     /// </summary>
     internal class TestEventListener : EventListener
     {
+        /// <summary>Unique Id used to identify events from the test thread.</summary>
+        private readonly Guid activityId;
+
         /// <summary>A queue of events that have been logged.</summary>
-        private readonly Queue<EventWrittenEventArgs> events;
+        private readonly List<EventWrittenEventArgs> events;
 
         /// <summary>
         /// Lock for event writing tracking.
@@ -39,11 +42,14 @@ namespace OpenTelemetry.Tests
         /// </summary>
         public TestEventListener()
         {
-            this.events = new Queue<EventWrittenEventArgs>();
+            this.activityId = Guid.NewGuid();
+            EventSource.SetCurrentThreadActivityId(this.activityId);
+
+            this.events = new List<EventWrittenEventArgs>();
             this.eventWritten = new AutoResetEvent(false);
             this.OnOnEventWritten = e =>
             {
-                this.events.Enqueue(e);
+                this.events.Add(e);
                 this.eventWritten.Set();
             };
         }
@@ -55,7 +61,7 @@ namespace OpenTelemetry.Tests
         public Action<EventWrittenEventArgs> OnOnEventWritten { get; set; }
 
         /// <summary>Gets the events that have been written.</summary>
-        public IEnumerable<EventWrittenEventArgs> Messages
+        public IList<EventWrittenEventArgs> Messages
         {
             get
             {
@@ -64,10 +70,7 @@ namespace OpenTelemetry.Tests
                     this.eventWritten.WaitOne(TimeSpan.FromSeconds(5));
                 }
 
-                while (this.events.Count != 0)
-                {
-                    yield return this.events.Dequeue();
-                }
+                return this.events;
             }
         }
 
@@ -83,7 +86,10 @@ namespace OpenTelemetry.Tests
         /// <param name="eventData">The event data that was written.</param>
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            this.OnOnEventWritten(eventData);
+            if (eventData.ActivityId == this.activityId)
+            {
+                this.OnOnEventWritten(eventData);
+            }
         }
 
         /// <summary>Handler for event source creation.</summary>

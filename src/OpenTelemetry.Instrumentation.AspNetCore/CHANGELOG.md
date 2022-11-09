@@ -2,8 +2,62 @@
 
 ## Unreleased
 
-* Updated to use Activity native support from `System.Diagnostics.DiagnosticSource`
-  to set activity status.
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
+* **Breaking change** The `Enrich` callback option has been removed.
+  For better usability, it has been replaced by three separate options:
+  `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.
+  Previously, the single `Enrich` callback required the consumer to detect
+  which event triggered the callback to be invoked (e.g., request start,
+  response end, or an exception) and then cast the object received to the
+  appropriate type: `HttpRequest`, `HttpResponse`, or `Exception`. The separate
+  callbacks make it clear what event triggers them and there is no longer the
+  need to cast the argument to the expected type.
+  ([#3749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3749))
+
+* Added back `netstandard2.0` and `netstandard2.1` targets.
+([#3755](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3755))
+
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
+* Performance improvement (Reduced memory allocation) - Updated DiagnosticSource
+event subscription to specific set of events.
+([#3519](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3519))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddAspNetCoreInstrumentation` extension to allow for more fine-grained
+  options management
+  ([#3661](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3661))
+
+* Fix issue where when an application has an ExceptionFilter, the exception data
+  wouldn't be collected.
+  ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
+
+## 1.0.0-rc9.6
+
+Released 2022-Aug-18
+
+* Removed `netstandard2.0` and `netstandard2.1` targets. .NET 5 reached EOL
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet). The
+  instrumentation for ASP.NET Core now requires .NET 6 or later.
+  ([#3567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
+
+* Fixed an issue where activity started within middleware was modified by
+  instrumentation library.
+  ([#3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
+
+* Updated to use Activity native support from
+  `System.Diagnostics.DiagnosticSource` to set activity status.
   ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
   ([#3555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3555))
 

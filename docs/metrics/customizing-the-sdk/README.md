@@ -204,7 +204,7 @@ with the metric are of interest to you.
         instrumentName: "MyFruitCounter",
         metricStreamConfiguration: new MetricStreamConfiguration
         {
-            TagKeys = new string[] { },
+            TagKeys = Array.Empty<string>(),
         })
 
     ...
@@ -235,8 +235,7 @@ with the metric are of interest to you.
 #### Specify custom boundaries for Histogram
 
 By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75,
-100, 250, 500,
-1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
+100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.14.0/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
 Views can be used to provide custom boundaries for a Histogram. The measurements
 are then aggregated using the custom boundaries provided instead of the the
 default boundaries. This requires the use of
@@ -256,7 +255,7 @@ default boundaries. This requires the use of
     // There are no buckets exported in this case.
     .AddView(
         instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
+        new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
 ```csharp
@@ -428,4 +427,37 @@ Refer to the individual exporter docs to learn how to use them:
 
 ### Resource
 
-// TODO
+[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+is the immutable representation of the entity producing the telemetry. If no
+`Resource` is explicitly configured, the
+[default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
+The `ConfigureResource` method on `MeterProviderBuilder` can be used to set a
+configure the resource on the provider. When the provider is built, it
+automatically builds the final `Resource` from the configured `ResourceBuilder`.
+There can only be a single `Resource` associated with a
+provider. It is not possible to change the resource builder *after* the provider
+is built, by calling the `Build()` method on the `MeterProviderBuilder`.
+`ResourceBuilder` offers various methods to construct resource comprising of
+multiple attributes from various sources.
+
+The snippet below shows configuring the `Resource` associated with the provider.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .ConfigureResource(r => r.AddService("MyServiceName"))
+    .Build();
+```
+
+It is also possible to configure the `Resource` by using following
+environmental variables:
+
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
+| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |

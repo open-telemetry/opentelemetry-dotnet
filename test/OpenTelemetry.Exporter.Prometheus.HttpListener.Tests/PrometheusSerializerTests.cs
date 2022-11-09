@@ -69,8 +69,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
                 ("^"
-                    + "# HELP test_gauge Hello, world!\n"
                     + "# TYPE test_gauge gauge\n"
+                    + "# HELP test_gauge Hello, world!\n"
                     + "test_gauge 123 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
@@ -96,6 +96,34 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE test_gauge_seconds gauge\n"
+                    + "# UNIT test_gauge_seconds seconds\n"
+                    + "test_gauge_seconds 123 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void GaugeZeroDimensionWithDescriptionAndUnit()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            meter.CreateObservableGauge("test_gauge", () => 123, unit: "seconds", description: "Hello, world!");
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_gauge_seconds gauge\n"
+                    + "# UNIT test_gauge_seconds seconds\n"
+                    + "# HELP test_gauge_seconds Hello, world!\n"
                     + "test_gauge_seconds 123 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
@@ -161,7 +189,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void SumDoubleInfinites()
+        public void SumDoubleInfinities()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -183,6 +211,33 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 ("^"
                     + "# TYPE test_counter counter\n"
                     + "test_counter \\+Inf \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void SumNonMonotonicDouble()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
+            counter.Add(10);
+            counter.Add(-11);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_updown_counter gauge\n"
+                    + "test_updown_counter -1 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
@@ -218,7 +273,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_bucket{le='100'} 2 \\d+\n"
                     + "test_histogram_bucket{le='250'} 2 \\d+\n"
                     + "test_histogram_bucket{le='500'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='750'} 2 \\d+\n"
                     + "test_histogram_bucket{le='1000'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='2500'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='5000'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='7500'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='10000'} 2 \\d+\n"
                     + "test_histogram_bucket{le='\\+Inf'} 2 \\d+\n"
                     + "test_histogram_sum 118 \\d+\n"
                     + "test_histogram_count 2 \\d+\n"
@@ -257,7 +317,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_bucket{x='1',le='100'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',le='250'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',le='500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='750'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',le='1000'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='2500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='5000'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='7500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='10000'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',le='\\+Inf'} 2 \\d+\n"
                     + "test_histogram_sum{x='1'} 118 \\d+\n"
                     + "test_histogram_count{x='1'} 2 \\d+\n"
@@ -296,7 +361,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_bucket{x='1',y='2',le='100'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',y='2',le='250'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',y='2',le='500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='750'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',y='2',le='1000'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='2500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='5000'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='7500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='10000'} 2 \\d+\n"
                     + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 2 \\d+\n"
                     + "test_histogram_sum{x='1',y='2'} 118 \\d+\n"
                     + "test_histogram_count{x='1',y='2'} 2 \\d+\n"
@@ -305,7 +375,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void HistogramInfinites()
+        public void HistogramInfinities()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -336,7 +406,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_bucket{le='100'} 1 \\d+\n"
                     + "test_histogram_bucket{le='250'} 1 \\d+\n"
                     + "test_histogram_bucket{le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='750'} 1 \\d+\n"
                     + "test_histogram_bucket{le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='2500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='5000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='7500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='10000'} 1 \\d+\n"
                     + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
                     + "test_histogram_sum \\+Inf \\d+\n"
                     + "test_histogram_count 3 \\d+\n"
@@ -376,7 +451,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_bucket{le='100'} 1 \\d+\n"
                     + "test_histogram_bucket{le='250'} 1 \\d+\n"
                     + "test_histogram_bucket{le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='750'} 1 \\d+\n"
                     + "test_histogram_bucket{le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='2500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='5000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='7500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='10000'} 1 \\d+\n"
                     + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
                     + "test_histogram_sum Nan \\d+\n"
                     + "test_histogram_count 3 \\d+\n"

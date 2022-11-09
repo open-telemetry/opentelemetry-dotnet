@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
@@ -21,13 +22,26 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// <summary>
     /// Asp.Net Core Requests instrumentation.
     /// </summary>
-    internal class AspNetCoreInstrumentation : IDisposable
+    internal sealed class AspNetCoreInstrumentation : IDisposable
     {
+        private static readonly HashSet<string> DiagnosticSourceEvents = new()
+        {
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn",
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
+            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
+            "Microsoft.AspNetCore.Mvc.BeforeAction",
+            "Microsoft.AspNetCore.Diagnostics.UnhandledException",
+            "Microsoft.AspNetCore.Hosting.UnhandledException",
+        };
+
+        private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
+            => DiagnosticSourceEvents.Contains(eventName);
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         public AspNetCoreInstrumentation(HttpInListener httpInListener)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

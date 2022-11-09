@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public sealed class Metric
     {
-        internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+        internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
 
         private readonly AggregatorStore aggStore;
 
@@ -34,7 +34,8 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
-            string[] tagKeysInteresting = null)
+            string[] tagKeysInteresting = null,
+            bool histogramRecordMinMax = true)
         {
             this.InstrumentIdentity = instrumentIdentity;
 
@@ -67,6 +68,34 @@ namespace OpenTelemetry.Metrics
                 aggType = AggregationType.DoubleSumIncomingCumulative;
                 this.MetricType = MetricType.DoubleSum;
             }
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<long>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<int>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<short>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<byte>))
+            {
+                aggType = AggregationType.LongSumIncomingCumulative;
+                this.MetricType = MetricType.LongSumNonMonotonic;
+            }
+            else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<long>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<int>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<short>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<byte>))
+            {
+                aggType = AggregationType.LongSumIncomingDelta;
+                this.MetricType = MetricType.LongSumNonMonotonic;
+            }
+            else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<double>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<float>))
+            {
+                aggType = AggregationType.DoubleSumIncomingDelta;
+                this.MetricType = MetricType.DoubleSumNonMonotonic;
+            }
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<double>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<float>))
+            {
+                aggType = AggregationType.DoubleSumIncomingCumulative;
+                this.MetricType = MetricType.DoubleSumNonMonotonic;
+            }
             else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<double>)
                 || instrumentIdentity.InstrumentType == typeof(ObservableGauge<float>))
             {
@@ -90,15 +119,9 @@ namespace OpenTelemetry.Metrics
             {
                 this.MetricType = MetricType.Histogram;
 
-                if (histogramBounds != null
-                    && histogramBounds.Length == 0)
-                {
-                    aggType = AggregationType.HistogramSumCount;
-                }
-                else
-                {
-                    aggType = AggregationType.Histogram;
-                }
+                aggType = histogramBounds != null && histogramBounds.Length == 0
+                    ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
+                    : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
             }
             else
             {

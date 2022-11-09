@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -33,6 +34,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     {
         private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
         private const int ExportIntervalMilliseconds = 10000;
+        private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
         private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
         private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
@@ -82,7 +84,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             OtlpTraceExporterHelperExtensions.AddOtlpExporter(
                 builder,
                 exporterOptions,
-                configure: null,
+                DefaultSdkLimitOptions,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
@@ -163,8 +165,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 builder,
                 exporterOptions,
                 readerOptions,
-                configureExporter: null,
-                configureExporterAndMetricReader: null,
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
@@ -33,7 +35,8 @@ namespace OpenTelemetry.Trace
             try
             {
                 var flags = BindingFlags.Static | BindingFlags.Public;
-                var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, new Type[] { }, null);
+                var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, Type.EmptyTypes, null)
+                    ?? throw new InvalidOperationException("Marshal.GetExceptionPointers method could not be resolved reflectively.");
                 var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
                 this.fnGetExceptionPointers = lambda.Compile();
             }

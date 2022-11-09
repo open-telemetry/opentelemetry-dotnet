@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Instrumentation-SqlClient")]
-    internal class SqlClientInstrumentationEventSource : EventSource
+    internal sealed class SqlClientInstrumentationEventSource : EventSource
     {
         public static SqlClientInstrumentationEventSource Log = new();
 
@@ -74,6 +74,27 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public void EnrichmentException(string exception)
         {
             this.WriteEvent(5, exception);
+        }
+
+        [Event(6, Message = "Command is filtered out. Activity {0}", Level = EventLevel.Verbose)]
+        public void CommandIsFilteredOut(string activityName)
+        {
+            this.WriteEvent(6, activityName);
+        }
+
+        [NonEvent]
+        public void CommandFilterException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.CommandFilterException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(7, Message = "Command filter threw exception. Command will not be collected. Exception {0}.", Level = EventLevel.Error)]
+        public void CommandFilterException(string exception)
+        {
+            this.WriteEvent(7, exception);
         }
     }
 }

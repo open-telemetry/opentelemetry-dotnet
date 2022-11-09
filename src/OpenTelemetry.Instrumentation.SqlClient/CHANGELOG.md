@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
+* Use `Activity.Status` and `Activity.StatusDescription` properties instead of
+  `OpenTelemetry.Trace.Status` and `OpenTelemetry.Trace.Status.Description`
+  respectively to set activity status.
+  ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
+  ([#3751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3751))
+* Add support for Filter option for non .NET Framework Targets
+  ([#3743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3743))
+
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
+## 1.0.0-rc9.6
+
+Released 2022-Aug-18
+
 ## 1.0.0-rc9.5
 
 Released 2022-Aug-02

@@ -15,9 +15,11 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace;
@@ -91,7 +93,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetryTracing(builder =>
             {
-                builder.Configure(
+                builder.ConfigureBuilder(
                     (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
             });
 
@@ -115,7 +117,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.Throws<ArgumentNullException>(() =>
                 services.AddOpenTelemetryTracing(builder =>
                 {
-                    builder.Configure(
+                    builder.ConfigureBuilder(
                         (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
                 }));
         }
@@ -139,10 +141,10 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             int configureCalls = 0;
             var services = new ServiceCollection();
             services.AddOpenTelemetryTracing(builder => builder
-                .Configure((sp1, builder1) =>
+                .ConfigureBuilder((sp1, builder1) =>
                 {
                     configureCalls++;
-                    builder1.Configure((sp2, builder2) =>
+                    builder1.ConfigureBuilder((sp2, builder2) =>
                     {
                         configureCalls++;
                     });
@@ -165,7 +167,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton<TestSampler>();
 
             services.AddOpenTelemetryTracing(builder => builder
-                .Configure((sp1, builder1) =>
+                .ConfigureBuilder((sp1, builder1) =>
                 {
                     builder1
                         .AddInstrumentation<TestInstrumentation>()
@@ -182,40 +184,68 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.True(tracerProvider.Sampler is TestSampler);
         }
 
-        [Fact(Skip = "Known limitation. See issue 1215.")]
-        public void AddOpenTelemetryTracerProvider_Idempotent()
+        [Fact]
+        public void AddOpenTelemetryTracing_MultipleCallsConfigureSingleProvider()
         {
-            var testInstrumentation1 = new TestInstrumentation();
-            var testInstrumentation2 = new TestInstrumentation();
-
             var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation1);
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation1);
-            });
 
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation2);
-            });
+            services.AddOpenTelemetryTracing(builder => builder.AddSource("TestSourceBuilder1"));
+            services.AddOpenTelemetryTracing();
+            services.AddOpenTelemetryTracing(builder => builder.AddSource("TestSourceBuilder2"));
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
+            var providers = serviceProvider.GetServices<TracerProvider>();
 
-            Assert.False(testInstrumentation1.Disposed);
-            Assert.False(testInstrumentation2.Disposed);
-            serviceProvider.Dispose();
-            Assert.True(testInstrumentation1.Disposed);
-            Assert.True(testInstrumentation2.Disposed);
+            Assert.Single(providers);
+        }
+
+        [Fact]
+        public async Task AddOpenTelemetryTracing_HostConfigurationHonoredTest()
+        {
+            bool configureBuilderCalled = false;
+
+            var builder = new HostBuilder()
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        ["TEST_KEY"] = "TEST_KEY_VALUE",
+                    });
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddOpenTelemetryTracing(builder =>
+                    {
+                        builder.ConfigureBuilder((sp, builder) =>
+                        {
+                            configureBuilderCalled = true;
+
+                            var configuration = sp.GetRequiredService<IConfiguration>();
+
+                            var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                            Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                        });
+                    });
+                });
+
+            var host = builder.Build();
+
+            Assert.False(configureBuilderCalled);
+
+            await host.StartAsync();
+
+            Assert.True(configureBuilderCalled);
+
+            await host.StopAsync();
+
+            host.Dispose();
         }
 
         private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
         {
-            (tracerProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
-                .AddSingleton<TestSampler>();
+            tracerProviderBuilder.ConfigureServices(services => services.AddSingleton<TestSampler>());
 
             return tracerProviderBuilder.SetSampler<TestSampler>();
         }

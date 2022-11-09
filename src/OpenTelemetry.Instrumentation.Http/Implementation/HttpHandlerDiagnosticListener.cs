@@ -35,6 +35,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
+        private const string OnStartEvent = "System.Net.Http.HttpRequestOut.Start";
+        private const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+        private const string OnUnhandledExceptionEvent = "System.Net.Http.Exception";
+
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
@@ -59,7 +63,32 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.options = options;
         }
 
-        public override void OnStartActivity(Activity activity, object payload)
+        public override void OnEventWritten(string name, object payload)
+        {
+            switch (name)
+            {
+                case OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnUnhandledExceptionEvent:
+                    {
+                        this.OnException(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what HttpClient library does is as below:
             // Activity.Start()
@@ -71,11 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
+            if (Sdk.SuppressInstrumentation)
             {
                 return;
             }
@@ -86,19 +111,20 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            // TODO: Investigate why this check is needed.
-            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
-            {
-                // this request is already instrumented, we should back off
-                activity.IsAllDataRequested = false;
-                return;
-            }
-
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (textMapPropagator is not TraceContextPropagator)
             {
                 textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
+            }
+
+            // For .NET7.0 or higher versions, activity is created using activity source.
+            // However the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                activity.IsAllDataRequested = false;
             }
 
             // enrich Activity from payload only if sampling decision
@@ -107,7 +133,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 try
                 {
-                    if (this.options.EventFilter(activity.OperationName, request) == false)
+                    if (this.options.EventFilterHttpRequestMessage(activity.OperationName, request) == false)
                     {
                         HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                         activity.IsAllDataRequested = false;
@@ -139,7 +165,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    this.options.EnrichWithHttpRequestMessage?.Invoke(activity, request);
                 }
                 catch (Exception ex)
                 {
@@ -148,17 +174,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
@@ -196,7 +213,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                     try
                     {
-                        this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                        this.options.EnrichWithHttpResponseMessage?.Invoke(activity, response);
                     }
                     catch (Exception ex)
                     {
@@ -206,17 +223,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public override void OnException(Activity activity, object payload)
+        public void OnException(Activity activity, object payload)
         {
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
@@ -237,7 +245,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                    this.options.EnrichWithException?.Invoke(activity, exc);
                 }
                 catch (Exception ex)
                 {

@@ -2,6 +2,69 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
+* Added back `netstandard2.0` target.
+  ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
+
+* **Breaking change**: The `Enrich` callback option has been removed. For better
+  usability, it has been replaced by three separate options: In case of
+  `HttpClient` the new options are `EnrichWithHttpRequestMessage`,
+  `EnrichWithHttpResponseMessage` and `EnrichWithException` and in case of
+  `HttpWebRequest` the new options are `EnrichWithHttpWebRequest`,
+  `EnrichWithHttpWebResponse` and `EnrichWithException`. Previously, the single
+  `Enrich` callback required the consumer to detect which event triggered the
+  callback to be invoked (e.g., request start, response end, or an exception)
+  and then cast the object received to the appropriate type:
+  `HttpRequestMessage`, `HttpResponsemessage`, or `Exception` in case of
+  `HttpClient` and `HttpWebRequest`,`HttpWebResponse` and `Exception` in case of
+  `HttpWebRequest`. The separate callbacks make it clear what event triggers
+  them and there is no longer the need to cast the argument to the expected
+  type.
+  ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
+
+* Fixed an issue which prevented custom propagators from being called on .NET 7+
+  runtimes for non-sampled outgoing `HttpClient` spans.
+  ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
+
+* **Breaking change**: The same API is now exposed for `net462` and
+  `netstandard2.0` targets. The `Filter` property on options is now exposed as
+  `FilterHttpRequestMessage` (called for .NET & .NET Core) and
+  `FilterHttpWebRequest` (called for .NET Framework).
+  ([#3793](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3793))
+
+## 1.0.0-rc9.8
+
+Released 2022-Oct-17
+
+* In case of .NET Core, additional spans created during retries will now be
+exported.
+([[#3729](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3729)])
+
+## 1.0.0-rc9.7
+
+Released 2022-Sep-29
+
+* Dropped `netstandard2.0` target and added `net6.0`. .NET 5 reached EOL
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. End of support
+  dates for .NET are published
+  [here](https://dotnet.microsoft.com/download/dotnet).
+  The instrumentation for HttpClient now requires .NET 6 or later.
+  This does not affect applications targeting .NET Framework.
+  ([#3664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3664))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddHttpClientInstrumentation` extension to allow for more fine-grained
+  options management
+  ([#3664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3664),
+  [#3667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3667))
+
+## 1.0.0-rc9.6
+
+Released 2022-Aug-18
+
 * Updated to use Activity native support from `System.Diagnostics.DiagnosticSource`
   to set activity status.
   ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))

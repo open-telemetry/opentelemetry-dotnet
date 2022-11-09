@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Instrumentation-AspNetCore")]
-    internal class AspNetCoreInstrumentationEventSource : EventSource
+    internal sealed class AspNetCoreInstrumentationEventSource : EventSource
     {
         public static AspNetCoreInstrumentationEventSource Log = new();
 

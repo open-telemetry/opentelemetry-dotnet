@@ -2,6 +2,55 @@
 
 ## Unreleased
 
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
+* Log Exporter modified to no longer prefix scope-depth when exporting ILogger
+  scopes as attributes. Empty keys and {OriginalFormat} key will be ignored from
+  scopes.
+  ([3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
+
+## 1.4.0-beta.2
+
+Released 2022-Oct-17
+
+* OTLP histogram data points will now include `Min` and `Max` values when
+  they are present.
+  ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
+
+* Adds support for limiting the length and count of attributes exported from
+  the OTLP log exporter. These
+  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  are configured via the environment variables defined in the specification.
+  ([#3684](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3684))
+
+* Added support for loading environment variables from `IConfiguration` when
+  using the `AddOtlpExporter` extensions
+  ([#3760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3760))
+
+## 1.4.0-beta.1
+
+Released 2022-Sep-29
+
+* Added overloads which accept a name to the `MeterProviderBuilder`
+  `AddOtlpExporter` extension to allow for more fine-grained options management
+  ([#3648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3648))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddOtlpExporter` extension to allow for more fine-grained options management
+  ([#3653](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3653))
+
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
+* When using [Attribute
+  Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  the OTLP exporter will now send "dropped" counts where applicable (ex:
+  [dropped_attributes_count](https://github.com/open-telemetry/opentelemetry-proto/blob/001e5eabf3ea0193ef9343c1b9a057d23d583d7c/opentelemetry/proto/trace/v1/trace.proto#L191)).
+  ([#3580](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3580))
+
 ## 1.4.0-alpha.1
 
 Released 2022-Aug-02

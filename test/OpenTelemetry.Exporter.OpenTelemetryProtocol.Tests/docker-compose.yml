@@ -21,5 +21,6 @@ services:
     command: --TestCaseFilter:CategoryName=CollectorIntegrationTests
     environment:
       - OTEL_COLLECTOR_HOSTNAME=otel-collector
+      - OTEL_MOCK_COLLECTOR_HOSTNAME=mock-otel-collector
     depends_on:
       - otel-collector

@@ -16,7 +16,10 @@
 
 using System;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -30,35 +33,69 @@ namespace OpenTelemetry.Trace
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder)
+            => AddOtlpExporter(builder, name: null, configure: null);
+
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure)
+            => AddOtlpExporter(builder, name: null, configure);
+
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<OtlpExporterOptions> configure)
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
-            {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure, sp);
-                });
-            }
+            name ??= Options.DefaultName;
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure, serviceProvider: null);
+            builder.ConfigureServices(services =>
+            {
+                if (configure != null)
+                {
+                    services.Configure(name, configure);
+                }
+
+                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+            });
+
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+
+                // Note: Not using name here for SdkLimitOptions. There should
+                // only be one provider for a given service collection so
+                // SdkLimitOptions is treated as a single default instance.
+                var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
+            });
         }
 
         internal static TracerProviderBuilder AddOtlpExporter(
             TracerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
-            Action<OtlpExporterOptions> configure,
+            SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
             Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null)
         {
-            configure?.Invoke(exporterOptions);
-
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions);
+            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
 
             if (configureExporterInstance != null)
             {

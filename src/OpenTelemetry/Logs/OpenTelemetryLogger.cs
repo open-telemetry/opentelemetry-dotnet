@@ -60,6 +60,7 @@ namespace OpenTelemetry.Logs
                 record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
                 record.State = provider.ParseStateValues ? null : state;
                 record.StateValues = provider.ParseStateValues ? ParseState(record, state) : null;
+                record.BufferedScopes = null;
 
                 ref LogRecordData data = ref record.Data;
 

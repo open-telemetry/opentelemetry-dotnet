@@ -13,12 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if !NETFRAMEWORK
+
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+#if NETFRAMEWORK
+using System.Net;
+#endif
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
@@ -38,13 +43,55 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
-                    ctx.Response.StatusCode = 200;
+                    string traceparent = ctx.Request.Headers["traceparent"];
+                    string custom_traceparent = ctx.Request.Headers["custom_traceparent"];
+                    if (string.IsNullOrWhiteSpace(traceparent)
+                        && string.IsNullOrWhiteSpace(custom_traceparent))
+                    {
+                        ctx.Response.StatusCode = 500;
+                        ctx.Response.StatusDescription = "Missing trace context";
+                    }
+                    else if (ctx.Request.Url.PathAndQuery.Contains("500"))
+                    {
+                        ctx.Response.StatusCode = 500;
+                    }
+                    else if (ctx.Request.Url.PathAndQuery.Contains("redirect"))
+                    {
+                        ctx.Response.RedirectLocation = "/";
+                        ctx.Response.StatusCode = 302;
+                    }
+                    else
+                    {
+                        ctx.Response.StatusCode = 200;
+                    }
+
                     ctx.Response.OutputStream.Close();
                 },
                 out var host,
                 out var port);
 
             this.url = $"http://{host}:{port}/";
+        }
+
+        [Fact]
+        public void AddHttpClientInstrumentation_NamedOptions()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<HttpClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<HttpClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddHttpClientInstrumentation()
+                .AddHttpClientInstrumentation("Instrumentation2", configureHttpClientInstrumentationOptions: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
         }
 
         [Fact]
@@ -57,10 +104,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
+        public async Task InjectsHeadersAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
-            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
+            {
+                c.SetTag("enrichedWithHttpWebRequest", "no");
+                c.SetTag("enrichedWithHttpWebResponse", "no");
+                c.SetTag("enrichedWithHttpRequestMessage", "no");
+                c.SetTag("enrichedWithHttpResponseMessage", "no");
+            });
+
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -73,33 +127,34 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            // var isInjectedHeaderValueGetterThrows = false;
-            // mockTextFormat
-            //     .Setup(x => x.IsInjected(It.IsAny<HttpRequestMessage>(), It.IsAny<Func<HttpRequestMessage, string, IEnumerable<string>>>()))
-            //     .Callback<HttpRequestMessage, Func<HttpRequestMessage, string, IEnumerable<string>>>(
-            //         (carrier, getter) =>
-            //         {
-            //             try
-            //             {
-            //                 // traceparent doesn't exist
-            //                 getter(carrier, "traceparent");
-            //             }
-            //             catch
-            //             {
-            //                 isInjectedHeaderValueGetterThrows = true;
-            //             }
-            //         });
-
             using (Sdk.CreateTracerProviderBuilder()
-                        .AddHttpClientInstrumentation(o =>
+                .AddHttpClientInstrumentation(o =>
+                {
+                    if (shouldEnrich)
+                    {
+                        o.EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
                         {
-                            if (shouldEnrich)
-                            {
-                                o.Enrich = ActivityEnrichmentSetTag;
-                            }
-                        })
-                        .AddProcessor(processor.Object)
-                        .Build())
+                            activity.SetTag("enrichedWithHttpWebRequest", "yes");
+                        };
+
+                        o.EnrichWithHttpWebResponse = (activity, httpWebResponse) =>
+                        {
+                            activity.SetTag("enrichedWithHttpWebResponse", "yes");
+                        };
+
+                        o.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                        {
+                            activity.SetTag("enrichedWithHttpRequestMessage", "yes");
+                        };
+
+                        o.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                        {
+                            activity.SetTag("enrichedWithHttpResponseMessage", "yes");
+                        };
+                    }
+                })
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -114,6 +169,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
             Assert.NotEqual(default, activity.Context.SpanId);
 
+#if NETFRAMEWORK
+            // Note: On .NET Framework a HttpWebRequest is created and enriched
+            // not the HttpRequestMessage passed to HttpClient.
+            Assert.Empty(request.Headers);
+#else
             Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
             Assert.Single(traceparents);
@@ -121,15 +181,25 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+#endif
 
-            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+#if NETFRAMEWORK
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+#else
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+#endif
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
+        [Fact]
+        public async Task InjectsHeadersAsync_CustomFormat()
         {
             var propagator = new Mock<TextMapPropagator>();
             propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
@@ -156,15 +226,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
             using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation((opt) =>
-                   {
-                       if (shouldEnrich)
-                       {
-                           opt.Enrich = ActivityEnrichment;
-                       }
-                   })
-                   .AddProcessor(processor.Object)
-                   .Build())
+                .AddHttpClientInstrumentation()
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -179,6 +243,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
             Assert.NotEqual(default, activity.Context.SpanId);
 
+#if NETFRAMEWORK
+            // Note: On .NET Framework a HttpWebRequest is created and enriched
+            // not the HttpRequestMessage passed to HttpClient.
+            Assert.Empty(request.Headers);
+#else
             Assert.True(request.Headers.TryGetValues("custom_traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("custom_tracestate", out var tracestates));
             Assert.Single(traceparents);
@@ -186,6 +255,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+#endif
+
             Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
                 new TraceContextPropagator(),
@@ -194,7 +265,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationRespectsSuppress()
+        public async Task RespectsSuppress()
         {
             try
             {
@@ -223,9 +294,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Sdk.SetDefaultTextMapPropagator(propagator.Object);
 
                 using (Sdk.CreateTracerProviderBuilder()
-                       .AddHttpClientInstrumentation()
-                       .AddProcessor(processor.Object)
-                       .Build())
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(processor.Object)
+                    .Build())
                 {
                     using var c = new HttpClient();
                     using (SuppressInstrumentationScope.Begin())
@@ -251,76 +322,126 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpClientInstrumentation_AddViaFactory_HttpInstrumentation_CollectsSpans()
+        public async Task ExportsSpansCreatedForRetries()
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
-
-            using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation()
-                   .AddProcessor(processor.Object)
-                   .Build())
-            {
-                using var c = new HttpClient();
-                await c.GetAsync(this.url);
-            }
-
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnStart"));
-            Assert.Single(processor.Invocations.Where(i => i.Method.Name == "OnEnd"));
-            Assert.IsType<Activity>(processor.Invocations[1].Arguments[0]);
-        }
-
-        [Fact]
-        public async Task HttpClientInstrumentationBacksOffIfAlreadyInstrumented()
-        {
-            // TODO: Investigate why this feature is required.
-            var processor = new Mock<BaseProcessor<Activity>>();
-
+            var exportedItems = new List<Activity>();
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
+            int maxRetries = 3;
+            using var c = new HttpClient(new RetryHandler(new HttpClientHandler(), maxRetries));
+            await c.SendAsync(request);
+
+            // number of exported spans should be 3(maxRetries)
+            Assert.Equal(maxRetries, exportedItems.Count());
+
+            var spanid1 = exportedItems[0].SpanId;
+            var spanid2 = exportedItems[1].SpanId;
+            var spanid3 = exportedItems[2].SpanId;
+
+            // Validate span ids are different
+            Assert.NotEqual(spanid1, spanid2);
+            Assert.NotEqual(spanid3, spanid1);
+            Assert.NotEqual(spanid2, spanid3);
+        }
+
+        [Fact]
+        public async Task RedirectTest()
+        {
+            var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
-                   .AddHttpClientInstrumentation()
-                   .AddProcessor(processor.Object)
-                   .Build())
+                .AddHttpClientInstrumentation()
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.GetAsync($"{this.url}redirect");
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+#if NETFRAMEWORK
+            // Note: HttpWebRequest automatically handles redirects and reuses
+            // the same instance which is patched reflectively. There isn't a
+            // good way to produce two spans when redirecting that we have
+            // found. For now, this is not supported.
+
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+
+            var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
+            Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 200);
+#else
+            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnEnd/OnShutdown/Dispose called.
+
+            var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
+            Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 302);
+
+            var secondActivity = (Activity)processor.Invocations[4].Arguments[0]; // Second OnEnd
+            Assert.Contains(secondActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 200);
+#endif
         }
 
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
+
+            bool httpWebRequestFilterApplied = false;
+            bool httpRequestMessageFilterApplied = false;
+
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation(
-                        (opt) => opt.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
-                               .AddProcessor(processor.Object)
-                               .Build())
+                .AddHttpClientInstrumentation(
+                    opt =>
+                    {
+                        opt.FilterHttpWebRequest = (req) =>
+                        {
+                            httpWebRequestFilterApplied = true;
+                            return !req.RequestUri.OriginalString.Contains(this.url);
+                        };
+                        opt.FilterHttpRequestMessage = (req) =>
+                        {
+                            httpRequestMessageFilterApplied = true;
+                            return !req.RequestUri.OriginalString.Contains(this.url);
+                        };
+                    })
+                .AddInMemoryExporter(exportedItems)
+                .Build())
             {
                 using var c = new HttpClient();
                 await c.GetAsync(this.url);
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+#if NETFRAMEWORK
+            Assert.True(httpWebRequestFilterApplied);
+            Assert.False(httpRequestMessageFilterApplied);
+#else
+            Assert.False(httpWebRequestFilterApplied);
+            Assert.True(httpRequestMessageFilterApplied);
+#endif
+
+            Assert.Empty(exportedItems);
         }
 
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
+
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation(
-                        (opt) => opt.Filter = (req) => throw new Exception("From InstrumentationFilter"))
-                               .AddProcessor(processor.Object)
-                               .Build())
+                .AddHttpClientInstrumentation(
+                    (opt) =>
+                    {
+                        opt.FilterHttpWebRequest = (req) => throw new Exception("From InstrumentationFilter");
+                        opt.FilterHttpRequestMessage = (req) => throw new Exception("From InstrumentationFilter");
+                    })
+                .AddInMemoryExporter(exportedItems)
+                .Build())
             {
                 using var c = new HttpClient();
                 using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
@@ -328,78 +449,185 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
 
-            Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
+            Assert.Empty(exportedItems);
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationCorrelationAndBaggage()
+        public async Task ReportsExceptionEventForNetworkFailuresWithGetAsync()
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
 
-            using var parent = new Activity("w3c activity");
-            parent.SetIdFormat(ActivityIdFormat.W3C);
-            parent.AddBaggage("k1", "v1");
-            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
-            parent.Start();
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation(o => o.RecordException = true)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
-            Baggage.SetBaggage("k2", "v2");
-
-            using (Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichment)
-                .AddProcessor(activityProcessor.Object)
-                .Build())
+            using var c = new HttpClient();
+            try
             {
-                using var c = new HttpClient();
-                using var r = await c.GetAsync(this.url).ConfigureAwait(false);
+                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+            }
+            catch
+            {
+                exceptionThrown = true;
             }
 
-            Assert.Equal(5, activityProcessor.Invocations.Count);
+            // Exception is thrown and collected as event
+            Assert.True(exceptionThrown);
+            Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
         }
 
         [Fact]
-        public async Task HttpClientInstrumentationContextPropagation()
+        public async Task DoesNotReportExceptionEventOnErrorResponseWithGetAsync()
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
+
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation(o => o.RecordException = true)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            using var c = new HttpClient();
+            try
+            {
+                await c.GetAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
+            }
+
+            // Exception is not thrown and not collected as event
+            Assert.False(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
+
+        [Fact]
+        public async Task DoesNotReportExceptionEventOnErrorResponseWithGetStringAsync()
+        {
+            var exportedItems = new List<Activity>();
+            bool exceptionThrown = false;
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri(this.url),
+                RequestUri = new Uri($"{this.url}500"),
                 Method = new HttpMethod("GET"),
             };
 
-            var parent = new Activity("parent")
-                .SetIdFormat(ActivityIdFormat.W3C)
-                .Start();
-            parent.TraceStateString = "k1=v1,k2=v2";
-            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
-            Baggage.SetBaggage("b1", "v1");
-            using (Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation()
-                .AddProcessor(processor.Object)
-                .Build())
+            using var traceprovider = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation(o => o.RecordException = true)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            using var c = new HttpClient();
+            try
             {
-                using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.GetStringAsync($"{this.url}500");
+            }
+            catch
+            {
+                exceptionThrown = true;
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-            var activity = (Activity)processor.Invocations[1].Arguments[0];
+            // Exception is thrown and not collected as event
+            Assert.True(exceptionThrown);
+            Assert.Empty(exportedItems[0].Events);
+        }
 
-            Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(parent.TraceId, activity.Context.TraceId);
-            Assert.Equal(parent.SpanId, activity.ParentSpanId);
-            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
-            Assert.NotEqual(default, activity.Context.SpanId);
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        public async Task CustomPropagatorCalled(bool sample, bool createParentActivity)
+        {
+            ActivityContext parentContext = default;
+            ActivityContext contextFromPropagator = default;
 
-            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
-            Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
-            Assert.True(request.Headers.TryGetValues("baggage", out var baggages));
-            Assert.Single(traceparents);
-            Assert.Single(tracestates);
-            Assert.Single(baggages);
+            var propagator = new Mock<TextMapPropagator>();
 
-            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
-            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
-            Assert.Equal("b1=v1", baggages.Single());
+#if NETFRAMEWORK
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
+                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
+                {
+                    contextFromPropagator = context.ActivityContext;
+
+                    setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
+                    setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
+                });
+#else
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
+                {
+                    contextFromPropagator = context.ActivityContext;
+
+                    setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
+                    setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
+                });
+#endif
+
+            var exportedItems = new List<Activity>();
+
+            using (var traceprovider = Sdk.CreateTracerProviderBuilder()
+               .AddHttpClientInstrumentation()
+               .AddInMemoryExporter(exportedItems)
+               .SetSampler(sample ? new ParentBasedSampler(new AlwaysOnSampler()) : new AlwaysOffSampler())
+               .Build())
+            {
+                var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
+                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+
+                Activity parent = null;
+                if (createParentActivity)
+                {
+                    parent = new Activity("parent")
+                        .SetIdFormat(ActivityIdFormat.W3C)
+                        .Start();
+
+                    parent.TraceStateString = "k1=v1,k2=v2";
+                    parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+                    parentContext = parent.Context;
+                }
+
+                var request = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(this.url),
+                    Method = new HttpMethod("GET"),
+                };
+
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+
+                parent?.Stop();
+
+                Sdk.SetDefaultTextMapPropagator(previousDefaultTextMapPropagator);
+            }
+
+            if (!sample)
+            {
+                Assert.Empty(exportedItems);
+            }
+            else
+            {
+                Assert.Single(exportedItems);
+            }
+
+            // Make sure custom propagator was called.
+            Assert.True(contextFromPropagator != default);
+            if (sample)
+            {
+                Assert.Equal(contextFromPropagator, exportedItems[0].Context);
+            }
+
+#if NETFRAMEWORK
+            if (!sample && createParentActivity)
+            {
+                Assert.Equal(parentContext.TraceId, contextFromPropagator.TraceId);
+                Assert.Equal(parentContext.SpanId, contextFromPropagator.SpanId);
+            }
+#endif
         }
 
         public void Dispose()
@@ -408,33 +636,5 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Activity.Current = null;
             GC.SuppressFinalize(this);
         }
-
-        private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
-        {
-            ActivityEnrichment(activity, method, obj);
-            activity.SetTag("enriched", "yes");
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequestMessage);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponseMessage);
-                    break;
-
-                case "OnException":
-                    Assert.True(obj is Exception);
-                    break;
-
-                default:
-                    break;
-            }
-        }
     }
 }
-#endif
