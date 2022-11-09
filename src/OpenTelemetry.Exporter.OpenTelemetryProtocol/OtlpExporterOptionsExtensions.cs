@@ -43,7 +43,8 @@ namespace OpenTelemetry.Exporter
             }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-            if (options.RetryMaxAttempts <= 1) {
+            if (options.RetryMaxAttempts <= 1)
+            {
                 return GrpcChannel.ForAddress(options.Endpoint);
             }
 
@@ -53,7 +54,7 @@ namespace OpenTelemetry.Exporter
                 InitialBackoff = options.RetryInitialBackoff,
                 MaxBackoff = options.RetryMaxBackoff,
                 BackoffMultiplier = options.RetryBackoffMultiplier,
-   
+
                 RetryableStatusCodes =
                 {
                     StatusCode.Cancelled,
