@@ -175,9 +175,9 @@ here as well.
 1. Install the latest stable `System.Diagnostics.DiagnosticSource` to your
    application or library.
 
-```shell
-dotnet add package System.Diagnostics.DiagnosticSource
-```
+    ```shell
+    dotnet add package System.Diagnostics.DiagnosticSource
+    ```
 
 2. Create an `ActivitySource`, providing the name and version of the
    library/application doing the instrumentation. `ActivitySource` instance is
@@ -472,9 +472,9 @@ Windows-based .NET implementation).
 1. Install the latest stable version of `System.Diagnostics.DiagnosticSource` to
    your application or library.
 
-```shell
-dotnet add package System.Diagnostics.DiagnosticSource
-```
+    ```shell
+    dotnet add package System.Diagnostics.DiagnosticSource
+    ```
 
 2. Create a `Meter`, providing the name and version of the library/application
    doing the instrumentation. The `Meter` instance is typically created once and
