@@ -33,7 +33,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package OpenTelemetry.Instrumentation.Http
+dotnet add package --prerelease OpenTelemetry.Instrumentation.Http
 ```
 
 ### Step 2: Enable HTTP Instrumentation at application startup

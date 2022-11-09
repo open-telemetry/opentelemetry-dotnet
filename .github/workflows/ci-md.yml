@@ -5,7 +5,7 @@
 
 # IMPORTANT: This workflow MUST use the same 'name' as the non -md workflow.
 
-name: Linux
+name: Build
 
 on:
   pull_request:
@@ -15,11 +15,14 @@ on:
 
 jobs:
   build-test:
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        version: [net6.0]
+        os: [ windows-latest, ubuntu-latest ]
+        version: [ net462, net6.0, net7.0 ]
+        exclude:
+        - os: ubuntu-latest
+          version: net462
 
+    runs-on: ubuntu-latest
     steps:
-      - run: 'echo "No build required"'
+    - run: 'echo "No build required"'

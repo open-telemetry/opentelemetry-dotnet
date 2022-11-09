@@ -252,15 +252,7 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    var givenKeys = new string[length];
-                    var givenValues = new object[length];
-
-                    tagKeys.CopyTo(givenKeys, 0);
-                    tagValues.CopyTo(givenValues, 0);
-
-                    givenTags = new Tags(givenKeys, givenValues);
-
+                    // This else block is for tag length = 1
                     aggregatorIndex = this.metricPointIndex;
                     if (aggregatorIndex >= this.maxMetricPoints)
                     {
@@ -270,6 +262,15 @@ namespace OpenTelemetry.Metrics
                         // we can re-claim them here.
                         return -1;
                     }
+
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                    var givenKeys = new string[length];
+                    var givenValues = new object[length];
+
+                    tagKeys.CopyTo(givenKeys, 0);
+                    tagValues.CopyTo(givenValues, 0);
+
+                    givenTags = new Tags(givenKeys, givenValues);
 
                     lock (this.tagsToMetricPointIndexDictionary)
                     {

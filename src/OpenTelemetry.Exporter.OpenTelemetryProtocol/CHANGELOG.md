@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
 * Log Exporter modified to no longer prefix scope-depth when exporting ILogger
   scopes as attributes. Empty keys and {OriginalFormat} key will be ignored from
   scopes.
