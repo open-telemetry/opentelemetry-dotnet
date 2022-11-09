@@ -549,7 +549,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.ConfigureOpenTelemetryMetrics(builder => builder.ConfigureBuilder((sp, builder) =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
-                if (options.EnableTracing)
+                if (options.EnableMetrics)
                 {
                     builder.AddMeter("MyLibrary");
                 }
