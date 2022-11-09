@@ -55,6 +55,8 @@ namespace OpenTelemetry.Exporter
                 MaxBackoff = options.RetryMaxBackoff,
                 BackoffMultiplier = options.RetryBackoffMultiplier,
 
+                // See table showing gRPC codes and if they are retryable:
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md#failures
                 RetryableStatusCodes =
                 {
                     StatusCode.Cancelled,
