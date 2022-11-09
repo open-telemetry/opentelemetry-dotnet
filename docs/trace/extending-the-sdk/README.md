@@ -341,16 +341,47 @@ A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
 ## Registration extension method guidance for library authors
 
-### TracerProviderBuilder attached registration
+Library authors are encouraged to provide extension methods users may call to
+register custom OpenTelemetry components into their `TracerProvider`s. These
+extension methods can target either the `TracerProviderBuilder` or the
+`IServiceCollection` classes. Both of these patterns are described below.
 
-Library authors are encouraged to provide extension methods on the
-`TracerProviderBuilder` class for registering custom OpenTelemetry components.
-Targeting `TracerProviderBuilder` will allow users to discover extensions using
-IDE helpers such as `IntelliSense` (in Visual Studio or Visual Studio Code)
-while configuring the builder(s) in their applications.
+When providing registration extensions:
 
-The following example shows how to register a custom exporter with options
-support.
+* **DO** support the [.NET Options
+  pattern](https://learn.microsoft.com/dotnet/core/extensions/options) and
+  **DO** support [named
+  options](https://learn.microsoft.com/dotnet/core/extensions/options#named-options-support-using-iconfigurenamedoptions).
+  The Options pattern allows users to bind
+  [configuration](https://learn.microsoft.com/dotnet/core/extensions/configuration)
+  to options classes and provides extension points for working with instances as
+  they are created. Multiple providers may exist in the same application for a
+  single configuration and multiple components (for example exporters) may exist
+  in the same provider. Named options help users target configuration to
+  specific components.
+
+  * Use the
+    [Configure](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.optionsservicecollectionextensions.configure#microsoft-extensions-dependencyinjection-optionsservicecollectionextensions-configure-1(microsoft-extensions-dependencyinjection-iservicecollection-system-string-system-action((-0))))
+    extension to register configuration callbacks for a given name.
+
+  * Use the
+    [IOptionsMonitor<T>.Get](https://learn.microsoft.com/dotnet/api/microsoft.extensions.options.ioptionsmonitor-1.get)
+    method to access options class instances by name.
+
+* **DO** throw exceptions for issues that prevent the component being registered
+  from starting. The OpenTelemetry SDK is allowed to crash if it cannot be
+  started. It **MUST NOT** crash once running.
+
+### TracerProviderBuilder extension methods
+
+When registering pipeline components (for example samplers, exporters, or
+resource detectors) it is recommended to use the `TracerProviderBuilder` as the
+target type for registration extension methods. These extensions will be highly
+discoverable for users interacting with the `TracerProviderBuilder` in their IDE
+of choice.
+
+The following example shows how to register a custom exporter with named options
+support using a `TracerProviderBuilder` extension.
 
 ```csharp
 using System.Diagnostics;
@@ -450,67 +481,110 @@ namespace MyLibrary
 }
 ```
 
-**Note** Use the `OpenTelemetry.Trace` namespace for registration extensions to
-help with discoverability.
+When providing `TracerProviderBuilder` registration extensions:
 
-**Note** Return the `TracerProviderBuilder` passed in to support call chaining
-of registration methods.
+* **DO** Use the `OpenTelemetry.Trace` namespace for `TracerProviderBuilder`
+  registration extensions to help with discoverability.
 
-**Note** Use the
-[Configure](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.optionsservicecollectionextensions.configure#microsoft-extensions-dependencyinjection-optionsservicecollectionextensions-configure-1(microsoft-extensions-dependencyinjection-iservicecollection-system-string-system-action((-0))))
-extension to register callbacks to configure options class instances instead of
-invoking callbacks directly.
+* **DO** Return the `TracerProviderBuilder` passed in to support call chaining
+  of registration methods.
 
-### IServiceCollection detached registration
+* **DO** Use the `TracerProviderBuilder.ConfigureServices` extension method to
+  register dependent services.
 
-In large codebases it is common to break logic up into smaller libraries. The
-above `TracerProviderBuilder` attached pattern might create code which looks
-like this:
+* **DO** Use the `TracerProviderBuilder.ConfigureBuilder` extension method to
+  peform configuration once the final `IServiceProvider` is available.
 
-```csharp
-var appBuilder = WebApplication.CreateBuilder(args);
+### IServiceCollection extension methods
 
-appBuilder.Services.AddMyLibrary();
+When registering instrumentation or listening to telemetry in a library
+providing other features it is recommended to use the `IServiceCollection` as
+the target type for registration extension methods.
 
-appBuilder.Services.AddOpenTelemetryTracing(builder => builder.AddMyLibraryInstrumentation());
-
-appBuilder.Services.AddOpenTelemetryMetrics(builder => builder.AddMyLibraryInstrumentation());
-```
-
-In the above example the user must add three different calls for "MyLibrary"
-setup. If OpenTelemetry configuration is handled elsewhere, perhaps in some
-other library, it must known about "MyLibrary" and have a dependency on its
-registration extensions.
-
-To simplify such cases the `ConfigureOpenTelemetryTracing` extension method is
-provided.
-
-`ConfigureOpenTelemetryTracing` allows for detached configuration of a
-`TracerProviderBuilder` using only an `IServiceCollection`:
+The following example shows how a library might enable tracing and metric
+support using an `IServiceCollection` extension by calling
+`ConfigureOpenTelemetryTracing`.
 
 ```csharp
-public static IServiceCollection AddMyLibrary(this IServiceCollection services)
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MyLibrary;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
+namespace Microsoft.Extensions.DependencyInjection
 {
-    ArgumentNullException.ThrowIfNull(services);
+    public static class MyLibraryServiceCollectionRegistrationExtensions
+    {
+        public static IServiceCollection AddMyLibrary(
+            this IServiceCollection services,
+            string? name = null,
+            Action<MyLibraryOptions>? configure = null)
+        {
+            ArgumentNullException.ThrowIfNull(services);
 
-    services.TryAddSingleton<MyCustomService>();
+            // Register library services.
+            services.TryAddSingleton<IMyLibraryService, MyLibraryService>();
 
-    services.ConfigureOpenTelemetryTracing(builder => builder.AddSource("MyLibrary"));
+            // Support named options.
+            name ??= Options.Options.DefaultName;
 
-    services.ConfigureOpenTelemetryMetrics(builder => builder.AddMeter("MyLibrary"));
+            if (configure != null)
+            {
+                // Support configuration through Options API.
+                services.Configure(name, configure);
+            }
 
-    return services;
+            // Configure OpenTelemetry tracing.
+            services.ConfigureOpenTelemetryTracing(builder => builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
+                if (options.EnableTracing)
+                {
+                    builder.AddSource("MyLibrary");
+                }
+            }));
+
+            // Configure OpenTelemetry metrics.
+            services.ConfigureOpenTelemetryMetrics(builder => builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
+                if (options.EnableTracing)
+                {
+                    builder.AddMeter("MyLibrary");
+                }
+            }));
+
+            return services;
+        }
+    }
+}
+
+namespace MyLibrary
+{
+    // Options class can be bound to IConfiguration or configured by code.
+    public class MyLibraryOptions
+    {
+        public bool EnableTracing { get; set; }
+
+        public bool EnableMetrics { get; set; }
+    }
+
+    internal sealed class MyLibraryService : IMyLibraryService
+    {
+        // Implementation not shown.
+    }
+
+    public interface IMyLibraryService
+    {
+        // Implementation not shown.
+    }
 }
 ```
 
-Users now only need to call a single `AddMyLibrary` extension and it will
-configure OpenTelemetry as well as register its services.
-
-This pattern may seem superior to the attached style above however the loss of
-discoverability is significant for many end users. This pattern is generally
-only recommended for enterprise platforms where separate libraries are plugging
-into a greater platform where a shared known telemetry library is guaranteed to
-start & stop the correct provider(s).
+The benefit to using the `IServiceCollection` style is users only need to call a
+single `AddMyLibrary` extension to configure the library itself and optionally
+turn on OpenTelemetry integration.
 
 **Note** `ConfigureOpenTelemetryTracing` does not automatically start
 OpenTelemetry. The host is responsible for either calling
@@ -519,6 +593,19 @@ OpenTelemetry. The host is responsible for either calling
 package, calling `Build` when using the `Sdk.CreateTracerProviderBuilder`
 method, or by accessing the `TracerProvider` from the `IServiceCollection` where
 `ConfigureOpenTelemetryTracing` was performed.
+
+When providing `IServiceCollection` registration extensions:
+
+* **DO** Use the `Microsoft.Extensions.DependencyInjection` namespace for
+  `IServiceCollection` registration extensions to help with discoverability.
+
+* **DO** Return the `IServiceCollection` passed in to support call chaining of
+  registration methods.
+
+* **DO** Use the `IServiceCollection` directly to register dependent services.
+
+* **DO** Use the `TracerProviderBuilder.ConfigureBuilder` extension method to
+  peform configuration once the final `IServiceProvider` is available.
 
 ## References
 
