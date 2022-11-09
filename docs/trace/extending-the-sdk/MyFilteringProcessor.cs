@@ -17,37 +17,32 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 /// <summary>
 /// A custom processor for filtering <see cref="Activity"/> instances.
 /// </summary>
-/// <remarks>
-/// Note: <see cref="CompositeProcessor{T}"/> is used as the base class because
-/// the SDK needs to understand that <c>MyFilteringProcessor</c> wraps an inner
-/// processor. Without that understanding some features such as <see
-/// cref="Resource"/> would be unavailable because the SDK needs to push state
-/// about the parent <see cref="TracerProvider"/> to all processors in the
-/// chain.
-/// </remarks>
-internal sealed class MyFilteringProcessor : CompositeProcessor<Activity>
+internal sealed class MyFilteringProcessor : BaseProcessor<Activity>
 {
     private readonly Func<Activity, bool> filter;
 
-    public MyFilteringProcessor(BaseProcessor<Activity> processor, Func<Activity, bool> filter)
-        : base(new[] { processor })
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MyFilteringProcessor"/>
+    /// class.
+    /// </summary>
+    /// <param name="filter">Function used to test if an <see cref="Activity"/>
+    /// should be recorded or dropped. Return <see langword="true"/> to record
+    /// or <see langword="false"/> to drop.</param>
+    public MyFilteringProcessor(Func<Activity, bool> filter)
     {
         this.filter = filter ?? throw new ArgumentNullException(nameof(filter));
     }
 
     public override void OnEnd(Activity activity)
     {
-        // Call the underlying processor
-        // only if the Filter returns true.
-        if (this.filter(activity))
+        // Bypass export if the Filter returns false.
+        if (!this.filter(activity))
         {
-            base.OnEnd(activity);
+            activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
         }
     }
 }

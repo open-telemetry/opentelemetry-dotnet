@@ -191,27 +191,37 @@ namespace OpenTelemetry.Exporter.Prometheus
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            var bufferSize = this.buffer.Length * 2;
-
-                            // there are two cases we might run into the following condition:
-                            // 1. we have many metrics to be exported - in this case we probably want
-                            //    to put some upper limit and allow the user to configure it.
-                            // 2. we got an IndexOutOfRangeException which was triggered by some other
-                            //    code instead of the buffer[cursor++] - in this case we should give up
-                            //    at certain point rather than allocating like crazy.
-                            if (bufferSize > 100 * 1024 * 1024)
+                            if (!this.IncreaseBufferSize())
                             {
+                                // there are two cases we might run into the following condition:
+                                // 1. we have many metrics to be exported - in this case we probably want
+                                //    to put some upper limit and allow the user to configure it.
+                                // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                //    code instead of the buffer[cursor++] - in this case we should give up
+                                //    at certain point rather than allocating like crazy.
                                 throw;
                             }
-
-                            var newBuffer = new byte[bufferSize];
-                            this.buffer.CopyTo(newBuffer, 0);
-                            this.buffer = newBuffer;
                         }
                     }
                 }
 
-                this.previousDataView = new ArraySegment<byte>(this.buffer, 0, Math.Max(cursor - 1, 0));
+                while (true)
+                {
+                    try
+                    {
+                        cursor = PrometheusSerializer.WriteEof(this.buffer, cursor);
+                        break;
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        if (!this.IncreaseBufferSize())
+                        {
+                            throw;
+                        }
+                    }
+                }
+
+                this.previousDataView = new ArraySegment<byte>(this.buffer, 0, cursor);
                 return ExportResult.Success;
             }
             catch (Exception)
@@ -219,6 +229,22 @@ namespace OpenTelemetry.Exporter.Prometheus
                 this.previousDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
                 return ExportResult.Failure;
             }
+        }
+
+        private bool IncreaseBufferSize()
+        {
+            var newBufferSize = this.buffer.Length * 2;
+
+            if (newBufferSize > 100 * 1024 * 1024)
+            {
+                return false;
+            }
+
+            var newBuffer = new byte[newBufferSize];
+            this.buffer.CopyTo(newBuffer, 0);
+            this.buffer = newBuffer;
+
+            return true;
         }
 
         public readonly struct CollectionResponse

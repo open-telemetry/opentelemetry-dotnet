@@ -31,6 +31,9 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
+        private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
+        private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
+
         private readonly GrpcClientInstrumentationOptions options;
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
@@ -41,7 +44,26 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             this.options = options;
         }
 
-        public override void OnStartActivity(Activity activity, object payload)
+        public override void OnEventWritten(string name, object payload)
+        {
+            switch (name)
+            {
+                case OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what GrpcClient library does is as below:
             // Activity.Start()
@@ -128,7 +150,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    this.options.EnrichWithHttpRequestMessage?.Invoke(activity, request);
                 }
                 catch (Exception ex)
                 {
@@ -137,14 +159,14 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
             if (activity.IsAllDataRequested)
             {
                 bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
                 if (validConversion)
                 {
-                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                    if (activity.Status == ActivityStatusCode.Unset)
                     {
                         activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
                     }
@@ -160,7 +182,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 {
                     try
                     {
-                        this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                        this.options.EnrichWithHttpResponseMessage?.Invoke(activity, response);
                     }
                     catch (Exception ex)
                     {

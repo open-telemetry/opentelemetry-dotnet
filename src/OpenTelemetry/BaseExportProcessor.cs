@@ -62,6 +62,8 @@ namespace OpenTelemetry
             this.exporter = exporter;
         }
 
+        internal BaseExporter<T> Exporter => this.exporter;
+
         /// <inheritdoc />
         public sealed override void OnStart(T data)
         {

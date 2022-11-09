@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,12 +27,15 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
+        private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
+
         [Fact]
         public void AddOtlpLogExporterOptionsTest()
         {
@@ -133,7 +137,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
@@ -173,7 +177,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
             Assert.NotNull(otlpLogRecord);
             Assert.Single(otlpLogRecord.Attributes);
 
@@ -187,7 +191,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog();
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
             Assert.NotNull(otlpLogRecord);
             Assert.Empty(otlpLogRecord.Attributes);
         }
@@ -211,7 +215,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
@@ -228,7 +232,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog();
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
@@ -256,7 +260,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
             logger.LogInformation("Log when there is no activity.");
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.Null(Activity.Current);
             Assert.True(otlpLogRecord.TraceId.IsEmpty);
@@ -289,7 +293,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId.ToByteArray()).ToString());
             Assert.Equal(expectedSpanId.ToString(), ActivitySpanId.CreateFromBytes(otlpLogRecord.SpanId.ToByteArray()).ToString());
@@ -321,7 +325,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal(logRecord.LogLevel.ToString(), otlpLogRecord.SeverityText);
@@ -371,7 +375,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             if (includeFormattedMessage)
@@ -390,7 +394,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog();
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             if (includeFormattedMessage)
@@ -410,7 +414,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
 
             logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog();
+            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
 
@@ -443,7 +447,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var logRecord = logRecords[0];
             var loggedException = logRecord.Exception;
-            var otlpLogRecord = logRecord.ToOtlpLog();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
             var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
@@ -455,6 +459,53 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
             Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordRespectsAttributeLimits()
+        {
+            var sdkLimitOptions = new SdkLimitOptions
+            {
+                AttributeCountLimit = 3, // 3 => LogCategory, exception.type and exception.message
+                AttributeValueLengthLimit = 8,
+            };
+
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation(new NotSupportedException("I'm the exception message."), "Exception Occurred");
+
+            var logRecord = logRecords[0];
+            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
+
+            Assert.NotNull(otlpLogRecord);
+            Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
+
+            var exceptionTypeAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType);
+            Assert.NotNull(exceptionTypeAtt);
+
+            // "NotSuppo" == first 8 chars from the exception typename "NotSupportedException"
+            Assert.Equal("NotSuppo", exceptionTypeAtt.Value.StringValue);
+            var exceptionMessageAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage);
+            Assert.NotNull(exceptionMessageAtt);
+
+            // "I'm the " == first 8 chars from the exception message
+            Assert.Equal("I'm the ", exceptionMessageAtt.Value.StringValue);
+
+            var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
+            Assert.Null(exceptionStackTraceAtt);
+        }
+
+        private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
+        {
+            return record.Attributes.FirstOrDefault(att => att.Key == key);
         }
     }
 }

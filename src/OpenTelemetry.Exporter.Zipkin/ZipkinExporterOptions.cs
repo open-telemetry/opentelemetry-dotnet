@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -44,11 +45,18 @@ namespace OpenTelemetry.Exporter
         /// Initializes zipkin endpoint.
         /// </summary>
         public ZipkinExporterOptions()
+             : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
-            if (EnvironmentVariableHelper.LoadUri(ZipkinEndpointEnvVar, out Uri endpoint))
+        }
+
+        internal ZipkinExporterOptions(IConfiguration configuration)
+        {
+            if (configuration.TryGetUriValue(ZipkinEndpointEnvVar, out var endpoint))
             {
                 this.Endpoint = endpoint;
             }
+
+            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
         }
 
         /// <summary>
@@ -75,7 +83,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see

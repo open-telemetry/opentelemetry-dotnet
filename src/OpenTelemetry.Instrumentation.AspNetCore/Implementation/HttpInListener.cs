@@ -23,11 +23,14 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
+#if NET6_0_OR_GREATER
+using Microsoft.AspNetCore.Mvc.Diagnostics;
+#endif
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal;
 #if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -35,23 +38,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+        internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
+        internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
+        internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
+        internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
+        internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
+
 #if NET7_0_OR_GREATER
         // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
         internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
 #endif
+
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
+
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
-        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
+#if !NET6_0_OR_GREATER
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
+#endif
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
@@ -62,8 +74,40 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
         }
 
+        public override void OnEventWritten(string name, object payload)
+        {
+            switch (name)
+            {
+                case OnStartEvent:
+                    {
+                        this.OnStartActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnStopEvent:
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnMvcBeforeActionEvent:
+                    {
+                        this.OnMvcBeforeAction(Activity.Current, payload);
+                    }
+
+                    break;
+                case OnUnhandledHostingExceptionEvent:
+                case OnUnHandledDiagnosticsExceptionEvent:
+                    {
+                        this.OnException(Activity.Current, payload);
+                    }
+
+                    break;
+            }
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public override void OnStartActivity(Activity activity, object payload)
+        public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what AspNetCore library does is as below:
             // Activity.Start()
@@ -80,7 +124,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
+            HttpContext context = payload as HttpContext;
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
@@ -178,7 +222,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStartActivity", request);
+                    this.options.EnrichWithHttpRequest?.Invoke(activity, request);
                 }
                 catch (Exception ex)
                 {
@@ -187,11 +231,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
         }
 
-        public override void OnStopActivity(Activity activity, object payload)
+        public void OnStopActivity(Activity activity, object payload)
         {
             if (activity.IsAllDataRequested)
             {
-                _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
+                HttpContext context = payload as HttpContext;
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
@@ -220,7 +264,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnStopActivity", response);
+                    this.options.EnrichWithHttpResponse?.Invoke(activity, response);
                 }
                 catch (Exception ex)
                 {
@@ -254,39 +298,62 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
         }
 
-        public override void OnCustom(string name, Activity activity, object payload)
+        public void OnMvcBeforeAction(Activity activity, object payload)
         {
-            if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
+            // We cannot rely on Activity.Current here
+            // There could be activities started by middleware
+            // after activity started by framework resulting in different Activity.Current.
+            // so, we need to first find the activity started by Asp.Net Core.
+            // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
+            // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+            // activity = httpActivityFeature.Activity;
+            // However, this will not work as in case of custom propagator
+            // we start a new activity during onStart event which is a sibling to the activity created by framework
+            // So, in that case we need to get the activity created by us here.
+            // we can do so only by looping through activity.Parent chain.
+            while (activity != null)
             {
-                if (activity.IsAllDataRequested)
+                if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
                 {
-                    // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
-                    // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
-                    // The reason to use reflection is to avoid a reference on MVC package.
-                    // This package can be used with non-MVC apps and this logic simply wouldn't run.
-                    // Taking reference on MVC will increase size of deployment for non-MVC apps.
-                    _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-                    _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-                    _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-
-                    if (!string.IsNullOrEmpty(template))
-                    {
-                        // override the span name that was previously set to the path part of URL.
-                        activity.DisplayName = template;
-                        activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
-                    }
-
-                    // TODO: Should we get values from RouteData?
-                    // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-                    // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
+                    break;
                 }
+
+                activity = activity.Parent;
+            }
+
+            if (activity == null)
+            {
+                return;
+            }
+
+            if (activity.IsAllDataRequested)
+            {
+#if !NET6_0_OR_GREATER
+                _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
+                _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
+                _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
+#else
+                var beforeActionEventData = payload as BeforeActionEventData;
+                var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
+#endif
+                if (!string.IsNullOrEmpty(template))
+                {
+                    // override the span name that was previously set to the path part of URL.
+                    activity.DisplayName = template;
+                    activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
+                }
+
+                // TODO: Should we get values from RouteData?
+                // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
+                // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
             }
         }
 
-        public override void OnException(Activity activity, object payload)
+        public void OnException(Activity activity, object payload)
         {
             if (activity.IsAllDataRequested)
             {
+                // We need to use reflection here as the payload type is not a defined public type.
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
@@ -302,7 +369,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                    this.options.EnrichWithException?.Invoke(activity, exc);
                 }
                 catch (Exception ex)
                 {
@@ -324,6 +391,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var queryString = request.QueryString.Value ?? string.Empty;
             var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
                          + path.Length + queryString.Length;
+
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
             return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
             {

@@ -17,8 +17,9 @@
 using System;
 #if NET7_0_OR_GREATER
 using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 #endif
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
@@ -34,23 +35,48 @@ namespace OpenTelemetry.Trace
         /// Enables the incoming requests automatic data collection for ASP.NET Core.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureAspNetCoreInstrumentationOptions">ASP.NET Core Request configuration options.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddAspNetCoreInstrumentation(this TracerProviderBuilder builder)
+            => AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
+
+        /// <summary>
+        /// Enables the incoming requests automatic data collection for ASP.NET Core.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="configureAspNetCoreInstrumentationOptions">Callback action for configuring <see cref="AspNetCoreInstrumentationOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddAspNetCoreInstrumentation(
             this TracerProviderBuilder builder,
-            Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
+            Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions)
+            => AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions);
+
+        /// <summary>
+        /// Enables the incoming requests automatic data collection for ASP.NET Core.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configureAspNetCoreInstrumentationOptions">Callback action for configuring <see cref="AspNetCoreInstrumentationOptions"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            name ??= Options.DefaultName;
+
+            if (configureAspNetCoreInstrumentationOptions != null)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions, sp);
-                });
+                builder.ConfigureServices(services => services.Configure(name, configureAspNetCoreInstrumentationOptions));
             }
 
-            return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
+            return builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreInstrumentationOptions>>().Get(name);
+
+                AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentation(new HttpInListener(options)), sp);
+            });
         }
 
         internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
@@ -80,19 +106,6 @@ namespace OpenTelemetry.Trace
 #endif
 
             return builder.AddInstrumentation(() => instrumentation);
-        }
-
-        private static TracerProviderBuilder AddAspNetCoreInstrumentation(
-            TracerProviderBuilder builder,
-            AspNetCoreInstrumentationOptions options,
-            Action<AspNetCoreInstrumentationOptions> configure = null,
-            IServiceProvider serviceProvider = null)
-        {
-            configure?.Invoke(options);
-            return AddAspNetCoreInstrumentation(
-                builder,
-                new AspNetCoreInstrumentation(new HttpInListener(options)),
-                serviceProvider);
         }
     }
 }

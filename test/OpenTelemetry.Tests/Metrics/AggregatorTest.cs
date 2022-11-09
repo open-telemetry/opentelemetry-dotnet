@@ -21,12 +21,12 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
-        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.Histogram, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
         {
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, Metric.DefaultHistogramBounds);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, Metric.DefaultHistogramBounds);
             histogramPoint.Update(-1);
             histogramPoint.Update(0);
             histogramPoint.Update(2);
@@ -45,15 +45,25 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(250);
             histogramPoint.Update(499);
             histogramPoint.Update(500);
-            histogramPoint.Update(999);
+            histogramPoint.Update(501);
+            histogramPoint.Update(750);
+            histogramPoint.Update(751);
             histogramPoint.Update(1000);
             histogramPoint.Update(1001);
+            histogramPoint.Update(2500);
+            histogramPoint.Update(2501);
+            histogramPoint.Update(5000);
+            histogramPoint.Update(5001);
+            histogramPoint.Update(7500);
+            histogramPoint.Update(7501);
+            histogramPoint.Update(10000);
+            histogramPoint.Update(10001);
             histogramPoint.Update(10000000);
             histogramPoint.TakeSnapshot(true);
 
             var count = histogramPoint.GetHistogramCount();
 
-            Assert.Equal(22, count);
+            Assert.Equal(32, count);
 
             int actualCount = 0;
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
@@ -67,7 +77,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramDistributeToAllBucketsCustom()
         {
             var boundaries = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, boundaries);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -105,10 +115,50 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void HistogramBinaryBucketTest()
+        {
+            // Arrange
+            // Bounds = (-Inf, 0] (0, 1], ... (49, +Inf)
+            var boundaries = new double[HistogramBuckets.DefaultBoundaryCountForBinarySearch];
+            for (var i = 0; i < boundaries.Length; i++)
+            {
+                boundaries[i] = i;
+            }
+
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, boundaries);
+
+            // Act
+            histogramPoint.Update(-1);
+            histogramPoint.Update(boundaries[0]);
+            histogramPoint.Update(boundaries[boundaries.Length - 1]);
+            for (var i = 0.5; i < boundaries.Length; i++)
+            {
+                histogramPoint.Update(i);
+            }
+
+            histogramPoint.TakeSnapshot(true);
+
+            // Assert
+            var index = 0;
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                var expectedCount = 1;
+
+                if (index == 0 || index == boundaries.Length - 1)
+                {
+                    expectedCount = 2;
+                }
+
+                Assert.Equal(expectedCount, histogramMeasurement.BucketCount);
+                index++;
+            }
+        }
+
+        [Fact]
         public void HistogramWithOnlySumCount()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramSumCount, null, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);

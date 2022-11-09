@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 
@@ -81,10 +83,10 @@ namespace OpenTelemetry.Trace
         /// </param>
         public ParentBasedSampler(
             Sampler rootSampler,
-            Sampler remoteParentSampled = null,
-            Sampler remoteParentNotSampled = null,
-            Sampler localParentSampled = null,
-            Sampler localParentNotSampled = null)
+            Sampler? remoteParentSampled = null,
+            Sampler? remoteParentNotSampled = null,
+            Sampler? localParentSampled = null,
+            Sampler? localParentNotSampled = null)
             : this(rootSampler)
         {
             this.remoteParentSampled = remoteParentSampled ?? new AlwaysOnSampler();

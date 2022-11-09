@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 #if NETFRAMEWORK
 using System;
 using System.Collections.Concurrent;
@@ -41,9 +42,17 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         static HttpWebRequestActivitySourceTests()
         {
-            HttpWebRequestInstrumentationOptions options = new HttpWebRequestInstrumentationOptions
+            HttpClientInstrumentationOptions options = new()
             {
-                Enrich = ActivityEnrichment,
+                EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
+                {
+                    VerifyHeaders(httpWebRequest);
+
+                    if (validateBaggage)
+                    {
+                        ValidateBaggage(httpWebRequest);
+                    }
+                },
             };
 
             HttpWebRequestActivitySource.Options = options;

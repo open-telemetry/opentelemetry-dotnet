@@ -25,42 +25,6 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Adds instrumentation to the provider.
-        /// </summary>
-        /// <typeparam name="T">Instrumentation type.</typeparam>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder)
-            where T : class
-        {
-            if (meterProviderBuilder is MeterProviderBuilderHosting meterProviderBuilderHosting)
-            {
-                meterProviderBuilderHosting.Configure((sp, builder) => builder
-                    .AddInstrumentation(() => sp.GetRequiredService<T>()));
-            }
-
-            return meterProviderBuilder;
-        }
-
-        /// <summary>
-        /// Adds a reader to the provider.
-        /// </summary>
-        /// <typeparam name="T">Reader type.</typeparam>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        public static MeterProviderBuilder AddReader<T>(this MeterProviderBuilder meterProviderBuilder)
-            where T : MetricReader
-        {
-            if (meterProviderBuilder is MeterProviderBuilderHosting meterProviderBuilderHosting)
-            {
-                meterProviderBuilderHosting.Configure((sp, builder) => builder
-                    .AddReader(sp.GetRequiredService<T>()));
-            }
-
-            return meterProviderBuilder;
-        }
-
-        /// <summary>
         /// Register a callback action to configure the <see
         /// cref="MeterProviderBuilder"/> once the application <see
         /// cref="IServiceProvider"/> is available.
@@ -68,14 +32,10 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        [Obsolete("Call ConfigureBuilder instead this method will be removed in a future version.")]
         public static MeterProviderBuilder Configure(this MeterProviderBuilder meterProviderBuilder, Action<IServiceProvider, MeterProviderBuilder> configure)
         {
-            if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
-            {
-                deferredMeterProviderBuilder.Configure(configure);
-            }
-
-            return meterProviderBuilder;
+            return meterProviderBuilder.ConfigureBuilder(configure);
         }
 
         /// <summary>
@@ -85,35 +45,12 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <returns><see cref="IServiceCollection"/> or <see langword="null"/>
         /// if services are unavailable.</returns>
+        [Obsolete("Call ConfigureServices instead this method will be removed in a future version.")]
         public static IServiceCollection GetServices(this MeterProviderBuilder meterProviderBuilder)
         {
-            if (meterProviderBuilder is MeterProviderBuilderHosting meterProviderBuilderHosting)
-            {
-                return meterProviderBuilderHosting.Services;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Run the configured actions to initialize the <see cref="MeterProvider"/>.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder, IServiceProvider serviceProvider)
-        {
-            if (meterProviderBuilder is MeterProviderBuilderHosting meterProviderBuilderHosting)
-            {
-                return meterProviderBuilderHosting.Build(serviceProvider);
-            }
-
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                return meterProviderBuilderBase.Build();
-            }
-
-            return null;
+            IServiceCollection services = null;
+            meterProviderBuilder.ConfigureServices(s => services = s);
+            return services;
         }
     }
 }

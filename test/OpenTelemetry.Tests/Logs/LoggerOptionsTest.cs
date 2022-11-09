@@ -38,6 +38,8 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(initialValue, provider.IncludeScopes);
             Assert.Equal(initialValue, provider.ParseStateValues);
 
+            Assert.NotNull(options);
+
             // Attempt to change value
             options.IncludeFormattedMessage = !initialValue;
             options.IncludeScopes = !initialValue;

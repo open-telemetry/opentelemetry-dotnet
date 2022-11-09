@@ -28,19 +28,18 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;
-        private bool disposed = false;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
-        /// <param name="scrapeResponseCacheDurationMilliseconds">
-        /// The cache duration in milliseconds for scrape responses. Default value: 0.
-        /// </param>
-        public PrometheusExporter(int scrapeResponseCacheDurationMilliseconds = 0)
+        /// <param name="options"><see cref="PrometheusExporterOptions"/>.</param>
+        public PrometheusExporter(PrometheusExporterOptions options)
         {
-            Guard.ThrowIfOutOfRange(scrapeResponseCacheDurationMilliseconds, min: 0);
+            Guard.ThrowIfNull(options);
 
-            this.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds;
+            this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
+
             this.CollectionManager = new PrometheusCollectionManager(this);
         }
 

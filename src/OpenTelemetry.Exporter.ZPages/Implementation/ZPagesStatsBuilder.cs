@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation
 {
-    internal class ZPagesStatsBuilder
+    internal sealed class ZPagesStatsBuilder
     {
         public const string ContentType = "text/html";
     }

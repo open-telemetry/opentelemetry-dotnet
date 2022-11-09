@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
-    internal class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
+    internal sealed class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
     {
         private readonly ListenerHandler handler;
 
@@ -49,22 +49,7 @@ namespace OpenTelemetry.Instrumentation
 
             try
             {
-                if (value.Key.EndsWith("Start", StringComparison.Ordinal))
-                {
-                    this.handler.OnStartActivity(Activity.Current, value.Value);
-                }
-                else if (value.Key.EndsWith("Stop", StringComparison.Ordinal))
-                {
-                    this.handler.OnStopActivity(Activity.Current, value.Value);
-                }
-                else if (value.Key.EndsWith("Exception", StringComparison.Ordinal))
-                {
-                    this.handler.OnException(Activity.Current, value.Value);
-                }
-                else
-                {
-                    this.handler.OnCustom(value.Key, Activity.Current, value.Value);
-                }
+                this.handler.OnEventWritten(value.Key, value.Value);
             }
             catch (Exception ex)
             {

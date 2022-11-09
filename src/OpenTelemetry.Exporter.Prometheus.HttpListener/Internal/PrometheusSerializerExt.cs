@@ -23,20 +23,23 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     internal static partial class PrometheusSerializer
     {
+        /* Counter becomes counter
+           Gauge becomes gauge
+           Histogram becomes histogram
+           UpDownCounter becomes gauge
+         * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
+        */
         private static readonly string[] MetricTypes = new string[]
         {
-            "untyped", "counter", "gauge", "summary", "histogram", "histogram", "histogram", "histogram", "untyped",
+            "untyped", "counter", "gauge", "summary", "histogram", "histogram", "histogram", "histogram", "gauge",
         };
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
-            if (!string.IsNullOrWhiteSpace(metric.Description))
-            {
-                cursor = WriteHelpText(buffer, cursor, metric.Name, metric.Unit, metric.Description);
-            }
-
             int metricType = (int)metric.MetricType >> 4;
-            cursor = WriteTypeInfo(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
+            cursor = WriteTypeMetadata(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
+            cursor = WriteUnitMetadata(buffer, cursor, metric.Name, metric.Unit);
+            cursor = WriteHelpMetadata(buffer, cursor, metric.Name, metric.Unit, metric.Description);
 
             if (!metric.MetricType.IsHistogram())
             {

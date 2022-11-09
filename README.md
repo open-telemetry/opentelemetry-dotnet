@@ -70,8 +70,10 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
-See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
-more exporters.
+See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) and
+[OpenTelemetry .NET Contrib
+repo](https://github.com/open-telemetry/opentelemetry-dotnet-contrib) for more
+components.
 
 ## Extensibility
 
@@ -118,6 +120,7 @@ If you have trouble accessing the doc, please get in touch on
 
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Robert Paj&#x105;k](https://github.com/pellared), Splunk
+* [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):

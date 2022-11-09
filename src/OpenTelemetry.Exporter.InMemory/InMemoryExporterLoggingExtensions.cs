@@ -22,6 +22,12 @@ namespace OpenTelemetry.Logs
 {
     public static class InMemoryExporterLoggingExtensions
     {
+        /// <summary>
+        /// Adds InMemory exporter to the OpenTelemetryLoggerOptions.
+        /// </summary>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, ICollection<LogRecord> exportedItems)
         {
             Guard.ThrowIfNull(loggerOptions);
