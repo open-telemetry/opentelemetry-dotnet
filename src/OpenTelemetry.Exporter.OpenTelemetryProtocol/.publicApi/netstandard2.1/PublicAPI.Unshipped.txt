@@ -1,3 +1,11 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryMaxAttempts.get -> int
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryMaxAttempts.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryInitialBackoff.get -> System.Timespan
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryInitialBackoff.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryMaxBackoff.get -> System.Timespan
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryMaxBackoff.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryBackoffMultiplier.get -> double
+OpenTelemetry.Exporter.OtlpExporterOptions.RetryBackoffMultiplier.set -> void
 static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions, OpenTelemetry.Metrics.MetricReaderOptions> configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configureExporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
 *REMOVED*static OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
