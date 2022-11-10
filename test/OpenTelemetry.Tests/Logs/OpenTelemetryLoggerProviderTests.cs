@@ -15,6 +15,8 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
@@ -36,6 +38,23 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(defaults.ParseStateValues, provider.ParseStateValues);
             Assert.Null(provider.Processor);
             Assert.NotNull(provider.Resource);
+        }
+
+        [Fact]
+        public void ResourceDetectionUsingIConfigurationTest()
+        {
+            var services = new ServiceCollection();
+
+            services.AddOptions();
+
+            services.AddSingleton<IConfiguration>(
+                new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_SERVICE_NAME"] = "TestServiceName" }).Build());
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            using var loggerProvider = new OpenTelemetryLoggerProvider(serviceProvider);
+
+            Assert.Contains(loggerProvider.Resource.Attributes, kvp => kvp.Key == "service.name" && (string)kvp.Value == "TestServiceName");
         }
 
         [Fact]
