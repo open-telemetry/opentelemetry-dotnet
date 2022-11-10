@@ -13,6 +13,7 @@ on:
 jobs:
   build-test:
     strategy:
+      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ windows-latest, ubuntu-latest ]
         version: [ net462, net6.0, net7.0 ]

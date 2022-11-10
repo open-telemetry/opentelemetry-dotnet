@@ -378,17 +378,15 @@ For the below examples imagine an exporter with this constructor:
 ```csharp
 public class MyCustomExporter : BaseExporter<Activity>
 {
-    public MyCustomExporter(
-        ILogger<MyCustomExporter> logger,
-        MyCustomService myCustomService)
+    public MyCustomExporter(MyCustomService myCustomService)
     {
         // Implementation not important
     }
 }
 ```
 
-We want to inject the `ILogger<MyCustomExporter>` and `MyCustomService`
-dependencies into our `MyCustomExporter` instance.
+We want to inject `MyCustomService` dependency into our `MyCustomExporter`
+instance.
 
 #### Using Sdk.CreateTracerProviderBuilder()
 
@@ -399,7 +397,6 @@ To register `MyCustomExporter` and `MyCustomService` we can use the
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .ConfigureServices(services =>
     {
-        services.AddLogging();
         services.AddSingleton<MyCustomService>();
     })
     .AddExporter<MyCustomExporter>(ExportProcessorType.Batch)
@@ -485,10 +482,6 @@ shutdown.
   primarily by library authors. Services may NOT be added to the
   `IServiceCollection` during `ConfigureBuilder` because the `IServiceProvider`
   has already been created.
-
-### Guidance for library authors
-
-// TODO: Add details here
 
 ## Configuration files and environment variables
 
