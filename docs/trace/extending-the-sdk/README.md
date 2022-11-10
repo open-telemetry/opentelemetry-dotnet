@@ -365,7 +365,7 @@ When providing registration extensions:
     extension to register configuration callbacks for a given name.
 
   * Use the
-    [IOptionsMonitor<T>.Get](https://learn.microsoft.com/dotnet/api/microsoft.extensions.options.ioptionsmonitor-1.get)
+    [IOptionsMonitor&lt;T&gt;.Get](https://learn.microsoft.com/dotnet/api/microsoft.extensions.options.ioptionsmonitor-1.get)
     method to access options class instances by name.
 
 * **DO** throw exceptions for issues that prevent the component being registered
