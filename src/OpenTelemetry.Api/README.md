@@ -137,7 +137,7 @@ Processors/Exporters see the same data.
 The recommended way of instrumenting is by using the [.NET Activity
 API](#instrumenting-a-libraryapplication-with-net-activity-api). Users are
 required to just take dependency on the
-[DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/5.0.0).
+[DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource).
 Adding dependency to
 [OpenTelemetry.API](https://www.nuget.org/packages/opentelemetry.api) is
 required only for the following scenarios:
@@ -160,7 +160,7 @@ required only for the following scenarios:
    [Context propagation](#context-propagation) section.
 
 3. You want to leverage
-   [Baggage](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
+   [Baggage](#baggage-api)
    API.
 
 ## Instrumenting a library/application with .NET Activity API
@@ -172,16 +172,11 @@ is the .NET `Activity` API. Guidance for instrumenting using this API is
 documented fully in the TBD(dotnet activity user guide link), but is described
 here as well.
 
-1. Install the `System.Diagnostics.DiagnosticSource` package version `5.0.1` or
-   above to your application or library.
+1. Install the latest stable `System.Diagnostics.DiagnosticSource` to your
+   application or library.
 
-    ```xml
-    <ItemGroup>
-      <PackageReference
-        Include="System.Diagnostics.DiagnosticSource"
-        Version="5.0.1"
-      />
-    </ItemGroup>
+    ```shell
+    dotnet add package System.Diagnostics.DiagnosticSource
     ```
 
 2. Create an `ActivitySource`, providing the name and version of the
@@ -462,7 +457,7 @@ context.
 Metrics in OpenTelemetry .NET are a somewhat unique implementation of the
 OpenTelemetry project, as the Metrics API is incorporated directly into the .NET
 runtime itself, as part of the
-[`System.Diagnostics.DiagnosticSource`](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0)
+[`System.Diagnostics.DiagnosticSource`](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource)
 package. This means, users can instrument their applications/libraries to emit
 metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
 package can be used in applications targeting any of the officially supported
@@ -474,13 +469,11 @@ Windows-based .NET implementation).
 
 ### Basic metric usage
 
-1. Install the `System.Diagnostics.DiagnosticSource` package version `6.0.0` or
-   above to your application or library.
+1. Install the latest stable version of `System.Diagnostics.DiagnosticSource` to
+   your application or library.
 
-    ```xml
-    <ItemGroup>
-      <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
-    </ItemGroup>
+    ```shell
+    dotnet add package System.Diagnostics.DiagnosticSource
     ```
 
 2. Create a `Meter`, providing the name and version of the library/application
@@ -520,7 +513,7 @@ describes more kinds of instruments.
 
 ### Instrument types
 
-// TODO - add all instruments.
+See [this](../../docs/metrics/learning-more-instruments/README.md).
 
 ## Troubleshooting
 

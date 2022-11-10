@@ -30,7 +30,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package OpenTelemetry.Instrumentation.SqlClient
+dotnet add package --prerelease OpenTelemetry.Instrumentation.SqlClient
 ```
 
 ### Step 2: Enable SqlClient Instrumentation at application startup

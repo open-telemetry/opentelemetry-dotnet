@@ -6,7 +6,7 @@
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Extensions.Hosting
+dotnet add package --prerelease OpenTelemetry.Extensions.Hosting
 ```
 
 ## Usage
