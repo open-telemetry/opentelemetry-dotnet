@@ -341,6 +341,9 @@ A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
 ## Registration extension method guidance for library authors
 
+**Note** This information applies to the OpenTelemetry SDK version 1.4.0 and
+newer only.
+
 Library authors are encouraged to provide extension methods users may call to
 register custom OpenTelemetry components into their `TracerProvider`s. These
 extension methods can target either the `TracerProviderBuilder` or the
@@ -584,7 +587,8 @@ namespace MyLibrary
 
 The benefit to using the `IServiceCollection` style is users only need to call a
 single `AddMyLibrary` extension to configure the library itself and optionally
-turn on OpenTelemetry integration.
+turn on OpenTelemetry integration for multiple signals (tracing & metrics in
+this case).
 
 **Note** `ConfigureOpenTelemetryTracing` does not automatically start
 OpenTelemetry. The host is responsible for either calling
