@@ -15,13 +15,6 @@ on:
 
 jobs:
   build-test:
-    strategy:
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
-        version: [ net462, net6.0, net7.0 ]
-        exclude:
-        - os: ubuntu-latest
-          version: net462
 
     runs-on: ubuntu-latest
     steps:
