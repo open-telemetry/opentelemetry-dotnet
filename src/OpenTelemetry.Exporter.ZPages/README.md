@@ -6,7 +6,7 @@
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.ZPages
+dotnet add package --prerelease OpenTelemetry.Exporter.ZPages
 ```
 
 ## Configuration

@@ -6,6 +6,10 @@
   and `net.host.port` attributes will be populated instead.
   ([#3858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3858))
 
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
 * **Breaking change** The `Enrich` callback option has been removed.
   For better usability, it has been replaced by three separate options:
   `EnrichWithHttpRequest`, `EnrichWithHttpResponse` and `EnrichWithException`.
