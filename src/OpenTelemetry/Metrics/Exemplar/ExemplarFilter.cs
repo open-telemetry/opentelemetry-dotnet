@@ -1,4 +1,4 @@
-// <copyright file="IExemplarFilter.cs" company="OpenTelemetry Authors">
+// <copyright file="ExemplarFilter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The interface defining Exemplar Filter.
 /// </summary>
-internal interface IExemplarFilter
+internal abstract class ExemplarFilter
 {
     /// <summary>
     /// Determines if a given measurement is eligible for being
@@ -40,7 +40,10 @@ internal interface IExemplarFilter
     /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
     /// and will not be given to the ExemplarReservoir.
     /// </returns>
-    bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+    public virtual bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    {
+        return false;
+    }
 
     /// <summary>
     /// Determines if a given measurement is eligible for being
@@ -58,5 +61,8 @@ internal interface IExemplarFilter
     /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
     /// and will not be given to the ExemplarReservoir.
     /// </returns>
-    bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+    public virtual bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    {
+        return false;
+    }
 }

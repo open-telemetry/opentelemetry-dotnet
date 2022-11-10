@@ -22,15 +22,6 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The Exemplar Filter which never samples any measurements.
 /// </summary>
-internal sealed class NoneExemplarFilter : IExemplarFilter
+internal sealed class NoneExemplarFilter : ExemplarFilter
 {
-    public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        return false;
-    }
-
-    public bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        return false;
-    }
 }

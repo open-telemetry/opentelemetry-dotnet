@@ -22,14 +22,14 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The Exemplar Filter which always samples measurements.
 /// </summary>
-internal sealed class AllExemplarFilter : IExemplarFilter
+internal sealed class AllExemplarFilter : ExemplarFilter
 {
-    public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
         return true;
     }
 
-    public bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
         return true;
     }

@@ -24,14 +24,14 @@ namespace OpenTelemetry.Metrics;
 /// The Exemplar Filter which samples measurement done inside context
 /// of sampled activity (span).
 /// </summary>
-internal sealed class SampledTraceExemplarFilter : IExemplarFilter
+internal sealed class SampledTraceExemplarFilter : ExemplarFilter
 {
-    public bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
         return Activity.Current?.Recorded ?? false;
     }
 
-    public bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
         return Activity.Current?.Recorded ?? false;
     }
