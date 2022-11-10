@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Phased out Grpc package and added `HTTPClient` as a hard requirement for
+  configuring `GrpcChannelOptions`.
+  ([#3421](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3421))
+  ([#3885](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3885))
+
 ## 1.4.0-beta.3
 
 Released 2022-Nov-07
@@ -9,7 +14,7 @@ Released 2022-Nov-07
 * Log Exporter modified to no longer prefix scope-depth when exporting ILogger
   scopes as attributes. Empty keys and {OriginalFormat} key will be ignored from
   scopes.
-  ([3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
+  ([#3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
 
 ## 1.4.0-beta.2
 
