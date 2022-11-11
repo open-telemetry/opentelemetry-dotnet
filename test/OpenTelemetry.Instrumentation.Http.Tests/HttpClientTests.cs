@@ -231,7 +231,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     ""spanAttributes"": {
                       ""http.scheme"": ""http"",
                       ""http.method"": ""GET"",
-                      ""http.host"": ""{host}:{port}"",
+                      ""net.peer.name"": ""{host}"",
+                      ""net.peer.port"": ""{port}"",
                       ""http.status_code"": ""399"",
                       ""http.flavor"": ""{flavor}"",
                       ""http.url"": ""http://{host}:{port}/""
