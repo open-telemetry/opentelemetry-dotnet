@@ -361,8 +361,6 @@ Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 
 ## Dependency injection support
 
-### Overview
-
 **Note** This information applies to the OpenTelemetry SDK version 1.4.0 and
 newer only.
 
@@ -371,7 +369,7 @@ The SDK implementation of `TracerProviderBuilder` is backed by an
 generally known as [dependency
 injection](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection).
 
-### Examples
+### Dependency injection examples
 
 For the below examples imagine an exporter with this constructor:
 
@@ -484,8 +482,6 @@ shutdown.
   has already been created.
 
 ## Configuration files and environment variables
-
-### Overview
 
 **Note** This information applies to the OpenTelemetry SDK version 1.4.0 and
 newer only.
@@ -637,7 +633,10 @@ appBuilder.Services.AddOpenTelemetryTracing(builder => builder
 
 ### How to set up configuration
 
-#### Using ASP.NET Core or .NET Generic Host with OpenTelemetry.Extensions.Hosting extensions
+The following sections describe how to set up configuration based on the host
+and OpenTelemetry API being used.
+
+#### Using .NET hosts with the OpenTelemetry.Extensions.Hosting package
 
 `ASP.NET Core` and [.NET Generic
 Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users
