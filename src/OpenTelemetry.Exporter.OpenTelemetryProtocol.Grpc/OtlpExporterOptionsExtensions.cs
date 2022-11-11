@@ -1,0 +1,108 @@
+// <copyright file="OtlpExporterOptionsExtensions.cs" company="OpenTelemetry Authors">
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+using System;
+using Grpc.Net.Client;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
+using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
+
+namespace OpenTelemetry.Exporter
+{
+    internal static class OtlpExporterOptionsExtensions
+    {
+        public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
+        {
+            if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
+            }
+
+            return GrpcChannel.ForAddress(options.Endpoint);
+        }
+
+        public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+            where THeaders : new()
+        {
+            var optionHeaders = options.Headers;
+            var headers = new THeaders();
+            if (!string.IsNullOrEmpty(optionHeaders))
+            {
+                Array.ForEach(
+                    optionHeaders.Split(','),
+                    (pair) =>
+                    {
+                        // Specify the maximum number of substrings to return to 2
+                        // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
+                        var keyValueData = pair.Split(new char[] { '=' }, 2);
+                        if (keyValueData.Length != 2)
+                        {
+                            throw new ArgumentException("Headers provided in an invalid format.");
+                        }
+
+                        var key = keyValueData[0].Trim();
+                        var value = keyValueData[1].Trim();
+                        addHeader(headers, key, value);
+                    });
+            }
+
+            return headers;
+        }
+
+        public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options)
+        {
+            return new OtlpGrpcTraceExportClient(options);
+        }
+
+        public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options)
+        {
+            return new OtlpGrpcMetricsExportClient(options);
+        }
+
+        public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options)
+        {
+            return new OtlpGrpcLogExportClient(options);
+        }
+
+        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
+        {
+            var absoluteUri = uri.AbsoluteUri;
+            var separator = string.Empty;
+
+            if (absoluteUri.EndsWith("/"))
+            {
+                // Endpoint already ends with 'path/'
+                if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
+                {
+                    return uri;
+                }
+            }
+            else
+            {
+                // Endpoint already ends with 'path'
+                if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
+                {
+                    return uri;
+                }
+
+                separator = "/";
+            }
+
+            return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
+        }
+    }
+}
