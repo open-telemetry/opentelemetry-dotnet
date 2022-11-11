@@ -512,7 +512,8 @@ supported. Consult the individual project README files for details on specific
 environment variable support.
 
 As an example the OpenTelemetry Specification defines the `OTEL_SERVICE_NAME`
-which may be used to configure the service name emitted on telemetry by the SDK.
+environment variable which may be used to configure the service name emitted on
+telemetry by the SDK.
 
 A traditional environment variable is set using a command like `set
 OTEL_SERVICE_NAME=MyService` on Windows or `export OTEL_SERVICE_NAME=MyService`
@@ -574,6 +575,7 @@ Json config file (usually appsettings.json):
       }
     }
   }
+}
 ```
 
 Code:
