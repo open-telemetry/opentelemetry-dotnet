@@ -133,7 +133,7 @@ library to exist. Users simply need to configure the OpenTelemetry SDK to listen
 to the `ActivitySource` used by the library by calling `AddSource` on the
 `TracerProviderBuilder` being configured. The following section is applicable
 only if you are writing an instrumentation library for something you cannot
-modify to emit activity/span instances directly directly.
+modify to emit activity/span instances directly.
 
 Writing an instrumentation library typically involves 3 steps.
 
