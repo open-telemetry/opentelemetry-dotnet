@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
@@ -58,6 +59,13 @@ namespace OpenTelemetry.Logs
         {
         }
 
+        internal OpenTelemetryLoggerProvider(IServiceProvider serviceProvider)
+            : this(
+                  serviceProvider: serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider)),
+                  options: serviceProvider?.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue!)
+        {
+        }
+
         internal OpenTelemetryLoggerProvider()
             : this(new OpenTelemetryLoggerOptions())
         {
@@ -68,7 +76,7 @@ namespace OpenTelemetry.Logs
         {
         }
 
-        internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
+        internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options, IServiceProvider? serviceProvider = null)
         {
             OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("Building OpenTelemetryLoggerProvider.");
 
@@ -78,7 +86,9 @@ namespace OpenTelemetry.Logs
             this.IncludeFormattedMessage = options.IncludeFormattedMessage;
             this.ParseStateValues = options.ParseStateValues;
 
-            this.Resource = options.ResourceBuilder.Build();
+            var resourceBuilder = options.ResourceBuilder;
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
 
             foreach (var processor in options.Processors)
             {
