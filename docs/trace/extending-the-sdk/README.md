@@ -530,7 +530,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<IMyLibraryService, MyLibraryService>();
 
             // Support named options.
-            name ??= Options.Options.DefaultName;
+            name ??= Options.DefaultName;
 
             if (configure != null)
             {
