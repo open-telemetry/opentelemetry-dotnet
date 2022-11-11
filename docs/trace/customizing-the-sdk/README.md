@@ -503,9 +503,9 @@ which may be used to configure SDK implementations.
 
 The OpenTelemetry .NET SDK will look for the environment variables defined in
 the specification using `IConfiguration` which means in addition to environment
-varaibles users may also manage these settings via the command-line,
+variables users may also manage these settings via the command-line,
 configuration files, or any other source registered with the .NET configuration
-engine. This provides greater flexibilty than what the specification defines.
+engine. This provides greater flexibility than what the specification defines.
   
 **Note** Not all of the environment variables defined in the specification are
 supported. Consult the individual project README files for details on specific
