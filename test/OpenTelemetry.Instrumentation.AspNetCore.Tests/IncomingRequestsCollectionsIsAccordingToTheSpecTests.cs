@@ -19,11 +19,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
 using Xunit;
@@ -58,12 +60,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
+                {
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
                         services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
                         .AddInMemoryExporter(exportedItems));
-                    }))
+                    });
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 try

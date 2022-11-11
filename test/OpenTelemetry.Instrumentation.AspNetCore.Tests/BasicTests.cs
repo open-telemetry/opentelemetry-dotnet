@@ -23,10 +23,12 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -57,8 +59,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
-        [Fact]
-        public async Task StatusIsUnsetOn200Response()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task StatusIsUnsetOn200Response(bool disableLogging)
         {
             var exportedItems = new List<Activity>();
             void ConfigureTestServices(IServiceCollection services)
@@ -72,7 +76,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    if (disableLogging)
+                    {
+                        builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                    }
+                })
                 .CreateClient())
             {
                 // Act
@@ -116,7 +126,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 // Act
@@ -150,12 +163,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
+                {
                     builder.ConfigureTestServices(services =>
                     {
-                        this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
+                        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddAspNetCoreInstrumentation()
                         .AddInMemoryExporter(exportedItems)
                         .Build();
-                    })))
+                    });
+
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
             {
                 using var client = testFactory.CreateClient();
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/values/2");
@@ -203,14 +221,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Arrange
                 using (var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
-                        builder.ConfigureTestServices(services =>
                         {
-                            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                                .AddAspNetCoreInstrumentation()
-                                .AddInMemoryExporter(exportedItems)
-                                .Build();
-                        })))
+                            builder.ConfigureTestServices(services =>
+                            {
+                                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                                this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation().AddInMemoryExporter(exportedItems).Build();
+                            });
+                            builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                        }))
                 {
                     using var client = testFactory.CreateClient();
                     var response = await client.GetAsync("/api/values/2");
@@ -256,7 +274,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices)))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
             {
                 using var client = testFactory.CreateClient();
 
@@ -303,7 +324,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices)))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
             {
                 using var client = testFactory.CreateClient();
 
@@ -347,13 +371,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Arrange
                 using var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
-                        builder.ConfigureTestServices(services =>
                         {
-                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                                .SetSampler(new TestSampler(samplingDecision))
-                                .AddAspNetCoreInstrumentation()
-                                .Build();
-                        }));
+                            builder.ConfigureTestServices(services => { this.tracerProvider = Sdk.CreateTracerProviderBuilder().SetSampler(new TestSampler(samplingDecision)).AddAspNetCoreInstrumentation().Build(); });
+                            builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                        });
                 using var client = testFactory.CreateClient();
 
                 // Test TraceContext Propagation
@@ -404,6 +425,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 bool isFilterCalled = false;
                 using var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
+                    {
                         builder.ConfigureTestServices(services =>
                         {
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -416,7 +438,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                     };
                                 })
                                 .Build();
-                        }));
+                        });
+                        builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                    });
                 using var client = testFactory.CreateClient();
 
                 // Test TraceContext Propagation
@@ -494,7 +518,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
@@ -549,7 +576,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient();
 
             // Act
@@ -582,7 +612,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 var response = await client.GetAsync("/api/values/2");
@@ -618,13 +651,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
+                {
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestNullHostActivityMiddlewareImpl(activitySourceName, activityName));
                         services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
                         .AddSource(activitySourceName)
                         .AddInMemoryExporter(exportedItems));
-                    }))
+                    });
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 var response = await client.GetAsync("/api/values/2");
@@ -671,7 +707,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 // Act
@@ -699,8 +738,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // Arrange
             using (var client = this.factory
-                .WithWebHostBuilder(builder => builder.ConfigureTestServices(
-                    (s) => this.ConfigureExceptionFilters(s, mode, ref exportedItems)))
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureTestServices(
+                    (s) => this.ConfigureExceptionFilters(s, mode, ref exportedItems));
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 // Act
@@ -745,7 +788,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
@@ -790,7 +836,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 try
@@ -836,6 +885,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .Build();
 
             var builder = WebApplication.CreateBuilder();
+            builder.Logging.ClearProviders();
             var app = builder.Build();
 
             app.UseExceptionHandler(handler =>
