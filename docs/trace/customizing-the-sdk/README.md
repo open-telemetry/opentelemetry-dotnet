@@ -493,6 +493,45 @@ patterns provided by .NET. The configuration pattern supports building a
 composited view of settings from external sources and the options pattern helps
 use those settings to configure features by binding to simple classes.
 
+### How to set up configuration
+
+The following sections describe how to set up configuration based on the host
+and OpenTelemetry API being used.
+
+#### Using .NET hosts with the OpenTelemetry.Extensions.Hosting package
+
+`ASP.NET Core` and [.NET Generic
+Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users
+using the
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
+package do not need to do anything extra to enable `IConfiguration` support. The
+OpenTelemetry SDK will automatically use whatever `IConfiguration` has been
+supplied by the host. The host by default will load environment variables,
+command-line arguments, and config files. See [Configuration in
+.NET](https://learn.microsoft.com/dotnet/core/extensions/configuration) for
+details.
+
+#### Using Sdk.CreateTracerProviderBuilder directly
+
+By default the `Sdk.CreateTracerProviderBuilder` API will create an
+`IConfiguration` from environment variables. The following example shows how to
+customize the `IConfiguration` used by `Sdk.CreateTracerProviderBuilder` for
+cases where additional sources beyond environment variables are required.
+
+```csharp
+// Build configuration from sources. Order is important.
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("./myOTelSettings.json")
+    .AddEnvironmentVariables()
+    .AddCommandLine(args)
+    .Build();
+
+// Set up a TracerProvider using the configuration.
+var provider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+    .Build();
+```
+
 ### OpenTelemetry Specification environment variables
 
 The [OpenTelemetry
@@ -631,43 +670,4 @@ appBuilder.Services.Configure<JaegerExporterOptions>(
 appBuilder.Services.AddOpenTelemetryTracing(builder => builder
     .AddJaegerExporter(name: "JaegerPrimary", configure: null)
     .AddJaegerExporter(name: "JaegerSecondary", configure: null));
-```
-
-### How to set up configuration
-
-The following sections describe how to set up configuration based on the host
-and OpenTelemetry API being used.
-
-#### Using .NET hosts with the OpenTelemetry.Extensions.Hosting package
-
-`ASP.NET Core` and [.NET Generic
-Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users
-using the
-[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
-package do not need to do anything extra to enable `IConfiguration` support. The
-OpenTelemetry SDK will automatically use whatever `IConfiguration` has been
-supplied by the host. The host by default will load environment variables,
-command-line arguments, and config files. See [Configuration in
-.NET](https://learn.microsoft.com/dotnet/core/extensions/configuration) for
-details.
-
-#### Using Sdk.CreateTracerProviderBuilder directly
-
-By default the `Sdk.CreateTracerProviderBuilder` API will create an
-`IConfiguration` from environment variables. The following example shows how to
-customize the `IConfiguration` used by `Sdk.CreateTracerProviderBuilder` for
-cases where additional sources beyond environment variables are required.
-
-```csharp
-// Build configuration from sources. Order is important.
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("./myOTelSettings.json")
-    .AddEnvironmentVariables()
-    .AddCommandLine(args)
-    .Build();
-
-// Set up a TracerProvider using the configuration.
-var provider = Sdk.CreateTracerProviderBuilder()
-    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-    .Build();
 ```
