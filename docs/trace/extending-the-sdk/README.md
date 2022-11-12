@@ -137,20 +137,25 @@ modify to emit activity/span instances directly.
 
 Writing an instrumentation library typically involves 3 steps.
 
-1. First step involves "hooking" into the target library. The exact mechanism
-   of this depends on the target library itself. For example,
-   System.Data.SqlClient for .NET Framework, which publishes events using
-   `EventSource`. The [SqlClient instrumentation
-   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
-   in this case subscribes to the `EventSource` callbacks.
+1. The first step involves attaching to the target library. The exact attachment
+   mechanism will depend on the implementation details of the target library
+   itself. For example, System.Data.SqlClient when running on .NET Framework
+   happens to publish events using an `EventSource` which the [SqlClient
+   instrumentation
+   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs)
+   listens to in order to trigger code as Sql commands are executed. The [.NET
+   Framework HttpWebRequest
+   instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/Implementation/HttpWebRequestActivitySource.netfx.cs)
+   patches the runtime code (using reflection) and swaps a static reference that
+   gets invoked as requests are processed for custom code. Every library will be
+   different.
 
-2. Second step is to emit activities using the [ActivitySource
-   API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
-   In this step, the instrumentation library emits activities **on behalf of**
-   the target instrumented library. Irrespective of the actual mechanism used in
-   first step, this should be uniform across all instrumentation libraries. The
-   `ActivitySource` must be created using the name and version of the
-   instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and
+2. The second step is to emit activity instances using the [ActivitySource
+   API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
+   **on behalf of** the target library. Irrespective of the actual mechanism
+   used in first step, this should be uniform across all instrumentation
+   libraries. The `ActivitySource` must be created using the name and version of
+   the instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and
    **NOT** the instrumented library (eg: "System.Net.Http")
       1. [Context
       Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
@@ -165,8 +170,8 @@ Writing an instrumentation library typically involves 3 steps.
       GrpcClient, this is already provided to you and **do not require**
       injecting/extracting `PropagationContext` explicitly again.)
 
-3. Third step is an optional step, and involves providing extension methods on
-   `TracerProviderBuilder` and/or `IServiceCollection` to enable the
+3. The third step is an optional step, and involves providing extension methods
+   on `TracerProviderBuilder` and/or `IServiceCollection` to enable the
    instrumentation. For help in choosing see: [Registration extension method
    guidance for library
    authors](#registration-extension-method-guidance-for-library-authors). This
