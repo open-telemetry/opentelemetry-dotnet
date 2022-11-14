@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Added dependency injection support in the `ResourceBuilder` class and added
+  support for loading environment variables from `IConfiguration` for the
+  `AddEnvironmentVariableDetector` extension (Logs)
+  ([#3889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3889))
+
 ## 1.4.0-beta.3
 
 Released 2022-Nov-07
@@ -17,7 +22,7 @@ Released 2022-Nov-07
 
 * Added dependency injection support in the `ResourceBuilder` class and added
   support for loading environment variables from `IConfiguration` for the
-  `AddEnvironmentVariableDetector` extension
+  `AddEnvironmentVariableDetector` extension (Traces & Metrics)
   ([#3782](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3782),
   [#3798](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3798))
 
