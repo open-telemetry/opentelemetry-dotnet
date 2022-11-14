@@ -71,18 +71,20 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `SqlClientInstrumentationOptions`.
 
-### Capturing 'db.statement'
+### Capturing database statements
 
-The `SqlClientInstrumentationOptions` class exposes several properties that can
-be used to configure how the
+The `SqlClientInstrumentationOptions` class exposes two properties that can be
+used to configure how the
 [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
-attribute is captured upon execution of a query.
+attribute is captured upon execution of a query but the behavior depends on the
+runtime used.
 
-#### .NET & .NET Core
+#### .NET and .NET Core
 
-On .NET Core, two properties are available: `SetDbStatementForStoredProcedure`
-and `SetDbStatementForText`. These properties control capturing of
-`CommandType.StoredProcedure` and `CommandType.Text` respectively.
+On .NET and .NET Core, two properties are available:
+`SetDbStatementForStoredProcedure` and `SetDbStatementForText`. These properties
+control capturing of `CommandType.StoredProcedure` and `CommandType.Text`
+respectively.
 
 `SetDbStatementForStoredProcedure` is _true_ by default and will set
 [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
@@ -140,7 +142,9 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### EnableConnectionLevelAttributes - All runtimes
+### EnableConnectionLevelAttributes
+
+**Note:** EnableConnectionLevelAttributes is supported on all runtimes.
 
 By default, `EnabledConnectionLevelAttributes` is disabled and this
 instrumentation sets the `peer.service` attribute to the
@@ -161,7 +165,9 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### Enrich - .NET & .NET Core only
+### Enrich
+
+**Note:** Enrich is supported on .NET and .NET Core runtimes only.
 
 This option can be used to enrich the activity with additional information from
 the raw `SqlCommand` object. The `Enrich` action is called only when
@@ -195,7 +201,9 @@ general extensibility point to add additional properties to any activity. The
 `Enrich` option is specific to this instrumentation, and is provided to get
 access to `SqlCommand` object.
 
-### RecordException - .NET & .NET Core only
+### RecordException
+
+**Note:** RecordException is supported on .NET and .NET Core runtimes only.
 
 This option can be set to instruct the instrumentation to record SqlExceptions
 as Activity
@@ -211,7 +219,9 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-### Filter - .NET & .NET Core only
+### Filter
+
+**Note:** Filter is supported on .NET and .NET Core runtimes only.
 
 This option can be used to filter out activities based on the properties of the
 `SqlCommand` object being instrumented using a `Func<object, bool>`. The
