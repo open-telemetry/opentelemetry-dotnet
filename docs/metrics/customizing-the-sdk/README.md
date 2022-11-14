@@ -276,7 +276,7 @@ default boundaries. This requires the use of
     })
 ```
 
-**NOTE:** The SDK currently does not support any changes to `Aggregation` type
+**Note:** The SDK currently does not support any changes to `Aggregation` type
 by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
@@ -329,9 +329,9 @@ ignored. The SDK chooses the key/value combinations in the order in which they
 are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
-**NOTE**: One `MetricPoint` is reserved for every `MetricStream` for the special
-case where there is no key/value pair associated with the metric. The maximum
-number of `MetricPoint`s has to accommodate for this special case.
+**Note:**: One `MetricPoint` is reserved for every `MetricStream` for the
+special case where there is no key/value pair associated with the metric. The
+maximum number of `MetricPoint`s has to accommodate for this special case.
 
 Consider the below example. Here we set the maximum number of `MetricPoint`s
 allowed to be `3`. This means that for every `MetricStream`, the SDK will export
@@ -395,7 +395,7 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-**NOTE:** The above limit is *per* metric stream, and applies to all the metric
+**Note:** The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at
 this moment.
 
