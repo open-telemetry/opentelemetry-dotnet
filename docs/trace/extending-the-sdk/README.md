@@ -119,40 +119,44 @@ Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/mai
 If you are writing an instrumentation library yourself, use the following
 guidelines.
 
-### Writing own instrumentation library
+### Writing a custom instrumentation library
 
-This section describes the steps required to write your own instrumentation
+This section describes the steps required to write a custom instrumentation
 library.
 
-*If you are writing a new library or modifying an existing library, the
-recommendation is to use [ActivitySource API/OpenTelemetry
+**Note** If you are writing a new library or modifying an existing library the
+recommendation is to use the [ActivitySource API/OpenTelemetry
 API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
-to instrument it and emit activity/span. If a library is instrumented using
-ActivitySource API, then there is no need of writing a separate instrumentation
-library, as instrumented and instrumentation library become same in this case.
-For applications to collect traces from this library, all that is needed is to
-enable the ActivitySource for the library using `AddSource` method of the
-`TracerProviderBuilder`. The following section is applicable only if you are
-writing an instrumentation library for an instrumented library which you cannot
-modify to emit activities directly.*
+to emit activity/span instances directly. If a library is instrumented using the
+`ActivitySource` API then there isn't a need for a separate instrumentation
+library to exist. Users simply need to configure the OpenTelemetry SDK to listen
+to the `ActivitySource` used by the library by calling `AddSource` on the
+`TracerProviderBuilder` being configured. The following section is applicable
+only if you are writing an instrumentation library for something you cannot
+modify to emit activity/span instances directly.
 
 Writing an instrumentation library typically involves 3 steps.
 
-1. First step involves "hijacking" into the target library. The exact mechanism
-   of this depends on the target library itself. For example,
-   System.Data.SqlClient for .NET Framework, which publishes events using
-   `EventSource`. The [SqlClient instrumentation
-   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
-   in this case subscribes to the `EventSource` callbacks.
+1. The first step involves attaching to the target library. The exact attachment
+   mechanism will depend on the implementation details of the target library
+   itself. For example, System.Data.SqlClient when running on .NET Framework
+   happens to publish events using an `EventSource` which the [SqlClient
+   instrumentation
+   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs)
+   listens to in order to trigger code as Sql commands are executed. The [.NET
+   Framework HttpWebRequest
+   instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/Implementation/HttpWebRequestActivitySource.netfx.cs)
+   patches the runtime code (using reflection) and swaps a static reference that
+   gets invoked as requests are processed for custom code. Every library will be
+   different.
 
-2. Second step is to emit activities using the [ActivitySource
-   API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
-   In this step, the instrumentation library emits activities *on behalf of* the
-   target instrumented library. Irrespective of the actual mechanism used in
-   first step, this should be uniform across all instrumentation libraries. The
-   `ActivitySource` must be created using the name and version of the
-   instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and *not*
-   the instrumented library (eg: "System.Net.Http")
+2. The second step is to emit activity instances using the [ActivitySource
+   API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
+   **on behalf of** the target library. Irrespective of the actual mechanism
+   used in first step, this should be uniform across all instrumentation
+   libraries. The `ActivitySource` must be created using the name and version of
+   the instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and
+   **NOT** the instrumented library (eg: "System.Net.Http")
       1. [Context
       Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
       If your library initiates out of process requests or accepts them, the
@@ -166,33 +170,42 @@ Writing an instrumentation library typically involves 3 steps.
       GrpcClient, this is already provided to you and **do not require**
       injecting/extracting `PropagationContext` explicitly again.)
 
-3. Third step is an optional step, and involves providing extension methods on
-   `TracerProviderBuilder`, to enable the instrumentation. This is optional, and
-   the below guidance must be followed:
+3. The third step is an optional step, and involves providing extension methods
+   on `TracerProviderBuilder` and/or `IServiceCollection` to enable the
+   instrumentation. For help in choosing see: [Registration extension method
+   guidance for library
+   authors](#registration-extension-method-guidance-for-library-authors). This
+   is optional, and the below guidance should be followed:
 
-    1. If the instrumentation library requires state management tied to that of
-       `TracerProvider`, then it must register itself with the provider with the
-       `AddInstrumentation` method on the `TracerProviderBuilder`. This causes
-       the instrumentation to be created and disposed along with
-       `TracerProvider`. If the above is required, then it must provide an
-       extension method on `TracerProviderBuilder`. Inside this extension
-       method, it should call the `AddInstrumentation` method, and `AddSource`
-       method to enable its ActivitySource for the provider. An example
-       instrumentation using this approach is [SqlClient
+    * If the instrumentation library requires state management tied to that of
+       `TracerProvider` then it should:
+
+       * Implement `IDisposable`.
+
+       * Provide an extension method which calls `AddSource` (to enable its
+         `ActivitySource`) and `AddInstrumentation` (to enable state management)
+         on the `TracerProviderBuilder` being configured.
+
+       An example instrumentation using this approach is [SqlClient
        instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
-       **CAUTION**: The instrumentation libraries requiring state management
-       are usually hard to auto-instrument. Therefore, they take the risk of not
-       being supported by [OpenTelemetry .NET Automatic Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
-    2. If the instrumentation library does not requires any state management
-       tied to that of `TracerProvider`, then providing `TracerProviderBuilder`
-       extension method is optional. If provided, then it must call `AddSource`
-       to enable its ActivitySource for the provider.
+       **CAUTION**: The instrumentation libraries requiring state management are
+       usually hard to auto-instrument. Therefore, they take the risk of not
+       being supported by [OpenTelemetry .NET Automatic
+       Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
-    3. If instrumentation library does not require state management, and is not
-       providing extension method, then the name of the `ActivitySource` used by
-       the instrumented library must be documented so that end users can enable
-       it using `AddSource` method on `TracerProviderBuilder`.
+    * If the instrumentation library does not require any state management, then
+      providing an extension method is optional.
+
+       * If an extension is provided it should call `AddSource` on the
+         `TracerProviderBuilder` being configured to enable its
+         `ActivitySource`.
+
+       * If an extension is not provided, then the name of the `ActivitySource`
+         used by the instrumented library must be documented so that end users
+         can enable it by calling `AddSource` on the `TracerProviderBuilder`
+         being configured. **Note** Changing the name of the source should be
+         considered a breaking change.
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
@@ -374,6 +387,14 @@ When providing registration extensions:
 * **DO** throw exceptions for issues that prevent the component being registered
   from starting. The OpenTelemetry SDK is allowed to crash if it cannot be
   started. It **MUST NOT** crash once running.
+
+**Note** The SDK implementation of `TracerProviderBuilder` ensures that the
+[.NET
+Configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration)
+engine is always available by creating a root `IConfiguration` from environment
+variables if it does not already exist in the `IServiceCollection` containing
+the `TracerProvider`. Library authors can rely on `IConfiguration` always being
+present in the final `IServiceProvider`.
 
 ### TracerProviderBuilder extension methods
 

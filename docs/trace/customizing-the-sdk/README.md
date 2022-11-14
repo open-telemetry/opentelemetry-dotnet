@@ -361,8 +361,6 @@ Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 
 ## Dependency injection support
 
-### Overview
-
 **Note** This information applies to the OpenTelemetry SDK version 1.4.0 and
 newer only.
 
@@ -371,7 +369,7 @@ The SDK implementation of `TracerProviderBuilder` is backed by an
 generally known as [dependency
 injection](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection).
 
-### Examples
+### Dependency injection examples
 
 For the below examples imagine an exporter with this constructor:
 
@@ -485,4 +483,191 @@ shutdown.
 
 ## Configuration files and environment variables
 
-// TODO: Add details here
+**Note** This information applies to the OpenTelemetry SDK version 1.4.0 and
+newer only.
+
+The OpenTelemetry .NET SDK integrates with the standard
+[configuration](https://learn.microsoft.com/dotnet/core/extensions/configuration)
+and [options](https://learn.microsoft.com/dotnet/core/extensions/options)
+patterns provided by .NET. The configuration pattern supports building a
+composited view of settings from external sources and the options pattern helps
+use those settings to configure features by binding to simple classes.
+
+### How to set up configuration
+
+The following sections describe how to set up configuration based on the host
+and OpenTelemetry API being used.
+
+#### Using .NET hosts with the OpenTelemetry.Extensions.Hosting package
+
+`ASP.NET Core` and [.NET Generic
+Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users
+using the
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
+package do not need to do anything extra to enable `IConfiguration` support. The
+OpenTelemetry SDK will automatically use whatever `IConfiguration` has been
+supplied by the host. The host by default will load environment variables,
+command-line arguments, and config files. See [Configuration in
+.NET](https://learn.microsoft.com/dotnet/core/extensions/configuration) for
+details.
+
+#### Using Sdk.CreateTracerProviderBuilder directly
+
+By default the `Sdk.CreateTracerProviderBuilder` API will create an
+`IConfiguration` from environment variables. The following example shows how to
+customize the `IConfiguration` used by `Sdk.CreateTracerProviderBuilder` for
+cases where additional sources beyond environment variables are required.
+
+```csharp
+// Build configuration from sources. Order is important.
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("./myOTelSettings.json")
+    .AddEnvironmentVariables()
+    .AddCommandLine(args)
+    .Build();
+
+// Set up a TracerProvider using the configuration.
+var provider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+    .Build();
+```
+
+### OpenTelemetry Specification environment variables
+
+The [OpenTelemetry
+Specification](https://github.com/open-telemetry/opentelemetry-specification)
+defines [specific environment
+variables](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md)
+which may be used to configure SDK implementations.
+
+The OpenTelemetry .NET SDK will look for the environment variables defined in
+the specification using `IConfiguration` which means in addition to environment
+variables users may also manage these settings via the command-line,
+configuration files, or any other source registered with the .NET configuration
+engine. This provides greater flexibility than what the specification defines.
+
+**Note** Not all of the environment variables defined in the specification are
+supported. Consult the individual project README files for details on specific
+environment variable support.
+
+As an example the OpenTelemetry Specification defines the `OTEL_SERVICE_NAME`
+environment variable which may be used to configure the service name emitted on
+telemetry by the SDK.
+
+A traditional environment variable is set using a command like `set
+OTEL_SERVICE_NAME=MyService` on Windows or `export OTEL_SERVICE_NAME=MyService`
+on Linux.
+
+That works as expected but the OpenTelemetry .NET SDK is actually looking for
+the `OTEL_SERVICE_NAME` key in `IConfiguration` which means it may also be
+configured in any configuration source registered with the
+`IConfigurationBuilder` used to create the final configuration for the host.
+
+Below are two examples of configuring the `OTEL_SERVICE_NAME` setting beyond
+environment variables.
+
+* Using appsettings.json:
+
+  ```json
+  {
+     "OTEL_SERVICE_NAME": "MyService"
+  }
+  ```
+
+* Using command-line:
+
+  ```sh
+  dotnet run --OTEL_SERVICE_NAME "MyService"
+  ```
+
+**Note** The [.NET
+  Configuration](https://learn.microsoft.com/dotnet/core/extensions/configuration)
+  pattern is hierarchical meaning the order of registered configuration sources
+  controls which value will seen by the SDK when it is defined in multiple
+  sources.
+
+### Using the .NET Options pattern to configure the SDK
+
+Options are typically simple classes containing only properties with public
+"getters" and "setters" (aka POCOs) and have "Options" at the end of the class
+name. These options classes are primarily used when interacting with the
+`TracerProviderBuilder` to control settings and features of the different SDK
+components.
+
+Options classes can always be configured through code but users typically want to
+control key settings through configuration.
+
+The following example shows how to configure `JaegerExporterOptions` by binding
+to an `IConfiguration` section.
+
+Json config file (usually appsettings.json):
+
+```json
+{
+  "OpenTelemetry": {
+    "Jaeger": {
+      "Protocol": "UdpCompactThrift"
+      "AgentHost": "localhost",
+      "AgentPort": 6831,
+      "BatchExportProcessorOptions": {
+        "ScheduledDelayMilliseconds": 5000
+      }
+    }
+  }
+}
+```
+
+Code:
+
+```csharp
+var appBuilder = WebApplication.CreateBuilder(args);
+
+appBuilder.Services.Configure<JaegerExporterOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:Jaeger"));
+
+appBuilder.Services.AddOpenTelemetryTracing(
+    builder => builder.AddJaegerExporter());
+```
+
+The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
+the same application and it also supports registering multiple similar
+components such as exporters into a single `TracerProvider`. In order to allow
+users to target configuration at specific components a "name" parameter is
+typically supported on configuration extensions to control the options instance
+used for the component being registered.
+
+The below example shows how to configure two `JaegerExporter` instances inside a
+single `TracerProvider` sending to different ports.
+
+Json config file (usually appsettings.json):
+
+```json
+{
+  "OpenTelemetry": {
+    "JaegerPrimary": {
+      "AgentPort": 1818
+    },
+    "JaegerSecondary": {
+      "AgentPort": 8818
+    }
+  }
+}
+```
+
+Code:
+
+```csharp
+var appBuilder = WebApplication.CreateBuilder(args);
+
+appBuilder.Services.Configure<JaegerExporterOptions>(
+    "JaegerPrimary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:JaegerPrimary"));
+
+appBuilder.Services.Configure<JaegerExporterOptions>(
+    "JaegerSecondary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:JaegerSecondary"));
+
+appBuilder.Services.AddOpenTelemetryTracing(builder => builder
+    .AddJaegerExporter(name: "JaegerPrimary", configure: null)
+    .AddJaegerExporter(name: "JaegerSecondary", configure: null));
+```
