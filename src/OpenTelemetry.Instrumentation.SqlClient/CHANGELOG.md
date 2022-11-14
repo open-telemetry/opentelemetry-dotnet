@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* **Breaking change**: The same API is now exposed for `net462` and
+  `netstandard2.0` targets. `SetDbStatement` has been removed. Use
+  `SetDbStatementForText` to capture command text and stored procedure names on
+  .NET Framework.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.0.0-rc9.9
 
 Released 2022-Nov-07

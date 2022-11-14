@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 #if NETFRAMEWORK
 using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetDbStatement = captureText;
+                    options.SetDbStatementForText = captureText;
                 })
                 .Build();
 
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddSqlClientInstrumentation(options =>
                 {
-                    options.SetDbStatement = captureText;
+                    options.SetDbStatementForText = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
                 })
                 .Build();
