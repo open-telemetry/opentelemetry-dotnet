@@ -195,16 +195,17 @@ Writing an instrumentation library typically involves 3 steps.
        Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
     * If the instrumentation library does not require any state management, then
-       providing an extension method is optional. If an extension is provided it
-       should call `AddSource` on the `TracerProviderBuilder` being configured
-       to enable its `ActivitySource`.
+      providing an extension method is optional.
 
-    * If instrumentation library does not require state management, and is not
-       providing extension method, then the name of the `ActivitySource` used by
-       the instrumented library should be documented so that end users can
-       enable it by calling `AddSource` on the `TracerProviderBuilder` being
-       configured. Changing the name of the source should be considered a
-       breaking change.
+       * If an extension is provided it should call `AddSource` on the
+         `TracerProviderBuilder` being configured to enable its
+         `ActivitySource`.
+
+       * If an extension is not provided, then the name of the `ActivitySource`
+         used by the instrumented library must be documented so that end users
+         can enable it by calling `AddSource` on the `TracerProviderBuilder`
+         being configured. **Note** Changing the name of the source should be
+         considered a breaking change.
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
