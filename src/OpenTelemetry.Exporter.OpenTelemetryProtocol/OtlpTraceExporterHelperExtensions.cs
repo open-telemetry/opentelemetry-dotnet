@@ -70,7 +70,10 @@ namespace OpenTelemetry.Trace
                 }
 
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+                services.RegisterOptionsFactory(
+                    (sp, configuration) => new OtlpExporterOptions(
+                        configuration,
+                        sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
@@ -108,7 +111,7 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new();
+                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
 
                 return builder.AddProcessor(new BatchActivityExportProcessor(
                     otlpExporter,
