@@ -78,7 +78,7 @@ be used to configure how the
 [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute is captured upon execution of a query.
 
-#### .NET Core - SetDbStatementForStoredProcedure and SetDbStatementForText
+#### .NET & .NET Core
 
 On .NET Core, two properties are available: `SetDbStatementForStoredProcedure`
 and `SetDbStatementForText`. These properties control capturing of
@@ -115,25 +115,16 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-#### .NET Framework - SetDbStatement
+#### .NET Framework
 
-For .NET Framework, `SetDbStatementForStoredProcedure` and
-`SetDbStatementForText` are not available. Instead, a single `SetDbStatement`
-property should be used to control whether this instrumentation should set the
+On .NET Framework, the `SetDbStatementForText` property controls whether or not
+this instrumentation will set the
 [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
-attribute to the text of the `SqlCommand` being executed. This could either be a
-name of a stored procedure or a full text of a `CommandType.Text` query.
-
-On .NET Framework, unlike .NET Core, the instrumentation capabilities for both
-[`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
-and `System.Data.SqlClient` are limited:
-
-* [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
-  always exposes both the stored procedure name and the full query text but
-  doesn't allow for more granular control to turn either on/off depending on
-  `CommandType`.
-* `System.Data.SqlClient` only exposes stored procedure names and not the full
-  query text.
+attribute to the text of the `SqlCommand` being executed. This could either be
+the name of a stored procedure (when `CommandType.StoredProcedure` is used) or
+the full text of a `CommandType.Text` query. `SetDbStatementForStoredProcedure`
+is ignored because on .NET Framework there is no way to determine the type of
+command being executed.
 
 Since `CommandType.Text` might contain sensitive data, all SQL capturing is
 _disabled_ by default to protect against accidentally sending full query text to
@@ -144,12 +135,12 @@ using the options like below:
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(
-        options => options.SetDbStatement = true)
+        options => options.SetDbStatementForText = true)
     .AddConsoleExporter()
     .Build();
 ```
 
-## EnableConnectionLevelAttributes
+### EnableConnectionLevelAttributes - All runtimes
 
 By default, `EnabledConnectionLevelAttributes` is disabled and this
 instrumentation sets the `peer.service` attribute to the
@@ -170,13 +161,12 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-## Enrich
+### Enrich - .NET & .NET Core only
 
-This option, available on .NET Core only, allows one to enrich the activity with
-additional information from the raw `SqlCommand` object. The `Enrich` action is
-called only when `activity.IsAllDataRequested` is `true`. It contains the
-activity itself (which can be enriched), the name of the event, and the actual
-raw object.
+This option can be used to enrich the activity with additional information from
+the raw `SqlCommand` object. The `Enrich` action is called only when
+`activity.IsAllDataRequested` is `true`. It contains the activity itself (which
+can be enriched), the name of the event, and the actual raw object.
 
 Currently there is only one event name reported, "OnCustom". The actual object
 is `Microsoft.Data.SqlClient.SqlCommand` for `Microsoft.Data.SqlClient` and
@@ -205,10 +195,10 @@ general extensibility point to add additional properties to any activity. The
 `Enrich` option is specific to this instrumentation, and is provided to get
 access to `SqlCommand` object.
 
-### RecordException
+### RecordException - .NET & .NET Core only
 
-This option, available on .NET Core only, can be set to instruct the
-instrumentation to record SqlExceptions as Activity
+This option can be set to instruct the instrumentation to record SqlExceptions
+as Activity
 [events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
 
 The default value is `false` and can be changed by the code like below.
@@ -221,16 +211,16 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-## Filter
+### Filter - .NET & .NET Core only
 
-This option allows to filter out activities based on the properties of the
-`SqlCommand` object being instrumented using a `Func<object, bool>`.
-The function receives an instance of the raw `SqlCommand` and should return
-`true` if the telemetry is to be collected, and `false` if it should not.
-The parameter of the Func delegate is of type `object` and needs to
-be cast to the appropriate type of `SqlCommand`, either
-`Microsoft.Data.SqlClient.SqlCommand` or `System.Data.SqlClient.SqlCommand`.
-The example below filters out all commands that are not stored procedures.
+This option can be used to filter out activities based on the properties of the
+`SqlCommand` object being instrumented using a `Func<object, bool>`. The
+function receives an instance of the raw `SqlCommand` and should return `true`
+if the telemetry is to be collected, and `false` if it should not. The parameter
+of the Func delegate is of type `object` and needs to be cast to the appropriate
+type of `SqlCommand`, either `Microsoft.Data.SqlClient.SqlCommand` or
+`System.Data.SqlClient.SqlCommand`. The example below filters out all commands
+that are not stored procedures.
 
 ```csharp
 using var traceProvider = Sdk.CreateTracerProviderBuilder()
