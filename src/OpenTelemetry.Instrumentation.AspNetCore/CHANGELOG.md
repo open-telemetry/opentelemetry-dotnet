@@ -3,7 +3,7 @@
 ## Unreleased
 
 * **Breaking change** `http.target` replaced with `http.route`
-([#3897](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3897))
+([#3903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3903))
 
 ## 1.0.0-rc9.9
 
