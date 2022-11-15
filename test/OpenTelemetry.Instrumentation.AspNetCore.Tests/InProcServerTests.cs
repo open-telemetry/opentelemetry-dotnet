@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             this.exportedItems = new List<Activity>();
             var builder = WebApplication.CreateBuilder();
+            builder.Logging.ClearProviders();
             var app = builder.Build();
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()

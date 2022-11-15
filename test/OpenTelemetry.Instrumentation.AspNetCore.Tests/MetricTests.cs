@@ -18,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -53,7 +55,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .AddInMemoryExporter(metricItems)
                 .Build();
 
-            using (var client = this.factory.CreateClient())
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
+                .CreateClient())
             {
                 var response = await client.GetAsync("/api/values");
                 response.EnsureSuccessStatusCode();

@@ -27,7 +27,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static readonly ConcurrentDictionary<string, string> MethodOperationNameCache = new();
         private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodOperationNameCache = new();
         private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodNameCache = new();
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new();
         private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new();
 
         private static readonly Func<string, string> ConvertMethodToOperationNameRef = ConvertMethodToOperationName;
@@ -62,37 +61,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// <param name="protocolVersion"><see cref="Version"/>.</param>
         /// <returns>Span flavor value.</returns>
         public static string GetFlavorTagValueFromProtocolVersion(Version protocolVersion) => ProtocolVersionToStringCache.GetOrAdd(protocolVersion, ConvertProtocolVersionToStringRef);
-
-        /// <summary>
-        /// Gets the OpenTelemetry standard host tag value for a span based on its request <see cref="Uri"/>.
-        /// </summary>
-        /// <param name="requestUri"><see cref="Uri"/>.</param>
-        /// <returns>Span host value.</returns>
-        public static string GetHostTagValueFromRequestUri(Uri requestUri)
-        {
-            string host = requestUri.Host;
-
-            if (requestUri.IsDefaultPort)
-            {
-                return host;
-            }
-
-            int port = requestUri.Port;
-
-            if (!HostAndPortToStringCache.TryGetValue(host, out ConcurrentDictionary<int, string> portCache))
-            {
-                portCache = new ConcurrentDictionary<int, string>();
-                HostAndPortToStringCache.TryAdd(host, portCache);
-            }
-
-            if (!portCache.TryGetValue(port, out string hostTagValue))
-            {
-                hostTagValue = $"{requestUri.Host}:{requestUri.Port}";
-                portCache.TryAdd(port, hostTagValue);
-            }
-
-            return hostTagValue;
-        }
 
         /// <summary>
         /// Gets the OpenTelemetry standard uri tag value for a span based on its request <see cref="Uri"/>.

@@ -50,11 +50,7 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BatchExportActivityProcessorOptions"/> class.
-        /// </summary>
-        /// <param name="configuration"><see cref="IConfiguration"/>.</param>
-        public BatchExportActivityProcessorOptions(IConfiguration configuration)
+        internal BatchExportActivityProcessorOptions(IConfiguration configuration)
         {
             if (configuration.TryGetIntValue(ExporterTimeoutEnvVarKey, out int value))
             {
