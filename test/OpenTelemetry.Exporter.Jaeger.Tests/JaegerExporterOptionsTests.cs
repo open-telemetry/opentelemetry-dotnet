@@ -139,6 +139,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(JaegerExportProtocol.HttpBinaryThrift, options.Protocol);
             Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
             Assert.Equal(18, options.BatchExportProcessorOptions.MaxQueueSize);
+
+            // Note:
+            //  1. OTEL_BSP_MAX_EXPORT_BATCH_SIZE is processed in BatchExportActivityProcessorOptions ctor and sets MaxExportBatchSize to 2.
+            //  2. Jaeger:BatchExportProcessorOptions:MaxExportBatchSize is processed by options binder after ctor and sets MaxExportBatchSize to 5.
             Assert.Equal(5, options.BatchExportProcessorOptions.MaxExportBatchSize);
         }
 
