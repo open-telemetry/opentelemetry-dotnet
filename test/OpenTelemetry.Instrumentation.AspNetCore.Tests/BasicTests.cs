@@ -757,11 +757,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task DiagnosticSourceCustomCallbacksAreReceivedOnlyForSubscribedEvents()
+        public async Task DiagnosticSourceCallbacksAreReceivedOnlyForSubscribedEvents()
         {
-            int numberOfCustomCallbacks = 0;
-            string expectedCustomEventName = "Microsoft.AspNetCore.Mvc.BeforeAction";
-            string actualCustomEventName = null;
+            int numberOfUnSubscribedEvents = 0;
+            int numberofSubscribedEvents = 0;
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -772,10 +771,27 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             {
                                 switch (name)
                                 {
+                                    case HttpInListener.OnStartEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnStopEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
                                     case HttpInListener.OnMvcBeforeActionEvent:
                                         {
-                                            actualCustomEventName = name;
-                                            numberOfCustomCallbacks++;
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    default:
+                                        {
+                                            numberOfUnSubscribedEvents++;
                                         }
 
                                         break;
@@ -800,13 +816,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using var response = await client.SendAsync(request);
             }
 
-            Assert.Equal(1, numberOfCustomCallbacks);
-            Assert.Equal(expectedCustomEventName, actualCustomEventName);
+            Assert.Equal(0, numberOfUnSubscribedEvents);
+            Assert.Equal(3, numberofSubscribedEvents);
         }
 
         [Fact]
         public async Task DiagnosticSourceExceptionCallbackIsReceivedForUnHandledException()
         {
+            int numberOfUnSubscribedEvents = 0;
+            int numberofSubscribedEvents = 0;
             int numberOfExceptionCallbacks = 0;
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -818,12 +836,38 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             {
                                 switch (name)
                                 {
+                                    case HttpInListener.OnStartEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnStopEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnMvcBeforeActionEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+
                                     // TODO: Add test case for validating name for both the types
                                     // of exception event.
                                     case HttpInListener.OnUnhandledHostingExceptionEvent:
                                     case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                         {
+                                            numberofSubscribedEvents++;
                                             numberOfExceptionCallbacks++;
+                                        }
+
+                                        break;
+                                    default:
+                                        {
+                                            numberOfUnSubscribedEvents++;
                                         }
 
                                         break;
@@ -856,11 +900,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(1, numberOfExceptionCallbacks);
+            Assert.Equal(0, numberOfUnSubscribedEvents);
+            Assert.Equal(4, numberofSubscribedEvents);
         }
 
         [Fact]
         public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
         {
+            int numberOfUnSubscribedEvents = 0;
+            int numberofSubscribedEvents = 0;
             int numberOfExceptionCallbacks = 0;
 
             // configure SDK
@@ -872,10 +920,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         {
                             switch (name)
                             {
+                                case HttpInListener.OnStartEvent:
+                                    {
+                                        numberofSubscribedEvents++;
+                                    }
+
+                                    break;
+                                case HttpInListener.OnStopEvent:
+                                    {
+                                        numberofSubscribedEvents++;
+                                    }
+
+                                    break;
+
+                                // TODO: Add test case for validating name for both the types
+                                // of exception event.
                                 case HttpInListener.OnUnhandledHostingExceptionEvent:
                                 case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                     {
+                                        numberofSubscribedEvents++;
                                         numberOfExceptionCallbacks++;
+                                    }
+
+                                    break;
+                                default:
+                                    {
+                                        numberOfUnSubscribedEvents++;
                                     }
 
                                     break;
@@ -919,6 +989,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(0, numberOfExceptionCallbacks);
+            Assert.Equal(0, numberOfUnSubscribedEvents);
+            Assert.Equal(2, numberofSubscribedEvents);
 
             await app.DisposeAsync();
         }
@@ -953,26 +1025,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
 #endif
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            Assert.True(activity.IsAllDataRequested);
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequest);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponse);
-                    break;
-
-                default:
-                    break;
-            }
-
-            activity.SetTag("enriched", "yes");
         }
 
         private static void AssertException(List<Activity> exportedItems)
