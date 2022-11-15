@@ -50,9 +50,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     var request = response.RequestMessage;
 
                     TagList tags;
-
-                    // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
-                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-client
                     if (!request.RequestUri.IsDefaultPort)
                     {
                         tags = new TagList
