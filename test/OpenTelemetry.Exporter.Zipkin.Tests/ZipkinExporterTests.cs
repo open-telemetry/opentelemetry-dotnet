@@ -220,7 +220,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 .AddInMemoryCollection(values)
                 .Build();
 
-            var options = new ZipkinExporterOptions(configuration);
+            var options = new ZipkinExporterOptions(configuration, new());
 
             Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
         }

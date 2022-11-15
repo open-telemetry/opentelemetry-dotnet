@@ -45,18 +45,23 @@ namespace OpenTelemetry.Exporter
         /// Initializes zipkin endpoint.
         /// </summary>
         public ZipkinExporterOptions()
-             : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+             : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
         {
         }
 
-        internal ZipkinExporterOptions(IConfiguration configuration)
+        internal ZipkinExporterOptions(
+            IConfiguration configuration,
+            BatchExportActivityProcessorOptions defaultBatchOptions)
         {
+            Debug.Assert(configuration != null, "configuration was null");
+            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
             if (configuration.TryGetUriValue(ZipkinEndpointEnvVar, out var endpoint))
             {
                 this.Endpoint = endpoint;
             }
 
-            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>

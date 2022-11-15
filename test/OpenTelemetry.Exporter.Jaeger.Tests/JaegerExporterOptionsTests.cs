@@ -17,6 +17,9 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests
@@ -104,18 +107,43 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                 [JaegerExporterOptions.OTelAgentHostEnvVarKey] = "jaeger-host",
                 [JaegerExporterOptions.OTelAgentPortEnvVarKey] = "123",
                 [JaegerExporterOptions.OTelEndpointEnvVarKey] = "http://custom-endpoint:12345",
+                ["OTEL_BSP_MAX_QUEUE_SIZE"] = "18",
+                ["OTEL_BSP_MAX_EXPORT_BATCH_SIZE"] = "2",
+                ["Jaeger:BatchExportProcessorOptions:MaxExportBatchSize"] = "5",
             };
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(values)
                 .Build();
 
-            var options = new JaegerExporterOptions(configuration);
+            IServiceCollection services = null;
+
+            using var provider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(s =>
+                {
+                    services = s;
+                    services.AddSingleton<IConfiguration>(configuration);
+                    services.Configure<JaegerExporterOptions>(configuration.GetSection("Jaeger"));
+                })
+                .AddJaegerExporter()
+                .Build();
+
+            Assert.NotNull(services);
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var options = serviceProvider.GetRequiredService<IOptionsMonitor<JaegerExporterOptions>>().CurrentValue;
 
             Assert.Equal("jaeger-host", options.AgentHost);
             Assert.Equal(123, options.AgentPort);
             Assert.Equal(JaegerExportProtocol.HttpBinaryThrift, options.Protocol);
             Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
+            Assert.Equal(18, options.BatchExportProcessorOptions.MaxQueueSize);
+
+            // Note:
+            //  1. OTEL_BSP_MAX_EXPORT_BATCH_SIZE is processed in BatchExportActivityProcessorOptions ctor and sets MaxExportBatchSize to 2.
+            //  2. Jaeger:BatchExportProcessorOptions:MaxExportBatchSize is processed by options binder after ctor and sets MaxExportBatchSize to 5.
+            Assert.Equal(5, options.BatchExportProcessorOptions.MaxExportBatchSize);
         }
 
         private static void ClearEnvVars()
