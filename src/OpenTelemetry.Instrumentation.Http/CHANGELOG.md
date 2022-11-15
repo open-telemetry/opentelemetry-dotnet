@@ -4,7 +4,7 @@
 
 * Added `net.peer.name` and `net.peer.port` as dimensions on
   `http.client.duration` metric.
-  ()
+  ([#3907](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3907))
 
 * **Breaking change** `http.host` will no longer be populated on activity.
   `net.peer.name` and `net.peer.port` attributes will be populated instead.
