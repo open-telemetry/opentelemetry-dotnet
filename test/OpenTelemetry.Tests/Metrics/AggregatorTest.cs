@@ -15,18 +15,23 @@
 // </copyright>
 
 using System;
+using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
-        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+        private static readonly Meter Meter = new("testMeter");
+        private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
+        private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
+        private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
+        private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
         {
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, Metric.DefaultHistogramBounds);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, Metric.DefaultHistogramBounds, 0);
             histogramPoint.Update(-1);
             histogramPoint.Update(0);
             histogramPoint.Update(2);
@@ -77,7 +82,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramDistributeToAllBucketsCustom()
         {
             var boundaries = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, boundaries, 0);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -125,7 +130,7 @@ namespace OpenTelemetry.Metrics.Tests
                 boundaries[i] = i;
             }
 
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, null, boundaries, 0);
 
             // Act
             histogramPoint.Update(-1);
@@ -158,7 +163,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramWithOnlySumCount()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries, 0);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);

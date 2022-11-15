@@ -72,5 +72,15 @@ namespace OpenTelemetry.Metrics
         /// Histogram with sum, count, min, max.
         /// </summary>
         HistogramWithMinMax = 9,
+
+        /// <summary>
+        /// Histogram with sum, count, min, max.
+        /// </summary>
+        ExponentialHistogram = 10,
+
+        /// <summary>
+        /// Histogram with sum, count, min, max.
+        /// </summary>
+        ExponentialHistogramWithMinMax = 11,
     }
 }

@@ -32,6 +32,8 @@ namespace OpenTelemetry.Metrics
 
         private HistogramBuckets histogramBuckets;
 
+        private ExponentialBucketHistogram exponentialBucketHistogram;
+
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
 
@@ -45,7 +47,8 @@ namespace OpenTelemetry.Metrics
             AggregationType aggType,
             string[] keys,
             object[] values,
-            double[] histogramExplicitBounds)
+            double[] histogramExplicitBounds,
+            int exponentialHistogramMaxSize)
         {
             Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
             Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
@@ -71,6 +74,16 @@ namespace OpenTelemetry.Metrics
             else
             {
                 this.histogramBuckets = null;
+            }
+
+            if (this.aggType == AggregationType.ExponentialHistogram ||
+                this.aggType == AggregationType.ExponentialHistogramWithMinMax)
+            {
+                this.exponentialBucketHistogram = new ExponentialBucketHistogram(exponentialHistogramMaxSize);
+            }
+            else
+            {
+                this.exponentialBucketHistogram = null;
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.

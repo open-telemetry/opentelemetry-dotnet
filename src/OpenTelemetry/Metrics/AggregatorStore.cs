@@ -40,6 +40,7 @@ namespace OpenTelemetry.Metrics
         private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
+        private readonly int exponentialHistogramMaxSize;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
@@ -49,23 +50,22 @@ namespace OpenTelemetry.Metrics
         private bool zeroTagMetricPointInitialized;
 
         internal AggregatorStore(
-            string name,
+            MetricStreamIdentity metricStreamIdentity,
             AggregationType aggType,
             AggregationTemporality temporality,
-            int maxMetricPoints,
-            double[] histogramBounds,
-            string[] tagKeysInteresting = null)
+            int maxMetricPoints)
         {
-            this.name = name;
+            this.name = metricStreamIdentity.InstrumentName;
             this.maxMetricPoints = maxMetricPoints;
             this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
             this.metricPoints = new MetricPoint[maxMetricPoints];
             this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
             this.outputDelta = temporality == AggregationTemporality.Delta;
-            this.histogramBounds = histogramBounds;
+            this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? Metric.DefaultHistogramBounds;
+            this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
             this.StartTimeExclusive = DateTimeOffset.UtcNow;
-            if (tagKeysInteresting == null)
+            if (metricStreamIdentity.TagKeys == null)
             {
                 this.updateLongCallback = this.UpdateLong;
                 this.updateDoubleCallback = this.UpdateDouble;
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.updateLongCallback = this.UpdateLongCustomTags;
                 this.updateDoubleCallback = this.UpdateDoubleCustomTags;
-                var hs = new HashSet<string>(tagKeysInteresting, StringComparer.Ordinal);
+                var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!this.zeroTagMetricPointInitialized)
                     {
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, null, this.histogramBounds, this.exponentialHistogramMaxSize);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.Keys, sortedTags.Values, this.histogramBounds, this.exponentialHistogramMaxSize);
 
                                 // Add to dictionary *after* initializing MetricPoint
                                 // as other threads can start writing to the
@@ -288,7 +288,7 @@ namespace OpenTelemetry.Metrics
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            metricPoint = new MetricPoint(this, this.aggType, givenTags.Keys, givenTags.Values, this.histogramBounds);
+                            metricPoint = new MetricPoint(this, this.aggType, givenTags.Keys, givenTags.Values, this.histogramBounds, this.exponentialHistogramMaxSize);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the

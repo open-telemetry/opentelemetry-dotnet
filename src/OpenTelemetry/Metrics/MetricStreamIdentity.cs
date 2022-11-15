@@ -36,6 +36,7 @@ namespace OpenTelemetry.Metrics
             this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
             this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
             this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
+            this.ExponentialHistogramMaxSize = (metricStreamConfiguration as ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
             this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
             unchecked
@@ -46,6 +47,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.MeterVersion.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
+                hash = (hash * 31) + this.ExponentialHistogramMaxSize.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
                 hash = !this.ViewId.HasValue ? hash : (hash * 31) + this.ViewId.Value;
@@ -83,6 +85,8 @@ namespace OpenTelemetry.Metrics
 
         public double[] HistogramBucketBounds { get; }
 
+        public int ExponentialHistogramMaxSize { get; }
+
         public bool HistogramRecordMinMax { get; }
 
         public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
@@ -104,6 +108,7 @@ namespace OpenTelemetry.Metrics
                 && this.Description == other.Description
                 && this.ViewId == other.ViewId
                 && this.HistogramRecordMinMax == other.HistogramRecordMinMax
+                && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
                 && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
                 && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
         }
