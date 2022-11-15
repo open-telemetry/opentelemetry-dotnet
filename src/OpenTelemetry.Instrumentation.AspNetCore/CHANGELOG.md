@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Breaking change** `http.target` replaced with `http.route`
+([#3897](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3897))
+
 ## 1.0.0-rc9.9
 
 Released 2022-Nov-07
