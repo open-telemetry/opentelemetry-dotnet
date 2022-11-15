@@ -26,6 +26,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     /// <summary>
     /// Options for <see cref="SqlClientInstrumentation"/>.
     /// </summary>
+    /// <remarks>
+    /// For help and examples see: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.SqlClient/README.md#advanced-configuration" />.
+    /// </remarks>
     public class SqlClientInstrumentationOptions
     {
         /*
@@ -61,95 +64,121 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new(StringComparer.OrdinalIgnoreCase);
 
-        // .NET Framework implementation uses SqlEventSource from which we can't reliably distinguish
-        // StoredProcedures from regular Text sql commands.
-#if NETFRAMEWORK
-
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should
-        /// add the text of the executed Sql commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag.
-        /// Default value: False.
+        /// Gets or sets a value indicating whether or not the <see
+        /// cref="SqlClientInstrumentation"/> should add the names of <see
+        /// cref="CommandType.StoredProcedure"/> commands as the <see
+        /// cref="SemanticConventions.AttributeDbStatement"/> tag. Default
+        /// value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// WARNING: potential sensitive data capture! If you use <c>Microsoft.Data.SqlClient</c>, the instrumentation will capture <c>sqlCommand.CommandText</c>
-        /// for <see cref="CommandType.StoredProcedure"/> and <see cref="CommandType.Text"/>. Make sure your <c>CommandText</c> property never contains
-        /// any sensitive data for <see cref="CommandType.Text"/> commands.
-        /// </para>
-        /// <para>
-        /// When using <c>System.Data.SqlClient</c>, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.
-        /// </para>
+        /// <para><b>SetDbStatementForStoredProcedure is only supported on .NET
+        /// and .NET Core runtimes.</b></para>
         /// </remarks>
-        public bool SetDbStatement { get; set; }
-#else
-        /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the names of <see cref="CommandType.StoredProcedure"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: True.
-        /// </summary>
         public bool SetDbStatementForStoredProcedure { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should add the text of <see cref="CommandType.Text"/> commands as the <see cref="SemanticConventions.AttributeDbStatement"/> tag. Default value: False.
-        /// </summary>
-        public bool SetDbStatementForText { get; set; }
-#endif
-
-        /// <summary>
-        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should parse the DataSource on a SqlConnection into server name, instance name, and/or port connection-level attribute tags. Default value: False.
+        /// Gets or sets a value indicating whether or not the <see
+        /// cref="SqlClientInstrumentation"/> should add the text of commands as
+        /// the <see cref="SemanticConventions.AttributeDbStatement"/> tag.
+        /// Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag. If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
+        /// <para>
+        /// <b>WARNING: SetDbStatementForText will capture the raw
+        /// <c>CommandText</c>. Make sure your <c>CommandText</c> property never
+        /// contains any sensitive data.</b>
+        /// </para>
+        /// <para><b>SetDbStatementForText is supported on all runtimes.</b>
+        /// <list type="bullet">
+        /// <item>On .NET and .NET Core SetDbStatementForText only applies to
+        /// <c>SqlCommand</c>s with <see cref="CommandType.Text"/>.</item>
+        /// <item>On .NET Framework SetDbStatementForText applies to all
+        /// <c>SqlCommand</c>s regardless of <see cref="CommandType"/>. Use
+        /// SetDbStatementForText to capture Text, StoredProcedure, and all
+        /// other command text.</item>
+        /// </list>
+        /// </para>
+        /// </remarks>
+        public bool SetDbStatementForText { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see
+        /// cref="SqlClientInstrumentation"/> should parse the DataSource on a
+        /// SqlConnection into server name, instance name, and/or port
+        /// connection-level attribute tags. Default value: <see
+        /// langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para><b>EnableConnectionLevelAttributes is supported on all
+        /// runtimes.</b></para>
+        /// <para>The default behavior is to set the SqlConnection DataSource as
+        /// the <see cref="SemanticConventions.AttributePeerService"/> tag. If
+        /// enabled, SqlConnection DataSource will be parsed and the server name
+        /// will be sent as the <see
+        /// cref="SemanticConventions.AttributeNetPeerName"/> or <see
+        /// cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance
+        /// name will be sent as the <see
+        /// cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and
+        /// the port will be sent as the <see
+        /// cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not
+        /// 1433 (the default port).</para>
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity.
+        /// Gets or sets an action to enrich an <see cref="Activity"/> with the
+        /// raw <c>SqlCommand</c> object.
         /// </summary>
         /// <remarks>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para>string: the name of the event.</para>
-        /// <para>object: the raw <c>SqlCommand</c> object from which additional information can be extracted to enrich the activity.</para>
-        /// <para>See also: <a href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.SqlClient#Enrich">example</a>.</para>
+        /// <para><b>Enrich is only executed on .NET and .NET Core
+        /// runtimes.</b></para>
+        /// The parameters passed to the enrich action are:
+        /// <list type="number">
+        /// <item>The <see cref="Activity"/> being enriched.</item>
+        /// <item>The name of the event. Currently only <c>"OnCustom"</c> is
+        /// used but more events may be added in the future.</item>
+        /// <item>The raw <c>SqlCommand</c> object from which additional
+        /// information can be extracted to enrich the <see
+        /// cref="Activity"/>.</item>
+        /// </list>
         /// </remarks>
-        /// <example>
-        /// <code>
-        /// using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-        ///     .AddSqlClientInstrumentation(opt => opt.Enrich
-        ///         = (activity, eventName, rawObject) =>
-        ///      {
-        ///         if (eventName.Equals("OnCustom"))
-        ///         {
-        ///             if (rawObject is SqlCommand cmd)
-        ///             {
-        ///                 activity.SetTag("db.commandTimeout", cmd.CommandTimeout);
-        ///             }
-        ///         }
-        ///      })
-        ///     .Build();
-        /// </code>
-        /// </example>
         public Action<Activity, string, object> Enrich { get; set; }
 
-#if !NETFRAMEWORK
         /// <summary>
-        /// Gets or sets a Filter function that determines whether or not to collect telemetry about a command
-        /// The Filter gets the SqlCommand, and should return a boolean.
-        /// If Filter returns true, the request is collected.
-        /// If Filter returns false or throw exception, the request is filtered out.
+        /// Gets or sets a filter function that determines whether or not to
+        /// collect telemetry about a command.
         /// </summary>
         /// <remarks>
-        /// <para>object: the raw <c>SqlCommand</c> object to interrogate for a decision on whether to trace or not.</para>
+        /// <para><b>Filter is only executed on .NET and .NET Core
+        /// runtimes.</b></para>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>The first parameter passed to the filter function is the raw
+        /// <c>SqlCommand</c> object for the command being executed.</item>
+        /// <item>The return value for the filter function is interpreted as:
+        /// <list type="bullet">
+        /// <item>If filter returns <see langword="true" />, the command is
+        /// collected.</item>
+        /// <item>If filter returns <see langword="false" /> or throws an
+        /// exception the command is NOT collected.</item>
+        /// </list></item>
+        /// </list>
         /// </remarks>
-        /// <returns>true to collect request, false to filter out.</returns>
         public Func<object, bool> Filter { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
+        /// Gets or sets a value indicating whether the exception will be
+        /// recorded as <see cref="ActivityEvent"/> or not. Default value: <see
+        /// langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md.
+        /// <para><b>RecordException is only supported on .NET and .NET Core
+        /// runtimes.</b></para>
+        /// <para>For specification details see: <see
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md"/>.</para>
         /// </remarks>
         public bool RecordException { get; set; }
-#endif
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {
