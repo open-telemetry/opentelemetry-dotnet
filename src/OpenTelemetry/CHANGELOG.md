@@ -7,6 +7,11 @@
   `AddEnvironmentVariableDetector` extension (Logs)
   ([#3889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3889))
 
+* **Breaking change** Added `http.route` tag in `http.client.duration` metric 
+  ([#3910](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3910))
+
+## 1.0.0-rc9.9
+
 ## 1.4.0-beta.3
 
 Released 2022-Nov-07
