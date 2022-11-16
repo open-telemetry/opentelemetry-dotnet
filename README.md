@@ -31,6 +31,11 @@ files.
  Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
  is still non-stable.
 
+See [Spec Compliance
+Matrix](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spec-compliance-matrix.md)
+to understand which portions of the specification has been implemented in this
+repo.
+
 ## Getting Started
 
 If you are new here, please read the getting started docs:
