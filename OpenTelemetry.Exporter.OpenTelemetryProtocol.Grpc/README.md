@@ -66,17 +66,6 @@ values of the `PeriodicExportingMetricReaderOptions`
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.
 
-## OTLP Logs
-
-This package currently only supports exporting traces and metrics. Support for
-exporting logs is provided by installing the
-[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/README.md)
-package.
-
-Once the OTLP log exporter is stable, it'll be folded into this package. Check
-[this](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/35)
-milestone for tracking.
-
 ## References
 
 * [OpenTelemetry
