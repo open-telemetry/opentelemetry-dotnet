@@ -31,6 +31,11 @@ namespace OpenTelemetry.Exporter
 {
     internal static class OtlpExporterOptionsExtensions
     {
+        private const int RetryMaxAttempts = 5;
+        private const double RetryBackoffMultiplier = 1.5;
+        private static readonly TimeSpan RetryInitialBackoff = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan RetryMaxBackoff = TimeSpan.FromSeconds(5);
+
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
         public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
 #else
@@ -43,17 +48,12 @@ namespace OpenTelemetry.Exporter
             }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-            if (options.RetryMaxAttempts <= 1)
-            {
-                return GrpcChannel.ForAddress(options.Endpoint);
-            }
-
             var retryPolicy = new RetryPolicy
             {
-                MaxAttempts = options.RetryMaxAttempts,
-                InitialBackoff = options.RetryInitialBackoff,
-                MaxBackoff = options.RetryMaxBackoff,
-                BackoffMultiplier = options.RetryBackoffMultiplier,
+                MaxAttempts = RetryMaxAttempts,
+                InitialBackoff = RetryInitialBackoff,
+                MaxBackoff = RetryMaxBackoff,
+                BackoffMultiplier = RetryBackoffMultiplier,
 
                 // See table showing gRPC codes and if they are retryable:
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md#failures
