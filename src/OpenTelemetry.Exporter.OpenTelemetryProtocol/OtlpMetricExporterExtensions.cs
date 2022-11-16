@@ -67,7 +67,8 @@ namespace OpenTelemetry.Metrics
                     services.Configure(name, configureExporter);
                 }
 
-                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+                services.RegisterOptionsFactory(configuration
+                    => new OtlpExporterOptions(configuration, defaultBatchOptions: null));
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
@@ -113,7 +114,8 @@ namespace OpenTelemetry.Metrics
 
             builder.ConfigureServices(services =>
             {
-                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
+                services.RegisterOptionsFactory(configuration
+                    => new OtlpExporterOptions(configuration, defaultBatchOptions: null));
             });
 
             return builder.ConfigureBuilder((sp, builder) =>

@@ -200,11 +200,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
                 var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
                 var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
+                var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, host);
+                var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
                 Assert.Contains(method, attributes);
                 Assert.Contains(scheme, attributes);
                 Assert.Contains(statusCode, attributes);
                 Assert.Contains(flavor, attributes);
-                Assert.Equal(4, attributes.Length);
+                Assert.Contains(hostName, attributes);
+                Assert.Contains(portNumber, attributes);
+                Assert.Equal(6, attributes.Length);
 #endif
             }
             else

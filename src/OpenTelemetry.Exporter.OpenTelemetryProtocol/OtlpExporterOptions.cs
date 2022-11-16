@@ -52,12 +52,16 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
         public OtlpExporterOptions()
-            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
         {
         }
 
-        internal OtlpExporterOptions(IConfiguration configuration)
+        internal OtlpExporterOptions(
+            IConfiguration configuration,
+            BatchExportActivityProcessorOptions defaultBatchOptions = null)
         {
+            Debug.Assert(configuration != null, "configuration was null");
+
             if (configuration.TryGetUriValue(EndpointEnvVarName, out var endpoint))
             {
                 this.endpoint = endpoint;
@@ -89,7 +93,7 @@ namespace OpenTelemetry.Exporter
                 };
             };
 
-            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>

@@ -48,12 +48,17 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="JaegerExporterOptions"/> class.
         /// </summary>
         public JaegerExporterOptions()
-            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
         {
         }
 
-        internal JaegerExporterOptions(IConfiguration configuration)
+        internal JaegerExporterOptions(
+            IConfiguration configuration,
+            BatchExportActivityProcessorOptions defaultBatchOptions)
         {
+            Debug.Assert(configuration != null, "configuration was null");
+            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
             if (configuration.TryGetValue<JaegerExportProtocol>(
                 OTelProtocolEnvVarKey,
                 JaegerExporterProtocolParser.TryParse,
@@ -77,7 +82,7 @@ namespace OpenTelemetry.Exporter
                 this.Endpoint = endpoint;
             }
 
-            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>

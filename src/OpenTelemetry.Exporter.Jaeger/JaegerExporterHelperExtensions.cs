@@ -69,7 +69,10 @@ namespace OpenTelemetry.Trace
                     services.Configure(name, configure);
                 }
 
-                services.RegisterOptionsFactory(configuration => new JaegerExporterOptions(configuration));
+                services.RegisterOptionsFactory(
+                    (sp, configuration) => new JaegerExporterOptions(
+                        configuration,
+                        sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
