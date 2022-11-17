@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 #if NETFRAMEWORK
 using System;
 using System.Diagnostics;
@@ -30,13 +31,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     /// We hook into these event sources and process their BeginExecute/EndExecute events.
     /// </summary>
     /// <remarks>
-    /// Note that before version 2.0.0, Microsoft.Data.SqlClient used "Microsoft-AdoNet-SystemData"
-    /// EventSource (same as System.Data.SqlClient), but since 2.0.0 has switched to "Microsoft.Data.SqlClient.EventSource".
-    ///
-    /// Due to the limitation of the "Microsoft-AdoNet-SystemData", it is not possible to capture sql statement text
-    /// for CommandType.Text when using that EventSource. It only reports text for CommandType.StoredProcedure.
-    ///
-    /// "Microsoft.Data.SqlClient.EventSource" doesn't have that issue.
+    /// Note that before version 2.0.0, Microsoft.Data.SqlClient used
+    /// "Microsoft-AdoNet-SystemData" (same as System.Data.SqlClient), but since
+    /// 2.0.0 has switched to "Microsoft.Data.SqlClient.EventSource".
     /// </remarks>
     internal sealed class SqlEventSourceListener : EventListener
     {
@@ -115,8 +112,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 [3] -> CommandText
 
                 Note:
-                - For "Microsoft-AdoNet-SystemData": [3] CommandText = (CommandType == CommandType.StoredProcedure ? CommandText : string.Empty;
-                - For "Microsoft.Data.SqlClient.EventSource": [3] CommandText = sqlCommand.CommandText (so it is set for all command types).
+                - For "Microsoft-AdoNet-SystemData" v1.0: [3] CommandText = CommandType == CommandType.StoredProcedure ? CommandText : string.Empty; (so it is set for only StoredProcedure command types)
+                    (https://github.com/dotnet/SqlClient/blob/v1.0.19239.1/src/Microsoft.Data.SqlClient/netfx/src/Microsoft/Data/SqlClient/SqlCommand.cs#L6369)
+                - For "Microsoft-AdoNet-SystemData" v1.1: [3] CommandText = sqlCommand.CommandText (so it is set for all command types)
+                    (https://github.com/dotnet/SqlClient/blob/v1.1.0/src/Microsoft.Data.SqlClient/netfx/src/Microsoft/Data/SqlClient/SqlCommand.cs#L7459)
+                - For "Microsoft.Data.SqlClient.EventSource" v2.0+: [3] CommandText = sqlCommand.CommandText (so it is set for all command types).
+                    (https://github.com/dotnet/SqlClient/blob/f4568ce68da21db3fe88c0e72e1287368aaa1dc8/src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/SqlCommand.cs#L6641)
              */
 
             if ((eventData?.Payload?.Count ?? 0) < 4)
@@ -148,7 +149,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
                 string commandText = (string)eventData.Payload[3];
-                if (!string.IsNullOrEmpty(commandText) && this.options.SetDbStatement)
+                if (!string.IsNullOrEmpty(commandText) && this.options.SetDbStatementForText)
                 {
                     activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                 }

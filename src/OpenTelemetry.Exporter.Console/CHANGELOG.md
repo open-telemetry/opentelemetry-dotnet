@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
 * Bumped the minimum required version of `System.Text.Json` to 4.7.2 in response
 to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
 ([#3789](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3789))

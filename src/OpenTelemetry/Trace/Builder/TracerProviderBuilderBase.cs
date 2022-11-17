@@ -20,7 +20,6 @@ using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -119,28 +118,6 @@ namespace OpenTelemetry.Trace
                 this.ConfigureServices(services
                     => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
             }
-
-            return this;
-        }
-
-        internal TracerProviderBuilder AddExporter<T>(ExportProcessorType exportProcessorType, string? name, Action<ExportActivityProcessorOptions>? configure)
-            where T : BaseExporter<Activity>
-        {
-            this.TryAddSingleton<T>();
-            this.ConfigureState((sp, state)
-                => state.AddProcessor(
-                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, sp.GetRequiredService<T>(), name, configure)));
-
-            return this;
-        }
-
-        internal TracerProviderBuilder AddExporter(ExportProcessorType exportProcessorType, BaseExporter<Activity> exporter, string? name, Action<ExportActivityProcessorOptions>? configure)
-        {
-            Guard.ThrowIfNull(exporter);
-
-            this.ConfigureState((sp, state)
-                => state.AddProcessor(
-                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, exporter, name, configure)));
 
             return this;
         }
@@ -275,39 +252,6 @@ namespace OpenTelemetry.Trace
             var serviceProvider = services.BuildServiceProvider(validateScopes);
 
             return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
-        }
-
-        private static BaseProcessor<Activity> BuildExportProcessor(
-            IServiceProvider serviceProvider,
-            ExportProcessorType exportProcessorType,
-            BaseExporter<Activity> exporter,
-            string? name,
-            Action<ExportActivityProcessorOptions>? configure)
-        {
-            name ??= Options.DefaultName;
-
-            switch (exportProcessorType)
-            {
-                case ExportProcessorType.Simple:
-                    return new SimpleActivityExportProcessor(exporter);
-                case ExportProcessorType.Batch:
-                    var options = serviceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(name);
-
-                    options.ExportProcessorType = ExportProcessorType.Batch;
-
-                    configure?.Invoke(options);
-
-                    var batchOptions = options.BatchExportProcessorOptions;
-
-                    return new BatchActivityExportProcessor(
-                        exporter,
-                        batchOptions.MaxQueueSize,
-                        batchOptions.ScheduledDelayMilliseconds,
-                        batchOptions.ExporterTimeoutMilliseconds,
-                        batchOptions.MaxExportBatchSize);
-                default:
-                    throw new NotSupportedException($"ExportProcessorType '{exportProcessorType}' is not supported.");
-            }
         }
 
         private TracerProviderBuilder AddInstrumentation<T>(Func<IServiceProvider, T> instrumentationFactory)

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             this.exportedItems = new List<Activity>();
             var builder = WebApplication.CreateBuilder();
+            builder.Logging.ClearProviders();
             var app = builder.Build();
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -71,7 +73,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var activity = this.exportedItems[0];
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("localhost:5000", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
+            Assert.Equal(5000, activity.GetTagValue(SemanticConventions.AttributeNetHostPort));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeHttpFlavor));
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
