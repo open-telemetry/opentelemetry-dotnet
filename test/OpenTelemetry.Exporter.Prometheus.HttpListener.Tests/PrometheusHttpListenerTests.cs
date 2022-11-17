@@ -31,10 +31,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         private readonly string meterName = Utils.GetCurrentMethodName();
 
         [Theory]
-        [InlineData("http://+:9184")]
-        [InlineData("http://*:9184")]
-        [InlineData("http://+:9184/")]
-        [InlineData("http://*:9184/")]
+        [InlineData("http://+:9464")]
+        [InlineData("http://*:9464")]
+        [InlineData("http://+:9464/")]
+        [InlineData("http://*:9464/")]
         [InlineData("https://example.com")]
         [InlineData("http://127.0.0.1")]
         [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
