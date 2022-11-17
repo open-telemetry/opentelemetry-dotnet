@@ -1,9 +1,9 @@
-# OTLP Exporter over gRPC for OpenTelemetry .NET
+# gRPC-based implementation of OTLP Exporter for OpenTelemetry .NET
 
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc)
 
-[The OTLP (OpenTelemetry Protocol) gRPC exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter)
+[gRPC-based implementation of OTLP Exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
 implementation.
 
 ## Prerequisite
