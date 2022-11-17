@@ -201,11 +201,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 if (request.Host.HasValue)
                 {
                     activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
-                }
 
-                if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                    }
                 }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
