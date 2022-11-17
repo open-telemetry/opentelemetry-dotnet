@@ -17,7 +17,7 @@
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
