@@ -15,13 +15,11 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.SqlClient;
-using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -67,9 +65,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [Trait("CategoryName", "SqlIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
         [InlineData(CommandType.Text, "select 1/1", false)]
-#if !NETFRAMEWORK
         [InlineData(CommandType.Text, "select 1/1", false, true)]
-#endif
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true, false, false)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
@@ -84,6 +80,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool recordException = false,
             bool shouldEnrich = true)
         {
+#if NETFRAMEWORK
+            // Disable things not available on netfx
+            recordException = false;
+            shouldEnrich = false;
+#endif
+
             var sampler = new TestSampler();
             var activities = new List<Activity>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -94,21 +96,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 #if !NETFRAMEWORK
                     options.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
                     options.SetDbStatementForText = captureTextCommandContent;
-                    options.RecordException = recordException;
 #else
-                    options.SetDbStatement = captureStoredProcedureCommandName;
+                    options.SetDbStatementForText = captureStoredProcedureCommandName || captureTextCommandContent;
 #endif
+                    options.RecordException = recordException;
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
                     }
                 })
                 .Build();
-
-#if NETFRAMEWORK
-            // RecordException not available on netfx
-            recordException = false;
-#endif
 
             using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 

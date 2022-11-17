@@ -33,12 +33,12 @@ namespace OpenTelemetry.Instrumentation.Http
         /// collect telemetry about requests on a per request basis.
         /// </summary>
         /// <remarks>
-        /// Notes:
-        /// <list type="bullet">
-        /// <item><b>FilterHttpRequestMessage is only executed on .NET and .NET
+        /// <para><b>FilterHttpRequestMessage is only executed on .NET and .NET
         /// Core runtimes. <see cref="HttpClient"/> and <see
         /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
-        /// using <see cref="HttpRequestMessage"/>.</b></item>
+        /// using <see cref="HttpRequestMessage"/>.</b></para>
+        /// Notes:
+        /// <list type="bullet">
         /// <item>The return value for the filter function is interpreted as:
         /// <list type="bullet">
         /// <item>If filter returns <see langword="true" />, the request is
@@ -51,38 +51,32 @@ namespace OpenTelemetry.Instrumentation.Http
         public Func<HttpRequestMessage, bool> FilterHttpRequestMessage { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpRequestMessage"/>.
+        /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="HttpRequestMessage"/>.
         /// </summary>
         /// <remarks>
         /// <para><b>EnrichWithHttpRequestMessage is only executed on .NET and .NET
         /// Core runtimes. <see cref="HttpClient"/> and <see
         /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
         /// using <see cref="HttpRequestMessage"/>.</b></para>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpRequestMessage"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpRequestMessage> EnrichWithHttpRequestMessage { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpResponseMessage"/>.
+        /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="HttpResponseMessage"/>.
         /// </summary>
         /// <remarks>
         /// <para><b>EnrichWithHttpResponseMessage is only executed on .NET and .NET
         /// Core runtimes. <see cref="HttpClient"/> and <see
         /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
         /// using <see cref="HttpRequestMessage"/>.</b></para>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpResponseMessage"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpResponseMessage> EnrichWithHttpResponseMessage { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="Exception"/>.
+        /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="Exception"/>.
         /// </summary>
         /// <remarks>
         /// <para><b>EnrichWithException is called for all runtimes.</b></para>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="Exception"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, Exception> EnrichWithException { get; set; }
 
@@ -91,12 +85,12 @@ namespace OpenTelemetry.Instrumentation.Http
         /// collect telemetry about requests on a per request basis.
         /// </summary>
         /// <remarks>
-        /// Notes:
-        /// <list type="bullet">
-        /// <item><b>FilterHttpWebRequest is only executed on .NET Framework
+        /// <para><b>FilterHttpWebRequest is only executed on .NET Framework
         /// runtimes. <see cref="HttpClient"/> and <see cref="HttpWebRequest"/>
         /// on .NET Framework are both implemented using <see
-        /// cref="HttpWebRequest"/>.</b></item>
+        /// cref="HttpWebRequest"/>.</b></para>
+        /// Notes:
+        /// <list type="bullet">
         /// <item>The return value for the filter function is interpreted as:
         /// <list type="bullet">
         /// <item>If filter returns <see langword="true" />, the request is
@@ -109,36 +103,37 @@ namespace OpenTelemetry.Instrumentation.Http
         public Func<HttpWebRequest, bool> FilterHttpWebRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpWebRequest"/>.
+        /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="HttpWebRequest"/>.
         /// </summary>
         /// <remarks>
         /// <para><b>EnrichWithHttpWebRequest is only executed on .NET Framework
         /// runtimes. <see cref="HttpClient"/> and <see cref="HttpWebRequest"/>
         /// on .NET Framework are both implemented using <see
         /// cref="HttpWebRequest"/>.</b></para>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpWebRequest"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpWebRequest> EnrichWithHttpWebRequest { get; set; }
 
         /// <summary>
-        /// Gets or sets an action to enrich an Activity with <see cref="HttpWebResponse"/>.
+        /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="HttpWebResponse"/>.
         /// </summary>
         /// <remarks>
         /// <para><b>EnrichWithHttpWebResponse is only executed on .NET Framework
         /// runtimes. <see cref="HttpClient"/> and <see cref="HttpWebRequest"/>
         /// on .NET Framework are both implemented using <see
         /// cref="HttpWebRequest"/>.</b></para>
-        /// <para><see cref="Activity"/>: the activity being enriched.</para>
-        /// <para><see cref="HttpWebResponse"/> object from which additional information can be extracted to enrich the activity.</para>
         /// </remarks>
         public Action<Activity, HttpWebResponse> EnrichWithHttpWebResponse { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether exception will be recorded as an <see cref="ActivityEvent"/> or not.
+        /// Gets or sets a value indicating whether exception will be recorded
+        /// as an <see cref="ActivityEvent"/> or not. Default value: <see
+        /// langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// See: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md" />.
+        /// <para><b>RecordException is supported on all runtimes.</b></para>
+        /// <para>For specification details see: <see
+        /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md"
+        /// />.</para>
         /// </remarks>
         public bool RecordException { get; set; }
 

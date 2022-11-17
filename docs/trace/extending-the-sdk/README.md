@@ -1,10 +1,13 @@
 # Extending the OpenTelemetry .NET SDK
 
+Quick links:
+
 * [Building your own exporter](#exporter)
 * [Building your own instrumentation library](#instrumentation-library)
 * [Building your own processor](#processor)
 * [Building your own sampler](#sampler)
 * [Building your own resource detector](#resource-detector)
+* [Registration extension method guidance for library authors](#registration-extension-method-guidance-for-library-authors)
 * [References](#references)
 
 ## Exporter
@@ -62,7 +65,9 @@ A demo exporter which simply writes activity name to the console is shown
 
 Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
-to the `TracerProvider` as shown in the example [here](./Program.cs).
+to the `TracerProvider` as shown in the example [here](./Program.cs). See
+[here](#registration-extension-method-guidance-for-library-authors) for more
+detailed extension method guidance.
 
 ### Exporting Activity Status
 
@@ -114,40 +119,44 @@ Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/mai
 If you are writing an instrumentation library yourself, use the following
 guidelines.
 
-### Writing own instrumentation library
+### Writing a custom instrumentation library
 
-This section describes the steps required to write your own instrumentation
+This section describes the steps required to write a custom instrumentation
 library.
 
-*If you are writing a new library or modifying an existing library, the
-recommendation is to use [ActivitySource API/OpenTelemetry
+**Note:** If you are writing a new library or modifying an existing library the
+recommendation is to use the [ActivitySource API/OpenTelemetry
 API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
-to instrument it and emit activity/span. If a library is instrumented using
-ActivitySource API, then there is no need of writing a separate instrumentation
-library, as instrumented and instrumentation library become same in this case.
-For applications to collect traces from this library, all that is needed is to
-enable the ActivitySource for the library using `AddSource` method of the
-`TracerProviderBuilder`. The following section is applicable only if you are
-writing an instrumentation library for an instrumented library which you cannot
-modify to emit activities directly.*
+to emit activity/span instances directly. If a library is instrumented using the
+`ActivitySource` API then there isn't a need for a separate instrumentation
+library to exist. Users simply need to configure the OpenTelemetry SDK to listen
+to the `ActivitySource` used by the library by calling `AddSource` on the
+`TracerProviderBuilder` being configured. The following section is applicable
+only if you are writing an instrumentation library for something you cannot
+modify to emit activity/span instances directly.
 
 Writing an instrumentation library typically involves 3 steps.
 
-1. First step involves "hijacking" into the target library. The exact mechanism
-   of this depends on the target library itself. For example,
-   System.Data.SqlClient for .NET Framework, which publishes events using
-   `EventSource`. The [SqlClient instrumentation
-   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
-   in this case subscribes to the `EventSource` callbacks.
+1. The first step involves attaching to the target library. The exact attachment
+   mechanism will depend on the implementation details of the target library
+   itself. For example, System.Data.SqlClient when running on .NET Framework
+   happens to publish events using an `EventSource` which the [SqlClient
+   instrumentation
+   library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs)
+   listens to in order to trigger code as Sql commands are executed. The [.NET
+   Framework HttpWebRequest
+   instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/Implementation/HttpWebRequestActivitySource.netfx.cs)
+   patches the runtime code (using reflection) and swaps a static reference that
+   gets invoked as requests are processed for custom code. Every library will be
+   different.
 
-2. Second step is to emit activities using the [ActivitySource
-   API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
-   In this step, the instrumentation library emits activities *on behalf of* the
-   target instrumented library. Irrespective of the actual mechanism used in
-   first step, this should be uniform across all instrumentation libraries. The
-   `ActivitySource` must be created using the name and version of the
-   instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and *not*
-   the instrumented library (eg: "System.Net.Http")
+2. The second step is to emit activity instances using the [ActivitySource
+   API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
+   **on behalf of** the target library. Irrespective of the actual mechanism
+   used in first step, this should be uniform across all instrumentation
+   libraries. The `ActivitySource` must be created using the name and version of
+   the instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and
+   **NOT** the instrumented library (eg: "System.Net.Http")
       1. [Context
       Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
       If your library initiates out of process requests or accepts them, the
@@ -161,33 +170,42 @@ Writing an instrumentation library typically involves 3 steps.
       GrpcClient, this is already provided to you and **do not require**
       injecting/extracting `PropagationContext` explicitly again.)
 
-3. Third step is an optional step, and involves providing extension methods on
-   `TracerProviderBuilder`, to enable the instrumentation. This is optional, and
-   the below guidance must be followed:
+3. The third step is an optional step, and involves providing extension methods
+   on `TracerProviderBuilder` and/or `IServiceCollection` to enable the
+   instrumentation. For help in choosing see: [Registration extension method
+   guidance for library
+   authors](#registration-extension-method-guidance-for-library-authors). This
+   is optional, and the below guidance should be followed:
 
-    1. If the instrumentation library requires state management tied to that of
-       `TracerProvider`, then it must register itself with the provider with the
-       `AddInstrumentation` method on the `TracerProviderBuilder`. This causes
-       the instrumentation to be created and disposed along with
-       `TracerProvider`. If the above is required, then it must provide an
-       extension method on `TracerProviderBuilder`. Inside this extension
-       method, it should call the `AddInstrumentation` method, and `AddSource`
-       method to enable its ActivitySource for the provider. An example
-       instrumentation using this approach is [SqlClient
+    * If the instrumentation library requires state management tied to that of
+       `TracerProvider` then it should:
+
+       * Implement `IDisposable`.
+
+       * Provide an extension method which calls `AddSource` (to enable its
+         `ActivitySource`) and `AddInstrumentation` (to enable state management)
+         on the `TracerProviderBuilder` being configured.
+
+       An example instrumentation using this approach is [SqlClient
        instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
-       **CAUTION**: The instrumentation libraries requiring state management
-       are usually hard to auto-instrument. Therefore, they take the risk of not
-       being supported by [OpenTelemetry .NET Automatic Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
-    2. If the instrumentation library does not requires any state management
-       tied to that of `TracerProvider`, then providing `TracerProviderBuilder`
-       extension method is optional. If provided, then it must call `AddSource`
-       to enable its ActivitySource for the provider.
+       **CAUTION**: The instrumentation libraries requiring state management are
+       usually hard to auto-instrument. Therefore, they take the risk of not
+       being supported by [OpenTelemetry .NET Automatic
+       Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
-    3. If instrumentation library does not require state management, and is not
-       providing extension method, then the name of the `ActivitySource` used by
-       the instrumented library must be documented so that end users can enable
-       it using `AddSource` method on `TracerProviderBuilder`.
+    * If the instrumentation library does not require any state management, then
+      providing an extension method is optional.
+
+       * If an extension is provided it should call `AddSource` on the
+         `TracerProviderBuilder` being configured to enable its
+         `ActivitySource`.
+
+       * If an extension is not provided, then the name of the `ActivitySource`
+         used by the instrumented library must be documented so that end users
+         can enable it by calling `AddSource` on the `TracerProviderBuilder`
+         being configured. **Note:** Changing the name of the source should be
+         considered a breaking change.
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
@@ -333,6 +351,289 @@ Custom resource detectors can be implemented:
   the `Detect` method.
 
 A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
+
+## Registration extension method guidance for library authors
+
+**Note:** This information applies to the OpenTelemetry SDK version 1.4.0 and
+newer only.
+
+Library authors are encouraged to provide extension methods users may call to
+register custom OpenTelemetry components into their `TracerProvider`s. These
+extension methods can target either the `TracerProviderBuilder` or the
+`IServiceCollection` classes. Both of these patterns are described below.
+
+When providing registration extensions:
+
+* **DO** support the [.NET Options
+  pattern](https://learn.microsoft.com/dotnet/core/extensions/options) and
+  **DO** support [named
+  options](https://learn.microsoft.com/dotnet/core/extensions/options#named-options-support-using-iconfigurenamedoptions).
+  The Options pattern allows users to bind
+  [configuration](https://learn.microsoft.com/dotnet/core/extensions/configuration)
+  to options classes and provides extension points for working with instances as
+  they are created. Multiple providers may exist in the same application for a
+  single configuration and multiple components (for example exporters) may exist
+  in the same provider. Named options help users target configuration to
+  specific components.
+
+  * Use the
+    [Configure](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.optionsservicecollectionextensions.configure#microsoft-extensions-dependencyinjection-optionsservicecollectionextensions-configure-1(microsoft-extensions-dependencyinjection-iservicecollection-system-string-system-action((-0))))
+    extension to register configuration callbacks for a given name.
+
+  * Use the
+    [IOptionsMonitor&lt;T&gt;.Get](https://learn.microsoft.com/dotnet/api/microsoft.extensions.options.ioptionsmonitor-1.get)
+    method to access options class instances by name.
+
+* **DO** throw exceptions for issues that prevent the component being registered
+  from starting. The OpenTelemetry SDK is allowed to crash if it cannot be
+  started. It **MUST NOT** crash once running.
+
+**Note:** The SDK implementation of `TracerProviderBuilder` ensures that the
+[.NET
+Configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration)
+engine is always available by creating a root `IConfiguration` from environment
+variables if it does not already exist in the `IServiceCollection` containing
+the `TracerProvider`. Library authors can rely on `IConfiguration` always being
+present in the final `IServiceProvider`.
+
+### TracerProviderBuilder extension methods
+
+When registering pipeline components (for example samplers, exporters, or
+resource detectors) it is recommended to use the `TracerProviderBuilder` as the
+target type for registration extension methods. These extensions will be highly
+discoverable for users interacting with the `TracerProviderBuilder` in their IDE
+of choice.
+
+The following example shows how to register a custom exporter with named options
+support using a `TracerProviderBuilder` extension.
+
+```csharp
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MyLibrary;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
+namespace OpenTelemetry.Trace
+{
+    public static class MyLibraryTracerProviderBuilderRegistrationExtensions
+    {
+        public static TracerProviderBuilder AddMyLibraryExporter(
+            this TracerProviderBuilder builder,
+            string? name = null,
+            Action<MyExporterOptions>? configureExporterOptions = null,
+            Action<BatchExportActivityProcessorOptions>? configureBatchProcessorOptions = null)
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+
+            // Support named options.
+            name ??= Options.DefaultName;
+
+            builder.ConfigureServices(services =>
+            {
+                if (configureExporterOptions != null)
+                {
+                    // Support configuration through Options API.
+                    services.Configure(name, configureExporterOptions);
+                }
+
+                if (configureBatchProcessorOptions != null)
+                {
+                    // Support configuration through Options API.
+                    services.Configure(name, configureBatchProcessorOptions);
+                }
+
+                // Register custom service as a singleton.
+                services.TryAddSingleton<MyCustomService>();
+            });
+
+            builder.ConfigureBuilder((sp, builder) =>
+            {
+                // Retrieve MyExporterOptions instance using name.
+                var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<MyExporterOptions>>().Get(name);
+
+                // Retrieve BatchExportActivityProcessorOptions instance using name.
+                var batchOptions = serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name);
+
+                // Retrieve MyCustomService singleton.
+                var myCustomService = sp.GetRequiredService<MyCustomService>();
+
+                // Registers MyCustomExporter with a batch processor.
+                builder.AddProcessor(
+                    new BatchActivityExportProcessor(
+                        new MyCustomExporter(exporterOptions, myCustomService),
+                        batchOptions.MaxQueueSize,
+                        batchOptions.ScheduledDelayMilliseconds,
+                        batchOptions.ExporterTimeoutMilliseconds,
+                        batchOptions.MaxExportBatchSize));
+            });
+
+            // Return builder for call chaining.
+            return builder;
+        }
+    }
+}
+
+namespace MyLibrary
+{
+    // Options class can be bound to IConfiguration or configured by code.
+    public class MyExporterOptions
+    {
+        public Uri? IngestionUri { get; set; }
+    }
+
+    internal sealed class MyCustomExporter : BaseExporter<Activity>
+    {
+        public MyCustomExporter(
+            MyExporterOptions options,
+            MyCustomService myCustomService)
+        {
+            // Implementation not shown.
+        }
+
+        public override ExportResult Export(in Batch<Activity> batch)
+        {
+            // Implementation not shown.
+
+            return ExportResult.Success;
+        }
+    }
+
+    internal sealed class MyCustomService
+    {
+        // Implementation not shown.
+    }
+}
+```
+
+When providing `TracerProviderBuilder` registration extensions:
+
+* **DO** Use the `OpenTelemetry.Trace` namespace for `TracerProviderBuilder`
+  registration extensions to help with discoverability.
+
+* **DO** Return the `TracerProviderBuilder` passed in to support call chaining
+  of registration methods.
+
+* **DO** Use the `TracerProviderBuilder.ConfigureServices` extension method to
+  register dependent services.
+
+* **DO** Use the `TracerProviderBuilder.ConfigureBuilder` extension method to
+  peform configuration once the final `IServiceProvider` is available.
+
+### IServiceCollection extension methods
+
+When registering instrumentation or listening to telemetry in a library
+providing other features it is recommended to use the `IServiceCollection` as
+the target type for registration extension methods.
+
+The following example shows how a library might enable tracing and metric
+support using an `IServiceCollection` extension by calling
+`ConfigureOpenTelemetryTracing`.
+
+```csharp
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MyLibrary;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
+namespace Microsoft.Extensions.DependencyInjection
+{
+    public static class MyLibraryServiceCollectionRegistrationExtensions
+    {
+        public static IServiceCollection AddMyLibrary(
+            this IServiceCollection services,
+            string? name = null,
+            Action<MyLibraryOptions>? configure = null)
+        {
+            ArgumentNullException.ThrowIfNull(services);
+
+            // Register library services.
+            services.TryAddSingleton<IMyLibraryService, MyLibraryService>();
+
+            // Support named options.
+            name ??= Options.DefaultName;
+
+            if (configure != null)
+            {
+                // Support configuration through Options API.
+                services.Configure(name, configure);
+            }
+
+            // Configure OpenTelemetry tracing.
+            services.ConfigureOpenTelemetryTracing(builder => builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
+                if (options.EnableTracing)
+                {
+                    builder.AddSource("MyLibrary");
+                }
+            }));
+
+            // Configure OpenTelemetry metrics.
+            services.ConfigureOpenTelemetryMetrics(builder => builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
+                if (options.EnableMetrics)
+                {
+                    builder.AddMeter("MyLibrary");
+                }
+            }));
+
+            return services;
+        }
+    }
+}
+
+namespace MyLibrary
+{
+    // Options class can be bound to IConfiguration or configured by code.
+    public class MyLibraryOptions
+    {
+        public bool EnableTracing { get; set; }
+
+        public bool EnableMetrics { get; set; }
+    }
+
+    internal sealed class MyLibraryService : IMyLibraryService
+    {
+        // Implementation not shown.
+    }
+
+    public interface IMyLibraryService
+    {
+        // Implementation not shown.
+    }
+}
+```
+
+The benefit to using the `IServiceCollection` style is users only need to call a
+single `AddMyLibrary` extension to configure the library itself and optionally
+turn on OpenTelemetry integration for multiple signals (tracing & metrics in
+this case).
+
+**Note:** `ConfigureOpenTelemetryTracing` does not automatically start
+OpenTelemetry. The host is responsible for either calling
+`AddOpenTelemetryTracing` in the
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
+package, calling `Build` when using the `Sdk.CreateTracerProviderBuilder`
+method, or by accessing the `TracerProvider` from the `IServiceCollection` where
+`ConfigureOpenTelemetryTracing` was performed.
+
+When providing `IServiceCollection` registration extensions:
+
+* **DO** Use the `Microsoft.Extensions.DependencyInjection` namespace for
+  `IServiceCollection` registration extensions to help with discoverability.
+
+* **DO** Return the `IServiceCollection` passed in to support call chaining of
+  registration methods.
+
+* **DO** Use the `IServiceCollection` directly to register dependent services.
+
+* **DO** Use the `TracerProviderBuilder.ConfigureBuilder` extension method to
+  peform configuration once the final `IServiceProvider` is available.
 
 ## References
 
