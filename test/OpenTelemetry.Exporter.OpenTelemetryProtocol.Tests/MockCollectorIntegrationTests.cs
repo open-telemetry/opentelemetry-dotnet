@@ -119,15 +119,16 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(ExportResult.Success, new[] { Grpc.Core.StatusCode.DataLoss })]
 
     [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.Cancelled, Grpc.Core.StatusCode.Cancelled })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unknown, Grpc.Core.StatusCode.Unknown, Grpc.Core.StatusCode.Unknown, Grpc.Core.StatusCode.Unknown, Grpc.Core.StatusCode.Unknown })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.InvalidArgument, Grpc.Core.StatusCode.InvalidArgument, Grpc.Core.StatusCode.InvalidArgument, Grpc.Core.StatusCode.InvalidArgument, Grpc.Core.StatusCode.InvalidArgument })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.NotFound, Grpc.Core.StatusCode.NotFound, Grpc.Core.StatusCode.NotFound, Grpc.Core.StatusCode.NotFound, Grpc.Core.StatusCode.NotFound })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.AlreadyExists, Grpc.Core.StatusCode.AlreadyExists, Grpc.Core.StatusCode.AlreadyExists, Grpc.Core.StatusCode.AlreadyExists, Grpc.Core.StatusCode.AlreadyExists })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.PermissionDenied, Grpc.Core.StatusCode.PermissionDenied, Grpc.Core.StatusCode.PermissionDenied, Grpc.Core.StatusCode.PermissionDenied, Grpc.Core.StatusCode.PermissionDenied })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.FailedPrecondition, Grpc.Core.StatusCode.FailedPrecondition, Grpc.Core.StatusCode.FailedPrecondition, Grpc.Core.StatusCode.FailedPrecondition, Grpc.Core.StatusCode.FailedPrecondition })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.Unimplemented })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Internal, Grpc.Core.StatusCode.Internal, Grpc.Core.StatusCode.Internal, Grpc.Core.StatusCode.Internal, Grpc.Core.StatusCode.Internal })]
-    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unauthenticated, Grpc.Core.StatusCode.Unauthenticated, Grpc.Core.StatusCode.Unauthenticated, Grpc.Core.StatusCode.Unauthenticated, Grpc.Core.StatusCode.Unauthenticated })]
+
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unknown })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.InvalidArgument })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.NotFound })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.AlreadyExists })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.PermissionDenied })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.FailedPrecondition })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unimplemented })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Internal })]
+    [InlineData(ExportResult.Failure, new[] { Grpc.Core.StatusCode.Unauthenticated })]
 
     public async Task TestOtlpExporterRetry(ExportResult result, Grpc.Core.StatusCode[] codes)
     {
