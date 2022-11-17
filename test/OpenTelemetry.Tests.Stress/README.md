@@ -43,7 +43,7 @@ Running (concurrency = 1), press <Esc> to stop...
 The stress test metrics are exposed via
 [Prometheus HttpListener](../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md),
 which can be accessed via
-[http://localhost:9184/metrics/](http://localhost:9184/metrics/).
+[http://localhost:9464/metrics/](http://localhost:9464/metrics/).
 
 Following shows a section of the metrics exposed in prometheus format:
 
@@ -82,7 +82,7 @@ public partial class Program
 {
     public static void Main()
     {
-        Stress(concurrency: 10, prometheusPort: 9184);
+        Stress(concurrency: 10, prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
