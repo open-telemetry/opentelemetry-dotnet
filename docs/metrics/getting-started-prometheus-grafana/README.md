@@ -174,7 +174,7 @@ to log in.
 
 After successfully logging in, hover on the Configuration icon
 on the panel at the left hand side, and click on Plugins.
-Find and click on the Prometheus plugin. Next on
+Find and click on the Prometheus plugin. Next click on
 `Create a Prometheus data source` button. Type in the default endpoint of
 Prometheus as suggested by the UI as the value for the URI.
 
