@@ -110,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = exportedItems[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeHttpFlavor));
             Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeHttpScheme));
