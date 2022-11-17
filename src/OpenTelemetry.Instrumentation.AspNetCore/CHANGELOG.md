@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* **Breaking change** The `http.target` in `http.server.duration` metric replaced with `http.route`
+* **Breaking change** The `http.target` in `http.server.duration` metric replaced
+with `http.route`
 ([#3903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3903))
 
 ## 1.0.0-rc9.9
