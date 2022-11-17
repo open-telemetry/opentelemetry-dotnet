@@ -38,9 +38,10 @@ tracerProvider.Dispose()
 ```
 
 **Note:** The `Sdk.CreateTracerProviderBuilder()` API is available for all
-runtimes. Additionally, for `ASP.NET Core` and [.NET Generic
-Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users,
-helper extensions are provided in the
+runtimes. Additionally, for [ASP.NET
+Core](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host) and
+[.NET Generic](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
+host users, helper extensions are provided in the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package to simplify configuration and management of the `TracerProvider`.
 
@@ -411,9 +412,10 @@ for details.
 
 #### Using the OpenTelemetry.Extensions.Hosting package
 
-**Note:** If you are authoring an ASP.NET Core application or using the [.NET
-Generic Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
-the
+**Note:** If you are authoring an [ASP.NET Core
+application](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host)
+or using the [.NET Generic
+Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package is the recommended mechanism.
 
@@ -500,9 +502,10 @@ and OpenTelemetry API being used.
 
 #### Using .NET hosts with the OpenTelemetry.Extensions.Hosting package
 
-`ASP.NET Core` and [.NET Generic
-Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) users
-using the
+[ASP.NET
+Core](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host) and
+[.NET Generic](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
+host users using the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package do not need to do anything extra to enable `IConfiguration` support. The
 OpenTelemetry SDK will automatically use whatever `IConfiguration` has been
