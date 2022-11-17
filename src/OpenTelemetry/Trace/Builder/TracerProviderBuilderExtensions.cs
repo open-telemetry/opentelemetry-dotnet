@@ -19,7 +19,6 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -151,128 +150,6 @@ namespace OpenTelemetry.Trace
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
                 tracerProviderBuilderBase.AddProcessor<T>();
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Adds an exporter to the provider.
-        /// </summary>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
-        /// <param name="exporter">Activity exporter to add.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddExporter(
-            this TracerProviderBuilder tracerProviderBuilder,
-            ExportProcessorType exportProcessorType,
-            BaseExporter<Activity> exporter)
-            => AddExporter(tracerProviderBuilder, exportProcessorType, exporter, name: null, configure: null);
-
-        /// <summary>
-        /// Adds an exporter to the provider.
-        /// </summary>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
-        /// <param name="exporter">Activity exporter to add.</param>
-        /// <param name="configure">Callback action to configure <see
-        /// cref="ExportActivityProcessorOptions"/>.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddExporter(
-            this TracerProviderBuilder tracerProviderBuilder,
-            ExportProcessorType exportProcessorType,
-            BaseExporter<Activity> exporter,
-            Action<ExportActivityProcessorOptions> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            return AddExporter(tracerProviderBuilder, exportProcessorType, exporter, name: null, configure);
-        }
-
-        /// <summary>
-        /// Adds an exporter to the provider.
-        /// </summary>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
-        /// <param name="exporter">Activity exporter to add.</param>
-        /// <param name="name">Optional name which is used when retrieving options.</param>
-        /// <param name="configure">Optional callback action to configure <see
-        /// cref="ExportActivityProcessorOptions"/>.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddExporter(
-            this TracerProviderBuilder tracerProviderBuilder,
-            ExportProcessorType exportProcessorType,
-            BaseExporter<Activity> exporter,
-            string? name,
-            Action<ExportActivityProcessorOptions>? configure)
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-            {
-                tracerProviderBuilderBase.AddExporter(exportProcessorType, exporter, name, configure);
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Adds an exporter to the provider which will be retrieved using dependency injection.
-        /// </summary>
-        /// <remarks><inheritdoc cref="AddExporter{T}(TracerProviderBuilder, ExportProcessorType, string?, Action{ExportActivityProcessorOptions}?)" path="/remarks"/></remarks>
-        /// <typeparam name="T">Exporter type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddExporter<T>(
-            this TracerProviderBuilder tracerProviderBuilder,
-            ExportProcessorType exportProcessorType)
-            where T : BaseExporter<Activity>
-            => AddExporter<T>(tracerProviderBuilder, exportProcessorType, name: null, configure: null);
-
-        /// <summary>
-        /// Adds an exporter to the provider which will be retrieved using dependency injection.
-        /// </summary>
-        /// <remarks><inheritdoc cref="AddExporter{T}(TracerProviderBuilder, ExportProcessorType, string?, Action{ExportActivityProcessorOptions}?)" path="/remarks"/></remarks>
-        /// <typeparam name="T">Exporter type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
-        /// <param name="configure">Callback action to configure <see
-        /// cref="ExportActivityProcessorOptions"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddExporter<T>(
-            this TracerProviderBuilder tracerProviderBuilder,
-            ExportProcessorType exportProcessorType,
-            Action<ExportActivityProcessorOptions> configure)
-            where T : BaseExporter<Activity>
-        {
-            Guard.ThrowIfNull(configure);
-
-            return AddExporter<T>(tracerProviderBuilder, exportProcessorType, name: null, configure);
-        }
-
-        /// <summary>
-        /// Adds an exporter to the provider which will be retrieved using dependency injection.
-        /// </summary>
-        /// <remarks>
-        /// Note: The type specified by <typeparamref name="T"/> will be
-        /// registered as a singleton service into application services.
-        /// </remarks>
-        /// <typeparam name="T">Exporter type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
-        /// <param name="name">Optional name which is used when retrieving options.</param>
-        /// <param name="configure">Optional callback action to configure <see
-        /// cref="ExportActivityProcessorOptions"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddExporter<T>(
-            this TracerProviderBuilder tracerProviderBuilder,
-            ExportProcessorType exportProcessorType,
-            string? name,
-            Action<ExportActivityProcessorOptions>? configure)
-            where T : BaseExporter<Activity>
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-            {
-                tracerProviderBuilderBase.AddExporter<T>(exportProcessorType, name, configure);
             }
 
             return tracerProviderBuilder;

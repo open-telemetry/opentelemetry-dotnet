@@ -106,7 +106,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(Status.Unset, activity.GetStatus());
 
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
-            Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
+            Assert.Equal(this.server.Port, activity.GetTagValue(SemanticConventions.AttributeNetHostPort));
             Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
             Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
@@ -184,7 +185,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 Assert.Equal(Status.Unset, activity.GetStatus());
 
                 // The following are http.* attributes that are also included on the span for the gRPC invocation.
-                Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+                Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
+                Assert.Equal(this.server.Port, activity.GetTagValue(SemanticConventions.AttributeNetHostPort));
                 Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
                 Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
                 Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));

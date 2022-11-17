@@ -319,7 +319,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
 
-            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, zipkinExporter);
+            tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(zipkinExporter));
 
             using var provider = tracerProviderBuilder.Build();
 
