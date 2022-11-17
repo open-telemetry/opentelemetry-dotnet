@@ -37,7 +37,7 @@ public partial class Program
 
         logger = loggerFactory.CreateLogger<Program>();
 
-        Stress(prometheusPort: 9184);
+        Stress(prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
