@@ -172,18 +172,19 @@ Follow the instructions in the Grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
 to log in.
 
-After successfully logging in, click on the Configuration icon
-on the panel at the left hand side, and click on Prometheus.
-Type in the default endpoint of Prometheus as suggested by the UI
-as the value for the URI.
+After successfully logging in, hover on the Configuration icon
+on the panel at the left hand side, and click on Plugins.
+Find and click on the Prometheus plugin. Next click on
+`Create a Prometheus data source` button. Type in the default endpoint of
+Prometheus as suggested by the UI as the value for the URI.
 
 ```console
 http://localhost:9090
 ```
 
-Then, click on the Explore icon on the left panel of
-the website - we should be able to write some queries to explore our metrics
-now!
+At the bottom of the page click `Save & test` to ensure the data source is
+working. Then, click on the `Explore` button - we should be able to write
+some queries to explore our metrics now!
 
 Feel free to find some handy PromQL
 [here](https://promlabs.com/promql-cheat-sheet/).
