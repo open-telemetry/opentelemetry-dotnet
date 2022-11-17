@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void ExportActivityProcessorOptions_UsingIConfiguration()
+        public void BatchExportProcessorOptions_UsingIConfiguration()
         {
             var values = new Dictionary<string, string>()
             {
@@ -75,13 +75,6 @@ namespace OpenTelemetry.Trace.Tests
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(values)
                 .Build();
-
-            var parentOptions = new ExportActivityProcessorOptions(configuration);
-
-            Assert.Equal(1, parentOptions.BatchExportProcessorOptions.MaxQueueSize);
-            Assert.Equal(2, parentOptions.BatchExportProcessorOptions.MaxExportBatchSize);
-            Assert.Equal(3, parentOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds);
-            Assert.Equal(4, parentOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds);
 
             var options = new BatchExportActivityProcessorOptions(configuration);
 

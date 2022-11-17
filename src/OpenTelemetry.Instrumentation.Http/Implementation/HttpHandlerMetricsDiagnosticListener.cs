@@ -49,29 +49,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     var request = response.RequestMessage;
 
-                    TagList tags;
+                    TagList tags = default;
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
+
                     if (!request.RequestUri.IsDefaultPort)
                     {
-                        tags = new TagList
-                        {
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port),
-                        };
-                    }
-                    else
-                    {
-                        tags = new TagList
-                        {
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
-                            new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
-                        };
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                     }
 
                     this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
