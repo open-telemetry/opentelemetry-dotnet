@@ -6,6 +6,10 @@
   `net.host.name` and `net.host.port` attributes will be populated instead.
   ([#3858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3858))
 
+* The `http.server.duration` metric's `http.target` attribute is replaced
+with `http.route` attribute.
+([#3903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3903))
+
 ## 1.0.0-rc9.9
 
 Released 2022-Nov-07
