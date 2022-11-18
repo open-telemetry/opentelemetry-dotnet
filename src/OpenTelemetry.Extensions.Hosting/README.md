@@ -9,92 +9,66 @@
 dotnet add package --prerelease OpenTelemetry.Extensions.Hosting
 ```
 
+## Overview
+
+The OpenTelemetry.Extensions.Hosting package provides extension methods for
+automatically starting (and stopping) OpenTelemetry tracing (`TracerProvider`)
+and metrics (`MeterProvider`) in [ASP.NET
+ Core](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host) and
+ [.NET Generic](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
+ hosts. These are completely optional extensions meant to simplify the
+ management of the OpenTelemetry SDK lifecycle.
+
+## Extension method reference
+
+**Note:** The below extension methods target
+`Microsoft.Extensions.DependencyInjection.IServiceCollection`.
+
+**Note:** The below extension methods should be called by application host code
+only. Library authors see: [Registration extension method guidance for library
+authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
+
+**Note:** Multiple calls to the below extensions will **NOT** result in multiple
+providers. To establish multiple providers use the
+`Sdk.CreateTracerProviderBuilder()` and/or `Sdk.CreateMeterProviderBuilder()`
+methods. See [TracerProvider
+configuration](../../docs/trace/customizing-the-sdk/README.md#tracerprovider-configuration)
+and [Building a
+MeterProvider](../../docs/metrics/customizing-the-sdk/README.md#building-a-meterprovider)
+for more details.
+
+* `AddOpenTelemetryTracing`: Configure OpenTelemetry and register an
+  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
+  to automatically start tracing services in the supplied
+  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+
+* `AddOpenTelemetryMetrics`: Configure OpenTelemetry and register an
+  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
+  to automatically start metric services in the supplied
+  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+
 ## Usage
 
-### Tracing
-
-#### Simple Configuration
-
-The following example registers tracing using the `ZipkinExporter` and binds
-options to the "Zipkin" configuration section:
+The following example shows how to register OpenTelemetry tracing & metrics in
+an ASP.NET Core host using the OpenTelemetry.Extensions.Hosting extensions.
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddAspNetCoreInstrumentation()
-    .AddHttpClientInstrumentation()
-    .AddZipkinExporter());
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
-services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));
-```
+var appBuilder = WebApplication.CreateBuilder(args);
 
-#### Using Dependency Injection
+appBuilder.Services.AddOpenTelemetryTracing(
+    builder => builder.AddConsoleExporter());
 
-The following example registers a processor of the type "MyProcessor" which has
-been registered as a singleton with the `IServiceCollection`:
+appBuilder.Services.AddOpenTelemetryMetrics(
+    builder => builder.AddConsoleExporter());
 
-```csharp
-services.AddSingleton<MyProcessor>();
+var app = appBuilder.Build();
 
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddAspNetCoreInstrumentation()
-    .AddHttpClientInstrumentation()
-    .AddProcessor<MyProcessor>());
-```
-
-Similar methods exist for registering instrumentation (`AddInstrumentation<T>`)
-and setting a sampler (`SetSampler<T>`).
-
-You can also access the application `IServiceProvider` directly and accomplish
-the same registration using the `ConfigureBuilder` extension like this:
-
-```csharp
-services.AddSingleton<MyProcessor>();
-
-services.AddOpenTelemetryTracing(hostingBuilder => hostingBuilder
-    .ConfigureBuilder((sp, builder) => builder
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddProcessor(sp.GetRequiredService<MyProcessor>())));
-```
-
-**Note:** `ConfigureBuilder` is called _after_ the `IServiceProvider` has been built
-from the application `IServiceCollection` so any services registered in the
-`ConfigureBuilder` callback will be ignored.
-
-#### Building Extension Methods
-
-Library authors may want to configure the OpenTelemetry `TracerProvider` and
-register application services to provide more complex features. This can be
-accomplished concisely by using the `TracerProviderBuilder.ConfigureServices`
-extension method inside of a more general `TracerProviderBuilder` configuration
-extension like this:
-
-```csharp
-public static class MyLibraryExtensions
-{
-    public static TracerProviderBuilder AddMyFeature(this TracerProviderBuilder tracerProviderBuilder)
-    {
-        return tracerProviderBuilder
-            .ConfigureServices(services =>
-                services
-                    .AddHostedService<MyHostedService>()
-                    .AddSingleton<MyService>()
-                    .AddSingleton<MyProcessor>()
-                    .AddSingleton<MySampler>())
-            .AddProcessor<MyProcessor>()
-            .SetSampler<MySampler>();
-    }
-}
-```
-
-Such an extension method can be consumed like this:
-
-```csharp
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddAspNetCoreInstrumentation()
-    .AddHttpClientInstrumentation()
-    .AddMyFeature()
-    .AddZipkinExporter());
+app.Run();
 ```
 
 ## References
