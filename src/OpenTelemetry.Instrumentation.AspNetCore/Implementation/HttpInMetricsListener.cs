@@ -70,11 +70,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 TagList tags;
 #if NET6_0_OR_GREATER
-                var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+                var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
 
                 // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
-                if (!string.IsNullOrEmpty(target))
+                if (!string.IsNullOrEmpty(route))
                 {
                     tags = new TagList
                     {
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                         { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
                         { SemanticConventions.AttributeHttpMethod, context.Request.Method },
                         { SemanticConventions.AttributeHttpHost, host },
-                        { SemanticConventions.AttributeHttpTarget, target },
+                        { SemanticConventions.AttributeHttpRoute, route },
                         { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
                     };
                 }
