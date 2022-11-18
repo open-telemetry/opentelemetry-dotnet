@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.SqlClient;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Internal;
@@ -30,19 +32,42 @@ namespace OpenTelemetry.Trace
         /// Enables SqlClient instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddSqlClientInstrumentation(this TracerProviderBuilder builder)
+            => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions: null);
+
+        /// <summary>
+        /// Enables SqlClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <param name="configureSqlClientInstrumentationOptions">SqlClient configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddSqlClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
+            => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions);
+
+        public static TracerProviderBuilder AddSqlClientInstrumentation(
+            this TracerProviderBuilder builder,
+            string name,
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
 
-            var sqlOptions = new SqlClientInstrumentationOptions();
-            configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
+            name ??= Options.DefaultName;
 
-            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
-            builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
+            if (configureSqlClientInstrumentationOptions != null)
+            {
+                builder.ConfigureServices(services => services.Configure(name, configureSqlClientInstrumentationOptions));
+            }
+
+            builder.ConfigureBuilder((sp, builder) =>
+            {
+                var sqlOptions = sp.GetRequiredService<IOptionsMonitor<SqlClientInstrumentationOptions>>().Get(name);
+
+                builder.AddInstrumentation(new SqlClientInstrumentation(sqlOptions));
+                builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
+            });
 
             return builder;
         }
