@@ -241,19 +241,6 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-To make exporter registration easier an `AddExporter` extension is also provided
-(as of 1.4.0). The snippet below shows how to add an export processor using
- `AddExporter` to the provider before it is built.
-
- ```csharp
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddExporter<MyExporter>(ExportProcessorType.Batch)
-    .Build();
-```
-
 It is also common for exporters to provide their own extensions to simplify
 registration. The snippet below shows how to add the
 [JaegerExporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md) to the
@@ -372,25 +359,25 @@ injection](https://learn.microsoft.com/dotnet/core/extensions/dependency-injecti
 
 ### Dependency injection examples
 
-For the below examples imagine an exporter with this constructor:
+For the below examples imagine a processor with this constructor:
 
 ```csharp
-public class MyCustomExporter : BaseExporter<Activity>
+public class MyCustomProcessor : BaseProcessor<Activity>
 {
-    public MyCustomExporter(MyCustomService myCustomService)
+    public MyCustomProcessor(MyCustomService myCustomService)
     {
         // Implementation not important
     }
 }
 ```
 
-We want to inject `MyCustomService` dependency into our `MyCustomExporter`
+We want to inject `MyCustomService` dependency into our `MyCustomProcessor`
 instance.
 
 #### Using Sdk.CreateTracerProviderBuilder()
 
-To register `MyCustomExporter` and `MyCustomService` we can use the
-`ConfigureServices` and `AddExporter` methods:
+To register `MyCustomProcessor` and `MyCustomService` we can use the
+`ConfigureServices` and `AddProcessor` methods:
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -398,7 +385,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     {
         services.AddSingleton<MyCustomService>();
     })
-    .AddExporter<MyCustomExporter>(ExportProcessorType.Batch)
+    .AddProcessor<MyCustomProcessor>()
     .Build();
 ```
 
@@ -425,7 +412,7 @@ var appBuilder = WebApplication.CreateBuilder(args);
 appBuilder.Services.AddSingleton<MyCustomService>();
 
 appBuilder.Services.AddOpenTelemetryTracing(builder => builder
-    .AddExporter<MyCustomExporter>(ExportProcessorType.Batch));
+    .AddProcessor<MyCustomProcessor>();
 ```
 
 When using the `AddOpenTelemetryTracing` method the `TracerProvider` does not
@@ -443,9 +430,6 @@ shutdown.
 `IServiceCollection` \ `IServiceProvider`.
 
 ### Dependency injection `TracerProviderBuilder` extension method reference
-
-* `AddExporter<T>`: Adds an export processor for the type `T` (must derive from
-  `BaseExporter<Activity>`) into the `TracerProvider`.
 
 * `AddInstrumentation<T>`: Adds instrumentation of type `T` into the
   `TracerProvider`.

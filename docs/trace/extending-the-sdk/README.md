@@ -442,9 +442,7 @@ namespace OpenTelemetry.Trace
                 if (configureBatchProcessorOptions != null)
                 {
                     // Support configuration through Options API.
-                    services.Configure<ExportActivityProcessorOptions>(
-                        name,
-                        o => configureBatchProcessorOptions(o.BatchExportProcessorOptions));
+                    services.Configure(name, configureBatchProcessorOptions);
                 }
 
                 // Register custom service as a singleton.
@@ -454,17 +452,22 @@ namespace OpenTelemetry.Trace
             builder.ConfigureBuilder((sp, builder) =>
             {
                 // Retrieve MyExporterOptions instance using name.
-                var options = sp.GetRequiredService<IOptionsMonitor<MyExporterOptions>>().Get(name);
+                var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<MyExporterOptions>>().Get(name);
+
+                // Retrieve BatchExportActivityProcessorOptions instance using name.
+                var batchOptions = serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name);
 
                 // Retrieve MyCustomService singleton.
                 var myCustomService = sp.GetRequiredService<MyCustomService>();
 
                 // Registers MyCustomExporter with a batch processor.
-                builder.AddExporter(
-                    ExportProcessorType.Batch,
-                    new MyCustomExporter(options, myCustomService),
-                    name,
-                    configure: null);
+                builder.AddProcessor(
+                    new BatchActivityExportProcessor(
+                        new MyCustomExporter(exporterOptions, myCustomService),
+                        batchOptions.MaxQueueSize,
+                        batchOptions.ScheduledDelayMilliseconds,
+                        batchOptions.ExporterTimeoutMilliseconds,
+                        batchOptions.MaxExportBatchSize));
             });
 
             // Return builder for call chaining.
