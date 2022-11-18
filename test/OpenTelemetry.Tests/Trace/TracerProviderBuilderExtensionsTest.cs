@@ -157,6 +157,8 @@ namespace OpenTelemetry.Trace.Tests
             ServiceProvider serviceProvider = null;
             TracerProviderSdk provider = null;
 
+            services.AddOpenTelemetry();
+
             services.ConfigureOpenTelemetryTracing(builder =>
             {
                 testRun = true;
@@ -166,7 +168,7 @@ namespace OpenTelemetry.Trace.Tests
                     () =>
                     {
                         // Note: Build can't be called directly on builder tied to external services
-                        Assert.Throws<NotSupportedException>(() => builder.Build());
+                        Assert.Null(builder.Build());
 
                         serviceProvider = services.BuildServiceProvider();
 
@@ -196,6 +198,8 @@ namespace OpenTelemetry.Trace.Tests
         public void SingleProviderForServiceCollectionTest()
         {
             var services = new ServiceCollection();
+
+            services.AddOpenTelemetry();
 
             services.ConfigureOpenTelemetryTracing(builder =>
             {
@@ -381,6 +385,8 @@ namespace OpenTelemetry.Trace.Tests
 
             var serviceCollection = new ServiceCollection();
 
+            serviceCollection.AddOpenTelemetry();
+
             serviceCollection.ConfigureOpenTelemetryTracing(builder =>
             {
                 builder.ConfigureBuilder((sp, builder) =>
@@ -403,7 +409,6 @@ namespace OpenTelemetry.Trace.Tests
             Action<TracerProviderSdk> postAction)
         {
             var baseBuilder = builder as TracerProviderBuilderBase;
-            Assert.Null(baseBuilder.State);
 
             builder
                 .AddSource("TestSource")
@@ -431,17 +436,17 @@ namespace OpenTelemetry.Trace.Tests
             {
                 configureBuilderInvocations++;
 
-                var baseBuilder = builder as TracerProviderBuilderBase;
-                Assert.NotNull(baseBuilder?.State);
+                var sdkBuilder = builder as TracerProviderBuilderSdk;
+                Assert.NotNull(sdkBuilder);
 
                 builder
                     .AddSource("TestSource2")
                     .AddLegacySource("TestLegacySource2");
 
-                Assert.Contains(baseBuilder.State.Sources, s => s == "TestSource");
-                Assert.Contains(baseBuilder.State.Sources, s => s == "TestSource2");
-                Assert.Contains(baseBuilder.State.LegacyActivityOperationNames, s => s == "TestLegacySource");
-                Assert.Contains(baseBuilder.State.LegacyActivityOperationNames, s => s == "TestLegacySource2");
+                Assert.Contains(sdkBuilder.Sources, s => s == "TestSource");
+                Assert.Contains(sdkBuilder.Sources, s => s == "TestSource2");
+                Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource");
+                Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource2");
 
                 // Note: Services can't be configured at this stage
                 Assert.Throws<NotSupportedException>(

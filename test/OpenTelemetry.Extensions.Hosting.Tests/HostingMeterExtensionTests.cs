@@ -168,8 +168,8 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 .ConfigureBuilder((sp1, builder1) =>
                 {
                     builder1
-                        .AddInstrumentation<TestInstrumentation>()
-                        .AddReader<TestReader>();
+                        .AddInstrumentation(sp1.GetRequiredService<TestInstrumentation>())
+                        .AddReader(sp1.GetRequiredService<TestReader>());
                 }));
 
             using var serviceProvider = services.BuildServiceProvider();

@@ -26,11 +26,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
-using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
-    OpenTelemetry.Metrics.MeterProviderBuilderSdk,
-    OpenTelemetry.Metrics.MeterProviderSdk,
-    OpenTelemetry.Metrics.MeterProviderBuilderState>;
-
 namespace OpenTelemetry.Metrics
 {
     internal sealed class MeterProviderSdk : MeterProvider
@@ -53,8 +48,8 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-            var state = serviceProvider!.GetRequiredService<MeterProviderBuilderState>();
-            state.RegisterProvider(nameof(MeterProvider), this);
+            var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
+            state.RegisterProvider(this);
 
             this.ServiceProvider = serviceProvider!;
 
@@ -66,9 +61,11 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-            CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider!,
-                state);
+            var configureProviderBuilders = serviceProvider.GetServices<IConfigureProviderBuilder<MeterProvider, MeterProviderBuilder>>();
+            foreach (var configureProviderBuilder in configureProviderBuilders)
+            {
+                configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
+            }
 
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();

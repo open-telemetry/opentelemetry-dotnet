@@ -170,9 +170,9 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 .ConfigureBuilder((sp1, builder1) =>
                 {
                     builder1
-                        .AddInstrumentation<TestInstrumentation>()
-                        .AddProcessor<TestProcessor>()
-                        .SetSampler<TestSampler>();
+                        .AddInstrumentation(sp1.GetRequiredService<TestInstrumentation>())
+                        .AddProcessor(sp1.GetRequiredService<TestProcessor>())
+                        .SetSampler(sp1.GetRequiredService<TestSampler>());
                 }));
 
             using var serviceProvider = services.BuildServiceProvider();

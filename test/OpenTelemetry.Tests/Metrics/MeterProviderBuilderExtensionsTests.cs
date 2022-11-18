@@ -66,6 +66,8 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var services = new ServiceCollection();
 
+            services.AddOpenTelemetry();
+
             bool testRun = false;
 
             ServiceProvider serviceProvider = null;
@@ -80,7 +82,7 @@ namespace OpenTelemetry.Metrics.Tests
                     () =>
                     {
                         // Note: Build can't be called directly on builder tied to external services
-                        Assert.Throws<NotSupportedException>(() => builder.Build());
+                        Assert.Null(builder.Build());
 
                         serviceProvider = services.BuildServiceProvider();
 
@@ -110,6 +112,8 @@ namespace OpenTelemetry.Metrics.Tests
         public void SingleProviderForServiceCollectionTest()
         {
             var services = new ServiceCollection();
+
+            services.AddOpenTelemetry();
 
             services.ConfigureOpenTelemetryMetrics(builder =>
             {
@@ -295,6 +299,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             var serviceCollection = new ServiceCollection();
 
+            serviceCollection.AddOpenTelemetry();
+
             serviceCollection.ConfigureOpenTelemetryMetrics(builder =>
             {
                 builder.ConfigureBuilder((sp, builder) =>
@@ -317,7 +323,6 @@ namespace OpenTelemetry.Metrics.Tests
             Action<MeterProviderSdk> postAction)
         {
             var baseBuilder = builder as MeterProviderBuilderBase;
-            Assert.Null(baseBuilder.State);
 
             builder.AddMeter("TestSource");
 
@@ -342,13 +347,13 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 configureBuilderInvocations++;
 
-                var baseBuilder = builder as MeterProviderBuilderBase;
-                Assert.NotNull(baseBuilder?.State);
+                var sdkBuilder = builder as MeterProviderBuilderSdk;
+                Assert.NotNull(sdkBuilder);
 
                 builder.AddMeter("TestSource2");
 
-                Assert.Contains(baseBuilder.State.MeterSources, s => s == "TestSource");
-                Assert.Contains(baseBuilder.State.MeterSources, s => s == "TestSource2");
+                Assert.Contains(sdkBuilder.MeterSources, s => s == "TestSource");
+                Assert.Contains(sdkBuilder.MeterSources, s => s == "TestSource2");
 
                 // Note: Services can't be configured at this stage
                 Assert.Throws<NotSupportedException>(

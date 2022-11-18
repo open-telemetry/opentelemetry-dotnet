@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -31,7 +32,8 @@ internal static class ProviderBuilderServiceCollectionExtensions
     {
         services.AddOpenTelemetryProviderBuilderServices();
 
-        services.TryAddSingleton<MeterProviderBuilderState>();
+        services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+        services.TryAddSingleton<MeterProviderBuilderSdk>();
         services.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
 
         return services;
@@ -41,15 +43,20 @@ internal static class ProviderBuilderServiceCollectionExtensions
     {
         services.AddOpenTelemetryProviderBuilderServices();
 
-        services.TryAddSingleton<TracerProviderBuilderState>();
+        services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+        services.TryAddSingleton<TracerProviderBuilderSdk>();
         services.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
 
         return services;
     }
 
-    private static IServiceCollection AddOpenTelemetryProviderBuilderServices(this IServiceCollection services)
+    private static void AddOpenTelemetryProviderBuilderServices(this IServiceCollection services)
     {
         Debug.Assert(services != null, "services was null");
+
+        // Accessing Sdk class is just to trigger its static ctor,
+        // which sets default Propagators and default Activity Id format
+        _ = Sdk.SuppressInstrumentation;
 
         services.AddOptions();
 
@@ -58,8 +65,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // Sdk.Create* style or when manually creating a ServiceCollection. The
         // point of this registration is to make IConfiguration available in
         // those cases.
-        services!.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
-
-        return services!;
+        services!.TryAddSingleton<IConfiguration>(
+            sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
     }
 }

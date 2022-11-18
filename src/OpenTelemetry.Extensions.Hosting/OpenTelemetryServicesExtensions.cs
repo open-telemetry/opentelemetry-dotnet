@@ -74,6 +74,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             Guard.ThrowIfNull(services);
 
+            services.AddOpenTelemetry();
+
             services.ConfigureOpenTelemetryTracing(configure);
 
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
@@ -124,6 +126,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
         {
             Guard.ThrowIfNull(services);
+
+            services.AddOpenTelemetry();
 
             services.ConfigureOpenTelemetryMetrics(configure);
 
