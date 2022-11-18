@@ -61,13 +61,14 @@ namespace OpenTelemetry.Trace
                 builder.ConfigureServices(services => services.Configure(name, configureSqlClientInstrumentationOptions));
             }
 
-            builder.ConfigureBuilder((sp, builder) =>
+            builder.AddInstrumentation(sp =>
             {
                 var sqlOptions = sp.GetRequiredService<IOptionsMonitor<SqlClientInstrumentationOptions>>().Get(name);
 
-                builder.AddInstrumentation(new SqlClientInstrumentation(sqlOptions));
-                builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
+                return new SqlClientInstrumentation(sqlOptions);
             });
+
+            builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
 
             return builder;
         }
