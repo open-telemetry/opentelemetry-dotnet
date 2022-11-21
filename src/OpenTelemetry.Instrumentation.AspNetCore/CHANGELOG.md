@@ -4,7 +4,7 @@
 
 * Added `net.host.name` and `net.host.port` to `http.server.duration` metric.
 Changed `http.status_code` type from string to int.
-([])()
+[#3928](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3928)
 
 * **Breaking change** The `http.server.duration` metric's `http.target`
 attribute is replaced with `http.route` attribute.
