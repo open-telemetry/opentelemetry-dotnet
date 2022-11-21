@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (name == OnStopEvent)
             {
-                HttpContext context = payload as HttpContext;
+                var context = payload as HttpContext;
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
@@ -57,56 +58,28 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
-                string host;
+                TagList tags = default;
 
-                if (context.Request.Host.Port is null or 80 or 443)
-                {
-                    host = context.Request.Host.Host;
-                }
-                else
-                {
-                    host = context.Request.Host.Host + ":" + context.Request.Host.Port;
-                }
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Method));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString()));
 
-                TagList tags;
+                if (context.Request.Host.HasValue)
+                {
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, context.Request.Host.Host));
+
+                    if (context.Request.Host.Port is not null && context.Request.Host.Port != 80 && context.Request.Host.Port != 443)
+                    {
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostPort, context.Request.Host.Port));
+                    }
+                }
 #if NET6_0_OR_GREATER
                 var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-
-                // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
                 if (!string.IsNullOrEmpty(route))
                 {
-                    tags = new TagList
-                    {
-                        { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
-                        { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
-                        { SemanticConventions.AttributeHttpMethod, context.Request.Method },
-                        { SemanticConventions.AttributeHttpHost, host },
-                        { SemanticConventions.AttributeHttpRoute, route },
-                        { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
-                    };
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
                 }
-                else
-                {
-                    tags = new TagList
-                    {
-                        { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
-                        { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
-                        { SemanticConventions.AttributeHttpMethod, context.Request.Method },
-                        { SemanticConventions.AttributeHttpHost, host },
-                        { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
-                    };
-                }
-#else
-                tags = new TagList
-            {
-                { SemanticConventions.AttributeHttpFlavor, context.Request.Protocol },
-                { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
-                { SemanticConventions.AttributeHttpMethod, context.Request.Method },
-                { SemanticConventions.AttributeHttpHost, host },
-                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
-            };
-
 #endif
 
                 this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
