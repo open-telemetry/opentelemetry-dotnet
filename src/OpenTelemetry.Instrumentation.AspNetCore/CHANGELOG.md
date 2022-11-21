@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-* Added `net.host.name` and `net.host.port` dimensions to `http.server.duration`
-metric.
+* **Breaking change** `http.host` will no longer be populated on
+  `http.server.duration` metric. `net.host.name` and `net.host.port` attributes
+will be populated instead.
 [#3928](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3928)
 
 * **Breaking change** The `http.server.duration` metric's `http.target`
