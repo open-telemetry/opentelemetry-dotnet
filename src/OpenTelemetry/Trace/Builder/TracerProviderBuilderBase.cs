@@ -260,7 +260,7 @@ namespace OpenTelemetry.Trace
             this.ConfigureState((sp, state)
                 => state.AddInstrumentation(
                     typeof(T).Name,
-                    "semver:" + typeof(T).Assembly.GetName().Version,
+                    typeof(T).Assembly.GetName().Version.ToString(),
                     instrumentationFactory(sp)));
 
             return this;

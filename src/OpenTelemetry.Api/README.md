@@ -186,7 +186,7 @@ here as well.
     ```csharp
     static ActivitySource activitySource = new ActivitySource(
         "companyname.product.instrumentationlibrary",
-        "semver1.0.0");
+        "1.0.0");
     ```
 
     The above requires import of the `System.Diagnostics` namespace.
@@ -483,7 +483,7 @@ Windows-based .NET implementation).
     ```csharp
     static Meter meter = new Meter(
         "companyname.product.instrumentationlibrary",
-        "semver1.0.0");
+        "1.0.0");
     ```
 
     The above requires import of the `System.Diagnostics.Metrics` namespace.
