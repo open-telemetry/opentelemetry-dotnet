@@ -36,6 +36,7 @@ namespace OpenTelemetry.Trace
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder, IDeferredTracerProviderBuilder
     {
         internal readonly TracerProviderBuilderState? State;
+        private const string DefaultInstrumentationVersion = "1.0.0.0";
 
         private readonly bool ownsServices;
         private IServiceCollection? services;
@@ -260,7 +261,7 @@ namespace OpenTelemetry.Trace
             this.ConfigureState((sp, state)
                 => state.AddInstrumentation(
                     typeof(T).Name,
-                    "semver:" + typeof(T).Assembly.GetName().Version,
+                    typeof(T).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
                     instrumentationFactory(sp)));
 
             return this;
