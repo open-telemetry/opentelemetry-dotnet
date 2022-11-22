@@ -23,7 +23,7 @@ namespace OpenTelemetry.Tests.Trace
     using OpenTelemetry.Trace;
     using Xunit;
 
-    [VerifyNoEventSourceErrorsLogged("OpenTelemetry-Sdk")]
+    [VerifyNoEventSourceErrorsLoggedTest("OpenTelemetry-Sdk")]
     public class ConsoleExporterTest
     {
         [Fact]

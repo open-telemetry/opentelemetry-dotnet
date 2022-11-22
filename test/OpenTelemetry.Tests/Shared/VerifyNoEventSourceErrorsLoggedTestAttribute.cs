@@ -1,4 +1,4 @@
-// <copyright file="VerifyNoEventSourceErrorsLoggedAttribute.cs" company="OpenTelemetry Authors">
+// <copyright file="VerifyNoEventSourceErrorsLoggedTestAttribute.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,11 +25,11 @@ namespace OpenTelemetry.Tests.Shared
     /// <summary>
     /// Can be used to assert that no Errors were logged to EventSource during a unit test.
     /// </summary>
-    internal class VerifyNoEventSourceErrorsLoggedAttribute : BeforeAfterTestAttribute
+    internal class VerifyNoEventSourceErrorsLoggedTestAttribute : BeforeAfterTestAttribute
     {
         private readonly UnitTestEventListener myTestEventListener;
 
-        public VerifyNoEventSourceErrorsLoggedAttribute(string eventSourceName)
+        public VerifyNoEventSourceErrorsLoggedTestAttribute(string eventSourceName)
         {
             this.myTestEventListener = new UnitTestEventListener(eventSourceName, EventLevel.Error);
         }
