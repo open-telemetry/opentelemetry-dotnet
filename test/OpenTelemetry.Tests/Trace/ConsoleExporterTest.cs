@@ -18,19 +18,17 @@ namespace OpenTelemetry.Tests.Trace
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
     using System.Threading.Tasks;
+    using OpenTelemetry.Tests.Shared;
     using OpenTelemetry.Trace;
     using Xunit;
 
+    [VerifyNoEventSourceErrorsLogged("OpenTelemetry-Sdk")]
     public class ConsoleExporterTest
     {
         [Fact]
-        public void Test_3863()
+        public void Test_3863() // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3863
         {
-            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3863
-            var mytesteventlistener = new MyTestEventListener("OpenTelemetry-Sdk", System.Diagnostics.Tracing.EventLevel.Error);
-
             var uniqueTestId = Guid.NewGuid();
 
             using var source = new ActivitySource("Testing");
@@ -51,9 +49,7 @@ namespace OpenTelemetry.Tests.Trace
             {
             }
 
-            Task.Delay(TimeSpan.FromSeconds(1)).Wait(); // TODO: SpinWait
-
-            Assert.False(mytesteventlistener.CapturedEvents.Any()); // SpanProcessorException
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait(); // wait for the Activity to dispose and Trace to be generated.
         }
     }
 }
