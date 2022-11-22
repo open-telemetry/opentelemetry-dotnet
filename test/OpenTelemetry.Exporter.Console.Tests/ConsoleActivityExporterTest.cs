@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -31,8 +31,7 @@ public class ConsoleActivityExporterTest
     [Fact]
     public void VerifyConsoleActivityExporterDoesntFailWithoutActivityLinkTags()
     {
-        var uniqueTestId = Guid.NewGuid();
-        var activitySourceName = $"activitySourceName{uniqueTestId}";
+        var activitySourceName = Utils.GetCurrentMethodName();
         using var activitySource = new ActivitySource(activitySourceName);
 
         var exportedItems = new List<Activity>();
