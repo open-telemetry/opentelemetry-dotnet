@@ -116,14 +116,11 @@ namespace OpenTelemetry.Exporter
                     foreach (var activityLink in activity.Links)
                     {
                         this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
-                        if (activityLink.Tags != null)
+                        foreach (ref readonly var attribute in activityLink.EnumerateTagObjects())
                         {
-                            foreach (var attribute in activityLink.Tags)
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
                             {
-                                if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
-                                {
-                                    this.WriteLine($"        {result}");
-                                }
+                                this.WriteLine($"        {result}");
                             }
                         }
                     }
