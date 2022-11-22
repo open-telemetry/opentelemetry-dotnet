@@ -29,7 +29,7 @@ namespace OpenTelemetry.Tests.Shared
         private readonly string eventName;
         private readonly EventLevel eventLevel;
 
-        public UnitTestEventListener(string eventName, EventLevel eventLevel = EventLevel.Verbose)
+        public UnitTestEventListener(string eventName, EventLevel eventLevel)
         {
             EventSource.SetCurrentThreadActivityId(this.currentThreadActivityId);
             this.eventName = eventName;
