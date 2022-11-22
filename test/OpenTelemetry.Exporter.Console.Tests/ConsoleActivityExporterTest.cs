@@ -61,15 +61,7 @@ public class ConsoleActivityExporterTest
         Assert.Null(activity.Links.First().Tags);
 
         // Assert that ConsoleExporter does not throw.
-        try
-        {
-            var consoleExporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
-
-            consoleExporter.Export(new Batch<Activity>(activity));
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail(ex.Message);
-        }
+        using var consoleExporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
+        consoleExporter.Export(new Batch<Activity>(activity));
     }
 }
