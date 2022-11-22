@@ -2,13 +2,19 @@
 
 ## Unreleased
 
-* **Breaking change** `http.host` will no longer be populated on activity.
+* **Users migrating from version `1.0.0-rc9.9` will see the following breaking
+  changes:**
+  * `http.host` will no longer be populated on `http.server.duration` metric.
   `net.host.name` and `net.host.port` attributes will be populated instead.
-  ([#3858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3858))
+([#3928](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3928))
 
-* The `http.server.duration` metric's `http.target` attribute is replaced
-with `http.route` attribute.
+  * The `http.server.duration` metric's `http.target` attribute is replaced with
+`http.route` attribute.
 ([#3903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3903))
+
+  * `http.host` will no longer be populated on activity. `net.host.name` and
+  `net.host.port` attributes will be populated instead.
+  ([#3858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3858))
 
 ## 1.0.0-rc9.9
 
