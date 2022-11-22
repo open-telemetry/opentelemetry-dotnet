@@ -4,6 +4,9 @@
 
 * **Users migrating from version `1.0.0-rc9.9` will see the following breaking
   changes:**
+  * Updated `http.status_code` dimension type from string to int for
+  `http.server.duration` metric.
+  ([#3930](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3930))
   * `http.host` will no longer be populated on `http.server.duration` metric.
   `net.host.name` and `net.host.port` attributes will be populated instead.
 ([#3928](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3928))
