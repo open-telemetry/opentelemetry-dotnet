@@ -16,14 +16,14 @@
 
 namespace OpenTelemetry.Tests.Trace
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using OpenTelemetry.Tests.Shared;
+    using OpenTelemetry.Exporter;
     using OpenTelemetry.Trace;
     using Xunit;
 
-    [VerifyNoEventSourceErrorsLoggedTest("OpenTelemetry-Sdk")]
     public class ConsoleExporterTest
     {
         /// <summary>
@@ -32,30 +32,46 @@ namespace OpenTelemetry.Tests.Trace
         [Fact]
         public void VerifyConsoleActivityExporterDoesntFailWithoutActivityLinkTags()
         {
+            var uniqueTestId = Guid.NewGuid();
+            var activitySourceName = $"activitySourceName{uniqueTestId}";
+            using var activitySource = new ActivitySource(activitySourceName);
+
             var exportedItems = new List<Activity>();
 
-            using var source = new ActivitySource("Testing");
-
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("Testing")
-                .AddConsoleExporter()
+                .AddSource(activitySourceName)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
             ActivityContext context;
-            using (var first = source.StartActivity("first"))
+            using (var first = activitySource.StartActivity("first"))
             {
                 context = first!.Context;
             }
 
+            exportedItems.Clear();
+
             var links = new[] { new ActivityLink(context) };
-            using (var secondActivity = source.StartActivity(ActivityKind.Internal, links: links, name: "Second"))
+            using (var secondActivity = activitySource.StartActivity(ActivityKind.Internal, links: links, name: "Second"))
             {
             }
 
             // Assert that an Activity was exported where ActivityLink.Tags == null.
-            var activity = exportedItems.First(x => x.DisplayName == "Second");
+            var activity = exportedItems[0];
+            Assert.Equal("Second", activity.DisplayName);
             Assert.Null(activity.Links.First().Tags);
+
+            // Assert that ConsoleExporter does not throw.
+            try
+            {
+                var consoleExporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
+
+                consoleExporter.Export(new Batch<Activity>(activity));
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
         }
     }
 }
