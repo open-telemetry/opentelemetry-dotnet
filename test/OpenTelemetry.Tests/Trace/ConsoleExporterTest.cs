@@ -17,8 +17,10 @@
 namespace OpenTelemetry.Tests.Trace
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Threading.Tasks;
+    using System.Linq;
+    using System.Threading;
     using OpenTelemetry.Tests.Shared;
     using OpenTelemetry.Trace;
     using Xunit;
@@ -26,16 +28,20 @@ namespace OpenTelemetry.Tests.Trace
     [VerifyNoEventSourceErrorsLoggedTest("OpenTelemetry-Sdk")]
     public class ConsoleExporterTest
     {
+        /// <summary>
+        /// Test case for https://github.com/open-telemetry/opentelemetry-dotnet/issues/3863.
+        /// </summary>
         [Fact]
-        public void Test_3863() // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3863
+        public void VerifyConsoleActivityExporterDoesntFailWithoutActivityLinkTags()
         {
-            var uniqueTestId = Guid.NewGuid();
+            var exportedItems = new List<Activity>();
 
             using var source = new ActivitySource("Testing");
 
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("Testing")
                 .AddConsoleExporter()
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             ActivityContext context;
@@ -49,7 +55,18 @@ namespace OpenTelemetry.Tests.Trace
             {
             }
 
-            Task.Delay(TimeSpan.FromSeconds(1)).Wait(); // wait for the Activity to dispose and Trace to be generated.
+            // Wait for the Activity to dispose and be exported.
+            Assert.True(SpinWait.SpinUntil(
+                () =>
+                {
+                    Thread.Sleep(10);
+                    return exportedItems.Any(x => x.DisplayName == "Second");
+                },
+                TimeSpan.FromSeconds(1)));
+
+            // Assert that an Activity was exported where ActivityLink.Tags == null.
+            var activity = exportedItems.First(x => x.DisplayName == "Second");
+            Assert.Null(activity.Links.First().Tags);
         }
     }
 }

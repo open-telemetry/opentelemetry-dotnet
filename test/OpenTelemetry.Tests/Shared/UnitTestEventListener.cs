@@ -21,7 +21,7 @@ namespace OpenTelemetry.Tests.Shared
     using System.Diagnostics.Tracing;
 
     /// <summary>
-    /// This EventListener can be used to subscribe to a specific EventSourceName and EventLevel 
+    /// This EventListener can be used to subscribe to a specific EventSourceName and EventLevel.
     /// </summary>
     public class UnitTestEventListener : EventListener
     {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Bug fix, ConsoleExporter fails silently when exporting an `ActivityLink` without Tags.
+
 ## 1.4.0-beta.3
 
 Released 2022-Nov-07
