@@ -20,6 +20,9 @@ namespace OpenTelemetry.Tests.Shared
     using System.Collections.Generic;
     using System.Diagnostics.Tracing;
 
+    /// <summary>
+    /// This EventListener can be used to subscribe to a specific EventSourceName and EventLevel 
+    /// </summary>
     public class UnitTestEventListener : EventListener
     {
         public List<EventWrittenEventArgs> CapturedEvents = new();
@@ -29,10 +32,10 @@ namespace OpenTelemetry.Tests.Shared
         private readonly string eventName;
         private readonly EventLevel eventLevel;
 
-        public UnitTestEventListener(string eventName, EventLevel eventLevel)
+        public UnitTestEventListener(string eventSourceName, EventLevel eventLevel)
         {
             EventSource.SetCurrentThreadActivityId(this.currentThreadActivityId);
-            this.eventName = eventName;
+            this.eventName = eventSourceName;
             this.eventLevel = eventLevel;
         }
 
