@@ -16,11 +16,9 @@
 
 namespace OpenTelemetry.Tests.Trace
 {
-    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Threading;
     using OpenTelemetry.Tests.Shared;
     using OpenTelemetry.Trace;
     using Xunit;
@@ -38,7 +36,7 @@ namespace OpenTelemetry.Tests.Trace
 
             using var source = new ActivitySource("Testing");
 
-            var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("Testing")
                 .AddConsoleExporter()
                 .AddInMemoryExporter(exportedItems)
@@ -54,15 +52,6 @@ namespace OpenTelemetry.Tests.Trace
             using (var secondActivity = source.StartActivity(ActivityKind.Internal, links: links, name: "Second"))
             {
             }
-
-            // Wait for the Activity to dispose and be exported.
-            Assert.True(SpinWait.SpinUntil(
-                () =>
-                {
-                    Thread.Sleep(10);
-                    return exportedItems.Any(x => x.DisplayName == "Second");
-                },
-                TimeSpan.FromSeconds(1)));
 
             // Assert that an Activity was exported where ActivityLink.Tags == null.
             var activity = exportedItems.First(x => x.DisplayName == "Second");
