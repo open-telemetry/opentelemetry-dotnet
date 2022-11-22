@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Bug fix, ConsoleExporter fails silently when exporting an `ActivityLink` without Tags.
-  ([3932](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3932))
+  ([#3932](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3932))
 
 ## 1.4.0-beta.3
 
