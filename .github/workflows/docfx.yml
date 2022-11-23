@@ -15,9 +15,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: install docfx
-      # specifying 2.58.5 version as latest release (2.58.8) has an issue
-      # https://github.com/dotnet/docfx/issues/7689
-      run: choco install docfx -y --version=2.58.5
+      run: choco install docfx -y
 
     - name: run .\build\docfx.cmd
       shell: cmd
