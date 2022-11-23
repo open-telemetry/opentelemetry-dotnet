@@ -4,6 +4,7 @@
 
 ARG SDK_VERSION=7.0
 FROM ubuntu AS w3c
+ENV SPEC_LEVEL=2
 #Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
