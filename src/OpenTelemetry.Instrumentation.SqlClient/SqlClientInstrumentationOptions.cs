@@ -97,7 +97,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <c>SqlCommand</c>s regardless of <see cref="CommandType"/>. Use
         /// SetDbStatementForText to capture Text, StoredProcedure, and all
         /// other command text.</item>
-        /// <item>When using <c>System.Data.SqlClient</c> on .NET Framework, the instrumentation will only capture <c>sqlCommand.CommandText</c> for <see cref="CommandType.StoredProcedure"/> commands.</item>
+        /// <item>When using <c>System.Data.SqlClient</c> on .NET Framework, the
+        /// instrumentation will only capture <c>sqlCommand.CommandText</c> for
+        /// <see cref="CommandType.StoredProcedure"/> commands.</item>
         /// </list>
         /// </para>
         /// </remarks>
