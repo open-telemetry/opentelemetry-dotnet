@@ -142,6 +142,11 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+On .NET Framework, the instrumentation capabilities for System.Data.SqlClient is
+limited. It only only exposes stored procedure names and not the full query
+text. On `Microsoft.Data.SqlClient`, stored procedure command or full query text
+will be collected based on `SqlCommand.CommandType`.
+
 ### EnableConnectionLevelAttributes
 
 **Note:** EnableConnectionLevelAttributes is supported on all runtimes.
