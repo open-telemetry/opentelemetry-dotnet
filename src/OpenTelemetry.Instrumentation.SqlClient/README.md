@@ -142,7 +142,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-On .NET Framework, System.Data.SqlClient only exposes stored procedure names and
+On .NET Framework, `System.Data.SqlClient` only exposes stored procedure names and
 not the full query text. On `Microsoft.Data.SqlClient`, stored procedure command
 or full query text will be collected based on `SqlCommand.CommandType`.
 
