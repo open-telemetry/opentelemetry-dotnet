@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -37,7 +38,12 @@ public class Program
             .AddSource("OpenTelemetry.Demo.Jaeger")
             .AddHttpClientInstrumentation()
             .AddConsoleExporter()
-            .AddJaegerExporter()
+            .AddOtlpExporter(opt =>
+            {
+                // using grpc protocol
+                opt.Endpoint = new Uri("http://localhost:4317");
+                opt.Protocol = OtlpExportProtocol.Grpc;
+            })
             .Build();
 
         using var parent = MyActivitySource.StartActivity("JaegerDemo");
