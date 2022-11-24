@@ -96,7 +96,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             // 2) harness sends an invalid traceparent with illegal characters in trace_flags ... FAIL
             string lastLine = ParseLastLine(result);
             this.output.WriteLine("result:" + result);
-            Assert.StartsWith("FAILED (failures=2)", lastLine);
+            Assert.StartsWith("FAILED (failures=3)", lastLine);
         }
 
         private static string RunCommand(string command, string args)

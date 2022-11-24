@@ -238,7 +238,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\reda
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.csproj", "{7263001A-49F8-4C3C-AAA8-998F12DAAF64}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{297D525C-E716-4A3E-8737-1569B5D44165}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{011E70E1-152A-47BB-AF83-12DD12B125ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -494,10 +494,10 @@ Global
 		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Release|Any CPU.Build.0 = Release|Any CPU
-		{297D525C-E716-4A3E-8737-1569B5D44165}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{297D525C-E716-4A3E-8737-1569B5D44165}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{297D525C-E716-4A3E-8737-1569B5D44165}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{297D525C-E716-4A3E-8737-1569B5D44165}.Release|Any CPU.Build.0 = Release|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
