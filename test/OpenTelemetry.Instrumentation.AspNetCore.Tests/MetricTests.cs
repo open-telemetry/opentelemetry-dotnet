@@ -67,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 var response1 = await client.GetAsync("/api/values");
-                var response2 = await client.GetAsync("/api/values2");
+                var response2 = await client.GetAsync("/api/values/2");
 
                 response1.EnsureSuccessStatusCode();
                 response2.EnsureSuccessStatusCode();
@@ -84,10 +84,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .Where(item => item.Name == "http.server.duration")
                 .ToArray();
 
-            Assert.True(requestMetrics.Length == 2);
+            var metric = Assert.Single(requestMetrics);
+            var metricPoints = GetMetricPoints(metric);
+            Assert.Equal(2, metricPoints.Count);
 
-            AssertMetric(requestMetrics[0]);
-            AssertMetric(requestMetrics[1]);
+            AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values");
+            AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}");
         }
 
         [Fact]
@@ -112,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                        .CreateClient())
             {
                 var response1 = await client.GetAsync("/api/values");
-                var response2 = await client.GetAsync("/api/values2");
+                var response2 = await client.GetAsync("/api/values/2");
 
                 response1.EnsureSuccessStatusCode();
                 response2.EnsureSuccessStatusCode();
@@ -129,10 +131,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .Where(item => item.Name == "http.server.duration")
                 .ToArray();
 
-            // Made two request to separate endpoints but one should be filtered out
-            Assert.True(requestMetrics.Length == 1);
+            var metric = Assert.Single(requestMetrics);
 
-            AssertMetric(requestMetrics[0]);
+            // Assert single because we filtered out one route
+            var metricPoint = Assert.Single(GetMetricPoints(metric));
+            AssertMetricPoint(metricPoint);
         }
 
         [Fact]
@@ -177,17 +180,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .Where(item => item.Name == "http.server.duration")
                 .ToArray();
 
-            Assert.True(requestMetrics.Length == 1);
+            var metric = Assert.Single(requestMetrics);
+            var metricPoint = Assert.Single(GetMetricPoints(metric));
 
-            var expectedTagsCount = StandardTagsCount + tagsToAdd.Count;
-
-            var tags = AssertMetric(requestMetrics[0], expectedTagsCount);
+            var tags = AssertMetricPoint(metricPoint, expectedTagsCount: StandardTagsCount + 2);
 
             Assert.Contains(tagsToAdd[0], tags);
             Assert.Contains(tagsToAdd[1], tags);
         }
 
-        private static KeyValuePair<string, object>[] AssertMetric(Metric metric, int expectedTagsCount = StandardTagsCount)
+        private static List<MetricPoint> GetMetricPoints(Metric metric)
         {
             Assert.NotNull(metric);
             Assert.True(metric.MetricType == MetricType.Histogram);
@@ -197,10 +199,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 metricPoints.Add(p);
             }
 
-            Assert.Single(metricPoints);
+            return metricPoints;
+        }
 
-            var metricPoint = metricPoints[0];
-
+        private static KeyValuePair<string, object>[] AssertMetricPoint(MetricPoint metricPoint,
+            string expectedRoute = "api/Values",
+            int expectedTagsCount = StandardTagsCount)
+        {
             var count = metricPoint.GetHistogramCount();
             var sum = metricPoint.GetHistogramSum();
 
@@ -229,7 +234,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
             var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
             var host = new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, "localhost");
-            var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, "api/Values");
+            var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
             Assert.Contains(method, attributes);
             Assert.Contains(scheme, attributes);
             Assert.Contains(statusCode, attributes);
