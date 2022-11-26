@@ -14,12 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
 #if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Routing;
+using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
 
@@ -30,12 +32,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
         private readonly Meter meter;
+        private readonly AspNetCoreMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpServerDuration;
 
-        public HttpInMetricsListener(string name, Meter meter)
+        internal HttpInMetricsListener(string name, Meter meter, AspNetCoreMetricsInstrumentationOptions options)
             : base(name)
         {
             this.meter = meter;
+            this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
         }
 
@@ -47,6 +51,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    return;
+                }
+
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(Activity.Current.OperationName);
                     return;
                 }
 
@@ -81,6 +91,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
                 }
 #endif
+                if (this.options.EnrichWithCustomTags != null)
+                {
+                    var enrichedTags = this.options.EnrichWithCustomTags(context);
+
+                    foreach (var keyValuePair in enrichedTags)
+                    {
+                        tags.Add(keyValuePair);
+                    }
+                }
 
                 this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
