@@ -72,9 +72,7 @@ namespace OpenTelemetry.Metrics
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreMetricsInstrumentationOptions>>().Get(name);
 
-                // TODO: Implement an IDeferredMeterProviderBuilder
-
-                // TODO: Add AspNetCoreMetricsInstrumentationOptions ?
+                // TODO: Add additional options to AspNetCoreMetricsInstrumentationOptions ?
                 //   RecordException - probably doesn't make sense for metric instrumentation
                 //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
 

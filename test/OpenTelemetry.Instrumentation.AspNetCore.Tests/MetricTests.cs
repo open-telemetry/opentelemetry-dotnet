@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -141,10 +143,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task MetricEnrichedWithCustomTags()
         {
-            var tagsToAdd = new List<KeyValuePair<string, object>>()
+            var tagsToAdd = new KeyValuePair<string, object>[]
             {
                 new("custom_tag_1", 1),
-                new("custom_tag_2", "one")
+                new("custom_tag_2", "one"),
             };
 
             var metricItems = new List<Metric>();
@@ -152,7 +154,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddAspNetCoreInstrumentation(opt => opt.EnrichWithCustomTags = (ctx) => tagsToAdd)
+                    .AddAspNetCoreInstrumentation(opt => opt.EnrichWithCustomTags = (HttpContext _, out TagList tags) =>
+                    {
+                        tags = new TagList(new Span<KeyValuePair<string, object>>(tagsToAdd));
+                    })
                     .AddInMemoryExporter(metricItems)
                     .Build();
             }

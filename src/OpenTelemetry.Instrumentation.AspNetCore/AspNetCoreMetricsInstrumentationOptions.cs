@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 
@@ -27,6 +26,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     public class AspNetCoreMetricsInstrumentationOptions
     {
         /// <summary>
+        /// Delegate for enrichment of recorded metric with additional tags.
+        /// </summary>
+        /// <param name="context"><see cref="HttpContext"/>: the HttpContext object. Both Request and Response are available.</param>
+        /// <param name="tags"><see cref="TagList"/>: List of tags to add. </param>
+        public delegate void AspNetCoreMetricEnrichmentFunc(HttpContext context, out TagList tags);
+
+        /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
         /// The Filter gets the HttpContext, and should return a boolean.
         /// If Filter returns true, the request is collected.
@@ -37,9 +43,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Gets or sets an function to enrich an recorded metric with additional custom tags.
         /// </summary>
-        /// <remarks>
-        /// <para><see cref="HttpContext"/>: the HttpContext object.</para>
-        /// </remarks>
-        public Func<HttpContext, IEnumerable<KeyValuePair<string, object>>> EnrichWithCustomTags { get; set; }
+        public AspNetCoreMetricEnrichmentFunc EnrichWithCustomTags { get; set; }
     }
 }

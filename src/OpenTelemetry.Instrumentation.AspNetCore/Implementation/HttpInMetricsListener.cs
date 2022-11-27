@@ -54,9 +54,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
-                if (this.options.Filter?.Invoke(context) == false)
+                try
                 {
-                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(Activity.Current.OperationName);
+                    if (this.options.Filter?.Invoke(context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(Activity.Current.OperationName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
                     return;
                 }
 
@@ -93,11 +101,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
                 if (this.options.EnrichWithCustomTags != null)
                 {
-                    var enrichedTags = this.options.EnrichWithCustomTags(context);
-
-                    foreach (var keyValuePair in enrichedTags)
+                    try
                     {
-                        tags.Add(keyValuePair);
+                        this.options.EnrichWithCustomTags(context, out var enrichedTags);
+
+                        foreach (var keyValuePair in enrichedTags)
+                        {
+                            tags.Add(keyValuePair);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
                     }
                 }
 
