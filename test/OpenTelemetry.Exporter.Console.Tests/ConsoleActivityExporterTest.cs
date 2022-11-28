@@ -23,9 +23,6 @@ namespace OpenTelemetry.Exporter.Console.Tests;
 
 public class ConsoleActivityExporterTest
 {
-    /// <summary>
-    /// Test case for https://github.com/open-telemetry/opentelemetry-dotnet/issues/3863.
-    /// </summary>
     [Fact]
     public void VerifyConsoleActivityExporterDoesntFailWithoutActivityLinkTags()
     {
@@ -57,7 +54,7 @@ public class ConsoleActivityExporterTest
         Assert.Equal("Second", activity.DisplayName);
         Assert.Null(activity.Links.First().Tags);
 
-        // If the ConsoleExporter throws an exception, this assert will fail.
+        // Test that the ConsoleExporter correctly handles an Activity without Tags.
         using var consoleExporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
         Assert.Equal(ExportResult.Success, consoleExporter.Export(new Batch<Activity>(activity)));
     }
