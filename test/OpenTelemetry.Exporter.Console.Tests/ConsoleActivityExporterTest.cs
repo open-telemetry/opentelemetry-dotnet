@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -59,8 +57,8 @@ public class ConsoleActivityExporterTest
         Assert.Equal("Second", activity.DisplayName);
         Assert.Null(activity.Links.First().Tags);
 
-        // Assert that ConsoleExporter does not throw.
+        // If the ConsoleExporter throws an exception, this assert will fail.
         using var consoleExporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
-        consoleExporter.Export(new Batch<Activity>(activity));
+        Assert.Equal(ExportResult.Success, consoleExporter.Export(new Batch<Activity>(activity)));
     }
 }
