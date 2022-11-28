@@ -154,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddAspNetCoreInstrumentation(opt => opt.EnrichWithCustomTags = (HttpContext _, out TagList tags) =>
+                    .AddAspNetCoreInstrumentation(opt => opt.Enrich = (HttpContext _, out TagList tags) =>
                     {
                         tags = new TagList(new Span<KeyValuePair<string, object>>(tagsToAdd));
                     })

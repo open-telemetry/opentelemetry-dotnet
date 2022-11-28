@@ -99,11 +99,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
                 }
 #endif
-                if (this.options.EnrichWithCustomTags != null)
+                if (this.options.Enrich != null)
                 {
                     try
                     {
-                        this.options.EnrichWithCustomTags(context, out var enrichedTags);
+                        this.options.Enrich(context, out var enrichedTags);
 
                         foreach (var keyValuePair in enrichedTags)
                         {

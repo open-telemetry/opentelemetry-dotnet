@@ -41,8 +41,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public Func<HttpContext, bool> Filter { get; set; }
 
         /// <summary>
-        /// Gets or sets an function to enrich an recorded metric with additional custom tags.
+        /// Gets or sets an function to enrich a recorded metric with additional custom tags.
         /// </summary>
-        public AspNetCoreMetricEnrichmentFunc EnrichWithCustomTags { get; set; }
+        public AspNetCoreMetricEnrichmentFunc Enrich { get; set; }
     }
 }
