@@ -1,4 +1,4 @@
-// <copyright file="IProviderBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="ITracerProviderBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,13 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OpenTelemetry;
+namespace OpenTelemetry.Trace;
 
-public interface IProviderBuilder<TProvider, TProviderBuilder>
-    where TProvider : BaseProvider
+public interface ITracerProviderBuilder : IDeferredTracerProviderBuilder
 {
-    TProvider? Provider { get; }
+    TracerProvider? Provider { get; }
 
-    TProviderBuilder ConfigureServices(Action<IServiceCollection> configure);
+    TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure);
 
-    TProviderBuilder ConfigureBuilder(Action<IServiceProvider, TProviderBuilder> configure);
+    TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure);
 }

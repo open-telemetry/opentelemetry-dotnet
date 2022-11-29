@@ -16,13 +16,12 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class DeferredTracerProviderBuilder : TracerProviderBuilder, IProviderBuilder<TracerProvider, TracerProviderBuilder>, IDeferredTracerProviderBuilder
+public class DeferredTracerProviderBuilder : TracerProviderBuilder, ITracerProviderBuilder
 {
     public DeferredTracerProviderBuilder(IServiceCollection services)
     {
@@ -36,7 +35,7 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, IProviderBui
     }
 
     /// <inheritdoc />
-    TracerProvider? IProviderBuilder<TracerProvider, TracerProviderBuilder>.Provider => null;
+    TracerProvider? ITracerProviderBuilder.Provider => null;
 
     protected IServiceCollection? Services { get; set; }
 
@@ -82,8 +81,8 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, IProviderBui
     /// <inheritdoc />
     public TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        this.ConfigureServices(services => services.AddSingleton<IConfigureProviderBuilder<TracerProvider, TracerProviderBuilder>>(
-            new ConfigureProviderBuilderCallbackWrapper<TracerProvider, TracerProviderBuilder>(configure)));
+        this.ConfigureServices(services => services.AddSingleton<IConfigureTracerProviderBuilder>(
+            new ConfigureTracerProviderBuilderCallbackWrapper(configure)));
 
         return this;
     }
@@ -108,4 +107,21 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, IProviderBui
     /// <inheritdoc />
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         => this.ConfigureBuilder(configure);
+
+    private sealed class ConfigureTracerProviderBuilderCallbackWrapper : IConfigureTracerProviderBuilder
+    {
+        private readonly Action<IServiceProvider, TracerProviderBuilder> configure;
+
+        public ConfigureTracerProviderBuilderCallbackWrapper(Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            this.configure = configure;
+        }
+
+        public void ConfigureBuilder(IServiceProvider serviceProvider, TracerProviderBuilder tracerProviderBuilder)
+        {
+            this.configure(serviceProvider, tracerProviderBuilder);
+        }
+    }
 }

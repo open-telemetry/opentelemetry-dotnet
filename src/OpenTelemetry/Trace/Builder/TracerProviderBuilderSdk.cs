@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Stores state used to build a <see cref="TracerProvider"/>.
     /// </summary>
-    internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, IProviderBuilder<TracerProvider, TracerProviderBuilder>, IDeferredTracerProviderBuilder
+    internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerProviderBuilder
     {
         private const string DefaultInstrumentationVersion = "1.0.0.0";
 

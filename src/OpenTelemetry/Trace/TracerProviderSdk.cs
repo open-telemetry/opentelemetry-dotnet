@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
 
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-            var configureProviderBuilders = serviceProvider.GetServices<IConfigureProviderBuilder<TracerProvider, TracerProviderBuilder>>();
+            var configureProviderBuilders = serviceProvider.GetServices<IConfigureTracerProviderBuilder>();
             foreach (var configureProviderBuilder in configureProviderBuilders)
             {
                 configureProviderBuilder.ConfigureBuilder(serviceProvider, state);

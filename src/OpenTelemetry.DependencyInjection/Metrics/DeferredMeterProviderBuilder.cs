@@ -16,13 +16,12 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public class DeferredMeterProviderBuilder : MeterProviderBuilder, IProviderBuilder<MeterProvider, MeterProviderBuilder>, IDeferredMeterProviderBuilder
+public class DeferredMeterProviderBuilder : MeterProviderBuilder, IMeterProviderBuilder
 {
     public DeferredMeterProviderBuilder(IServiceCollection services)
     {
@@ -36,7 +35,7 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IProviderBuild
     }
 
     /// <inheritdoc />
-    MeterProvider? IProviderBuilder<MeterProvider, MeterProviderBuilder>.Provider => null;
+    MeterProvider? IMeterProviderBuilder.Provider => null;
 
     protected IServiceCollection? Services { get; set; }
 
@@ -69,8 +68,8 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IProviderBuild
     /// <inheritdoc />
     public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
     {
-        this.ConfigureServices(services => services.AddSingleton<IConfigureProviderBuilder<MeterProvider, MeterProviderBuilder>>(
-            new ConfigureProviderBuilderCallbackWrapper<MeterProvider, MeterProviderBuilder>(configure)));
+        this.ConfigureServices(services => services.AddSingleton<IConfigureMeterProviderBuilder>(
+            new ConfigureMeterProviderBuilderCallbackWrapper(configure)));
 
         return this;
     }
@@ -95,4 +94,21 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IProviderBuild
     /// <inheritdoc />
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         => this.ConfigureBuilder(configure);
+
+    private sealed class ConfigureMeterProviderBuilderCallbackWrapper : IConfigureMeterProviderBuilder
+    {
+        private readonly Action<IServiceProvider, MeterProviderBuilder> configure;
+
+        public ConfigureMeterProviderBuilderCallbackWrapper(Action<IServiceProvider, MeterProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            this.configure = configure;
+        }
+
+        public void ConfigureBuilder(IServiceProvider serviceProvider, MeterProviderBuilder meterProviderBuilder)
+        {
+            this.configure(serviceProvider, meterProviderBuilder);
+        }
+    }
 }

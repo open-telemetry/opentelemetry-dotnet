@@ -86,10 +86,10 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
 
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (builder is IProviderBuilder<MeterProvider, MeterProviderBuilder> providerBuilder
-                && providerBuilder.Provider != null)
+            if (builder is IMeterProviderBuilder iMeterProviderBuilder
+                && iMeterProviderBuilder.Provider != null)
             {
-                builder.AddInstrumentation(() => instrumentationFactory(sp, providerBuilder.Provider));
+                builder.AddInstrumentation(() => instrumentationFactory(sp, iMeterProviderBuilder.Provider));
             }
         });
 
@@ -111,9 +111,9 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         this MeterProviderBuilder meterProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (meterProviderBuilder is IProviderBuilder<MeterProvider, MeterProviderBuilder> providerBuilder)
+        if (meterProviderBuilder is IMeterProviderBuilder iMeterProviderBuilder)
         {
-            providerBuilder.ConfigureServices(configure);
+            iMeterProviderBuilder.ConfigureServices(configure);
         }
 
         return meterProviderBuilder;
@@ -131,11 +131,7 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         this MeterProviderBuilder meterProviderBuilder,
         Action<IServiceProvider, MeterProviderBuilder> configure)
     {
-        if (meterProviderBuilder is IProviderBuilder<MeterProvider, MeterProviderBuilder> providerBuilder)
-        {
-            providerBuilder.ConfigureBuilder(configure);
-        }
-        else if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+        if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
         {
             deferredMeterProviderBuilder.Configure(configure);
         }

@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Stores state used to build a <see cref="MeterProvider"/>.
     /// </summary>
-    internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IProviderBuilder<MeterProvider, MeterProviderBuilder>, IDeferredMeterProviderBuilder
+    internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProviderBuilder
     {
         public const int MaxMetricsDefault = 1000;
         public const int MaxMetricPointsPerMetricDefault = 2000;

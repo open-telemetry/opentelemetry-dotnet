@@ -1,4 +1,4 @@
-// <copyright file="IConfigureProviderBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="IMeterProviderBuilder.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,15 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace OpenTelemetry;
+namespace OpenTelemetry.Metrics;
 
-public interface IConfigureProviderBuilder<TProvider, TProviderBuilder>
+public interface IMeterProviderBuilder : IDeferredMeterProviderBuilder
 {
-    void ConfigureBuilder(IServiceProvider serviceProvider, TProviderBuilder providerBuilder);
+    MeterProvider? Provider { get; }
+
+    MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure);
+
+    MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure);
 }

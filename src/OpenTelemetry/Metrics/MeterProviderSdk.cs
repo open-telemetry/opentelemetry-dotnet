@@ -61,7 +61,7 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-            var configureProviderBuilders = serviceProvider.GetServices<IConfigureProviderBuilder<MeterProvider, MeterProviderBuilder>>();
+            var configureProviderBuilders = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
             foreach (var configureProviderBuilder in configureProviderBuilders)
             {
                 configureProviderBuilder.ConfigureBuilder(serviceProvider, state);

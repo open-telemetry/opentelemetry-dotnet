@@ -86,10 +86,10 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
 
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (builder is IProviderBuilder<TracerProvider, TracerProviderBuilder> providerBuilder
-                && providerBuilder.Provider != null)
+            if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder
+                && iTracerProviderBuilder.Provider != null)
             {
-                builder.AddInstrumentation(() => instrumentationFactory(sp, providerBuilder.Provider));
+                builder.AddInstrumentation(() => instrumentationFactory(sp, iTracerProviderBuilder.Provider));
             }
         });
 
@@ -111,9 +111,9 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         this TracerProviderBuilder tracerProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (tracerProviderBuilder is IProviderBuilder<TracerProvider, TracerProviderBuilder> providerBuilder)
+        if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder)
         {
-            providerBuilder.ConfigureServices(configure);
+            iTracerProviderBuilder.ConfigureServices(configure);
         }
 
         return tracerProviderBuilder;
@@ -131,11 +131,7 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         this TracerProviderBuilder tracerProviderBuilder,
         Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        if (tracerProviderBuilder is IProviderBuilder<TracerProvider, TracerProviderBuilder> providerBuilder)
-        {
-            providerBuilder.ConfigureBuilder(configure);
-        }
-        else if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+        if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
         {
             deferredTracerProviderBuilder.Configure(configure);
         }
