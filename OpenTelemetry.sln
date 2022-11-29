@@ -92,9 +92,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\apicompatibility.yml = .github\workflows\apicompatibility.yml
-		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml
-		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\ci-md.yml = .github\workflows\ci-md.yml
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\docfx.yml = .github\workflows\docfx.yml
 		.github\workflows\dotnet-format-md.yml = .github\workflows\dotnet-format-md.yml
@@ -210,7 +210,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "source-generation", "docs\l
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-grafana", "docs\metrics\getting-started-prometheus-grafana\getting-started-prometheus-grafana.csproj", "{41B784AA-3301-4126-AF9F-1D59BD04B0BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
 EndProject
@@ -237,6 +237,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\redaction\redaction.csproj", "{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.csproj", "{7263001A-49F8-4C3C-AAA8-998F12DAAF64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{011E70E1-152A-47BB-AF83-12DD12B125ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -492,6 +494,10 @@ Global
 		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
