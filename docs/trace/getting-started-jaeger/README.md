@@ -1,7 +1,7 @@
 # Getting Started with Jaeger
 
 - [Export traces from the application](#export-traces-from-the-application)
-    - [Check results in the console](#check-results-in-the-console)
+  - [Check results in the console](#check-results-in-the-console)
 - [Collect and visualize traces using Jaeger](#collect-and-visualize-traces-using-jaeger)
 - [Final cleanup](#final-cleanup)
 - [Learn more](#learn-more)
@@ -21,8 +21,8 @@ dotnet run
 
 Add reference to [Console
 Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md), [OTLP
-Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and [HttpClient
-Instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/README.md):
+Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and
+[HttpClient Instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/README.md):
 
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console
