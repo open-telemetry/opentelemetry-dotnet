@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +30,6 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         [Fact]
         public async Task AddOpenTelemetryMeterProviderInstrumentationCreationAndDisposal()
         {
-            var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
@@ -41,7 +39,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                     builder.AddInstrumentation(() =>
                     {
                         callbackRun = true;
-                        return testInstrumentation;
+                        return new object();
                     });
                 });
             });
@@ -49,22 +47,18 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var host = builder.Build();
 
             Assert.False(callbackRun);
-            Assert.False(testInstrumentation.Disposed);
 
             await host.StartAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testInstrumentation.Disposed);
 
             await host.StopAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testInstrumentation.Disposed);
 
             host.Dispose();
 
             Assert.True(callbackRun);
-            Assert.True(testInstrumentation.Disposed);
         }
 
         [Fact]
@@ -84,100 +78,13 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public void AddOpenTelemetryMeterProvider_ServiceProviderArgument_ServicesRegistered()
-        {
-            var testInstrumentation = new TestInstrumentation();
-
-            var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation);
-            services.AddOpenTelemetryMetrics(builder =>
-            {
-                builder.ConfigureBuilder(
-                    (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
-            });
-
-            var serviceProvider = services.BuildServiceProvider();
-
-            var meterFactory = serviceProvider.GetRequiredService<MeterProvider>();
-            Assert.NotNull(meterFactory);
-
-            Assert.False(testInstrumentation.Disposed);
-
-            serviceProvider.Dispose();
-
-            Assert.True(testInstrumentation.Disposed);
-        }
-
-        [Fact]
         public void AddOpenTelemetryMeterProvider_BadArgs_NullServiceCollection()
         {
             ServiceCollection services = null;
             Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryMetrics(null));
-            Assert.Throws<ArgumentNullException>(() =>
-                services.AddOpenTelemetryMetrics(builder =>
-                {
-                    builder.ConfigureBuilder(
-                        (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
-                }));
-        }
 
-        [Fact]
-        public void AddOpenTelemetryMeterProvider_GetServicesExtension()
-        {
-            var services = new ServiceCollection();
-            services.AddOpenTelemetryMetrics(builder => AddMyFeature(builder));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var meterProvider = (MeterProviderSdk)serviceProvider.GetRequiredService<MeterProvider>();
-
-            Assert.True(meterProvider.Reader is TestReader);
-        }
-
-        [Fact]
-        public void AddOpenTelemetryMeterProvider_NestedConfigureCallbacks()
-        {
-            int configureCalls = 0;
-            var services = new ServiceCollection();
-            services.AddOpenTelemetryMetrics(builder => builder
-                .ConfigureBuilder((sp1, builder1) =>
-                {
-                    configureCalls++;
-                    builder1.ConfigureBuilder((sp2, builder2) =>
-                    {
-                        configureCalls++;
-                    });
-                }));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var meterFactory = serviceProvider.GetRequiredService<MeterProvider>();
-
-            Assert.Equal(2, configureCalls);
-        }
-
-        [Fact]
-        public void AddOpenTelemetryMeterProvider_ConfigureCallbacksUsingExtensions()
-        {
-            var services = new ServiceCollection();
-
-            services.AddSingleton<TestInstrumentation>();
-            services.AddSingleton<TestReader>();
-
-            services.AddOpenTelemetryMetrics(builder => builder
-                .ConfigureBuilder((sp1, builder1) =>
-                {
-                    builder1
-                        .AddInstrumentation(sp1.GetRequiredService<TestInstrumentation>())
-                        .AddReader(sp1.GetRequiredService<TestReader>());
-                }));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var meterProvider = (MeterProviderSdk)serviceProvider.GetRequiredService<MeterProvider>();
-
-            Assert.True(meterProvider.Instrumentations.FirstOrDefault() is TestInstrumentation);
-            Assert.True(meterProvider.Reader is TestReader);
+            services = new();
+            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryMetrics(null));
         }
 
         [Fact]
@@ -237,27 +144,6 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             await host.StopAsync();
 
             host.Dispose();
-        }
-
-        private static MeterProviderBuilder AddMyFeature(MeterProviderBuilder meterProviderBuilder)
-        {
-            meterProviderBuilder.ConfigureServices(services => services.AddSingleton<TestReader>());
-
-            return meterProviderBuilder.AddReader<TestReader>();
-        }
-
-        internal class TestInstrumentation : IDisposable
-        {
-            public bool Disposed { get; private set; }
-
-            public void Dispose()
-            {
-                this.Disposed = true;
-            }
-        }
-
-        internal class TestReader : MetricReader
-        {
         }
     }
 }

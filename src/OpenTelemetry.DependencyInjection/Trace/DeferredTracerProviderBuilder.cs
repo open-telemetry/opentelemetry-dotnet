@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -28,8 +27,6 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, ITracerProvi
         Guard.ThrowIfNull(services);
 
         this.Services = services;
-
-        services.TryAddSingleton<TracerProvider>(sp => throw new NotSupportedException("The OpenTelemetry SDK has not been initialized. Call AddOpenTelemetry to register the SDK."));
 
         this.ConfigureBuilder((sp, builder) => this.Services = null);
     }

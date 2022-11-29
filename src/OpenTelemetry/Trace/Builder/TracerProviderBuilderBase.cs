@@ -18,6 +18,7 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace;
@@ -32,8 +33,8 @@ public class TracerProviderBuilderBase : DeferredTracerProviderBuilder
     {
         this.ConfigureServices(services => services
             .AddOpenTelemetryTracerProviderBuilderServices()
-            .AddSingleton<TracerProvider>(
-                sp => throw new NotSupportedException("External TracerProvider created through Sdk.CreateTracerProviderBuilder cannot be accessed using service provider.")));
+            .TryAddSingleton<TracerProvider>(
+                sp => throw new NotSupportedException("Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead.")));
     }
 
     internal TracerProvider InvokeBuild()

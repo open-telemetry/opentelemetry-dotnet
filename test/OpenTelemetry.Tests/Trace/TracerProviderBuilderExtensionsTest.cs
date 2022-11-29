@@ -152,12 +152,12 @@ namespace OpenTelemetry.Trace.Tests
         {
             var services = new ServiceCollection();
 
+            services.AddOpenTelemetryTracerProvider();
+
             bool testRun = false;
 
             ServiceProvider serviceProvider = null;
             TracerProviderSdk provider = null;
-
-            services.AddOpenTelemetry();
 
             services.ConfigureOpenTelemetryTracing(builder =>
             {
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetry();
+            services.AddOpenTelemetryTracerProvider();
 
             services.ConfigureOpenTelemetryTracing(builder =>
             {
@@ -383,11 +383,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             bool innerTestExecuted = false;
 
-            var serviceCollection = new ServiceCollection();
+            var services = new ServiceCollection();
 
-            serviceCollection.AddOpenTelemetry();
+            services.AddOpenTelemetryTracerProvider();
 
-            serviceCollection.ConfigureOpenTelemetryTracing(builder =>
+            services.ConfigureOpenTelemetryTracing(builder =>
             {
                 builder.ConfigureBuilder((sp, builder) =>
                 {
@@ -396,7 +396,7 @@ namespace OpenTelemetry.Trace.Tests
                 });
             });
 
-            using var serviceProvider = serviceCollection.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
             var resolvedProvider = serviceProvider.GetRequiredService<TracerProvider>();
 

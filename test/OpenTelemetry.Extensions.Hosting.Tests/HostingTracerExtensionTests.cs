@@ -16,8 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +30,6 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         [Fact]
         public async Task AddOpenTelemetryTracerProviderInstrumentationCreationAndDisposal()
         {
-            var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
@@ -42,7 +39,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                     builder.AddInstrumentation(() =>
                     {
                         callbackRun = true;
-                        return testInstrumentation;
+                        return new object();
                     });
                 });
             });
@@ -50,30 +47,43 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var host = builder.Build();
 
             Assert.False(callbackRun);
-            Assert.False(testInstrumentation.Disposed);
 
             await host.StartAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testInstrumentation.Disposed);
 
             await host.StopAsync();
 
             Assert.True(callbackRun);
-            Assert.False(testInstrumentation.Disposed);
 
             host.Dispose();
 
             Assert.True(callbackRun);
-            Assert.True(testInstrumentation.Disposed);
         }
 
-        [Fact]
-        public void AddOpenTelemetryTracerProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        public void AddOpenTelemetryTracerProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton(bool callPreConfigure, bool callPostConfigure)
         {
+            bool preConfigureCalled = false;
+            bool postConfigureCalled = false;
+
             var builder = new HostBuilder().ConfigureServices(services =>
             {
+                if (callPreConfigure)
+                {
+                    services.ConfigureOpenTelemetryTracing(builder => builder.ConfigureBuilder((sp, builder) => preConfigureCalled = true));
+                }
+
                 services.AddOpenTelemetryTracing();
+
+                if (callPostConfigure)
+                {
+                    services.ConfigureOpenTelemetryTracing(builder => builder.ConfigureBuilder((sp, builder) => postConfigureCalled = true));
+                }
             });
 
             var host = builder.Build();
@@ -82,106 +92,19 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             var tracerProvider2 = host.Services.GetRequiredService<TracerProvider>();
 
             Assert.Same(tracerProvider1, tracerProvider2);
-        }
 
-        [Fact]
-        public void AddOpenTelemetryTracerProvider_ServiceProviderArgument_ServicesRegistered()
-        {
-            var testInstrumentation = new TestInstrumentation();
-
-            var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation);
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.ConfigureBuilder(
-                    (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
-            });
-
-            var serviceProvider = services.BuildServiceProvider();
-
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
-
-            Assert.False(testInstrumentation.Disposed);
-
-            serviceProvider.Dispose();
-
-            Assert.True(testInstrumentation.Disposed);
+            Assert.Equal(callPreConfigure, preConfigureCalled);
+            Assert.Equal(callPostConfigure, postConfigureCalled);
         }
 
         [Fact]
         public void AddOpenTelemetryTracerProvider_BadArgs_NullServiceCollection()
         {
             ServiceCollection services = null;
+            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryTracing());
+
+            services = new();
             Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryTracing(null));
-            Assert.Throws<ArgumentNullException>(() =>
-                services.AddOpenTelemetryTracing(builder =>
-                {
-                    builder.ConfigureBuilder(
-                        (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
-                }));
-        }
-
-        [Fact]
-        public void AddOpenTelemetryTracerProvider_GetServicesExtension()
-        {
-            var services = new ServiceCollection();
-            services.AddOpenTelemetryTracing(builder => AddMyFeature(builder));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
-
-            Assert.True(tracerProvider.Sampler is TestSampler);
-        }
-
-        [Fact]
-        public void AddOpenTelemetryTracerProvider_NestedConfigureCallbacks()
-        {
-            int configureCalls = 0;
-            var services = new ServiceCollection();
-            services.AddOpenTelemetryTracing(builder => builder
-                .ConfigureBuilder((sp1, builder1) =>
-                {
-                    configureCalls++;
-                    builder1.ConfigureBuilder((sp2, builder2) =>
-                    {
-                        configureCalls++;
-                    });
-                }));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-
-            Assert.Equal(2, configureCalls);
-        }
-
-        [Fact]
-        public void AddOpenTelemetryTracerProvider_ConfigureCallbacksUsingExtensions()
-        {
-            var services = new ServiceCollection();
-
-            services.AddSingleton<TestInstrumentation>();
-            services.AddSingleton<TestProcessor>();
-            services.AddSingleton<TestSampler>();
-
-            services.AddOpenTelemetryTracing(builder => builder
-                .ConfigureBuilder((sp1, builder1) =>
-                {
-                    builder1
-                        .AddInstrumentation(sp1.GetRequiredService<TestInstrumentation>())
-                        .AddProcessor(sp1.GetRequiredService<TestProcessor>())
-                        .SetSampler(sp1.GetRequiredService<TestSampler>());
-                }));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
-
-            Assert.True(tracerProvider.Instrumentations.FirstOrDefault() is TestInstrumentation);
-            Assert.True(tracerProvider.Processor is TestProcessor);
-            Assert.True(tracerProvider.Sampler is TestSampler);
         }
 
         [Fact]
@@ -241,35 +164,6 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             await host.StopAsync();
 
             host.Dispose();
-        }
-
-        private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
-        {
-            tracerProviderBuilder.ConfigureServices(services => services.AddSingleton<TestSampler>());
-
-            return tracerProviderBuilder.SetSampler<TestSampler>();
-        }
-
-        internal class TestInstrumentation : IDisposable
-        {
-            public bool Disposed { get; private set; }
-
-            public void Dispose()
-            {
-                this.Disposed = true;
-            }
-        }
-
-        internal class TestProcessor : BaseProcessor<Activity>
-        {
-        }
-
-        internal class TestSampler : Sampler
-        {
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            {
-                return new SamplingResult(SamplingDecision.RecordAndSample);
-            }
         }
     }
 }

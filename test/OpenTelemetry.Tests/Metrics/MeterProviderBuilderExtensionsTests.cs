@@ -66,7 +66,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetry();
+            services.AddOpenTelemetryMeterProvider();
 
             bool testRun = false;
 
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetry();
+            services.AddOpenTelemetryMeterProvider();
 
             services.ConfigureOpenTelemetryMetrics(builder =>
             {
@@ -297,11 +297,11 @@ namespace OpenTelemetry.Metrics.Tests
         {
             bool innerTestExecuted = false;
 
-            var serviceCollection = new ServiceCollection();
+            var services = new ServiceCollection();
 
-            serviceCollection.AddOpenTelemetry();
+            services.AddOpenTelemetryMeterProvider();
 
-            serviceCollection.ConfigureOpenTelemetryMetrics(builder =>
+            services.ConfigureOpenTelemetryMetrics(builder =>
             {
                 builder.ConfigureBuilder((sp, builder) =>
                 {
@@ -310,7 +310,7 @@ namespace OpenTelemetry.Metrics.Tests
                 });
             });
 
-            using var serviceProvider = serviceCollection.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
             var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
 

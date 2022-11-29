@@ -32,7 +32,6 @@ internal static class ProviderBuilderServiceCollectionExtensions
     {
         services.AddOpenTelemetryProviderBuilderServices();
 
-        services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
         services.TryAddSingleton<MeterProviderBuilderSdk>();
         services.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
 
@@ -43,7 +42,6 @@ internal static class ProviderBuilderServiceCollectionExtensions
     {
         services.AddOpenTelemetryProviderBuilderServices();
 
-        services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
         services.TryAddSingleton<TracerProviderBuilderSdk>();
         services.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
 

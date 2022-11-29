@@ -18,6 +18,7 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace OpenTelemetry.Metrics;
 
@@ -31,8 +32,8 @@ public class MeterProviderBuilderBase : DeferredMeterProviderBuilder
     {
         this.ConfigureServices(services => services
             .AddOpenTelemetryMeterProviderBuilderServices()
-            .AddSingleton<MeterProvider>(
-                sp => throw new NotSupportedException("External MeterProvider created through Sdk.CreateMeterProviderBuilder cannot be accessed using service provider.")));
+            .TryAddSingleton<MeterProvider>(
+                sp => throw new NotSupportedException("Self-contained MeterProvider cannot be accessed using the application IServiceProvider call Build instead.")));
     }
 
     internal MeterProvider InvokeBuild()

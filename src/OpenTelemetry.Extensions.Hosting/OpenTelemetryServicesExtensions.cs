@@ -46,7 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <item>
         /// This method should be called by application host code. Library
         /// authors should call <see
-        /// cref="TracerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryTracing(IServiceCollection)"/>
+        /// cref="OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions.ConfigureOpenTelemetryTracing(IServiceCollection)"/>
         /// instead.
         /// </item>
         /// </list>
@@ -74,7 +74,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             Guard.ThrowIfNull(services);
 
-            services.AddOpenTelemetry();
+            services.AddOpenTelemetryTracerProvider();
 
             services.ConfigureOpenTelemetryTracing(configure);
 
@@ -99,7 +99,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <item>
         /// This method should be called by application host code. Library
         /// authors should call <see
-        /// cref="MeterProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(IServiceCollection)"/>
+        /// cref="OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(IServiceCollection)"/>
         /// instead.
         /// </item>
         /// </list>
@@ -127,7 +127,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             Guard.ThrowIfNull(services);
 
-            services.AddOpenTelemetry();
+            services.AddOpenTelemetryMeterProvider();
 
             services.ConfigureOpenTelemetryMetrics(configure);
 

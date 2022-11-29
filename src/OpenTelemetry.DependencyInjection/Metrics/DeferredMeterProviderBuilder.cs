@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
@@ -28,8 +27,6 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IMeterProvider
         Guard.ThrowIfNull(services);
 
         this.Services = services;
-
-        services.TryAddSingleton<MeterProvider>(sp => throw new NotSupportedException("The OpenTelemetry SDK has not been initialized. Call AddOpenTelemetry to register the SDK."));
 
         this.ConfigureBuilder((sp, builder) => this.Services = null);
     }
