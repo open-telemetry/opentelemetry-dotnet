@@ -267,7 +267,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
 
-            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, jaegerTraceExporter);
+            tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(jaegerTraceExporter));
 
             using var provider = tracerProviderBuilder.Build();
 

@@ -198,14 +198,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.DisplayName = path;
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
+                if (request.Host.HasValue)
+                {
+                    activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
 
-                if (request.Host.Port is null or 80 or 443)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
-                }
-                else
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
+                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                    }
                 }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);

@@ -55,12 +55,12 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void ServiceResource_ServiceNameAndInstanceAndNamespaceAndVersion()
         {
-            var resource = ResourceBuilder.CreateEmpty().AddService("my-service", "my-namespace", "semVer:1.2.3", serviceInstanceId: "123").Build();
+            var resource = ResourceBuilder.CreateEmpty().AddService("my-service", "my-namespace", "1.2.3", serviceInstanceId: "123").Build();
             Assert.Equal(4, resource.Attributes.Count());
             Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceInstance, "123"), resource.Attributes);
             Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "my-namespace"), resource.Attributes);
-            Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceVersion, "semVer:1.2.3"), resource.Attributes);
+            Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceVersion, "1.2.3"), resource.Attributes);
         }
 
         [Fact]
