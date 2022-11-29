@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilderServiceCollectionExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,50 +16,50 @@
 
 using System;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Extension methods for setting up OpenTelemetry tracing services in an <see cref="IServiceCollection" />.
+/// Extension methods for setting up OpenTelemetry Metrics services in an <see cref="IServiceCollection" />.
 /// </summary>
-public static class TracerProviderBuilderServiceCollectionExtensions
+public static class OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions
 {
     /// <summary>
-    /// Configures OpenTelemetry tracing services in the supplied <see cref="IServiceCollection" />.
+    /// Configures OpenTelemetry Metrics services in the supplied <see cref="IServiceCollection" />.
     /// </summary>
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>A <see cref="TracerProvider"/> will not be created automatically
+    /// <item>A <see cref="MeterProvider"/> will not be created automatically
     /// using this method. Either use the
-    /// <c>IServiceCollection.AddOpenTelemetryTracing</c> extension in the
+    /// <c>IServiceCollection.AddOpenTelemetryMetrics</c> extension in the
     /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
-    /// cref="TracerProvider"/> through the application <see
+    /// cref="MeterProvider"/> through the application <see
     /// cref="IServiceProvider"/> to begin collecting traces.</item>
     /// <item>This is safe to be called multiple times and by library authors.
-    /// Only a single <see cref="TracerProvider"/> will be created for a given
+    /// Only a single <see cref="MeterProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.</item>
     /// </list>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services)
-        => ConfigureOpenTelemetryTracing(services, (b) => { });
+    public static IServiceCollection ConfigureOpenTelemetryMetrics(this IServiceCollection services)
+        => ConfigureOpenTelemetryMetrics(services, (b) => { });
 
     /// <summary>
-    /// Configures OpenTelemetry tracing services in the supplied <see cref="IServiceCollection" />.
+    /// Configures OpenTelemetry Metrics services in the supplied <see cref="IServiceCollection" />.
     /// </summary>
-    /// <remarks><inheritdoc cref="ConfigureOpenTelemetryTracing(IServiceCollection)" path="/remarks"/></remarks>
+    /// <remarks><inheritdoc cref="ConfigureOpenTelemetryMetrics(IServiceCollection)" path="/remarks"/></remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="configure">Callback action to configure the <see cref="MeterProviderBuilder"/>.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
+    public static IServiceCollection ConfigureOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
     {
         Guard.ThrowIfNull(services);
         Guard.ThrowIfNull(configure);
 
-        var builder = new DeferredTracerProviderBuilder(services);
+        var builder = new DeferredMeterProviderBuilder(services);
 
         configure(builder);
 

@@ -1,4 +1,4 @@
-// <copyright file="MeterProviderBuilderDependencyInjectionExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Contains extension methods for the <see cref="MeterProviderBuilder"/> class.
 /// </summary>
-public static class MeterProviderBuilderDependencyInjectionExtensions
+public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions
 {
     /// <summary>
     /// Adds instrumentation to the provider.
