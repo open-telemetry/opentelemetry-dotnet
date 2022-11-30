@@ -38,12 +38,7 @@ public class Program
             .AddSource("OpenTelemetry.Demo.Jaeger")
             .AddHttpClientInstrumentation()
             .AddConsoleExporter()
-            .AddOtlpExporter(opt =>
-            {
-                // using grpc protocol
-                opt.Endpoint = new Uri("http://localhost:4317");
-                opt.Protocol = OtlpExportProtocol.Grpc;
-            })
+            .AddOtlpExporter()
             .Build();
 
         using var parent = MyActivitySource.StartActivity("JaegerDemo");

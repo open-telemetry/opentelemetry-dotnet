@@ -67,11 +67,7 @@ Note that we have configured two exporters in the code:
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     ...
     .AddConsoleExporter()
-    .AddOtlpExporter(opt =>
-    {
-        opt.Endpoint = new Uri("http://localhost:4317");
-        opt.Protocol = OtlpExportProtocol.Grpc;
-    })
+    .AddOtlpExporter()
     .Build();
 ```
 
@@ -137,7 +133,7 @@ Chart](https://en.wikipedia.org/wiki/Gantt_chart):
 ```mermaid
 graph TD
 
-OtlpExporter["OtlpExporter"] --> |udp://localhost:6831| Jaeger
+OtlpExporter["OtlpExporter"] --> |http://localhost:4317| Jaeger
 Jaeger -->|http://localhost:16686/| JaegerUI["Browser<br/>(Jaeger UI)"]
 ```
 
@@ -151,11 +147,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     ...
     // Remove Console Exporter from the final application
     // .AddConsoleExporter()
-    .AddOtlpExporter(opt =>
-    {
-        opt.Endpoint = new Uri("http://localhost:4317");
-        opt.Protocol = OtlpExportProtocol.Grpc;
-    })
+    .AddOtlpExporter()
     .Build();
 ```
 
