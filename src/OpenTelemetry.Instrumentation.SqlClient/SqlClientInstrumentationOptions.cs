@@ -94,9 +94,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <item>On .NET and .NET Core SetDbStatementForText only applies to
         /// <c>SqlCommand</c>s with <see cref="CommandType.Text"/>.</item>
         /// <item>On .NET Framework SetDbStatementForText applies to all
-        /// <c>SqlCommand</c>s regardless of <see cref="CommandType"/>. Use
+        /// <c>SqlCommand</c>s regardless of <see cref="CommandType"/>.
+        /// <list type="bullet">
+        /// <item>When using <c>System.Data.SqlClient</c> use
+        /// SetDbStatementForText to capture StoredProcedure command
+        /// names.</item>
+        /// <item>When using <c>Microsoft.Data.SqlClient</c> use
         /// SetDbStatementForText to capture Text, StoredProcedure, and all
         /// other command text.</item>
+        /// </list></item>
         /// </list>
         /// </para>
         /// </remarks>
