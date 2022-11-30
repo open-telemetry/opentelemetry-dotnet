@@ -20,14 +20,14 @@ dotnet run
 ```
 
 Add reference to [Console
-Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md), [Jaeger
-Exporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md) and [HttpClient
-Instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/README.md):
+Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md), [OTLP
+Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and
+[HttpClient Instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/README.md):
 
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console
-dotnet add package OpenTelemetry.Exporter.Jaeger
-dotnet add package OpenTelemetry.Instrumentation.Http
+dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
+dotnet add package OpenTelemetry.Instrumentation.Http --prerelease
 ```
 
 Now copy the code from [Program.cs](./Program.cs).
@@ -67,15 +67,15 @@ Note that we have configured two exporters in the code:
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     ...
     .AddConsoleExporter()
-    .AddJaegerExporter()
+    .AddOtlpExporter()
     .Build();
 ```
 
 When we run the application, the `ConsoleExporter` was printing the traces on
-console, and the `JaegerExporter` was attempting to send the traces to Jaeger
-Agent via the default endpoint `udp://localhost:6831`.
+console, and the `OtlpExporter` was attempting to send the traces to Jaeger
+Agent via the default endpoint `http://localhost:4317`.
 
-Since we didn't have Jaeger running, the traces received by `JaegerExporter`
+Since we didn't have Jaeger running, the traces received by `OtlpExporter`
 were simply dropped on the floor. In the next step, we are going to learn about
 how to use Jaeger to collect and visualize the traces.
 
@@ -87,7 +87,7 @@ subgraph SDK
   SimpleExportProcessor["SimpleExportProcessor < Activity >"]
   BatchExportProcessor["BatchExportProcessor < Activity >"]
   ConsoleExporter
-  JaegerExporter
+  OtlpExporter
 end
 
 subgraph API
@@ -98,7 +98,7 @@ ActivitySource --> | System.Diagnostics.Activity | TracerProvider
 
 TracerProvider --> | System.Diagnostics.Activity | SimpleExportProcessor --> | Batch | ConsoleExporter
 
-TracerProvider --> | System.Diagnostics.Activity | BatchExportProcessor --> | Batch | JaegerExporter
+TracerProvider --> | System.Diagnostics.Activity | BatchExportProcessor --> | Batch | OtlpExporter
 ```
 
 ## Collect and visualize traces using Jaeger
@@ -112,7 +112,7 @@ After finished downloading, extract it to a local location that's easy to
 access. Run the `jaeger-all-in-one(.exe)` executable:
 
 ```sh
-./jaeger-all-in-one
+./jaeger-all-in-one --collector.otlp.enabled
 ```
 
 Now we should be able to see the Jaeger UI at
@@ -133,7 +133,7 @@ Chart](https://en.wikipedia.org/wiki/Gantt_chart):
 ```mermaid
 graph TD
 
-JaegerExporter["JaegerExporter"] --> |udp://localhost:6831| Jaeger
+OtlpExporter["OtlpExporter"] --> |http://localhost:4317| Jaeger
 Jaeger -->|http://localhost:16686/| JaegerUI["Browser<br/>(Jaeger UI)"]
 ```
 
@@ -147,7 +147,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     ...
     // Remove Console Exporter from the final application
     // .AddConsoleExporter()
-    .AddJaegerExporter()
+    .AddOtlpExporter()
     .Build();
 ```
 
@@ -161,7 +161,7 @@ graph LR
 subgraph SDK
   TracerProvider
   BatchExportProcessor["BatchExportProcessor < Activity >"]
-  JaegerExporter
+  OtlpExporter
 end
 
 subgraph API
@@ -170,11 +170,11 @@ end
 
 ActivitySource --> | System.Diagnostics.Activity | TracerProvider --> | System.Diagnostics.Activity | BatchExportProcessor
 
-BatchExportProcessor --> | Batch | JaegerExporter
+BatchExportProcessor --> | Batch | OtlpExporter
 ```
 
 ## Learn more
 
 - [Jaeger Tracing](https://www.jaegertracing.io/)
-- [Jaeger Exporter for OpenTelemetry
-  .NET](../../../src/OpenTelemetry.Exporter.Jaeger/README.md)
+- [OTLP Exporter for OpenTelemetry
+  .NET](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
