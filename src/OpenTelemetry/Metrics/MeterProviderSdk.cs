@@ -61,10 +61,10 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-            var configureProviderBuilders = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
+            var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
             foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
             }
 
             StringBuilder exportersAdded = new StringBuilder();

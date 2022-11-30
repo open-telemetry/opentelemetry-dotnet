@@ -1,3 +1,4 @@
+Microsoft.Extensions.DependencyInjection.OpenTelemetryServiceCollectionExtensions
 OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
 OpenTelemetry.Logs.LogRecord.EventId.set -> void
 OpenTelemetry.Logs.LogRecord.Exception.set -> void
@@ -14,6 +15,8 @@ OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.get -> bool
 OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.set -> void
 OpenTelemetry.Metrics.MetricPoint.TryGetHistogramMinMaxValues(out double min, out double max) -> bool
 OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider?, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
+static Microsoft.Extensions.DependencyInjection.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetryMeterProvider(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Microsoft.Extensions.DependencyInjection.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetryTracerProvider(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string?
 OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string! traceStateString) -> void
