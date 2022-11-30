@@ -20,21 +20,32 @@ using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// A <see cref="TracerProviderBuilder"/> implementation which registers build
+/// actions as <see cref="IConfigureTracerProviderBuilder"/> instances into an
+/// <see cref="IServiceCollection"/>. The build actions should be retrieved
+/// using the final application <see cref="IServiceProvider"/> and applied to
+/// construct a <see cref="TracerProvider"/>.
+/// </summary>
 public class DeferredTracerProviderBuilder : TracerProviderBuilder, ITracerProviderBuilder
 {
+    private IServiceCollection? services;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeferredTracerProviderBuilder"/> class.
+    /// </summary>
+    /// <param name="services"><see cref="IServiceCollection"/>.</param>
     public DeferredTracerProviderBuilder(IServiceCollection services)
     {
         Guard.ThrowIfNull(services);
 
-        this.Services = services;
+        this.services = services;
 
-        this.ConfigureBuilder((sp, builder) => this.Services = null);
+        RegisterBuildAction(services, (sp, builder) => this.services = null);
     }
 
     /// <inheritdoc />
     TracerProvider? ITracerProviderBuilder.Provider => null;
-
-    protected IServiceCollection? Services { get; set; }
 
     /// <inheritdoc />
     public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
@@ -78,8 +89,14 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, ITracerProvi
     /// <inheritdoc />
     public TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        this.ConfigureServices(services => services.AddSingleton<IConfigureTracerProviderBuilder>(
-            new ConfigureTracerProviderBuilderCallbackWrapper(configure)));
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during TracerProvider construction.");
+        }
+
+        RegisterBuildAction(services, configure);
 
         return this;
     }
@@ -89,11 +106,11 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, ITracerProvi
     {
         Guard.ThrowIfNull(configure);
 
-        var services = this.Services;
+        var services = this.services;
 
         if (services == null)
         {
-            throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
+            throw new NotSupportedException("Services cannot be configured during TracerProvider construction.");
         }
 
         configure(services);
@@ -104,6 +121,14 @@ public class DeferredTracerProviderBuilder : TracerProviderBuilder, ITracerProvi
     /// <inheritdoc />
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         => this.ConfigureBuilder(configure);
+
+    private static void RegisterBuildAction(IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        services.AddSingleton<IConfigureTracerProviderBuilder>(
+            new ConfigureTracerProviderBuilderCallbackWrapper(configure));
+    }
 
     private sealed class ConfigureTracerProviderBuilderCallbackWrapper : IConfigureTracerProviderBuilder
     {

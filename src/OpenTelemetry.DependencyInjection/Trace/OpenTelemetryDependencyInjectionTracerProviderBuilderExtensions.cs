@@ -49,6 +49,13 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
         return tracerProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="instrumentation">Instrumentation instance.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder, T instrumentation)
         where T : class
     {
@@ -62,6 +69,13 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
         return tracerProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<T>(
         this TracerProviderBuilder tracerProviderBuilder,
         Func<IServiceProvider, T> instrumentationFactory)
@@ -77,6 +91,13 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
         return tracerProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<T>(
         this TracerProviderBuilder tracerProviderBuilder,
         Func<IServiceProvider, TracerProvider, T> instrumentationFactory)

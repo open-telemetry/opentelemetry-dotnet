@@ -16,8 +16,6 @@
 
 #nullable enable
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -27,22 +25,14 @@ public static class OpenTelemetryServiceCollectionExtensions
 {
     public static IServiceCollection AddOpenTelemetryTracerProvider(this IServiceCollection services)
     {
-        Guard.ThrowIfNull(services);
-
-        services
-            .AddOpenTelemetryTracerProviderBuilderServices()
-            .TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+        TracerProviderBuilderBase.RegisterTracerProvider(services);
 
         return services;
     }
 
     public static IServiceCollection AddOpenTelemetryMeterProvider(this IServiceCollection services)
     {
-        Guard.ThrowIfNull(services);
-
-        services
-            .AddOpenTelemetryMeterProviderBuilderServices()
-            .TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+        MeterProviderBuilderBase.RegisterMeterProvider(services);
 
         return services;
     }

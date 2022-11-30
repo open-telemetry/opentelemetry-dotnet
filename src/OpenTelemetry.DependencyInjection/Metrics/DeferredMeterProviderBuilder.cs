@@ -20,21 +20,32 @@ using OpenTelemetry.Metrics;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// A <see cref="MeterProviderBuilder"/> implementation which registers build
+/// actions as <see cref="IConfigureMeterProviderBuilder"/> instances into an
+/// <see cref="IServiceCollection"/>. The build actions should be retrieved
+/// using the final application <see cref="IServiceProvider"/> and applied to
+/// construct a <see cref="MeterProvider"/>.
+/// </summary>
 public class DeferredMeterProviderBuilder : MeterProviderBuilder, IMeterProviderBuilder
 {
+    private IServiceCollection? services;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeferredMeterProviderBuilder"/> class.
+    /// </summary>
+    /// <param name="services"><see cref="IServiceCollection"/>.</param>
     public DeferredMeterProviderBuilder(IServiceCollection services)
     {
         Guard.ThrowIfNull(services);
 
-        this.Services = services;
+        this.services = services;
 
-        this.ConfigureBuilder((sp, builder) => this.Services = null);
+        RegisterBuildAction(services, (sp, builder) => this.services = null);
     }
 
     /// <inheritdoc />
     MeterProvider? IMeterProviderBuilder.Provider => null;
-
-    protected IServiceCollection? Services { get; set; }
 
     /// <inheritdoc />
     public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
@@ -65,8 +76,14 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IMeterProvider
     /// <inheritdoc />
     public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
     {
-        this.ConfigureServices(services => services.AddSingleton<IConfigureMeterProviderBuilder>(
-            new ConfigureMeterProviderBuilderCallbackWrapper(configure)));
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during MeterProvider construction.");
+        }
+
+        RegisterBuildAction(services, configure);
 
         return this;
     }
@@ -76,14 +93,14 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IMeterProvider
     {
         Guard.ThrowIfNull(configure);
 
-        var services = this.Services;
+        var services = this.services;
 
         if (services == null)
         {
-            throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
+            throw new NotSupportedException("Services cannot be configured during MeterProvider construction.");
         }
 
-        configure(services);
+        configure((IServiceCollection)services);
 
         return this;
     }
@@ -91,6 +108,14 @@ public class DeferredMeterProviderBuilder : MeterProviderBuilder, IMeterProvider
     /// <inheritdoc />
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         => this.ConfigureBuilder(configure);
+
+    private static void RegisterBuildAction(IServiceCollection services, Action<IServiceProvider, MeterProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        services.AddSingleton<IConfigureMeterProviderBuilder>(
+            new ConfigureMeterProviderBuilderCallbackWrapper(configure));
+    }
 
     private sealed class ConfigureMeterProviderBuilderCallbackWrapper : IConfigureMeterProviderBuilder
     {

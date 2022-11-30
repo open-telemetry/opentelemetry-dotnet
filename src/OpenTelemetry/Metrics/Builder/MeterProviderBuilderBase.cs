@@ -19,6 +19,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
@@ -36,6 +37,15 @@ public class MeterProviderBuilderBase : DeferredMeterProviderBuilder
                 sp => throw new NotSupportedException("Self-contained MeterProvider cannot be accessed using the application IServiceProvider call Build instead.")));
     }
 
+    internal static void RegisterMeterProvider(IServiceCollection services)
+    {
+        Guard.ThrowIfNull(services);
+
+        services
+            .AddOpenTelemetryMeterProviderBuilderServices()
+            .TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+    }
+
     internal MeterProvider InvokeBuild()
         => this.Build();
 
@@ -45,21 +55,28 @@ public class MeterProviderBuilderBase : DeferredMeterProviderBuilder
     /// <returns><see cref="MeterProvider"/>.</returns>
     protected MeterProvider Build()
     {
-        var services = this.Services;
-
-        if (services == null)
+        ServiceProvider? serviceProvider = null;
+        try
+        {
+            this.ConfigureServices(services =>
+            {
+#if DEBUG
+                bool validateScopes = true;
+#else
+                bool validateScopes = false;
+#endif
+                serviceProvider = services.BuildServiceProvider(validateScopes);
+            });
+        }
+        catch (NotSupportedException)
         {
             throw new NotSupportedException("MeterProviderBuilder build method cannot be called multiple times.");
         }
 
-        this.Services = null;
-
-#if DEBUG
-        bool validateScopes = true;
-#else
-        bool validateScopes = false;
-#endif
-        var serviceProvider = services.BuildServiceProvider(validateScopes);
+        if (serviceProvider == null)
+        {
+            throw new InvalidOperationException("ServiceProvider could not be created for ServiceCollection.");
+        }
 
         return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
     }

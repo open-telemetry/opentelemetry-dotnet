@@ -18,7 +18,15 @@ using System;
 
 namespace OpenTelemetry.Trace;
 
+/// <summary>
+/// Represents something that configures the <see cref="TracerProviderBuilder"/> type.
+/// </summary>
 public interface IConfigureTracerProviderBuilder
 {
+    /// <summary>
+    /// Invoked to configure a <see cref="TracerProviderBuilder"/> instance.
+    /// </summary>
+    /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     void ConfigureBuilder(IServiceProvider serviceProvider, TracerProviderBuilder tracerProviderBuilder);
 }

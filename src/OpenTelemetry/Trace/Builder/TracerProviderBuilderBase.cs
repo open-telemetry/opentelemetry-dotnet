@@ -37,6 +37,15 @@ public class TracerProviderBuilderBase : DeferredTracerProviderBuilder
                 sp => throw new NotSupportedException("Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead.")));
     }
 
+    internal static void RegisterTracerProvider(IServiceCollection services)
+    {
+        Guard.ThrowIfNull(services);
+
+        services
+            .AddOpenTelemetryTracerProviderBuilderServices()
+            .TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+    }
+
     internal TracerProvider InvokeBuild()
         => this.Build();
 
@@ -74,21 +83,28 @@ public class TracerProviderBuilderBase : DeferredTracerProviderBuilder
     /// <returns><see cref="TracerProvider"/>.</returns>
     protected TracerProvider Build()
     {
-        var services = this.Services;
-
-        if (services == null)
+        ServiceProvider? serviceProvider = null;
+        try
+        {
+            this.ConfigureServices(services =>
+            {
+#if DEBUG
+                bool validateScopes = true;
+#else
+                bool validateScopes = false;
+#endif
+                serviceProvider = services.BuildServiceProvider(validateScopes);
+            });
+        }
+        catch (NotSupportedException)
         {
             throw new NotSupportedException("TracerProviderBuilder build method cannot be called multiple times.");
         }
 
-        this.Services = null;
-
-#if DEBUG
-        bool validateScopes = true;
-#else
-        bool validateScopes = false;
-#endif
-        var serviceProvider = services.BuildServiceProvider(validateScopes);
+        if (serviceProvider == null)
+        {
+            throw new InvalidOperationException("ServiceProvider could not be created for ServiceCollection.");
+        }
 
         return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
     }

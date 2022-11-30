@@ -49,6 +49,13 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
         return meterProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentation">Instrumentation instance.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder, T instrumentation)
         where T : class
     {
@@ -62,6 +69,13 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
         return meterProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<T>(
         this MeterProviderBuilder meterProviderBuilder,
         Func<IServiceProvider, T> instrumentationFactory)
@@ -77,6 +91,13 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
         return meterProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<T>(
         this MeterProviderBuilder meterProviderBuilder,
         Func<IServiceProvider, MeterProvider, T> instrumentationFactory)
