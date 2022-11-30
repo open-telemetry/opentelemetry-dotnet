@@ -26,24 +26,29 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions
 {
     /// <summary>
-    /// Configures OpenTelemetry tracing services in the supplied <see cref="IServiceCollection" />.
+    /// Configures OpenTelemetry tracing services in the supplied <see
+    /// cref="IServiceCollection" />.
     /// </summary>
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>A <see cref="TracerProvider"/> will not be created automatically
-    /// using this method. Either use the
-    /// <c>IServiceCollection.AddOpenTelemetryTracing</c> extension in the
-    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
-    /// cref="TracerProvider"/> through the application <see
-    /// cref="IServiceProvider"/> to begin collecting traces.</item>
     /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.</item>
+    /// <item>A <see cref="TracerProvider"/> will not be created automatically
+    /// using this method. To begin collecting traces either use the
+    /// <c>IServiceCollection.AddOpenTelemetryTracing</c> extension in the
+    /// <c>OpenTelemetry.Extensions.Hosting</c> package or use the
+    /// <c>IServiceCollection.AddOpenTelemetryTracerProvider</c> extension in
+    /// the <c>OpenTelemetry</c> package and access the <see
+    /// cref="TracerProvider"/> through the application <see
+    /// cref="IServiceProvider"/>.</item>
     /// </list>
     /// </remarks>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+    /// <param name="services">The <see cref="IServiceCollection" /> to add
+    /// services to.</param>
+    /// <returns>The <see cref="IServiceCollection"/> so that additional calls
+    /// can be chained.</returns>
     public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services)
         => ConfigureOpenTelemetryTracing(services, (b) => { });
 
