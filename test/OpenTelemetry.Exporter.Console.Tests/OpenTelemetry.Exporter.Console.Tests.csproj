@@ -7,7 +7,6 @@
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AnalysisLevel>latest-all</AnalysisLevel>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
