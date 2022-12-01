@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace OpenTelemetry.Metrics;
 
 /// <summary>
 /// A <see cref="MeterProviderBuilder"/> implementation which registers build

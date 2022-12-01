@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace OpenTelemetry.Trace;
 
 /// <summary>
 /// A <see cref="TracerProviderBuilder"/> implementation which registers build
