@@ -6,6 +6,9 @@
     <Description>Jaeger exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Jaeger;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
