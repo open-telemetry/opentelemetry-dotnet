@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -37,7 +38,7 @@ public class Program
             .AddSource("OpenTelemetry.Demo.Jaeger")
             .AddHttpClientInstrumentation()
             .AddConsoleExporter()
-            .AddJaegerExporter()
+            .AddOtlpExporter()
             .Build();
 
         using var parent = MyActivitySource.StartActivity("JaegerDemo");
