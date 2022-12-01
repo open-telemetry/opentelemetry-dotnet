@@ -103,12 +103,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     try
                     {
-                        this.options.Enrich(context, out var enrichedTags);
-
-                        foreach (var keyValuePair in enrichedTags)
-                        {
-                            tags.Add(keyValuePair);
-                        }
+                        this.options.Enrich(context, ref tags);
                     }
                     catch (Exception ex)
                     {

@@ -29,8 +29,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// Delegate for enrichment of recorded metric with additional tags.
         /// </summary>
         /// <param name="context"><see cref="HttpContext"/>: the HttpContext object. Both Request and Response are available.</param>
-        /// <param name="tags"><see cref="TagList"/>: List of tags to add. </param>
-        public delegate void AspNetCoreMetricEnrichmentFunc(HttpContext context, out TagList tags);
+        /// <param name="tags"><see cref="TagList"/>: List of current tags. You can add additional tags to this list. </param>
+        public delegate void AspNetCoreMetricEnrichmentFunc(HttpContext context, ref TagList tags);
 
         /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.

@@ -154,9 +154,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddAspNetCoreInstrumentation(opt => opt.Enrich = (HttpContext _, out TagList tags) =>
+                    .AddAspNetCoreInstrumentation(opt => opt.Enrich = (HttpContext _, ref TagList tags) =>
                     {
-                        tags = new TagList(new Span<KeyValuePair<string, object>>(tagsToAdd));
+                        foreach (var keyValuePair in tagsToAdd)
+                        {
+                            tags.Add(keyValuePair);
+                        }
                     })
                     .AddInMemoryExporter(metricItems)
                     .Build();
