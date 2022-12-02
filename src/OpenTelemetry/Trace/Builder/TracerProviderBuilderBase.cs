@@ -55,7 +55,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         Guard.ThrowIfNull(services);
 
         services
-            .AddOpenTelemetryMeterProviderBuilderServices()
+            .AddOpenTelemetryTracerProviderBuilderServices()
             .TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
 
         services.ConfigureOpenTelemetryTracerProvider((sp, builder) => this.services = null);
