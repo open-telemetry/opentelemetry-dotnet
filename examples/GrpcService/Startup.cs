@@ -40,34 +40,36 @@ namespace Examples.GrpcService
         {
             services.AddGrpc();
 
-            services.AddOpenTelemetry().WithTracing(builder =>
-            {
-                builder
-                    .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")))
-                    .AddAspNetCoreInstrumentation();
-
-                // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
-                var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
-                switch (exporter)
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
                 {
-                    case "jaeger":
-                        builder.AddJaegerExporter(jaegerOptions =>
-                        {
-                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                        });
-                        break;
-                    case "zipkin":
-                        builder.AddZipkinExporter(zipkinOptions =>
-                        {
-                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                        });
-                        break;
-                    default:
-                        builder.AddConsoleExporter();
-                        break;
-                }
-            });
+                    builder
+                        .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")))
+                        .AddAspNetCoreInstrumentation();
+
+                    // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
+                    var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+                    switch (exporter)
+                    {
+                        case "jaeger":
+                            builder.AddJaegerExporter(jaegerOptions =>
+                            {
+                                jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                                jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                            });
+                            break;
+                        case "zipkin":
+                            builder.AddZipkinExporter(zipkinOptions =>
+                            {
+                                zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                            });
+                            break;
+                        default:
+                            builder.AddConsoleExporter();
+                            break;
+                    }
+                })
+                .StartWithHost();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
