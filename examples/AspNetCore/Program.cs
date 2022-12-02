@@ -25,20 +25,23 @@ using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-// Switch between Zipkin/Jaeger/OTLP/Console by setting UseTracingExporter in appsettings.json.
+// Note: Switch between Zipkin/Jaeger/OTLP/Console by setting UseTracingExporter in appsettings.json.
 var tracingExporter = appBuilder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
 
-// Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
+// Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
 var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
 
-// Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
+// Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
 
+// Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: appBuilder.Configuration.GetValue<string>("ServiceName"),
     serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
 
+// Configure OpenTelemetry tracing & metrics with auto-start using the
+// StartWithHost extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(configureResource)
     .WithTracing(builder =>
@@ -119,9 +122,10 @@ appBuilder.Services.AddOpenTelemetry()
     })
     .StartWithHost();
 
-// Logging
+// Clear default logging providers used by WebApplication host.
 appBuilder.Logging.ClearProviders();
 
+// Configure OpenTelemetry Logging.
 appBuilder.Logging.AddOpenTelemetry(options =>
 {
     // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
@@ -143,17 +147,14 @@ appBuilder.Logging.AddOpenTelemetry(options =>
     }
 });
 
-// Add services to the container.
 appBuilder.Services.AddControllers();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 appBuilder.Services.AddEndpointsApiExplorer();
 
 appBuilder.Services.AddSwaggerGen();
 
 var app = appBuilder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -166,6 +167,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Configure OpenTelemetry Prometheus AspNetCore middleware scrape endpoint if enabled.
 if (metricsExporter.Equals("prometheus", StringComparison.OrdinalIgnoreCase))
 {
     app.UseOpenTelemetryPrometheusScrapingEndpoint();
