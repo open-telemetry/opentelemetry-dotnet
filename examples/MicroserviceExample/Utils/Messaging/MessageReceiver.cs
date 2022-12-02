@@ -98,7 +98,7 @@ namespace Utils.Messaging
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Failed to extract trace context: {ex}");
+                this.logger.LogError(ex, "Failed to extract trace context.");
             }
 
             return Enumerable.Empty<string>();
