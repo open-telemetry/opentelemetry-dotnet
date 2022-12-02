@@ -84,13 +84,13 @@ generated `HttpClient`:
 
 ```csharp
 services.AddOpenTelemetry()
-    .WithTracing((builder) => builder
+    .WithTracing(builder => builder
         .AddZipkinExporter(o => o.HttpClientFactory = () =>
         {
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
             return client;
-        }));
+        }))
     .StartWithHost();
 ```
 

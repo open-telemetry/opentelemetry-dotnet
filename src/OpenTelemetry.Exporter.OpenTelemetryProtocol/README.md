@@ -128,7 +128,7 @@ function with your own implementation if you want to customize the generated
 
 ```csharp
 services.AddOpenTelemetry()
-    .WithTracing((builder) => builder
+    .WithTracing(builder => builder
         .AddOtlpExporter(o =>
         {
             o.Protocol = OtlpExportProtocol.HttpProtobuf;
@@ -138,7 +138,7 @@ services.AddOpenTelemetry()
                 client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
                 return client;
             };
-        }));
+        }))
     .StartWithHost();
 ```
 

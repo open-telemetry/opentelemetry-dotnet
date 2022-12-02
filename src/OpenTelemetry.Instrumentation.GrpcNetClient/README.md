@@ -110,7 +110,7 @@ following code snippet shows how to add additional tags using these options.
 ```csharp
 services.AddOpenTelemetry()
     .WithTracing(builder => builder
-        .AddGrpcClientInstrumentation((options) =>
+        .AddGrpcClientInstrumentation(options =>
         {
             options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
             {
