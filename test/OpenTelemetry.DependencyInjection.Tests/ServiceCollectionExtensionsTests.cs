@@ -42,11 +42,9 @@ public class ServiceCollectionExtensionsTests
 
         var registrations = serviceProvider.GetServices<IConfigureTracerProviderBuilder>();
 
-        var builder = new NoopTracerProviderBuilder();
-
         foreach (var registration in registrations)
         {
-            registration.ConfigureBuilder(serviceProvider, builder);
+            registration.ConfigureBuilder(serviceProvider, null!);
         }
 
         Assert.Equal(invocations, registrations.Count());
@@ -72,35 +70,12 @@ public class ServiceCollectionExtensionsTests
 
         var registrations = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
 
-        var builder = new NoopMeterProviderBuilder();
-
         foreach (var registration in registrations)
         {
-            registration.ConfigureBuilder(serviceProvider, builder);
+            registration.ConfigureBuilder(serviceProvider, null!);
         }
 
         Assert.Equal(invocations, registrations.Count());
         Assert.Equal(numberOfCalls, registrations.Count());
-    }
-
-    private sealed class NoopTracerProviderBuilder : TracerProviderBuilder
-    {
-        public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-            => throw new NotImplementedException();
-
-        public override TracerProviderBuilder AddLegacySource(string operationName)
-            => throw new NotImplementedException();
-
-        public override TracerProviderBuilder AddSource(params string[] names)
-            => throw new NotImplementedException();
-    }
-
-    private sealed class NoopMeterProviderBuilder : MeterProviderBuilder
-    {
-        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-            => throw new NotImplementedException();
-
-        public override MeterProviderBuilder AddMeter(params string[] names)
-            => throw new NotImplementedException();
     }
 }
