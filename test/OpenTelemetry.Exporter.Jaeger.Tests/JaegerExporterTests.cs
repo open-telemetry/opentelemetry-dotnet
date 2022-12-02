@@ -124,8 +124,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             services.AddHttpClient("JaegerExporter", configureClient: (client) => invocations++);
 
-            services.AddOpenTelemetryTracing(builder => builder.AddJaegerExporter(
-                o => o.Protocol = JaegerExportProtocol.HttpBinaryThrift));
+            services.AddOpenTelemetry().WithTracing(builder => builder
+                .AddJaegerExporter(o => o.Protocol = JaegerExportProtocol.HttpBinaryThrift));
 
             using var serviceProvider = services.BuildServiceProvider();
 
