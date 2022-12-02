@@ -26,25 +26,106 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Contains methods for building <see cref="MeterProvider"/> instances.
 /// </summary>
-public class MeterProviderBuilderBase : DeferredMeterProviderBuilder
+public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuilder
 {
+    private readonly bool allowBuild;
+    private IServiceCollection? services;
+
     public MeterProviderBuilderBase()
-        : base(new ServiceCollection())
     {
-        this.ConfigureServices(services => services
+        var services = new ServiceCollection();
+
+        services
             .AddOpenTelemetryMeterProviderBuilderServices()
             .TryAddSingleton<MeterProvider>(
-                sp => throw new NotSupportedException("Self-contained MeterProvider cannot be accessed using the application IServiceProvider call Build instead.")));
+                sp => throw new NotSupportedException("Self-contained MeterProvider cannot be accessed using the application IServiceProvider call Build instead."));
+
+        services.ConfigureOpenTelemetryMeterProvider((sp, builder) => this.services = null);
+
+        this.services = services;
+
+        this.allowBuild = true;
     }
 
-    internal static void RegisterMeterProvider(IServiceCollection services)
+    internal MeterProviderBuilderBase(IServiceCollection services)
     {
         Guard.ThrowIfNull(services);
 
         services
             .AddOpenTelemetryMeterProviderBuilderServices()
             .TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+
+        services.ConfigureOpenTelemetryMeterProvider((sp, builder) => this.services = null);
+
+        this.services = services;
+
+        this.allowBuild = false;
     }
+
+    /// <inheritdoc />
+    MeterProvider? IMeterProviderBuilder.Provider => null;
+
+    /// <inheritdoc />
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    {
+        Guard.ThrowIfNull(instrumentationFactory);
+
+        this.ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddInstrumentation(instrumentationFactory);
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public override MeterProviderBuilder AddMeter(params string[] names)
+    {
+        Guard.ThrowIfNull(names);
+
+        this.ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddMeter(names);
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
+    {
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during MeterProvider construction.");
+        }
+
+        services.ConfigureOpenTelemetryMeterProvider(configure);
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Services cannot be configured during MeterProvider construction.");
+        }
+
+        configure(services);
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
+        => this.ConfigureBuilder(configure);
 
     internal MeterProvider InvokeBuild()
         => this.Build();
@@ -55,28 +136,26 @@ public class MeterProviderBuilderBase : DeferredMeterProviderBuilder
     /// <returns><see cref="MeterProvider"/>.</returns>
     protected MeterProvider Build()
     {
-        ServiceProvider? serviceProvider = null;
-        try
+        if (!this.allowBuild)
         {
-            this.ConfigureServices(services =>
-            {
-#if DEBUG
-                bool validateScopes = true;
-#else
-                bool validateScopes = false;
-#endif
-                serviceProvider = services.BuildServiceProvider(validateScopes);
-            });
+            throw new NotSupportedException("A MeterProviderBuilder bound to external service cannot be built directly. Access the MeterProvider using the application IServiceProvider instead.");
         }
-        catch (NotSupportedException)
+
+        var services = this.services;
+
+        if (services == null)
         {
             throw new NotSupportedException("MeterProviderBuilder build method cannot be called multiple times.");
         }
 
-        if (serviceProvider == null)
-        {
-            throw new InvalidOperationException("ServiceProvider could not be created for ServiceCollection.");
-        }
+        this.services = null;
+
+#if DEBUG
+        bool validateScopes = true;
+#else
+        bool validateScopes = false;
+#endif
+        var serviceProvider = services.BuildServiceProvider(validateScopes);
 
         return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
     }

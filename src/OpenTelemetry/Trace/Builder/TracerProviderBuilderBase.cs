@@ -26,25 +26,119 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Contains methods for building <see cref="TracerProvider"/> instances.
 /// </summary>
-public class TracerProviderBuilderBase : DeferredTracerProviderBuilder
+public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderBuilder
 {
+    private readonly bool allowBuild;
+    private IServiceCollection? services;
+
     public TracerProviderBuilderBase()
-        : base(new ServiceCollection())
     {
-        this.ConfigureServices(services => services
+        var services = new ServiceCollection();
+
+        services
             .AddOpenTelemetryTracerProviderBuilderServices()
             .TryAddSingleton<TracerProvider>(
-                sp => throw new NotSupportedException("Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead.")));
+                sp => throw new NotSupportedException("Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead."));
+
+        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => this.services = null);
+
+        this.services = services;
+
+        this.allowBuild = true;
     }
 
-    internal static void RegisterTracerProvider(IServiceCollection services)
+    internal TracerProviderBuilderBase(IServiceCollection services)
     {
         Guard.ThrowIfNull(services);
 
         services
-            .AddOpenTelemetryTracerProviderBuilderServices()
+            .AddOpenTelemetryMeterProviderBuilderServices()
             .TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+
+        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => this.services = null);
+
+        this.services = services;
+
+        this.allowBuild = false;
     }
+
+    /// <inheritdoc />
+    TracerProvider? ITracerProviderBuilder.Provider => null;
+
+    /// <inheritdoc />
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    {
+        Guard.ThrowIfNull(instrumentationFactory);
+
+        this.ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddInstrumentation(instrumentationFactory);
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public override TracerProviderBuilder AddSource(params string[] names)
+    {
+        Guard.ThrowIfNull(names);
+
+        this.ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddSource(names);
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public override TracerProviderBuilder AddLegacySource(string operationName)
+    {
+        Guard.ThrowIfNullOrWhitespace(operationName);
+
+        this.ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddLegacySource(operationName);
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
+    {
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during TracerProvider construction.");
+        }
+
+        services.ConfigureOpenTelemetryTracerProvider(configure);
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Services cannot be configured during TracerProvider construction.");
+        }
+
+        configure(services);
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
+        => this.ConfigureBuilder(configure);
 
     internal TracerProvider InvokeBuild()
         => this.Build();
@@ -83,28 +177,26 @@ public class TracerProviderBuilderBase : DeferredTracerProviderBuilder
     /// <returns><see cref="TracerProvider"/>.</returns>
     protected TracerProvider Build()
     {
-        ServiceProvider? serviceProvider = null;
-        try
+        if (!this.allowBuild)
         {
-            this.ConfigureServices(services =>
-            {
-#if DEBUG
-                bool validateScopes = true;
-#else
-                bool validateScopes = false;
-#endif
-                serviceProvider = services.BuildServiceProvider(validateScopes);
-            });
+            throw new NotSupportedException("A TracerProviderBuilder bound to external service cannot be built directly. Access the TracerProvider using the application IServiceProvider instead.");
         }
-        catch (NotSupportedException)
+
+        var services = this.services;
+
+        if (services == null)
         {
             throw new NotSupportedException("TracerProviderBuilder build method cannot be called multiple times.");
         }
 
-        if (serviceProvider == null)
-        {
-            throw new InvalidOperationException("ServiceProvider could not be created for ServiceCollection.");
-        }
+        this.services = null;
+
+#if DEBUG
+        bool validateScopes = true;
+#else
+        bool validateScopes = false;
+#endif
+        var serviceProvider = services.BuildServiceProvider(validateScopes);
 
         return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
     }

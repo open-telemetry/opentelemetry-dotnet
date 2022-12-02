@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace OpenTelemetry.Trace;
 
 /// <summary>
 /// Extension methods for setting up OpenTelemetry tracing services in an <see cref="IServiceCollection" />.
@@ -26,8 +26,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions
 {
     /// <summary>
-    /// Configures OpenTelemetry tracing services in the supplied <see
-    /// cref="IServiceCollection" />.
+    /// Registers an action used to configure the OpenTelemetry <see
+    /// cref="TracerProviderBuilder"/> used to create the <see
+    /// cref="TracerProvider"/> for the <see cref="IServiceCollection"/> being
+    /// configured.
     /// </summary>
     /// <remarks>
     /// Notes:
@@ -36,38 +38,47 @@ public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExte
     /// Only a single <see cref="TracerProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.</item>
     /// <item>A <see cref="TracerProvider"/> will not be created automatically
-    /// using this method. To begin collecting traces either use the
-    /// <c>IServiceCollection.AddOpenTelemetryTracing</c> extension in the
-    /// <c>OpenTelemetry.Extensions.Hosting</c> package or use the
-    /// <c>IServiceCollection.AddOpenTelemetryTracerProvider</c> extension in
-    /// the <c>OpenTelemetry</c> package and access the <see
-    /// cref="TracerProvider"/> through the application <see
-    /// cref="IServiceProvider"/>.</item>
+    /// using this method. To begin collecting traces TBD.</item>
     /// </list>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add
     /// services to.</param>
+    /// <param name="configure">Callback action to configure the <see
+    /// cref="TracerProviderBuilder"/>.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls
     /// can be chained.</returns>
-    public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services)
-        => ConfigureOpenTelemetryTracing(services, (b) => { });
+    public static IServiceCollection ConfigureOpenTelemetryTracerProvider(
+        this IServiceCollection services,
+        Action<IServiceProvider, TracerProviderBuilder> configure)
+    {
+        RegisterBuildAction(services, configure);
 
-    /// <summary>
-    /// Configures OpenTelemetry tracing services in the supplied <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <remarks><inheritdoc cref="ConfigureOpenTelemetryTracing(IServiceCollection)" path="/remarks"/></remarks>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
-    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
+        return services;
+    }
+
+    private static void RegisterBuildAction(IServiceCollection services, Action<IServiceProvider, TracerProviderBuilder> configure)
     {
         Guard.ThrowIfNull(services);
         Guard.ThrowIfNull(configure);
 
-        var builder = new DeferredTracerProviderBuilder(services);
+        services.AddSingleton<IConfigureTracerProviderBuilder>(
+            new ConfigureTracerProviderBuilderCallbackWrapper(configure));
+    }
 
-        configure(builder);
+    private sealed class ConfigureTracerProviderBuilderCallbackWrapper : IConfigureTracerProviderBuilder
+    {
+        private readonly Action<IServiceProvider, TracerProviderBuilder> configure;
 
-        return services;
+        public ConfigureTracerProviderBuilderCallbackWrapper(Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            this.configure = configure;
+        }
+
+        public void ConfigureBuilder(IServiceProvider serviceProvider, TracerProviderBuilder tracerProviderBuilder)
+        {
+            this.configure(serviceProvider, tracerProviderBuilder);
+        }
     }
 }

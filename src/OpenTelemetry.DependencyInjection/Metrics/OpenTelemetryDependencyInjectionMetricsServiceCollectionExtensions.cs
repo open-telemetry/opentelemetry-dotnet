@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace OpenTelemetry.Metrics;
 
 /// <summary>
 /// Extension methods for setting up OpenTelemetry Metrics services in an <see cref="IServiceCollection" />.
@@ -26,8 +26,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions
 {
     /// <summary>
-    /// Configures OpenTelemetry Metrics services in the supplied <see
-    /// cref="IServiceCollection" />.
+    /// Registers an action used to configure the OpenTelemetry <see
+    /// cref="MeterProviderBuilder"/> used to create the <see
+    /// cref="MeterProvider"/> for the <see cref="IServiceCollection"/> being
+    /// configured.
     /// </summary>
     /// <remarks>
     /// Notes:
@@ -36,37 +38,47 @@ public static class OpenTelemetryDependencyInjectionMetricsServiceCollectionExte
     /// Only a single <see cref="MeterProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.</item>
     /// <item>A <see cref="MeterProvider"/> will not be created automatically
-    /// using this method. To begin collecting metrics either use the
-    /// <c>IServiceCollection.AddOpenTelemetryMetrics</c> extension in the
-    /// <c>OpenTelemetry.Extensions.Hosting</c> package or use the
-    /// <c>IServiceCollection.AddOpenTelemetryMeterProvider</c> extension in the
-    /// <c>OpenTelemetry</c> package and access the <see cref="MeterProvider"/>
-    /// through the application <see cref="IServiceProvider"/>.</item>
+    /// using this method. To begin collecting metrics TBD.</item>
     /// </list>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add
     /// services to.</param>
+    /// <param name="configure">Callback action to configure the <see
+    /// cref="MeterProviderBuilder"/>.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls
     /// can be chained.</returns>
-    public static IServiceCollection ConfigureOpenTelemetryMetrics(this IServiceCollection services)
-        => ConfigureOpenTelemetryMetrics(services, (b) => { });
+    public static IServiceCollection ConfigureOpenTelemetryMeterProvider(
+        this IServiceCollection services,
+        Action<IServiceProvider, MeterProviderBuilder> configure)
+    {
+        RegisterBuildAction(services, configure);
 
-    /// <summary>
-    /// Configures OpenTelemetry Metrics services in the supplied <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <remarks><inheritdoc cref="ConfigureOpenTelemetryMetrics(IServiceCollection)" path="/remarks"/></remarks>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="configure">Callback action to configure the <see cref="MeterProviderBuilder"/>.</param>
-    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection ConfigureOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
+        return services;
+    }
+
+    private static void RegisterBuildAction(IServiceCollection services, Action<IServiceProvider, MeterProviderBuilder> configure)
     {
         Guard.ThrowIfNull(services);
         Guard.ThrowIfNull(configure);
 
-        var builder = new DeferredMeterProviderBuilder(services);
+        services.AddSingleton<IConfigureMeterProviderBuilder>(
+            new ConfigureMeterProviderBuilderCallbackWrapper(configure));
+    }
 
-        configure(builder);
+    private sealed class ConfigureMeterProviderBuilderCallbackWrapper : IConfigureMeterProviderBuilder
+    {
+        private readonly Action<IServiceProvider, MeterProviderBuilder> configure;
 
-        return services;
+        public ConfigureMeterProviderBuilderCallbackWrapper(Action<IServiceProvider, MeterProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            this.configure = configure;
+        }
+
+        public void ConfigureBuilder(IServiceProvider serviceProvider, MeterProviderBuilder meterProviderBuilder)
+        {
+            this.configure(serviceProvider, meterProviderBuilder);
+        }
     }
 }

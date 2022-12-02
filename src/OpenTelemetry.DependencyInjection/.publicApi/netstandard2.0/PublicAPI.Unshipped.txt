@@ -1,9 +1,3 @@
-Microsoft.Extensions.DependencyInjection.OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions
-Microsoft.Extensions.DependencyInjection.OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions
-OpenTelemetry.Metrics.DeferredMeterProviderBuilder
-OpenTelemetry.Metrics.DeferredMeterProviderBuilder.ConfigureBuilder(System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-OpenTelemetry.Metrics.DeferredMeterProviderBuilder.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-OpenTelemetry.Metrics.DeferredMeterProviderBuilder.DeferredMeterProviderBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> void
 OpenTelemetry.Metrics.IConfigureMeterProviderBuilder
 OpenTelemetry.Metrics.IConfigureMeterProviderBuilder.ConfigureBuilder(System.IServiceProvider! serviceProvider, OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> void
 OpenTelemetry.Metrics.IMeterProviderBuilder
@@ -11,10 +5,7 @@ OpenTelemetry.Metrics.IMeterProviderBuilder.ConfigureBuilder(System.Action<Syste
 OpenTelemetry.Metrics.IMeterProviderBuilder.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Metrics.IMeterProviderBuilder.Provider.get -> OpenTelemetry.Metrics.MeterProvider?
 OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions
-OpenTelemetry.Trace.DeferredTracerProviderBuilder
-OpenTelemetry.Trace.DeferredTracerProviderBuilder.ConfigureBuilder(System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
-OpenTelemetry.Trace.DeferredTracerProviderBuilder.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
-OpenTelemetry.Trace.DeferredTracerProviderBuilder.DeferredTracerProviderBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> void
+OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions
 OpenTelemetry.Trace.IConfigureTracerProviderBuilder
 OpenTelemetry.Trace.IConfigureTracerProviderBuilder.ConfigureBuilder(System.IServiceProvider! serviceProvider, OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> void
 OpenTelemetry.Trace.ITracerProviderBuilder
@@ -22,24 +13,18 @@ OpenTelemetry.Trace.ITracerProviderBuilder.ConfigureBuilder(System.Action<System
 OpenTelemetry.Trace.ITracerProviderBuilder.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Trace.ITracerProviderBuilder.Provider.get -> OpenTelemetry.Trace.TracerProvider?
 OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions
-override OpenTelemetry.Metrics.DeferredMeterProviderBuilder.AddMeter(params string![]! names) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-override OpenTelemetry.Trace.DeferredTracerProviderBuilder.AddLegacySource(string! operationName) -> OpenTelemetry.Trace.TracerProviderBuilder!
-override OpenTelemetry.Trace.DeferredTracerProviderBuilder.AddSource(params string![]! names) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions.ConfigureOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions.ConfigureOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions.ConfigureOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions
 static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProvider!, T!>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.IServiceProvider!, T!>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, T! instrumentation) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.ConfigureBuilder(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.ConfigureServices(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Metrics.OpenTelemetryDependencyInjectionMetricsServiceCollectionExtensions.ConfigureOpenTelemetryMeterProvider(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.TracerProvider!, T!>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, T!>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, T! instrumentation) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.ConfigureBuilder(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.ConfigureServices(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
-~override OpenTelemetry.Metrics.DeferredMeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-~override OpenTelemetry.Trace.DeferredTracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.OpenTelemetryDependencyInjectionTracingServiceCollectionExtensions.ConfigureOpenTelemetryTracerProvider(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1,4 +1,3 @@
-Microsoft.Extensions.DependencyInjection.OpenTelemetryServiceCollectionExtensions
 OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
 OpenTelemetry.Logs.LogRecord.EventId.set -> void
 OpenTelemetry.Logs.LogRecord.Exception.set -> void
@@ -13,10 +12,19 @@ OpenTelemetry.Metrics.HistogramConfiguration
 OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
 OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.get -> bool
 OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.set -> void
+OpenTelemetry.Metrics.MeterProviderBuilderBase.ConfigureBuilder(System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+OpenTelemetry.Metrics.MeterProviderBuilderBase.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Metrics.MetricPoint.TryGetHistogramMinMaxValues(out double min, out double max) -> bool
+OpenTelemetry.OpenTelemetryBuilder
+OpenTelemetry.OpenTelemetryBuilder.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
+OpenTelemetry.OpenTelemetryBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>? configure = null) -> OpenTelemetry.OpenTelemetryBuilder!
+OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>? configure = null) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider?, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetryMeterProvider(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetryTracerProvider(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+OpenTelemetry.Trace.TracerProviderBuilderBase.ConfigureBuilder(System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.Trace.TracerProviderBuilderBase.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.OpenTelemetryServiceCollectionExtensions
+static OpenTelemetry.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> OpenTelemetry.OpenTelemetryBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string?
 OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string! traceStateString) -> void
@@ -30,8 +38,3 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(th
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSumNonMonotonic = 141 -> OpenTelemetry.Metrics.MetricType
-*REMOVED*~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-*REMOVED*override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string![]! names) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-*REMOVED*~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
-*REMOVED*override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string! operationName) -> OpenTelemetry.Trace.TracerProviderBuilder!
-*REMOVED*override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string![]! names) -> OpenTelemetry.Trace.TracerProviderBuilder!
