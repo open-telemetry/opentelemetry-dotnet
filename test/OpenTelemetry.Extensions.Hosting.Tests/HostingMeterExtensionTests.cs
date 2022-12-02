@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -28,20 +27,20 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
     public class HostingMeterExtensionTests
     {
         [Fact]
-        public async Task AddOpenTelemetryMeterProviderInstrumentationCreationAndDisposal()
+        public async Task AddOpenTelemetry_StartWithHost_CreationAndDisposal()
         {
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetryMetrics(builder =>
-                {
-                    builder.AddInstrumentation(() =>
-                    {
-                        callbackRun = true;
-                        return new object();
-                    });
-                });
+                services.AddOpenTelemetry()
+                    .WithMetrics(builder => builder
+                        .AddInstrumentation(() =>
+                        {
+                            callbackRun = true;
+                            return new object();
+                        }))
+                    .StartWithHost();
             });
 
             var host = builder.Build();
@@ -62,49 +61,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public void AddOpenTelemetryMeterProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
-        {
-            var builder = new HostBuilder().ConfigureServices(services =>
-            {
-                services.AddOpenTelemetryMetrics();
-            });
-
-            var host = builder.Build();
-
-            var meterProvider1 = host.Services.GetRequiredService<MeterProvider>();
-            var meterProvider2 = host.Services.GetRequiredService<MeterProvider>();
-
-            Assert.Same(meterProvider1, meterProvider2);
-        }
-
-        [Fact]
-        public void AddOpenTelemetryMeterProvider_BadArgs_NullServiceCollection()
-        {
-            ServiceCollection services = null;
-            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryMetrics(null));
-
-            services = new();
-            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryMetrics(null));
-        }
-
-        [Fact]
-        public void AddOpenTelemetryMetrics_MultipleCallsConfigureSingleProvider()
-        {
-            var services = new ServiceCollection();
-
-            services.AddOpenTelemetryMetrics(builder => builder.AddMeter("TestSourceBuilder1"));
-            services.AddOpenTelemetryMetrics();
-            services.AddOpenTelemetryMetrics(builder => builder.AddMeter("TestSourceBuilder2"));
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var providers = serviceProvider.GetServices<MeterProvider>();
-
-            Assert.Single(providers);
-        }
-
-        [Fact]
-        public async Task AddOpenTelemetryMetrics_HostConfigurationHonoredTest()
+        public async Task AddOpenTelemetry_StartWithHost_HostConfigurationHonoredTest()
         {
             bool configureBuilderCalled = false;
 
@@ -118,19 +75,19 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddOpenTelemetryMetrics(builder =>
-                    {
-                        builder.ConfigureBuilder((sp, builder) =>
-                        {
-                            configureBuilderCalled = true;
+                    services.AddOpenTelemetry()
+                        .WithMetrics(builder => builder
+                            .ConfigureBuilder((sp, builder) =>
+                            {
+                                configureBuilderCalled = true;
 
-                            var configuration = sp.GetRequiredService<IConfiguration>();
+                                var configuration = sp.GetRequiredService<IConfiguration>();
 
-                            var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
 
-                            Assert.Equal("TEST_KEY_VALUE", testKeyValue);
-                        });
-                    });
+                                Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                            }))
+                        .StartWithHost();
                 });
 
             var host = builder.Build();
