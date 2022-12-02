@@ -30,10 +30,11 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Stores state used to build a <see cref="MeterProvider"/>.
     /// </summary>
-    internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IProviderBuilder<MeterProvider, MeterProviderBuilder>, IDeferredMeterProviderBuilder
+    internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProviderBuilder
     {
         public const int MaxMetricsDefault = 1000;
         public const int MaxMetricPointsPerMetricDefault = 2000;
+        private const string DefaultInstrumentationVersion = "1.0.0.0";
 
         private static readonly Regex InstrumentNameRegex = new(
             @"^[a-z][a-z0-9-._]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -114,8 +115,8 @@ namespace OpenTelemetry.Metrics
 
             return this.AddInstrumentation(
                 typeof(TInstrumentation).Name,
-                "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                instrumentationFactory());
+                typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
+                instrumentationFactory!());
         }
 
         public MeterProviderBuilder AddInstrumentation(
@@ -206,7 +207,7 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(configure != null, "configure was null");
 
-            configure(this.serviceProvider, this);
+            configure!(this.serviceProvider, this);
 
             return this;
         }

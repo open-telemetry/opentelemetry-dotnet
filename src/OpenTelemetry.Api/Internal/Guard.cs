@@ -14,11 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#pragma warning disable IDE0005 // Using directive is unnecessary. Note: Projects using implicit usings warn on System & System.Threading
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
+#pragma warning restore IDE0005 // Using directive is unnecessary.
 
 #if !NET6_0_OR_GREATER
 namespace System.Runtime.CompilerServices

@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -40,7 +41,7 @@ namespace WebApi
 
             services.AddSingleton<MessageSender>();
 
-            services.AddOpenTelemetryTracing((builder) => builder
+            services.AddOpenTelemetry().WithTracing((builder) => builder
                 .AddAspNetCoreInstrumentation()
                 .AddSource(nameof(MessageSender))
                 .AddZipkinExporter(b =>

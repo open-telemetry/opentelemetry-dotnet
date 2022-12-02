@@ -28,8 +28,10 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Stores state used to build a <see cref="TracerProvider"/>.
     /// </summary>
-    internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, IProviderBuilder<TracerProvider, TracerProviderBuilder>, IDeferredTracerProviderBuilder
+    internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerProviderBuilder
     {
+        private const string DefaultInstrumentationVersion = "1.0.0.0";
+
         private readonly IServiceProvider serviceProvider;
         private TracerProviderSdk? tracerProvider;
 
@@ -73,8 +75,8 @@ namespace OpenTelemetry.Trace
 
             return this.AddInstrumentation(
                 typeof(TInstrumentation).Name,
-                "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                instrumentationFactory());
+                typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
+                instrumentationFactory!());
         }
 
         public TracerProviderBuilder AddInstrumentation(
@@ -169,7 +171,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(configure != null, "configure was null");
 
-            configure(this.serviceProvider, this);
+            configure!(this.serviceProvider, this);
 
             return this;
         }

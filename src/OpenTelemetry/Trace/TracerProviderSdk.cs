@@ -48,7 +48,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-            var state = serviceProvider.GetRequiredService<TracerProviderBuilderSdk>();
+            var state = serviceProvider!.GetRequiredService<TracerProviderBuilderSdk>();
             state.RegisterProvider(this);
 
             this.ServiceProvider = serviceProvider!;
@@ -61,10 +61,10 @@ namespace OpenTelemetry.Trace
 
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-            var configureProviderBuilders = serviceProvider.GetServices<IConfigureProviderBuilder<TracerProvider, TracerProviderBuilder>>();
+            var configureProviderBuilders = serviceProvider!.GetServices<IConfigureTracerProviderBuilder>();
             foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
             }
 
             StringBuilder processorsAdded = new StringBuilder();

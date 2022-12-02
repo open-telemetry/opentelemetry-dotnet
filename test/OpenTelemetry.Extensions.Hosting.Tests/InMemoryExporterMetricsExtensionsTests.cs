@@ -89,7 +89,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             using var host = await new HostBuilder()
                .ConfigureWebHost(webBuilder => webBuilder
                    .UseTestServer()
-                   .ConfigureServices(services => services.AddOpenTelemetryMetrics(configure))
+                   .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure).StartWithHost())
                    .Configure(app => app.Run(httpContext =>
                    {
                        testAction.Invoke();

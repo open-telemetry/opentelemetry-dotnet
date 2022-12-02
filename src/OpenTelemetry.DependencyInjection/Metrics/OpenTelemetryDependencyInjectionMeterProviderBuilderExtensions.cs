@@ -1,4 +1,4 @@
-// <copyright file="MeterProviderBuilderDependencyInjectionExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -24,7 +23,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Contains extension methods for the <see cref="MeterProviderBuilder"/> class.
 /// </summary>
-public static class MeterProviderBuilderDependencyInjectionExtensions
+public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions
 {
     /// <summary>
     /// Adds instrumentation to the provider.
@@ -49,6 +48,13 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         return meterProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentation">Instrumentation instance.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder, T instrumentation)
         where T : class
     {
@@ -62,6 +68,13 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         return meterProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<T>(
         this MeterProviderBuilder meterProviderBuilder,
         Func<IServiceProvider, T> instrumentationFactory)
@@ -77,6 +90,13 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         return meterProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<T>(
         this MeterProviderBuilder meterProviderBuilder,
         Func<IServiceProvider, MeterProvider, T> instrumentationFactory)
@@ -86,10 +106,10 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
 
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (builder is IProviderBuilder<MeterProvider, MeterProviderBuilder> providerBuilder
-                && providerBuilder.Provider != null)
+            if (builder is IMeterProviderBuilder iMeterProviderBuilder
+                && iMeterProviderBuilder.Provider != null)
             {
-                builder.AddInstrumentation(() => instrumentationFactory(sp, providerBuilder.Provider));
+                builder.AddInstrumentation(() => instrumentationFactory(sp, iMeterProviderBuilder.Provider));
             }
         });
 
@@ -111,9 +131,9 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         this MeterProviderBuilder meterProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (meterProviderBuilder is IProviderBuilder<MeterProvider, MeterProviderBuilder> providerBuilder)
+        if (meterProviderBuilder is IMeterProviderBuilder iMeterProviderBuilder)
         {
-            providerBuilder.ConfigureServices(configure);
+            iMeterProviderBuilder.ConfigureServices(configure);
         }
 
         return meterProviderBuilder;
@@ -131,11 +151,7 @@ public static class MeterProviderBuilderDependencyInjectionExtensions
         this MeterProviderBuilder meterProviderBuilder,
         Action<IServiceProvider, MeterProviderBuilder> configure)
     {
-        if (meterProviderBuilder is IProviderBuilder<MeterProvider, MeterProviderBuilder> providerBuilder)
-        {
-            providerBuilder.ConfigureBuilder(configure);
-        }
-        else if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+        if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
         {
             deferredMeterProviderBuilder.Configure(configure);
         }

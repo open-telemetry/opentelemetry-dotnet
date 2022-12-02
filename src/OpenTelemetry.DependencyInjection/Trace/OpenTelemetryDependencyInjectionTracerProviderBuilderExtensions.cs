@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilderDependencyInjectionExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -24,7 +23,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Contains extension methods for the <see cref="TracerProviderBuilder"/> class.
 /// </summary>
-public static class TracerProviderBuilderDependencyInjectionExtensions
+public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions
 {
     /// <summary>
     /// Adds instrumentation to the provider.
@@ -49,6 +48,13 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         return tracerProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="instrumentation">Instrumentation instance.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder, T instrumentation)
         where T : class
     {
@@ -62,6 +68,13 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         return tracerProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<T>(
         this TracerProviderBuilder tracerProviderBuilder,
         Func<IServiceProvider, T> instrumentationFactory)
@@ -77,6 +90,13 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         return tracerProviderBuilder;
     }
 
+    /// <summary>
+    /// Adds instrumentation to the provider.
+    /// </summary>
+    /// <typeparam name="T">Instrumentation type.</typeparam>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="instrumentationFactory">Instrumentation factory.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<T>(
         this TracerProviderBuilder tracerProviderBuilder,
         Func<IServiceProvider, TracerProvider, T> instrumentationFactory)
@@ -86,10 +106,10 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
 
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (builder is IProviderBuilder<TracerProvider, TracerProviderBuilder> providerBuilder
-                && providerBuilder.Provider != null)
+            if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder
+                && iTracerProviderBuilder.Provider != null)
             {
-                builder.AddInstrumentation(() => instrumentationFactory(sp, providerBuilder.Provider));
+                builder.AddInstrumentation(() => instrumentationFactory(sp, iTracerProviderBuilder.Provider));
             }
         });
 
@@ -111,9 +131,9 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         this TracerProviderBuilder tracerProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (tracerProviderBuilder is IProviderBuilder<TracerProvider, TracerProviderBuilder> providerBuilder)
+        if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder)
         {
-            providerBuilder.ConfigureServices(configure);
+            iTracerProviderBuilder.ConfigureServices(configure);
         }
 
         return tracerProviderBuilder;
@@ -131,11 +151,7 @@ public static class TracerProviderBuilderDependencyInjectionExtensions
         this TracerProviderBuilder tracerProviderBuilder,
         Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        if (tracerProviderBuilder is IProviderBuilder<TracerProvider, TracerProviderBuilder> providerBuilder)
-        {
-            providerBuilder.ConfigureBuilder(configure);
-        }
-        else if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+        if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
         {
             deferredTracerProviderBuilder.Configure(configure);
         }
