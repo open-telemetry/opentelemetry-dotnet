@@ -8,6 +8,7 @@
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <Nullable>enable</Nullable>
     <AnalysisLevel>latest-all</AnalysisLevel>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
