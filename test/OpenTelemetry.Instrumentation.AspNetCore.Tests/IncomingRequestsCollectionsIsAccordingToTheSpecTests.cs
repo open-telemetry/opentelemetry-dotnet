@@ -64,8 +64,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
-                        .AddInMemoryExporter(exportedItems));
+                        services.AddOpenTelemetry().WithTracing(builder => builder
+                            .AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
+                            .AddInMemoryExporter(exportedItems));
                     });
                     builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
                 })
