@@ -31,6 +31,9 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     private readonly bool allowBuild;
     private IServiceCollection? services;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TracerProviderBuilderBase"/> class.
+    /// </summary>
     public TracerProviderBuilderBase()
     {
         var services = new ServiceCollection();

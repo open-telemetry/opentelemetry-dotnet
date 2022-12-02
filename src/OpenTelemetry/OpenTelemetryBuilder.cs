@@ -47,6 +47,10 @@ public class OpenTelemetryBuilder
     /// Registers an action to configure the <see cref="ResourceBuilder"/>s used
     /// by tracing and metrics.
     /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Each registered configuration action will be applied sequentially.
+    /// </remarks>
     /// <param name="configure"><see cref="ResourceBuilder"/> configuration
     /// action.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
@@ -68,6 +72,11 @@ public class OpenTelemetryBuilder
     /// <summary>
     /// Adds metric services into the builder.
     /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="MeterProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
     /// <param name="configure">Optional <see cref="MeterProviderBuilder"/>
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
@@ -84,6 +93,11 @@ public class OpenTelemetryBuilder
     /// <summary>
     /// Adds tracing services into the builder.
     /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="TracerProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
     /// <param name="configure">Optional <see cref="TracerProviderBuilder"/>
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining

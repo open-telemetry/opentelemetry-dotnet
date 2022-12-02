@@ -34,9 +34,10 @@ public static class OpenTelemetryBuilderHostingExtensions
     /// cref="IServiceCollection" />.
     /// </summary>
     /// <remarks>
-    /// This is safe to be called multiple times. Only a single <see
+    /// Note: This is safe to be called multiple times. Only a single <see
     /// cref="IHostedService"/> will be created for a given <see
-    /// cref="IServiceCollection"/>.
+    /// cref="IServiceCollection"/>. This should generally be called by hosting
+    /// application code and NOT library authors.
     /// </remarks>
     /// <param name="builder"><see cref="OpenTelemetryBuilder"/>.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining

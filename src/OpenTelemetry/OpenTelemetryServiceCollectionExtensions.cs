@@ -16,7 +16,10 @@
 
 #nullable enable
 
+using System;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry;
 
@@ -25,6 +28,29 @@ namespace OpenTelemetry;
 /// </summary>
 public static class OpenTelemetryServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds OpenTelemetry SDK services into the supplied <see
+    /// cref="IServiceCollection"/>.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>A <see cref="TracerProvider"/> and/or <see cref="MeterProvider"/>
+    /// will not be created automatically using this method. Either use the
+    /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
+    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
+    /// cref="TracerProvider"/> and/or <see cref="MeterProvider"/> through the
+    /// application <see cref="IServiceProvider"/> to begin collecting traces
+    /// and/or metrics.</item>
+    /// <item>This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="TracerProvider"/> and/or <see
+    /// cref="MeterProvider"/> will be created for a given <see
+    /// cref="IServiceCollection"/>.</item>
+    /// </list>
+    /// </remarks>
+    /// <param name="services"><see cref="IServiceCollection"/>.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
     public static OpenTelemetryBuilder AddOpenTelemetry(this IServiceCollection services)
         => new(services);
 }
