@@ -7,6 +7,9 @@
 
     <NoWarn>$(NoWarn),CS0618</NoWarn>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

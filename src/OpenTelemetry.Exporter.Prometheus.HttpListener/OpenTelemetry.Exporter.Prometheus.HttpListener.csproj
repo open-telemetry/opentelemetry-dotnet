@@ -6,6 +6,9 @@
     <Description>Stand-alone HttpListener for hosting OpenTelemetry .NET Prometheus Exporter</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <!--Do not run ApiCompat as this package has never released a stable version.
