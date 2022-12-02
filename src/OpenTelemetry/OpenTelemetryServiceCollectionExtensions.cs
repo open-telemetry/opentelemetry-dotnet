@@ -36,12 +36,12 @@ public static class OpenTelemetryServiceCollectionExtensions
     /// Notes:
     /// <list type="bullet">
     /// <item>A <see cref="TracerProvider"/> and/or <see cref="MeterProvider"/>
-    /// will not be created automatically using this method. Either use the
+    /// will not be created automatically using this method. To begin collecting
+    /// traces and/or metrics either use the
     /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
     /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
     /// cref="TracerProvider"/> and/or <see cref="MeterProvider"/> through the
-    /// application <see cref="IServiceProvider"/> to begin collecting traces
-    /// and/or metrics.</item>
+    /// application <see cref="IServiceProvider"/>.</item>
     /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> and/or <see
     /// cref="MeterProvider"/> will be created for a given <see

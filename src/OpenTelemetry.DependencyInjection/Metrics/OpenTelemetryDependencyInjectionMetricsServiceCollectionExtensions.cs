@@ -35,10 +35,12 @@ public static class OpenTelemetryDependencyInjectionMetricsServiceCollectionExte
     /// Notes:
     /// <list type="bullet">
     /// <item>This is safe to be called multiple times and by library authors.
-    /// Only a single <see cref="MeterProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.</item>
+    /// Each registered configuration action will be applied
+    /// sequentially.</item>
     /// <item>A <see cref="MeterProvider"/> will not be created automatically
-    /// using this method. To begin collecting metrics TBD.</item>
+    /// using this method. To begin collecting metrics use the
+    /// <c>IServiceCollection.AddOpenTelemetry</c> extension in the
+    /// <c>OpenTelemetry</c> package.</item>
     /// </list>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add
