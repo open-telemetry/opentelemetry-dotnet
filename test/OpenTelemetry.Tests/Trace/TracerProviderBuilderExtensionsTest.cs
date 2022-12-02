@@ -118,8 +118,6 @@ namespace OpenTelemetry.Trace.Tests
         {
             var builder = Sdk.CreateTracerProviderBuilder();
 
-            builder.ConfigureServices(services => services.AddSingleton<MyInstrumentation>());
-
             MyInstrumentation myInstrumentation = null;
 
             RunBuilderServiceLifecycleTest(
@@ -152,14 +150,12 @@ namespace OpenTelemetry.Trace.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryTracerProvider();
-
             bool testRun = false;
 
             ServiceProvider serviceProvider = null;
             TracerProviderSdk provider = null;
 
-            services.ConfigureOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetry().WithTracing(builder =>
             {
                 testRun = true;
 
@@ -168,7 +164,7 @@ namespace OpenTelemetry.Trace.Tests
                     () =>
                     {
                         // Note: Build can't be called directly on builder tied to external services
-                        Assert.Null(builder.Build());
+                        Assert.Throws<NotSupportedException>(() => builder.Build());
 
                         serviceProvider = services.BuildServiceProvider();
 
@@ -199,14 +195,12 @@ namespace OpenTelemetry.Trace.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryTracerProvider();
-
-            services.ConfigureOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetry().WithTracing(builder =>
             {
                 builder.AddInstrumentation<MyInstrumentation>(() => new());
             });
 
-            services.ConfigureOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetry().WithTracing(builder =>
             {
                 builder.AddInstrumentation<MyInstrumentation>(() => new());
             });
@@ -363,7 +357,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryTracing();
+                        services.AddOpenTelemetry().WithTracing(builder => { });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
@@ -385,9 +379,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryTracerProvider();
-
-            services.ConfigureOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetry().WithTracing(builder =>
             {
                 builder.ConfigureBuilder((sp, builder) =>
                 {
@@ -422,12 +414,15 @@ namespace OpenTelemetry.Trace.Tests
 
                 Assert.NotNull(services);
 
+                services.TryAddSingleton<MyInstrumentation>();
                 services.TryAddSingleton<MyProcessor>();
 
-                services.ConfigureOpenTelemetryTracing(b =>
+                // Note: This is strange to call ConfigureOpenTelemetryTracerProvider here, but supported
+                services.ConfigureOpenTelemetryTracerProvider((sp, b) =>
                 {
-                    // Note: This is strange to call ConfigureOpenTelemetryTracing here, but supported
-                    b.AddInstrumentation<MyInstrumentation>();
+                    Assert.Throws<NotSupportedException>(() => b.ConfigureServices(services => { }));
+
+                    b.AddInstrumentation(sp.GetRequiredService<MyInstrumentation>());
                 });
             });
 

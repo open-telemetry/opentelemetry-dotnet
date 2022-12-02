@@ -32,8 +32,6 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var builder = Sdk.CreateMeterProviderBuilder();
 
-            builder.ConfigureServices(services => services.AddSingleton<MyInstrumentation>());
-
             MyInstrumentation myInstrumentation = null;
 
             RunBuilderServiceLifecycleTest(
@@ -66,14 +64,12 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryMeterProvider();
-
             bool testRun = false;
 
             ServiceProvider serviceProvider = null;
             MeterProviderSdk provider = null;
 
-            services.ConfigureOpenTelemetryMetrics(builder =>
+            services.AddOpenTelemetry().WithMetrics(builder =>
             {
                 testRun = true;
 
@@ -82,7 +78,7 @@ namespace OpenTelemetry.Metrics.Tests
                     () =>
                     {
                         // Note: Build can't be called directly on builder tied to external services
-                        Assert.Null(builder.Build());
+                        Assert.Throws<NotSupportedException>(() => builder.Build());
 
                         serviceProvider = services.BuildServiceProvider();
 
@@ -113,14 +109,12 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryMeterProvider();
-
-            services.ConfigureOpenTelemetryMetrics(builder =>
+            services.AddOpenTelemetry().WithMetrics(builder =>
             {
                 builder.AddInstrumentation<MyInstrumentation>(() => new());
             });
 
-            services.ConfigureOpenTelemetryMetrics(builder =>
+            services.AddOpenTelemetry().WithMetrics(builder =>
             {
                 builder.AddInstrumentation<MyInstrumentation>(() => new());
             });
@@ -277,7 +271,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryMetrics();
+                        services.AddOpenTelemetry().WithMetrics(builder => { });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
@@ -299,9 +293,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var services = new ServiceCollection();
 
-            services.AddOpenTelemetryMeterProvider();
-
-            services.ConfigureOpenTelemetryMetrics(builder =>
+            services.AddOpenTelemetry().WithMetrics(builder =>
             {
                 builder.ConfigureBuilder((sp, builder) =>
                 {
@@ -333,12 +325,15 @@ namespace OpenTelemetry.Metrics.Tests
 
                 Assert.NotNull(services);
 
+                services.TryAddSingleton<MyInstrumentation>();
                 services.TryAddSingleton<MyReader>();
 
-                services.ConfigureOpenTelemetryMetrics(b =>
+                // Note: This is strange to call ConfigureOpenTelemetryMeterProvider here, but supported
+                services.ConfigureOpenTelemetryMeterProvider((sp, b) =>
                 {
-                    // Note: This is strange to call ConfigureOpenTelemetryMetrics here, but supported
-                    b.AddInstrumentation<MyInstrumentation>();
+                    Assert.Throws<NotSupportedException>(() => b.ConfigureServices(services => { }));
+
+                    b.AddInstrumentation(sp.GetRequiredService<MyInstrumentation>());
                 });
             });
 
