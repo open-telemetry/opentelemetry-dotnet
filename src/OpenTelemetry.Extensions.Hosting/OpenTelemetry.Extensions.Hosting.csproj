@@ -4,6 +4,9 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>Contains extensions to register and start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

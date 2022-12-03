@@ -6,6 +6,9 @@
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;AspNetCore;B3</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
