@@ -352,6 +352,47 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Fact]
+        public void ShouldNotCollectTelemetryWhenIsEnabledFilterReturnFalse()
+        {
+            var activities = this.RunCommandWithFilter(
+                cmd =>
+                {
+                    cmd.CommandText = "select 1";
+                },
+                null,
+                (eventName, obj1, obj2) => false
+            );
+
+            Assert.Empty(activities);
+        }
+
+        [Fact]
+        public void ShouldCollectTelemetryWhenIsEnabledFilterWithSqlExecute()
+        {
+            var activities = this.RunCommandWithFilter(
+                cmd =>
+                {
+                    cmd.CommandText = "select 1";
+                },
+                null,
+                (eventName, obj1, obj2) =>
+                {
+                    if (eventName is SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand
+                        or SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand)
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }
+            );
+
+            Assert.Single(activities);
+            Assert.True(activities[0].IsAllDataRequested);
+            Assert.True(activities[0].ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        }
+
+        [Fact]
         public void ShouldNotCollectTelemetryAndShouldNotPropagateExceptionWhenFilterThrowsException()
         {
             var activities = this.RunCommandWithFilter(
@@ -470,7 +511,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
 #if !NETFRAMEWORK
-        private Activity[] RunCommandWithFilter(Action<SqlCommand> sqlCommandSetup, Func<object, bool> filter)
+        private Activity[] RunCommandWithFilter(
+            Action<SqlCommand> sqlCommandSetup,
+            Func<object, bool> filter,
+            Func<string, object, object, bool> isEnabled = null)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
@@ -481,7 +525,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                    options =>
                    {
                        options.Filter = filter;
-                   })
+                   },
+                   isEnabled)
                .AddInMemoryExporter(activities)
                .Build())
             {
@@ -497,7 +542,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
                 this.fakeSqlClientDiagnosticSource.Write(
                     SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand,
-                    beforeExecuteEventData);
+                    beforeExecuteEventData,
+                    isEnabled);
 
                 var afterExecuteEventData = new
                 {
@@ -508,7 +554,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
                 this.fakeSqlClientDiagnosticSource.Write(
                     SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand,
-                    afterExecuteEventData);
+                    afterExecuteEventData,
+                    isEnabled);
             }
 
             return activities.ToArray();
@@ -524,9 +571,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 this.listener = new DiagnosticListener(SqlClientInstrumentation.SqlClientDiagnosticListenerName);
             }
 
-            public void Write(string name, object value)
+            public void Write(string name, object value, Func<string, object, object, bool> isEnabled = null)
             {
-                this.listener.Write(name, value);
+                var isNotEnabled = isEnabled != null && !isEnabled(name, null, null);
+                if (!isNotEnabled)
+                {
+                    this.listener.Write(name, value);
+                }
             }
 
             public void Dispose()

@@ -34,14 +34,15 @@ namespace OpenTelemetry.Trace
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddSqlClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
+            Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null,
+            Func<string, object, object, bool> isEnabled = null)
         {
             Guard.ThrowIfNull(builder);
 
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);
 
-            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions));
+            builder.AddInstrumentation(() => new SqlClientInstrumentation(sqlOptions, isEnabled));
             builder.AddSource(SqlActivitySourceHelper.ActivitySourceName);
 
             return builder;

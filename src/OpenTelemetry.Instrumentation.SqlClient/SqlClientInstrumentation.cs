@@ -35,7 +35,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
         /// <param name="options">Configuration options for sql instrumentation.</param>
-        public SqlClientInstrumentation(SqlClientInstrumentationOptions options = null)
+        public SqlClientInstrumentation(SqlClientInstrumentationOptions options = null,
+            Func<string, object, object, bool> isEnabled = null)
         {
 #if NETFRAMEWORK
             this.sqlEventSourceListener = new SqlEventSourceListener(options);
@@ -43,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                name => new SqlClientDiagnosticListener(name, options),
                listener => listener.Name == SqlClientDiagnosticListenerName,
-               null);
+               isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
 #endif
         }
