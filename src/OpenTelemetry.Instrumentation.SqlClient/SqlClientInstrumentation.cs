@@ -35,7 +35,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
         /// <param name="options">Configuration options for sql instrumentation.</param>
-        public SqlClientInstrumentation(SqlClientInstrumentationOptions options = null,
+        /// <param name="isEnabled">A delegate that filters events based on their name and up to two context objects.</param>
+        public SqlClientInstrumentation(
+            SqlClientInstrumentationOptions options = null,
             Func<string, object, object, bool> isEnabled = null)
         {
 #if NETFRAMEWORK

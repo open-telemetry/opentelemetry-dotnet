@@ -360,8 +360,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     cmd.CommandText = "select 1";
                 },
                 null,
-                (eventName, obj1, obj2) => false
-            );
+                (eventName, obj1, obj2) => false);
 
             Assert.Empty(activities);
         }
@@ -384,8 +383,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     }
 
                     return false;
-                }
-            );
+                });
 
             Assert.Single(activities);
             Assert.True(activities[0].IsAllDataRequested);
