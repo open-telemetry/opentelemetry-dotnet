@@ -43,8 +43,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddOpenTelemetry().WithTracing(builder => builder
-                    .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                services.AddOpenTelemetry()
+                    .WithTracing(builder => builder
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
 
                 services.Configure<AspNetCoreInstrumentationOptions>(name, options =>
                 {
