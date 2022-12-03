@@ -77,15 +77,30 @@ public class OpenTelemetryBuilder
     /// Only a single <see cref="MeterProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.
     /// </remarks>
-    /// <param name="configure">Optional <see cref="MeterProviderBuilder"/>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithMetrics()
+        => this.WithMetrics(b => { });
+
+    /// <summary>
+    /// Adds metric services into the builder.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="MeterProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="configure"><see cref="MeterProviderBuilder"/>
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-    public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder>? configure = null)
+    public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder> configure)
     {
+        Guard.ThrowIfNull(configure);
+
         var builder = new MeterProviderBuilderBase(this.Services);
 
-        configure?.Invoke(builder);
+        configure(builder);
 
         return this;
     }
@@ -98,15 +113,30 @@ public class OpenTelemetryBuilder
     /// Only a single <see cref="TracerProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.
     /// </remarks>
-    /// <param name="configure">Optional <see cref="TracerProviderBuilder"/>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithTracing()
+        => this.WithTracing(b => { });
+
+    /// <summary>
+    /// Adds tracing services into the builder.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="TracerProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="configure"><see cref="TracerProviderBuilder"/>
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-    public OpenTelemetryBuilder WithTracing(Action<TracerProviderBuilder>? configure = null)
+    public OpenTelemetryBuilder WithTracing(Action<TracerProviderBuilder> configure)
     {
+        Guard.ThrowIfNull(configure);
+
         var builder = new TracerProviderBuilderBase(this.Services);
 
-        configure?.Invoke(builder);
+        configure(builder);
 
         return this;
     }
