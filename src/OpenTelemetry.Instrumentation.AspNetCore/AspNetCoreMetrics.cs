@@ -41,7 +41,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
             => DiagnosticSourceEvents.Contains(eventName);
 
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        private readonly DiagnosticSourceSubscriber httpServerDurationDiagnosticSourceSubscriber;
+        private readonly DiagnosticSourceSubscriber httpActiveRequestsDiagnosticSourceSubscriber;
         private readonly Meter meter;
 
         /// <summary>
@@ -50,14 +51,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         public AspNetCoreMetrics()
         {
             this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", this.meter), this.isEnabled);
-            this.diagnosticSourceSubscriber.Subscribe();
+            this.httpServerDurationDiagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInDurationMetricsListener("Microsoft.AspNetCore", this.meter), this.isEnabled);
+            this.httpActiveRequestsDiagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInActiveRequestsMetricsListener("Microsoft.AspNetCore", this.meter), this.isEnabled);
+
+            this.httpServerDurationDiagnosticSourceSubscriber.Subscribe();
+            this.httpActiveRequestsDiagnosticSourceSubscriber.Subscribe();
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber?.Dispose();
+            this.httpServerDurationDiagnosticSourceSubscriber?.Dispose();
+            this.httpActiveRequestsDiagnosticSourceSubscriber?.Dispose();
             this.meter?.Dispose();
         }
     }

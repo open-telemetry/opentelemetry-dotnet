@@ -1,4 +1,4 @@
-// <copyright file="HttpInMetricsListener.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpInDurationMetricsListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,14 +25,14 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
-    internal sealed class HttpInMetricsListener : ListenerHandler
+    internal sealed class HttpInDurationMetricsListener : ListenerHandler
     {
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
         private readonly Meter meter;
         private readonly Histogram<double> httpServerDuration;
 
-        public HttpInMetricsListener(string name, Meter meter)
+        public HttpInDurationMetricsListener(string name, Meter meter)
             : base(name)
         {
             this.meter = meter;
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var context = payload as HttpContext;
                 if (context == null)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInDurationMetricsListener), nameof(this.OnEventWritten));
                     return;
                 }
 
