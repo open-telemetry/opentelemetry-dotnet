@@ -30,25 +30,25 @@ internal static class ProviderBuilderServiceCollectionExtensions
 {
     public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
     {
-        services.AddOpenTelemetryProviderBuilderServices();
+        Debug.Assert(services != null, "services was null");
 
-        services.TryAddSingleton<MeterProviderBuilderSdk>();
-        services.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
+        services!.TryAddSingleton<MeterProviderBuilderSdk>();
+        services!.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
 
-        return services;
+        return services!;
     }
 
     public static IServiceCollection AddOpenTelemetryTracerProviderBuilderServices(this IServiceCollection services)
     {
-        services.AddOpenTelemetryProviderBuilderServices();
+        Debug.Assert(services != null, "services was null");
 
-        services.TryAddSingleton<TracerProviderBuilderSdk>();
-        services.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
+        services!.TryAddSingleton<TracerProviderBuilderSdk>();
+        services!.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
 
-        return services;
+        return services!;
     }
 
-    private static void AddOpenTelemetryProviderBuilderServices(this IServiceCollection services)
+    public static IServiceCollection AddOpenTelemetrySharedProviderBuilderServices(this IServiceCollection services)
     {
         Debug.Assert(services != null, "services was null");
 
@@ -65,5 +65,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // those cases.
         services!.TryAddSingleton<IConfiguration>(
             sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+
+        return services!;
     }
 }

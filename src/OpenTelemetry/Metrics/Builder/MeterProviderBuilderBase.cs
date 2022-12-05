@@ -36,6 +36,7 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         var services = new ServiceCollection();
 
         services
+            .AddOpenTelemetrySharedProviderBuilderServices()
             .AddOpenTelemetryMeterProviderBuilderServices()
             .TryAddSingleton<MeterProvider>(
                 sp => throw new NotSupportedException("Self-contained MeterProvider cannot be accessed using the application IServiceProvider call Build instead."));

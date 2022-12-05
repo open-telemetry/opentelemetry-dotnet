@@ -39,6 +39,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         var services = new ServiceCollection();
 
         services
+            .AddOpenTelemetrySharedProviderBuilderServices()
             .AddOpenTelemetryTracerProviderBuilderServices()
             .TryAddSingleton<TracerProvider>(
                 sp => throw new NotSupportedException("Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead."));

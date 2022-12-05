@@ -35,6 +35,8 @@ public class OpenTelemetryBuilder
     {
         Guard.ThrowIfNull(services);
 
+        services.AddOpenTelemetrySharedProviderBuilderServices();
+
         this.Services = services;
     }
 
