@@ -69,8 +69,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 this.httpServerActiveRequests.Add(1, tags);
             }
-
-            if (name == OnStopEvent)
+            else if (name == OnStopEvent)
             {
                 var context = payload as HttpContext;
                 if (context == null)
