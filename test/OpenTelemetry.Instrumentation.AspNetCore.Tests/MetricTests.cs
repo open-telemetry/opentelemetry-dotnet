@@ -14,11 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -34,10 +30,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
     public class MetricTests
         : IClassFixture<WebApplicationFactory<Program>>, IDisposable
     {
-        private readonly WebApplicationFactory<Program> factory;
-        private MeterProvider meterProvider = null;
-
         private const int StandardTagsCount = 6;
+
+        private readonly WebApplicationFactory<Program> factory;
+        private MeterProvider meterProvider;
 
         public MetricTests(WebApplicationFactory<Program> factory)
         {
@@ -197,6 +193,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Contains(tagsToAdd[1], tags);
         }
 
+        public void Dispose()
+        {
+            this.meterProvider?.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
         private static List<MetricPoint> GetMetricPoints(Metric metric)
         {
             Assert.NotNull(metric);
@@ -210,7 +212,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             return metricPoints;
         }
 
-        private static KeyValuePair<string, object>[] AssertMetricPoint(MetricPoint metricPoint,
+        private static KeyValuePair<string, object>[] AssertMetricPoint(
+            MetricPoint metricPoint,
             string expectedRoute = "api/Values",
             int expectedTagsCount = StandardTagsCount)
         {
@@ -219,16 +222,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(1L, count);
             Assert.True(sum > 0);
-
-            /*
-            var bucket = metric.Buckets
-                .Where(b =>
-                    metric.PopulationSum > b.LowBoundary &&
-                    metric.PopulationSum <= b.HighBoundary)
-                .FirstOrDefault();
-            Assert.NotEqual(default, bucket);
-            Assert.Equal(1, bucket.Count);
-            */
 
             var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
             int i = 0;
@@ -252,12 +245,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(expectedTagsCount, attributes.Length);
 
             return attributes;
-        }
-
-        public void Dispose()
-        {
-            this.meterProvider?.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 }
