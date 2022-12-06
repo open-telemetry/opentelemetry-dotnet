@@ -9,6 +9,7 @@
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
 
     <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
