@@ -11,6 +11,7 @@
     <NoWarn>$(NoWarn),1591</NoWarn>
 
     <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
