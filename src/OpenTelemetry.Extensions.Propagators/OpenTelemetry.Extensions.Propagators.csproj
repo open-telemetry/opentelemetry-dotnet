@@ -8,6 +8,7 @@
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
 
     <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
