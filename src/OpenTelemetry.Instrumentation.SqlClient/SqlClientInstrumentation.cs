@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 using System;
+#if !NETFRAMEWORK
 using System.Collections.Generic;
+#endif
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
 namespace OpenTelemetry.Instrumentation.SqlClient
@@ -26,6 +28,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     {
         internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
 
+#if NETFRAMEWORK
+        private readonly SqlEventSourceListener sqlEventSourceListener;
+#else
         private static readonly HashSet<string> DiagnosticSourceEvents = new()
         {
             "System.Data.SqlClient.WriteCommandBefore",
@@ -39,9 +44,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
             => DiagnosticSourceEvents.Contains(eventName);
 
-#if NETFRAMEWORK
-        private readonly SqlEventSourceListener sqlEventSourceListener;
-#else
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 #endif
 
