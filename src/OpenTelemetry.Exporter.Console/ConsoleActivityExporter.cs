@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 

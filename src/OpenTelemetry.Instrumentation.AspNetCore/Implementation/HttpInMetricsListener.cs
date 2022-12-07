@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -30,12 +31,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
         private readonly Meter meter;
+        private readonly AspNetCoreMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpServerDuration;
 
-        public HttpInMetricsListener(string name, Meter meter)
+        internal HttpInMetricsListener(string name, Meter meter, AspNetCoreMetricsInstrumentationOptions options)
             : base(name)
         {
             this.meter = meter;
+            this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
         }
 
@@ -47,6 +50,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    return;
+                }
+
+                try
+                {
+                    if (this.options.Filter?.Invoke(context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(Activity.Current.OperationName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
                     return;
                 }
 
@@ -81,6 +98,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
                 }
 #endif
+                if (this.options.Enrich != null)
+                {
+                    try
+                    {
+                        this.options.Enrich(context, ref tags);
+                    }
+                    catch (Exception ex)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                    }
+                }
 
                 this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
