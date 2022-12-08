@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 using OpenTelemetry.Exporter.ZPages;
 using OpenTelemetry.Internal;
 
