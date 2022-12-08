@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using OpenTelemetry.Instrumentation.Http.Implementation;

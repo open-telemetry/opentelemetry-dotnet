@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
 using System.Collections.Concurrent;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
