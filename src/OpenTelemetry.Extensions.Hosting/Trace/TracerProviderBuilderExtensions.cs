@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenTelemetry.Trace
