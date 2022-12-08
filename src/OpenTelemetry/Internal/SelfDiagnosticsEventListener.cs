@@ -14,13 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
-using System.IO;
 using System.Text;
-using System.Threading;
 
 namespace OpenTelemetry.Internal
 {

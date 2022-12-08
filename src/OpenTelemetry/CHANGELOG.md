@@ -7,6 +7,11 @@
   `AddEnvironmentVariableDetector` extension (Logs)
   ([#3889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3889))
 
+* Refactored `AddInstrumentation`, `ConfigureServices` and `ConfigureBuilder`
+  APIs into the OpenTelemetry.Extensions.DependencyInjection package and added
+  the `IServiceCollection.AddOpenTelemetry` API
+  ([#3923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3923))
+
 ## 1.4.0-beta.3
 
 Released 2022-Nov-07

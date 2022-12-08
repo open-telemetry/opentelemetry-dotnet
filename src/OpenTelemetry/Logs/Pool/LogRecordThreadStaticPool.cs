@@ -16,8 +16,6 @@
 
 #nullable enable
 
-using System;
-
 namespace OpenTelemetry.Logs
 {
     internal sealed class LogRecordThreadStaticPool : ILogRecordPool

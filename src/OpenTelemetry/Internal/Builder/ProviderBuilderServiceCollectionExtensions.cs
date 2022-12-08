@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -29,27 +30,31 @@ internal static class ProviderBuilderServiceCollectionExtensions
 {
     public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
     {
-        services.AddOpenTelemetryProviderBuilderServices();
+        Debug.Assert(services != null, "services was null");
 
-        services.TryAddSingleton<MeterProviderBuilderState>();
-        services.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
+        services!.TryAddSingleton<MeterProviderBuilderSdk>();
+        services!.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
 
-        return services;
+        return services!;
     }
 
     public static IServiceCollection AddOpenTelemetryTracerProviderBuilderServices(this IServiceCollection services)
     {
-        services.AddOpenTelemetryProviderBuilderServices();
+        Debug.Assert(services != null, "services was null");
 
-        services.TryAddSingleton<TracerProviderBuilderState>();
-        services.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
+        services!.TryAddSingleton<TracerProviderBuilderSdk>();
+        services!.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
 
-        return services;
+        return services!;
     }
 
-    private static IServiceCollection AddOpenTelemetryProviderBuilderServices(this IServiceCollection services)
+    public static IServiceCollection AddOpenTelemetrySharedProviderBuilderServices(this IServiceCollection services)
     {
         Debug.Assert(services != null, "services was null");
+
+        // Accessing Sdk class is just to trigger its static ctor,
+        // which sets default Propagators and default Activity Id format
+        _ = Sdk.SuppressInstrumentation;
 
         services.AddOptions();
 
@@ -58,7 +63,8 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // Sdk.Create* style or when manually creating a ServiceCollection. The
         // point of this registration is to make IConfiguration available in
         // those cases.
-        services!.TryAddSingleton<IConfiguration>(sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+        services!.TryAddSingleton<IConfiguration>(
+            sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
         return services!;
     }

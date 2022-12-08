@@ -83,13 +83,15 @@ replace the function with your own implementation if you want to customize the
 generated `HttpClient`:
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddZipkinExporter(o => o.HttpClientFactory = () =>
-    {
-        HttpClient client = new HttpClient();
-        client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
-        return client;
-    }));
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddZipkinExporter(o => o.HttpClientFactory = () =>
+        {
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
+            return client;
+        }))
+    .StartWithHost();
 ```
 
 For users using
