@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
