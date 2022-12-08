@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Threading;
 using Grpc.Core;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
