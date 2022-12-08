@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 #if !NETFRAMEWORK
-using System;
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
