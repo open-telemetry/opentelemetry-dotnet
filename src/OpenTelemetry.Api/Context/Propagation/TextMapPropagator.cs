@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Context.Propagation
 {
     /// <summary>

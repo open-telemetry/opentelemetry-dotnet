@@ -11,7 +11,6 @@
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <!--Do not run ApiCompat for netstandard2.1/net6.0 as this is newly added. Remove this property once we have released a stable version.-->
