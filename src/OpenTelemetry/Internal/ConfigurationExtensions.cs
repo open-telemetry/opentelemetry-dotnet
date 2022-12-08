@@ -17,8 +17,6 @@
 #nullable enable
 
 #pragma warning disable IDE0005 // Temporarily suppressing "Using directive is unnecessary" until other projects have been updated. See #3958.
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 #if !NETFRAMEWORK && !NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;

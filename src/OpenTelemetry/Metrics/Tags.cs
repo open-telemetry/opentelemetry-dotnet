@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Metrics
 {
     internal readonly struct Tags : IEquatable<Tags>
