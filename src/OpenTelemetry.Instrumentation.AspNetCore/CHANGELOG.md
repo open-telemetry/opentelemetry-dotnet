@@ -22,7 +22,8 @@
 * Extension method `AddAspNetCoreInstrumentation` on `MeterProviderBuilder` now
   supports `AspNetCoreMetricsInstrumentationOptions`. This option class exposes
   configuration properties for metric filtering and tag enrichment.
-  ([#3948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3948))
+  ([#3948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3948),
+  [#3982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3982))
 
 ## 1.0.0-rc9.9
 
