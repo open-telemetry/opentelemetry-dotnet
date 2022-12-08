@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -36,17 +37,51 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Theory]
         [InlineData(null)]
         [InlineData("CustomName")]
-        public void TestDIConfig(string name)
+        public void TestTracingOptionsDIConfig(string name)
         {
             name ??= Options.DefaultName;
 
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddOpenTelemetry().WithTracing(builder => builder
-                    .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                services.AddOpenTelemetry()
+                    .WithTracing(builder => builder
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
 
                 services.Configure<AspNetCoreInstrumentationOptions>(name, options =>
+                {
+                    optionsPickedFromDI = true;
+                });
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+            }
+
+            Assert.True(optionsPickedFromDI);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("CustomName")]
+        public void TestMetricsOptionsDIConfig(string name)
+        {
+            name ??= Options.DefaultName;
+
+            bool optionsPickedFromDI = false;
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                services.AddOpenTelemetry()
+                    .WithMetrics(builder => builder
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
+
+                services.Configure<AspNetCoreMetricsInstrumentationOptions>(name, options =>
                 {
                     optionsPickedFromDI = true;
                 });

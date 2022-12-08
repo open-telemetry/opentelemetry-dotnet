@@ -4,6 +4,9 @@
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net6.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

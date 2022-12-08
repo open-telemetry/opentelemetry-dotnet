@@ -19,7 +19,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.DependencyInjection.Tests;
+namespace OpenTelemetry.Extensions.DependencyInjection.Tests;
 
 public class ServiceCollectionExtensionsTests
 {

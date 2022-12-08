@@ -35,6 +35,8 @@ public class OpenTelemetryBuilder
     {
         Guard.ThrowIfNull(services);
 
+        services.AddOpenTelemetrySharedProviderBuilderServices();
+
         this.Services = services;
     }
 
@@ -73,19 +75,39 @@ public class OpenTelemetryBuilder
     /// Adds metric services into the builder.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>A <see cref="MeterProvider"/> will not be created automatically
+    /// using this method. To begin collecting metrics either use the
+    /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
+    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
+    /// cref="MeterProvider"/> through the application <see
+    /// cref="IServiceProvider"/>.</item>
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="MeterProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
+    /// <see cref="IServiceCollection"/>.</item>
+    /// </list>
     /// </remarks>
-    /// <param name="configure">Optional <see cref="MeterProviderBuilder"/>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithMetrics()
+        => this.WithMetrics(b => { });
+
+    /// <summary>
+    /// Adds metric services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithMetrics()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="MeterProviderBuilder"/>
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-    public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder>? configure = null)
+    public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder> configure)
     {
+        Guard.ThrowIfNull(configure);
+
         var builder = new MeterProviderBuilderBase(this.Services);
 
-        configure?.Invoke(builder);
+        configure(builder);
 
         return this;
     }
@@ -94,19 +116,39 @@ public class OpenTelemetryBuilder
     /// Adds tracing services into the builder.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>A <see cref="TracerProvider"/> will not be created automatically
+    /// using this method. To begin collecting traces either use the
+    /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
+    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
+    /// cref="TracerProvider"/> through the application <see
+    /// cref="IServiceProvider"/>.</item>
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
+    /// <see cref="IServiceCollection"/>.</item>
+    /// </list>
     /// </remarks>
-    /// <param name="configure">Optional <see cref="TracerProviderBuilder"/>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithTracing()
+        => this.WithTracing(b => { });
+
+    /// <summary>
+    /// Adds tracing services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithTracing()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="TracerProviderBuilder"/>
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-    public OpenTelemetryBuilder WithTracing(Action<TracerProviderBuilder>? configure = null)
+    public OpenTelemetryBuilder WithTracing(Action<TracerProviderBuilder> configure)
     {
+        Guard.ThrowIfNull(configure);
+
         var builder = new TracerProviderBuilderBase(this.Services);
 
-        configure?.Invoke(builder);
+        configure(builder);
 
         return this;
     }

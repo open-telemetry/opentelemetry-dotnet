@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;

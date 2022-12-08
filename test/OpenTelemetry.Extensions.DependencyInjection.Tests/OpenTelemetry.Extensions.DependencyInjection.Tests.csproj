@@ -4,13 +4,10 @@
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <AnalysisLevel>latest-all</AnalysisLevel>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.DependencyInjection\OpenTelemetry.DependencyInjection.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.DependencyInjection\OpenTelemetry.Extensions.DependencyInjection.csproj" />
   </ItemGroup>
 
   <ItemGroup>

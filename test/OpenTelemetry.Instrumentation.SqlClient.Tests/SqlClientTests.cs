@@ -470,7 +470,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
 #if !NETFRAMEWORK
-        private Activity[] RunCommandWithFilter(Action<SqlCommand> sqlCommandSetup, Func<object, bool> filter)
+        private Activity[] RunCommandWithFilter(
+            Action<SqlCommand> sqlCommandSetup,
+            Func<object, bool> filter)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
@@ -526,7 +528,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             public void Write(string name, object value)
             {
-                this.listener.Write(name, value);
+                if (this.listener.IsEnabled(name))
+                {
+                    this.listener.Write(name, value);
+                }
             }
 
             public void Dispose()

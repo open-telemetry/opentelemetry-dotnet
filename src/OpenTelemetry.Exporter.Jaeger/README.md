@@ -90,17 +90,19 @@ who want to configure the `HttpClient` used by the `JaegerExporter` when
 implementation if you want to customize the generated `HttpClient`:
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddJaegerExporter(o =>
-    {
-        o.Protocol = JaegerExportProtocol.HttpBinaryThrift;
-        o.HttpClientFactory = () =>
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddJaegerExporter(o =>
         {
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
-            return client;
-        };
-    }));
+            o.Protocol = JaegerExportProtocol.HttpBinaryThrift;
+            o.HttpClientFactory = () =>
+            {
+                HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
+                return client;
+            };
+        }))
+    .StartWithHost();
 ```
 
 For users using

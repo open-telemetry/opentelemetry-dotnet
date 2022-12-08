@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal interface IJaegerClient : IDisposable
