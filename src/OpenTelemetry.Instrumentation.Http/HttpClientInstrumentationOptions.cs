@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Net;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
