@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Timers;
 
 namespace OpenTelemetry.Exporter.ZPages.Implementation
