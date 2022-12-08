@@ -7,7 +7,7 @@
     <PackageTags>$(PackageTags);ZPages;distributed-tracing</PackageTags>
 
     <!-- this is temporary. will remove in future PR. -->
-    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

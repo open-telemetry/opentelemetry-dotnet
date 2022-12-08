@@ -14,10 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
+#if NETFRAMEWORK
 using System.Net.Http;
-using System.Threading;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
