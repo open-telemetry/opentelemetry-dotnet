@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Description>Contains extensions to register and start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
+    <Description>Contains extensions to start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
 
     <!-- this is temporary. will remove in future PR. -->

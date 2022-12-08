@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilderExtensionsTests.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterProviderBuilderExtensionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,17 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using Xunit;
 
-namespace OpenTelemetry.DependencyInjection.Tests;
+namespace OpenTelemetry.Extensions.DependencyInjection.Tests;
 
-public class TracerProviderBuilderExtensionsTests
+public class MeterProviderBuilderExtensionsTests
 {
     [Fact]
     public void AddInstrumentationFromServiceProviderTest()
     {
-        using var builder = new TestTracerProviderBuilder();
+        using var builder = new TestMeterProviderBuilder();
 
         builder.AddInstrumentation<TestInstrumentation>();
 
@@ -46,7 +46,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void AddInstrumentationUsingInstanceTest()
     {
-        using var builder = new TestTracerProviderBuilder();
+        using var builder = new TestMeterProviderBuilder();
 
         var instrumentation = new TestInstrumentation();
 
@@ -63,7 +63,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void AddInstrumentationUsingFactoryTest()
     {
-        using var builder = new TestTracerProviderBuilder();
+        using var builder = new TestMeterProviderBuilder();
 
         var instrumentation = new TestInstrumentation();
 
@@ -85,7 +85,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void AddInstrumentationUsingFactoryAndProviderTest()
     {
-        using var builder = new TestTracerProviderBuilder();
+        using var builder = new TestMeterProviderBuilder();
 
         var instrumentation = new TestInstrumentation();
 
@@ -108,7 +108,7 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void ConfigureServicesTest()
     {
-        using var builder = new TestTracerProviderBuilder();
+        using var builder = new TestMeterProviderBuilder();
 
         builder.ConfigureServices(services => services.TryAddSingleton<TestInstrumentation>());
 
@@ -120,22 +120,22 @@ public class TracerProviderBuilderExtensionsTests
     [Fact]
     public void ConfigureBuilderTest()
     {
-        using var builder = new TestTracerProviderBuilder();
+        using var builder = new TestMeterProviderBuilder();
 
         builder.ConfigureBuilder((sp, builder) =>
         {
             Assert.NotNull(sp);
             Assert.NotNull(builder);
 
-            builder.AddSource("HelloWorld");
+            builder.AddMeter("HelloWorld");
         });
 
         var serviceProvider = builder.BuildServiceProvider();
         var registrationCount = builder.InvokeRegistrations();
 
         Assert.Equal(1, registrationCount);
-        Assert.Single(builder.Sources);
-        Assert.Equal("HelloWorld", builder.Sources[0]);
+        Assert.Single(builder.Meters);
+        Assert.Equal("HelloWorld", builder.Meters[0]);
     }
 
     private sealed class TestInstrumentation

@@ -17,7 +17,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.DependencyInjection.Tests;
+namespace OpenTelemetry.Extensions.DependencyInjection.Tests;
 
 public sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerProviderBuilder, IDisposable
 {

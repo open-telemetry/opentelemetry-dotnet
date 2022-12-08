@@ -16,7 +16,7 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("OpenTelemetry.DependencyInjection.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.DependencyInjection.Tests" + AssemblyInfo.PublicKey)]
 
 #if SIGNED
 internal static class AssemblyInfo
