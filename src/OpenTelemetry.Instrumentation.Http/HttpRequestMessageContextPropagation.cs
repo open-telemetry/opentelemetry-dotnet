@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 
 namespace OpenTelemetry.Instrumentation.Http
 {

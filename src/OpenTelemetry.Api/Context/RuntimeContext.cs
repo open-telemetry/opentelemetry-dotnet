@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;

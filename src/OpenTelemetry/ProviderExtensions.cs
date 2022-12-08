@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
