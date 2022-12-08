@@ -6,9 +6,6 @@
     <Description>OpenTelemetry .NET dependency injection extensions</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-    <Nullable>enable</Nullable>
-    <AnalysisLevel>latest-all</AnalysisLevel>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <!--Do not run ApiCompat for netstandard2.0/net462 as this is newly added. Remove this property once we have released a stable version.-->
