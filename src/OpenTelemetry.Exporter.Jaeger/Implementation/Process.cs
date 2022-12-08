@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Text;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
