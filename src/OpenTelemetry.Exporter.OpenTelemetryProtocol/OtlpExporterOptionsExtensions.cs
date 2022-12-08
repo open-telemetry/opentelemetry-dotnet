@@ -14,8 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
