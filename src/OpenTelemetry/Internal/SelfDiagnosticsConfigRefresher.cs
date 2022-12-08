@@ -14,14 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Internal
 {

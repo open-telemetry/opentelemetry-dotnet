@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#pragma warning disable IDE0005 // Temporarily suppressing "Using directive is unnecessary" until other projects have been updated. See #3958.
-using System;
 using System.Diagnostics;
-#pragma warning restore IDE0005
 
 namespace OpenTelemetry.Internal;
 

@@ -16,10 +16,7 @@
 
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources

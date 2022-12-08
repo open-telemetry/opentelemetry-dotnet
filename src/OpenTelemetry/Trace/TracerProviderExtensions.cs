@@ -16,9 +16,7 @@
 
 #nullable enable
 
-using System;
 using System.Diagnostics;
-using System.Threading;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
