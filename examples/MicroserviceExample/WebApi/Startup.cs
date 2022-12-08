@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -40,14 +41,16 @@ namespace WebApi
 
             services.AddSingleton<MessageSender>();
 
-            services.AddOpenTelemetryTracing((builder) => builder
-                .AddAspNetCoreInstrumentation()
-                .AddSource(nameof(MessageSender))
-                .AddZipkinExporter(b =>
-                {
-                    var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                    b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                }));
+            services.AddOpenTelemetry()
+                .WithTracing(builder => builder
+                    .AddAspNetCoreInstrumentation()
+                    .AddSource(nameof(MessageSender))
+                    .AddZipkinExporter(b =>
+                    {
+                        var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+                        b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                    }))
+                .StartWithHost();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -16,299 +16,147 @@
 
 #nullable enable
 
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Resources;
 
-using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
-    OpenTelemetry.Metrics.MeterProviderBuilderSdk,
-    OpenTelemetry.Metrics.MeterProviderSdk,
-    OpenTelemetry.Metrics.MeterProviderBuilderState>;
+namespace OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Metrics
+/// <summary>
+/// Contains methods for building <see cref="MeterProvider"/> instances.
+/// </summary>
+public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuilder
 {
-    /// <summary>
-    /// Contains methods for building <see cref="MeterProvider"/> instances.
-    /// </summary>
-    public abstract class MeterProviderBuilderBase : MeterProviderBuilder, IDeferredMeterProviderBuilder
+    private readonly bool allowBuild;
+    private IServiceCollection? services;
+
+    public MeterProviderBuilderBase()
     {
-        internal readonly MeterProviderBuilderState? State;
-        private const string DefaultInstrumentationVersion = "1.0.0.0";
+        var services = new ServiceCollection();
 
-        private readonly bool ownsServices;
-        private IServiceCollection? services;
+        services
+            .AddOpenTelemetrySharedProviderBuilderServices()
+            .AddOpenTelemetryMeterProviderBuilderServices()
+            .TryAddSingleton<MeterProvider>(
+                sp => throw new NotSupportedException("Self-contained MeterProvider cannot be accessed using the application IServiceProvider call Build instead."));
 
-        // This ctor is for a builder created from MeterProviderBuilderState which
-        // happens after the service provider has been created.
-        internal MeterProviderBuilderBase(MeterProviderBuilderState state)
+        services.ConfigureOpenTelemetryMeterProvider((sp, builder) => this.services = null);
+
+        this.services = services;
+
+        this.allowBuild = true;
+    }
+
+    internal MeterProviderBuilderBase(IServiceCollection services)
+    {
+        Guard.ThrowIfNull(services);
+
+        services
+            .AddOpenTelemetryMeterProviderBuilderServices()
+            .TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
+
+        services.ConfigureOpenTelemetryMeterProvider((sp, builder) => this.services = null);
+
+        this.services = services;
+
+        this.allowBuild = false;
+    }
+
+    /// <inheritdoc />
+    MeterProvider? IMeterProviderBuilder.Provider => null;
+
+    /// <inheritdoc />
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    {
+        Guard.ThrowIfNull(instrumentationFactory);
+
+        this.ConfigureBuilder((sp, builder) =>
         {
-            Debug.Assert(state != null, "state was null");
+            builder.AddInstrumentation(instrumentationFactory);
+        });
 
-            this.State = state;
+        return this;
+    }
+
+    /// <inheritdoc />
+    public override MeterProviderBuilder AddMeter(params string[] names)
+    {
+        Guard.ThrowIfNull(names);
+
+        this.ConfigureBuilder((sp, builder) =>
+        {
+            builder.AddMeter(names);
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
+    {
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during MeterProvider construction.");
         }
 
-        // This ctor is for ConfigureOpenTelemetryMetrics +
-        // AddOpenTelemetryMetrics scenarios where the builder is bound to an
-        // external service collection.
-        internal MeterProviderBuilderBase(IServiceCollection services)
+        services.ConfigureOpenTelemetryMeterProvider(configure);
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    public MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var services = this.services;
+
+        if (services == null)
         {
-            Guard.ThrowIfNull(services);
-
-            services.AddOpenTelemetryMeterProviderBuilderServices();
-            services.TryAddSingleton<MeterProvider>(sp => new MeterProviderSdk(sp, ownsServiceProvider: false));
-
-            this.services = services;
-            this.ownsServices = false;
+            throw new NotSupportedException("Services cannot be configured during MeterProvider construction.");
         }
 
-        // This ctor is for Sdk.CreateMeterProviderBuilder where the builder
-        // owns its services and service provider.
-        protected MeterProviderBuilderBase()
+        configure(services);
+
+        return this;
+    }
+
+    /// <inheritdoc />
+    MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
+        => this.ConfigureBuilder(configure);
+
+    internal MeterProvider InvokeBuild()
+        => this.Build();
+
+    /// <summary>
+    /// Run the configured actions to initialize the <see cref="MeterProvider"/>.
+    /// </summary>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    protected MeterProvider Build()
+    {
+        if (!this.allowBuild)
         {
-            var services = new ServiceCollection();
-
-            services.AddOpenTelemetryMeterProviderBuilderServices();
-            services.AddSingleton<MeterProvider>(
-                sp => throw new NotSupportedException("External MeterProvider created through Sdk.CreateMeterProviderBuilder cannot be accessed using service provider."));
-
-            this.services = services;
-            this.ownsServices = true;
+            throw new NotSupportedException("A MeterProviderBuilder bound to external service cannot be built directly. Access the MeterProvider using the application IServiceProvider instead.");
         }
 
-        /// <inheritdoc />
-        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            Guard.ThrowIfNull(instrumentationFactory);
+        var services = this.services;
 
-            return this.AddInstrumentation((sp) => instrumentationFactory());
+        if (services == null)
+        {
+            throw new NotSupportedException("MeterProviderBuilder build method cannot be called multiple times.");
         }
 
-        /// <inheritdoc />
-        public override MeterProviderBuilder AddMeter(params string[] names)
-        {
-            Guard.ThrowIfNull(names);
-
-            return this.ConfigureState((sp, state) => state.AddMeter(names));
-        }
-
-        /// <inheritdoc />
-        MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(
-            Action<IServiceProvider, MeterProviderBuilder> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            if (this.State != null)
-            {
-                configure(this.State.ServiceProvider, this);
-            }
-            else
-            {
-                this.ConfigureServices(services
-                    => CallbackHelper.RegisterConfigureBuilderCallback(services, configure));
-            }
-
-            return this;
-        }
-
-        internal MeterProviderBuilder AddInstrumentation<T>()
-            where T : class
-        {
-            this.TryAddSingleton<T>();
-            this.AddInstrumentation((sp) => sp.GetRequiredService<T>());
-
-            return this;
-        }
-
-        internal MeterProviderBuilder AddReader<T>()
-            where T : MetricReader
-        {
-            this.TryAddSingleton<T>();
-            this.ConfigureState((sp, state) => state.AddReader(sp.GetRequiredService<T>()));
-
-            return this;
-        }
-
-        internal MeterProviderBuilder AddReader(MetricReader reader)
-        {
-            Guard.ThrowIfNull(reader);
-
-            return this.ConfigureState((sp, state) => state.AddReader(reader));
-        }
-
-        internal MeterProviderBuilder AddView(string instrumentName, string name)
-        {
-            if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
-            {
-                throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
-            }
-
-            if (instrumentName.IndexOf('*') != -1)
-            {
-                throw new ArgumentException(
-                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
-                    $"contains a wildcard character. This is not allowed when using a view to " +
-                    $"rename a metric stream as it would lead to conflicting metric stream names.",
-                    nameof(instrumentName));
-            }
-
-            return this.AddView(
-                instrumentName,
-                new MetricStreamConfiguration
-                {
-                    Name = name,
-                });
-        }
-
-        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
-        {
-            Guard.ThrowIfNullOrWhitespace(instrumentName);
-            Guard.ThrowIfNull(metricStreamConfiguration);
-
-            if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
-            {
-                throw new ArgumentException(
-                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
-                    $"contains a wildcard character. This is not allowed when using a view to " +
-                    $"rename a metric stream as it would lead to conflicting metric stream names.",
-                    nameof(instrumentName));
-            }
-
-            if (instrumentName.IndexOf('*') != -1)
-            {
-                var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
-                var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                return this.AddView(instrument => regex.IsMatch(instrument.Name) ? metricStreamConfiguration : null);
-            }
-            else
-            {
-                return this.AddView(instrument => instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
-            }
-        }
-
-        internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration?> viewConfig)
-        {
-            Guard.ThrowIfNull(viewConfig);
-
-            this.ConfigureState((sp, state) => state.AddView(viewConfig));
-
-            return this;
-        }
-
-        internal MeterProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            return this.ConfigureState((sp, state) => state.ConfigureResource(configure));
-        }
-
-        internal MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            var services = this.services;
-
-            if (services == null)
-            {
-                throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
-            }
-
-            configure(services);
-
-            return this;
-        }
-
-        internal MeterProvider InvokeBuild()
-            => this.Build();
-
-        internal MeterProviderBuilder SetMaxMetricStreams(int maxMetricStreams)
-        {
-            Guard.ThrowIfOutOfRange(maxMetricStreams, min: 1);
-
-            return this.ConfigureState((sp, state) => state.MaxMetricStreams = maxMetricStreams);
-        }
-
-        internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
-        {
-            Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);
-
-            return this.ConfigureState((sp, state) => state.MaxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream);
-        }
-
-        internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Guard.ThrowIfNull(resourceBuilder);
-
-            return this.ConfigureState((sp, state) => state.SetResourceBuilder(resourceBuilder));
-        }
-
-        /// <summary>
-        /// Run the configured actions to initialize the <see cref="MeterProvider"/>.
-        /// </summary>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        protected MeterProvider Build()
-        {
-            if (!this.ownsServices || this.State != null)
-            {
-                throw new NotSupportedException("Build cannot be called directly on MeterProviderBuilder tied to external services.");
-            }
-
-            var services = this.services;
-
-            if (services == null)
-            {
-                throw new NotSupportedException("MeterProviderBuilder build method cannot be called multiple times.");
-            }
-
-            this.services = null;
+        this.services = null;
 
 #if DEBUG
-            bool validateScopes = true;
+        bool validateScopes = true;
 #else
-            bool validateScopes = false;
+        bool validateScopes = false;
 #endif
-            var serviceProvider = services.BuildServiceProvider(validateScopes);
+        var serviceProvider = services.BuildServiceProvider(validateScopes);
 
-            return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
-        }
-
-        private MeterProviderBuilder AddInstrumentation<T>(Func<IServiceProvider, T> instrumentationFactory)
-            where T : class
-        {
-            this.ConfigureState((sp, state)
-                => state.AddInstrumentation(
-                    typeof(T).Name,
-                    typeof(T).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-                    instrumentationFactory(sp)));
-
-            return this;
-        }
-
-        private MeterProviderBuilder ConfigureState(Action<IServiceProvider, MeterProviderBuilderState> configure)
-        {
-            Debug.Assert(configure != null, "configure was null");
-
-            if (this.State != null)
-            {
-                configure!(this.State.ServiceProvider, this.State);
-            }
-            else
-            {
-                this.ConfigureServices(services => CallbackHelper.RegisterConfigureStateCallback(services, configure!));
-            }
-
-            return this;
-        }
-
-        private void TryAddSingleton<T>()
-            where T : class
-        {
-            var services = this.services;
-
-            services?.TryAddSingleton<T>();
-        }
+        return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
     }
 }

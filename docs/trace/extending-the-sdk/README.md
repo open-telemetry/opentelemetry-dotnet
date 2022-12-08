@@ -530,7 +530,7 @@ the target type for registration extension methods.
 
 The following example shows how a library might enable tracing and metric
 support using an `IServiceCollection` extension by calling
-`ConfigureOpenTelemetryTracing`.
+`ConfigureOpenTelemetryTracerProvider`.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -563,7 +563,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // Configure OpenTelemetry tracing.
-            services.ConfigureOpenTelemetryTracing(builder => builder.ConfigureBuilder((sp, builder) =>
+            services.ConfigureOpenTelemetryTracerProvider((sp, builder) =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
                 if (options.EnableTracing)
@@ -573,7 +573,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }));
 
             // Configure OpenTelemetry metrics.
-            services.ConfigureOpenTelemetryMetrics(builder => builder.ConfigureBuilder((sp, builder) =>
+            services.ConfigureOpenTelemetryMeterProvider((sp, builder) =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<MyLibraryOptions>>().Get(name);
                 if (options.EnableMetrics)
@@ -614,13 +614,12 @@ single `AddMyLibrary` extension to configure the library itself and optionally
 turn on OpenTelemetry integration for multiple signals (tracing & metrics in
 this case).
 
-**Note:** `ConfigureOpenTelemetryTracing` does not automatically start
-OpenTelemetry. The host is responsible for either calling
-`AddOpenTelemetryTracing` in the
+**Note:** `ConfigureOpenTelemetryTracerProvider` does not automatically start
+OpenTelemetry. The host is responsible for either calling `StartWithHost` in the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package, calling `Build` when using the `Sdk.CreateTracerProviderBuilder`
 method, or by accessing the `TracerProvider` from the `IServiceCollection` where
-`ConfigureOpenTelemetryTracing` was performed.
+`ConfigureOpenTelemetryTracerProvider` was performed.
 
 When providing `IServiceCollection` registration extensions:
 

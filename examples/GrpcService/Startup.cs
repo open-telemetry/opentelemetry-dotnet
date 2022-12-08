@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -39,34 +40,36 @@ namespace Examples.GrpcService
         {
             services.AddGrpc();
 
-            // Switch between Jaeger/Zipkin by setting UseExporter in appsettings.json.
-            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
-            switch (exporter)
-            {
-                case "jaeger":
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
-                        .AddAspNetCoreInstrumentation()
-                        .AddJaegerExporter(jaegerOptions =>
-                        {
-                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                        }));
-                    break;
-                case "zipkin":
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
-                        .AddZipkinExporter(zipkinOptions =>
-                        {
-                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                        }));
-                    break;
-                default:
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
-                        .AddConsoleExporter());
-                    break;
-            }
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
+                {
+                    builder
+                        .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")))
+                        .AddAspNetCoreInstrumentation();
+
+                    // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
+                    var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+                    switch (exporter)
+                    {
+                        case "jaeger":
+                            builder.AddJaegerExporter(jaegerOptions =>
+                            {
+                                jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                                jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                            });
+                            break;
+                        case "zipkin":
+                            builder.AddZipkinExporter(zipkinOptions =>
+                            {
+                                zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                            });
+                            break;
+                        default:
+                            builder.AddConsoleExporter();
+                            break;
+                    }
+                })
+                .StartWithHost();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

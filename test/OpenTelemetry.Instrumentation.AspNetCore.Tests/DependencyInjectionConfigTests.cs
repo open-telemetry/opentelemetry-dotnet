@@ -44,8 +44,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddOpenTelemetryTracing(
-                    builder => builder.AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                services.AddOpenTelemetry()
+                    .WithTracing(builder => builder
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
 
                 services.Configure<AspNetCoreInstrumentationOptions>(name, options =>
                 {
@@ -74,8 +76,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             bool optionsPickedFromDI = false;
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddOpenTelemetryMetrics(
-                    builder => builder.AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                services.AddOpenTelemetry()
+                    .WithMetrics(builder => builder
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
 
                 services.Configure<AspNetCoreMetricsInstrumentationOptions>(name, options =>
                 {
@@ -85,9 +89,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // Arrange
             using (var client = this.factory
-                       .WithWebHostBuilder(builder =>
-                           builder.ConfigureTestServices(ConfigureTestServices))
-                       .CreateClient())
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
             {
             }
 
