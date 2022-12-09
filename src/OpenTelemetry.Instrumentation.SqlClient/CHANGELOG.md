@@ -13,7 +13,7 @@
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddSqlClientInstrumentation` extension to allow for more fine-grained options
   management
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3994))
 
 ## 1.0.0-rc9.9
 
