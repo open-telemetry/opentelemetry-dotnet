@@ -21,7 +21,8 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Describes a <see cref="TracerProviderBuilder"/> backed by an <see cref="IServiceCollection"/>.
 /// </summary>
-public interface ITracerProviderBuilder : IDeferredTracerProviderBuilder
+// Note: This API may be made public if there is a need for it.
+internal interface ITracerProviderBuilder : IDeferredTracerProviderBuilder
 {
     /// <summary>
     /// Gets the <see cref="TracerProvider"/> being constructed by the builder.
