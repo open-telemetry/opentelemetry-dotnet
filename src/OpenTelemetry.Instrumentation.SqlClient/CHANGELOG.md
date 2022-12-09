@@ -10,6 +10,11 @@
   Framework.
   ([#3900](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3900))
 
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddSqlClientInstrumentation` extension to allow for more fine-grained options
+  management
+  ([#3994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3994))
+
 ## 1.0.0-rc9.9
 
 Released 2022-Nov-07

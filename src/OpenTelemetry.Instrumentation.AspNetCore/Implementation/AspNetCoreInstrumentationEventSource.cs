@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.WriteEvent(1, handlerName, eventName);
         }
 
-        [Event(2, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
+        [Event(2, Message = "Request is filtered out. EventName: '{0}'.", Level = EventLevel.Verbose)]
         public void RequestIsFilteredOut(string eventName)
         {
             this.WriteEvent(2, eventName);

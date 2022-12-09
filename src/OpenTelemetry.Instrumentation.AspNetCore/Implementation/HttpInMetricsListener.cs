@@ -26,6 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal sealed class HttpInMetricsListener : ListenerHandler
     {
+        private const string HttpServerDurationMetricName = "http.server.duration";
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
         private readonly Meter meter;
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             this.meter = meter;
             this.options = options;
-            this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
+            this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "measures the duration of the inbound HTTP request");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -53,9 +54,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 try
                 {
-                    if (this.options.Filter?.Invoke(context) == false)
+                    if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(Activity.Current.OperationName);
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(HttpServerDurationMetricName);
                         return;
                     }
                 }
@@ -100,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     try
                     {
-                        this.options.Enrich(context, ref tags);
+                        this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
                     }
                     catch (Exception ex)
                     {
