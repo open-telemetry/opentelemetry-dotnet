@@ -130,7 +130,9 @@ appBuilder.Logging.AddOpenTelemetry(options =>
 {
     // Note: See appsettings.json Logging:OpenTelemetry section for configuration.
 
-    options.ConfigureResource(configureResource);
+    var resourceBuilder = ResourceBuilder.CreateDefault();
+    configureResource(resourceBuilder);
+    options.SetResourceBuilder(resourceBuilder);
 
     switch (logExporter)
     {
