@@ -98,7 +98,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddAspNetCoreInstrumentation(opt => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
+                    .AddAspNetCoreInstrumentation(opt => opt.Filter = (name, ctx) => ctx.Request.Path != "/api/values/2")
                     .AddInMemoryExporter(metricItems)
                     .Build();
             }
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddAspNetCoreInstrumentation(opt => opt.Enrich = (HttpContext _, ref TagList tags) =>
+                    .AddAspNetCoreInstrumentation(opt => opt.Enrich = (string _, HttpContext _, ref TagList tags) =>
                     {
                         foreach (var keyValuePair in tagsToAdd)
                         {
