@@ -28,6 +28,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     {
         private const string HttpServerDurationMetricName = "http.server.duration";
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
+        private const string EventName = "OnStopActivity";
 
         private readonly Meter meter;
         private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var context = payload as HttpContext;
                 if (context == null)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
                     return;
                 }
 
@@ -56,13 +57,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(HttpServerDurationMetricName);
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
                     return;
                 }
 
@@ -105,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                     catch (Exception ex)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
                     }
                 }
 
