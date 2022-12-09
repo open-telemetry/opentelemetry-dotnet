@@ -22,7 +22,6 @@ OpenTelemetry.OpenTelemetryBuilder.WithMetrics() -> OpenTelemetry.OpenTelemetryB
 OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing() -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
-OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider?, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
 OpenTelemetry.Trace.TracerProviderBuilderBase.ConfigureBuilder(System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Trace.TracerProviderBuilderBase.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.OpenTelemetryServiceCollectionExtensions
