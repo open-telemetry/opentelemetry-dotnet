@@ -13,7 +13,7 @@
   ([#3923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3923))
 
 * Removed `ConfigureResource` on `OpenTelemetryLoggingOptions`
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#3999](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3999))
 
 ## 1.4.0-beta.3
 
