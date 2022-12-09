@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus

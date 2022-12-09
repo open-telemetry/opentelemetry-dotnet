@@ -35,6 +35,7 @@
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.3]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[17.3.0]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>[3.1.0,)</MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>
+    <MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>[3.1.0,)</MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingConfigurationPkgVer>

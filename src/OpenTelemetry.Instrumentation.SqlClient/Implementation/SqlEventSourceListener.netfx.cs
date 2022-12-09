@@ -15,7 +15,6 @@
 // </copyright>
 
 #if NETFRAMEWORK
-using System;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Trace;

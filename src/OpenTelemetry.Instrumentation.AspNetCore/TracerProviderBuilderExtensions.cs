@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 #if NET7_0_OR_GREATER
 using System.Diagnostics;
 #endif

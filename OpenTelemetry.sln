@@ -238,9 +238,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\reda
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.csproj", "{7263001A-49F8-4C3C-AAA8-998F12DAAF64}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{011E70E1-152A-47BB-AF83-12DD12B125ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{011E70E1-152A-47BB-AF83-12DD12B125ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "getting-started-jaeger", "docs\trace\getting-started-jaeger\getting-started-jaeger.csproj", "{329AD438-6D15-4432-99BE-B0E85F00B3CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.DependencyInjection", "src\OpenTelemetry.Extensions.DependencyInjection\OpenTelemetry.Extensions.DependencyInjection.csproj", "{171A87CB-393C-4296-913F-E704CD8CEAE9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.DependencyInjection.Tests", "test\OpenTelemetry.Extensions.DependencyInjection.Tests\OpenTelemetry.Extensions.DependencyInjection.Tests.csproj", "{662476AA-5875-4E74-B992-DDF309168EFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -500,10 +502,14 @@ Global
 		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{329AD438-6D15-4432-99BE-B0E85F00B3CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{329AD438-6D15-4432-99BE-B0E85F00B3CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{329AD438-6D15-4432-99BE-B0E85F00B3CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{329AD438-6D15-4432-99BE-B0E85F00B3CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{171A87CB-393C-4296-913F-E704CD8CEAE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{171A87CB-393C-4296-913F-E704CD8CEAE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{171A87CB-393C-4296-913F-E704CD8CEAE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{171A87CB-393C-4296-913F-E704CD8CEAE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{662476AA-5875-4E74-B992-DDF309168EFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{662476AA-5875-4E74-B992-DDF309168EFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{662476AA-5875-4E74-B992-DDF309168EFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{662476AA-5875-4E74-B992-DDF309168EFB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -541,7 +547,6 @@ Global
 		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{5FDAF679-DE5A-4C73-A49B-8ABCF2399229} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
-		{329AD438-6D15-4432-99BE-B0E85F00B3CB} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

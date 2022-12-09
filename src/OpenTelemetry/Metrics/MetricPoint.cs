@@ -14,10 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {

@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
-using System;
-#endif
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 

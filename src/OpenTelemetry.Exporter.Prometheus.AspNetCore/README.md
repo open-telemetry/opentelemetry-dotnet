@@ -26,10 +26,10 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
   package on .NET 6.0+:
 
     ```csharp
-    services.AddOpenTelemetryMetrics(builder =>
-    {
-        builder.AddPrometheusExporter();
-    });
+    services.AddOpenTelemetry()
+        .WithMetrics(builder => builder
+            .AddPrometheusExporter())
+        .StartWithHost();
     ```
 
 * Or configure directly:

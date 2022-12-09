@@ -136,8 +136,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             services.AddHttpClient("OtlpTraceExporter", configureClient: (client) => invocations++);
 
-            services.AddOpenTelemetryTracing(builder => builder.AddOtlpExporter(
-                o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+            services.AddOpenTelemetry().WithTracing(builder => builder
+                .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
 
             using var serviceProvider = services.BuildServiceProvider();
 

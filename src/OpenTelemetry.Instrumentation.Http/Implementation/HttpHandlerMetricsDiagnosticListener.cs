@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation

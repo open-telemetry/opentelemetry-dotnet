@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;

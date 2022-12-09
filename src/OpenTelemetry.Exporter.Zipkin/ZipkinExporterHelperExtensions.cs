@@ -14,8 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
