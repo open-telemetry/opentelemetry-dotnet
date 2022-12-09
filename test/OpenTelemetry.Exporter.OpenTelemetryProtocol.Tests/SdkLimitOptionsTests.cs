@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using Xunit;
@@ -37,16 +35,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void SdkLimitOptionsDefaults()
         {
-            var config = new SdkLimitOptions();
+            var options = new SdkLimitOptions();
 
-            Assert.Null(config.AttributeValueLengthLimit);
-            Assert.Null(config.AttributeCountLimit);
-            Assert.Null(config.SpanAttributeValueLengthLimit);
-            Assert.Null(config.SpanAttributeCountLimit);
-            Assert.Null(config.SpanEventCountLimit);
-            Assert.Null(config.SpanLinkCountLimit);
-            Assert.Null(config.SpanEventAttributeCountLimit);
-            Assert.Null(config.SpanLinkAttributeCountLimit);
+            Assert.Null(options.AttributeValueLengthLimit);
+            Assert.Equal(128, options.AttributeCountLimit);
+            Assert.Null(options.SpanAttributeValueLengthLimit);
+            Assert.Equal(128, options.SpanAttributeCountLimit);
+            Assert.Equal(128, options.SpanEventCountLimit);
+            Assert.Equal(128, options.SpanLinkCountLimit);
+            Assert.Equal(128, options.SpanEventAttributeCountLimit);
+            Assert.Equal(128, options.SpanLinkAttributeCountLimit);
         }
 
         [Fact]
@@ -61,66 +59,88 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "30");
             Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "30");
 
-            var config = new SdkLimitOptions();
+            var options = new SdkLimitOptions();
 
-            Assert.Equal(10, config.AttributeValueLengthLimit);
-            Assert.Equal(10, config.AttributeCountLimit);
-            Assert.Equal(20, config.SpanAttributeValueLengthLimit);
-            Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(10, config.SpanEventCountLimit);
-            Assert.Equal(10, config.SpanLinkCountLimit);
-            Assert.Equal(30, config.SpanEventAttributeCountLimit);
-            Assert.Equal(30, config.SpanLinkAttributeCountLimit);
+            Assert.Equal(10, options.AttributeValueLengthLimit);
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(20, options.SpanAttributeValueLengthLimit);
+            Assert.Equal(20, options.SpanAttributeCountLimit);
+            Assert.Equal(10, options.SpanEventCountLimit);
+            Assert.Equal(10, options.SpanLinkCountLimit);
+            Assert.Equal(30, options.SpanEventAttributeCountLimit);
+            Assert.Equal(30, options.SpanLinkAttributeCountLimit);
         }
 
         [Fact]
         public void SpanAttributeValueLengthLimitFallback()
         {
-            var config = new SdkLimitOptions();
+            var options = new SdkLimitOptions();
 
-            config.AttributeValueLengthLimit = 10;
-            Assert.Equal(10, config.AttributeValueLengthLimit);
-            Assert.Equal(10, config.SpanAttributeValueLengthLimit);
+            options.AttributeValueLengthLimit = 10;
+            Assert.Equal(10, options.AttributeValueLengthLimit);
+            Assert.Equal(10, options.SpanAttributeValueLengthLimit);
 
-            config.SpanAttributeValueLengthLimit = 20;
-            Assert.Equal(10, config.AttributeValueLengthLimit);
-            Assert.Equal(20, config.SpanAttributeValueLengthLimit);
+            options.SpanAttributeValueLengthLimit = 20;
+            Assert.Equal(10, options.AttributeValueLengthLimit);
+            Assert.Equal(20, options.SpanAttributeValueLengthLimit);
+
+            options.SpanAttributeValueLengthLimit = null;
+            Assert.Equal(10, options.AttributeValueLengthLimit);
+            Assert.Null(options.SpanAttributeValueLengthLimit);
         }
 
         [Fact]
         public void SpanAttributeCountLimitFallback()
         {
-            var config = new SdkLimitOptions();
+            var options = new SdkLimitOptions();
 
-            config.AttributeCountLimit = 10;
-            Assert.Equal(10, config.AttributeCountLimit);
-            Assert.Equal(10, config.SpanAttributeCountLimit);
-            Assert.Equal(10, config.SpanEventAttributeCountLimit);
-            Assert.Equal(10, config.SpanLinkAttributeCountLimit);
+            options.AttributeCountLimit = 10;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(10, options.SpanAttributeCountLimit);
+            Assert.Equal(10, options.SpanEventAttributeCountLimit);
+            Assert.Equal(10, options.SpanLinkAttributeCountLimit);
 
-            config.SpanAttributeCountLimit = 20;
-            Assert.Equal(10, config.AttributeCountLimit);
-            Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(20, config.SpanEventAttributeCountLimit);
-            Assert.Equal(20, config.SpanLinkAttributeCountLimit);
+            options.SpanAttributeCountLimit = 20;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(20, options.SpanAttributeCountLimit);
+            Assert.Equal(20, options.SpanEventAttributeCountLimit);
+            Assert.Equal(20, options.SpanLinkAttributeCountLimit);
 
-            config.SpanEventAttributeCountLimit = 30;
-            Assert.Equal(10, config.AttributeCountLimit);
-            Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(30, config.SpanEventAttributeCountLimit);
-            Assert.Equal(20, config.SpanLinkAttributeCountLimit);
+            options.SpanEventAttributeCountLimit = 30;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(20, options.SpanAttributeCountLimit);
+            Assert.Equal(30, options.SpanEventAttributeCountLimit);
+            Assert.Equal(20, options.SpanLinkAttributeCountLimit);
 
-            config.SpanLinkAttributeCountLimit = 40;
-            Assert.Equal(10, config.AttributeCountLimit);
-            Assert.Equal(20, config.SpanAttributeCountLimit);
-            Assert.Equal(30, config.SpanEventAttributeCountLimit);
-            Assert.Equal(40, config.SpanLinkAttributeCountLimit);
+            options.SpanLinkAttributeCountLimit = 40;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(20, options.SpanAttributeCountLimit);
+            Assert.Equal(30, options.SpanEventAttributeCountLimit);
+            Assert.Equal(40, options.SpanLinkAttributeCountLimit);
+
+            options.SpanLinkAttributeCountLimit = null;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(20, options.SpanAttributeCountLimit);
+            Assert.Equal(30, options.SpanEventAttributeCountLimit);
+            Assert.Null(options.SpanLinkAttributeCountLimit);
+
+            options.SpanEventAttributeCountLimit = null;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Equal(20, options.SpanAttributeCountLimit);
+            Assert.Null(options.SpanEventAttributeCountLimit);
+            Assert.Null(options.SpanLinkAttributeCountLimit);
+
+            options.SpanAttributeCountLimit = null;
+            Assert.Equal(10, options.AttributeCountLimit);
+            Assert.Null(options.SpanAttributeCountLimit);
+            Assert.Null(options.SpanEventAttributeCountLimit);
+            Assert.Null(options.SpanLinkAttributeCountLimit);
         }
 
         [Fact]
         public void SdkLimitOptionsUsingIConfiguration()
         {
-            var values = new Dictionary<string, string>()
+            var values = new Dictionary<string, string>
             {
                 ["OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT"] = "23",
                 ["OTEL_ATTRIBUTE_COUNT_LIMIT"] = "24",

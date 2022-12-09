@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
 namespace OpenTelemetry.Instrumentation.SqlClient
@@ -28,6 +28,19 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 #if NETFRAMEWORK
         private readonly SqlEventSourceListener sqlEventSourceListener;
 #else
+        private static readonly HashSet<string> DiagnosticSourceEvents = new()
+        {
+            "System.Data.SqlClient.WriteCommandBefore",
+            "Microsoft.Data.SqlClient.WriteCommandBefore",
+            "System.Data.SqlClient.WriteCommandAfter",
+            "Microsoft.Data.SqlClient.WriteCommandAfter",
+            "System.Data.SqlClient.WriteCommandError",
+            "Microsoft.Data.SqlClient.WriteCommandError",
+        };
+
+        private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
+            => DiagnosticSourceEvents.Contains(eventName);
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 #endif
 
@@ -35,7 +48,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
         /// <param name="options">Configuration options for sql instrumentation.</param>
-        public SqlClientInstrumentation(SqlClientInstrumentationOptions options = null)
+        public SqlClientInstrumentation(
+            SqlClientInstrumentationOptions options = null)
         {
 #if NETFRAMEWORK
             this.sqlEventSourceListener = new SqlEventSourceListener(options);
@@ -43,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
             this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
                name => new SqlClientDiagnosticListener(name, options),
                listener => listener.Name == SqlClientDiagnosticListenerName,
-               null);
+               this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
 #endif
         }

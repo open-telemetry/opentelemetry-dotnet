@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
-using System;
-#endif
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;

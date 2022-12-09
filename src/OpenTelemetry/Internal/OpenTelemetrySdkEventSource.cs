@@ -14,11 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-#if DEBUG
-using System.Collections.Generic;
-using System.Linq;
-#endif
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Security;

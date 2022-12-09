@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace OpenTelemetry.Context
 {

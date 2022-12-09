@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Internal;
 

@@ -14,11 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 #if !NET6_0_OR_GREATER
 namespace System.Runtime.CompilerServices

@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -116,7 +115,7 @@ namespace OpenTelemetry.Exporter
                     foreach (var activityLink in activity.Links)
                     {
                         this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
-                        foreach (var attribute in activityLink.Tags)
+                        foreach (ref readonly var attribute in activityLink.EnumerateTagObjects())
                         {
                             if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
                             {

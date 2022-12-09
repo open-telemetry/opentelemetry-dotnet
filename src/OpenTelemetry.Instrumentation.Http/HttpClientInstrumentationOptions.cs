@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Net;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
@@ -30,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Http
     {
         /// <summary>
         /// Gets or sets a filter function that determines whether or not to
-        /// collect telemetry about requests on a per request basis.
+        /// collect telemetry on a per request basis.
         /// </summary>
         /// <remarks>
         /// <para><b>FilterHttpRequestMessage is only executed on .NET and .NET
@@ -82,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.Http
 
         /// <summary>
         /// Gets or sets a filter function that determines whether or not to
-        /// collect telemetry about requests on a per request basis.
+        /// collect telemetry on a per request basis.
         /// </summary>
         /// <remarks>
         /// <para><b>FilterHttpWebRequest is only executed on .NET Framework

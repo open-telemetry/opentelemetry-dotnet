@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
@@ -27,16 +26,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal sealed class HttpInMetricsListener : ListenerHandler
     {
+        private const string HttpServerDurationMetricName = "http.server.duration";
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
 
         private readonly Meter meter;
+        private readonly AspNetCoreMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpServerDuration;
 
-        public HttpInMetricsListener(string name, Meter meter)
+        internal HttpInMetricsListener(string name, Meter meter, AspNetCoreMetricsInstrumentationOptions options)
             : base(name)
         {
             this.meter = meter;
-            this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
+            this.options = options;
+            this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "measures the duration of the inbound HTTP request");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -47,6 +49,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    return;
+                }
+
+                try
+                {
+                    if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(HttpServerDurationMetricName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
                     return;
                 }
 
@@ -81,6 +97,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
                 }
 #endif
+                if (this.options.Enrich != null)
+                {
+                    try
+                    {
+                        this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
+                    }
+                    catch (Exception ex)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                    }
+                }
 
                 this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
