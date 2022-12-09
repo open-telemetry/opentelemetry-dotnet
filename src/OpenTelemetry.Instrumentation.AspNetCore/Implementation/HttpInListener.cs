@@ -124,7 +124,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             HttpContext context = payload as HttpContext;
             if (context == null)
             {
-                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
+                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName);
                 return;
             }
 
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     if (this.options.Filter?.Invoke(context) == false)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName);
                         activity.IsAllDataRequested = false;
                         activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                         return;
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName, ex);
                     activity.IsAllDataRequested = false;
                     activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                     return;
@@ -223,7 +223,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnStartActivity), activity.OperationName, ex);
                 }
             }
         }
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 HttpContext context = payload as HttpContext;
                 if (context == null)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity), activity.OperationName);
                     return;
                 }
 
@@ -265,7 +265,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnStopActivity), activity.OperationName, ex);
                 }
             }
 
@@ -353,7 +353,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // We need to use reflection here as the payload type is not a defined public type.
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException), activity.OperationName);
                     return;
                 }
 
@@ -370,7 +370,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnException), activity.OperationName, ex);
                 }
             }
         }
