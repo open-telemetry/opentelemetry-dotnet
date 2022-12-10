@@ -19,7 +19,8 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Represents something that configures the <see cref="MeterProviderBuilder"/> type.
 /// </summary>
-public interface IConfigureMeterProviderBuilder
+// Note: This API may be made public if there is a need for it.
+internal interface IConfigureMeterProviderBuilder
 {
     /// <summary>
     /// Invoked to configure a <see cref="MeterProviderBuilder"/> instance.
