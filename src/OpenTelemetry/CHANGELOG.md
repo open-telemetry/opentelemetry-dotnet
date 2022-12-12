@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
 * Added dependency injection support in the `ResourceBuilder` class and added
   support for loading environment variables from `IConfiguration` for the
   `AddEnvironmentVariableDetector` extension (Logs)

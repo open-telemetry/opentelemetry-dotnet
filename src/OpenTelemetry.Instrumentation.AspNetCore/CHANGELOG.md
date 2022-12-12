@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.10
+
+Released 2022-Dec-12
+
 * **Users migrating from version `1.0.0-rc9.9` will see the following breaking
   changes:**
   * Updated `http.status_code` dimension type from string to int for

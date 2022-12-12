@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.10
+
+Released 2022-Dec-12
+
 * Added `net.peer.name` and `net.peer.port` as dimensions on
   `http.client.duration` metric.
   ([#3907](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3907))

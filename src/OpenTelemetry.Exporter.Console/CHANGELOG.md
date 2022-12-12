@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
 * Bug fix to prevent ConsoleExporter from failing when exporting an
   `ActivityLink` without Tags.
   ([#3932](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3932))

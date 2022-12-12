@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
 * Added the `OpenTelemetryBuilder.StartWithHost` extension.
   ([#3923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3923))
 
