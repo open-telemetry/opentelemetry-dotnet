@@ -4,7 +4,7 @@
 
 * If the OpenTelemetry SDK cannot start it will now throw exceptions and prevent
   the host from starting.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4006))
 
 ## 1.4.0-rc.1
 
