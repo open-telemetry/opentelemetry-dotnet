@@ -6,6 +6,7 @@
     <Description>Contains extensions to register OpenTelemetry in applications using Microsoft.Extensions.DependencyInjection</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <AnalysisLevel>latest-all</AnalysisLevel>
   </PropertyGroup>
 
   <!--Do not run ApiCompat for netstandard2.0/net462 as this is newly added. Remove this property once we have released a stable version.-->
