@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -30,7 +29,9 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.ConfigureResource(r => r.AddService(serviceName: "MyService", serviceVersion: "1.0.0"));
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                    serviceName: "MyService",
+                    serviceVersion: "1.0.0"));
                 options.AddConsoleExporter();
             });
         });

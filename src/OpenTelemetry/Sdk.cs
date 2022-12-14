@@ -68,7 +68,7 @@ namespace OpenTelemetry
         /// <returns><see cref="MeterProviderBuilder"/> instance, which is used to build a <see cref="MeterProvider"/>.</returns>
         public static MeterProviderBuilder CreateMeterProviderBuilder()
         {
-            return new MeterProviderBuilderSdk();
+            return new MeterProviderBuilderBase();
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace OpenTelemetry
         /// <returns><see cref="TracerProviderBuilder"/> instance, which is used to build a <see cref="TracerProvider"/>.</returns>
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
-            return new TracerProviderBuilderSdk();
+            return new TracerProviderBuilderBase();
         }
     }
 }

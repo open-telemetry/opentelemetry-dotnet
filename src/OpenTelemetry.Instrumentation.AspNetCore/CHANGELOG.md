@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.10
+
+Released 2022-Dec-12
+
 * **Users migrating from version `1.0.0-rc9.9` will see the following breaking
   changes:**
   * Updated `http.status_code` dimension type from string to int for
@@ -18,10 +22,12 @@
   * `http.host` will no longer be populated on activity. `net.host.name` and
   `net.host.port` attributes will be populated instead.
   ([#3858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3858))
-  * Extension method `AddAspNetCoreInstrumentation` on `MeterProviderBuilder` now
+
+* Extension method `AddAspNetCoreInstrumentation` on `MeterProviderBuilder` now
   supports `AspNetCoreMetricsInstrumentationOptions`. This option class exposes
-   configuration properties for metric filtering and tag enrichment.
-  ([#3948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3948))
+  configuration properties for metric filtering and tag enrichment.
+  ([#3948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3948),
+  [#3982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3982))
 
 ## 1.0.0-rc9.9
 

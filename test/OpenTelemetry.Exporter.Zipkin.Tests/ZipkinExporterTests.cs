@@ -283,7 +283,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             services.AddHttpClient("ZipkinExporter", configureClient: (client) => invocations++);
 
-            services.AddOpenTelemetryTracing(builder => builder.AddZipkinExporter());
+            services.AddOpenTelemetry().WithTracing(builder => builder
+                .AddZipkinExporter());
 
             using var serviceProvider = services.BuildServiceProvider();
 

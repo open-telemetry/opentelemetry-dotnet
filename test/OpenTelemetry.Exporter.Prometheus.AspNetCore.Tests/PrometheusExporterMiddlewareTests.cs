@@ -258,7 +258,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                    {
                        if (registerMeterProvider)
                        {
-                           services.AddOpenTelemetryMetrics(builder => builder
+                           services.AddOpenTelemetry().WithMetrics(builder => builder
                                 .AddMeter(MeterName)
                                 .AddPrometheusExporter(o =>
                                 {

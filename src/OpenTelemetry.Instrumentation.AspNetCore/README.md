@@ -55,10 +55,11 @@ using OpenTelemetry.Trace;
 
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddOpenTelemetryTracing((builder) => builder
-        .AddAspNetCoreInstrumentation()
-        .AddJaegerExporter()
-    );
+    services.AddOpenTelemetry()
+        .WithTracing(builder => builder
+            .AddAspNetCoreInstrumentation()
+            .AddJaegerExporter())
+        .StartWithHost();
 }
 ```
 
@@ -84,10 +85,11 @@ services.Configure<AspNetCoreInstrumentationOptions>(options =>
     };
 });
 
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddAspNetCoreInstrumentation()
-    .AddJaegerExporter()
-);
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddAspNetCoreInstrumentation()
+        .AddJaegerExporter())
+    .StartWithHost();
 ```
 
 ### Filter
@@ -103,14 +105,15 @@ The following code snippet shows how to use `Filter` to only allow GET
 requests.
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddAspNetCoreInstrumentation((options) => options.Filter = httpContext =>
-    {
-        // only collect telemetry about HTTP GET requests
-        return httpContext.Request.Method.Equals("GET");
-    })
-    .AddJaegerExporter()
-);
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddAspNetCoreInstrumentation((options) => options.Filter = httpContext =>
+        {
+            // only collect telemetry about HTTP GET requests
+            return httpContext.Request.Method.Equals("GET");
+        })
+        .AddJaegerExporter())
+    .StartWithHost();
 ```
 
 It is important to note that this `Filter` option is specific to this
@@ -131,24 +134,24 @@ The following code snippet shows how to enrich the activity using all 3
 different options.
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) =>
-{
-    builder.AddAspNetCoreInstrumentation(o =>
-    {
-        o.EnrichWithHttpRequest = (activity, httpRequest) =>
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddAspNetCoreInstrumentation(o =>
         {
-            activity.SetTag("requestProtocol", httpRequest.Protocol);
-        };
-        o.EnrichWithHttpResponse = (activity, httpResponse) =>
-        {
-            activity.SetTag("responseLength", httpResponse.ContentLength);
-        };
-        o.EnrichWithException = (activity, exception) =>
-        {
-            activity.SetTag("exceptionType", exception.GetType().ToString());
-        };
-    })
-});
+            o.EnrichWithHttpRequest = (activity, httpRequest) =>
+            {
+                activity.SetTag("requestProtocol", httpRequest.Protocol);
+            };
+            o.EnrichWithHttpResponse = (activity, httpResponse) =>
+            {
+                activity.SetTag("responseLength", httpResponse.ContentLength);
+            };
+            o.EnrichWithException = (activity, exception) =>
+            {
+                activity.SetTag("exceptionType", exception.GetType().ToString());
+            };
+        }))
+    .StartWithHost();
 ```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor),

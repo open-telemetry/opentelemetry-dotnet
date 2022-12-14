@@ -142,7 +142,8 @@ namespace OpenTelemetry.Resources
         /// </remarks>
         /// <param name="resourceDetectorFactory">Resource detector factory.</param>
         /// <returns>Supplied <see cref="ResourceBuilder"/> for call chaining.</returns>
-        public ResourceBuilder AddDetector(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
+        // Note: This API may be made public if there is a need for it.
+        internal ResourceBuilder AddDetector(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
         {
             Guard.ThrowIfNull(resourceDetectorFactory);
 

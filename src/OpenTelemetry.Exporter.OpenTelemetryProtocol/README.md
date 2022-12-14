@@ -127,17 +127,19 @@ function with your own implementation if you want to customize the generated
 `HttpClient`:
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) => builder
-    .AddOtlpExporter(o =>
-    {
-        o.Protocol = OtlpExportProtocol.HttpProtobuf;
-        o.HttpClientFactory = () =>
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddOtlpExporter(o =>
         {
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
-            return client;
-        };
-    }));
+            o.Protocol = OtlpExportProtocol.HttpProtobuf;
+            o.HttpClientFactory = () =>
+            {
+                HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
+                return client;
+            };
+        }))
+    .StartWithHost();
 ```
 
 For users using
