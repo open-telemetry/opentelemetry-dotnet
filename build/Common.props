@@ -8,7 +8,8 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AnalysisLevel>latest-All</AnalysisLevel>
+    <!--temporarily disable. See 3958-->
+    <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
