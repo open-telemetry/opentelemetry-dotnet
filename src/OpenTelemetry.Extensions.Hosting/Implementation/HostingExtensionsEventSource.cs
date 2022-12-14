@@ -26,10 +26,16 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
     {
         public static HostingExtensionsEventSource Log = new();
 
-        [Event(1, Message = "OpenTelemetry TraverProvider and/or MeterProvider were not found in application services. SDK will remain disabled.", Level = EventLevel.Warning)]
-        public void SdkNotRegistered()
+        [Event(1, Message = "OpenTelemetry TracerProvider was not found in application services. Tracing will remain disabled.", Level = EventLevel.Warning)]
+        public void TracerProviderNotRegistered()
         {
             this.WriteEvent(1);
+        }
+
+        [Event(2, Message = "OpenTelemetry MeterProvider was not found in application services. Metrics will remain disabled.", Level = EventLevel.Warning)]
+        public void MeterProviderNotRegistered()
+        {
+            this.WriteEvent(2);
         }
     }
 }

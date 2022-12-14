@@ -50,11 +50,15 @@ internal sealed class TelemetryHostedService : IHostedService
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
         var meterProvider = serviceProvider.GetService<MeterProvider>();
-        var tracerProvider = serviceProvider.GetService<TracerProvider>();
-
-        if (meterProvider == null && tracerProvider == null)
+        if (meterProvider == null)
         {
-            HostingExtensionsEventSource.Log.SdkNotRegistered();
+            HostingExtensionsEventSource.Log.MeterProviderNotRegistered();
+        }
+
+        var tracerProvider = serviceProvider.GetService<TracerProvider>();
+        if (tracerProvider == null)
+        {
+            HostingExtensionsEventSource.Log.TracerProviderNotRegistered();
         }
     }
 }
