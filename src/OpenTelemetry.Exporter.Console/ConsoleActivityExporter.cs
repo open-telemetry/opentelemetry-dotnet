@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter
                 if (activity.TagObjects.Any())
                 {
                     this.WriteLine("Activity.Tags:");
-                    foreach (var tag in activity.TagObjects)
+                    foreach (ref readonly var tag in activity.EnumerateTagObjects())
                     {
                         if (tag.Key == SpanAttributeConstants.StatusCodeKey)
                         {
@@ -96,10 +96,10 @@ namespace OpenTelemetry.Exporter
                 if (activity.Events.Any())
                 {
                     this.WriteLine("Activity.Events:");
-                    foreach (var activityEvent in activity.Events)
+                    foreach (ref readonly var activityEvent in activity.EnumerateEvents())
                     {
                         this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
-                        foreach (var attribute in activityEvent.Tags)
+                        foreach (ref readonly var attribute in activityEvent.EnumerateTagObjects())
                         {
                             if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
                             {
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter
                 if (activity.Links.Any())
                 {
                     this.WriteLine("Activity.Links:");
-                    foreach (var activityLink in activity.Links)
+                    foreach (ref readonly var activityLink in activity.EnumerateLinks())
                     {
                         this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
                         foreach (ref readonly var attribute in activityLink.EnumerateTagObjects())
