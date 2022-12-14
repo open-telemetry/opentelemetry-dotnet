@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics.Tracing;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation
 {
@@ -27,34 +26,16 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
     {
         public static HostingExtensionsEventSource Log = new();
 
-        [NonEvent]
-        public void FailedInitialize(Exception ex)
+        [Event(1, Message = "OpenTelemetry TracerProvider was not found in application services. Tracing will remain disabled.", Level = EventLevel.Warning)]
+        public void TracerProviderNotRegistered()
         {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.FailedInitialize(ex.ToInvariantString());
-            }
+            this.WriteEvent(1);
         }
 
-        [NonEvent]
-        public void FailedOpenTelemetrySDK(Exception ex)
+        [Event(2, Message = "OpenTelemetry MeterProvider was not found in application services. Metrics will remain disabled.", Level = EventLevel.Warning)]
+        public void MeterProviderNotRegistered()
         {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.FailedOpenTelemetrySDK(ex.ToInvariantString());
-            }
-        }
-
-        [Event(1, Message = "An exception occurred while initializing OpenTelemetry Tracing. OpenTelemetry tracing will remain disabled. Exception: '{0}'.", Level = EventLevel.Error)]
-        public void FailedInitialize(string exception)
-        {
-            this.WriteEvent(1, exception);
-        }
-
-        [Event(2, Message = "An exception occurred while retrieving OpenTelemetry Tracer. OpenTelemetry tracing will remain disabled. Exception: '{0}'.", Level = EventLevel.Error)]
-        public void FailedOpenTelemetrySDK(string exception)
-        {
-            this.WriteEvent(2, exception);
+            this.WriteEvent(2);
         }
     }
 }
