@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
+* Fix default values for `OTEL_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_SPAN_EVENT_COUNT_LIMIT`,
+  `OTEL_SPAN_LINK_COUNT_LIMIT`,
+  `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`. All of them are defaulted to `128`.
+  ([#3978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3978))
+
 ## 1.4.0-beta.3
 
 Released 2022-Nov-07
@@ -9,7 +22,7 @@ Released 2022-Nov-07
 * Log Exporter modified to no longer prefix scope-depth when exporting ILogger
   scopes as attributes. Empty keys and {OriginalFormat} key will be ignored from
   scopes.
-  ([3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
+  ([#3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
 
 ## 1.4.0-beta.2
 

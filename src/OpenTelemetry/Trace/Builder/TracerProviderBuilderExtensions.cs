@@ -18,6 +18,8 @@
 
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -36,10 +38,13 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.SetErrorStatusOnException(enabled);
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.SetErrorStatusOnException(enabled);
+                }
+            });
 
             return tracerProviderBuilder;
         }
@@ -52,10 +57,15 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetSampler(this TracerProviderBuilder tracerProviderBuilder, Sampler sampler)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            Guard.ThrowIfNull(sampler);
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.SetSampler(sampler);
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.SetSampler(sampler);
+                }
+            });
 
             return tracerProviderBuilder;
         }
@@ -73,10 +83,15 @@ namespace OpenTelemetry.Trace
         public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : Sampler
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.SetSampler<T>();
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.SetSampler(sp.GetRequiredService<T>());
+                }
+            });
 
             return tracerProviderBuilder;
         }
@@ -92,10 +107,15 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, ResourceBuilder resourceBuilder)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            Guard.ThrowIfNull(resourceBuilder);
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.SetResourceBuilder(resourceBuilder);
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                }
+            });
 
             return tracerProviderBuilder;
         }
@@ -109,10 +129,15 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder> configure)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            Guard.ThrowIfNull(configure);
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.ConfigureResource(configure);
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.ConfigureResource(configure);
+                }
+            });
 
             return tracerProviderBuilder;
         }
@@ -125,10 +150,15 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, BaseProcessor<Activity> processor)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            Guard.ThrowIfNull(processor);
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.AddProcessor(processor);
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.AddProcessor(processor);
+                }
+            });
 
             return tracerProviderBuilder;
         }
@@ -146,74 +176,15 @@ namespace OpenTelemetry.Trace
         public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : BaseProcessor<Activity>
         {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
-                tracerProviderBuilderBase.AddProcessor<T>();
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Adds instrumentation to the provider.
-        /// </summary>
-        /// <remarks>
-        /// Note: The type specified by <typeparamref name="T"/> will be
-        /// registered as a singleton service into application services.
-        /// </remarks>
-        /// <typeparam name="T">Instrumentation type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
-            where T : class
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-            {
-                tracerProviderBuilderBase.AddInstrumentation<T>();
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Register a callback action to configure the <see
-        /// cref="IServiceCollection"/> where tracing services are configured.
-        /// </summary>
-        /// <remarks>
-        /// Note: Tracing services are only available during the application
-        /// configuration phase.
-        /// </remarks>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="configure">Configuration callback.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder ConfigureServices(
-            this TracerProviderBuilder tracerProviderBuilder,
-            Action<IServiceCollection> configure)
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-            {
-                tracerProviderBuilderBase.ConfigureServices(configure);
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Register a callback action to configure the <see
-        /// cref="TracerProviderBuilder"/> once the application <see
-        /// cref="IServiceProvider"/> is available.
-        /// </summary>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="configure">Configuration callback.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder ConfigureBuilder(
-            this TracerProviderBuilder tracerProviderBuilder,
-            Action<IServiceProvider, TracerProviderBuilder> configure)
-        {
-            if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
-            {
-                deferredTracerProviderBuilder.Configure(configure);
-            }
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.AddProcessor(sp.GetRequiredService<T>());
+                }
+            });
 
             return tracerProviderBuilder;
         }

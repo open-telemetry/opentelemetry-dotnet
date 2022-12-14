@@ -21,8 +21,17 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Contains extension methods for the <see cref="TracerProvider"/> class.
+    /// </summary>
     public static class TracerProviderExtensions
     {
+        /// <summary>
+        /// Add a processor to the provider.
+        /// </summary>
+        /// <param name="provider"><see cref="TracerProvider"/>.</param>
+        /// <param name="processor"><see cref="BaseProcessor{T}"/>.</param>
+        /// <returns>The supplied <see cref="TracerProvider"/> instance for call chaining.</returns>
         public static TracerProvider AddProcessor(this TracerProvider provider, BaseProcessor<Activity> processor)
         {
             Guard.ThrowIfNull(provider);

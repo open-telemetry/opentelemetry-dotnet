@@ -25,11 +25,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     public class AspNetCoreInstrumentationOptions
     {
         /// <summary>
-        /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
-        /// The Filter gets the HttpContext, and should return a boolean.
-        /// If Filter returns true, the request is collected.
-        /// If Filter returns false or throw exception, the request is filtered out.
+        /// Gets or sets a filter function that determines whether or not to
+        /// collect telemetry on a per request basis.
         /// </summary>
+        /// <remarks>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>The return value for the filter function is interpreted as:
+        /// <list type="bullet">
+        /// <item>If filter returns <see langword="true" />, the request is
+        /// collected.</item>
+        /// <item>If filter returns <see langword="false" /> or throws an
+        /// exception the request is NOT collected.</item>
+        /// </list></item>
+        /// </list>
+        /// </remarks>
         public Func<HttpContext, bool> Filter { get; set; }
 
         /// <summary>

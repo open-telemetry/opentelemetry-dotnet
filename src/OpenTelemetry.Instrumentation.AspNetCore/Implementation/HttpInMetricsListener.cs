@@ -26,7 +26,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal sealed class HttpInMetricsListener : ListenerHandler
     {
+        private const string HttpServerDurationMetricName = "http.server.duration";
         private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
+        private const string EventName = "OnStopActivity";
 
         private readonly Meter meter;
         private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -37,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             this.meter = meter;
             this.options = options;
-            this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
+            this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "measures the duration of the inbound HTTP request");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -47,21 +49,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var context = payload as HttpContext;
                 if (context == null)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnEventWritten));
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
                     return;
                 }
 
                 try
                 {
-                    if (this.options.Filter?.Invoke(context) == false)
+                    if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(Activity.Current.OperationName);
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
-                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(ex);
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
                     return;
                 }
 
@@ -100,11 +102,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     try
                     {
-                        this.options.Enrich(context, ref tags);
+                        this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
                     }
                     catch (Exception ex)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
                     }
                 }
 
