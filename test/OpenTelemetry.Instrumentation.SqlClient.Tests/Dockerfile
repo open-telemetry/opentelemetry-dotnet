@@ -19,4 +19,4 @@ ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait
 RUN chmod +x /wait
 WORKDIR /test
 COPY --from=build /drop .
-ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.SqlClient.Tests.dll"]
+ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.SqlClient.Tests.dll", "--logger:console;verbosity=detailed"]
