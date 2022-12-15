@@ -4,6 +4,9 @@
     <Name Resource="OpenTelemetrySDKRules_Name" />
     <Description Resource="OpenTelemetrySDKRules_Description" />
   </Localization>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.NetAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.NetAnalyzers">
+    <Rule Id="CA1707" Action="None" />
+  </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA0001" Action="None" />
     <Rule Id="SA1200" Action="None" />
