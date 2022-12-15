@@ -34,7 +34,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             opentelemetry>docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --project-directory=. up --exit-code-from=tests --build
          */
         private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
-        private static Version AspNetCoreVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;
+        private static readonly Version AspNetCoreHostingVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;
         private readonly HttpClient httpClient = new HttpClient();
         private readonly ITestOutputHelper output;
 
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             // 1) harness sends a request with an invalid tracestate header with duplicated keys ... FAIL
             // 2) harness sends an invalid traceparent with illegal characters in trace_flags ... FAIL
 
-            if (AspNetCoreVersion.Major <= 6)
+            if (AspNetCoreHostingVersion.Major <= 6)
             {
                 Assert.StartsWith("FAILED (failures=5)", lastLine);
             }
