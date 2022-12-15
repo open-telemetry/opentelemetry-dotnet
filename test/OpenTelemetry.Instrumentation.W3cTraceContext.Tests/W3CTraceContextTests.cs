@@ -97,9 +97,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 
             // Assert on the last line
 
-            // TODO: Investigate failures:
-            // 1) harness sends a request with an invalid tracestate header with duplicated keys ... FAIL
-            // 2) harness sends an invalid traceparent with illegal characters in trace_flags ... FAIL
+            // TODO: Investigate failures on .NET6 vs .NET7. To see the details
+            // run the tests with console logger (done automatically by the CI
+            // jobs).
 
             if (AspNetCoreHostingVersion.Major <= 6)
             {
