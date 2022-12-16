@@ -4,6 +4,6 @@ services:
   tests:
     build:
       args:
-        PUBLISH_FRAMEWORK: net7.0
-        TEST_SDK_VERSION: 7.0
+        PUBLISH_FRAMEWORK: net6.0
+        TEST_SDK_VERSION: 6.0
         BUILD_SDK_VERSION: 7.0
