@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var httpClient = ClientTestHelpers.CreateTestClient(async request =>
             {
-                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
+                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
                 var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
                 response.TrailingHeaders().Add("grpc-message", "value");
                 return response;

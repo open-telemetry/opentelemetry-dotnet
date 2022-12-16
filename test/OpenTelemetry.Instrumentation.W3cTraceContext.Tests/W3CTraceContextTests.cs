@@ -73,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                                 Encoding.UTF8,
                                 "application/json"),
                         };
-                        await this.httpClient.SendAsync(request);
+                        await this.httpClient.SendAsync(request).ConfigureAwait(false);
                     }
                 }
                 else

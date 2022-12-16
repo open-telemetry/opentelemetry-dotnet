@@ -66,11 +66,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
                 data = response.ToByteArray();
             }
 
-            await ResponseUtils.WriteHeaderAsync(ms, data.Length, compress, CancellationToken.None);
+            await ResponseUtils.WriteHeaderAsync(ms, data.Length, compress, CancellationToken.None).ConfigureAwait(false);
 #if NET5_0_OR_GREATER
-            await ms.WriteAsync(data);
+            await ms.WriteAsync(data).ConfigureAwait(false);
 #else
-            await ms.WriteAsync(data, 0, data.Length);
+            await ms.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
 #endif
         }
 
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             var ms = new MemoryStream();
             foreach (var response in responses)
             {
-                await WriteResponseAsync(ms, response, compressionProvider);
+                await WriteResponseAsync(ms, response, compressionProvider).ConfigureAwait(false);
             }
 
             ms.Seek(0, SeekOrigin.Begin);

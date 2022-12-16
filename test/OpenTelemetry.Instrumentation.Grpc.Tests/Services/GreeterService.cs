@@ -43,10 +43,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Services.Tests
                 var message = $"How are you {request.Name}? {++i}";
                 this.logger.LogInformation("Sending greeting {Message}.", message);
 
-                await responseStream.WriteAsync(new HelloReply { Message = message });
+                await responseStream.WriteAsync(new HelloReply { Message = message }).ConfigureAwait(false);
 
                 // Gotta look busy
-                await Task.Delay(1000);
+                await Task.Delay(1000).ConfigureAwait(false);
             }
         }
     }

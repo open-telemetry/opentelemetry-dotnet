@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         }
                     }
 
-                    await c.SendAsync(request);
+                    await c.SendAsync(request).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
@@ -247,7 +247,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
             var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
-            await t;
+            await t.ConfigureAwait(false);
         }
 
         [Fact]

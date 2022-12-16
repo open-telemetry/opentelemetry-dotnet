@@ -88,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         path += query;
                     }
 
-                    var response = await client.GetAsync(path);
+                    var response = await client.GetAsync(path).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     // We need to let End callback execute as it is executed AFTER response was returned.
                     // In unit tests environment there may be a lot of parallel unit tests executed, so
                     // giving some breezing room for the End callback to complete
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                 }
             }
 
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 context.Response.StatusCode = this.statusCode;
                 context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = this.reasonPhrase;
-                await context.Response.WriteAsync("empty");
+                await context.Response.WriteAsync("empty").ConfigureAwait(false);
 
                 if (context.Request.Path.Value.EndsWith("exception"))
                 {

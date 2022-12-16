@@ -64,8 +64,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 })
                 .CreateClient())
             {
-                var response1 = await client.GetAsync("/api/values");
-                var response2 = await client.GetAsync("/api/values/2");
+                var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 response1.EnsureSuccessStatusCode();
                 response2.EnsureSuccessStatusCode();
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so
             // giving some breezing room for the End callback to complete
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
             this.meterProvider.Dispose();
 
@@ -111,8 +111,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                        })
                        .CreateClient())
             {
-                var response1 = await client.GetAsync("/api/values");
-                var response2 = await client.GetAsync("/api/values/2");
+                var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 response1.EnsureSuccessStatusCode();
                 response2.EnsureSuccessStatusCode();
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so
             // giving some breezing room for the End callback to complete
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
             this.meterProvider.Dispose();
 
@@ -169,14 +169,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                        })
                        .CreateClient())
             {
-                var response = await client.GetAsync("/api/values");
+                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
             }
 
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so
             // giving some breezing room for the End callback to complete
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
             this.meterProvider.Dispose();
 

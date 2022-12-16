@@ -73,7 +73,7 @@ namespace Benchmarks.Instrumentation
         [Benchmark]
         public async Task InstrumentedHttpClient()
         {
-            var httpResponse = await this.httpClient.GetAsync(this.url);
+            var httpResponse = await this.httpClient.GetAsync(this.url).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 
@@ -81,7 +81,7 @@ namespace Benchmarks.Instrumentation
         public async Task InstrumentedHttpClientWithParentActivity()
         {
             using var parent = this.source.StartActivity(ActivityName, ActivityKind.Server);
-            var httpResponse = await this.httpClient.GetAsync(this.url);
+            var httpResponse = await this.httpClient.GetAsync(this.url).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
     }
