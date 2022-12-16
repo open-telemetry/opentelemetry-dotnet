@@ -995,7 +995,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(0, numberOfUnSubscribedEvents);
             Assert.Equal(2, numberofSubscribedEvents);
 
-            await app.DisposeAsync().ConfigureAwait(false).ConfigureAwait(false);
+            await app.DisposeAsync().ConfigureAwait(false);
         }
 
         public void Dispose()
