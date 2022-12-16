@@ -38,8 +38,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             {
                 using var registration = cancellationToken.Register(() => tcs.TrySetCanceled());
 
-                var result = await Task.WhenAny(sendAsync(request), tcs.Task);
-                return await result;
+                var result = await Task.WhenAny(sendAsync(request), tcs.Task).ConfigureAwait(false);
+                return await result.ConfigureAwait(false);
             });
         }
 

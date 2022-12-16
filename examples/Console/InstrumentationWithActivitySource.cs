@@ -138,7 +138,7 @@ namespace Examples.Console
 
                                 activity?.SetTag("http.status_code", (int)response.StatusCode);
 
-                                var responseContent = await response.Content.ReadAsStringAsync();
+                                var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                                 activity?.SetTag("response.content", responseContent);
                                 activity?.SetTag("response.length", responseContent.Length.ToString(CultureInfo.InvariantCulture));
 

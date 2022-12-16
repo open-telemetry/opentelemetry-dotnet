@@ -269,7 +269,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                        configureServices?.Invoke(services);
                    })
                    .Configure(configure))
-               .StartAsync();
+               .StartAsync().ConfigureAwait(false);
 
             var tags = new KeyValuePair<string, object>[]
             {

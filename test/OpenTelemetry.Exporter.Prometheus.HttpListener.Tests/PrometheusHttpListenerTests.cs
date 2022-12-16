@@ -82,13 +82,13 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [Fact]
         public async Task PrometheusExporterHttpServerIntegration()
         {
-            await this.RunPrometheusExporterHttpServerIntegrationTest();
+            await this.RunPrometheusExporterHttpServerIntegrationTest().ConfigureAwait(false);
         }
 
         [Fact]
         public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
         {
-            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true).ConfigureAwait(false);
         }
 
         private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)

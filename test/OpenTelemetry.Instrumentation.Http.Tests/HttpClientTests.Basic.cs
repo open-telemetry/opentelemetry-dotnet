@@ -157,7 +157,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.SendAsync(request).ConfigureAwait(false);
             }
 
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.SendAsync(request).ConfigureAwait(false);
             }
 
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -301,7 +301,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     using var c = new HttpClient();
                     using (SuppressInstrumentationScope.Begin())
                     {
-                        await c.SendAsync(request);
+                        await c.SendAsync(request).ConfigureAwait(false);
                     }
                 }
 
@@ -338,7 +338,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             int maxRetries = 3;
             using var c = new HttpClient(new RetryHandler(new HttpClientHandler(), maxRetries));
-            await c.SendAsync(request);
+            await c.SendAsync(request).ConfigureAwait(false);
 
             // number of exported spans should be 3(maxRetries)
             Assert.Equal(maxRetries, exportedItems.Count());
@@ -363,7 +363,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.GetAsync($"{this.url}redirect");
+                await c.GetAsync($"{this.url}redirect").ConfigureAwait(false);
             }
 
 #if NETFRAMEWORK
@@ -414,7 +414,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.GetAsync(this.url);
+                await c.GetAsync(this.url).ConfigureAwait(false);
             }
 
 #if NETFRAMEWORK
@@ -445,7 +445,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 using var c = new HttpClient();
                 using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
-                await c.GetAsync(this.url);
+                await c.GetAsync(this.url).ConfigureAwait(false);
                 Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
 
@@ -466,7 +466,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/").ConfigureAwait(false);
             }
             catch
             {
@@ -492,7 +492,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetAsync($"{this.url}500");
+                await c.GetAsync($"{this.url}500").ConfigureAwait(false);
             }
             catch
             {
@@ -523,7 +523,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetStringAsync($"{this.url}500");
+                await c.GetStringAsync($"{this.url}500").ConfigureAwait(false);
             }
             catch
             {
@@ -598,7 +598,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 };
 
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.SendAsync(request).ConfigureAwait(false);
 
                 parent?.Stop();
 

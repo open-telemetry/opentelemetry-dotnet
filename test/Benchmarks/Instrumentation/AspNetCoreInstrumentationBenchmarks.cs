@@ -71,28 +71,28 @@ namespace Benchmarks.Instrumentation
         public async Task GlobalCleanupUninstrumentedAspNetCoreAppAsync()
         {
             this.httpClient.Dispose();
-            await this.app.DisposeAsync();
+            await this.app.DisposeAsync().ConfigureAwait(false);
         }
 
         [GlobalCleanup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
         public async Task GlobalCleanupInstrumentedAspNetCoreAppWithDefaultOptionsAsync()
         {
             this.httpClient.Dispose();
-            await this.app.DisposeAsync();
+            await this.app.DisposeAsync().ConfigureAwait(false);
             this.tracerProvider.Dispose();
         }
 
         [Benchmark]
         public async Task UninstrumentedAspNetCoreApp()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
+            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 
         [Benchmark]
         public async Task InstrumentedAspNetCoreAppWithDefaultOptions()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values");
+            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 

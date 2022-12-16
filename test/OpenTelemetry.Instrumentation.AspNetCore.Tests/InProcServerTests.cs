@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async void ExampleTest()
         {
-            var res = await this.client.GetStringAsync("http://localhost:5000");
+            var res = await this.client.GetStringAsync("http://localhost:5000").ConfigureAwait(false);
             Assert.NotNull(res);
 
             this.tracerProvider.ForceFlush();
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // We need to let End callback execute as it is executed AFTER response was returned.
                 // In unit tests environment there may be a lot of parallel unit tests executed, so
                 // giving some breezing room for the End callback to complete
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
             }
 
             var activity = this.exportedItems[0];
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             this.tracerProvider.Dispose();
             this.client.Dispose();
-            await this.app.DisposeAsync();
+            await this.app.DisposeAsync().ConfigureAwait(false);
         }
     }
 }

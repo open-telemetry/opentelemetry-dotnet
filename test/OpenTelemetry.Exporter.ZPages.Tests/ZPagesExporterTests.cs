@@ -164,10 +164,10 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             var zpagesServer = new ZPagesExporterStatsHttpServer(exporter);
             zpagesServer.Start();
 
-            using var httpResponseMessage = await HttpClient.GetAsync("http://localhost:7284/rpcz/");
+            using var httpResponseMessage = await HttpClient.GetAsync("http://localhost:7284/rpcz/").ConfigureAwait(false);
             Assert.True(httpResponseMessage.IsSuccessStatusCode);
 
-            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+            var content = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
             Assert.Contains($"<td>Test Zipkin Activity 1</td>", content);
             Assert.Contains($"<td>Test Zipkin Activity 2</td>", content);
 

@@ -86,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values");
+                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values");
+                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedSpanId}-01");
 
                 // Act
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         }))
                 {
                     using var client = testFactory.CreateClient();
-                    var response = await client.GetAsync("/api/values/2");
+                    var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                     response.EnsureSuccessStatusCode(); // Status Code 200-299
 
                     WaitForActivityExport(exportedItems, 1);
@@ -282,8 +282,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using var client = testFactory.CreateClient();
 
                 // Act
-                var response1 = await client.GetAsync("/api/values");
-                var response2 = await client.GetAsync("/api/values/2");
+                var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 // Assert
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -334,8 +334,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Act
                 using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
                 {
-                    var response1 = await client.GetAsync("/api/values");
-                    var response2 = await client.GetAsync("/api/values/2");
+                    var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                    var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                     response1.EnsureSuccessStatusCode(); // Status Code 200-299
                     response2.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -379,7 +379,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
                 var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
@@ -391,7 +391,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Test Baggage Context Propagation
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                response = await client.SendAsync(request);
+                response = await client.SendAsync(request).ConfigureAwait(false);
                 var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
@@ -445,7 +445,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
 
                 // Ensure that filter was called
                 Assert.True(isFilterCalled);
@@ -461,7 +461,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Test Baggage Context Propagation
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                response = await client.SendAsync(request);
+                response = await client.SendAsync(request).ConfigureAwait(false);
                 var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
@@ -529,7 +529,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request.Headers.TryAddWithoutValidation("baggage", "TestKey1=123,TestKey2=456");
 
                 // Act
-                using var response = await client.SendAsync(request);
+                using var response = await client.SendAsync(request).ConfigureAwait(false);
             }
 
             stopSignal.WaitOne(5000);
@@ -583,7 +583,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient();
 
             // Act
-            var response = await client.GetAsync("/api/values");
+            var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
@@ -618,7 +618,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 })
                 .CreateClient())
             {
-                var response = await client.GetAsync("/api/values/2");
+                var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 WaitForActivityExport(exportedItems, 2);
             }
@@ -666,7 +666,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 })
                 .CreateClient())
             {
-                var response = await client.GetAsync("/api/values/2");
+                var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 WaitForActivityExport(exportedItems, 2);
             }
@@ -717,7 +717,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values");
+                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -750,7 +750,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/error");
+                var response = await client.GetAsync("/api/error").ConfigureAwait(false);
 
                 WaitForActivityExport(exportedItems, 1);
             }
@@ -816,7 +816,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
 
                 // Act
-                using var response = await client.SendAsync(request);
+                using var response = await client.SendAsync(request).ConfigureAwait(false);
             }
 
             Assert.Equal(0, numberOfUnSubscribedEvents);
@@ -894,7 +894,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     using var request = new HttpRequestMessage(HttpMethod.Get, "/api/error");
 
                     // Act
-                    using var response = await client.SendAsync(request);
+                    using var response = await client.SendAsync(request).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -965,7 +965,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 handler.Run(async (ctx) =>
                 {
-                    await ctx.Response.WriteAsync("handled");
+                    await ctx.Response.WriteAsync("handled").ConfigureAwait(false);
                 });
             });
 
@@ -984,7 +984,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             using var client = new HttpClient();
             try
             {
-                await client.GetStringAsync("http://localhost:5000/error");
+                await client.GetStringAsync("http://localhost:5000/error").ConfigureAwait(false);
             }
             catch
             {
@@ -995,7 +995,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(0, numberOfUnSubscribedEvents);
             Assert.Equal(2, numberofSubscribedEvents);
 
-            await app.DisposeAsync();
+            await app.DisposeAsync().ConfigureAwait(false);
         }
 
         public void Dispose()

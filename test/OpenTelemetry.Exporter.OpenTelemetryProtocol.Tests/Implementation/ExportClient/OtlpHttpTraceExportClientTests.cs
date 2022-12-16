@@ -124,7 +124,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     httpRequest = r;
 
                     // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                    httpRequestContent = await r.Content.ReadAsByteArrayAsync();
+                    httpRequestContent = await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                 })
 #endif
                 .Verifiable();
