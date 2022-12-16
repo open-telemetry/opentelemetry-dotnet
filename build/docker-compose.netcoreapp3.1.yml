@@ -1,8 +1,0 @@
-version: '3.7'
-
-services:
-  tests:
-    build:
-      args:
-        PUBLISH_FRAMEWORK: netcoreapp3.1
-        SDK_VERSION: 3.1
