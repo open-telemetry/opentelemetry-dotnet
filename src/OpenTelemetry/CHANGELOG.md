@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* Support for metrics was originally released in version 1.3.0. A
+  synchronization issue with regards to the histogram aggregation was
+  discovered and fixed in
+  [#3534](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3534).
+  This fix has been back-ported to OpenTelemetry .NET 1.3.2. If you
+  are currently running OpenTelemetry .NET version 1.3.x, it is recommended
+  that you upgrade to 1.3.2.
+  ([#4031](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4031))
+
 ## 1.3.1
 
 Released 2022-Sep-06
