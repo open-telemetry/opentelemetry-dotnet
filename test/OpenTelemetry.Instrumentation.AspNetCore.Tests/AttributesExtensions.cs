@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Linq;
-
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     internal static class AttributesExtensions

@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
