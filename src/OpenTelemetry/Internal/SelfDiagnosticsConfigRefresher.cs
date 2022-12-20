@@ -28,7 +28,7 @@ namespace OpenTelemetry.Internal
     /// file is present and valid. Otherwise, the stream object would be unavailable,
     /// nothing will be logged to any file.
     /// </summary>
-    internal class SelfDiagnosticsConfigRefresher : IDisposable
+    internal sealed class SelfDiagnosticsConfigRefresher : IDisposable
     {
         public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.\n");
 
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Internal
         /// <param name="stream">When this method returns, contains the Stream object where `byteCount` of bytes can be written.</param>
         /// <param name="availableByteCount">The number of bytes that is remaining until the end of the stream.</param>
         /// <returns>Whether the logger should log in the stream.</returns>
-        public virtual bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
+        public bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
         {
             if (this.memoryMappedFile == null)
             {

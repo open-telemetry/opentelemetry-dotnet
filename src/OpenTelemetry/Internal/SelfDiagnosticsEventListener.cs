@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
     /// SelfDiagnosticsEventListener class enables the events from OpenTelemetry event sources
     /// and write the events to a local file in a circular way.
     /// </summary>
-    internal class SelfDiagnosticsEventListener : EventListener
+    internal sealed class SelfDiagnosticsEventListener : EventListener
     {
         // Buffer size of the log line. A UTF-16 encoded character in C# can take up to 4 bytes if encoded in UTF-8.
         private const int BUFFERSIZE = 4 * 5120;
@@ -321,7 +321,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(eventData.Message, eventData.Payload);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (this.disposedValue)
             {

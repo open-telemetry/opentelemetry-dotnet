@@ -16,11 +16,10 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-#pragma warning restore IDE0005
 
 namespace OpenTelemetry.Instrumentation
 {
-    internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
+    internal sealed class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
         private readonly List<IDisposable> listenerSubscriptions;
         private readonly Func<string, ListenerHandler> handlerFactory;
@@ -90,7 +89,7 @@ namespace OpenTelemetry.Instrumentation
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (Interlocked.CompareExchange(ref this.disposed, 1, 0) == 1)
             {
