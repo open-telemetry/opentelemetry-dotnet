@@ -15,6 +15,7 @@
 // </copyright>
 
 extern alias Zipkin;
+
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
