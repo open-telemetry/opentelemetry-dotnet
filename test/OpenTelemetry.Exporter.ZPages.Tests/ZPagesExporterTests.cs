@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;

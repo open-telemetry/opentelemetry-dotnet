@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class Http2UnencryptedSupportTests : IDisposable
