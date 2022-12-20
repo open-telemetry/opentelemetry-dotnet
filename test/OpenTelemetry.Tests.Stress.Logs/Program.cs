@@ -16,7 +16,6 @@
 
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Tests.Stress;
 

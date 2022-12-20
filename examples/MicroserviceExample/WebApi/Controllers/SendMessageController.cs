@@ -15,7 +15,6 @@
 // </copyright>
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Utils.Messaging;
 
 namespace WebApi.Controllers

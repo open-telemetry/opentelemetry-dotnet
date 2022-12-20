@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 using Utils.Messaging;
 
 namespace WorkerService
