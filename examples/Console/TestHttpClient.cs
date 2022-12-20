@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
-using System.Net.Http;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;

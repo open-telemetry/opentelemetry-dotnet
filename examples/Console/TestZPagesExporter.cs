@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Threading;
 using OpenTelemetry;
 using OpenTelemetry.Exporter.ZPages;
 using OpenTelemetry.Trace;
