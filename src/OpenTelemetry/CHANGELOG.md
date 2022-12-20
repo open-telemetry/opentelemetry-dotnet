@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.2
+
+Released 2022-Dec-20
+
 * Support for metrics was originally released in version 1.3.0. A
   synchronization issue with regards to the histogram aggregation was
   discovered and fixed in
