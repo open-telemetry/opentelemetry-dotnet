@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Tests;
 

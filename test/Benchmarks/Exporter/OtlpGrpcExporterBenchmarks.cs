@@ -15,10 +15,7 @@
 // </copyright>
 
 extern alias OpenTelemetryProtocol;
-
-using System;
 using System.Diagnostics;
-using System.Threading;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using Grpc.Core;

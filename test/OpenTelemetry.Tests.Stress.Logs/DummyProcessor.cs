@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Tests.Stress;

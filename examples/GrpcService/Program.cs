@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-
 namespace Examples.GrpcService
 {
     public class Program
