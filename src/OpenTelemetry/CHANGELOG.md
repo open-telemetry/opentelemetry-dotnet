@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.3.2
+
+Released 2022-Dec-20
+
+* Fix Histogram synchronization issue: Use the same synchronization mechanism
+  for Histograms Update and Snapshot.
+  ([#4031](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4031))
+
 ## 1.3.1
 
 Released 2022-Sep-06
