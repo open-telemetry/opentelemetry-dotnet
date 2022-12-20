@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
