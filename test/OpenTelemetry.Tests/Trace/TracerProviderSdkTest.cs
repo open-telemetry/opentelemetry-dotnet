@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;

@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Tests;
 
 public class DelegatingProcessor<T> : BaseProcessor<T>
