@@ -81,11 +81,15 @@ Released 2022-Sep-29
   ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
 
 * Added support for dependency injection scenarios when configuring
-  `MeterProvider`
+  `MeterProvider`.
   ([#3646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3646))
 
-* Revert new logging APIs pending OTel specification changes
+* Revert new logging APIs pending OTel specification changes.
   ([#3702](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3702))
+
+* Fix Histogram synchronization issue: Use the same synchronization mechanism
+  for Histograms Update and Snapshot.
+  ([#3534](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3534))
 
 ## 1.4.0-alpha.2
 
