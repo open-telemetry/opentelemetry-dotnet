@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
 

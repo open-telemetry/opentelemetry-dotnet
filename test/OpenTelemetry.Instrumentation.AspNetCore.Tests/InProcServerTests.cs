@@ -15,11 +15,7 @@
 // </copyright>
 
 #if NET6_0_OR_GREATER
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
