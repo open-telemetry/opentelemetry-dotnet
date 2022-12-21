@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Tests
