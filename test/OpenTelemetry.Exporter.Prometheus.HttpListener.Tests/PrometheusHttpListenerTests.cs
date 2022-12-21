@@ -14,12 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
