@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;

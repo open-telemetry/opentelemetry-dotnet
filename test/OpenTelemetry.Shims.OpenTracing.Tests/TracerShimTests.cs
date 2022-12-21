@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
