@@ -186,7 +186,7 @@ namespace OpenTelemetry.Internal
         {
             if (value is not T result)
             {
-                throw new InvalidCastException($"Cannot cast '{paramName}' from '{value?.GetType().Name ?? "null"}' to '{typeof(T)}'");
+                throw new InvalidCastException($"Cannot cast '{paramName}' from '{value?.GetType().ToString() ?? "null"}' to '{typeof(T)}'");
             }
 
             return result;
