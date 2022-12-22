@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 c.SetTag("enrichedWithHttpResponseMessage", "no");
             });
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uri = new Uri($"http://localhost:{this.server.Port}");
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()

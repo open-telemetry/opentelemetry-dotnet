@@ -61,7 +61,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
             PropagationContext propagationContext = new PropagationContext(activityContext, default);
             var carrier = new Dictionary<string, string>();
-            var activity = new Activity("test");
+            using var activity = new Activity("test");
 
             compositePropagator.Inject(propagationContext, carrier, Setter);
             Assert.Contains(carrier, kv => kv.Key == "custom-traceparent-1");

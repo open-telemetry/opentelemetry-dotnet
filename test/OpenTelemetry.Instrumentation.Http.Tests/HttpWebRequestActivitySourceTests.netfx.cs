@@ -397,7 +397,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 using var eventRecords = new ActivitySourceRecorder();
 
-                var parent = new Activity("w3c activity");
+                using var parent = new Activity("w3c activity");
                 parent.SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom());
                 parent.TraceStateString = "some=state";
                 parent.Start();
@@ -712,7 +712,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public void TestMultipleConcurrentRequests()
         {
             ServicePointManager.DefaultConnectionLimit = int.MaxValue;
-            var parentActivity = new Activity("parent").Start();
+            using var parentActivity = new Activity("parent").Start();
             using var eventRecords = new ActivitySourceRecorder();
 
             Dictionary<Uri, Tuple<WebRequest, WebResponse>> requestData = new Dictionary<Uri, Tuple<WebRequest, WebResponse>>();
@@ -724,7 +724,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             // Issue all requests simultaneously
-            HttpClient httpClient = new HttpClient();
+            using var httpClient = new HttpClient();
             Dictionary<Uri, Task<HttpResponseMessage>> tasks = new Dictionary<Uri, Task<HttpResponseMessage>>();
 
             CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));

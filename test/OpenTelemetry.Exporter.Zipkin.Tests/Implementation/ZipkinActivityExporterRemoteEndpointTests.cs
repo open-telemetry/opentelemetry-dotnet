@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void GenerateActivity_RemoteEndpointOmittedByDefault()
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
 
             // Act & Assert
             var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void GenerateActivity_RemoteEndpointResolution()
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(
+            using var activity = ZipkinExporterTests.CreateTestActivity(
                 additionalAttributes: new Dictionary<string, object>
                 {
                     ["net.peer.name"] = "RemoteServiceName",
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
+            using var activity = ZipkinExporterTests.CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
 
             // Act & Assert
             var zipkinSpan = ZipkinActivityConversionExtensions.ToZipkinSpan(activity, DefaultZipkinEndpoint);

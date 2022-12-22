@@ -114,8 +114,8 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             ZPagesExporter exporter = new ZPagesExporter(options);
             var zpagesProcessor = new ZPagesProcessor(exporter);
 
-            var source = new ActivitySource(ActivitySourceName);
-            var activity0 = source.StartActivity("Test Zipkin Activity 1");
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity0 = source.StartActivity("Test Zipkin Activity 1");
             zpagesProcessor.OnStart(activity0);
 
             // checking size of dictionaries from ZPagesActivityTracker
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Single(ZPagesActivityTracker.TotalErrorCount);
             Assert.Single(ZPagesActivityTracker.TotalLatency);
 
-            var activity1 = source.StartActivity("Test Zipkin Activity 1");
+            using var activity1 = source.StartActivity("Test Zipkin Activity 1");
             zpagesProcessor.OnStart(activity1);
 
             // checking size of dictionaries from ZPagesActivityTracker
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Single(ZPagesActivityTracker.TotalErrorCount);
             Assert.Single(ZPagesActivityTracker.TotalLatency);
 
-            var activity2 = source.StartActivity("Test Zipkin Activity 2");
+            using var activity2 = source.StartActivity("Test Zipkin Activity 2");
             zpagesProcessor.OnStart(activity2);
 
             // checking size of dictionaries from ZPagesActivityTracker

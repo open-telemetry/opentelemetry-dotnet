@@ -50,17 +50,17 @@ namespace Benchmarks.Logs
 
         public LogBenchmarks()
         {
-            var loggerFactoryWithNoListener = LoggerFactory.Create(builder => { });
+            using var loggerFactoryWithNoListener = LoggerFactory.Create(builder => { });
             this.loggerWithNoListener = loggerFactoryWithNoListener.CreateLogger<LogBenchmarks>();
 
-            var loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
+            using var loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options => options
                     .AddProcessor(new DummyLogProcessor()));
             });
             this.loggerWithOneProcessor = loggerFactoryWithOneProcessor.CreateLogger<LogBenchmarks>();
 
-            var loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
+            using var loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options => options
                     .AddProcessor(new DummyLogProcessor())
@@ -68,7 +68,7 @@ namespace Benchmarks.Logs
             });
             this.loggerWithTwoProcessors = loggerFactoryWithTwoProcessor.CreateLogger<LogBenchmarks>();
 
-            var loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
+            using var loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options => options
                     .AddProcessor(new DummyLogProcessor())

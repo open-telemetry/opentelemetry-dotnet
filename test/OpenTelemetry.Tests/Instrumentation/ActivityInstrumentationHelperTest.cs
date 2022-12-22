@@ -26,8 +26,8 @@ namespace OpenTelemetry.Instrumentation.Tests
         [InlineData("TestActivitySource", "1.0.0")]
         public void SetActivitySource(string name, string version)
         {
-            var activity = new Activity("Test");
-            var activitySource = new ActivitySource(name, version);
+            using var activity = new Activity("Test");
+            using var activitySource = new ActivitySource(name, version);
 
             activity.Start();
             ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySource);
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.Tests
         [InlineData(ActivityKind.Server)]
         public void SetActivityKind(ActivityKind activityKind)
         {
-            var activity = new Activity("Test");
+            using var activity = new Activity("Test");
             activity.Start();
             ActivityInstrumentationHelper.SetKindProperty(activity, activityKind);
             Assert.Equal(activityKind, activity.Kind);

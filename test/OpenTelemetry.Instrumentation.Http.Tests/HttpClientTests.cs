@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 try
                 {
                     using var c = new HttpClient();
-                    var request = new HttpRequestMessage
+                    using var request = new HttpRequestMessage
                     {
                         RequestUri = new Uri(tc.Url),
                         Method = new HttpMethod(tc.Method),

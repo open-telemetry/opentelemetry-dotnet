@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CurrentSpan_WhenActivityExists()
         {
-            _ = new Activity("foo").Start();
+            using var activity = new Activity("foo").Start();
             Assert.True(Tracer.CurrentSpan.Context.IsValid);
         }
 

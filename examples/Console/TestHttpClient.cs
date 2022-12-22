@@ -38,7 +38,7 @@ namespace Examples.Console
                 .AddConsoleExporter()
                 .Build();
 
-            var source = new ActivitySource("http-client-test");
+            using var source = new ActivitySource("http-client-test");
             using (var parent = source.StartActivity("incoming request", ActivityKind.Server))
             {
                 using var client = new HttpClient();

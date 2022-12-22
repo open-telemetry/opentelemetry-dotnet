@@ -26,8 +26,8 @@ namespace Examples.Console
         internal static object Run()
         {
             var zpagesOptions = new ZPagesExporterOptions() { Url = "http://localhost:7284/rpcz/", RetentionTime = 3600000 };
-            var zpagesExporter = new ZPagesExporter(zpagesOptions);
-            var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter);
+            using var zpagesExporter = new ZPagesExporter(zpagesOptions);
+            using var httpServer = new ZPagesExporterStatsHttpServer(zpagesExporter);
 
             // Start the server
             httpServer.Start();
@@ -41,7 +41,7 @@ namespace Examples.Console
                     })
                     .Build();
 
-            ActivitySource activitySource = new ActivitySource("zpages-test");
+            using var activitySource = new ActivitySource("zpages-test");
 
             while (true)
             {

@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 
         private static string RunCommand(string command, string args)
         {
-            var proc = new Process
+            using var proc = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {

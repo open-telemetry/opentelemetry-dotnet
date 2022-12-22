@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ToZipkinSpan_AllPropertiesSet()
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
 
             // Act & Assert
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ToZipkinSpan_NoEvents()
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity(addEvents: false);
+            using var activity = ZipkinExporterTests.CreateTestActivity(addEvents: false);
 
             // Act & Assert
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ToZipkinSpan_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
         {
             // Arrange
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
             // Act
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         {
             // Arrange.
             const string description = "Description when ActivityStatusCode is Error.";
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
             activity.SetStatus(expectedStatusCode, description);
 
             // Act.
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsOk()
         {
             // Arrange.
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
             activity.SetStatus(ActivityStatusCode.Ok);
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
 
@@ -200,7 +200,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError()
         {
             // Arrange.
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
 
             const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
             const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError_SettingTagFirst()
         {
             // Arrange.
-            var activity = ZipkinExporterTests.CreateTestActivity();
+            using var activity = ZipkinExporterTests.CreateTestActivity();
 
             const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
             const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
