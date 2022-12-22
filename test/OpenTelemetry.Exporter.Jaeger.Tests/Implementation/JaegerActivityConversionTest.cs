@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         [InlineData(false)]
         public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_AllPropertiesSet(bool isRootSpan)
         {
-            var activity = CreateTestActivity(isRootSpan: isRootSpan);
+            using var activity = CreateTestActivity(isRootSpan: isRootSpan);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
             var linkTraceIdAsInt = new Int128(activity.Links.Single().Context.TraceId);
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         [Fact]
         public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoAttributes()
         {
-            var activity = CreateTestActivity(setAttributes: false);
+            using var activity = CreateTestActivity(setAttributes: false);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
             var linkTraceIdAsInt = new Int128(activity.Links.Single().Context.TraceId);
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         [Fact]
         public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoEvents()
         {
-            var activity = CreateTestActivity(addEvents: false);
+            using var activity = CreateTestActivity(addEvents: false);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
             var linkTraceIdAsInt = new Int128(activity.Links.Single().Context.TraceId);
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         [Fact]
         public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoLinks()
         {
-            var activity = CreateTestActivity(addLinks: false, ticksToAdd: 8000);
+            using var activity = CreateTestActivity(addLinks: false, ticksToAdd: 8000);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
 
@@ -357,7 +357,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void JaegerActivityConverterTest_GenerateJaegerSpan_RemoteEndpointOmittedByDefault()
         {
             // Arrange
-            var span = CreateTestActivity();
+            using var span = CreateTestActivity();
 
             // Act
             var jaegerSpan = span.ToJaegerSpan();
@@ -370,7 +370,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void JaegerActivityConverterTest_GenerateJaegerSpan_RemoteEndpointResolution()
         {
             // Arrange
-            var span = CreateTestActivity(
+            using var span = CreateTestActivity(
                 additionalAttributes: new Dictionary<string, object>
                 {
                     ["net.peer.name"] = "RemoteServiceName",
@@ -388,7 +388,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void JaegerActivityConverterTest_GenerateJaegerSpan_PeerServiceNameIgnoredForServerSpan()
         {
             // Arrange
-            var span = CreateTestActivity(
+            using var span = CreateTestActivity(
                 additionalAttributes: new Dictionary<string, object>
                 {
                     ["http.host"] = "DiscardedRemoteServiceName",
@@ -408,7 +408,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void JaegerActivityConverterTest_GenerateJaegerSpan_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
         {
             // Arrange
-            var activity = CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
+            using var activity = CreateTestActivity(additionalAttributes: testCase.RemoteEndpointAttributes);
 
             // Act
             var jaegerSpan = activity.ToJaegerSpan();
@@ -424,7 +424,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void JaegerActivityConverterTest_NullTagValueTest()
         {
             // Arrange
-            var activity = CreateTestActivity(additionalAttributes: new Dictionary<string, object> { ["nullTag"] = null });
+            using var activity = CreateTestActivity(additionalAttributes: new Dictionary<string, object> { ["nullTag"] = null });
 
             // Act
             var jaegerSpan = activity.ToJaegerSpan();
@@ -441,7 +441,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
         {
             // Arrange
-            var activity = CreateTestActivity();
+            using var activity = CreateTestActivity();
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
 
@@ -487,7 +487,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void ToJaegerSpan_Activity_Status_And_StatusDescription_is_Set(ActivityStatusCode expectedStatusCode)
         {
             // Arrange
-            var activity = CreateTestActivity();
+            using var activity = CreateTestActivity();
             activity.SetStatus(expectedStatusCode);
 
             // Act
@@ -528,7 +528,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsOk()
         {
             // Arrange.
-            var activity = CreateTestActivity();
+            using var activity = CreateTestActivity();
             const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
             activity.SetStatus(ActivityStatusCode.Ok);
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
@@ -557,7 +557,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError()
         {
             // Arrange.
-            var activity = CreateTestActivity();
+            using var activity = CreateTestActivity();
             const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
             activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
@@ -584,7 +584,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         public void ActivityDescription_Takes_precedence_Over_Status_Tags_When_ActivityStatusCodeIsError()
         {
             // Arrange.
-            var activity = CreateTestActivity();
+            using var activity = CreateTestActivity();
 
             const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
             const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
@@ -678,7 +678,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 
             var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-            var activitySource = new ActivitySource(nameof(CreateTestActivity));
+            using var activitySource = new ActivitySource(nameof(CreateTestActivity));
 
             var tags = setAttributes ?
                     attributes
@@ -693,7 +693,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
                     }
                     : null;
 
-            var activity = activitySource.StartActivity(
+            using var activity = activitySource.StartActivity(
                 "Name",
                 kind,
                 parentContext: new ActivityContext(traceId, parentSpanId, ActivityTraceFlags.Recorded),

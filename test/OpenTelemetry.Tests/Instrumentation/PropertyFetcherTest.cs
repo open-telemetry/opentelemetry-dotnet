@@ -24,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.Tests
         [Fact]
         public void FetchValidProperty()
         {
-            var activity = new Activity("test");
+            using var activity = new Activity("test");
             var fetch = new PropertyFetcher<string>("DisplayName");
             Assert.True(fetch.TryFetch(activity, out string result));
             Assert.Equal(activity.DisplayName, result);
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Tests
         [Fact]
         public void FetchInvalidProperty()
         {
-            var activity = new Activity("test");
+            using var activity = new Activity("test");
             var fetch = new PropertyFetcher<string>("DisplayName2");
             Assert.False(fetch.TryFetch(activity, out string result));
 

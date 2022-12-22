@@ -118,7 +118,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Start_ActivityOperationRootSpanChecks()
         {
             // Create an activity
-            _ = new Activity("foo")
+            using var activity = new Activity("foo")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 

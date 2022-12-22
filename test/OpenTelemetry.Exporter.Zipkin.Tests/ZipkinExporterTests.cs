@@ -128,8 +128,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
             };
-            var zipkinExporter = new ZipkinExporter(exporterOptions);
-            var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
+            using var zipkinExporter = new ZipkinExporter(exporterOptions);
+            using var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
 
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -138,8 +138,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 .AddHttpClientInstrumentation()
                 .Build();
 
-            var source = new ActivitySource(ActivitySourceName);
-            var activity = source.StartActivity("Test Zipkin Activity");
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity("Test Zipkin Activity");
             activity?.Stop();
 
             // We call ForceFlush on the exporter twice, so that in the event

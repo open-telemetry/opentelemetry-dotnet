@@ -130,11 +130,11 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            Activity parentActivity = new Activity("Foo");
+            using var parentActivity = new Activity("Foo");
             parentActivity.TraceStateString = existingTraceState;
             parentActivity.Start();
 
-            Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             Assert.NotNull(activity);
             if (samplingDecision != SamplingDecision.Drop)
@@ -168,11 +168,11 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            Activity parentActivity = new Activity("Foo");
+            using var parentActivity = new Activity("Foo");
             parentActivity.TraceStateString = existingTraceState;
             parentActivity.Start();
 
-            Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             Assert.NotNull(activity);
             if (samplingDecision != SamplingDecision.Drop)

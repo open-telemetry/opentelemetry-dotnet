@@ -141,7 +141,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var message = "message";
             var exception = new ArgumentNullException(message, new Exception(message));
-            var activity = new Activity("test-activity");
+            using var activity = new Activity("test-activity");
             activity.RecordException(exception);
 
             var @event = activity.Events.FirstOrDefault(e => e.Name == SemanticConventions.AttributeExceptionEventName);
@@ -154,7 +154,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var message = "message";
             var exception = new ArgumentNullException(message, new Exception(message));
-            var activity = new Activity("test-activity");
+            using var activity = new Activity("test-activity");
 
             var tags = new TagList
             {
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void GetTagValueEmpty()
         {
-            Activity activity = new Activity("Test");
+            using var activity = new Activity("Test");
 
             Assert.Null(activity.GetTagValue("Tag1"));
         }
@@ -197,7 +197,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void GetTagValue()
         {
-            Activity activity = new Activity("Test");
+            using var activity = new Activity("Test");
             activity.SetTag("Tag1", "Value1");
 
             Assert.Equal("Value1", activity.GetTagValue("Tag1"));
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData("CustomTag", null, false)]
         public void TryCheckFirstTag(string tagName, object expectedTagValue, bool expectedResult)
         {
-            Activity activity = new Activity("Test");
+            using var activity = new Activity("Test");
             activity.SetTag("Key", "Value");
 
             var result = activity.TryCheckFirstTag(tagName, out var tagValue);
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TryCheckFirstTagReturnsFalseForActivityWithNoTags()
         {
-            Activity activity = new Activity("Test");
+            using var activity = new Activity("Test");
 
             var result = activity.TryCheckFirstTag("Key", out var tagValue);
             Assert.False(result);

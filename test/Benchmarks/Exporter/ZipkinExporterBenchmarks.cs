@@ -79,7 +79,7 @@ namespace Benchmarks.Exporter
         [Benchmark]
         public void ZipkinExporter_Batching()
         {
-            var exporter = new ZipkinExporter(
+            using var exporter = new ZipkinExporter(
                 new ZipkinExporterOptions
                 {
                     Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),

@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public void GrpcTagHelper_GetGrpcMethodFromActivity()
         {
             var grpcMethod = "/some.service/somemethod";
-            var activity = new Activity("operationName");
+            using var activity = new Activity("operationName");
             activity.SetTag(GrpcTagHelper.GrpcMethodTagName, grpcMethod);
 
             var result = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [Fact]
         public void GrpcTagHelper_GetGrpcStatusCodeFromActivity()
         {
-            var activity = new Activity("operationName");
+            using var activity = new Activity("operationName");
             activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, "0");
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [Fact]
         public void GrpcTagHelper_GetGrpcStatusCodeFromEmptyActivity()
         {
-            var activity = new Activity("operationName");
+            using var activity = new Activity("operationName");
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
             Assert.False(validConversion);

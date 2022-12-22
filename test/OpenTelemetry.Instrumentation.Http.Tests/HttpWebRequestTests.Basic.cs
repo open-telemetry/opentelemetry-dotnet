@@ -187,7 +187,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             request.Method = "GET";
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
