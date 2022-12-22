@@ -475,7 +475,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.False(emptyActivitySource.HasListeners()); // No listener for empty ActivitySource even after build
 
-            using Activity activity = new Activity("Test");
+            using var activity = new Activity("Test");
             activity.Start();
             activity.Stop();
 
@@ -536,7 +536,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(emptyActivitySource.HasListeners()); // Listener for empty ActivitySource added after TracerProvider build
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             activity.Stop();
 
@@ -598,7 +598,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(emptyActivitySource.HasListeners()); // Listener for empty ActivitySource added after TracerProvider build
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             activity.Stop();
 
@@ -647,7 +647,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(emptyActivitySource.HasListeners()); // Listener for empty ActivitySource added after TracerProvider build
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
             activity.Stop();
@@ -698,7 +698,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(emptyActivitySource.HasListeners()); // Listener for empty ActivitySource added after TracerProvider build
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
             activity.Stop();
@@ -742,7 +742,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(tracerProvider, testActivityProcessor.ParentProvider);
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             activity.Stop();
 
@@ -751,7 +751,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // As Processors can be added anytime after Provider construction, the following validates
             // the following validates that updated processors are processing the legacy activities created from here on.
-            TestActivityProcessor testActivityProcessorNew = new TestActivityProcessor();
+            using var testActivityProcessorNew = new TestActivityProcessor();
 
             bool startCalledNew = false;
             bool endCalledNew = false;
@@ -780,7 +780,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(tracerProvider, sdkProvider.Processor.ParentProvider);
             Assert.Equal(tracerProvider, testActivityProcessorNew.ParentProvider);
 
-            using Activity activityNew = new Activity(operationNameForLegacyActivity); // Create a new Activity with the same operation name
+            using var activityNew = new Activity(operationNameForLegacyActivity); // Create a new Activity with the same operation name
             activityNew.Start();
             activityNew.Stop();
 
@@ -797,7 +797,7 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
 
             Assert.True(activity.IsAllDataRequested);
@@ -820,7 +820,7 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
 
             Assert.False(activity.IsAllDataRequested);
@@ -848,7 +848,7 @@ namespace OpenTelemetry.Trace.Tests
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
 
             Assert.Equal(isAllDataRequested, activity.IsAllDataRequested);
@@ -882,7 +882,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // Start activity without setting parent. i.e it'll have null parent
             // and becomes root activity
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             activity.Stop();
         }
@@ -925,7 +925,7 @@ namespace OpenTelemetry.Trace.Tests
             // The sampling parameters are expected to be that of the
             // parent context i.e the remote parent.
 
-            using Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+            using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
             activity.TraceStateString = tracestate;
 
             // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
@@ -961,7 +961,7 @@ namespace OpenTelemetry.Trace.Tests
             // The sampling parameters are expected to be that of the
             // parent context i.e the remote parent.
 
-            using Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+            using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
 
             // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
             activity.Start();
@@ -996,7 +996,7 @@ namespace OpenTelemetry.Trace.Tests
             // The sampling parameters are expected to be that of the
             // parent context i.e the remote parent.
 
-            using Activity activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
+            using var activity = new Activity(operationNameForLegacyActivity).SetParentId(remoteParentId);
 
             // At this point SetParentId has set the ActivityTraceFlags to that of the parent activity. The activity is now passed to the sampler.
             activity.Start();
@@ -1046,7 +1046,7 @@ namespace OpenTelemetry.Trace.Tests
             // activity.Parent will be equal to the activity created at the beginning of this test.
             // Sampling parameters are expected to be that of the parentContext.
             // i.e of the parent Activity
-            using Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             activity.Stop();
         }
@@ -1190,7 +1190,7 @@ namespace OpenTelemetry.Trace.Tests
             foreach (var ns in legacySourceNamespaces)
             {
                 var startOpName = ns.Replace("*", "Start");
-                using Activity startOperation = new Activity(startOpName);
+                using var startOperation = new Activity(startOpName);
                 startOperation.Start();
                 startOperation.Stop();
 
@@ -1198,7 +1198,7 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Contains(startOpName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
 
                 var stopOpName = ns.Replace("*", "Stop");
-                using Activity stopOperation = new Activity(stopOpName);
+                using var stopOperation = new Activity(stopOpName);
                 stopOperation.Start();
                 stopOperation.Stop();
 
@@ -1207,7 +1207,7 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             // Ensure we can still process "normal" activities when in legacy wildcard mode.
-            using Activity nonLegacyActivity = activitySource.StartActivity("TestActivity");
+            using var nonLegacyActivity = activitySource.StartActivity("TestActivity");
             nonLegacyActivity.Start();
             nonLegacyActivity.Stop();
 

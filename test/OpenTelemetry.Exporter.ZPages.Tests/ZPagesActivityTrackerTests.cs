@@ -25,12 +25,14 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
         [Fact]
         public void CheckingPurge()
         {
-            ZPagesActivityTracker.CurrentHourList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
+            using var activity1 = new Activity("new");
+            ZPagesActivityTracker.CurrentHourList.TryAdd("new", new ZPagesActivityAggregate(activity1));
             Assert.NotEmpty(ZPagesActivityTracker.CurrentHourList);
             ZPagesActivityTracker.PurgeCurrentHourData(null, null);
             Assert.Empty(ZPagesActivityTracker.CurrentHourList);
 
-            ZPagesActivityTracker.CurrentMinuteList.TryAdd("new", new ZPagesActivityAggregate(new Activity("new")));
+            using var activity2 = new Activity("new");
+            ZPagesActivityTracker.CurrentMinuteList.TryAdd("new", new ZPagesActivityAggregate(activity2));
             Assert.NotEmpty(ZPagesActivityTracker.CurrentMinuteList);
             ZPagesActivityTracker.PurgeCurrentMinuteData(null, null);
             Assert.Empty(ZPagesActivityTracker.CurrentMinuteList);

@@ -207,13 +207,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
@@ -275,13 +275,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 var processor = new Mock<BaseProcessor<Activity>>();
 
-                var request = new HttpRequestMessage
+                using var request = new HttpRequestMessage
                 {
                     RequestUri = new Uri(this.url),
                     Method = new HttpMethod("GET"),
                 };
 
-                var parent = new Activity("parent")
+                using var parent = new Activity("parent")
                     .SetIdFormat(ActivityIdFormat.W3C)
                     .Start();
                 parent.TraceStateString = "k1=v1,k2=v2";
@@ -333,9 +333,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build();
 
             int maxRetries = 3;
-            using var retryHandler = new RetryHandler(new HttpClientHandler(), maxRetries);
-            using var c = new HttpClient(retryHandler);
-            await c.SendAsync(request).ConfigureAwait(false);
+            using var clientHandler = new HttpClientHandler();
+            using var retryHandler = new RetryHandler(clientHandler, maxRetries);
+            using var httpClient = new HttpClient(retryHandler);
+            await httpClient.SendAsync(request).ConfigureAwait(false);
 
             // number of exported spans should be 3(maxRetries)
             Assert.Equal(maxRetries, exportedItems.Count());
@@ -506,7 +507,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri($"{this.url}500"),
                 Method = new HttpMethod("GET"),
@@ -588,7 +589,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     parentContext = parent.Context;
                 }
 
-                var request = new HttpRequestMessage
+                using var request = new HttpRequestMessage
                 {
                     RequestUri = new Uri(this.url),
                     Method = new HttpMethod("GET"),

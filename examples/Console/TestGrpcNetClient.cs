@@ -47,7 +47,7 @@ namespace Examples.Console
                 .AddConsoleExporter()
                 .Build();
 
-            var source = new ActivitySource("grpc-net-client-test");
+            using var source = new ActivitySource("grpc-net-client-test");
             using (var parent = source.StartActivity("Main", ActivityKind.Server))
             {
                 using var channel = GrpcChannel.ForAddress("https://localhost:44335");
