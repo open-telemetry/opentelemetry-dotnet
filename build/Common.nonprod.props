@@ -11,7 +11,7 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
-  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
     <Content Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -41,7 +41,7 @@
     <MicrosoftExtensionsLoggingPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingAbstractionsPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingAbstractionsPkgVer>
     <MicrosoftNETTestSdkPkgVer>[17.3.0]</MicrosoftNETTestSdkPkgVer>
-    <MoqPkgVer>[4.14.5,5.0)</MoqPkgVer>
+    <MoqPkgVer>[4.18.3,5.0)</MoqPkgVer>
     <RabbitMQClientPkgVer>[6.1.0,7.0)</RabbitMQClientPkgVer>
     <RuntimeInstrumentationPkgVer>[1.0.0,2.0)</RuntimeInstrumentationPkgVer>
     <SwashbuckleAspNetCorePkgVer>[6.4.0]</SwashbuckleAspNetCorePkgVer>

@@ -15,23 +15,24 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
     public class ActivityExtensionsTest
     {
-        private const string ActivitySourceName = "test.status";
         private const string ActivityName = "Test Activity";
 
         [Fact]
         public void SetStatus()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity.SetStatus(Status.Ok);
             activity?.Stop();
@@ -42,11 +43,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetStatusWithDescription()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity.SetStatus(Status.Error.WithDescription("Not Found"));
             activity?.Stop();
@@ -59,11 +61,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetStatusWithDescriptionTwice()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity.SetStatus(Status.Error.WithDescription("Not Found"));
             activity.SetStatus(Status.Ok);
@@ -77,11 +80,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetStatusWithIgnoredDescription()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity.SetStatus(Status.Ok.WithDescription("This should be ignored."));
             activity?.Stop();
@@ -94,11 +98,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetCancelledStatus()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity.SetStatus(Status.Error);
             activity?.Stop();
@@ -109,11 +114,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void GetStatusWithNoStatusInActivity()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity?.Stop();
 
@@ -123,11 +129,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void LastSetStatusWins()
         {
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .Build();
 
-            using var source = new ActivitySource(ActivitySourceName);
+            using var source = new ActivitySource(activitySourceName);
             using var activity = source.StartActivity(ActivityName);
             activity.SetStatus(Status.Error);
             activity.SetStatus(Status.Ok);
@@ -141,7 +148,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var message = "message";
             var exception = new ArgumentNullException(message, new Exception(message));
-            var activity = new Activity("test-activity");
+            using var activity = new Activity("test-activity");
             activity.RecordException(exception);
 
             var @event = activity.Events.FirstOrDefault(e => e.Name == SemanticConventions.AttributeExceptionEventName);
@@ -154,7 +161,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var message = "message";
             var exception = new ArgumentNullException(message, new Exception(message));
-            var activity = new Activity("test-activity");
+            using var activity = new Activity("test-activity");
 
             var tags = new TagList
             {
@@ -189,7 +196,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void GetTagValueEmpty()
         {
-            Activity activity = new Activity("Test");
+            using Activity activity = new Activity("Test");
 
             Assert.Null(activity.GetTagValue("Tag1"));
         }
@@ -197,7 +204,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void GetTagValue()
         {
-            Activity activity = new Activity("Test");
+            using Activity activity = new Activity("Test");
             activity.SetTag("Tag1", "Value1");
 
             Assert.Equal("Value1", activity.GetTagValue("Tag1"));
@@ -210,7 +217,7 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData("CustomTag", null, false)]
         public void TryCheckFirstTag(string tagName, object expectedTagValue, bool expectedResult)
         {
-            Activity activity = new Activity("Test");
+            using Activity activity = new Activity("Test");
             activity.SetTag("Key", "Value");
 
             var result = activity.TryCheckFirstTag(tagName, out var tagValue);
@@ -221,7 +228,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void TryCheckFirstTagReturnsFalseForActivityWithNoTags()
         {
-            Activity activity = new Activity("Test");
+            using Activity activity = new Activity("Test");
 
             var result = activity.TryCheckFirstTag("Key", out var tagValue);
             Assert.False(result);

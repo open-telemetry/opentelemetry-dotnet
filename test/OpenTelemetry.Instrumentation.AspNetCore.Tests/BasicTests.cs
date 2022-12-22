@@ -80,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -225,7 +225,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         }))
                 {
                     using var client = testFactory.CreateClient();
-                    var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                    using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                     response.EnsureSuccessStatusCode(); // Status Code 200-299
 
                     WaitForActivityExport(exportedItems, 1);
@@ -276,8 +276,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 using var client = testFactory.CreateClient();
 
                 // Act
-                var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-                var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 // Assert
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -328,8 +328,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Act
                 using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
                 {
-                    var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-                    var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                    using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                    using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                     response1.EnsureSuccessStatusCode(); // Status Code 200-299
                     response2.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -577,7 +577,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient();
 
             // Act
-            var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
@@ -612,7 +612,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 })
                 .CreateClient())
             {
-                var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 WaitForActivityExport(exportedItems, 2);
             }
@@ -660,7 +660,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 })
                 .CreateClient())
             {
-                var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 WaitForActivityExport(exportedItems, 2);
             }
@@ -711,7 +711,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -744,7 +744,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/error").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/error").ConfigureAwait(false);
 
                 WaitForActivityExport(exportedItems, 1);
             }

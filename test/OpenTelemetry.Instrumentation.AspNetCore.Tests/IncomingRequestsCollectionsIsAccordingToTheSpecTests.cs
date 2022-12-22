@@ -84,7 +84,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         path += query;
                     }
 
-                    var response = await client.GetAsync(path).ConfigureAwait(false);
+                    using var response = await client.GetAsync(path).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {

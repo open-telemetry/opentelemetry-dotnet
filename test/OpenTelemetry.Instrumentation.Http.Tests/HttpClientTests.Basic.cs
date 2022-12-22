@@ -111,13 +111,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 c.SetTag("enrichedWithHttpResponseMessage", "no");
             });
 
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
@@ -321,7 +321,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task ExportsSpansCreatedForRetries()
         {
             var exportedItems = new List<Activity>();
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
@@ -333,7 +333,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build();
 
             int maxRetries = 3;
-            using var c = new HttpClient(new RetryHandler(new HttpClientHandler(), maxRetries));
+            using var retryHandler = new RetryHandler(new HttpClientHandler(), maxRetries);
+            using var c = new HttpClient(retryHandler);
             await c.SendAsync(request).ConfigureAwait(false);
 
             // number of exported spans should be 3(maxRetries)

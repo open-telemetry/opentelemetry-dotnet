@@ -83,7 +83,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 using var response = (HttpWebResponse)request.GetResponse();
 
-                new StreamReader(response.GetResponseStream()).ReadToEnd();
+                using var streamReader = new StreamReader(response.GetResponseStream());
+                streamReader.ReadToEnd();
             }
             catch (Exception)
             {
