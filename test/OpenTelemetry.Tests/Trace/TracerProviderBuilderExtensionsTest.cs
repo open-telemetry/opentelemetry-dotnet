@@ -26,7 +26,6 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class TracerProviderBuilderExtensionsTest
     {
-
         [Fact]
         public void SetErrorStatusOnExceptionEnabled()
         {

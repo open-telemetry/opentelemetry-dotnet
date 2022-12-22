@@ -22,7 +22,6 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class ExceptionProcessorTest
     {
-
         [Fact]
         public void ActivityStatusSetToErrorWhenExceptionProcessorEnabled()
         {

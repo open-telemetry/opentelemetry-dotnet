@@ -23,7 +23,6 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class ExportProcessorTest
     {
-
         [Fact]
         public void ExportProcessorIgnoresActivityWhenDropped()
         {
