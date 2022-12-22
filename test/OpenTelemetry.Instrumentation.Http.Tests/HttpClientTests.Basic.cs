@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 c.SetTag("enrichedWithHttpResponseMessage", "no");
             });
 
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),

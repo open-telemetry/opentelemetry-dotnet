@@ -19,20 +19,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
     public class TracerProviderBuilderExtensionsTest
     {
-        private const string ActivitySourceName = "TracerProviderBuilderExtensionsTest";
-
         [Fact]
         public void SetErrorStatusOnExceptionEnabled()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .SetErrorStatusOnException(false)
                 .SetErrorStatusOnException(false)
@@ -61,9 +61,10 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetErrorStatusOnExceptionDisabled()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .SetErrorStatusOnException()
                 .SetErrorStatusOnException(false)
@@ -88,9 +89,10 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetErrorStatusOnExceptionDefault()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 
@@ -400,8 +402,8 @@ namespace OpenTelemetry.Trace.Tests
             var baseBuilder = builder as TracerProviderBuilderBase;
 
             builder
-                .AddSource("TestSource")
-                .AddLegacySource("TestLegacySource")
+                .AddSource("TestSource1")
+                .AddLegacySource("TestLegacySource1")
                 .SetSampler<MySampler>();
 
             bool configureServicesCalled = false;
@@ -435,9 +437,9 @@ namespace OpenTelemetry.Trace.Tests
                     .AddSource("TestSource2")
                     .AddLegacySource("TestLegacySource2");
 
-                Assert.Contains(sdkBuilder.Sources, s => s == "TestSource");
+                Assert.Contains(sdkBuilder.Sources, s => s == "TestSource1");
                 Assert.Contains(sdkBuilder.Sources, s => s == "TestSource2");
-                Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource");
+                Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource1");
                 Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource2");
 
                 // Note: Services can't be configured at this stage

@@ -64,8 +64,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 })
                 .CreateClient())
             {
-                var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-                var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 response1.EnsureSuccessStatusCode();
                 response2.EnsureSuccessStatusCode();
@@ -111,8 +111,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                        })
                        .CreateClient())
             {
-                var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-                var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 response1.EnsureSuccessStatusCode();
                 response2.EnsureSuccessStatusCode();
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                        })
                        .CreateClient())
             {
-                var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
             }
 

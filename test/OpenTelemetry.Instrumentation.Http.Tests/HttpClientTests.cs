@@ -40,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             bool enrichWithHttpResponseMessageCalled = false;
             bool enrichWithExceptionCalled = false;
 
-            var serverLifeTime = TestHttpServer.RunServer(
+            using var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;
@@ -58,8 +58,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .AddHttpClientInstrumentation()
                 .AddInMemoryExporter(metrics)
                 .Build();
-
-            using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation((opt) =>

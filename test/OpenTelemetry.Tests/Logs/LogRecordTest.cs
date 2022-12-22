@@ -388,7 +388,7 @@ namespace OpenTelemetry.Logs.Tests
 
             var sampler = new RecordOnlySampler();
             var exportedActivityList = new List<Activity>();
-            var activitySourceName = "LogRecordTest";
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
@@ -416,7 +416,7 @@ namespace OpenTelemetry.Logs.Tests
 
             var sampler = new AlwaysOnSampler();
             var exportedActivityList = new List<Activity>();
-            var activitySourceName = "LogRecordTest";
+            var activitySourceName = Utils.GetCurrentMethodName();
             using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)

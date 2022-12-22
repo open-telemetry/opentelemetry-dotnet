@@ -214,8 +214,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // not the HttpWebRequest that was executed.
             Assert.Empty(request.Headers);
 #endif
-
-            parent.Stop();
         }
 
         [Theory]
