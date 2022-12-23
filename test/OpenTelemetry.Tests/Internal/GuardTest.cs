@@ -147,7 +147,7 @@ namespace OpenTelemetry.Internal.Tests
 
             // Invalid
             var ex1 = Assert.Throws<InvalidCastException>(() => Guard.ThrowIfNotOfType<double>(100));
-            Assert.Equal("Cannot cast '100' from 'Int32' to 'Double'", ex1.Message);
+            Assert.Equal("Cannot cast '100' from 'System.Int32' to 'System.Double'", ex1.Message);
         }
 
         [Fact]
