@@ -15,8 +15,6 @@
 // </copyright>
 
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Tests
 {
@@ -41,7 +39,7 @@ namespace OpenTelemetry.Tests
 
                 try
                 {
-                    response = await base.SendAsync(request, cancellationToken);
+                    response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {

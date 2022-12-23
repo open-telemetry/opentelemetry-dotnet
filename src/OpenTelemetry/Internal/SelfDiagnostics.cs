@@ -20,7 +20,7 @@ namespace OpenTelemetry.Internal
     /// Self diagnostics class captures the EventSource events sent by OpenTelemetry
     /// modules and writes them to local file for internal troubleshooting.
     /// </summary>
-    internal class SelfDiagnostics : IDisposable
+    internal sealed class SelfDiagnostics : IDisposable
     {
         /// <summary>
         /// Long-living object that hold relevant resources.
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Internal
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (disposing)
             {

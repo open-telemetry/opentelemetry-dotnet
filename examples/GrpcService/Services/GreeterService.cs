@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading.Tasks;
 using Grpc.Core;
-using Microsoft.Extensions.Logging;
 
 namespace Examples.GrpcService
 {

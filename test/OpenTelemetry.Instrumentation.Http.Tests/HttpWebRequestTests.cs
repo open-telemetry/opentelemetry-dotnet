@@ -14,11 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text.Json;
 using Moq;
@@ -87,7 +83,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 using var response = (HttpWebResponse)request.GetResponse();
 
-                new StreamReader(response.GetResponseStream()).ReadToEnd();
+                using var streamReader = new StreamReader(response.GetResponseStream());
+                streamReader.ReadToEnd();
             }
             catch (Exception)
             {

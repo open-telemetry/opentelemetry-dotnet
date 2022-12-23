@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -47,11 +45,11 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
             Assert.False(callbackRun);
 
-            await host.StartAsync();
+            await host.StartAsync().ConfigureAwait(false);
 
             Assert.True(callbackRun);
 
-            await host.StopAsync();
+            await host.StopAsync().ConfigureAwait(false);
 
             Assert.True(callbackRun);
 
@@ -94,11 +92,11 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
             Assert.False(configureBuilderCalled);
 
-            await host.StartAsync();
+            await host.StartAsync().ConfigureAwait(false);
 
             Assert.True(configureBuilderCalled);
 
-            await host.StopAsync();
+            await host.StopAsync().ConfigureAwait(false);
 
             host.Dispose();
         }

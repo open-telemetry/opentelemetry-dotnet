@@ -14,22 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
     public class ExceptionProcessorTest
     {
-        private const string ActivitySourceName = "ExceptionProcessorTest";
-
         [Fact]
         public void ActivityStatusSetToErrorWhenExceptionProcessorEnabled()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .AddProcessor(new ExceptionProcessor())
                 .Build();
@@ -111,9 +110,10 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void ActivityStatusNotSetWhenExceptionProcessorNotEnabled()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 

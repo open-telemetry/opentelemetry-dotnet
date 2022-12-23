@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System.Collections.Generic;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests

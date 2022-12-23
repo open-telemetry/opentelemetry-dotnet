@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
-using System.Threading;
 #if !NET6_0_OR_GREATER
 using System.Threading.Tasks;
 #endif
@@ -124,7 +120,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     httpRequest = r;
 
                     // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                    httpRequestContent = await r.Content.ReadAsByteArrayAsync();
+                    httpRequestContent = await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                 })
 #endif
                 .Verifiable();

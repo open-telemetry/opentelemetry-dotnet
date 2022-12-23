@@ -14,12 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -82,13 +79,13 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [Fact]
         public async Task PrometheusExporterHttpServerIntegration()
         {
-            await this.RunPrometheusExporterHttpServerIntegrationTest();
+            await this.RunPrometheusExporterHttpServerIntegrationTest().ConfigureAwait(false);
         }
 
         [Fact]
         public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
         {
-            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true).ConfigureAwait(false);
         }
 
         private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)

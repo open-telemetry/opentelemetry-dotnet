@@ -103,7 +103,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public void OnStartActivity(Activity activity, object payload)
         {
             // The overall flow of what AspNetCore library does is as below:

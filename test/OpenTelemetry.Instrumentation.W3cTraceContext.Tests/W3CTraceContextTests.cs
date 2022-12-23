@@ -27,7 +27,7 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 {
-    public class W3CTraceContextTests
+    public class W3CTraceContextTests : IDisposable
     {
         /*
             To run the tests, invoke docker-compose.yml from the root of the repo:
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             .Build();
 
             var builder = WebApplication.CreateBuilder();
-            var app = builder.Build();
+            using var app = builder.Build();
 
             // disabling due to failing dotnet-format
             // TODO: investigate why dotnet-format fails.
@@ -67,14 +67,14 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
                 {
                     foreach (var argument in data)
                     {
-                        var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
+                        using var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
                         {
                             Content = new StringContent(
                                 JsonSerializer.Serialize(argument.Arguments),
                                 Encoding.UTF8,
                                 "application/json"),
                         };
-                        await this.httpClient.SendAsync(request);
+                        await this.httpClient.SendAsync(request).ConfigureAwait(false);
                     }
                 }
                 else
@@ -111,9 +111,14 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             }
         }
 
+        public void Dispose()
+        {
+            this.httpClient.Dispose();
+        }
+
         private static string RunCommand(string command, string args)
         {
-            var proc = new Process
+            using var proc = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {

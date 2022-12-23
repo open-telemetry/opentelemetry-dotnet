@@ -47,7 +47,7 @@ namespace Benchmarks.Instrumentation
         [Benchmark]
         public async Task SimpleAspNetCoreGetPage()
         {
-            var httpResponse = await this.client.GetAsync(LocalhostUrl);
+            var httpResponse = await this.client.GetAsync(LocalhostUrl).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
     }

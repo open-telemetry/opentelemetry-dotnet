@@ -14,15 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 #if !NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -94,7 +90,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-            using var response = await request.GetResponseAsync();
+            using var response = await request.GetResponseAsync().ConfigureAwait(false);
 
 #if NETFRAMEWORK
             // Note: Back-off is part of the .NET Framework reflection only and
@@ -136,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync();
+            using var response = await request.GetResponseAsync().ConfigureAwait(false);
 
 #if NETFRAMEWORK
             Assert.True(httpWebRequestFilterApplied);
@@ -170,7 +166,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 request.Method = "GET";
 
-                using var response = await request.GetResponseAsync();
+                using var response = await request.GetResponseAsync().ConfigureAwait(false);
 
                 Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
@@ -191,13 +187,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             request.Method = "GET";
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            using var response = await request.GetResponseAsync();
+            using var response = await request.GetResponseAsync().ConfigureAwait(false);
 
             Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
@@ -218,8 +214,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // not the HttpWebRequest that was executed.
             Assert.Empty(request.Headers);
 #endif
-
-            parent.Stop();
         }
 
         [Theory]
@@ -281,7 +275,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 request.Method = "GET";
 
-                using var response = await request.GetResponseAsync();
+                using var response = await request.GetResponseAsync().ConfigureAwait(false);
 
                 parent?.Stop();
 
@@ -354,7 +348,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 request.Method = "GET";
 
-                using var response = await request.GetResponseAsync();
+                using var response = await request.GetResponseAsync().ConfigureAwait(false);
             }
             catch
             {
@@ -383,7 +377,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 request.Method = "GET";
 
-                using var response = await request.GetResponseAsync();
+                using var response = await request.GetResponseAsync().ConfigureAwait(false);
             }
             catch
             {
