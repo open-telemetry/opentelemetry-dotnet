@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
 * Fix default values for `OTEL_ATTRIBUTE_COUNT_LIMIT`,
   `OTEL_ATTRIBUTE_COUNT_LIMIT`,
   `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`,

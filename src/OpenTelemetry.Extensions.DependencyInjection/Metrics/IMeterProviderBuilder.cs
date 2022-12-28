@@ -21,7 +21,8 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Describes a <see cref="MeterProviderBuilder"/> backed by an <see cref="IServiceCollection"/>.
 /// </summary>
-public interface IMeterProviderBuilder : IDeferredMeterProviderBuilder
+// Note: This API may be made public if there is a need for it.
+internal interface IMeterProviderBuilder : IDeferredMeterProviderBuilder
 {
     /// <summary>
     /// Gets the <see cref="MeterProvider"/> being constructed by the builder.

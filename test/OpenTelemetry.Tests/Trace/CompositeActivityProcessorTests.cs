@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -47,7 +45,7 @@ namespace OpenTelemetry.Trace.Tests
                 activity => { result += "2"; },
                 activity => { result += "4"; });
 
-            var activity = new Activity("test");
+            using var activity = new Activity("test");
 
             using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
             {
@@ -65,7 +63,7 @@ namespace OpenTelemetry.Trace.Tests
                 activity => { throw new Exception("Start exception"); },
                 activity => { throw new Exception("End exception"); });
 
-            var activity = new Activity("test");
+            using var activity = new Activity("test");
 
             using var processor = new CompositeProcessor<Activity>(new[] { p1 });
             Assert.Throws<Exception>(() => { processor.OnStart(activity); });

@@ -73,7 +73,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     {
         Guard.ThrowIfNull(instrumentationFactory);
 
-        this.ConfigureBuilder((sp, builder) =>
+        this.ConfigureBuilderInternal((sp, builder) =>
         {
             builder.AddInstrumentation(instrumentationFactory);
         });
@@ -86,7 +86,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     {
         Guard.ThrowIfNull(names);
 
-        this.ConfigureBuilder((sp, builder) =>
+        this.ConfigureBuilderInternal((sp, builder) =>
         {
             builder.AddSource(names);
         });
@@ -99,7 +99,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     {
         Guard.ThrowIfNullOrWhitespace(operationName);
 
-        this.ConfigureBuilder((sp, builder) =>
+        this.ConfigureBuilderInternal((sp, builder) =>
         {
             builder.AddLegacySource(operationName);
         });
@@ -108,40 +108,16 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     }
 
     /// <inheritdoc />
-    public TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
-    {
-        var services = this.services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("Builder cannot be configured during TracerProvider construction.");
-        }
-
-        services.ConfigureOpenTelemetryTracerProvider(configure);
-
-        return this;
-    }
+    TracerProviderBuilder ITracerProviderBuilder.ConfigureServices(Action<IServiceCollection> configure)
+        => this.ConfigureServicesInternal(configure);
 
     /// <inheritdoc />
-    public TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-    {
-        Guard.ThrowIfNull(configure);
-
-        var services = this.services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("Services cannot be configured during TracerProvider construction.");
-        }
-
-        configure(services);
-
-        return this;
-    }
+    TracerProviderBuilder ITracerProviderBuilder.ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
+        => this.ConfigureBuilderInternal(configure);
 
     /// <inheritdoc />
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
-        => this.ConfigureBuilder(configure);
+        => this.ConfigureBuilderInternal(configure);
 
     internal TracerProvider InvokeBuild()
         => this.Build();
@@ -162,7 +138,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         Guard.ThrowIfNullOrWhitespace(instrumentationVersion);
         Guard.ThrowIfNull(instrumentationFactory);
 
-        return this.ConfigureBuilder((sp, builder) =>
+        return this.ConfigureBuilderInternal((sp, builder) =>
         {
             if (builder is TracerProviderBuilderSdk tracerProviderBuilderState)
             {
@@ -202,5 +178,35 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         var serviceProvider = services.BuildServiceProvider(validateScopes);
 
         return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private TracerProviderBuilder ConfigureBuilderInternal(Action<IServiceProvider, TracerProviderBuilder> configure)
+    {
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during TracerProvider construction.");
+        }
+
+        services.ConfigureOpenTelemetryTracerProvider(configure);
+
+        return this;
+    }
+
+    private TracerProviderBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Services cannot be configured during TracerProvider construction.");
+        }
+
+        configure(services);
+
+        return this;
     }
 }

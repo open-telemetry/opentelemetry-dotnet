@@ -70,7 +70,7 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     {
         Guard.ThrowIfNull(instrumentationFactory);
 
-        this.ConfigureBuilder((sp, builder) =>
+        this.ConfigureBuilderInternal((sp, builder) =>
         {
             builder.AddInstrumentation(instrumentationFactory);
         });
@@ -83,7 +83,7 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     {
         Guard.ThrowIfNull(names);
 
-        this.ConfigureBuilder((sp, builder) =>
+        this.ConfigureBuilderInternal((sp, builder) =>
         {
             builder.AddMeter(names);
         });
@@ -92,40 +92,16 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     }
 
     /// <inheritdoc />
-    public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
-    {
-        var services = this.services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("Builder cannot be configured during MeterProvider construction.");
-        }
-
-        services.ConfigureOpenTelemetryMeterProvider(configure);
-
-        return this;
-    }
+    MeterProviderBuilder IMeterProviderBuilder.ConfigureServices(Action<IServiceCollection> configure)
+        => this.ConfigureServicesInternal(configure);
 
     /// <inheritdoc />
-    public MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-    {
-        Guard.ThrowIfNull(configure);
-
-        var services = this.services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("Services cannot be configured during MeterProvider construction.");
-        }
-
-        configure(services);
-
-        return this;
-    }
+    MeterProviderBuilder IMeterProviderBuilder.ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
+        => this.ConfigureBuilderInternal(configure);
 
     /// <inheritdoc />
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
-        => this.ConfigureBuilder(configure);
+        => this.ConfigureBuilderInternal(configure);
 
     internal MeterProvider InvokeBuild()
         => this.Build();
@@ -158,5 +134,35 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         var serviceProvider = services.BuildServiceProvider(validateScopes);
 
         return new MeterProviderSdk(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private MeterProviderBuilder ConfigureBuilderInternal(Action<IServiceProvider, MeterProviderBuilder> configure)
+    {
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Builder cannot be configured during MeterProvider construction.");
+        }
+
+        services.ConfigureOpenTelemetryMeterProvider(configure);
+
+        return this;
+    }
+
+    private MeterProviderBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var services = this.services;
+
+        if (services == null)
+        {
+            throw new NotSupportedException("Services cannot be configured during MeterProvider construction.");
+        }
+
+        configure(services);
+
+        return this;
     }
 }

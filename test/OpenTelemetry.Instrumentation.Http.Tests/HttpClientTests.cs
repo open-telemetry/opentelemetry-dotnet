@@ -14,14 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
@@ -44,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             bool enrichWithHttpResponseMessageCalled = false;
             bool enrichWithExceptionCalled = false;
 
-            var serverLifeTime = TestHttpServer.RunServer(
+            using var serverLifeTime = TestHttpServer.RunServer(
                 (ctx) =>
                 {
                     ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;
@@ -63,8 +59,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .AddInMemoryExporter(metrics)
                 .Build();
 
-            using (serverLifeTime)
-
             using (Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation((opt) =>
                 {
@@ -81,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 try
                 {
                     using var c = new HttpClient();
-                    var request = new HttpRequestMessage
+                    using var request = new HttpRequestMessage
                     {
                         RequestUri = new Uri(tc.Url),
                         Method = new HttpMethod(tc.Method),
@@ -100,7 +94,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         }
                     }
 
-                    await c.SendAsync(request);
+                    await c.SendAsync(request).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
@@ -247,7 +241,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
             var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
-            await t;
+            await t.ConfigureAwait(false);
         }
 
         [Fact]

@@ -14,15 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 #if NETFRAMEWORK
 using System.Net;
 #endif
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
@@ -115,13 +111,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 c.SetTag("enrichedWithHttpResponseMessage", "no");
             });
 
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
@@ -157,7 +153,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.SendAsync(request).ConfigureAwait(false);
             }
 
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -211,13 +207,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
             };
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
@@ -231,7 +227,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.SendAsync(request).ConfigureAwait(false);
             }
 
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -279,13 +275,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 var processor = new Mock<BaseProcessor<Activity>>();
 
-                var request = new HttpRequestMessage
+                using var request = new HttpRequestMessage
                 {
                     RequestUri = new Uri(this.url),
                     Method = new HttpMethod("GET"),
                 };
 
-                var parent = new Activity("parent")
+                using var parent = new Activity("parent")
                     .SetIdFormat(ActivityIdFormat.W3C)
                     .Start();
                 parent.TraceStateString = "k1=v1,k2=v2";
@@ -301,7 +297,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     using var c = new HttpClient();
                     using (SuppressInstrumentationScope.Begin())
                     {
-                        await c.SendAsync(request);
+                        await c.SendAsync(request).ConfigureAwait(false);
                     }
                 }
 
@@ -325,7 +321,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task ExportsSpansCreatedForRetries()
         {
             var exportedItems = new List<Activity>();
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
                 Method = new HttpMethod("GET"),
@@ -337,8 +333,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build();
 
             int maxRetries = 3;
-            using var c = new HttpClient(new RetryHandler(new HttpClientHandler(), maxRetries));
-            await c.SendAsync(request);
+            using var clientHandler = new HttpClientHandler();
+            using var retryHandler = new RetryHandler(clientHandler, maxRetries);
+            using var httpClient = new HttpClient(retryHandler);
+            await httpClient.SendAsync(request).ConfigureAwait(false);
 
             // number of exported spans should be 3(maxRetries)
             Assert.Equal(maxRetries, exportedItems.Count());
@@ -363,7 +361,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.GetAsync($"{this.url}redirect");
+                await c.GetAsync($"{this.url}redirect").ConfigureAwait(false);
             }
 
 #if NETFRAMEWORK
@@ -414,7 +412,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                await c.GetAsync(this.url);
+                await c.GetAsync(this.url).ConfigureAwait(false);
             }
 
 #if NETFRAMEWORK
@@ -445,7 +443,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 using var c = new HttpClient();
                 using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
-                await c.GetAsync(this.url);
+                await c.GetAsync(this.url).ConfigureAwait(false);
                 Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
 
@@ -466,7 +464,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
+                await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/").ConfigureAwait(false);
             }
             catch
             {
@@ -492,7 +490,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetAsync($"{this.url}500");
+                await c.GetAsync($"{this.url}500").ConfigureAwait(false);
             }
             catch
             {
@@ -509,7 +507,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var exportedItems = new List<Activity>();
             bool exceptionThrown = false;
-            var request = new HttpRequestMessage
+            using var request = new HttpRequestMessage
             {
                 RequestUri = new Uri($"{this.url}500"),
                 Method = new HttpMethod("GET"),
@@ -523,7 +521,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             try
             {
-                await c.GetStringAsync($"{this.url}500");
+                await c.GetStringAsync($"{this.url}500").ConfigureAwait(false);
             }
             catch
             {
@@ -591,14 +589,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     parentContext = parent.Context;
                 }
 
-                var request = new HttpRequestMessage
+                using var request = new HttpRequestMessage
                 {
                     RequestUri = new Uri(this.url),
                     Method = new HttpMethod("GET"),
                 };
 
                 using var c = new HttpClient();
-                await c.SendAsync(request);
+                await c.SendAsync(request).ConfigureAwait(false);
 
                 parent?.Stop();
 

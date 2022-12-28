@@ -39,7 +39,6 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static void SetStatus(this Activity activity, Status status)
         {
             Debug.Assert(activity != null, "Activity should not be null");
@@ -56,7 +55,6 @@ namespace OpenTelemetry.Trace
         /// <param name="activity">Activity instance.</param>
         /// <returns>Activity execution status.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static Status GetStatus(this Activity activity)
         {
             if (!activity.TryGetStatus(out StatusCode statusCode, out string statusDescription))

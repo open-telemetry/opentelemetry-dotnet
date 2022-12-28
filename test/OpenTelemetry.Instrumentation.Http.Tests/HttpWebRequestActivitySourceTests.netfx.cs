@@ -165,7 +165,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
             {
-                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
+                (await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)).Dispose();
             }
 
             // Just make sure some events are written, to confirm we successfully subscribed to it.
@@ -190,8 +190,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (var client = new HttpClient())
             {
                 (method == "GET"
-                    ? await client.GetAsync(url)
-                    : await client.PostAsync(url, new StringContent("hello world"))).Dispose();
+                    ? await client.GetAsync(url).ConfigureAwait(false)
+                    : await client.PostAsync(url, new StringContent("hello world")).ConfigureAwait(false)).Dispose();
             }
 
             // We should have exactly one Start and one Stop event
@@ -221,8 +221,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (var client = new HttpClient())
             {
                 (method == "GET"
-                    ? await client.GetAsync(this.BuildRequestUrl())
-                    : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"))).Dispose();
+                    ? await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)
+                    : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world")).ConfigureAwait(false)).Dispose();
             }
 
             // There should be no events because we turned off sampling.
@@ -258,7 +258,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         stream = webRequest.GetRequestStream();
                         break;
                     case 1:
-                        stream = await webRequest.GetRequestStreamAsync();
+                        stream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false);
                         break;
                     case 2:
                         {
@@ -320,7 +320,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     webResponse = webRequest.GetResponse();
                     break;
                 case 1:
-                    webResponse = await webRequest.GetResponseAsync();
+                    webResponse = await webRequest.GetResponseAsync().ConfigureAwait(false);
                     break;
                 case 2:
                     {
@@ -397,7 +397,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 using var eventRecords = new ActivitySourceRecorder();
 
-                var parent = new Activity("w3c activity");
+                using var parent = new Activity("w3c activity");
                 parent.SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom());
                 parent.TraceStateString = "some=state";
                 parent.Start();
@@ -407,7 +407,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 // Send a random Http request to generate some events
                 using (var client = new HttpClient())
                 {
-                    (await client.GetAsync(this.BuildRequestUrl())).Dispose();
+                    (await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)).Dispose();
                 }
 
                 parent.Stop();
@@ -448,7 +448,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         request.Content = new StringContent("hello world");
                     }
 
-                    (await client.SendAsync(request)).Dispose();
+                    (await client.SendAsync(request).ConfigureAwait(false)).Dispose();
                 }
 
                 // No events are sent.
@@ -476,8 +476,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (var client = new HttpClient())
             {
                 using HttpResponseMessage response = method == "GET"
-                    ? await client.GetAsync(url)
-                    : await client.PostAsync(url, new StringContent("hello world"));
+                    ? await client.GetAsync(url).ConfigureAwait(false)
+                    : await client.PostAsync(url, new StringContent("hello world")).ConfigureAwait(false);
             }
 
             // We should have exactly one Start and one Stop event
@@ -509,8 +509,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (var client = new HttpClient())
             {
                 using HttpResponseMessage response = method == "GET"
-                    ? await client.GetAsync(this.BuildRequestUrl(queryString: "redirects=10"))
-                    : await client.PostAsync(this.BuildRequestUrl(queryString: "redirects=10"), new StringContent("hello world"));
+                    ? await client.GetAsync(this.BuildRequestUrl(queryString: "redirects=10")).ConfigureAwait(false)
+                    : await client.PostAsync(this.BuildRequestUrl(queryString: "redirects=10"), new StringContent("hello world")).ConfigureAwait(false);
             }
 
             // We should have exactly one Start and one Stop event
@@ -539,7 +539,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 return method == "GET"
                     ? new HttpClient().GetAsync(url)
                     : new HttpClient().PostAsync(url, new StringContent("hello world"));
-            });
+            }).ConfigureAwait(false);
 
             // check that request failed because of the wrong domain name and not because of reflection
             var webException = (WebException)ex.InnerException;
@@ -582,7 +582,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     return method == "GET"
                         ? client.GetAsync(url, cts.Token)
                         : client.PostAsync(url, new StringContent("hello world"), cts.Token);
-                });
+                }).ConfigureAwait(false);
                 Assert.True(ex is TaskCanceledException || ex is WebException);
             }
 
@@ -621,7 +621,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     return method == "GET"
                         ? client.GetAsync(url)
                         : client.PostAsync(url, new StringContent("hello world"));
-                });
+                }).ConfigureAwait(false);
                 Assert.True(ex is HttpRequestException);
             }
 
@@ -663,7 +663,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     return method == "GET"
                         ? client.GetAsync(url)
                         : client.PostAsync(url, new StringContent("hello world"));
-                });
+                }).ConfigureAwait(false);
                 Assert.True(ex is HttpRequestException);
             }
 
@@ -695,7 +695,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             using (var client = new HttpClient())
             {
-                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
+                (await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)).Dispose();
             }
 
             Assert.Equal(2, eventRecords.Records.Count());
@@ -712,7 +712,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public void TestMultipleConcurrentRequests()
         {
             ServicePointManager.DefaultConnectionLimit = int.MaxValue;
-            var parentActivity = new Activity("parent").Start();
+            using var parentActivity = new Activity("parent").Start();
             using var eventRecords = new ActivitySourceRecorder();
 
             Dictionary<Uri, Tuple<WebRequest, WebResponse>> requestData = new Dictionary<Uri, Tuple<WebRequest, WebResponse>>();
@@ -724,7 +724,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             // Issue all requests simultaneously
-            HttpClient httpClient = new HttpClient();
+            using var httpClient = new HttpClient();
             Dictionary<Uri, Task<HttpResponseMessage>> tasks = new Dictionary<Uri, Task<HttpResponseMessage>>();
 
             CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));

@@ -14,13 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;

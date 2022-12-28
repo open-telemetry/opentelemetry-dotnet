@@ -14,16 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Examples.Console
 {
@@ -138,7 +132,7 @@ namespace Examples.Console
 
                                 activity?.SetTag("http.status_code", (int)response.StatusCode);
 
-                                var responseContent = await response.Content.ReadAsStringAsync();
+                                var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                                 activity?.SetTag("response.content", responseContent);
                                 activity?.SetTag("response.length", responseContent.Length.ToString(CultureInfo.InvariantCulture));
 

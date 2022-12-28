@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Tests;
 
@@ -54,7 +52,7 @@ namespace Benchmarks.Instrumentation
         [Benchmark]
         public async Task SimpleHttpClient()
         {
-            var httpResponse = await this.httpClient.GetAsync(this.url);
+            var httpResponse = await this.httpClient.GetAsync(this.url).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
     }
