@@ -34,15 +34,15 @@
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.3]</MicrosoftCodeAnalysisAnalyzersPkgVer>
-    <MicrosoftCodeCoveragePkgVer>[17.3.0]</MicrosoftCodeCoveragePkgVer>
+    <MicrosoftCodeCoveragePkgVer>[17.4.1]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>[3.1.0,)</MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>
     <MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>[3.1.0,)</MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingConfigurationPkgVer>
     <MicrosoftExtensionsOptionsPkgVer>[5.0.0,)</MicrosoftExtensionsOptionsPkgVer>
-    <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
-    <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
+    <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.3,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
+    <MicrosoftSourceLinkGitHubPkgVer>[1.1.1,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
     <OTelPreviousStableVer>1.3.2</OTelPreviousStableVer>
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
