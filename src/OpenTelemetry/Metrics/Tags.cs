@@ -20,26 +20,23 @@ namespace OpenTelemetry.Metrics
     {
         private readonly int hashCode;
 
-        public Tags(string[] keys, object[] values)
+        public Tags(KeyValuePair<string, object>[] keyValuePairs)
         {
-            this.Keys = keys;
-            this.Values = values;
+            this.KeyValuePairs = keyValuePairs;
 
-            unchecked
+            var hash = 17;
+            for (int i = 0; i < this.KeyValuePairs.Length; i++)
             {
-                var hash = 17;
-                for (int i = 0; i < this.Keys.Length; i++)
+                unchecked
                 {
-                    hash = (hash * 31) + this.Keys[i].GetHashCode() + this.Values[i]?.GetHashCode() ?? 0;
+                    hash = (hash * 31) + this.KeyValuePairs[i].Key.GetHashCode() + this.KeyValuePairs[i].Value?.GetHashCode() ?? 0;
                 }
-
-                this.hashCode = hash;
             }
+
+            this.hashCode = hash;
         }
 
-        public readonly string[] Keys { get; }
-
-        public readonly object[] Values { get; }
+        public readonly KeyValuePair<string, object>[] KeyValuePairs { get; }
 
         public static bool operator ==(Tags tag1, Tags tag2) => tag1.Equals(tag2);
 
@@ -52,35 +49,23 @@ namespace OpenTelemetry.Metrics
 
         public readonly bool Equals(Tags other)
         {
-            // Equality check for Keys
-            // Check if the two string[] are equal
-            var keysLength = this.Keys.Length;
+            var length = this.KeyValuePairs.Length;
 
-            if (keysLength != other.Keys.Length)
+            if (length != other.KeyValuePairs.Length)
             {
                 return false;
             }
 
-            for (int i = 0; i < keysLength; i++)
+            for (int i = 0; i < length; i++)
             {
-                if (!this.Keys[i].Equals(other.Keys[i], StringComparison.Ordinal))
+                // Equality check for Keys
+                if (!this.KeyValuePairs[i].Key.Equals(other.KeyValuePairs[i].Key, StringComparison.Ordinal))
                 {
                     return false;
                 }
-            }
 
-            // Equality check for Values
-            // Check if the two object[] are equal
-            var valuesLength = this.Values.Length;
-
-            if (valuesLength != other.Values.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < valuesLength; i++)
-            {
-                if (!this.Values[i].Equals(other.Values[i]))
+                // Equality check for Values
+                if (!this.KeyValuePairs[i].Value?.Equals(other.KeyValuePairs[i].Value) ?? other.KeyValuePairs[i].Value != null)
                 {
                     return false;
                 }
