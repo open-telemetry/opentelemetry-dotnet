@@ -7,11 +7,30 @@ OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
 OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
 OpenTelemetry.Logs.LogRecord.TraceId.set -> void
 OpenTelemetry.Logs.LogRecord.TraceState.set -> void
+OpenTelemetry.Metrics.CircularBufferBuckets
+OpenTelemetry.Metrics.CircularBufferBuckets.Capacity.get -> int
+OpenTelemetry.Metrics.CircularBufferBuckets.CircularBufferBuckets(int capacity) -> void
+OpenTelemetry.Metrics.CircularBufferBuckets.Offset.get -> int
+OpenTelemetry.Metrics.CircularBufferBuckets.ScaleDown(int level = 1) -> void
+OpenTelemetry.Metrics.CircularBufferBuckets.Size.get -> int
+OpenTelemetry.Metrics.CircularBufferBuckets.this[int index].get -> long
+OpenTelemetry.Metrics.CircularBufferBuckets.TryIncrement(int index, long value = 1) -> int
+OpenTelemetry.Metrics.ExponentialBucketHistogram
+OpenTelemetry.Metrics.ExponentialBucketHistogram.ExponentialBucketHistogram(int maxBuckets = 160) -> void
+OpenTelemetry.Metrics.ExponentialBucketHistogram.MapToIndex(double value) -> int
+OpenTelemetry.Metrics.ExponentialBucketHistogram.Record(double value) -> void
+OpenTelemetry.Metrics.ExponentialBucketHistogram.Scale.get -> int
+OpenTelemetry.Metrics.ExponentialBucketHistogram.SnapshotZeroCount -> long
+OpenTelemetry.Metrics.ExponentialBucketHistogramConfiguration
+OpenTelemetry.Metrics.ExponentialBucketHistogramConfiguration.ExponentialBucketHistogramConfiguration() -> void
+OpenTelemetry.Metrics.ExponentialBucketHistogramConfiguration.MaxSize.get -> int
+OpenTelemetry.Metrics.ExponentialBucketHistogramConfiguration.MaxSize.set -> void
 OpenTelemetry.Metrics.HistogramConfiguration
 OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
 OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.get -> bool
 OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.set -> void
 OpenTelemetry.Metrics.MetricPoint.TryGetHistogramMinMaxValues(out double min, out double max) -> bool
+OpenTelemetry.Metrics.MetricType.ExponentialHistogram = 80 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.OpenTelemetryBuilder
 OpenTelemetry.OpenTelemetryBuilder.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -34,3 +53,6 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(th
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSumNonMonotonic = 141 -> OpenTelemetry.Metrics.MetricType
+~OpenTelemetry.Metrics.ExponentialBucketHistogram.SnapshotNegativeBuckets -> OpenTelemetry.Metrics.CircularBufferBuckets
+~OpenTelemetry.Metrics.ExponentialBucketHistogram.SnapshotPositiveBuckets -> OpenTelemetry.Metrics.CircularBufferBuckets
+~OpenTelemetry.Metrics.MetricPoint.GetExponentialHistogram() -> OpenTelemetry.Metrics.ExponentialBucketHistogram

@@ -118,7 +118,7 @@ namespace OpenTelemetry.Metrics
 
                 this.MetricType = exponentialMaxSize == 0
                     ? MetricType.Histogram
-                    : (MetricType)0x50; // TODO: Change to MetricType.ExponentialHistogram once added to public API
+                    : MetricType.ExponentialHistogram;
 
                 if (this.MetricType == MetricType.Histogram)
                 {

@@ -66,8 +66,10 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         Histogram = 0x40,
 
-        // TODO: Commented out for now to avoid exposing publically.
-        // ExponentialHistogram = 0x50,
+        /// <summary>
+        /// Exponential Histogram.
+        /// </summary>
+        ExponentialHistogram = 0x50,
 
         /// <summary>
         /// Non-monotonic Sum of Long type.

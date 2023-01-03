@@ -271,7 +271,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns><see cref="HistogramBuckets"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal readonly ExponentialBucketHistogram GetExponentialHistogram()
+        public readonly ExponentialBucketHistogram GetExponentialHistogram()
         {
             if (this.aggType != AggregationType.ExponentialHistogram &&
                 this.aggType != AggregationType.ExponentialHistogramWithMinMax)

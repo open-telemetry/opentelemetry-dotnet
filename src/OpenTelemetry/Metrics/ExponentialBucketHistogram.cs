@@ -25,8 +25,12 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal sealed class ExponentialBucketHistogram
+public sealed class ExponentialBucketHistogram
 {
+    public CircularBufferBuckets SnapshotPositiveBuckets;
+    public long SnapshotZeroCount;
+    public CircularBufferBuckets SnapshotNegativeBuckets;
+
     internal double RunningSum;
     internal double SnapshotSum;
 
@@ -35,10 +39,6 @@ internal sealed class ExponentialBucketHistogram
 
     internal double RunningMax = double.NegativeInfinity;
     internal double SnapshotMax;
-
-    internal CircularBufferBuckets SnapshotPositiveBuckets;
-    internal long SnapshotZeroCount;
-    internal CircularBufferBuckets SnapshotNegativeBuckets;
 
     internal int IsCriticalSectionOccupied = 0;
 
@@ -113,11 +113,11 @@ internal sealed class ExponentialBucketHistogram
         this.NegativeBuckets = new CircularBufferBuckets(maxBuckets);
     }
 
-    internal int Scale
+    public int Scale
     {
         get => this.scale;
 
-        set
+        internal set
         {
             this.scale = value;
 

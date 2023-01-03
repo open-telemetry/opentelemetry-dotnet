@@ -276,7 +276,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         break;
                     }
 
-                case (MetricType)0x50:
+                case MetricType.ExponentialHistogram:
                     {
                         var histogram = new OtlpMetrics.ExponentialHistogram
                         {
