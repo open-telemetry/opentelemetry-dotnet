@@ -30,19 +30,19 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
-    <BenchmarkDotNetPkgVer>[0.13.2,0.14)</BenchmarkDotNetPkgVer>
-    <CommandLineParserPkgVer>[2.3.0,3.0)</CommandLineParserPkgVer>
+    <BenchmarkDotNetPkgVer>[0.13.3,0.14)</BenchmarkDotNetPkgVer>
+    <CommandLineParserPkgVer>[2.9.1,3.0)</CommandLineParserPkgVer>
     <DotNetXUnitCliVer>[2.3.1,3.0)</DotNetXUnitCliVer>
     <GoogleProtobufPkgVer>[3.19.4,4.0)</GoogleProtobufPkgVer>
-    <GrpcAspNetCorePkgVer>[2.48.0,3.0)</GrpcAspNetCorePkgVer>
+    <GrpcAspNetCorePkgVer>[2.50.0,3.0)</GrpcAspNetCorePkgVer>
     <GrpcAspNetCoreServerPkgVer>[2.48.0, 3.0)</GrpcAspNetCoreServerPkgVer>
     <GrpcToolsPkgVer>[2.48.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftExtensionsHostingPkgVer>[3.1.6,5.0)</MicrosoftExtensionsHostingPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingAbstractionsPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingAbstractionsPkgVer>
-    <MicrosoftNETTestSdkPkgVer>[17.3.0]</MicrosoftNETTestSdkPkgVer>
+    <MicrosoftNETTestSdkPkgVer>[17.4.1]</MicrosoftNETTestSdkPkgVer>
     <MoqPkgVer>[4.18.3,5.0)</MoqPkgVer>
-    <RabbitMQClientPkgVer>[6.1.0,7.0)</RabbitMQClientPkgVer>
+    <RabbitMQClientPkgVer>[6.4.0,7.0)</RabbitMQClientPkgVer>
     <RuntimeInstrumentationPkgVer>[1.0.0,2.0)</RuntimeInstrumentationPkgVer>
     <SwashbuckleAspNetCorePkgVer>[6.4.0]</SwashbuckleAspNetCorePkgVer>
     <SystemTextJsonPkgVer>6.0.5</SystemTextJsonPkgVer>
