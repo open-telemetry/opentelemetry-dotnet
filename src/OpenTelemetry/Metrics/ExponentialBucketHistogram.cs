@@ -27,6 +27,21 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class ExponentialBucketHistogram
 {
+    internal double RunningSum;
+    internal double SnapshotSum;
+
+    internal double RunningMin = double.PositiveInfinity;
+    internal double SnapshotMin;
+
+    internal double RunningMax = double.NegativeInfinity;
+    internal double SnapshotMax;
+
+    internal CircularBufferBuckets SnapshotPositiveBuckets;
+    internal long SnapshotZeroCount;
+    internal CircularBufferBuckets SnapshotNegativeBuckets;
+
+    internal int IsCriticalSectionOccupied = 0;
+
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -199,5 +214,25 @@ internal sealed class ExponentialBucketHistogram
         this.Scale -= n;
         n = buckets.TryIncrement(index >> n);
         Debug.Assert(n == 0, "Increment should always succeed after scale down.");
+    }
+
+    internal void Reset()
+    {
+        this.RunningSum = 0;
+        this.RunningMin = double.PositiveInfinity;
+        this.RunningMax = double.NegativeInfinity;
+        this.ZeroCount = 0;
+        this.PositiveBuckets.Reset();
+        this.NegativeBuckets.Reset();
+    }
+
+    internal void Snapshot()
+    {
+        this.SnapshotSum = this.RunningSum;
+        this.SnapshotMin = this.RunningMin;
+        this.SnapshotMax = this.RunningMax;
+        this.SnapshotPositiveBuckets = this.PositiveBuckets.Copy();
+        this.SnapshotZeroCount = this.ZeroCount;
+        this.SnapshotNegativeBuckets = this.NegativeBuckets.Copy();
     }
 }

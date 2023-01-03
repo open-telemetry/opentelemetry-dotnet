@@ -275,6 +275,59 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         otlpMetric.Histogram = histogram;
                         break;
                     }
+
+                case (MetricType)0x50:
+                    {
+                        var histogram = new OtlpMetrics.ExponentialHistogram
+                        {
+                            AggregationTemporality = temporality,
+                        };
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.ExponentialHistogramDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
+
+                            if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                            {
+                                dataPoint.Min = min;
+                                dataPoint.Max = max;
+                            }
+
+                            var eh = metricPoint.GetExponentialHistogram();
+
+                            dataPoint.Scale = eh.Scale;
+                            dataPoint.ZeroCount = (ulong)eh.SnapshotZeroCount;
+
+                            dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            var offset = eh.SnapshotPositiveBuckets.Offset;
+                            dataPoint.Positive.Offset = offset;
+                            for (var i = offset; i < offset + eh.SnapshotPositiveBuckets.Size; ++i)
+                            {
+                                dataPoint.Positive.BucketCounts.Add((ulong)eh.SnapshotPositiveBuckets[i]);
+                            }
+
+                            dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            offset = eh.SnapshotNegativeBuckets.Offset;
+                            dataPoint.Negative.Offset = offset;
+                            for (var i = offset; i < offset + eh.SnapshotNegativeBuckets.Size; ++i)
+                            {
+                                dataPoint.Negative.BucketCounts.Add((ulong)eh.SnapshotNegativeBuckets[i]);
+                            }
+
+                            histogram.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.ExponentialHistogram = histogram;
+                        break;
+                    }
             }
 
             return otlpMetric;

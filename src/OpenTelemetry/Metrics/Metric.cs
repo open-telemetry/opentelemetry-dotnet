@@ -116,7 +116,9 @@ namespace OpenTelemetry.Metrics
                 var exponentialMaxSize = instrumentIdentity.ExponentialHistogramMaxSize;
                 var histogramRecordMinMax = instrumentIdentity.HistogramRecordMinMax;
 
-                this.MetricType = exponentialMaxSize == 0 ? MetricType.Histogram : MetricType.ExponentialHistogram;
+                this.MetricType = exponentialMaxSize == 0
+                    ? MetricType.Histogram
+                    : (MetricType)0x50; // TODO: Change to MetricType.ExponentialHistogram once added to public API
 
                 if (this.MetricType == MetricType.Histogram)
                 {
