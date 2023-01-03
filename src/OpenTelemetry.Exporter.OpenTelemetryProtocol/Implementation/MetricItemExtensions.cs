@@ -301,6 +301,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 dataPoint.Max = max;
                             }
 
+                            // TODO: This API needs some work.
+                            // Instead maybe we should do something like:
+                            //    metricPoint.GetExponentialHistogramScale()
+                            //    metricPoint.GetExponentialHistogramPositiveBuckets()
+                            //    metricPoint.GetExponentialHistogramNegativeBuckets()
+                            //    metricPoint.GetExponentialHistogramZeroCount()
+
+                            // Also exposing CircularBufferBuckets may not be what we want. It introduces some complexity
+                            // when iterating over the buckets. Should we instead consider a differet data structure for
+                            // enumerating the buckets?
                             var eh = metricPoint.GetExponentialHistogram();
 
                             dataPoint.Scale = eh.Scale;
