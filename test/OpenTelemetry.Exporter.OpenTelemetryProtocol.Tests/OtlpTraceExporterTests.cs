@@ -20,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -635,6 +636,97 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                         o.ExportProcessorType = ExportProcessorType.Batch;
                         o.BatchExportProcessorOptions = null;
                     });
+        }
+
+        [Fact]
+        public void NonnamedOptionsMutateSharedInstanceTest()
+        {
+            OtlpExporterOptions tracerOptions = null;
+            OtlpExporterOptions meterOptions = null;
+
+            var services = new ServiceCollection();
+
+            services.AddOpenTelemetry()
+                .WithTracing(builder => builder.AddOtlpExporter(o =>
+                {
+                    tracerOptions = o;
+                    o.Endpoint = new("http://localhost/traces");
+                }))
+                .WithMetrics(builder => builder.AddOtlpExporter(o =>
+                {
+                    meterOptions = o;
+                    o.Endpoint = new("http://localhost/metrics");
+                }));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            // Verify the OtlpTraceExporter saw the correct endpoint.
+
+            Assert.NotNull(tracerOptions);
+            Assert.Null(meterOptions);
+            Assert.Equal("http://localhost/traces", tracerOptions.Endpoint.OriginalString);
+
+            var meterProvider = serviceProvider.GetRequiredService<MeterProvider>();
+
+            // Verify the OtlpMetricExporter saw the correct endpoint.
+
+            Assert.NotNull(tracerOptions);
+            Assert.NotNull(meterOptions);
+            Assert.Equal("http://localhost/metrics", meterOptions.Endpoint.OriginalString);
+
+            // Note: tracerOptions & meterOptions are actually the same instance
+            // in memory and that instance was actually mutated after
+            // OtlpTraceExporter was created but this is OK because it doesn't
+            // use the options after ctor.
+            Assert.True(ReferenceEquals(tracerOptions, meterOptions));
+            Assert.Equal("http://localhost/metrics", tracerOptions.Endpoint.OriginalString);
+        }
+
+        [Fact]
+        public void NamedOptionsMutateSeparateInstancesTest()
+        {
+            OtlpExporterOptions tracerOptions = null;
+            OtlpExporterOptions meterOptions = null;
+
+            var services = new ServiceCollection();
+
+            services.AddOpenTelemetry()
+                .WithTracing(builder => builder.AddOtlpExporter("Trace", o =>
+                {
+                    tracerOptions = o;
+                    o.Endpoint = new("http://localhost/traces");
+                }))
+                .WithMetrics(builder => builder.AddOtlpExporter("Metrics", o =>
+                {
+                    meterOptions = o;
+                    o.Endpoint = new("http://localhost/metrics");
+                }));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            // Verify the OtlpTraceExporter saw the correct endpoint.
+
+            Assert.NotNull(tracerOptions);
+            Assert.Null(meterOptions);
+            Assert.Equal("http://localhost/traces", tracerOptions.Endpoint.OriginalString);
+
+            var meterProvider = serviceProvider.GetRequiredService<MeterProvider>();
+
+            // Verify the OtlpMetricExporter saw the correct endpoint.
+
+            Assert.NotNull(tracerOptions);
+            Assert.NotNull(meterOptions);
+            Assert.Equal("http://localhost/metrics", meterOptions.Endpoint.OriginalString);
+
+            // Verify expected state of instances.
+
+            Assert.False(ReferenceEquals(tracerOptions, meterOptions));
+            Assert.Equal("http://localhost/traces", tracerOptions.Endpoint.OriginalString);
+            Assert.Equal("http://localhost/metrics", meterOptions.Endpoint.OriginalString);
         }
     }
 }

@@ -53,13 +53,11 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
         public OtlpExporterOptions()
-            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
         {
         }
 
-        internal OtlpExporterOptions(
-            IConfiguration configuration,
-            BatchExportActivityProcessorOptions defaultBatchOptions = null)
+        internal OtlpExporterOptions(IConfiguration configuration)
         {
             Debug.Assert(configuration != null, "configuration was null");
 
@@ -93,8 +91,6 @@ namespace OpenTelemetry.Exporter
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
                 };
             };
-
-            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>

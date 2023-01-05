@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs
 {
@@ -53,22 +54,26 @@ namespace OpenTelemetry.Logs
             OtlpExporterOptions exporterOptions,
             Action<OtlpExporterOptions> configure)
         {
+            loggerOptions.ParseStateValues = true;
+
             configure?.Invoke(exporterOptions);
 
             var otlpExporter = new OtlpLogExporter(exporterOptions);
-            loggerOptions.ParseStateValues = true;
+
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
             }
             else
             {
+                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
+
                 loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
                     otlpExporter,
-                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
-                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+                    batchOptions.MaxQueueSize,
+                    batchOptions.ScheduledDelayMilliseconds,
+                    batchOptions.ExporterTimeoutMilliseconds,
+                    batchOptions.MaxExportBatchSize));
             }
 
             return loggerOptions;
