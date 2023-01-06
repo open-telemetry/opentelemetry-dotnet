@@ -144,6 +144,26 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// cref="MeterProviderBuilder"/> once the application <see
     /// cref="IServiceProvider"/> is available.
     /// </summary>
+    /// <remarks>
+    /// <para><see cref="ConfigureBuilder"/> is an advanced API and is expected
+    /// to be used primarily by library authors.</para>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>Services may NOT be added to the <see cref="IServiceCollection" />
+    /// (via <see cref="ConfigureServices"/>) inside <see
+    /// cref="ConfigureBuilder"/> because the <see cref="IServiceProvider"/> has
+    /// already been created. A <see cref="NotSupportedException"/> will be
+    /// thrown if services are accessed.</item>
+    /// <item>Library extension methods (for example <c>AddOtlpExporter</c>
+    /// inside <c>OpenTelemetry.Exporter.OpenTelemetryProtocol</c>) may depend
+    /// on services being available today or at any point in the future. It is
+    /// NOT recommend to call library extension methods from inside <see
+    /// cref="ConfigureBuilder"/>.</item>
+    /// </list>
+    /// For more information see: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/metrics/customizing-the-sdk/README.md#dependency-injection-support">Dependency
+    /// injection support</see>.
+    /// </remarks>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="configure">Configuration callback.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
