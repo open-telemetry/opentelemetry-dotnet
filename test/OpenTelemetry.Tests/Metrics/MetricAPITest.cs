@@ -405,7 +405,7 @@ namespace OpenTelemetry.Metrics.Tests
             // Ensure that the two instruments have different MetricStreamIdentity but the same MetricStreamName
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("duplicateInstrumentName", new MetricStreamConfiguration { Name = "instrumentName", Description = "duplicateInstrument" }) 
+                .AddView("duplicateInstrumentName", new MetricStreamConfiguration { Name = "instrumentName", Description = "duplicateInstrument" })
                 .AddInMemoryExporter(exportedItems);
 
             using var meterProvider = meterProviderBuilder.Build();
