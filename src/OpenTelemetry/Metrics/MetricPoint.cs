@@ -812,6 +812,35 @@ namespace OpenTelemetry.Metrics
                     }
 
                 case AggregationType.ExponentialHistogram:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.exponentialBucketHistogram.SnapshotSum = this.exponentialBucketHistogram.RunningSum;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    this.exponentialBucketHistogram.RunningSum = 0;
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
                 case AggregationType.ExponentialHistogramWithMinMax:
                     {
                         var sw = default(SpinWait);
