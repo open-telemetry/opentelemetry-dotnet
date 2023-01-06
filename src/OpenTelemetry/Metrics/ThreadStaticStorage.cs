@@ -120,11 +120,11 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    var tmpTagKeyAndValues = new KeyValuePair<string, object>[actualLength];
+                    var tmpTagKeysAndValues = new KeyValuePair<string, object>[actualLength];
 
-                    Array.Copy(tagKeysAndValues, 0, tmpTagKeyAndValues, 0, actualLength);
+                    Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
 
-                    tagKeysAndValues = tmpTagKeyAndValues;
+                    tagKeysAndValues = tmpTagKeysAndValues;
                 }
             }
         }
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Metrics
                 clonedTagKeysAndValues = new KeyValuePair<string, object>[tagLength];
             }
 
-            inputTagKeysAndValues.CopyTo(clonedTagKeysAndValues.AsSpan());
+            Array.Copy(inputTagKeysAndValues, 0, clonedTagKeysAndValues, 0, tagLength);
         }
 
         internal sealed class TagStorage
