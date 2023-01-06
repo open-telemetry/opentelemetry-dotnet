@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs
 {
@@ -59,7 +59,9 @@ namespace OpenTelemetry.Logs
 
             // TODO: We are using span/activity batch environment variable keys
             // here when we should be using the ones for logs.
-            var defaultBatchOptions = exporterOptions.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions();
+            var defaultBatchOptions = exporterOptions.BatchExportProcessorOptions;
+
+            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
 
             configure?.Invoke(exporterOptions);
 
