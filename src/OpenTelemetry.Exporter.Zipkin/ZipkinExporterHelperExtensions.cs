@@ -71,7 +71,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 services.RegisterOptionsFactory(
-                    (sp, configuration) => new ZipkinExporterOptions(
+                    (sp, configuration, name) => new ZipkinExporterOptions(
                         configuration,
                         sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
             });
