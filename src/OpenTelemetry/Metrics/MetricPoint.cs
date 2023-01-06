@@ -812,6 +812,12 @@ namespace OpenTelemetry.Metrics
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
                                 this.exponentialBucketHistogram.SnapshotSum = this.exponentialBucketHistogram.RunningSum;
 
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    this.exponentialBucketHistogram.RunningSum = 0;
+                                }
+
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock

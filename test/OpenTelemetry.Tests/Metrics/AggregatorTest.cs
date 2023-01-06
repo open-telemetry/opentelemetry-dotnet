@@ -184,14 +184,16 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationType.ExponentialHistogram)]
-        [InlineData(AggregationType.ExponentialHistogramWithMinMax)]
-        internal void ExponentialHistogramTests(AggregationType aggregationType)
+        [InlineData(AggregationType.ExponentialHistogram, AggregationTemporality.Cumulative)]
+        [InlineData(AggregationType.ExponentialHistogram, AggregationTemporality.Delta)]
+        [InlineData(AggregationType.ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative)]
+        [InlineData(AggregationType.ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
+        internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality)
         {
             var aggregatorStore = new AggregatorStore(
                 $"{nameof(this.ExponentialHistogramTests)}",
                 aggregationType,
-                AggregationTemporality.Cumulative,
+                aggregationTemporality,
                 maxMetricPoints: 1024,
                 Metric.DefaultHistogramBounds,
                 Metric.DefaultExponentialHistogramMaxBuckets);
@@ -212,16 +214,29 @@ namespace OpenTelemetry.Metrics.Tests
             metricPoint.Update(11);
             metricPoint.Update(19);
 
-            metricPoint.TakeSnapshot(outputDelta: false); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
+            metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
 
             var count = metricPoint.GetHistogramCount();
             var sum = metricPoint.GetHistogramSum();
 
-            // Sum of all recordings
             Assert.Equal(40, sum);
-
-            // Count  = # of recordings
             Assert.Equal(7, count);
+
+            metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
+
+            count = metricPoint.GetHistogramCount();
+            sum = metricPoint.GetHistogramSum();
+
+            if (aggregationTemporality == AggregationTemporality.Cumulative)
+            {
+                Assert.Equal(40, sum);
+                Assert.Equal(7, count);
+            }
+            else
+            {
+                Assert.Equal(0, sum);
+                Assert.Equal(0, count);
+            }
         }
     }
 }
