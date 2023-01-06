@@ -33,18 +33,18 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 |                    Method | AggregationTemporality |      Mean |    Error |   StdDev | Allocated |
 |-------------------------- |----------------------- |----------:|---------:|---------:|----------:|
-|            CounterHotPath |             Cumulative |  14.45 ns | 0.082 ns | 0.068 ns |         - |
-| CounterWith1LabelsHotPath |             Cumulative |  60.54 ns | 0.473 ns | 0.442 ns |         - |
-| CounterWith3LabelsHotPath |             Cumulative | 134.96 ns | 1.543 ns | 1.368 ns |         - |
-| CounterWith5LabelsHotPath |             Cumulative | 206.31 ns | 1.219 ns | 1.081 ns |         - |
-| CounterWith6LabelsHotPath |             Cumulative | 230.43 ns | 0.898 ns | 0.840 ns |         - |
-| CounterWith7LabelsHotPath |             Cumulative | 254.62 ns | 1.156 ns | 1.082 ns |         - |
-|            CounterHotPath |                  Delta |  13.79 ns | 0.021 ns | 0.019 ns |         - |
-| CounterWith1LabelsHotPath |                  Delta |  58.06 ns | 0.227 ns | 0.212 ns |         - |
-| CounterWith3LabelsHotPath |                  Delta | 131.89 ns | 0.304 ns | 0.285 ns |         - |
-| CounterWith5LabelsHotPath |                  Delta | 207.92 ns | 1.050 ns | 0.982 ns |         - |
-| CounterWith6LabelsHotPath |                  Delta | 232.65 ns | 1.011 ns | 0.896 ns |         - |
-| CounterWith7LabelsHotPath |                  Delta | 266.57 ns | 5.200 ns | 5.988 ns |         - |
+|            CounterHotPath |             Cumulative |  13.82 ns | 0.020 ns | 0.018 ns |         - |
+| CounterWith1LabelsHotPath |             Cumulative |  61.06 ns | 0.276 ns | 0.231 ns |         - |
+| CounterWith3LabelsHotPath |             Cumulative | 135.11 ns | 0.609 ns | 0.540 ns |         - |
+| CounterWith5LabelsHotPath |             Cumulative | 207.05 ns | 0.232 ns | 0.181 ns |         - |
+| CounterWith6LabelsHotPath |             Cumulative | 235.28 ns | 0.513 ns | 0.480 ns |         - |
+| CounterWith7LabelsHotPath |             Cumulative | 261.48 ns | 0.665 ns | 0.589 ns |         - |
+|            CounterHotPath |                  Delta |  13.88 ns | 0.110 ns | 0.103 ns |         - |
+| CounterWith1LabelsHotPath |                  Delta |  58.28 ns | 0.375 ns | 0.351 ns |         - |
+| CounterWith3LabelsHotPath |                  Delta | 128.66 ns | 0.246 ns | 0.230 ns |         - |
+| CounterWith5LabelsHotPath |                  Delta | 210.62 ns | 1.246 ns | 1.166 ns |         - |
+| CounterWith6LabelsHotPath |                  Delta | 233.51 ns | 0.656 ns | 0.614 ns |         - |
+| CounterWith7LabelsHotPath |                  Delta | 263.35 ns | 0.865 ns | 0.766 ns |         - |
 */
 
 namespace Benchmarks.Metrics

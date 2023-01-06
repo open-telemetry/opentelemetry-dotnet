@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     internal sealed class AggregatorStore
     {
         private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
-        private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = DimensionComparison;
+        private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
         private readonly object lockZeroTags = new();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
@@ -152,11 +152,6 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointsAccessor GetMetricPoints()
             => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
-
-        private static int DimensionComparison(KeyValuePair<string, object> x, KeyValuePair<string, object> y)
-        {
-            return x.Key.CompareTo(y.Key);
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()

@@ -27,9 +27,12 @@ namespace OpenTelemetry.Metrics
             var hash = 17;
             for (int i = 0; i < this.KeyValuePairs.Length; i++)
             {
+                ref var item = ref this.KeyValuePairs[i];
+
                 unchecked
                 {
-                    hash = (hash * 31) + this.KeyValuePairs[i].Key.GetHashCode() + this.KeyValuePairs[i].Value?.GetHashCode() ?? 0;
+                    hash = (hash * 31) + item.Key.GetHashCode();
+                    hash = (hash * 31) + item.Value?.GetHashCode() ?? 0;
                 }
             }
 
@@ -58,14 +61,17 @@ namespace OpenTelemetry.Metrics
 
             for (int i = 0; i < length; i++)
             {
+                ref var left = ref this.KeyValuePairs[i];
+                ref var right = ref other.KeyValuePairs[i];
+
                 // Equality check for Keys
-                if (!this.KeyValuePairs[i].Key.Equals(other.KeyValuePairs[i].Key, StringComparison.Ordinal))
+                if (!left.Key.Equals(right.Key, StringComparison.Ordinal))
                 {
                     return false;
                 }
 
                 // Equality check for Values
-                if (!this.KeyValuePairs[i].Value?.Equals(other.KeyValuePairs[i].Value) ?? other.KeyValuePairs[i].Value != null)
+                if (!left.Value?.Equals(other.KeyValuePairs[i].Value) ?? right.Value != null)
                 {
                     return false;
                 }
