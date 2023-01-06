@@ -226,12 +226,16 @@ namespace OpenTelemetry.Metrics
             if (this.aggType != AggregationType.HistogramWithBuckets &&
                 this.aggType != AggregationType.Histogram &&
                 this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
-                this.aggType != AggregationType.HistogramWithMinMax)
+                this.aggType != AggregationType.HistogramWithMinMax &&
+                this.aggType != AggregationType.ExponentialHistogram &&
+                this.aggType != AggregationType.ExponentialHistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
 
-            return this.histogramBuckets.SnapshotSum;
+            return this.histogramBuckets != null
+                ? this.histogramBuckets.SnapshotSum
+                : this.exponentialBucketHistogram.SnapshotSum;
         }
 
         /// <summary>
@@ -497,6 +501,7 @@ namespace OpenTelemetry.Metrics
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
+                                    this.exponentialBucketHistogram.RunningSum += number;
                                 }
 
                                 // Release lock
@@ -521,6 +526,7 @@ namespace OpenTelemetry.Metrics
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
+                                    this.exponentialBucketHistogram.RunningSum += number;
                                 }
 
                                 // Release lock
@@ -804,6 +810,7 @@ namespace OpenTelemetry.Metrics
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.exponentialBucketHistogram.SnapshotSum = this.exponentialBucketHistogram.RunningSum;
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 

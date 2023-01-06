@@ -27,6 +27,9 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class ExponentialBucketHistogram
 {
+    internal double RunningSum;
+    internal double SnapshotSum;
+
     internal int IsCriticalSectionOccupied = 0;
 
     private int scale;

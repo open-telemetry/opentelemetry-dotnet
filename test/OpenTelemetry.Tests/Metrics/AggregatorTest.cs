@@ -215,6 +215,10 @@ namespace OpenTelemetry.Metrics.Tests
             metricPoint.TakeSnapshot(outputDelta: false); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
 
             var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+
+            // Sum of all recordings
+            Assert.Equal(40, sum);
 
             // Count  = # of recordings
             Assert.Equal(7, count);
