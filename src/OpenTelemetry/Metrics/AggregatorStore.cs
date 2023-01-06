@@ -434,15 +434,5 @@ namespace OpenTelemetry.Metrics
 
             return this.LookupAggregatorStore(tagKeysAndValues, actualLength);
         }
-
-        private class KeyValuePairComparer : IComparer<KeyValuePair<string, object>>
-        {
-            public static KeyValuePairComparer Instance = new KeyValuePairComparer();
-
-            public int Compare(KeyValuePair<string, object> x, KeyValuePair<string, object> y)
-            {
-                return x.Key.CompareTo(y.Key);
-            }
-        }
     }
 }
