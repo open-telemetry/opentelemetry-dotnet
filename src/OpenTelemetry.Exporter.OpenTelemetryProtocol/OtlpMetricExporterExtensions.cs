@@ -57,25 +57,38 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfNull(builder);
 
-            name ??= Options.DefaultName;
+            var finalOptionsName = name ?? Options.DefaultName;
 
             builder.ConfigureServices(services =>
             {
-                if (configureExporter != null)
+                if (name != null && configureExporter != null)
                 {
-                    services.Configure(name, configureExporter);
+                    // If we are using named options we register the
+                    // configuration delegate into options pipeline.
+                    services.Configure(finalOptionsName, configureExporter);
                 }
 
-                services.RegisterOptionsFactory(configuration
-                    => new OtlpExporterOptions(configuration, defaultBatchOptions: null));
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+
+                if (name == null && configureExporter != null)
+                {
+                    // If we are NOT using named options, we execute the
+                    // configuration delegate inline. The reason for this is
+                    // OtlpExporterOptions is shared by all signals. Without a
+                    // name, delegates for all signals will mix together. See:
+                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+                    configureExporter(exporterOptions);
+                }
+
                 AddOtlpExporter(
                     builder,
-                    sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name),
-                    sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name),
+                    exporterOptions,
+                    sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
                     sp);
             });
         }
@@ -113,8 +126,7 @@ namespace OpenTelemetry.Metrics
 
             builder.ConfigureServices(services =>
             {
-                services.RegisterOptionsFactory(configuration
-                    => new OtlpExporterOptions(configuration, defaultBatchOptions: null));
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
