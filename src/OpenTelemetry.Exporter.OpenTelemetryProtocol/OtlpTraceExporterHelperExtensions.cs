@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace
                     services.Configure(finalOptionsName, configure);
                 }
 
-                RegisterOtlpExporterOptionsFactory(services);
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
             });
 
@@ -96,14 +96,6 @@ namespace OpenTelemetry.Trace
 
                 AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
             });
-        }
-
-        internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
-        {
-            services.RegisterOptionsFactory(
-                (sp, configuration, name) => new OtlpExporterOptions(
-                    configuration,
-                    sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
         }
 
         internal static TracerProviderBuilder AddOtlpExporter(

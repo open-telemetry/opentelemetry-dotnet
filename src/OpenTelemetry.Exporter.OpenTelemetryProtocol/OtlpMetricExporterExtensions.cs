@@ -18,7 +18,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
@@ -69,7 +68,7 @@ namespace OpenTelemetry.Metrics
                     services.Configure(finalOptionsName, configureExporter);
                 }
 
-                OtlpTraceExporterHelperExtensions.RegisterOtlpExporterOptionsFactory(services);
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
@@ -127,7 +126,7 @@ namespace OpenTelemetry.Metrics
 
             builder.ConfigureServices(services =>
             {
-                OtlpTraceExporterHelperExtensions.RegisterOtlpExporterOptionsFactory(services);
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
