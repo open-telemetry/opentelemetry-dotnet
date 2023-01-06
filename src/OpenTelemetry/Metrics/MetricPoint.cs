@@ -278,6 +278,15 @@ namespace OpenTelemetry.Metrics
                 return true;
             }
 
+            if (this.aggType == AggregationType.ExponentialHistogramWithMinMax)
+            {
+                Debug.Assert(this.exponentialBucketHistogram != null, "exponentialBucketHistogram was null");
+
+                min = this.exponentialBucketHistogram.SnapshotMin;
+                max = this.exponentialBucketHistogram.SnapshotMax;
+                return true;
+            }
+
             min = 0;
             max = 0;
             return false;
@@ -527,6 +536,8 @@ namespace OpenTelemetry.Metrics
                                 {
                                     this.runningValue.AsLong++;
                                     this.exponentialBucketHistogram.RunningSum += number;
+                                    this.exponentialBucketHistogram.RunningMin = Math.Min(this.exponentialBucketHistogram.RunningMin, number);
+                                    this.exponentialBucketHistogram.RunningMax = Math.Max(this.exponentialBucketHistogram.RunningMax, number);
                                 }
 
                                 // Release lock
@@ -811,11 +822,15 @@ namespace OpenTelemetry.Metrics
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
                                 this.exponentialBucketHistogram.SnapshotSum = this.exponentialBucketHistogram.RunningSum;
+                                this.exponentialBucketHistogram.SnapshotMin = this.exponentialBucketHistogram.RunningMin;
+                                this.exponentialBucketHistogram.SnapshotMax = this.exponentialBucketHistogram.RunningMax;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
                                     this.exponentialBucketHistogram.RunningSum = 0;
+                                    this.exponentialBucketHistogram.RunningMin = double.PositiveInfinity;
+                                    this.exponentialBucketHistogram.RunningMax = double.NegativeInfinity;
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;

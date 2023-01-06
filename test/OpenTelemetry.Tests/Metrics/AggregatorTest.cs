@@ -218,24 +218,59 @@ namespace OpenTelemetry.Metrics.Tests
 
             var count = metricPoint.GetHistogramCount();
             var sum = metricPoint.GetHistogramSum();
+            var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
 
             Assert.Equal(40, sum);
             Assert.Equal(7, count);
+
+            if (aggregationType == AggregationType.ExponentialHistogramWithMinMax)
+            {
+                Assert.True(hasMinMax);
+                Assert.Equal(-10, min);
+                Assert.Equal(19, max);
+            }
+            else
+            {
+                Assert.False(hasMinMax);
+            }
 
             metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
 
             count = metricPoint.GetHistogramCount();
             sum = metricPoint.GetHistogramSum();
+            hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out min, out max);
 
             if (aggregationTemporality == AggregationTemporality.Cumulative)
             {
                 Assert.Equal(40, sum);
                 Assert.Equal(7, count);
+
+                if (aggregationType == AggregationType.ExponentialHistogramWithMinMax)
+                {
+                    Assert.True(hasMinMax);
+                    Assert.Equal(-10, min);
+                    Assert.Equal(19, max);
+                }
+                else
+                {
+                    Assert.False(hasMinMax);
+                }
             }
             else
             {
                 Assert.Equal(0, sum);
                 Assert.Equal(0, count);
+
+                if (aggregationType == AggregationType.ExponentialHistogramWithMinMax)
+                {
+                    Assert.True(hasMinMax);
+                    Assert.Equal(double.PositiveInfinity, min);
+                    Assert.Equal(double.NegativeInfinity, max);
+                }
+                else
+                {
+                    Assert.False(hasMinMax);
+                }
             }
         }
     }
