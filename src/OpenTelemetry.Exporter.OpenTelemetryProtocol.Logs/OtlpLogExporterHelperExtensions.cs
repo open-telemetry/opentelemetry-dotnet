@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Runtime.Serialization;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 
