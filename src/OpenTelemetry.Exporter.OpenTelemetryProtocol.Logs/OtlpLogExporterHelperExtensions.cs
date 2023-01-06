@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Runtime.Serialization;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 
@@ -31,7 +32,7 @@ namespace OpenTelemetry.Logs
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
-            => AddOtlpExporter(loggerOptions, configure: null);
+            => AddOtlpExporterInternal(loggerOptions, configure: null);
 
         /// <summary>
         /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
@@ -47,14 +48,19 @@ namespace OpenTelemetry.Logs
         public static OpenTelemetryLoggerOptions AddOtlpExporter(
             this OpenTelemetryLoggerOptions loggerOptions,
             Action<OtlpExporterOptions> configure)
-            => AddOtlpExporter(loggerOptions, new(), configure);
+            => AddOtlpExporterInternal(loggerOptions, configure);
 
-        private static OpenTelemetryLoggerOptions AddOtlpExporter(
+        private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
             OpenTelemetryLoggerOptions loggerOptions,
-            OtlpExporterOptions exporterOptions,
             Action<OtlpExporterOptions> configure)
         {
             loggerOptions.ParseStateValues = true;
+
+            var exporterOptions = new OtlpExporterOptions();
+
+            // TODO: We are using span/activity batch environment variable keys
+            // here when we should be using the ones for logs.
+            var defaultBatchOptions = exporterOptions.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions();
 
             configure?.Invoke(exporterOptions);
 
@@ -66,7 +72,7 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
+                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? defaultBatchOptions;
 
                 loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
                     otlpExporter,
