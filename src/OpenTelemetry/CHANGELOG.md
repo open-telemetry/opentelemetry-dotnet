@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Performance Improvement: Update the internal structure used to store metric
+  dimensions from a combination of `string[]` and `object[]` to a
+  `KeyValuePair<string, object>[]`. This results in faster copying of the metric
+  dimensions required for `MetricPoint` lookup on the hot path.
+  ([#4059](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4059))
+
 ## 1.4.0-rc.1
 
 Released 2022-Dec-12
@@ -146,26 +152,27 @@ Released 2022-June-1
   `PeriodicExportingMetricReader`.
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
 * Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
-  in most cases and has greater flexibility (applies to
-  TracerProviderBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  in most cases and has greater flexibility (applies to TracerProviderBuilder,
+  MeterProviderBuilder, OpenTelemetryLoggingOptions).
   ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0-beta.2
 
 Released 2022-May-16
 
-* Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`,
-  and `LogRecord.FormattedMessage`.
+* Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`, and
+  `LogRecord.FormattedMessage`.
   ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
 
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15
 
-* Removes .NET Framework 4.6.1. The minimum .NET Framework
-  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
-* Bumped minimum required version of `Microsoft.Extensions.Logging`
-  and `Microsoft.Extensions.Logging.Configuration` to 3.1.0
+* Removes .NET Framework 4.6.1. The minimum .NET Framework version supported is
+  .NET 4.6.2.
+  ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+* Bumped minimum required version of `Microsoft.Extensions.Logging` and
+  `Microsoft.Extensions.Logging.Configuration` to 3.1.0
   ([#2582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3196))
 
 ## 1.2.0
@@ -181,15 +188,15 @@ Released 2022-Apr-15
 Released 2022-Apr-12
 
 * Removed the `Temporality` setting on `MetricReader` and replaced it with
-  `TemporalityPreference`. This is a breaking change.
-  `TemporalityPreference` is used to determine the `AggregationTemporality`
-  used on a per-instrument kind basis. Currently, there are two preferences:
+  `TemporalityPreference`. This is a breaking change. `TemporalityPreference` is
+  used to determine the `AggregationTemporality` used on a per-instrument kind
+  basis. Currently, there are two preferences:
   * `Cumulative`: Measurements from all instrument kinds are aggregated using
     `AggregationTemporality.Cumulative`.
   * `Delta`: Measurements from `Counter`, `ObservableCounter`, and `Histogram`
     instruments are aggregated using `AggregationTemporality.Delta`. When
-    UpDownCounters are supported with
-    [DiagnosticSource version 7.0 onwards](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/7.0.0-preview.2.22152.2),
+    UpDownCounters are supported with [DiagnosticSource version 7.0
+    onwards](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/7.0.0-preview.2.22152.2),
     they will be aggregated using `AggregationTemporality.Cumulative`.
   ([#3153](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3153))
 * Fix issue where `ExplicitBucketHistogramConfiguration` could be used to
@@ -243,8 +250,8 @@ Released 2022-Mar-04
   differ in some respect - different type, description, or unit - will result in
   a separate metric stream for each distinct instrument.
   ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
-* The `Meter` property on `OpenTelemetry.Metrics.Metric` has been removed.
-  It now has `MeterName` and `MeterVersion` properties.
+* The `Meter` property on `OpenTelemetry.Metrics.Metric` has been removed. It
+  now has `MeterName` and `MeterVersion` properties.
   ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
 * Added support for implementing custom `ResourceDetector`.
   ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
