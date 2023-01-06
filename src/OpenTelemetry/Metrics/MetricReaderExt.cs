@@ -44,11 +44,6 @@ namespace OpenTelemetry.Metrics
             var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
             lock (this.instrumentCreationLock)
             {
-                if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
-                {
-                    return existingMetric;
-                }
-
                 if (this.metricStreamNames.Contains(metricStreamIdentity.MetricStreamName))
                 {
                     OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
@@ -56,6 +51,12 @@ namespace OpenTelemetry.Metrics
                         metricStreamIdentity.MeterName,
                         "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
                         "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+                    return null;
+                }
+
+                if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
+                {
+                    return existingMetric;
                 }
 
                 var index = ++this.metricIndex;
@@ -126,12 +127,6 @@ namespace OpenTelemetry.Metrics
                         continue;
                     }
 
-                    if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
-                    {
-                        metrics.Add(existingMetric);
-                        continue;
-                    }
-
                     if (this.metricStreamNames.Contains(metricStreamIdentity.MetricStreamName))
                     {
                         OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
@@ -139,6 +134,13 @@ namespace OpenTelemetry.Metrics
                             metricStreamIdentity.MeterName,
                             "Metric instrument has the same name as an existing one but differs by description, unit, instrument type, or aggregation configuration (like histogram bounds, tag keys etc. ). Measurements from this instrument will still be exported but may result in conflicts.",
                             "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+                        continue;
+                    }
+
+                    if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
+                    {
+                        metrics.Add(existingMetric);
+                        continue;
                     }
 
                     if (metricStreamConfig == MetricStreamConfiguration.Drop)

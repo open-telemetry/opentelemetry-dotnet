@@ -396,6 +396,43 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_DuplicateInstruments_DifferentDescription()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+
+            // Ensure that the two instruments have different MetricStreamIdentity but the same MetricStreamName
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("duplicateInstrumentName", new MetricStreamConfiguration { Name = "instrumentName", Description = "duplicateInstrument" }) 
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument = meter.CreateCounter<long>("instrumentName");
+            var duplicateInstrument = meter.CreateCounter<long>("duplicateInstrumentName");
+
+            instrument.Add(10);
+            duplicateInstrument.Add(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+
+            var metric = exportedItems[0];
+            Assert.Equal("instrumentName", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+        }
+
+        [Fact]
         public void DuplicateInstrumentNamesFromDifferentMetersWithSameNameDifferentVersion()
         {
             var exportedItems = new List<Metric>();
