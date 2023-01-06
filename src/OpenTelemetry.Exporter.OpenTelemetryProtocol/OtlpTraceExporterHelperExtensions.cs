@@ -59,29 +59,39 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
-            name ??= Options.DefaultName;
+            var finalOptionsName = name ?? Options.DefaultName;
 
             builder.ConfigureServices(services =>
             {
-                if (configure != null)
+                if (name != null && configure != null)
                 {
-                    services.Configure(name, configure);
+                    // If we are using named options we register the
+                    // configuration delegate into options pipeline.
+                    services.Configure(finalOptionsName, configure);
                 }
 
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-                services.RegisterOptionsFactory(
-                    (sp, configuration) => new OtlpExporterOptions(
-                        configuration,
-                        sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
             });
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
 
-                // Note: Not using name here for SdkLimitOptions. There should
-                // only be one provider for a given service collection so
-                // SdkLimitOptions is treated as a single default instance.
+                if (name == null && configure != null)
+                {
+                    // If we are NOT using named options, we execute the
+                    // configuration delegate inline. The reason for this is
+                    // OtlpExporterOptions is shared by all signals. Without a
+                    // name, delegates for all signals will mix together. See:
+                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+                    configure(exporterOptions);
+                }
+
+                // Note: Not using finalOptionsName here for SdkLimitOptions.
+                // There should only be one provider for a given service
+                // collection so SdkLimitOptions is treated as a single default
+                // instance.
                 var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
                 AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
