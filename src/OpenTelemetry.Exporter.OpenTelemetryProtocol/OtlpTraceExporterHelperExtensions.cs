@@ -83,7 +83,8 @@ namespace OpenTelemetry.Trace
                     // If we are NOT using named options, we execute the
                     // configuration delegate inline. The reason for this is
                     // OtlpExporterOptions is shared by all signals. Without a
-                    // name, delegates for all signals will mix together.
+                    // name, delegates for all signals will mix together. See:
+                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
                     configure(exporterOptions);
                 }
 
