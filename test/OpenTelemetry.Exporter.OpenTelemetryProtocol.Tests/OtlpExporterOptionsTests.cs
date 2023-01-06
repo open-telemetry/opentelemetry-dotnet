@@ -87,7 +87,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddInMemoryCollection(values)
                 .Build();
 
-            var options = new OtlpExporterOptions(configuration);
+            var options = new OtlpExporterOptions(configuration, new());
 
             Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
             Assert.Equal("A=2,B=3", options.Headers);
