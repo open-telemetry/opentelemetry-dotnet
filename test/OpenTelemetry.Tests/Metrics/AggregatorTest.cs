@@ -182,5 +182,42 @@ namespace OpenTelemetry.Metrics.Tests
             var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
             Assert.False(enumerator.MoveNext());
         }
+
+        [Theory]
+        [InlineData(AggregationType.ExponentialHistogram)]
+        [InlineData(AggregationType.ExponentialHistogramWithMinMax)]
+        internal void ExponentialHistogramTests(AggregationType aggregationType)
+        {
+            var aggregatorStore = new AggregatorStore(
+                $"{nameof(this.ExponentialHistogramTests)}",
+                aggregationType,
+                AggregationTemporality.Cumulative,
+                maxMetricPoints: 1024,
+                Metric.DefaultHistogramBounds,
+                Metric.DefaultExponentialHistogramMaxBuckets);
+
+            var metricPoint = new MetricPoint(
+                aggregatorStore,
+                aggregationType, // TODO: Why is this here? AggregationType is already declared when AggregatorStore was instantiated.
+                keys: null,
+                values: null,
+                Metric.DefaultHistogramBounds,
+                Metric.DefaultExponentialHistogramMaxBuckets);
+
+            metricPoint.Update(-10);
+            metricPoint.Update(0);
+            metricPoint.Update(1);
+            metricPoint.Update(9);
+            metricPoint.Update(10);
+            metricPoint.Update(11);
+            metricPoint.Update(19);
+
+            metricPoint.TakeSnapshot(outputDelta: false); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
+
+            var count = metricPoint.GetHistogramCount();
+
+            // Count  = # of recordings
+            Assert.Equal(7, count);
+        }
     }
 }

@@ -203,7 +203,9 @@ namespace OpenTelemetry.Metrics
             if (this.aggType != AggregationType.HistogramWithBuckets &&
                 this.aggType != AggregationType.Histogram &&
                 this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
-                this.aggType != AggregationType.HistogramWithMinMax)
+                this.aggType != AggregationType.HistogramWithMinMax &&
+                this.aggType != AggregationType.ExponentialHistogram &&
+                this.aggType != AggregationType.ExponentialHistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
             }
@@ -310,6 +312,8 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                 case AggregationType.Histogram:
                 case AggregationType.HistogramWithMinMax:
+                case AggregationType.ExponentialHistogram:
+                case AggregationType.ExponentialHistogramWithMinMax:
                     {
                         this.Update((double)number);
 
@@ -473,6 +477,54 @@ namespace OpenTelemetry.Metrics
 
                                 // Release lock
                                 Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogram:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogramWithMinMax:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -733,6 +785,30 @@ namespace OpenTelemetry.Metrics
 
                                 // Release lock
                                 Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogram:
+                case AggregationType.ExponentialHistogramWithMinMax:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
