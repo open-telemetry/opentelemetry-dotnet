@@ -50,58 +50,47 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out string[] tagKeys, out object[] tagValues)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out KeyValuePair<string, object>[] tagKeysAndValues)
         {
             Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
 
             if (tagLength <= MaxTagCacheSize)
             {
-                tagKeys = this.primaryTagStorage[tagLength - 1].TagKeys;
-                tagValues = this.primaryTagStorage[tagLength - 1].TagValues;
+                tagKeysAndValues = this.primaryTagStorage[tagLength - 1].TagKeysAndValues;
             }
             else
             {
-                tagKeys = new string[tagLength];
-                tagValues = new object[tagLength];
+                tagKeysAndValues = new KeyValuePair<string, object>[tagLength];
             }
 
-            for (var n = 0; n < tagLength; n++)
-            {
-                tagKeys[n] = tags[n].Key;
-                tagValues[n] = tags[n].Value;
-            }
+            tags.CopyTo(tagKeysAndValues);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues, out int actualLength)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out KeyValuePair<string, object>[] tagKeysAndValues, out int actualLength)
         {
             // We do not know ahead the actual length, so start with max possible length.
             var maxLength = Math.Min(tagKeysInteresting.Count, tagLength);
             if (maxLength == 0)
             {
-                tagKeys = null;
-                tagValues = null;
+                tagKeysAndValues = null;
             }
             else if (maxLength <= MaxTagCacheSize)
             {
-                tagKeys = this.primaryTagStorage[maxLength - 1].TagKeys;
-                tagValues = this.primaryTagStorage[maxLength - 1].TagValues;
+                tagKeysAndValues = this.primaryTagStorage[maxLength - 1].TagKeysAndValues;
             }
             else
             {
-                tagKeys = new string[maxLength];
-                tagValues = new object[maxLength];
+                tagKeysAndValues = new KeyValuePair<string, object>[maxLength];
             }
 
             actualLength = 0;
             for (var n = 0; n < tagLength; n++)
             {
                 // Copy only interesting tags, and keep count.
-                var tag = tags[n];
-                if (tagKeysInteresting.Contains(tag.Key))
+                if (tagKeysInteresting.Contains(tags[n].Key))
                 {
-                    tagKeys[actualLength] = tag.Key;
-                    tagValues[actualLength] = tag.Value;
+                    tagKeysAndValues[actualLength] = tags[n];
                     actualLength++;
                 }
             }
@@ -118,73 +107,53 @@ namespace OpenTelemetry.Metrics
             {
                 if (actualLength == 0)
                 {
-                    tagKeys = null;
-                    tagValues = null;
+                    tagKeysAndValues = null;
                     return;
                 }
                 else if (actualLength <= MaxTagCacheSize)
                 {
-                    var tmpKeys = this.primaryTagStorage[actualLength - 1].TagKeys;
-                    var tmpValues = this.primaryTagStorage[actualLength - 1].TagValues;
-                    for (var n = 0; n < actualLength; n++)
-                    {
-                        tmpKeys[n] = tagKeys[n];
-                        tmpValues[n] = tagValues[n];
-                    }
+                    var tmpTagKeysAndValues = this.primaryTagStorage[actualLength - 1].TagKeysAndValues;
 
-                    tagKeys = tmpKeys;
-                    tagValues = tmpValues;
+                    Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
+
+                    tagKeysAndValues = tmpTagKeysAndValues;
                 }
                 else
                 {
-                    var tmpKeys = new string[actualLength];
-                    var tmpValues = new object[actualLength];
+                    var tmpTagKeysAndValues = new KeyValuePair<string, object>[actualLength];
 
-                    for (var n = 0; n < actualLength; n++)
-                    {
-                        tmpKeys[n] = tagKeys[n];
-                        tmpValues[n] = tagValues[n];
-                    }
+                    Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
 
-                    tagKeys = tmpKeys;
-                    tagValues = tmpValues;
+                    tagKeysAndValues = tmpTagKeysAndValues;
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void CloneKeysAndValues(string[] inputTagKeys, object[] inputTagValues, int tagLength, out string[] clonedTagKeys, out object[] clonedTagValues)
+        internal void CloneKeysAndValues(KeyValuePair<string, object>[] inputTagKeysAndValues, int tagLength, out KeyValuePair<string, object>[] clonedTagKeysAndValues)
         {
             Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}", $"{nameof(tagLength)}");
 
             if (tagLength <= MaxTagCacheSize)
             {
-                clonedTagKeys = this.secondaryTagStorage[tagLength - 1].TagKeys;
-                clonedTagValues = this.secondaryTagStorage[tagLength - 1].TagValues;
+                clonedTagKeysAndValues = this.secondaryTagStorage[tagLength - 1].TagKeysAndValues;
             }
             else
             {
-                clonedTagKeys = new string[tagLength];
-                clonedTagValues = new object[tagLength];
+                clonedTagKeysAndValues = new KeyValuePair<string, object>[tagLength];
             }
 
-            for (int i = 0; i < tagLength; i++)
-            {
-                clonedTagKeys[i] = inputTagKeys[i];
-                clonedTagValues[i] = inputTagValues[i];
-            }
+            Array.Copy(inputTagKeysAndValues, 0, clonedTagKeysAndValues, 0, tagLength);
         }
 
         internal sealed class TagStorage
         {
             // Used to split into Key sequence, Value sequence.
-            internal readonly string[] TagKeys;
-            internal readonly object[] TagValues;
+            internal readonly KeyValuePair<string, object>[] TagKeysAndValues;
 
             internal TagStorage(int n)
             {
-                this.TagKeys = new string[n];
-                this.TagValues = new object[n];
+                this.TagKeysAndValues = new KeyValuePair<string, object>[n];
             }
         }
     }
