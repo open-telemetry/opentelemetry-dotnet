@@ -61,9 +61,9 @@ namespace OpenTelemetry.Metrics
 #else
             var hash = 17;
 
-            unchecked
+            for (int i = 0; i < strings.Length; i++)
             {
-                for (int i = 0; i < strings.Length; i++)
+                unchecked
                 {
                     hash = (hash * 31) + strings[i]?.GetHashCode() ?? 0;
                 }

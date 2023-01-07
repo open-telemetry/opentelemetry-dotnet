@@ -345,7 +345,7 @@ namespace OpenTelemetry
         {
             var baggage = this.baggage ?? EmptyBaggage;
 
-            int hash = 17;
+            var hash = 17;
             foreach (var item in baggage)
             {
                 unchecked
