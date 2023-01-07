@@ -41,16 +41,14 @@ namespace OpenTelemetry.Metrics
         internal MetricPoint(
             AggregatorStore aggregatorStore,
             AggregationType aggType,
-            string[] keys,
-            object[] values,
+            KeyValuePair<string, object>[] tagKeysAndValues,
             double[] histogramExplicitBounds)
         {
             Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
-            Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
             Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
 
             this.aggType = aggType;
-            this.Tags = new ReadOnlyTagCollection(keys, values);
+            this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
             this.runningValue = default;
             this.snapshotValue = default;
             this.deltaLastValue = default;

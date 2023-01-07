@@ -16,8 +16,6 @@
 
 #nullable enable
 
-using System.Diagnostics;
-
 namespace OpenTelemetry
 {
     /// <summary>
@@ -27,21 +25,17 @@ namespace OpenTelemetry
     // prevent accidental boxing.
     public readonly struct ReadOnlyTagCollection
     {
-        private readonly string[] keys;
-        private readonly object[] values;
+        private readonly KeyValuePair<string, object>[] keyAndValues;
 
-        internal ReadOnlyTagCollection(string[]? keys, object[]? values)
+        internal ReadOnlyTagCollection(KeyValuePair<string, object>[]? keyAndValues)
         {
-            this.keys = keys ?? Array.Empty<string>();
-            this.values = values ?? Array.Empty<object>();
-
-            Debug.Assert(this.keys.Length == this.values.Length, "Array length mismatch");
+            this.keyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object>>();
         }
 
         /// <summary>
         /// Gets the number of tags in the collection.
         /// </summary>
-        public int Count => this.keys.Length;
+        public int Count => this.keyAndValues.Length;
 
         /// <summary>
         /// Returns an enumerator that iterates through the tags.
@@ -84,9 +78,7 @@ namespace OpenTelemetry
 
                 if (index < this.source.Count)
                 {
-                    this.Current = new KeyValuePair<string, object>(
-                        this.source.keys[index],
-                        this.source.values[index]);
+                    this.Current = this.source.keyAndValues[index];
 
                     this.index++;
                     return true;
