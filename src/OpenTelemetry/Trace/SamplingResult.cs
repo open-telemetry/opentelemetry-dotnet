@@ -117,11 +117,23 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            var result = 1;
-            result = (31 * result) + this.Decision.GetHashCode();
-            result = (31 * result) + this.Attributes.GetHashCode();
-            result = this.TraceStateString == null ? result : (result * 31) + this.TraceStateString.GetHashCode();
-            return result;
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+            HashCode hashCode = default;
+            hashCode.Add(this.Decision.GetHashCode());
+            hashCode.Add(this.Attributes.GetHashCode());
+            hashCode.Add(this.TraceStateString?.GetHashCode() ?? 0);
+
+            var hash = hashCode.ToHashCode();
+#else
+            var hash = 17;
+            unchecked
+            {
+                hash = (31 * hash) + this.Decision.GetHashCode();
+                hash = (31 * hash) + this.Attributes.GetHashCode();
+                hash = (31 * hash) + (this.TraceStateString?.GetHashCode() ?? 0);
+            }
+#endif
+            return hash;
         }
 
         /// <inheritdoc/>

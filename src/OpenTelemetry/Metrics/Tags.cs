@@ -24,17 +24,28 @@ namespace OpenTelemetry.Metrics
         {
             this.KeyValuePairs = keyValuePairs;
 
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+            HashCode hashCode = default;
+            for (int i = 0; i < this.KeyValuePairs.Length; i++)
+            {
+                ref var item = ref this.KeyValuePairs[i];
+                hashCode.Add(item.Key?.GetHashCode() ?? 0);
+                hashCode.Add(item.Value?.GetHashCode() ?? 0);
+            }
+
+            var hash = hashCode.ToHashCode();
+#else
             var hash = 17;
             for (int i = 0; i < this.KeyValuePairs.Length; i++)
             {
                 ref var item = ref this.KeyValuePairs[i];
-
                 unchecked
                 {
-                    hash = (hash * 31) + item.Key.GetHashCode();
-                    hash = (hash * 31) + item.Value?.GetHashCode() ?? 0;
+                    hash = (hash * 31) + (item.Key?.GetHashCode() ?? 0);
+                    hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
                 }
             }
+#endif
 
             this.hashCode = hash;
         }
@@ -71,7 +82,7 @@ namespace OpenTelemetry.Metrics
                 }
 
                 // Equality check for Values
-                if (!left.Value?.Equals(other.KeyValuePairs[i].Value) ?? right.Value != null)
+                if (!left.Value?.Equals(right.Value) ?? right.Value != null)
                 {
                     return false;
                 }
