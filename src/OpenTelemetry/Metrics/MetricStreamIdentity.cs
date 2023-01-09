@@ -46,8 +46,8 @@ namespace OpenTelemetry.Metrics
             hashCode.Add(this.HistogramRecordMinMax.GetHashCode());
             hashCode.Add(this.Unit.GetHashCode());
             hashCode.Add(this.Description.GetHashCode());
-            hashCode.Add(this.ViewId?.GetHashCode() ?? 0);
-            hashCode.Add(this.TagKeys != null ? StringArrayComparer.GetHashCode(this.TagKeys) : 0);
+            hashCode.Add(this.ViewId?.GetHashCode());
+            hashCode.Add(this.TagKeys, StringArrayComparer);
             if (this.HistogramBucketBounds != null)
             {
                 for (var i = 0; i < this.HistogramBucketBounds.Length; ++i)
@@ -66,10 +66,10 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.MeterVersion.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
-                hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
-                hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
-                hash = !this.ViewId.HasValue ? hash : (hash * 31) + this.ViewId.Value;
-                hash = this.TagKeys == null ? hash : (hash * 31) + StringArrayComparer.GetHashCode(this.TagKeys);
+                hash = (hash * 31) + this.Unit?.GetHashCode() ?? 0;
+                hash = (hash * 31) + this.Description?.GetHashCode() ?? 0;
+                hash = (hash * 31) + this.ViewId ?? 0;
+                hash = (hash * 31) + (this.TagKeys != null ? StringArrayComparer.GetHashCode(this.TagKeys) : 0);
                 if (this.HistogramBucketBounds != null)
                 {
                     var len = this.HistogramBucketBounds.Length;
