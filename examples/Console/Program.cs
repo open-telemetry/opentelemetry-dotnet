@@ -162,6 +162,9 @@ namespace Examples.Console
         [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
 
+        [Option('e', "endpoint", HelpText = "Target to which the OTLP exporter is going to send logs (default value depends on protocol).", Default = null)]
+        public string Endpoint { get; set; }
+
         [Option('p', "protocol", HelpText = "Transport protocol used by OTLP exporter. Supported values: grpc and http/protobuf. Only applicable if Exporter is OTLP", Default = "grpc")]
         public string Protocol { get; set; }
     }
