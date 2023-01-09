@@ -29,8 +29,8 @@ namespace OpenTelemetry.Metrics
             for (int i = 0; i < this.KeyValuePairs.Length; i++)
             {
                 ref var item = ref this.KeyValuePairs[i];
-                hashCode.Add(item.Key?.GetHashCode() ?? 0);
-                hashCode.Add(item.Value?.GetHashCode() ?? 0);
+                hashCode.Add(item.Key);
+                hashCode.Add(item.Value);
             }
 
             var hash = hashCode.ToHashCode();

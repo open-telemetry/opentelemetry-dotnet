@@ -39,20 +39,20 @@ namespace OpenTelemetry.Metrics
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
             HashCode hashCode = default;
-            hashCode.Add(this.InstrumentType.GetHashCode());
-            hashCode.Add(this.MeterName.GetHashCode());
-            hashCode.Add(this.MeterVersion.GetHashCode());
-            hashCode.Add(this.InstrumentName.GetHashCode());
-            hashCode.Add(this.HistogramRecordMinMax.GetHashCode());
-            hashCode.Add(this.Unit.GetHashCode());
-            hashCode.Add(this.Description.GetHashCode());
-            hashCode.Add(this.ViewId?.GetHashCode());
+            hashCode.Add(this.InstrumentType);
+            hashCode.Add(this.MeterName);
+            hashCode.Add(this.MeterVersion);
+            hashCode.Add(this.InstrumentName);
+            hashCode.Add(this.HistogramRecordMinMax);
+            hashCode.Add(this.Unit);
+            hashCode.Add(this.Description);
+            hashCode.Add(this.ViewId);
             hashCode.Add(this.TagKeys, StringArrayComparer);
             if (this.HistogramBucketBounds != null)
             {
                 for (var i = 0; i < this.HistogramBucketBounds.Length; ++i)
                 {
-                    hashCode.Add(this.HistogramBucketBounds[i].GetHashCode());
+                    hashCode.Add(this.HistogramBucketBounds[i]);
                 }
             }
 
