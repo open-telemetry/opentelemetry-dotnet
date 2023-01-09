@@ -112,7 +112,7 @@ namespace Examples.Console
         [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
 
-        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send metrics (default value depends on protocol).", Default =null)]
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send metrics (default value depends on protocol).", Default = null)]
         public string Endpoint { get; set; }
 
         [Option('p', "useGrpc", HelpText = "Use gRPC or HTTP when using the OTLP exporter", Required = false, Default = true)]
