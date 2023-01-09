@@ -71,10 +71,14 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            var hashCode = 323591981;
-            hashCode = (hashCode * -1521134295) + this.ActivityContext.GetHashCode();
-            hashCode = (hashCode * -1521134295) + this.Baggage.GetHashCode();
-            return hashCode;
+            var hash = 323591981;
+            unchecked
+            {
+                hash = (hash * -1521134295) + this.ActivityContext.GetHashCode();
+                hash = (hash * -1521134295) + this.Baggage.GetHashCode();
+            }
+
+            return hash;
         }
     }
 }

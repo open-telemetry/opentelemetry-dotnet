@@ -345,17 +345,17 @@ namespace OpenTelemetry
         {
             var baggage = this.baggage ?? EmptyBaggage;
 
-            unchecked
+            var hash = 17;
+            foreach (var item in baggage)
             {
-                int res = 17;
-                foreach (var item in baggage)
+                unchecked
                 {
-                    res = (res * 23) + baggage.Comparer.GetHashCode(item.Key);
-                    res = (res * 23) + item.Value.GetHashCode();
+                    hash = (hash * 23) + baggage.Comparer.GetHashCode(item.Key);
+                    hash = (hash * 23) + item.Value.GetHashCode();
                 }
-
-                return res;
             }
+
+            return hash;
         }
 
         private static BaggageHolder EnsureBaggageHolder()

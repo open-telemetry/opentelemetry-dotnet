@@ -30,21 +30,20 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
   [Host]     : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
   DefaultJob : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
 
-
 |                    Method | AggregationTemporality |      Mean |    Error |   StdDev | Allocated |
 |-------------------------- |----------------------- |----------:|---------:|---------:|----------:|
-|            CounterHotPath |             Cumulative |  13.82 ns | 0.020 ns | 0.018 ns |         - |
-| CounterWith1LabelsHotPath |             Cumulative |  61.06 ns | 0.276 ns | 0.231 ns |         - |
-| CounterWith3LabelsHotPath |             Cumulative | 135.11 ns | 0.609 ns | 0.540 ns |         - |
-| CounterWith5LabelsHotPath |             Cumulative | 207.05 ns | 0.232 ns | 0.181 ns |         - |
-| CounterWith6LabelsHotPath |             Cumulative | 235.28 ns | 0.513 ns | 0.480 ns |         - |
-| CounterWith7LabelsHotPath |             Cumulative | 261.48 ns | 0.665 ns | 0.589 ns |         - |
-|            CounterHotPath |                  Delta |  13.88 ns | 0.110 ns | 0.103 ns |         - |
-| CounterWith1LabelsHotPath |                  Delta |  58.28 ns | 0.375 ns | 0.351 ns |         - |
-| CounterWith3LabelsHotPath |                  Delta | 128.66 ns | 0.246 ns | 0.230 ns |         - |
-| CounterWith5LabelsHotPath |                  Delta | 210.62 ns | 1.246 ns | 1.166 ns |         - |
-| CounterWith6LabelsHotPath |                  Delta | 233.51 ns | 0.656 ns | 0.614 ns |         - |
-| CounterWith7LabelsHotPath |                  Delta | 263.35 ns | 0.865 ns | 0.766 ns |         - |
+|            CounterHotPath |             Cumulative |  13.83 ns | 0.030 ns | 0.026 ns |         - |
+| CounterWith1LabelsHotPath |             Cumulative |  60.59 ns | 0.075 ns | 0.067 ns |         - |
+| CounterWith3LabelsHotPath |             Cumulative | 141.04 ns | 0.422 ns | 0.395 ns |         - |
+| CounterWith5LabelsHotPath |             Cumulative | 221.42 ns | 0.923 ns | 0.818 ns |         - |
+| CounterWith6LabelsHotPath |             Cumulative | 252.18 ns | 1.040 ns | 0.973 ns |         - |
+| CounterWith7LabelsHotPath |             Cumulative | 278.59 ns | 0.457 ns | 0.428 ns |         - |
+|            CounterHotPath |                  Delta |  13.76 ns | 0.024 ns | 0.023 ns |         - |
+| CounterWith1LabelsHotPath |                  Delta |  62.50 ns | 0.094 ns | 0.083 ns |         - |
+| CounterWith3LabelsHotPath |                  Delta | 140.97 ns | 0.590 ns | 0.523 ns |         - |
+| CounterWith5LabelsHotPath |                  Delta | 222.37 ns | 0.467 ns | 0.390 ns |         - |
+| CounterWith6LabelsHotPath |                  Delta | 254.25 ns | 1.387 ns | 1.298 ns |         - |
+| CounterWith7LabelsHotPath |                  Delta | 279.22 ns | 0.843 ns | 0.747 ns |         - |
 */
 
 namespace Benchmarks.Metrics

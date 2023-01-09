@@ -37,18 +37,39 @@ namespace OpenTelemetry.Metrics
             this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
             this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+            HashCode hashCode = default;
+            hashCode.Add(this.InstrumentType);
+            hashCode.Add(this.MeterName);
+            hashCode.Add(this.MeterVersion);
+            hashCode.Add(this.InstrumentName);
+            hashCode.Add(this.HistogramRecordMinMax);
+            hashCode.Add(this.Unit);
+            hashCode.Add(this.Description);
+            hashCode.Add(this.ViewId);
+            hashCode.Add(this.TagKeys, StringArrayComparer);
+            if (this.HistogramBucketBounds != null)
+            {
+                for (var i = 0; i < this.HistogramBucketBounds.Length; ++i)
+                {
+                    hashCode.Add(this.HistogramBucketBounds[i]);
+                }
+            }
+
+            var hash = hashCode.ToHashCode();
+#else
+            var hash = 17;
             unchecked
             {
-                var hash = 17;
                 hash = (hash * 31) + this.InstrumentType.GetHashCode();
                 hash = (hash * 31) + this.MeterName.GetHashCode();
                 hash = (hash * 31) + this.MeterVersion.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
-                hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
-                hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
-                hash = !this.ViewId.HasValue ? hash : (hash * 31) + this.ViewId.Value;
-                hash = this.TagKeys == null ? hash : (hash * 31) + StringArrayComparer.GetHashCode(this.TagKeys);
+                hash = (hash * 31) + (this.Unit?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (this.Description?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (this.ViewId ?? 0);
+                hash = (hash * 31) + (this.TagKeys != null ? StringArrayComparer.GetHashCode(this.TagKeys) : 0);
                 if (this.HistogramBucketBounds != null)
                 {
                     var len = this.HistogramBucketBounds.Length;
@@ -57,9 +78,10 @@ namespace OpenTelemetry.Metrics
                         hash = (hash * 31) + this.HistogramBucketBounds[i].GetHashCode();
                     }
                 }
-
-                this.hashCode = hash;
             }
+
+#endif
+            this.hashCode = hash;
         }
 
         public string MeterName { get; }
