@@ -65,7 +65,7 @@ namespace OpenTelemetry.Metrics
             {
                 unchecked
                 {
-                    hash = (hash * 31) + strings[i]?.GetHashCode() ?? 0;
+                    hash = (hash * 31) + (strings[i]?.GetHashCode() ?? 0);
                 }
             }
 #endif

@@ -41,8 +41,8 @@ namespace OpenTelemetry.Metrics
                 ref var item = ref this.KeyValuePairs[i];
                 unchecked
                 {
-                    hash = (hash * 31) + item.Key?.GetHashCode() ?? 0;
-                    hash = (hash * 31) + item.Value?.GetHashCode() ?? 0;
+                    hash = (hash * 31) + (item.Key?.GetHashCode() ?? 0);
+                    hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
                 }
             }
 #endif

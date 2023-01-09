@@ -130,7 +130,7 @@ namespace OpenTelemetry.Trace
             {
                 hash = (31 * hash) + this.Decision.GetHashCode();
                 hash = (31 * hash) + this.Attributes.GetHashCode();
-                hash = (31 * hash) + this.TraceStateString?.GetHashCode() ?? 0;
+                hash = (31 * hash) + (this.TraceStateString?.GetHashCode() ?? 0);
             }
 #endif
             return hash;
