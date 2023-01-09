@@ -119,9 +119,9 @@ namespace OpenTelemetry.Trace
         {
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
             HashCode hashCode = default;
-            hashCode.Add(this.Decision.GetHashCode());
-            hashCode.Add(this.Attributes.GetHashCode());
-            hashCode.Add(this.TraceStateString?.GetHashCode() ?? 0);
+            hashCode.Add(this.Decision);
+            hashCode.Add(this.Attributes);
+            hashCode.Add(this.TraceStateString);
 
             var hash = hashCode.ToHashCode();
 #else

@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
             HashCode hashCode = default;
             for (int i = 0; i < strings.Length; i++)
             {
-                hashCode.Add(strings[i]?.GetHashCode() ?? 0);
+                hashCode.Add(strings[i]);
             }
 
             var hash = hashCode.ToHashCode();
