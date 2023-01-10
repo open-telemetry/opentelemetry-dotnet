@@ -252,5 +252,29 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(parentTraceState, activity.TraceStateString);
             }
         }
+
+        [Fact]
+        public void SamplerExceptionBubblesUpTest()
+        {
+            // TODO: Discuss: An exception thrown in custom sampler probably
+            // should not blow up like this?
+
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(activitySourceName)
+                .SetSampler(new ThrowingSampler())
+                .Build();
+
+            Assert.Throws<InvalidOperationException>(() => activitySource.StartActivity("ThrowingSampler"));
+        }
+
+        private sealed class ThrowingSampler : Sampler
+        {
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                throw new InvalidOperationException("ThrowingSampler");
+            }
+        }
     }
 }
