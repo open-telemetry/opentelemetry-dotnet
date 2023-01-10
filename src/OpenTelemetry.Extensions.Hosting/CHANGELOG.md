@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Removed deprecated extensions: `AddOpenTelemetryTracing`,
+  `AddOpenTelemetryMetrics`, `Configure`, & `GetServices`.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09

@@ -6,7 +6,7 @@
 ## Installation
 
 ```shell
-dotnet add package --prerelease OpenTelemetry.Extensions.Hosting
+dotnet add package OpenTelemetry.Extensions.Hosting
 ```
 
 ## Overview
@@ -21,7 +21,7 @@ and metrics (`MeterProvider`) in [ASP.NET
 
 ## Extension method reference
 
-### Current OpenTelemetry SDK v1.4.0 and newer extensions
+### OpenTelemetry SDK v1.4.0 and newer extensions
 
 Targeting `OpenTelemetry.OpenTelemetryBuilder`:
 
@@ -30,7 +30,32 @@ Targeting `OpenTelemetry.OpenTelemetryBuilder`:
   to automatically start tracing and/or metric services in the supplied
   [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
 
-### Obsolete OpenTelemetry SDK pre-1.4.0 extensions
+#### Usage
+
+The following example shows how to register OpenTelemetry tracing & metrics in
+an ASP.NET Core host using the OpenTelemetry.Extensions.Hosting extensions.
+
+```csharp
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
+var appBuilder = WebApplication.CreateBuilder(args);
+
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(builder => builder.AddConsoleExporter())
+    .WithMetrics(builder => builder.AddConsoleExporter())
+    .StartWithHost();
+
+var app = appBuilder.Build();
+
+app.Run();
+```
+
+### OpenTelemetry SDK v1.3.0 and older extensions
+
+**Note:** The below extension methods were removed in v1.4.0.
 
 **Note:** The below extension methods should be called by application host code
 only. Library authors see: [Registration extension method guidance for library
@@ -56,29 +81,6 @@ Targeting `Microsoft.Extensions.DependencyInjection.IServiceCollection`:
   [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
   to automatically start metric services in the supplied
   [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
-
-## Usage
-
-The following example shows how to register OpenTelemetry tracing & metrics in
-an ASP.NET Core host using the OpenTelemetry.Extensions.Hosting extensions.
-
-```csharp
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
-
-var appBuilder = WebApplication.CreateBuilder(args);
-
-appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddConsoleExporter())
-    .WithMetrics(builder => builder.AddConsoleExporter())
-    .StartWithHost();
-
-var app = appBuilder.Build();
-
-app.Run();
-```
 
 ## References
 

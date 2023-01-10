@@ -6,7 +6,7 @@
 ## Installation
 
 ```shell
-dotnet add package --prerelease OpenTelemetry.Extensions.DependencyInjection
+dotnet add package OpenTelemetry.Extensions.DependencyInjection
 ```
 
 ## Overview
