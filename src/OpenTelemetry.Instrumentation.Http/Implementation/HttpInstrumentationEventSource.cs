@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     [EventSource(Name = "OpenTelemetry-Instrumentation-Http")]
     internal sealed class HttpInstrumentationEventSource : EventSource
     {
-        public static HttpInstrumentationEventSource Log = new();
+        public static readonly HttpInstrumentationEventSource Log = new();
 
         [NonEvent]
         public void FailedProcessResult(Exception ex)

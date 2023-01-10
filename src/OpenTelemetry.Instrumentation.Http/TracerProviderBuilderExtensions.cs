@@ -39,11 +39,11 @@ namespace OpenTelemetry.Trace
         /// Enables HttpClient instrumentation.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <param name="configureHttpClientInstrumentationOptions">Callback action for configuring <see cref="HttpClientInstrumentationOptions"/>.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">Callback action for configuring <see cref="HttpClientInstrumentationSamplingOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
+            Action<HttpClientInstrumentationSamplingOptions> configureHttpClientInstrumentationOptions)
             => AddHttpClientInstrumentation(builder, name: null, configureHttpClientInstrumentationOptions);
 
         /// <summary>
@@ -51,12 +51,12 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <param name="name">Name which is used when retrieving options.</param>
-        /// <param name="configureHttpClientInstrumentationOptions">Callback action for configuring <see cref="HttpClientInstrumentationOptions"/>.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">Callback action for configuring <see cref="HttpClientInstrumentationSamplingOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
             string name,
-            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions)
+            Action<HttpClientInstrumentationSamplingOptions> configureHttpClientInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
 
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Trace
 
             return builder.ConfigureBuilder((sp, builder) =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
+                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationSamplingOptions>>().Get(name);
 
 #if NETFRAMEWORK
                 HttpWebRequestActivitySource.Options = options;

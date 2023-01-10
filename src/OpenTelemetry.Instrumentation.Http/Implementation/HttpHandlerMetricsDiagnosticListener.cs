@@ -29,10 +29,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly Histogram<double> httpClientDuration;
+        private readonly HttpClientInstrumentationMeterOptions options;
 
-        public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
+        public HttpHandlerMetricsDiagnosticListener(string name, Meter meter, HttpClientInstrumentationMeterOptions options)
             : base(name)
         {
+            this.options = options;
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
         }
 
@@ -40,30 +42,95 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (name == OnStopEvent)
             {
-                if (Sdk.SuppressInstrumentation)
+                this.OnStopActivity(Activity.Current, payload);
+            }
+        }
+
+        private void OnStopActivity(Activity activity, object payload)
+        {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
+            if (!this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) || response == null)
+            {
+                // TODO: logging?
+                return;
+            }
+
+            var request = response.RequestMessage;
+            var tags = new List<KeyValuePair<string, object>>
+            {
+                new(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
+                new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
+                new(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
+                new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
+                new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
+            };
+
+            if (!request.RequestUri.IsDefaultPort)
+            {
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+            }
+
+            if (!this.TryFilterHttpRequestMessage(activity.OperationName, request))
+            {
+                return;
+            }
+
+            this.EnrichWithHttpRequestMessage(tags, request);
+
+            this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags.ToArray());
+        }
+
+        /// <summary>
+        /// Gets or sets a filter function that determines whether or not to
+        /// collect telemetry on a per request basis.
+        /// </summary>
+        /// <param name="operationName">The name of operation.</param>
+        /// <param name="request">Proceed <see cref="HttpRequestMessage"/>.</param>
+        /// <returns>
+        /// <list type="bullet">
+        /// <item>The return value for the filter function is interpreted as:
+        /// <list type="bullet">
+        /// <item>If filter returns <see langword="true" />, the request is
+        /// collected.</item>
+        /// <item>If filter returns <see langword="false" /> or throws an
+        /// exception the request is NOT collected.</item>
+        /// </list></item>
+        /// </list>
+        /// </returns>
+        private bool TryFilterHttpRequestMessage(string operationName, HttpRequestMessage request)
+        {
+            try
+            {
+                var shouldCollect = this.options.FilterHttpRequestMessage?.Invoke(request) ?? true;
+
+                if (shouldCollect)
                 {
-                    return;
+                    return true;
                 }
 
-                var activity = Activity.Current;
-                if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
-                {
-                    var request = response.RequestMessage;
+                HttpInstrumentationEventSource.Log.RequestIsFilteredOut(operationName);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
+        }
 
-                    TagList tags = default;
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
-
-                    if (!request.RequestUri.IsDefaultPort)
-                    {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
-                    }
-
-                    this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
-                }
+        private void EnrichWithHttpRequestMessage(List<KeyValuePair<string, object>> tags, HttpRequestMessage request)
+        {
+            try
+            {
+                this.options.EnrichWithHttpRequestMessage?.Invoke(tags, request);
+            }
+            catch (Exception ex)
+            {
+                HttpInstrumentationEventSource.Log.EnrichmentException(ex);
             }
         }
     }
