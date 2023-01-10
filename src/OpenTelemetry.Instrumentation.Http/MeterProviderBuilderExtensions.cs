@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Internal;
 
@@ -30,21 +32,52 @@ namespace OpenTelemetry.Metrics
         /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddHttpClientInstrumentation(
-            this MeterProviderBuilder builder)
-        {
-            Guard.ThrowIfNull(builder);
+            this MeterProviderBuilder builder) =>
+            builder.AddHttpClientInstrumentation(null);
 
+        /// <summary>
+        /// Enables HttpClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+        /// <param name="configureOptions">Callback action for configuring <see cref="HttpClientInstrumentationMeterOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddHttpClientInstrumentation(
+            this MeterProviderBuilder builder,
+            Action<HttpClientInstrumentationMeterOptions> configureOptions) =>
+            builder.AddHttpClientInstrumentation(optionsName: null, configureOptions);
+
+        /// <summary>
+        /// Enables HttpClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+        /// <param name="optionsName"> Name which is used when retrieving options.</param>
+        /// <param name="configureOptions">Callback action for configuring <see cref="HttpClientInstrumentationMeterOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddHttpClientInstrumentation(
+            this MeterProviderBuilder builder,
+            string optionsName,
+            Action<HttpClientInstrumentationMeterOptions> configureOptions)
+        {
             // TODO: Implement an IDeferredMeterProviderBuilder
 
-            // TODO: Handle HttpClientInstrumentationOptions
-            //   SetHttpFlavor - seems like this would be handled by views
-            //   Filter - makes sense for metric instrumentation
-            //   Enrich - do we want a similar kind of functionality for metrics?
-            //   RecordException - probably doesn't make sense for metric instrumentation
+            Guard.ThrowIfNull(builder);
 
-            var instrumentation = new HttpClientMetrics();
-            builder.AddMeter(HttpClientMetrics.InstrumentationName);
-            return builder.AddInstrumentation(() => instrumentation);
+            optionsName ??= Options.DefaultName;
+
+            if (configureOptions != null)
+            {
+                builder.ConfigureServices(services => services.Configure(optionsName, configureOptions));
+            }
+
+            builder.ConfigureBuilder((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationMeterOptions>>().Get(optionsName);
+                var instrumentation = new HttpClientMetrics(options);
+                builder.AddMeter(HttpClientMetrics.InstrumentationName);
+                builder.AddInstrumentation(() => instrumentation);
+            });
+
+            return builder;
         }
     }
 }

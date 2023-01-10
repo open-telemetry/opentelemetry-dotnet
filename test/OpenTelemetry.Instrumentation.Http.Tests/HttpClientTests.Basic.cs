@@ -41,8 +41,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     string traceparent = ctx.Request.Headers["traceparent"];
                     string custom_traceparent = ctx.Request.Headers["custom_traceparent"];
-                    if (string.IsNullOrWhiteSpace(traceparent)
-                        && string.IsNullOrWhiteSpace(custom_traceparent))
+                    if (string.IsNullOrWhiteSpace(traceparent) && string.IsNullOrWhiteSpace(custom_traceparent))
                     {
                         ctx.Response.StatusCode = 500;
                         ctx.Response.StatusDescription = "Missing trace context";
@@ -69,38 +68,107 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             this.url = $"http://{host}:{port}/";
         }
 
-        [Fact]
-        public void AddHttpClientInstrumentation_NamedOptions()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task InjectsHeadersAsync(bool shouldEnrich)
         {
-            int defaultExporterOptionsConfigureOptionsInvocations = 0;
-            int namedExporterOptionsConfigureOptionsInvocations = 0;
+            var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
+            {
+                c.SetTag("enrichedWithHttpWebRequest", "no");
+                c.SetTag("enrichedWithHttpWebResponse", "no");
+                c.SetTag("enrichedWithHttpRequestMessage", "no");
+                c.SetTag("enrichedWithHttpResponseMessage", "no");
+            });
 
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .ConfigureServices(services =>
+            var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(this.url),
+                Method = new HttpMethod("GET"),
+            };
+
+            var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            parent.TraceStateString = "k1=v1,k2=v2";
+            parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation(o =>
                 {
-                    services.Configure<HttpClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                    if (shouldEnrich)
+                    {
+                        o.EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
+                        {
+                            activity.SetTag("enrichedWithHttpWebRequest", "yes");
+                        };
 
-                    services.Configure<HttpClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                        o.EnrichWithHttpWebResponse = (activity, httpWebResponse) =>
+                        {
+                            activity.SetTag("enrichedWithHttpWebResponse", "yes");
+                        };
+
+                        o.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                        {
+                            activity.SetTag("enrichedWithHttpRequestMessage", "yes");
+                        };
+
+                        o.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                        {
+                            activity.SetTag("enrichedWithHttpResponseMessage", "yes");
+                        };
+                    }
                 })
-                .AddHttpClientInstrumentation()
-                .AddHttpClientInstrumentation("Instrumentation2", configureHttpClientInstrumentationOptions: null)
-                .Build();
+                .AddProcessor(processor.Object)
+                .Build())
+            {
+                using var c = new HttpClient();
+                await c.SendAsync(request);
+            }
 
-            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
-            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
-        }
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
-        [Fact]
-        public void AddHttpClientInstrumentation_BadArgs()
-        {
-            TracerProviderBuilder builder = null;
-            Assert.Throws<ArgumentNullException>(() => builder.AddHttpClientInstrumentation());
+            Assert.Equal(ActivityKind.Client, activity.Kind);
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
+
+#if NETFRAMEWORK
+            // Note: On .NET Framework a HttpWebRequest is created and enriched
+            // not the HttpRequestMessage passed to HttpClient.
+            Assert.Empty(request.Headers);
+#else
+            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
+            Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
+            Assert.Single(traceparents);
+            Assert.Single(tracestates);
+
+            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
+            Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+#endif
+
+#if NETFRAMEWORK
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+#else
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+#endif
         }
 
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task InjectsHeadersAsync(bool shouldEnrich)
+        public async Task InjectsTagsForMeterAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
             processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>

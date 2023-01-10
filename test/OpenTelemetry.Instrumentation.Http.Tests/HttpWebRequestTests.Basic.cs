@@ -306,31 +306,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 #endif
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("CustomName")]
-        public void AddHttpClientInstrumentationUsesOptionsApi(string name)
-        {
-            name ??= Options.DefaultName;
-
-            int configurationDelegateInvocations = 0;
-
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .ConfigureServices(services =>
-                {
-                    services.Configure<HttpClientInstrumentationOptions>(name, o => configurationDelegateInvocations++);
-                })
-                .AddProcessor(activityProcessor.Object)
-                .AddHttpClientInstrumentation(name, options =>
-                {
-                    Assert.IsType<HttpClientInstrumentationOptions>(options);
-                })
-                .Build();
-
-            Assert.Equal(1, configurationDelegateInvocations);
-        }
-
         [Fact]
         public async Task ReportsExceptionEventForNetworkFailures()
         {
