@@ -23,8 +23,8 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and then browse to the url shown
-in the console for your application (ex `http://localhost:5033`). You should see the trace output
-from the console.
+in the console for your application (ex `http://localhost:5033`). You should see
+the trace output from the console.
 
 ```text
 Activity.TraceId:            27ceaa21a82883dc4f5365e3c00dbf62
