@@ -38,8 +38,9 @@ appBuilder.Services.AddOpenTelemetry()
     .StartWithHost();
 ```
 
-**Note:** The `StartWithHost` extension automatically starts and stops the
-`TracerProvider` with the host.
+**Note:** The
+[StartWithHost](../../../src/OpenTelemetry.Extensions.Hosting/README.md#extension-method-reference)
+extension automatically starts and stops the `TracerProvider` with the host.
 
 ### Using Sdk.CreateTracerProviderBuilder
 
