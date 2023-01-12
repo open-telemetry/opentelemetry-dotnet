@@ -74,7 +74,7 @@ appBuilder.Services.AddOpenTelemetry()
 ```
 
 **Note:** The `StartWithHost` extension is part of the
-[OpenTelemetry.Extensions.Hosting](../../../src/Extensions.Hosting/README.md)
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 project.
 
 As an additional exercise, try modifying the Index page
