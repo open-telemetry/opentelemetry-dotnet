@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -37,16 +35,15 @@ namespace WorkerService
 
                     services.AddSingleton<MessageReceiver>();
 
-                    services.AddOpenTelemetryTracing(builder =>
-                    {
-                        builder
+                    services.AddOpenTelemetry()
+                        .WithTracing(builder => builder
                             .AddSource(nameof(MessageReceiver))
                             .AddZipkinExporter(b =>
                             {
                                 var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
                                 b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                            });
-                    });
+                            }))
+                        .StartWithHost();
                 });
     }
 }

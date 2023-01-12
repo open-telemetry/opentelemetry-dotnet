@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 1.4.0-rc.2
+
+Released 2023-Jan-09
+
+* If the OpenTelemetry SDK cannot start it will now throw exceptions and prevent
+  the host from starting.
+  ([#4006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4006))
+
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
+* Added the `OpenTelemetryBuilder.StartWithHost` extension.
+  ([#3923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3923))
+
 ## 1.0.0-rc9.9
 
 Released 2022-Nov-07

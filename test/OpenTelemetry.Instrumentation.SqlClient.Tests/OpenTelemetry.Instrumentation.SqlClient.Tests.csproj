@@ -5,6 +5,9 @@
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net7.0;net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' and $(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

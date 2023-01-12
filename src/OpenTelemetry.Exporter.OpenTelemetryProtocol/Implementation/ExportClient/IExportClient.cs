@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
-
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
     /// <summary>Export client interface.</summary>

@@ -2,13 +2,36 @@
 
 ## Unreleased
 
-* **Breaking change** `http.host` will no longer be populated on activity.
+## 1.0.0-rc9.11
+
+Released 2023-Jan-09
+
+## 1.0.0-rc9.10
+
+Released 2022-Dec-12
+
+* **Users migrating from version `1.0.0-rc9.9` will see the following breaking
+  changes:**
+  * Updated `http.status_code` dimension type from string to int for
+  `http.server.duration` metric.
+  ([#3930](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3930))
+  * `http.host` will no longer be populated on `http.server.duration` metric.
   `net.host.name` and `net.host.port` attributes will be populated instead.
+([#3928](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3928))
+
+  * The `http.server.duration` metric's `http.target` attribute is replaced with
+`http.route` attribute.
+([#3903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3903))
+
+  * `http.host` will no longer be populated on activity. `net.host.name` and
+  `net.host.port` attributes will be populated instead.
   ([#3858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3858))
 
-* The `http.server.duration` metric's `http.target` attribute is replaced
-with `http.route` attribute.
-([#3903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3903))
+* Extension method `AddAspNetCoreInstrumentation` on `MeterProviderBuilder` now
+  supports `AspNetCoreMetricsInstrumentationOptions`. This option class exposes
+  configuration properties for metric filtering and tag enrichment.
+  ([#3948](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3948),
+  [#3982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3982))
 
 ## 1.0.0-rc9.9
 

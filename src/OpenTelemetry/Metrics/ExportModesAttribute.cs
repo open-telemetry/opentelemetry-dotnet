@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Metrics
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]

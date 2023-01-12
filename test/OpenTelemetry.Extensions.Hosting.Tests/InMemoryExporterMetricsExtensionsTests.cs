@@ -55,7 +55,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                     using var meter = new Meter(meterName);
                     var counter = meter.CreateCounter<long>("meter");
                     counter.Add(10);
-                });
+                }).ConfigureAwait(false);
 
             Assert.Single(exportedItems);
             var metricPointsEnumerator = exportedItems[0].GetMetricPoints().GetEnumerator();
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                     using var meter = new Meter(meterName);
                     var counter = meter.CreateCounter<long>("meter");
                     counter.Add(10);
-                });
+                }).ConfigureAwait(false);
 
             Assert.Single(exportedItems);
             Assert.Equal(10, exportedItems[0].MetricPoints[0].GetSumLong());
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             using var host = await new HostBuilder()
                .ConfigureWebHost(webBuilder => webBuilder
                    .UseTestServer()
-                   .ConfigureServices(services => services.AddOpenTelemetryMetrics(configure))
+                   .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure).StartWithHost())
                    .Configure(app => app.Run(httpContext =>
                    {
                        testAction.Invoke();
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
                        return Task.CompletedTask;
                    })))
-               .StartAsync();
+               .StartAsync().ConfigureAwait(false);
 
             using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}").ConfigureAwait(false);
 

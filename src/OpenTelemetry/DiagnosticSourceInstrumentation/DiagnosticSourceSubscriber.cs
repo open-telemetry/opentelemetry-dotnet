@@ -13,15 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
-using System.Threading;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
-    internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
+    internal sealed class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
         private readonly List<IDisposable> listenerSubscriptions;
         private readonly Func<string, ListenerHandler> handlerFactory;
@@ -91,7 +89,7 @@ namespace OpenTelemetry.Instrumentation
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (Interlocked.CompareExchange(ref this.disposed, 1, 0) == 1)
             {

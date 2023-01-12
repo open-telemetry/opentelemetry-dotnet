@@ -16,8 +16,6 @@
 
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 #if !NETFRAMEWORK && !NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;
@@ -127,7 +125,7 @@ internal static class ConfigurationExtensions
         services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
-                optionsFactoryFunc!,
+                (c, n) => optionsFactoryFunc!(c),
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetServices<IConfigureOptions<T>>(),
                 sp.GetServices<IPostConfigureOptions<T>>(),
@@ -139,7 +137,7 @@ internal static class ConfigurationExtensions
 
     public static IServiceCollection RegisterOptionsFactory<T>(
         this IServiceCollection services,
-        Func<IServiceProvider, IConfiguration, T> optionsFactoryFunc)
+        Func<IServiceProvider, IConfiguration, string, T> optionsFactoryFunc)
         where T : class
     {
         Debug.Assert(services != null, "services was null");
@@ -148,7 +146,7 @@ internal static class ConfigurationExtensions
         services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
-                c => optionsFactoryFunc!(sp, c),
+                (c, n) => optionsFactoryFunc!(sp, c, n),
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetServices<IConfigureOptions<T>>(),
                 sp.GetServices<IPostConfigureOptions<T>>(),
@@ -161,11 +159,11 @@ internal static class ConfigurationExtensions
     private sealed class DelegatingOptionsFactory<T> : OptionsFactory<T>
         where T : class
     {
-        private readonly Func<IConfiguration, T> optionsFactoryFunc;
+        private readonly Func<IConfiguration, string, T> optionsFactoryFunc;
         private readonly IConfiguration configuration;
 
         public DelegatingOptionsFactory(
-            Func<IConfiguration, T> optionsFactoryFunc,
+            Func<IConfiguration, string, T> optionsFactoryFunc,
             IConfiguration configuration,
             IEnumerable<IConfigureOptions<T>> setups,
             IEnumerable<IPostConfigureOptions<T>> postConfigures,
@@ -180,6 +178,6 @@ internal static class ConfigurationExtensions
         }
 
         protected override T CreateInstance(string name)
-            => this.optionsFactoryFunc(this.configuration);
+            => this.optionsFactoryFunc(this.configuration, name);
     }
 }

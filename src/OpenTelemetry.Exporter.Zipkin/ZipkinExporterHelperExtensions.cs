@@ -14,8 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -70,7 +71,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 services.RegisterOptionsFactory(
-                    (sp, configuration) => new ZipkinExporterOptions(
+                    (sp, configuration, name) => new ZipkinExporterOptions(
                         configuration,
                         sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
             });

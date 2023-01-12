@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
@@ -54,7 +51,7 @@ namespace Examples.Console
                  * Open another terminal window at the examples/Console/ directory and
                  * launch the OTLP example by running:
                  *
-                 *     dotnet run metrics --useExporter otlp
+                 *     dotnet run metrics --useExporter otlp -e http://localhost:4317
                  *
                  * The OpenTelemetry Collector will output all received metrics to the stdout of its terminal.
                  *
@@ -69,6 +66,11 @@ namespace Examples.Console
                     .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
                     {
                         exporterOptions.Protocol = options.UseGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf;
+
+                        if (!string.IsNullOrWhiteSpace(options.Endpoint))
+                        {
+                            exporterOptions.Endpoint = new Uri(options.Endpoint);
+                        }
 
                         metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         metricReaderOptions.TemporalityPreference = options.IsDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;

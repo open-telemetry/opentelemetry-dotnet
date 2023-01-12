@@ -411,21 +411,24 @@ var appBuilder = WebApplication.CreateBuilder(args);
 
 appBuilder.Services.AddSingleton<MyCustomService>();
 
-appBuilder.Services.AddOpenTelemetryTracing(builder => builder
-    .AddProcessor<MyCustomProcessor>();
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddProcessor<MyCustomProcessor>())
+    .StartWithHost();
 ```
 
-When using the `AddOpenTelemetryTracing` method the `TracerProvider` does not
-own its `IServiceCollection` and instead registers into an existing collection
-(typically the collection used is the one managed by the application host). The
-`TracerProviderBuilder` will be able to access all services registered into that
-collection. For lifecycle management, an [IHostedService
+When using the `AddOpenTelemetry` & `WithTracing` extension methods the
+`TracerProvider` does not own its `IServiceCollection` and instead registers
+into an existing collection (typically the collection used is the one managed by
+the application host). The `TracerProviderBuilder` will be able to access all
+services registered into that collection. For lifecycle management, the
+`StartWithHost` registers an [IHostedService
 ](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
-is used to automatically start the `TracerProvider` when the host starts and the
-host will automatically shutdown and dispose the `TracerProvider` when it is
-shutdown.
+which is used to automatically start the `TracerProvider` when the host starts
+and the host will automatically shutdown and dispose the `TracerProvider` when
+it is shutdown.
 
-**Note:** Multiple calls to `AddOpenTelemetryTracing` will configure the same
+**Note:** Multiple calls to `WithTracing` will configure the same
 `TracerProvider`. Only a single `TraceProvider` may exist in an
 `IServiceCollection` \ `IServiceProvider`.
 
@@ -451,15 +454,17 @@ shutdown.
   ```csharp
    var appBuilder = WebApplication.CreateBuilder(args);
 
-   appBuilder.Services.AddOpenTelemetryTracing(builder => builder
-     .ConfigureBuilder((sp, builder) =>
-     {
-       builder.AddProcessor(
-         new MyCustomProcessor(
-           // Note: This example uses the final IServiceProvider once it is available.
-           sp.GetRequiredService<MyCustomService>(),
-           sp.GetRequiredService<IOptions<MyOptions>>().Value));
-     }));
+   appBuilder.Services.AddOpenTelemetry()
+      .WithTracing(builder => builder
+         .ConfigureBuilder((sp, builder) =>
+         {
+           builder.AddProcessor(
+             new MyCustomProcessor(
+               // Note: This example uses the final IServiceProvider once it is available.
+               sp.GetRequiredService<MyCustomService>(),
+               sp.GetRequiredService<IOptions<MyOptions>>().Value));
+         }))
+      .StartWithHost();
   ```
 
   **Note:** `ConfigureBuilder` is an advanced API and is expected to be used
@@ -612,8 +617,9 @@ var appBuilder = WebApplication.CreateBuilder(args);
 appBuilder.Services.Configure<JaegerExporterOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Jaeger"));
 
-appBuilder.Services.AddOpenTelemetryTracing(
-    builder => builder.AddJaegerExporter());
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(builder => builder.AddJaegerExporter())
+    .StartWithHost();
 ```
 
 The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
@@ -654,7 +660,9 @@ appBuilder.Services.Configure<JaegerExporterOptions>(
     "JaegerSecondary",
     appBuilder.Configuration.GetSection("OpenTelemetry:JaegerSecondary"));
 
-appBuilder.Services.AddOpenTelemetryTracing(builder => builder
-    .AddJaegerExporter(name: "JaegerPrimary", configure: null)
-    .AddJaegerExporter(name: "JaegerSecondary", configure: null));
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddJaegerExporter(name: "JaegerPrimary", configure: null)
+        .AddJaegerExporter(name: "JaegerSecondary", configure: null))
+    .StartWithHost();
 ```

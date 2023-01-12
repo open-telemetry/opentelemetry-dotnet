@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -86,16 +83,16 @@ namespace OpenTelemetry.Trace.Tests
 
             async Task DoSomeAsyncWork()
             {
-                await Task.Delay(10);
+                await Task.Delay(10).ConfigureAwait(false);
                 using (tracer.GetTracer("tracername").StartRootSpan("RootSpan2"))
                 {
-                    await Task.Delay(10);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
             }
 
             using (tracer.GetTracer("tracername").StartActiveSpan("RootSpan1"))
             {
-                await DoSomeAsyncWork();
+                await DoSomeAsyncWork().ConfigureAwait(false);
             }
 
             Assert.Equal(2, exportedItems.Count);

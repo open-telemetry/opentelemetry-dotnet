@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
@@ -98,7 +94,7 @@ namespace Utils.Messaging
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Failed to extract trace context: {ex}");
+                this.logger.LogError(ex, "Failed to extract trace context.");
             }
 
             return Enumerable.Empty<string>();

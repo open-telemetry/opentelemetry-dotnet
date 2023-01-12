@@ -35,7 +35,6 @@ namespace OpenTelemetry.Trace
         /// <param name="statusDescription">Status description.</param>
         /// <returns><see langword="true"/> if <see cref="Status"/> was found on the supplied Activity.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string statusDescription)
         {
             Debug.Assert(activity != null, "Activity should not be null");
@@ -81,7 +80,6 @@ namespace OpenTelemetry.Trace
         /// <param name="tagName">Case-sensitive tag name to retrieve.</param>
         /// <returns>Tag value or null if a match was not found.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static object GetTagValue(this Activity activity, string tagName)
         {
             Debug.Assert(activity != null, "Activity should not be null");

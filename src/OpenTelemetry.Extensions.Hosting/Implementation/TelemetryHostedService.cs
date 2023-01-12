@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
@@ -36,16 +33,9 @@ internal sealed class TelemetryHostedService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            // The sole purpose of this HostedService is to ensure all
-            // instrumentations, exporters, etc., are created and started.
-            Initialize(this.serviceProvider);
-        }
-        catch (Exception ex)
-        {
-            HostingExtensionsEventSource.Log.FailedOpenTelemetrySDK(ex);
-        }
+        // The sole purpose of this HostedService is to ensure all
+        // instrumentations, exporters, etc., are created and started.
+        Initialize(this.serviceProvider);
 
         return Task.CompletedTask;
     }
@@ -60,11 +50,15 @@ internal sealed class TelemetryHostedService : IHostedService
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
         var meterProvider = serviceProvider.GetService<MeterProvider>();
-        var tracerProvider = serviceProvider.GetService<TracerProvider>();
-
-        if (meterProvider == null && tracerProvider == null)
+        if (meterProvider == null)
         {
-            throw new InvalidOperationException("Could not resolve either MeterProvider or TracerProvider through application ServiceProvider, OpenTelemetry SDK has not been initialized.");
+            HostingExtensionsEventSource.Log.MeterProviderNotRegistered();
+        }
+
+        var tracerProvider = serviceProvider.GetService<TracerProvider>();
+        if (tracerProvider == null)
+        {
+            HostingExtensionsEventSource.Log.TracerProviderNotRegistered();
         }
     }
 }

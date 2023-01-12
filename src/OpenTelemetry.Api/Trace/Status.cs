@@ -103,10 +103,14 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            var result = 1;
-            result = (31 * result) + this.StatusCode.GetHashCode();
-            result = (31 * result) + (this.Description?.GetHashCode() ?? 0);
-            return result;
+            var hash = 17;
+            unchecked
+            {
+                hash = (31 * hash) + this.StatusCode.GetHashCode();
+                hash = (31 * hash) + (this.Description?.GetHashCode() ?? 0);
+            }
+
+            return hash;
         }
 
         /// <inheritdoc/>

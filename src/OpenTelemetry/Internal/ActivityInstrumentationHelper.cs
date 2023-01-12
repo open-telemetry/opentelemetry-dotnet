@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
+#pragma warning restore IDE0005
 
 namespace OpenTelemetry.Instrumentation
 {

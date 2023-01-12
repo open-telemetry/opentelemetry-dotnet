@@ -34,7 +34,7 @@ namespace TestApp.AspNetCore
                 this.impl.PreProcess(context);
             }
 
-            await this.next(context);
+            await this.next(context).ConfigureAwait(false);
 
             if (this.impl != null)
             {

@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Trace
@@ -92,7 +89,6 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
@@ -109,7 +105,6 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpanHelper(false, name, kind, parentContext, initialAttributes, links, startTime);
@@ -126,7 +121,6 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public TelemetrySpan StartActiveSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartActiveSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
@@ -143,7 +137,6 @@ namespace OpenTelemetry.Trace
         /// <param name="startTime"> Start time for the span.</param>
         /// <returns>Span instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public TelemetrySpan StartActiveSpan(string name, SpanKind kind = SpanKind.Internal, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
         {
             return this.StartSpanHelper(true, name, kind, parentContext, initialAttributes, links, startTime);
