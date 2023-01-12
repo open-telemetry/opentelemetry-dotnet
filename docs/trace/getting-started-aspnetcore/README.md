@@ -77,9 +77,15 @@ appBuilder.Services.AddOpenTelemetry()
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 project.
 
-As an additional exercise, try modifying the Index page
-([PageModel](./Pages/Index.cshtml.cs) and [RazorPage](./Pages/Index.cshtml)) to
-display the active trace information.
+As an additional exercise, try modifying the Index page to display the active
+trace information. An example using `Activity.Current` is shown in
+[Index.cshtml.cs](./Pages/Index.cshtml.cs). In OpenTelemetry .NET the [Activity
+class](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity?view=net-7.0)
+represents the OpenTelemetry Specification
+[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
+For more details about how the OpenTelemetry Specification is implemented in
+.NET see: [Introduction to OpenTelemetry .NET Tracing
+API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api).
 
 ## Learn more
 
