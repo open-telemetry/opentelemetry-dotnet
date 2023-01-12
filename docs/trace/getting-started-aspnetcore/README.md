@@ -56,10 +56,10 @@ What does the above program do?
 
 The program uses the
 [OpenTelemetry.Instrumentation.AspNetCore](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-project to automatically create traces for incoming ASP.NET Core requests and
+package to automatically create traces for incoming ASP.NET Core requests and
 uses the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
-project to write traces to the console. This is done by configuring an
+package to write traces to the console. This is done by configuring an
 OpenTelemetry [TracerProvider](../customizing-the-sdk/README.MD#tracerprovider)
 using extension methods and setting it to auto-start when the host is started:
 
@@ -75,7 +75,7 @@ appBuilder.Services.AddOpenTelemetry()
 
 **Note:** The `StartWithHost` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
-project.
+package.
 
 As an additional exercise, try modifying the Index page to display the active
 trace information. An example using `Activity.Current` is shown in
