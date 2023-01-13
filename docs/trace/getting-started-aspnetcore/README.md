@@ -6,7 +6,7 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new web application:
 
 ```sh
-dotnet new webapp -o aspnetcoreapp
+dotnet new web -o aspnetcoreapp
 cd aspnetcoreapp
 ```
 
@@ -23,31 +23,31 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and then browse to the url shown
-in the console for your application (ex `http://localhost:5033`). You should see
+in the console for your application (ex `http://localhost:5154`). You should see
 the trace output from the console.
 
 ```text
-Activity.TraceId:            27ceaa21a82883dc4f5365e3c00dbf62
-Activity.SpanId:             34eaacb083842c6e
+Activity.TraceId:            c1572aa14ee9c0ac037dbdc3e91e5dd7
+Activity.SpanId:             45406137f33cc279
 Activity.TraceFlags:         Recorded
-Activity.ActivitySourceName: Microsoft.AspNetCore
+Activity.ActivitySourceName: OpenTelemetry.Instrumentation.AspNetCore
 Activity.DisplayName:        /
 Activity.Kind:               Server
-Activity.StartTime:          2023-01-11T23:02:22.1251620Z
-Activity.Duration:           00:00:00.1825101
+Activity.StartTime:          2023-01-13T19:38:11.5417593Z
+Activity.Duration:           00:00:00.0167407
 Activity.Tags:
     net.host.name: localhost
-    net.host.port: 5033
+    net.host.port: 5154
     http.method: GET
     http.scheme: http
     http.target: /
-    http.url: http://localhost:5033/
+    http.url: http://localhost:5154/
     http.flavor: 1.1
     http.user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.76
     http.status_code: 200
 Resource associated with Activity:
     service.name: OTel.NET Getting Started
-    service.instance.id: d828fb42-f423-4ec4-8276-9405998a4bd7
+    service.instance.id: af85d327-d673-41c8-b529-b7eecf3c90f6
 ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.
@@ -77,9 +77,14 @@ appBuilder.Services.AddOpenTelemetry()
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
 
-As an additional exercise, try modifying the Index page to display the active
-trace information. An example using `Activity.Current` is shown in
-[Index.cshtml.cs](./Pages/Index.cshtml.cs). In OpenTelemetry .NET the [Activity
+The index route ("/") is set up to write out the OpenTelemetry trace information
+on the response:
+
+```csharp
+app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}");
+```
+
+In OpenTelemetry .NET the [Activity
 class](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity?view=net-7.0)
 represents the OpenTelemetry Specification
 [Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
