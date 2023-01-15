@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
-        private readonly HttpClientInstrumentationSamplingOptions options;
+        private readonly HttpClientInstrumentationOptions options;
 
         static HttpHandlerDiagnosticListener()
         {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        public HttpHandlerDiagnosticListener(HttpClientInstrumentationSamplingOptions options)
+        public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
             : base("HttpHandlerDiagnosticListener")
         {
             this.options = options;

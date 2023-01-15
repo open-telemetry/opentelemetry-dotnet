@@ -1,4 +1,4 @@
-// <copyright file="HttpClientInstrumentationSamplingOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientInstrumentationOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.Http
     /// <summary>
     /// Options for HttpClient instrumentation.
     /// </summary>
-    public class HttpClientInstrumentationSamplingOptions
+    public class HttpClientInstrumentationOptions
     {
         /// <summary>
         /// Gets or sets a filter function that determines whether or not to

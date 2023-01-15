@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             // given
             var metrics = new List<Metric>();
-            const string enrichedTagKey = nameof(HttpClientInstrumentationSamplingOptions.EnrichWithHttpRequestMessage);
+            const string enrichedTagKey = nameof(HttpClientInstrumentationMeterOptions.EnrichWithHttpRequestMessage);
             const string enrichedTagValue = "yes";
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation(o =>

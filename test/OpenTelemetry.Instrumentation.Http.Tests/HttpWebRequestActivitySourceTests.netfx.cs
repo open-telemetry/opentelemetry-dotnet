@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         static HttpWebRequestActivitySourceTests()
         {
-            HttpClientInstrumentationSamplingOptions options = new()
+            HttpClientInstrumentationOptions options = new()
             {
                 EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
                 {
