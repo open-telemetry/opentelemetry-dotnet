@@ -14,13 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using Moq;
-using OpenTelemetry.Instrumentation.Http.Tests.Extensions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -247,13 +245,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task TraceProvider_CheckEnrichmentWhenSampling()
+        public async Task CheckEnrichmentWhenSampling()
         {
-            await CheckSamplingEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
-            await CheckSamplingEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
         }
 
-        private static async Task CheckSamplingEnrichment(Sampler sampler, bool enrichExpected, string url)
+        private static async Task CheckEnrichment(Sampler sampler, bool enrichExpected, string url)
         {
             bool enrichWithHttpWebRequestCalled = false;
             bool enrichWithHttpWebResponseCalled = false;

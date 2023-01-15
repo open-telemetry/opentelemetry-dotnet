@@ -35,10 +35,10 @@ public class ProviderBuilderExtensionsTests
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<HttpClientInstrumentationSamplingOptions>(_ =>
+                services.Configure<HttpClientInstrumentationOptions>(_ =>
                     defaultExporterOptionsConfigureOptionsInvocations++);
 
-                services.Configure<HttpClientInstrumentationSamplingOptions>(
+                services.Configure<HttpClientInstrumentationOptions>(
                     "Instrumentation2",
                     _ => namedExporterOptionsConfigureOptionsInvocations++);
             })
@@ -63,12 +63,12 @@ public class ProviderBuilderExtensionsTests
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<HttpClientInstrumentationSamplingOptions>(name, _ => configurationDelegateInvocations++);
+                services.Configure<HttpClientInstrumentationOptions>(name, _ => configurationDelegateInvocations++);
             })
             .AddProcessor(activityProcessor.Object)
             .AddHttpClientInstrumentation(
                 name,
-                options => Assert.IsType<HttpClientInstrumentationSamplingOptions>(options))
+                options => Assert.IsType<HttpClientInstrumentationOptions>(options))
             .Build();
 
         Assert.Equal(1, configurationDelegateInvocations);

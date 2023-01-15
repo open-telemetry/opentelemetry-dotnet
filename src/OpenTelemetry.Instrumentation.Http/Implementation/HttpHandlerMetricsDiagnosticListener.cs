@@ -60,6 +60,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             var request = response.RequestMessage;
+            if (!this.TryFilterHttpRequestMessage(activity.OperationName, request))
+            {
+                return;
+            }
+
             var tags = new List<KeyValuePair<string, object>>
             {
                 new(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
@@ -72,11 +77,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (!request.RequestUri.IsDefaultPort)
             {
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
-            }
-
-            if (!this.TryFilterHttpRequestMessage(activity.OperationName, request))
-            {
-                return;
             }
 
             this.EnrichWithHttpRequestMessage(tags, request);
