@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.2
+
+Released 2023-Jan-09
+
 * Performance Improvement: Update the internal structure used to store metric
   dimensions from a combination of `string[]` and `object[]` to a
   `KeyValuePair<string, object>[]`. This results in faster copying of the metric
