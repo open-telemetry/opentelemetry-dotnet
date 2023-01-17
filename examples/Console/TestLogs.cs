@@ -47,7 +47,7 @@ namespace Examples.Console
                          * Open another terminal window at the examples/Console/ directory and
                          * launch the OTLP example by running:
                          *
-                         *     dotnet run logs --useExporter otlp
+                         *     dotnet run logs --useExporter otlp -e http://localhost:4317
                          *
                          * The OpenTelemetry Collector will output all received logs to the stdout of its terminal.
                          *
@@ -58,28 +58,29 @@ namespace Examples.Console
                         // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                         AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
+                        var protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+
                         if (options.Protocol.Trim().ToLower().Equals("grpc"))
                         {
-                            opt.AddOtlpExporter(otlpOptions =>
-                            {
-                                otlpOptions.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
-                            });
+                            protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
                         }
                         else if (options.Protocol.Trim().ToLower().Equals("http/protobuf"))
                         {
-                            opt.AddOtlpExporter(otlpOptions =>
-                            {
-                                otlpOptions.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
-                            });
+                            protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
                         }
                         else
                         {
                             System.Console.WriteLine($"Export protocol {options.Protocol} is not supported. Default protocol 'grpc' will be used.");
-                            opt.AddOtlpExporter(otlpOptions =>
-                            {
-                                otlpOptions.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
-                            });
                         }
+
+                        opt.AddOtlpExporter(otlpOptions =>
+                        {
+                            otlpOptions.Protocol = protocol;
+                            if (!string.IsNullOrWhiteSpace(options.Endpoint))
+                            {
+                                otlpOptions.Endpoint = new Uri(options.Endpoint);
+                            }
+                        });
                     }
                     else
                     {

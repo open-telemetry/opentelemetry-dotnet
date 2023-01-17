@@ -1,4 +1,4 @@
-// <copyright file="ExponentialBucketHistogram.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialBucketHistogram.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,23 +25,23 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal sealed class ExponentialBucketHistogram
+internal sealed class Base2ExponentialBucketHistogram
 {
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ExponentialBucketHistogram"/> class.
+    /// Initializes a new instance of the <see cref="Base2ExponentialBucketHistogram"/> class.
     /// </summary>
     /// <param name="maxBuckets">
     /// The maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket. The default value is 160.
     /// </param>
-    public ExponentialBucketHistogram(int maxBuckets = 160)
+    public Base2ExponentialBucketHistogram(int maxBuckets = 160)
         : this(maxBuckets, 20)
     {
     }
 
-    internal ExponentialBucketHistogram(int maxBuckets, int scale)
+    internal Base2ExponentialBucketHistogram(int maxBuckets, int scale)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
