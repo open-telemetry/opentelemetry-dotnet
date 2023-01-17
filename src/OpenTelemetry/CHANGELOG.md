@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_VERSION`
+   environmental variable.
+   ([#4081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4081))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
