@@ -24,7 +24,7 @@ dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 ```
 
 > **Note** This quickstart guide uses prerelease packages. For a quickstart
-> which only relies on stable packages see: [Console
+> which only relies on stable packages see: [Getting Started - Console
 > Application](../getting-started-console/README.md). For more information about
 > when instrumentation will be marked as stable see: [Instrumentation-1.0.0
 > milestone](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).
