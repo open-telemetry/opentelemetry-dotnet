@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         private HistogramBuckets histogramBuckets;
 
-        private ExponentialBucketHistogram exponentialBucketHistogram;
+        private Base2ExponentialBucketHistogram exponentialBucketHistogram;
 
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.ExponentialHistogram ||
                 this.aggType == AggregationType.ExponentialHistogramWithMinMax)
             {
-                this.exponentialBucketHistogram = new ExponentialBucketHistogram(exponentialHistogramMaxSize);
+                this.exponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize);
             }
             else
             {
