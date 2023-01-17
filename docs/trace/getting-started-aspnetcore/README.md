@@ -11,7 +11,10 @@ cd aspnetcoreapp
 ```
 
 Install the
-[OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+[OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md),
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md),
+and
+[OpenTelemetry.Instrumentation.AspNetCore](../../../src/OpenTelemetry.Exporter.Console/README.md)
 packages:
 
 ```sh
@@ -19,6 +22,12 @@ dotnet add package OpenTelemetry.Exporter.Console --prerelease
 dotnet add package OpenTelemetry.Extensions.Hosting --prerelease
 dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 ```
+
+> **Note** This quickstart guide uses prerelease packages. For a quickstart
+> which only relies on stable packages see: [Console
+> Application](../getting-started-console/README.md). For more information about
+> when instrumentation will be marked as stable see: [Instrumentation-1.0.0
+> milestone](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
@@ -73,7 +82,8 @@ appBuilder.Services.AddOpenTelemetry()
     .StartWithHost();
 ```
 
-**Note:** The `StartWithHost` extension is part of the
+> **Note**
+> The `StartWithHost` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
 
