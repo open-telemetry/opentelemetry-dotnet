@@ -1,4 +1,4 @@
-# Getting Started with OpenTelemetry .NET in 5 Minutes
+# Getting Started with OpenTelemetry .NET in 5 Minutes - Console Application
 
 First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
@@ -25,7 +25,7 @@ package:
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
+Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and you should see the trace
 output from the console.
