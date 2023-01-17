@@ -498,6 +498,50 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
+        public void GetResource_WithServiceVersionEnvVar()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelServiceVersionEnvVarDetector.EnvVarKey, "1.2.3");
+            var resource = ResourceBuilder.CreateDefault().AddAttributes(CreateAttributes(2)).Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("service.version", "1.2.3"), attributes);
+        }
+
+        [Fact]
+        public void GetResource_WithServiceVersionSetWithTwoEnvVars()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.version=from-resource-attr");
+            Environment.SetEnvironmentVariable(OtelServiceVersionEnvVarDetector.EnvVarKey, "from-service-version");
+            var resource = ResourceBuilder.CreateDefault().AddAttributes(CreateAttributes(2)).Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("service.version", "from-service-version"), attributes);
+        }
+
+        [Fact]
+        public void GetResource_WithServiceVersionSetWithTwoEnvVarsAndCode()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.version=from-resource-attr");
+            Environment.SetEnvironmentVariable(OtelServiceVersionEnvVarDetector.EnvVarKey, "from-service-version");
+            var resource = ResourceBuilder.CreateDefault().AddService("some-service", serviceVersion: "from-code").AddAttributes(CreateAttributes(2)).Build();
+
+            // Assert
+            var attributes = resource.Attributes;
+            Assert.Equal(5, attributes.Count());
+            ValidateAttributes(attributes, 0, 1);
+            Assert.Contains(new KeyValuePair<string, object>("service.version", "from-code"), attributes);
+        }
+
+        [Fact]
         public void ResourceBuilder_ServiceProvider_Available()
         {
             var builder = ResourceBuilder.CreateDefault();
@@ -540,6 +584,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
+            Environment.SetEnvironmentVariable(OtelServiceVersionEnvVarDetector.EnvVarKey, null);
         }
 
         private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)

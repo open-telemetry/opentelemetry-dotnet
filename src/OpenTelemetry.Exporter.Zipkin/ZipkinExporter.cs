@@ -105,12 +105,22 @@ namespace OpenTelemetry.Exporter
             }
 
             string serviceName = null;
+            string serviceVersion = null;
             foreach (var label in resource.Attributes)
             {
-                if (label.Key == ResourceSemanticConventions.AttributeServiceName)
+                string key = label.Key;
+
+                if (label.Value is string strVal)
                 {
-                    serviceName = label.Value as string;
-                    break;
+                    switch (key)
+                    {
+                        case ResourceSemanticConventions.AttributeServiceName:
+                            serviceName = strVal;
+                            continue;
+                        case ResourceSemanticConventions.AttributeServiceVersion:
+                            serviceVersion = strVal;
+                            continue;
+                    }
                 }
             }
 
@@ -120,8 +130,15 @@ namespace OpenTelemetry.Exporter
                     pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
             }
 
+            if (string.IsNullOrEmpty(serviceVersion))
+            {
+                serviceVersion = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceVersion).FirstOrDefault().Value;
+            }
+
             this.LocalEndpoint = new ZipkinEndpoint(
                 serviceName,
+                serviceVersion,
                 ipv4,
                 ipv6,
                 port: null,

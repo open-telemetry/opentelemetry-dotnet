@@ -308,6 +308,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                     Dictionary<string, string> configuration = new()
                     {
                         ["OTEL_SERVICE_NAME"] = "myservicename",
+                        ["OTEL_SERVICE_Version"] = "1.2.3",
                     };
 
                     services.AddSingleton<IConfiguration>(
@@ -323,6 +324,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
             Assert.Equal("myservicename", zipkinExporter.LocalEndpoint.ServiceName);
+            Assert.Equal("1.2.3", zipkinExporter.LocalEndpoint.ServiceVersion);
         }
 
         [Theory]

@@ -196,6 +196,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Fact]
+        public void JaegerTraceExporter_SetResource_UpdatesServiceVersion()
+        {
+            using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
+            var process = jaegerTraceExporter.Process;
+
+            jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
+
+            Assert.StartsWith("unknown_service:", process.ServiceName);
+
+            jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddService("MyService", serviceVersion: "MyServiceVersion").Build());
+
+            Assert.Equal("MyServiceVersion", process.ServiceVersion);
+        }
+
+        [Fact]
         public void JaegerTraceExporter_SetResource_CreatesTags()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
@@ -255,6 +270,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     Dictionary<string, string> configuration = new()
                     {
                         ["OTEL_SERVICE_NAME"] = "myservicename",
+                        ["OTEL_SERVICE_VERSION"] = "1.2.3",
                     };
 
                     services.AddSingleton<IConfiguration>(
@@ -272,6 +288,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
             Assert.Equal("myservicename", process.ServiceName);
+            Assert.Equal("1.2.3", process.ServiceVersion);
         }
 
         [Fact]

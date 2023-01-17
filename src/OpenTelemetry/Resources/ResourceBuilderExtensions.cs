@@ -110,7 +110,7 @@ namespace OpenTelemetry.Resources
         }
 
         /// <summary>
-        /// Adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME environment variables
+        /// Adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME, and OTEL_SERVICE_VERSION environment variables
         /// to a <see cref="ResourceBuilder"/> following the <a
         /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
         /// SDK</a>.
@@ -123,7 +123,8 @@ namespace OpenTelemetry.Resources
 
             return resourceBuilder
                 .AddDetector(sp => new OtelEnvResourceDetector(sp?.GetService<IConfiguration>() ?? configuration.Value))
-                .AddDetector(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
+                .AddDetector(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value))
+                .AddDetector(sp => new OtelServiceVersionEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
         }
 
         private static string GetFileVersion()

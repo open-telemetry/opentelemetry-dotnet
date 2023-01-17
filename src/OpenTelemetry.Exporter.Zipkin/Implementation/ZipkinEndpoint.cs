@@ -21,18 +21,20 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
     internal sealed class ZipkinEndpoint
     {
         public ZipkinEndpoint(string serviceName)
-            : this(serviceName, null, null, null, null)
+            : this(serviceName, null, null, null, null, null)
         {
         }
 
         public ZipkinEndpoint(
             string serviceName,
+            string serviceVersion,
             string ipv4,
             string ipv6,
             int? port,
             Dictionary<string, object> tags)
         {
             this.ServiceName = serviceName;
+            this.ServiceVersion = serviceVersion;
             this.Ipv4 = ipv4;
             this.Ipv6 = ipv6;
             this.Port = port;
@@ -40,6 +42,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         }
 
         public string ServiceName { get; }
+
+        public string ServiceVersion { get; }
 
         public string Ipv4 { get; }
 
@@ -67,6 +71,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         {
             return new ZipkinEndpoint(
                 serviceName,
+                this.ServiceVersion,
                 this.Ipv4,
                 this.Ipv6,
                 this.Port,
@@ -80,6 +85,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             if (this.ServiceName != null)
             {
                 writer.WriteString(ZipkinSpanJsonHelper.ServiceNamePropertyName, this.ServiceName);
+            }
+
+            if (this.ServiceVersion != null)
+            {
+                writer.WriteString(ZipkinSpanJsonHelper.ServiceVersionPropertyName, this.ServiceVersion);
             }
 
             if (this.Ipv4 != null)

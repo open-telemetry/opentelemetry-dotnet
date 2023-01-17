@@ -24,6 +24,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         public string ServiceName { get; set; }
 
+        public string ServiceVersion { get; set; }
+
         public Dictionary<string, JaegerTag> Tags { get; set; }
 
         public override string ToString()
@@ -31,6 +33,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             var sb = new StringBuilder("Process(");
             sb.Append(", ServiceName: ");
             sb.Append(this.ServiceName);
+
+            if (this.ServiceVersion != null)
+            {
+                sb.Append(", ServiceVersion: ");
+                sb.Append(this.ServiceVersion);
+            }
 
             if (this.Tags != null)
             {

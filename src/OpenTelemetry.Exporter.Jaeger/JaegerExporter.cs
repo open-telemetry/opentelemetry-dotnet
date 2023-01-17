@@ -123,6 +123,7 @@ namespace OpenTelemetry.Exporter
 
             string serviceName = null;
             string serviceNamespace = null;
+            string serviceVersion = null;
             foreach (var label in resource.Attributes)
             {
                 string key = label.Key;
@@ -136,6 +137,9 @@ namespace OpenTelemetry.Exporter
                             continue;
                         case ResourceSemanticConventions.AttributeServiceNamespace:
                             serviceNamespace = strVal;
+                            continue;
+                        case ResourceSemanticConventions.AttributeServiceVersion:
+                            serviceVersion = strVal;
                             continue;
                     }
                 }
@@ -163,7 +167,14 @@ namespace OpenTelemetry.Exporter
                     pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
             }
 
+            if (string.IsNullOrWhiteSpace(serviceVersion))
+            {
+                serviceVersion = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(
+                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceVersion).Value;
+            }
+
             process.ServiceName = serviceName;
+            process.ServiceVersion = serviceVersion;
 
             this.Batch = new Batch(process, this.batchWriter);
             if (this.sendUsingEmitBatchArgs)

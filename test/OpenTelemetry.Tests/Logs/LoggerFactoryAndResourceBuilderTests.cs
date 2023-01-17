@@ -52,6 +52,25 @@ namespace OpenTelemetry.Logs.Tests
             }
         }
 
+        [Fact]
+        public void VerifyResourceBuilder_WithServiceVersionEnVar()
+        {
+            try
+            {
+                Environment.SetEnvironmentVariable(OtelServiceVersionEnvVarDetector.EnvVarKey, "1.2.3");
+
+                VerifyResourceBuilder(
+                    assert: (Resource resource) =>
+                    {
+                        Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceVersion && kvp.Value.Equals("1.2.3"));
+                    });
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(OtelServiceVersionEnvVarDetector.EnvVarKey, null);
+            }
+        }
+
         private static void VerifyResourceBuilder(
             Action<Resource> assert)
         {

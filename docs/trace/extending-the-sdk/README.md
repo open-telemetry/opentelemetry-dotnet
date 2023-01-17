@@ -340,8 +340,8 @@ A demo sampler is shown [here](./MySampler.cs).
 ## Resource Detector
 
 OpenTelemetry .NET SDK provides a resource detector for detecting resource
-information from the `OTEL_RESOURCE_ATTRIBUTES` and `OTEL_SERVICE_NAME`
-environment variables.
+information from the `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME` and
+`OTEL_SERVICE_VERSION` environment variables.
 
 Custom resource detectors can be implemented:
 

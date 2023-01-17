@@ -46,14 +46,21 @@ namespace OpenTelemetry.Logs.Tests
 
             services.AddOptions();
 
+            var configuration = new Dictionary<string, string>
+            {
+                ["OTEL_SERVICE_NAME"] = "TestServiceName",
+                ["OTEL_SERVICE_VERSION"] = "1.2.3",
+            };
+
             services.AddSingleton<IConfiguration>(
-                new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_SERVICE_NAME"] = "TestServiceName" }).Build());
+                new ConfigurationBuilder().AddInMemoryCollection(configuration).Build());
 
             using var serviceProvider = services.BuildServiceProvider();
 
             using var loggerProvider = new OpenTelemetryLoggerProvider(serviceProvider);
 
             Assert.Contains(loggerProvider.Resource.Attributes, kvp => kvp.Key == "service.name" && (string)kvp.Value == "TestServiceName");
+            Assert.Contains(loggerProvider.Resource.Attributes, kvp => kvp.Key == "service.version" && (string)kvp.Value == "1.2.3");
         }
 
         [Fact]

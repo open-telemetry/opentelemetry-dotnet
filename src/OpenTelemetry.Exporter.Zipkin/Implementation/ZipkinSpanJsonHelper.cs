@@ -50,6 +50,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
         public static readonly JsonEncodedText ServiceNamePropertyName = JsonEncodedText.Encode("serviceName");
 
+        public static readonly JsonEncodedText ServiceVersionPropertyName = JsonEncodedText.Encode("serviceVersion");
+
         public static readonly JsonEncodedText Ipv4PropertyName = JsonEncodedText.Encode("ipv4");
 
         public static readonly JsonEncodedText Ipv6PropertyName = JsonEncodedText.Encode("ipv6");
