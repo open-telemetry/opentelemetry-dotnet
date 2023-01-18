@@ -65,9 +65,11 @@ Metrics](../../docs/metrics/customizing-the-sdk/README.md).
 
 If you are new to
 [traces](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md),
-it is recommended to first follow the [getting started in 5
-minutes](../../docs/trace/getting-started/README.md) guide to get up and
-running.
+it is recommended to first follow the [getting started in 5 minutes - ASP.NET
+Core Application](../../docs/trace/getting-started-aspnetcore/README.md) guide
+or the [getting started in 5 minutes - Console
+Application](../../docs/trace/getting-started-console/README.md) guide to get up
+and running.
 
 For a more detailed explanation of SDK tracing features see [Customizing
 OpenTelemetry .NET SDK for
