@@ -1,4 +1,4 @@
-// <copyright file="AspNetCoreInstrumentationBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="AspNetCoreMetricInstrumentationBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
@@ -36,18 +37,18 @@ Job=InProcess  Toolchain=InProcessEmitToolchain
 
 |                                      Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 172.7 us | 3.45 us | 7.79 us | 0.9766 |   4.75 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 211.4 us | 4.01 us | 3.75 us | 1.2207 |   5.98 KB |
+|                 UninstrumentedAspNetCoreApp | 152.2 us | 2.31 us | 2.05 us | 0.9766 |   4.75 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions | 163.5 us | 1.92 us | 1.70 us | 0.9766 |   5.26 KB |
 */
 
 namespace Benchmarks.Instrumentation
 {
     [InProcess]
-    public class AspNetCoreInstrumentationBenchmarks
+    public class AspNetCoreMetricInstrumentationBenchmarks
     {
         private HttpClient httpClient;
         private WebApplication app;
-        private TracerProvider tracerProvider;
+        private MeterProvider meterProvider;
 
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
         public void UninstrumentedAspNetCoreAppGlobalSetup()
@@ -62,7 +63,7 @@ namespace Benchmarks.Instrumentation
             this.StartWebApplication();
             this.httpClient = new HttpClient();
 
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
                 .Build();
         }
@@ -79,7 +80,7 @@ namespace Benchmarks.Instrumentation
         {
             this.httpClient.Dispose();
             await this.app.DisposeAsync().ConfigureAwait(false);
-            this.tracerProvider.Dispose();
+            this.meterProvider.Dispose();
         }
 
         [Benchmark]
