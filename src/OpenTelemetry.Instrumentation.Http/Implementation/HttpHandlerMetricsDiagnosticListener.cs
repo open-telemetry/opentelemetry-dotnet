@@ -26,6 +26,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
         internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+        private const string HttpClientMetricName = "http.client.duration";
 
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly Histogram<double> httpClientDuration;
@@ -35,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             : base(name)
         {
             this.options = options;
-            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
+            this.httpClientDuration = meter.CreateHistogram<double>(HttpClientMetricName, "ms", "measures the duration of the outbound HTTP request");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -65,23 +66,21 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            var tags = new List<KeyValuePair<string, object>>
-            {
-                new(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
-                new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                new(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
-                new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
-                new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
-            };
+            TagList tags = default;
+            tags.Add(new(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+            tags.Add(new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
+            tags.Add(new(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
+            tags.Add(new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+            tags.Add(new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
 
             if (!request.RequestUri.IsDefaultPort)
             {
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
             }
 
-            this.EnrichWithHttpRequestMessage(tags, request);
+            this.EnrichWithHttpRequestMessage(ref tags, request);
 
-            this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags.ToArray());
+            this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
         }
 
         /// <summary>
@@ -122,11 +121,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        private void EnrichWithHttpRequestMessage(List<KeyValuePair<string, object>> tags, HttpRequestMessage request)
+        private void EnrichWithHttpRequestMessage(ref TagList tagList, HttpRequestMessage request)
         {
             try
             {
-                this.options.EnrichWithHttpRequestMessage?.Invoke(tags, request);
+                this.options.EnrichWithHttpRequestMessage?.Invoke(HttpClientMetricName, request, ref tagList);
             }
             catch (Exception ex)
             {

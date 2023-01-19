@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -27,6 +28,14 @@ namespace OpenTelemetry.Instrumentation.Http;
 public class HttpClientInstrumentationMeterOptions
 {
     /// <summary>
+    /// Delegate for enrichment of recorded metric with additional tags.
+    /// </summary>
+    /// <param name="name">The name of the metric being enriched.</param>
+    /// <param name="requestMessage"><see cref="HttpRequestMessage"/>: the HttpRequestMessage object.</param>
+    /// <param name="tags"><see cref="TagList"/>: List of current tags. You can add additional tags to this list. </param>
+    public delegate void HttpRequestMessageEnrichmentFunc(string name, HttpRequestMessage requestMessage, ref TagList tags);
+
+    /// <summary>
     /// Gets or sets an action to enrich an tags collection with <see cref="HttpRequestMessage"/>.
     /// </summary>
     /// <remarks>
@@ -35,7 +44,7 @@ public class HttpClientInstrumentationMeterOptions
     /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
     /// using <see cref="HttpRequestMessage"/>.</b></para>
     /// </remarks>
-    public Action<List<KeyValuePair<string, object>>, HttpRequestMessage> EnrichWithHttpRequestMessage { get; set; }
+    public HttpRequestMessageEnrichmentFunc EnrichWithHttpRequestMessage { get; set; }
 
     /// <summary>
     /// Gets or sets a filter function that determines whether or not to
