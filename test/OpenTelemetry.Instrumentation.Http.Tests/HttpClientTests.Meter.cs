@@ -46,7 +46,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         return;
                     }
 
-                    o.EnrichWithHttpRequestMessage = (tags, _) =>
+                    o.EnrichWithHttpRequestMessage = (string _, HttpRequestMessage _, ref TagList tags) =>
                         tags.Add(new KeyValuePair<string, object>(enrichedTagKey, enrichedTagValue));
                 })
                 .AddInMemoryExporter(metrics)
@@ -83,7 +83,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // given
             var metrics = new List<Metric>();
             var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddHttpClientInstrumentation(o => o.EnrichWithHttpRequestMessage = (_, _) => throw new Exception())
+                .AddHttpClientInstrumentation(o =>
+                    o.EnrichWithHttpRequestMessage = (string _, HttpRequestMessage _, ref TagList _) =>
+                        throw new Exception())
                 .AddInMemoryExporter(metrics)
                 .Build()!;
 
