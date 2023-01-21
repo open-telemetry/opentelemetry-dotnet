@@ -67,7 +67,6 @@ internal static class ConfigurationExtensions
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
             OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
-            value = default;
             return false;
         }
 
@@ -88,7 +87,6 @@ internal static class ConfigurationExtensions
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
             OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
-            value = default;
             return false;
         }
 
@@ -113,7 +111,6 @@ internal static class ConfigurationExtensions
         if (!tryParseFunc(stringValue!, out value))
         {
             OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
-            value = default;
             return false;
         }
 
