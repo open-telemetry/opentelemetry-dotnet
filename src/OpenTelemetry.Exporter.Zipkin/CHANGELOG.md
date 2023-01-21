@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Changed EnvironmentVariable parsing to not throw a `FormatException` and
+  instead log a warning.
+  ([#4095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4095))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
