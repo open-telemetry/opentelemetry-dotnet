@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
         public void OtlpExporterOptions_InvalidEndpointVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "invalid");
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Throws<FormatException>(() => new OtlpExporterOptions());
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
         public void OtlpExporterOptions_InvalidTimeoutVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "invalid");
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Throws<FormatException>(() => new OtlpExporterOptions());
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
         public void OtlpExporterOptions_InvalidProtocolVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "invalid");

@@ -409,6 +409,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(46, message);
         }
 
+        [Event(47, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
+        public void InvalidEnvironmentVariable(string key, string value)
+        {
+            this.WriteEvent(47, key, value);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
