@@ -45,9 +45,6 @@ values of the `PeriodicExportingMetricReaderOptions`
 | `OTEL_METRIC_EXPORT_INTERVAL` | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`  | `ExportTimeoutMilliseconds`                     |
 
-`FormatException` is thrown in case of an invalid value for any of the
-supported environment variables.
-
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
