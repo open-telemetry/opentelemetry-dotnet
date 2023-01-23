@@ -256,8 +256,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SamplerExceptionBubblesUpTest()
         {
-            // TODO: Discuss: An exception thrown in custom sampler probably
-            // should not blow up like this?
+            // Note: This test verifies there is NO try/catch around sampling
+            // and it will throw. For the discussion behind this see:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/4072
 
             var activitySourceName = Utils.GetCurrentMethodName();
             using var activitySource = new ActivitySource(activitySourceName);
