@@ -1,4 +1,4 @@
-// <copyright file="ExponentialBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,9 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// Stores configuration for a histogram metric stream with exponential bucket boundaries.
+/// Stores configuration for a histogram metric stream with base-2 exponential bucket boundaries.
 /// </summary>
-internal sealed class ExponentialBucketHistogramConfiguration : MetricStreamConfiguration
+internal sealed class Base2ExponentialBucketHistogramConfiguration : MetricStreamConfiguration
 {
     /// <summary>
     /// Gets or sets the maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket.

@@ -150,3 +150,6 @@ generated_code = true
 
 [*.csproj]
 indent_size = 2
+
+[*.cshtml.cs]
+dotnet_diagnostic.SA1649.severity = none

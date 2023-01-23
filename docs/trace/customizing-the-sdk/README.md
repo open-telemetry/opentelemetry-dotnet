@@ -2,24 +2,60 @@
 
 ## TracerProvider
 
-As shown in the [getting-started](../getting-started/README.md) doc, a valid
+As shown in the [Getting Started - ASP.NET Core
+Application](../getting-started-aspnetcore/README.md) and [Getting Started -
+Console Application](../getting-started-console/README.md) docs, OpenTelemetry
+tracing is managed by a
 [`TracerProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#tracer-provider)
-must be configured and built to collect traces with OpenTelemetry .NET Sdk.
-`TracerProvider` holds all the configuration for tracing like samplers,
-processors, etc. Naturally, almost all the customizations must be done on the
-`TracerProvider`.
+instance configured using the `TracerProviderBuilder` API.
+
+`TracerProviderBuilder` exposes various methods to configure the provider (ex:
+`SetSampler`, `AddProcessor`, etc.) which are explained in subsequent sections
+of this document. It is also common for library authors to target
+`TracerProviderBuilder` for extension methods which help configure SDK plug-in
+components.
 
 ## Building a TracerProvider
 
-Building a `TracerProvider` is done using `TracerProviderBuilder` which must be
-obtained by calling `Sdk.CreateTracerProviderBuilder()`. `TracerProviderBuilder`
-exposes various methods which configures the provider it is going to build.
-These includes methods like `SetSampler`, `AddProcessor` etc, and are explained
-in subsequent sections of this document. Once configuration is done, calling
-`Build()` on the `TracerProviderBuilder` builds the `TracerProvider` instance.
-Once built, changes to its configuration is not allowed, with the exception of
-adding more processors. In most cases, a single `TracerProvider` is created at
-the application startup, and is disposed when application shuts down.
+There are two different ways to create a `TracerProviderBuilder`.
+
+### Using OpenTelemetry.Extensions.Hosting
+
+For [ASP.NET
+Core](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host) and
+[.NET Generic](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
+host users, helper extensions are provided in the
+[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
+package to simplify configuration and management of the `TracerProvider`.
+
+```csharp
+using OpenTelemetry.Trace;
+
+var appBuilder = WebApplication.CreateBuilder(args);
+
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(builder => builder.AddConsoleExporter())
+    .StartWithHost();
+```
+
+**Note:** The
+[StartWithHost](../../../src/OpenTelemetry.Extensions.Hosting/README.md#extension-method-reference)
+extension automatically starts and stops the `TracerProvider` with the host.
+
+### Using Sdk.CreateTracerProviderBuilder
+
+`Sdk.CreateTracerProviderBuilder()` is provided on all runtimes to create
+`TracerProvider`s when either hosting is not available or multiple providers are
+required.
+
+Call `Sdk.CreateTracerProviderBuilder()` to obtain a builder and then call
+`Build()` once configuration is done to retrieve the `TracerProvider` instance.
+
+**Note:** Once built changes to `TracerProvider` configuration are not allowed,
+with the exception of adding more processors.
+
+In most cases a single `TracerProvider` is created at the application startup,
+and is disposed when application shuts down.
 
 The snippet below shows how to build a basic `TracerProvider` and dispose it at
 the end of the application. This will create a provider with default
@@ -36,25 +72,6 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 // Dispose at application shutdown
 tracerProvider.Dispose()
 ```
-
-**Note:** The `Sdk.CreateTracerProviderBuilder()` API is available for all
-runtimes. Additionally, for [ASP.NET
-Core](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host) and
-[.NET Generic](https://learn.microsoft.com/dotnet/core/extensions/generic-host)
-host users, helper extensions are provided in the
-[OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
-package to simplify configuration and management of the `TracerProvider`.
-
-In a typical application, a single `TracerProvider` is created at application
-startup and disposed at application shutdown. It is important to ensure that the
-provider is not disposed too early. Actual mechanism depends on the application
-type. For example, in a typical ASP.NET application, `TracerProvider` is created
-in `Application_Start`, and disposed in `Application_End` (both methods are a
-part of the Global.asax.cs file) as shown
-[here](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/examples/AspNet/Global.asax.cs).
-In a typical ASP.NET Core application, `TracerProvider` lifetime is managed by
-leveraging the built-in Dependency Injection container as shown
-[here](../../../examples/AspNetCore/Program.cs).
 
 ## TracerProvider configuration
 
