@@ -252,5 +252,30 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(parentTraceState, activity.TraceStateString);
             }
         }
+
+        [Fact]
+        public void SamplerExceptionBubblesUpTest()
+        {
+            // Note: This test verifies there is NO try/catch around sampling
+            // and it will throw. For the discussion behind this see:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/4072
+
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(activitySourceName)
+                .SetSampler(new ThrowingSampler())
+                .Build();
+
+            Assert.Throws<InvalidOperationException>(() => activitySource.StartActivity("ThrowingSampler"));
+        }
+
+        private sealed class ThrowingSampler : Sampler
+        {
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                throw new InvalidOperationException("ThrowingSampler");
+            }
+        }
     }
 }
