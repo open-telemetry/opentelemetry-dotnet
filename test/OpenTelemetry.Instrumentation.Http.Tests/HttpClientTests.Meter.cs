@@ -16,6 +16,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Net.Http;
 using Moq;
 using OpenTelemetry.Instrumentation.Http.Tests.Extensions;
 using OpenTelemetry.Metrics;
