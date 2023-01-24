@@ -25,7 +25,7 @@ public partial class Program
     private const int ArraySize = 10;
 
     // Note: Uncomment the below line if you want to run Histogram stress test
-    // private const int MaxHistogramMeasurement = 1000;
+    private const int MaxHistogramMeasurement = 1000;
 
     private static readonly Meter TestMeter = new(Utils.GetCurrentMethodName());
     private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
@@ -33,7 +33,7 @@ public partial class Program
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
 
     // Note: Uncomment the below line if you want to run Histogram stress test
-    // private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");
+    private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");
 
     public static void Main()
     {
@@ -51,26 +51,27 @@ public partial class Program
         Stress(prometheusPort: 9464);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void Run()
-    {
-        var random = ThreadLocalRandom.Value;
-        TestCounter.Add(
-            100,
-            new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
-            new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
-            new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
-    }
-
-    // Note: Uncomment the below lines if you want to run Histogram stress test
     // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     // protected static void Run()
     // {
-    //    var random = ThreadLocalRandom.Value;
-    //    TestHistogram.Record(
-    //        random.Next(MaxHistogramMeasurement),
-    //        new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
-    //        new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
-    //        new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+    //     var random = ThreadLocalRandom.Value;
+    //     TestCounter.Add(
+    //         100,
+    //         new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+    //         new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+    //         new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
     // }
+
+    // Note: Uncomment the below lines if you want to run Histogram stress test
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected static void Run()
+    {
+       var random = ThreadLocalRandom.Value;
+       TestHistogram.Record(
+           random.Next(MaxHistogramMeasurement),
+           new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+           new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+           new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+    }
 }

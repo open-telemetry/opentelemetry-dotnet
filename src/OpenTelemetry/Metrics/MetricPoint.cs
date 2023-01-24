@@ -30,6 +30,8 @@ namespace OpenTelemetry.Metrics
 
         private HistogramBuckets histogramBuckets;
 
+        private ExemplarReservoir exemplarReservoir;
+
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
 
@@ -67,6 +69,16 @@ namespace OpenTelemetry.Metrics
             else
             {
                 this.histogramBuckets = null;
+            }
+
+            if (this.aggType == AggregationType.HistogramWithBuckets ||
+                this.aggType == AggregationType.HistogramWithMinMaxBuckets)
+            {
+               this.exemplarReservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Length);
+            }
+            else
+            {
+                this.exemplarReservoir = new SimpleFixedSizeExemplarReservoir();
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.
@@ -239,6 +251,16 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Gets the exemplars associated with the metric point.
+        /// </summary>
+        /// <returns><see cref="HistogramBuckets"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Exemplar[] GetExemplars()
+        {
+            return this.exemplarReservoir.Collect();
+        }
+
+        /// <summary>
         /// Gets the Histogram Min and Max values.
         /// </summary>
         /// <param name="min"> The histogram minimum value.</param>
@@ -267,6 +289,220 @@ namespace OpenTelemetry.Metrics
             MetricPoint copy = this;
             copy.histogramBuckets = this.histogramBuckets?.Copy();
             return copy;
+        }
+
+        internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.LongSumIncomingDelta:
+                    {
+                        Interlocked.Add(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.LongSumIncomingCumulative:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.LongGauge:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                case AggregationType.HistogramWithMinMaxBuckets:
+                case AggregationType.Histogram:
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        this.UpdateWithExemplar((double)number, tags);
+
+                        // At this point MetricPointStatus is already set to CollectPending so we can simply return.
+                        return;
+                    }
+            }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+        }
+
+        internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.DoubleSumIncomingDelta:
+                    {
+                        double initValue, newValue;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            initValue = this.runningValue.AsDouble;
+
+                            unchecked
+                            {
+                                newValue = initValue + number;
+                            }
+
+                            if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
+                            {
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.DoubleSumIncomingCumulative:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        break;
+                    }
+
+                case AggregationType.DoubleGauge:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        int i = this.histogramBuckets.FindBucketIndex(number);
+                        this.exemplarReservoir.Offer(number, tags);
+
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningBucketCounts[i]++;
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        int i = this.histogramBuckets.FindBucketIndex(number);
+
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningBucketCounts[i]++;
+                                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                                }
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+            }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void Update(long number)

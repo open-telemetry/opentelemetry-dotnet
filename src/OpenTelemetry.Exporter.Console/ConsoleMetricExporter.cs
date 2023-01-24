@@ -107,6 +107,7 @@ namespace OpenTelemetry.Exporter
 
                         bool isFirstIteration = true;
                         double previousExplicitBound = default;
+                        int exemplarIndex = 0;
                         foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
                             if (isFirstIteration)
@@ -116,6 +117,9 @@ namespace OpenTelemetry.Exporter
                                 bucketsBuilder.Append(']');
                                 bucketsBuilder.Append(':');
                                 bucketsBuilder.Append(histogramMeasurement.BucketCount);
+                                var exemplar = (metricPoint.GetExemplars())[0];
+                                bucketsBuilder.Append("\t");
+                                bucketsBuilder.Append(exemplar.LongValue);
                                 previousExplicitBound = histogramMeasurement.ExplicitBound;
                                 isFirstIteration = false;
                             }
@@ -127,6 +131,7 @@ namespace OpenTelemetry.Exporter
                                 if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
                                     bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                    previousExplicitBound = histogramMeasurement.ExplicitBound;
                                 }
                                 else
                                 {

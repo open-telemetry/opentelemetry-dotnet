@@ -41,6 +41,9 @@ namespace OpenTelemetry.Metrics
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
+
+        private readonly ExemplarFilter exemplarFilter;
+
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
@@ -76,6 +79,8 @@ namespace OpenTelemetry.Metrics
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }
+
+            this.exemplarFilter = ExemplarFilters.WithSampledTrace;
         }
 
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
@@ -309,7 +314,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in samplers to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -332,7 +345,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in samplers to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -355,7 +376,16 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in samplers to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
+
             }
             catch (Exception)
             {
@@ -378,7 +408,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in samplers to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
