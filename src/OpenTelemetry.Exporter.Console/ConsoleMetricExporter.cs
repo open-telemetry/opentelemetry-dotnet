@@ -127,6 +127,7 @@ namespace OpenTelemetry.Exporter
                                 if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
                                     bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                    previousExplicitBound = histogramMeasurement.ExplicitBound;
                                 }
                                 else
                                 {
