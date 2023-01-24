@@ -189,7 +189,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
         public void ErrorGettingUriFromEnvVarSetsDefaultEndpointValue()
         {
             try

@@ -66,7 +66,8 @@ internal static class ConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            throw new FormatException($"{key} environment variable has an invalid value: '{stringValue}'");
+            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            return false;
         }
 
         return true;
@@ -85,7 +86,8 @@ internal static class ConfigurationExtensions
 
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
-            throw new FormatException($"{key} environment variable has an invalid value: '{stringValue}'");
+            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            return false;
         }
 
         return true;
@@ -108,7 +110,8 @@ internal static class ConfigurationExtensions
 
         if (!tryParseFunc(stringValue!, out value))
         {
-            throw new FormatException($"{key} environment variable has an invalid value: '{stringValue}'");
+            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            return false;
         }
 
         return true;

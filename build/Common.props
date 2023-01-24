@@ -35,7 +35,6 @@
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.3]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[17.4.1]</MicrosoftCodeCoveragePkgVer>
-    <MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>[3.1.0,)</MicrosoftExtensionsConfigurationEnvironmentVariablesPkgVer>
     <MicrosoftExtensionsDependencyInjectionPkgVer>[3.1.0,)</MicrosoftExtensionsDependencyInjectionPkgVer>
     <MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>$(MicrosoftExtensionsDependencyInjectionPkgVer)</MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
