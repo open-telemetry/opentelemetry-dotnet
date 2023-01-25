@@ -18,6 +18,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ConfigurationExtensions.cs" Link="Includes\ConfigurationExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\OpenTelemetrySdkEventSource.cs" Link="Includes\OpenTelemetrySdkEventSource.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PooledList.cs" Link="Includes\PooledList.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />

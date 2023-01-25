@@ -95,28 +95,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         }
 
-        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
-        public void OtlpExporterOptions_InvalidEndpointVariableOverride()
+        [Fact]
+        public void OtlpExporterOptions_InvalidEnvironmentVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "invalid");
-
-            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
-        }
-
-        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
-        public void OtlpExporterOptions_InvalidTimeoutVariableOverride()
-        {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "invalid");
-
-            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
-        }
-
-        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
-        public void OtlpExporterOptions_InvalidProtocolVariableOverride()
-        {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "invalid");
 
-            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
+            var options = new OtlpExporterOptions();
+
+            Assert.Equal(new Uri("http://localhost:4317"), options.Endpoint);
+            Assert.Equal(10000, options.TimeoutMilliseconds);
+            Assert.Equal(default, options.Protocol);
         }
 
         [Fact]
