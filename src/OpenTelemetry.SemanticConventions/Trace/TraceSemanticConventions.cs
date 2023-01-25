@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace
     /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/README.md"/>.
     /// </summary>
     /// <remarks>
-    /// Schema and specification version: https://opentelemetry.io/schemas/v1.13.0.
+    /// Schema and specification version: https://opentelemetry.io/schemas/v1.17.0.
     /// </remarks>
     public static class TraceSemanticConventions
     {
@@ -199,23 +199,14 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
         /// <summary>
-        /// SHOULD be set to true if the exception event is recorded at a point where it is known that the exception is escaping the scope of the span.
+        /// Name of the code, either &quot;OK&quot; or &quot;ERROR&quot;. MUST NOT be set if the status code is UNSET.
         /// </summary>
-        /// <remarks>
-        /// An exception is considered to have escaped (or left) the scope of a span,
-        /// if that span is ended while the exception is still logically &amp;#34;in flight&amp;#34;.
-        /// This may be actually &amp;#34;in flight&amp;#34; in some languages (e.g. if the exception
-        /// is passed to a Context manager&amp;#39;s <c>__exit__</c> method in Python) but will
-        /// usually be caught at the point of recording the exception in most languages.It is usually not possible to determine at the point where an exception is thrown
-        /// whether it will escape the scope of a span.
-        /// However, it is trivial to know that an exception
-        /// will escape, if one checks for an active exception just before ending the span,
-        /// as done in the <a href="#recording-an-exception">example above</a>.It follows that an exception may still escape the scope of the span
-        /// even if the <c>exception.escaped</c> attribute was not set or set to false,
-        /// since the event might have been recorded at a time where it was not
-        /// clear whether the exception will escape.
-        /// </remarks>
-        public const string AttributeExceptionEscaped = "exception.escaped";
+        public const string AttributeOtelStatusCode = "otel.status_code";
+
+        /// <summary>
+        /// Description of the Status if it has a value, otherwise not set.
+        /// </summary>
+        public const string AttributeOtelStatusDescription = "otel.status_description";
 
         /// <summary>
         /// Type of the trigger which caused this function execution.
@@ -294,6 +285,29 @@ namespace OpenTelemetry.Trace
         /// SHOULD be equal to the <c>cloud.region</c> resource attribute of the invoked function.
         /// </remarks>
         public const string AttributeFaasInvokedRegion = "faas.invoked_region";
+
+        /// <summary>
+        /// The unique identifier of the feature flag.
+        /// </summary>
+        public const string AttributeFeatureFlagKey = "feature_flag.key";
+
+        /// <summary>
+        /// The name of the service provider that performs the flag evaluation.
+        /// </summary>
+        public const string AttributeFeatureFlagProviderName = "feature_flag.provider_name";
+
+        /// <summary>
+        /// SHOULD be a semantic identifier for a value. If one is unavailable, a stringified version of the value can be used.
+        /// </summary>
+        /// <remarks>
+        /// A semantic identifier, commonly referred to as a variant, provides a means
+        /// for referring to a value without including the value itself. This can
+        /// provide additional context for understanding the meaning behind a value.
+        /// For example, the variant <c>red</c> maybe be used for the value <c>#c05543</c>.A stringified version of the value can be used in situations where a
+        /// semantic identifier is unavailable. String representation of the value
+        /// should be determined by the implementer.
+        /// </remarks>
+        public const string AttributeFeatureFlagVariant = "feature_flag.variant";
 
         /// <summary>
         /// Transport protocol used. See note below.
@@ -447,6 +461,11 @@ namespace OpenTelemetry.Trace
         public const string AttributeCodeLineno = "code.lineno";
 
         /// <summary>
+        /// The column number in <c>code.filepath</c> best representing the operation. It SHOULD point within the code unit named in <c>code.function</c>.
+        /// </summary>
+        public const string AttributeCodeColumn = "code.column";
+
+        /// <summary>
         /// HTTP request method.
         /// </summary>
         public const string AttributeHttpMethod = "http.method";
@@ -488,9 +507,12 @@ namespace OpenTelemetry.Trace
         public const string AttributeHttpUrl = "http.url";
 
         /// <summary>
-        /// The ordinal number of request re-sending attempt.
+        /// The ordinal number of request resending attempt (for any reason, including redirects).
         /// </summary>
-        public const string AttributeHttpRetryCount = "http.retry_count";
+        /// <remarks>
+        /// The resend count SHOULD be updated each time an HTTP request gets resent by the client, regardless of what was the cause of the resending (e.g. redirection, authorization failure, 503 Server Unavailable, network issues, or any other).
+        /// </remarks>
+        public const string AttributeHttpResendCount = "http.resend_count";
 
         /// <summary>
         /// The URI scheme identifying the used protocol.
@@ -655,87 +677,132 @@ namespace OpenTelemetry.Trace
         public const string AttributeGraphqlDocument = "graphql.document";
 
         /// <summary>
+        /// A value used by the messaging system as an identifier for the message, represented as a string.
+        /// </summary>
+        public const string AttributeMessagingMessageId = "messaging.message.id";
+
+        /// <summary>
+        /// The <a href="#conversations">conversation ID</a> identifying the conversation to which the message belongs, represented as a string. Sometimes called &quot;Correlation ID&quot;.
+        /// </summary>
+        public const string AttributeMessagingMessageConversationId = "messaging.message.conversation_id";
+
+        /// <summary>
+        /// The (uncompressed) size of the message payload in bytes. Also use this attribute if it is unknown whether the compressed or uncompressed payload size is reported.
+        /// </summary>
+        public const string AttributeMessagingMessagePayloadSizeBytes = "messaging.message.payload_size_bytes";
+
+        /// <summary>
+        /// The compressed size of the message payload in bytes.
+        /// </summary>
+        public const string AttributeMessagingMessagePayloadCompressedSizeBytes = "messaging.message.payload_compressed_size_bytes";
+
+        /// <summary>
+        /// The message destination name.
+        /// </summary>
+        /// <remarks>
+        /// Destination name SHOULD uniquely identify a specific queue, topic or other entity within the broker. If
+        /// the broker does not have such notion, the destination name SHOULD uniquely identify the broker.
+        /// </remarks>
+        public const string AttributeMessagingDestinationName = "messaging.destination.name";
+
+        /// <summary>
+        /// The kind of message destination.
+        /// </summary>
+        public const string AttributeMessagingDestinationKind = "messaging.destination.kind";
+
+        /// <summary>
+        /// Low cardinality representation of the messaging destination name.
+        /// </summary>
+        /// <remarks>
+        /// Destination names could be constructed from templates. An example would be a destination name involving a user name or product id. Although the destination name in this case is of high cardinality, the underlying template is of low cardinality and can be effectively used for grouping and aggregation.
+        /// </remarks>
+        public const string AttributeMessagingDestinationTemplate = "messaging.destination.template";
+
+        /// <summary>
+        /// A boolean that is true if the message destination is temporary and might not exist anymore after messages are processed.
+        /// </summary>
+        public const string AttributeMessagingDestinationTemporary = "messaging.destination.temporary";
+
+        /// <summary>
+        /// A boolean that is true if the message destination is anonymous (could be unnamed or have auto-generated name).
+        /// </summary>
+        public const string AttributeMessagingDestinationAnonymous = "messaging.destination.anonymous";
+
+        /// <summary>
+        /// The message source name.
+        /// </summary>
+        /// <remarks>
+        /// Source name SHOULD uniquely identify a specific queue, topic, or other entity within the broker. If
+        /// the broker does not have such notion, the source name SHOULD uniquely identify the broker.
+        /// </remarks>
+        public const string AttributeMessagingSourceName = "messaging.source.name";
+
+        /// <summary>
+        /// The kind of message source.
+        /// </summary>
+        public const string AttributeMessagingSourceKind = "messaging.source.kind";
+
+        /// <summary>
+        /// Low cardinality representation of the messaging source name.
+        /// </summary>
+        /// <remarks>
+        /// Source names could be constructed from templates. An example would be a source name involving a user name or product id. Although the source name in this case is of high cardinality, the underlying template is of low cardinality and can be effectively used for grouping and aggregation.
+        /// </remarks>
+        public const string AttributeMessagingSourceTemplate = "messaging.source.template";
+
+        /// <summary>
+        /// A boolean that is true if the message source is temporary and might not exist anymore after messages are processed.
+        /// </summary>
+        public const string AttributeMessagingSourceTemporary = "messaging.source.temporary";
+
+        /// <summary>
+        /// A boolean that is true if the message source is anonymous (could be unnamed or have auto-generated name).
+        /// </summary>
+        public const string AttributeMessagingSourceAnonymous = "messaging.source.anonymous";
+
+        /// <summary>
         /// A string identifying the messaging system.
         /// </summary>
         public const string AttributeMessagingSystem = "messaging.system";
 
         /// <summary>
-        /// The message destination name. This might be equal to the span name but is required nevertheless.
+        /// A string identifying the kind of messaging operation as defined in the <a href="#operation-names">Operation names</a> section above.
         /// </summary>
-        public const string AttributeMessagingDestination = "messaging.destination";
-
-        /// <summary>
-        /// The kind of message destination.
-        /// </summary>
-        public const string AttributeMessagingDestinationKind = "messaging.destination_kind";
-
-        /// <summary>
-        /// A boolean that is true if the message destination is temporary.
-        /// </summary>
-        public const string AttributeMessagingTempDestination = "messaging.temp_destination";
-
-        /// <summary>
-        /// The name of the transport protocol.
-        /// </summary>
-        public const string AttributeMessagingProtocol = "messaging.protocol";
-
-        /// <summary>
-        /// The version of the transport protocol.
-        /// </summary>
-        public const string AttributeMessagingProtocolVersion = "messaging.protocol_version";
-
-        /// <summary>
-        /// Connection string.
-        /// </summary>
-        public const string AttributeMessagingUrl = "messaging.url";
-
-        /// <summary>
-        /// A value used by the messaging system as an identifier for the message, represented as a string.
-        /// </summary>
-        public const string AttributeMessagingMessageId = "messaging.message_id";
-
-        /// <summary>
-        /// The <a href="#conversations">conversation ID</a> identifying the conversation to which the message belongs, represented as a string. Sometimes called &quot;Correlation ID&quot;.
-        /// </summary>
-        public const string AttributeMessagingConversationId = "messaging.conversation_id";
-
-        /// <summary>
-        /// The (uncompressed) size of the message payload in bytes. Also use this attribute if it is unknown whether the compressed or uncompressed payload size is reported.
-        /// </summary>
-        public const string AttributeMessagingMessagePayloadSizeBytes = "messaging.message_payload_size_bytes";
-
-        /// <summary>
-        /// The compressed size of the message payload in bytes.
-        /// </summary>
-        public const string AttributeMessagingMessagePayloadCompressedSizeBytes = "messaging.message_payload_compressed_size_bytes";
-
-        /// <summary>
-        /// A string identifying the kind of message consumption as defined in the <a href="#operation-names">Operation names</a> section above. If the operation is &quot;send&quot;, this attribute MUST NOT be set, since the operation can be inferred from the span kind in that case.
-        /// </summary>
+        /// <remarks>
+        /// If a custom value is used, it MUST be of low cardinality.
+        /// </remarks>
         public const string AttributeMessagingOperation = "messaging.operation";
 
         /// <summary>
-        /// The identifier for the consumer receiving a message. For Kafka, set it to <c>{messaging.kafka.consumer_group} - {messaging.kafka.client_id}</c>, if both are present, or only <c>messaging.kafka.consumer_group</c>. For brokers, such as RabbitMQ and Artemis, set it to the <c>client_id</c> of the client consuming the message.
+        /// The number of messages sent, received, or processed in the scope of the batching operation.
         /// </summary>
-        public const string AttributeMessagingConsumerId = "messaging.consumer_id";
+        /// <remarks>
+        /// Instrumentations SHOULD NOT set <c>messaging.batch.message_count</c> on spans that operate with a single message. When a messaging client library supports both batch and single-message API for the same operation, instrumentations SHOULD use <c>messaging.batch.message_count</c> for batching APIs and SHOULD NOT use it for single-message APIs.
+        /// </remarks>
+        public const string AttributeMessagingBatchMessageCount = "messaging.batch.message_count";
+
+        /// <summary>
+        /// The identifier for the consumer receiving a message. For Kafka, set it to <c>{messaging.kafka.consumer.group} - {messaging.kafka.client_id}</c>, if both are present, or only <c>messaging.kafka.consumer.group</c>. For brokers, such as RabbitMQ and Artemis, set it to the <c>client_id</c> of the client consuming the message.
+        /// </summary>
+        public const string AttributeMessagingConsumerId = "messaging.consumer.id";
 
         /// <summary>
         /// RabbitMQ message routing key.
         /// </summary>
-        public const string AttributeMessagingRabbitmqRoutingKey = "messaging.rabbitmq.routing_key";
+        public const string AttributeMessagingRabbitmqDestinationRoutingKey = "messaging.rabbitmq.destination.routing_key";
 
         /// <summary>
-        /// Message keys in Kafka are used for grouping alike messages to ensure they're processed on the same partition. They differ from <c>messaging.message_id</c> in that they're not unique. If the key is <c>null</c>, the attribute MUST NOT be set.
+        /// Message keys in Kafka are used for grouping alike messages to ensure they're processed on the same partition. They differ from <c>messaging.message.id</c> in that they're not unique. If the key is <c>null</c>, the attribute MUST NOT be set.
         /// </summary>
         /// <remarks>
         /// If the key type is not string, it&amp;#39;s string representation has to be supplied for the attribute. If the key has no unambiguous, canonical string form, don&amp;#39;t include its value.
         /// </remarks>
-        public const string AttributeMessagingKafkaMessageKey = "messaging.kafka.message_key";
+        public const string AttributeMessagingKafkaMessageKey = "messaging.kafka.message.key";
 
         /// <summary>
         /// Name of the Kafka Consumer Group that is handling the message. Only applies to consumers, not producers.
         /// </summary>
-        public const string AttributeMessagingKafkaConsumerGroup = "messaging.kafka.consumer_group";
+        public const string AttributeMessagingKafkaConsumerGroup = "messaging.kafka.consumer.group";
 
         /// <summary>
         /// Client Id for the Consumer or Producer that is handling the message.
@@ -745,12 +812,22 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Partition the message is sent to.
         /// </summary>
-        public const string AttributeMessagingKafkaPartition = "messaging.kafka.partition";
+        public const string AttributeMessagingKafkaDestinationPartition = "messaging.kafka.destination.partition";
+
+        /// <summary>
+        /// Partition the message is received from.
+        /// </summary>
+        public const string AttributeMessagingKafkaSourcePartition = "messaging.kafka.source.partition";
+
+        /// <summary>
+        /// The offset of a record in the corresponding Kafka partition.
+        /// </summary>
+        public const string AttributeMessagingKafkaMessageOffset = "messaging.kafka.message.offset";
 
         /// <summary>
         /// A boolean that is true if the message is a tombstone.
         /// </summary>
-        public const string AttributeMessagingKafkaTombstone = "messaging.kafka.tombstone";
+        public const string AttributeMessagingKafkaMessageTombstone = "messaging.kafka.message.tombstone";
 
         /// <summary>
         /// Namespace of RocketMQ resources, resources in different namespaces are individual.
@@ -768,19 +845,34 @@ namespace OpenTelemetry.Trace
         public const string AttributeMessagingRocketmqClientId = "messaging.rocketmq.client_id";
 
         /// <summary>
+        /// The timestamp in milliseconds that the delay message is expected to be delivered to consumer.
+        /// </summary>
+        public const string AttributeMessagingRocketmqMessageDeliveryTimestamp = "messaging.rocketmq.message.delivery_timestamp";
+
+        /// <summary>
+        /// The delay time level for delay message, which determines the message delay time.
+        /// </summary>
+        public const string AttributeMessagingRocketmqMessageDelayTimeLevel = "messaging.rocketmq.message.delay_time_level";
+
+        /// <summary>
+        /// It is essential for FIFO message. Messages that belong to the same message group are always processed one by one within the same consumer group.
+        /// </summary>
+        public const string AttributeMessagingRocketmqMessageGroup = "messaging.rocketmq.message.group";
+
+        /// <summary>
         /// Type of message.
         /// </summary>
-        public const string AttributeMessagingRocketmqMessageType = "messaging.rocketmq.message_type";
+        public const string AttributeMessagingRocketmqMessageType = "messaging.rocketmq.message.type";
 
         /// <summary>
         /// The secondary classifier of message besides topic.
         /// </summary>
-        public const string AttributeMessagingRocketmqMessageTag = "messaging.rocketmq.message_tag";
+        public const string AttributeMessagingRocketmqMessageTag = "messaging.rocketmq.message.tag";
 
         /// <summary>
         /// Key(s) of message, another way to mark message besides message id.
         /// </summary>
-        public const string AttributeMessagingRocketmqMessageKeys = "messaging.rocketmq.message_keys";
+        public const string AttributeMessagingRocketmqMessageKeys = "messaging.rocketmq.message.keys";
 
         /// <summary>
         /// Model of message consumption. This only applies to consumer spans.
@@ -857,6 +949,25 @@ namespace OpenTelemetry.Trace
         public const string AttributeMessageUncompressedSize = "message.uncompressed_size";
 
         /// <summary>
+        /// SHOULD be set to true if the exception event is recorded at a point where it is known that the exception is escaping the scope of the span.
+        /// </summary>
+        /// <remarks>
+        /// An exception is considered to have escaped (or left) the scope of a span,
+        /// if that span is ended while the exception is still logically &amp;#34;in flight&amp;#34;.
+        /// This may be actually &amp;#34;in flight&amp;#34; in some languages (e.g. if the exception
+        /// is passed to a Context manager&amp;#39;s <c>__exit__</c> method in Python) but will
+        /// usually be caught at the point of recording the exception in most languages.It is usually not possible to determine at the point where an exception is thrown
+        /// whether it will escape the scope of a span.
+        /// However, it is trivial to know that an exception
+        /// will escape, if one checks for an active exception just before ending the span,
+        /// as done in the <a href="#recording-an-exception">example above</a>.It follows that an exception may still escape the scope of the span
+        /// even if the <c>exception.escaped</c> attribute was not set or set to false,
+        /// since the event might have been recorded at a time where it was not
+        /// clear whether the exception will escape.
+        /// </remarks>
+        public const string AttributeExceptionEscaped = "exception.escaped";
+
+        /// <summary>
         /// Prefix for 'aws.lambda'.
         /// </summary>
         public static readonly string PrefixAwsLambda = "aws.lambda";
@@ -907,6 +1018,11 @@ namespace OpenTelemetry.Trace
         public static readonly string PrefixException = "exception";
 
         /// <summary>
+        /// Prefix for 'otel_span'.
+        /// </summary>
+        public static readonly string PrefixOtelSpan = "otel";
+
+        /// <summary>
         /// Prefix for 'faas_span'.
         /// </summary>
         public static readonly string PrefixFaasSpan = "faas";
@@ -915,6 +1031,11 @@ namespace OpenTelemetry.Trace
         /// Prefix for 'faas_span.datasource'.
         /// </summary>
         public static readonly string PrefixFaasSpanDatasource = "faas.document";
+
+        /// <summary>
+        /// Prefix for 'feature_flag'.
+        /// </summary>
+        public static readonly string PrefixFeatureFlag = "feature_flag";
 
         /// <summary>
         /// Prefix for 'network'.
@@ -962,9 +1083,19 @@ namespace OpenTelemetry.Trace
         public static readonly string PrefixGraphql = "graphql";
 
         /// <summary>
-        /// Prefix for 'messaging'.
+        /// Prefix for 'messaging.message'.
         /// </summary>
-        public static readonly string PrefixMessaging = "messaging";
+        public static readonly string PrefixMessagingMessage = "messaging";
+
+        /// <summary>
+        /// Prefix for 'messaging.destination'.
+        /// </summary>
+        public static readonly string PrefixMessagingDestination = "messaging.destination";
+
+        /// <summary>
+        /// Prefix for 'messaging.source'.
+        /// </summary>
+        public static readonly string PrefixMessagingSource = "messaging.source";
 
         /// <summary>
         /// Prefix for 'messaging.rabbitmq'.
@@ -1002,14 +1133,19 @@ namespace OpenTelemetry.Trace
         public static readonly string PrefixRpcMessage = "message";
 
         /// <summary>
-        /// Event name for 'exception'.
+        /// Event name for 'feature_flag'.
         /// </summary>
-        public static readonly string EventException = "exception";
+        public static readonly string EventFeatureFlag = "feature_flag";
 
         /// <summary>
         /// Event name for 'rpc.message'.
         /// </summary>
         public static readonly string EventRpcMessage = "message";
+
+        /// <summary>
+        /// Event name for 'trace-exception'.
+        /// </summary>
+        public static readonly string EventTraceException = "exception";
 
         /// <summary>
         /// Parent-child Reference type.
@@ -1271,6 +1407,11 @@ namespace OpenTelemetry.Trace
             /// OpenSearch.
             /// </summary>
             public const string Opensearch = "opensearch";
+
+            /// <summary>
+            /// ClickHouse.
+            /// </summary>
+            public const string Clickhouse = "clickhouse";
         }
 
         /// <summary>
@@ -1332,6 +1473,22 @@ namespace OpenTelemetry.Trace
             /// local_serial.
             /// </summary>
             public const string LocalSerial = "local_serial";
+        }
+
+        /// <summary>
+        /// Name of the code, either &quot;OK&quot; or &quot;ERROR&quot;. MUST NOT be set if the status code is UNSET.
+        /// </summary>
+        public static class OtelStatusCodeValues
+        {
+            /// <summary>
+            /// The operation has been validated by an Application developer or Operator to have completed successfully.
+            /// </summary>
+            public const string Ok = "OK";
+
+            /// <summary>
+            /// The operation contains an error.
+            /// </summary>
+            public const string Error = "ERROR";
         }
 
         /// <summary>
@@ -1685,10 +1842,31 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// A string identifying the kind of message consumption as defined in the <a href="#operation-names">Operation names</a> section above. If the operation is &quot;send&quot;, this attribute MUST NOT be set, since the operation can be inferred from the span kind in that case.
+        /// The kind of message source.
+        /// </summary>
+        public static class MessagingSourceKindValues
+        {
+            /// <summary>
+            /// A message received from a queue.
+            /// </summary>
+            public const string Queue = "queue";
+
+            /// <summary>
+            /// A message received from a topic.
+            /// </summary>
+            public const string Topic = "topic";
+        }
+
+        /// <summary>
+        /// A string identifying the kind of messaging operation as defined in the <a href="#operation-names">Operation names</a> section above.
         /// </summary>
         public static class MessagingOperationValues
         {
+            /// <summary>
+            /// publish.
+            /// </summary>
+            public const string Publish = "publish";
+
             /// <summary>
             /// receive.
             /// </summary>

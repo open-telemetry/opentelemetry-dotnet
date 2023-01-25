@@ -25,7 +25,7 @@ namespace OpenTelemetry.Resources
     /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md"/>.
     /// </summary>
     /// <remarks>
-    /// Schema and specification version: https://opentelemetry.io/schemas/v1.13.0.
+    /// Schema and specification version: https://opentelemetry.io/schemas/v1.17.0.
     /// </remarks>
     public static class ResourceSemanticConventions
     {
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Resources
         /// Array of brand name and version separated by a space.
         /// </summary>
         /// <remarks>
-        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (navigator.userAgentData.brands).
+        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (<c>navigator.userAgentData.brands</c>).
         /// </remarks>
         public const string AttributeBrowserBrands = "browser.brands";
 
@@ -41,10 +41,18 @@ namespace OpenTelemetry.Resources
         /// The platform on which the browser is running.
         /// </summary>
         /// <remarks>
-        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (navigator.userAgentData.platform). If unavailable, the legacy <c>navigator.platform</c> API SHOULD NOT be used instead and this attribute SHOULD be left unset in order for the values to be consistent.
-        /// The list of possible values is defined in the <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-platform">W3C User-Agent Client Hints specification</a>. Note that some (but not all) of these values can overlap with values in the <a href="./os.md">os.type and os.name attributes</a>. However, for consistency, the values in the <c>browser.platform</c> attribute should capture the exact value that the user agent provides.
+        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (<c>navigator.userAgentData.platform</c>). If unavailable, the legacy <c>navigator.platform</c> API SHOULD NOT be used instead and this attribute SHOULD be left unset in order for the values to be consistent.
+        /// The list of possible values is defined in the <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-platform">W3C User-Agent Client Hints specification</a>. Note that some (but not all) of these values can overlap with values in the <a href="./os.md"><c>os.type</c> and <c>os.name</c> attributes</a>. However, for consistency, the values in the <c>browser.platform</c> attribute should capture the exact value that the user agent provides.
         /// </remarks>
         public const string AttributeBrowserPlatform = "browser.platform";
+
+        /// <summary>
+        /// A boolean that is true if the browser is running on a mobile device.
+        /// </summary>
+        /// <remarks>
+        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (<c>navigator.userAgentData.mobile</c>). If unavailable, this attribute SHOULD be left unset.
+        /// </remarks>
+        public const string AttributeBrowserMobile = "browser.mobile";
 
         /// <summary>
         /// Full user-agent string provided by the browser.
@@ -53,6 +61,14 @@ namespace OpenTelemetry.Resources
         /// The user-agent value SHOULD be provided only from browsers that do not have a mechanism to retrieve brands and platform individually from the User-Agent Client Hints API. To retrieve the value, the legacy <c>navigator.userAgent</c> API can be used.
         /// </remarks>
         public const string AttributeBrowserUserAgent = "browser.user_agent";
+
+        /// <summary>
+        /// Preferred language of the user using the browser.
+        /// </summary>
+        /// <remarks>
+        /// This value is intended to be taken from the Navigator API <c>navigator.language</c>.
+        /// </remarks>
+        public const string AttributeBrowserLanguage = "browser.language";
 
         /// <summary>
         /// Name of the cloud provider.
@@ -291,7 +307,7 @@ namespace OpenTelemetry.Resources
         public const string AttributeFaasMaxMemory = "faas.max_memory";
 
         /// <summary>
-        /// Unique host ID. For Cloud, this must be the instance_id assigned by the cloud provider.
+        /// Unique host ID. For Cloud, this must be the instance_id assigned by the cloud provider. For non-containerized Linux systems, the <c>machine-id</c> located in <c>/etc/machine-id</c> or <c>/var/lib/dbus/machine-id</c> may be used.
         /// </summary>
         public const string AttributeHostId = "host.id";
 
@@ -725,6 +741,11 @@ namespace OpenTelemetry.Resources
             public const string Gcp = "gcp";
 
             /// <summary>
+            /// IBM Cloud.
+            /// </summary>
+            public const string IbmCloud = "ibm_cloud";
+
+            /// <summary>
             /// Tencent Cloud.
             /// </summary>
             public const string TencentCloud = "tencent_cloud";
@@ -744,6 +765,11 @@ namespace OpenTelemetry.Resources
             /// Alibaba Cloud Function Compute.
             /// </summary>
             public const string AlibabaCloudFc = "alibaba_cloud_fc";
+
+            /// <summary>
+            /// Red Hat OpenShift on Alibaba Cloud.
+            /// </summary>
+            public const string AlibabaCloudOpenshift = "alibaba_cloud_openshift";
 
             /// <summary>
             /// AWS Elastic Compute Cloud.
@@ -776,6 +802,11 @@ namespace OpenTelemetry.Resources
             public const string AwsAppRunner = "aws_app_runner";
 
             /// <summary>
+            /// Red Hat OpenShift on AWS (ROSA).
+            /// </summary>
+            public const string AwsOpenshift = "aws_openshift";
+
+            /// <summary>
             /// Azure Virtual Machines.
             /// </summary>
             public const string AzureVm = "azure_vm";
@@ -801,6 +832,11 @@ namespace OpenTelemetry.Resources
             public const string AzureAppService = "azure_app_service";
 
             /// <summary>
+            /// Azure Red Hat OpenShift.
+            /// </summary>
+            public const string AzureOpenshift = "azure_openshift";
+
+            /// <summary>
             /// Google Cloud Compute Engine (GCE).
             /// </summary>
             public const string GcpComputeEngine = "gcp_compute_engine";
@@ -824,6 +860,16 @@ namespace OpenTelemetry.Resources
             /// Google Cloud App Engine (GAE).
             /// </summary>
             public const string GcpAppEngine = "gcp_app_engine";
+
+            /// <summary>
+            /// Red Hat OpenShift on Google Cloud.
+            /// </summary>
+            public const string GoogleCloudOpenshift = "google_cloud_openshift";
+
+            /// <summary>
+            /// Red Hat OpenShift on IBM Cloud.
+            /// </summary>
+            public const string IbmCloudOpenshift = "ibm_cloud_openshift";
 
             /// <summary>
             /// Tencent Cloud Cloud Virtual Machine (CVM).
