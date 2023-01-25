@@ -90,9 +90,6 @@ values of the span limits
 * `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT`
 * `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`
 
-`FormatException` is thrown in case of an invalid value for any of the
-supported environment variables.
-
 ## OTLP Logs
 
 This package currently only supports exporting traces and metrics. Support for

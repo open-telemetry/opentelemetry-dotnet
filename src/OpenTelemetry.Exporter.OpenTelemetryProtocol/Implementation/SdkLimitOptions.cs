@@ -31,7 +31,7 @@ internal sealed class SdkLimitOptions
     private int? spanLinkAttributeCountLimit;
     private bool spanLinkAttributeCountLimitSet;
 
-    internal SdkLimitOptions()
+    public SdkLimitOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
     }
