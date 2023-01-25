@@ -37,9 +37,9 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ConfigurationExtensions.cs" Link="Includes\ConfigurationExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\OpenTelemetrySdkEventSource.cs" Link="Includes\OpenTelemetrySdkEventSource.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
