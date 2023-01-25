@@ -29,10 +29,6 @@ namespace OpenTelemetry.Exporter
     /// OTEL_EXPORTER_JAEGER_AGENT_HOST, OTEL_EXPORTER_JAEGER_AGENT_PORT
     /// environment variables are parsed during object construction.
     /// </summary>
-    /// <remarks>
-    /// The constructor throws <see cref="FormatException"/> if it fails to parse
-    /// any of the supported environment variables.
-    /// </remarks>
     public class JaegerExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;

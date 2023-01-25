@@ -64,14 +64,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
         }
 
-        [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
-        [InlineData(JaegerExporterOptions.OTelAgentPortEnvVarKey)]
-        [InlineData(JaegerExporterOptions.OTelProtocolEnvVarKey)]
-        public void JaegerExporterOptions_InvalidEnvironmentVariableOverride(string envVar)
+        [Fact]
+        public void JaegerExporterOptions_InvalidEnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable(envVar, "invalid");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelProtocolEnvVarKey, "invalid");
 
-            Assert.Throws<FormatException>(() => new JaegerExporterOptions());
+            var options = new JaegerExporterOptions();
+
+            Assert.Equal("localhost", options.AgentHost);
+            Assert.Equal(default(JaegerExportProtocol), options.Protocol);
         }
 
         [Fact]
