@@ -224,9 +224,6 @@ For exporting purposes, the SDK provides the following built-in processors:
   | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                 |
   | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
 
-  `FormatException` is thrown in case of an invalid value for any of the
-  supported environment variables.
-
 * [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor)
   : This is an exporting processor which passes telemetry to the configured
   exporter immediately without any batching.
