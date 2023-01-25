@@ -21,7 +21,8 @@ used:
 
 * [Logs](../../docs/logs/getting-started/Program.cs)
 * [Metrics](../../docs/metrics/getting-started/Program.cs)
-* [Traces](../../docs/trace/getting-started/Program.cs)
+* Traces: [ASP.NET Core](../../docs/trace/getting-started-aspnetcore/README.md)
+  | [Console](../../docs/trace/getting-started-console/README.md)
 
 ## Configuration
 
@@ -43,9 +44,6 @@ values of the `PeriodicExportingMetricReaderOptions`
 | ------------------------------| ------------------------------------------------|
 | `OTEL_METRIC_EXPORT_INTERVAL` | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`  | `ExportTimeoutMilliseconds`                     |
-
-`FormatException` is thrown in case of an invalid value for any of the
-supported environment variables.
 
 ## References
 

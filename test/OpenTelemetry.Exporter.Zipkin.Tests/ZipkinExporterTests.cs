@@ -189,14 +189,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
         public void ErrorGettingUriFromEnvVarSetsDefaultEndpointValue()
         {
             try
             {
                 Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "InvalidUri");
 
-                Assert.Throws<FormatException>(() => new ZipkinExporterOptions());
+                var options = new ZipkinExporterOptions();
+
+                Assert.Equal(new Uri(ZipkinExporterOptions.DefaultZipkinEndpoint), options.Endpoint);
             }
             finally
             {

@@ -83,11 +83,19 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void BatchExportProcessorOptions_InvalidPortEnvironmentVariableOverride()
+        public void BatchExportProcessorOptions_InvalidEnvironmentVariableOverride()
         {
             Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ScheduledDelayEnvVarKey, "invalid");
 
-            Assert.Throws<FormatException>(() => new BatchExportActivityProcessorOptions());
+            var options = new BatchExportActivityProcessorOptions();
+
+            Assert.Equal(30000, options.ExporterTimeoutMilliseconds);
+            Assert.Equal(512, options.MaxExportBatchSize);
+            Assert.Equal(2048, options.MaxQueueSize);
+            Assert.Equal(5000, options.ScheduledDelayMilliseconds);
         }
 
         [Fact]

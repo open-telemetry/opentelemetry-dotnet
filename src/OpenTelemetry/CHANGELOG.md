@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Removed the dependency on
+  Microsoft.Extensions.Configuration.EnvironmentVariables
+  ([#4092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4092))
+
+* Removed the explicit reference to Microsoft.Extensions.Options version 5.0 and
+  reverted back to the transitive reference of version 3.1
+  ([#4093](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4093))
+  
 * `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_VERSION`
    environmental variable.
    ([#4081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4081))
