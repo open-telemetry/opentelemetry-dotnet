@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -167,6 +168,7 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="configure">Configuration callback.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static MeterProviderBuilder ConfigureBuilder(
         this MeterProviderBuilder meterProviderBuilder,
         Action<IServiceProvider, MeterProviderBuilder> configure)
