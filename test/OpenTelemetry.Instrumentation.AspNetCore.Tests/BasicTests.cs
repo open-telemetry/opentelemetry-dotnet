@@ -676,10 +676,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(activityName, middlewareActivity.OperationName);
             Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-            // tag http.route should not be added on activity started by asp.net core as it will not be found during OnEventWritten event
-            Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+            // tag http.route should be added on activity started by asp.net core as it is set during onStop event
+            Assert.Contains(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
-            Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
+            Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
         }
 
 #if NET7_0_OR_GREATER
@@ -780,12 +780,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                         }
 
                                         break;
-                                    case HttpInListener.OnMvcBeforeActionEvent:
-                                        {
-                                            numberofSubscribedEvents++;
-                                        }
-
-                                        break;
                                     default:
                                         {
                                             numberOfUnSubscribedEvents++;
@@ -814,7 +808,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(0, numberOfUnSubscribedEvents);
-            Assert.Equal(3, numberofSubscribedEvents);
+            Assert.Equal(2, numberofSubscribedEvents);
         }
 
         [Fact]
@@ -840,12 +834,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                                         break;
                                     case HttpInListener.OnStopEvent:
-                                        {
-                                            numberofSubscribedEvents++;
-                                        }
-
-                                        break;
-                                    case HttpInListener.OnMvcBeforeActionEvent:
                                         {
                                             numberofSubscribedEvents++;
                                         }
@@ -898,7 +886,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(1, numberOfExceptionCallbacks);
             Assert.Equal(0, numberOfUnSubscribedEvents);
-            Assert.Equal(4, numberofSubscribedEvents);
+            Assert.Equal(3, numberofSubscribedEvents);
         }
 
         [Fact]

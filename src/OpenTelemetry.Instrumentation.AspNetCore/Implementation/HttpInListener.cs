@@ -21,7 +21,7 @@ using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
 #if NET6_0_OR_GREATER
-using Microsoft.AspNetCore.Mvc.Diagnostics;
+using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
 #if !NETSTANDARD2_0
@@ -84,12 +84,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 case OnStopEvent:
                     {
                         this.OnStopActivity(Activity.Current, payload);
-                    }
-
-                    break;
-                case OnMvcBeforeActionEvent:
-                    {
-                        this.OnMvcBeforeAction(Activity.Current, payload);
                     }
 
                     break;
@@ -242,6 +236,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
+#if NET6_0_OR_GREATER
+                var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+                if (!string.IsNullOrEmpty(route))
+                {
+                    activity.DisplayName = route;
+                    activity.SetTag(SemanticConventions.AttributeHttpRoute, route);
+                }
+#endif
+
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
@@ -291,57 +294,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             if (textMapPropagator is not TraceContextPropagator)
             {
                 Baggage.Current = default;
-            }
-        }
-
-        public void OnMvcBeforeAction(Activity activity, object payload)
-        {
-            // We cannot rely on Activity.Current here
-            // There could be activities started by middleware
-            // after activity started by framework resulting in different Activity.Current.
-            // so, we need to first find the activity started by Asp.Net Core.
-            // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
-            // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
-            // activity = httpActivityFeature.Activity;
-            // However, this will not work as in case of custom propagator
-            // we start a new activity during onStart event which is a sibling to the activity created by framework
-            // So, in that case we need to get the activity created by us here.
-            // we can do so only by looping through activity.Parent chain.
-            while (activity != null)
-            {
-                if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
-                {
-                    break;
-                }
-
-                activity = activity.Parent;
-            }
-
-            if (activity == null)
-            {
-                return;
-            }
-
-            if (activity.IsAllDataRequested)
-            {
-#if !NET6_0_OR_GREATER
-                _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-                _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-                _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-#else
-                var beforeActionEventData = payload as BeforeActionEventData;
-                var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
-#endif
-                if (!string.IsNullOrEmpty(template))
-                {
-                    // override the span name that was previously set to the path part of URL.
-                    activity.DisplayName = template;
-                    activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
-                }
-
-                // TODO: Should we get values from RouteData?
-                // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-                // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
             }
         }
 

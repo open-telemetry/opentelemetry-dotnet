@@ -27,7 +27,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
             "Microsoft.AspNetCore.Hosting.HttpRequestIn",
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
-            "Microsoft.AspNetCore.Mvc.BeforeAction",
             "Microsoft.AspNetCore.Diagnostics.UnhandledException",
             "Microsoft.AspNetCore.Hosting.UnhandledException",
         };
