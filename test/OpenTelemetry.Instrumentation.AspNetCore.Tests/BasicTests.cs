@@ -1012,14 +1012,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             _ = app.RunAsync();
 
             using var client = new HttpClient();
-            try
-            {
-                await client.GetStringAsync("http://localhost:5000/custom/abc").ConfigureAwait(false);
-            }
-            catch
-            {
-                // ignore 500 error.
-            }
+            var res = await client.GetStringAsync("http://localhost:5000/custom/abc").ConfigureAwait(false);
+            Assert.NotNull(res);
 
             tracerprovider.ForceFlush();
             for (var i = 0; i < 10; i++)
@@ -1037,8 +1031,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var activity = exportedItems[0];
 
+            // After fix update to Contains http.route
             Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+
+            // After fix this should be /custom/{name:alpha}
             Assert.Equal("/custom/abc", activity.DisplayName);
 
             await app.DisposeAsync().ConfigureAwait(false);
