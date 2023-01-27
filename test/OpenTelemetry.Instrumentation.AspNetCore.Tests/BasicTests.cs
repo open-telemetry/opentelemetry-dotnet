@@ -1031,6 +1031,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var activity = exportedItems[0];
 
+            Assert.NotNull(activity);
+
             // After fix update to Contains http.route
             Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
