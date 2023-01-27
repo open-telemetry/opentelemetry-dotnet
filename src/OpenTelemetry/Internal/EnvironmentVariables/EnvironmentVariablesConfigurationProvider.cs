@@ -15,11 +15,6 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
     /// </summary>
     internal sealed class EnvironmentVariablesConfigurationProvider : ConfigurationProvider
     {
-        private const string MySqlServerPrefix = "MYSQLCONNSTR_";
-        private const string SqlAzureServerPrefix = "SQLAZURECONNSTR_";
-        private const string SqlServerPrefix = "SQLCONNSTR_";
-        private const string CustomConnectionStringPrefix = "CUSTOMCONNSTR_";
-
         private readonly string _prefix;
         private readonly string _normalizedPrefix;
 
@@ -66,27 +61,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
                 {
                     string key = (string)e.Entry.Key;
                     string? value = (string?)e.Entry.Value;
-
-                    if (key.StartsWith(MySqlServerPrefix, StringComparison.OrdinalIgnoreCase))
-                    {
-                        HandleMatchedConnectionStringPrefix(data, MySqlServerPrefix, "MySql.Data.MySqlClient", key, value);
-                    }
-                    else if (key.StartsWith(SqlAzureServerPrefix, StringComparison.OrdinalIgnoreCase))
-                    {
-                        HandleMatchedConnectionStringPrefix(data, SqlAzureServerPrefix, "System.Data.SqlClient", key, value);
-                    }
-                    else if (key.StartsWith(SqlServerPrefix, StringComparison.OrdinalIgnoreCase))
-                    {
-                        HandleMatchedConnectionStringPrefix(data, SqlServerPrefix, "System.Data.SqlClient", key, value);
-                    }
-                    else if (key.StartsWith(CustomConnectionStringPrefix, StringComparison.OrdinalIgnoreCase))
-                    {
-                        HandleMatchedConnectionStringPrefix(data, CustomConnectionStringPrefix, null, key, value);
-                    }
-                    else
-                    {
-                        AddIfNormalizedKeyMatchesPrefix(data, Normalize(key), value);
-                    }
+                    AddIfNormalizedKeyMatchesPrefix(data, Normalize(key), value);
                 }
             }
             finally
@@ -95,18 +70,6 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             }
 
             Data = data;
-        }
-
-        private void HandleMatchedConnectionStringPrefix(Dictionary<string, string?> data, string connectionStringPrefix, string? provider, string fullKey, string? value)
-        {
-            string normalizedKeyWithoutConnectionStringPrefix = Normalize(fullKey.Substring(connectionStringPrefix.Length));
-
-            // Add the key-value pair for connection string, and optionally provider name
-            AddIfNormalizedKeyMatchesPrefix(data, $"ConnectionStrings:{normalizedKeyWithoutConnectionStringPrefix}", value);
-            if (provider != null)
-            {
-                AddIfNormalizedKeyMatchesPrefix(data, $"ConnectionStrings:{normalizedKeyWithoutConnectionStringPrefix}_ProviderName", provider);
-            }
         }
 
         private void AddIfNormalizedKeyMatchesPrefix(Dictionary<string, string?> data, string normalizedKey, string? value)
