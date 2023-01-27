@@ -120,7 +120,7 @@ internal static class ConfigurationExtensions
     public static IServiceCollection RegisterOptionsFactory<T>(
         this IServiceCollection services,
         Func<IConfiguration, T> optionsFactoryFunc)
-        where T : class
+        where T : class, new()
     {
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
@@ -141,7 +141,7 @@ internal static class ConfigurationExtensions
     public static IServiceCollection RegisterOptionsFactory<T>(
         this IServiceCollection services,
         Func<IServiceProvider, IConfiguration, string, T> optionsFactoryFunc)
-        where T : class
+        where T : class, new()
     {
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
@@ -157,30 +157,5 @@ internal static class ConfigurationExtensions
         });
 
         return services!;
-    }
-
-    private sealed class DelegatingOptionsFactory<T> : OptionsFactory<T>
-        where T : class
-    {
-        private readonly Func<IConfiguration, string, T> optionsFactoryFunc;
-        private readonly IConfiguration configuration;
-
-        public DelegatingOptionsFactory(
-            Func<IConfiguration, string, T> optionsFactoryFunc,
-            IConfiguration configuration,
-            IEnumerable<IConfigureOptions<T>> setups,
-            IEnumerable<IPostConfigureOptions<T>> postConfigures,
-            IEnumerable<IValidateOptions<T>> validations)
-            : base(setups, postConfigures, validations)
-        {
-            Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
-            Debug.Assert(configuration != null, "configuration was null");
-
-            this.optionsFactoryFunc = optionsFactoryFunc!;
-            this.configuration = configuration!;
-        }
-
-        protected override T CreateInstance(string name)
-            => this.optionsFactoryFunc(this.configuration, name);
     }
 }
