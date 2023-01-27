@@ -21,20 +21,22 @@ namespace OpenTelemetry.Metrics;
 internal abstract class ExemplarFilter
 {
     /// <summary>
-    /// Gets the ExemplarFilter which never samples any measurements.
+    /// Determines if a given measurement is eligible for being
+    /// considered for becoming Exemplar.
     /// </summary>
-    public static ExemplarFilter AlwaysOff { get; } = new AlwaysOffExemplarFilter();
-
-    /// <summary>
-    /// Gets the ExemplarFilter which samples all measurements.
-    /// </summary>
-    public static ExemplarFilter AlwaysOn { get; } = new AlwaysOnExemplarFilter();
-
-    /// <summary>
-    /// Gets the ExemplarFilter which samples all measurements that are made
-    /// inside context of a sampled Activity.
-    /// </summary>
-    public static ExemplarFilter TraceBased { get; } = new TraceBasedExemplarFilter();
+    /// <param name="value">The value of the measurement.</param>
+    /// <param name="tags">The complete set of tags provided with the measurement.</param>
+    /// <returns>
+    /// Returns
+    /// <c>true</c> to indicate this measurement is eligible to become Exemplar
+    /// and will be given to an ExemplarReservoir.
+    /// Reservoir may further sample, so a true here does not mean that this
+    /// measurement will become an exemplar, it just means it'll be
+    /// eligible for being Exemplar.
+    /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
+    /// and will not be given to the ExemplarReservoir.
+    /// </returns>
+    public abstract bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
     /// <summary>
     /// Determines if a given measurement is eligible for being
@@ -52,29 +54,5 @@ internal abstract class ExemplarFilter
     /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
     /// and will not be given to the ExemplarReservoir.
     /// </returns>
-    public virtual bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        return false;
-    }
-
-    /// <summary>
-    /// Determines if a given measurement is eligible for being
-    /// considered for becoming Exemplar.
-    /// </summary>
-    /// <param name="value">The value of the measurement.</param>
-    /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    /// <returns>
-    /// Returns
-    /// <c>true</c> to indicate this measurement is eligible to become Exemplar
-    /// and will be given to an ExemplarReservoir.
-    /// Reservoir may further sample, so a true here does not mean that this
-    /// measurement will become an exemplar, it just means it'll be
-    /// eligible for being Exemplar.
-    /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
-    /// and will not be given to the ExemplarReservoir.
-    /// </returns>
-    public virtual bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        return false;
-    }
+    public abstract bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 }
