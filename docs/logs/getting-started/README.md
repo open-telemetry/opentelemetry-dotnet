@@ -37,14 +37,14 @@ Run the application again (using `dotnet run`) and you should see the log output
 on the console.
 
 ```text
-LogRecord.TraceId:            00000000000000000000000000000000
-LogRecord.SpanId:             0000000000000000
-LogRecord.Timestamp:          2020-11-13T23:50:33.5764463Z
-LogRecord.EventId:            0
-LogRecord.CategoryName:       Program
-LogRecord.LogLevel:           Information
-LogRecord.TraceFlags:         None
-LogRecord.State:              Hello from tomato 2.99.
+LogRecord.Timestamp:               2023-01-21T00:33:08.1467491Z
+LogRecord.CategoryName:            GettingStarted.Program
+LogRecord.LogLevel:                Information
+LogRecord.State (Key:Value):
+    name: tomato
+    price: 2.99
+    OriginalFormat (a.k.a Body): Hello from {name} {price}.
+LogRecord.EventId:                 123
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
