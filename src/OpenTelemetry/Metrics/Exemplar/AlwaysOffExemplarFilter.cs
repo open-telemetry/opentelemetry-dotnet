@@ -1,4 +1,4 @@
-// <copyright file="AlwaysOffNoneExemplarFilter.cs" company="OpenTelemetry Authors">
+// <copyright file="AlwaysOffExemplarFilter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ namespace OpenTelemetry.Metrics;
 /// An ExemplarFilter which makes no measurements eligible for being an Exemplar.
 /// Using this ExemplarFilter is as good as disabling Exemplar feature.
 /// </summary>
-internal sealed class AlwaysOffNoneExemplarFilter : ExemplarFilter
+internal sealed class AlwaysOffExemplarFilter : ExemplarFilter
 {
     public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {

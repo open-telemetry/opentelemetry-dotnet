@@ -21,6 +21,22 @@ namespace OpenTelemetry.Metrics;
 internal abstract class ExemplarFilter
 {
     /// <summary>
+    /// Gets the ExemplarFilter which never samples any measurements.
+    /// </summary>
+    public static ExemplarFilter AlwaysOff { get; } = new AlwaysOffExemplarFilter();
+
+    /// <summary>
+    /// Gets the ExemplarFilter which samples all measurements.
+    /// </summary>
+    public static ExemplarFilter AlwaysOn { get; } = new AlwaysOnExemplarFilter();
+
+    /// <summary>
+    /// Gets the ExemplarFilter which samples all measurements that are made
+    /// inside context of a sampled Activity.
+    /// </summary>
+    public static ExemplarFilter TraceBased { get; } = new TraceBasedExemplarFilter();
+
+    /// <summary>
     /// Determines if a given measurement is eligible for being
     /// considered for becoming Exemplar.
     /// </summary>
