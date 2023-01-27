@@ -99,28 +99,20 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Sets the sampler on the provider.
         /// </summary>
-        /// <remarks>
-        /// Note: The type specified by <typeparamref name="T"/> will be
-        /// registered as a singleton service into application services.
-        /// </remarks>
-        /// <typeparam name="T">Sampler type.</typeparam>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder SetSampler<T>(
+        public static TracerProviderBuilder SetSampler(
             this TracerProviderBuilder tracerProviderBuilder,
-            Func<IServiceProvider, T> implementationFactory)
-            where T : Sampler
+            Func<IServiceProvider, Sampler> implementationFactory)
         {
             Guard.ThrowIfNull(implementationFactory);
-
-            tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton(implementationFactory));
 
             tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
                 if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
                 {
-                    tracerProviderBuilderSdk.SetSampler(sp.GetRequiredService<T>());
+                    tracerProviderBuilderSdk.SetSampler(implementationFactory(sp));
                 }
             });
 
@@ -223,28 +215,20 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds a processor to the provider which will be retrieved using dependency injection.
         /// </summary>
-        /// <remarks>
-        /// Note: The type specified by <typeparamref name="T"/> will be
-        /// registered as a singleton service into application services.
-        /// </remarks>
-        /// <typeparam name="T">Processor type.</typeparam>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddProcessor<T>(
+        public static TracerProviderBuilder AddProcessor(
             this TracerProviderBuilder tracerProviderBuilder,
-            Func<IServiceProvider, T> implementationFactory)
-            where T : BaseProcessor<Activity>
+            Func<IServiceProvider, BaseProcessor<Activity>> implementationFactory)
         {
             Guard.ThrowIfNull(implementationFactory);
-
-            tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton(implementationFactory));
 
             tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
                 if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
                 {
-                    tracerProviderBuilderSdk.AddProcessor(sp.GetRequiredService<T>());
+                    tracerProviderBuilderSdk.AddProcessor(implementationFactory(sp));
                 }
             });
 

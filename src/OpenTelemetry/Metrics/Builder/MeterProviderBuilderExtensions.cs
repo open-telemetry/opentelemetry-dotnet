@@ -80,28 +80,20 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Adds a reader to the provider.
         /// </summary>
-        /// <remarks>
-        /// Note: The type specified by <typeparamref name="T"/> will be
-        /// registered as a singleton service into application services.
-        /// </remarks>
-        /// <typeparam name="T">Reader type.</typeparam>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        public static MeterProviderBuilder AddReader<T>(
+        public static MeterProviderBuilder AddReader(
             this MeterProviderBuilder meterProviderBuilder,
-            Func<IServiceProvider, T> implementationFactory)
-            where T : MetricReader
+            Func<IServiceProvider, MetricReader> implementationFactory)
         {
             Guard.ThrowIfNull(implementationFactory);
-
-            meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton(implementationFactory));
 
             meterProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
                 if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
                 {
-                    meterProviderBuilderSdk.AddReader(sp.GetRequiredService<T>());
+                    meterProviderBuilderSdk.AddReader(implementationFactory(sp));
                 }
             });
 

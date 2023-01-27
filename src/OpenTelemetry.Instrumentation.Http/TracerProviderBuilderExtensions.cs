@@ -67,24 +67,34 @@ namespace OpenTelemetry.Trace
                 builder.ConfigureServices(services => services.Configure(name, configureHttpClientInstrumentationOptions));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+#if NETFRAMEWORK
+            builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
+
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
+
+                    HttpWebRequestActivitySource.Options = options;
+                });
+            }
+#else
+            AddHttpClientInstrumentationSource(builder);
+
+            builder.AddInstrumentation(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
 
-#if NETFRAMEWORK
-                HttpWebRequestActivitySource.Options = options;
-
-                builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
-#else
-                AddHttpClientInstrumentation(builder, new HttpClientInstrumentation(options));
-#endif
+                return new HttpClientInstrumentation(options);
             });
+#endif
+            return builder;
         }
 
 #if !NETFRAMEWORK
-        internal static TracerProviderBuilder AddHttpClientInstrumentation(
-            this TracerProviderBuilder builder,
-            HttpClientInstrumentation instrumentation)
+        internal static void AddHttpClientInstrumentationSource(
+            this TracerProviderBuilder builder)
         {
             if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
             {
@@ -95,8 +105,6 @@ namespace OpenTelemetry.Trace
                 builder.AddSource(HttpHandlerDiagnosticListener.ActivitySourceName);
                 builder.AddLegacySource("System.Net.Http.HttpRequestOut");
             }
-
-            return builder.AddInstrumentation(() => instrumentation);
         }
 #endif
     }

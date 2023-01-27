@@ -70,17 +70,24 @@ namespace OpenTelemetry.Trace
                 builder.ConfigureServices(services => services.Configure(name, configureAspNetCoreInstrumentationOptions));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddAspNetCoreInstrumentationSources(builder, sp);
+                });
+            }
+
+            return builder.AddInstrumentation(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreInstrumentationOptions>>().Get(name);
 
-                AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentation(new HttpInListener(options)), sp);
+                return BuildAspNetCoreInstrumentation(options);
             });
         }
 
-        internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
+        internal static void AddAspNetCoreInstrumentationSources(
             this TracerProviderBuilder builder,
-            AspNetCoreInstrumentation instrumentation,
             IServiceProvider serviceProvider = null)
         {
             // For .NET7.0 onwards activity will be created using activitySource.
@@ -103,8 +110,10 @@ namespace OpenTelemetry.Trace
             builder.AddSource(HttpInListener.ActivitySourceName);
             builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
 #endif
-
-            return builder.AddInstrumentation(() => instrumentation);
         }
+
+        internal static AspNetCoreInstrumentation BuildAspNetCoreInstrumentation(
+            AspNetCoreInstrumentationOptions options)
+            => new(new HttpInListener(options));
     }
 }
