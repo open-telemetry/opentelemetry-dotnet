@@ -249,6 +249,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-console", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-jaeger", "docs\trace\getting-started-jaeger\getting-started-jaeger.csproj", "{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.ThreadSafety", "test\OpenTelemetry.Tests.ThreadSafety\OpenTelemetry.Tests.ThreadSafety.csproj", "{07B9A1BF-9C07-4CDC-9255-8C2291B5454A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -523,6 +525,10 @@ Global
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07B9A1BF-9C07-4CDC-9255-8C2291B5454A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07B9A1BF-9C07-4CDC-9255-8C2291B5454A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07B9A1BF-9C07-4CDC-9255-8C2291B5454A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07B9A1BF-9C07-4CDC-9255-8C2291B5454A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
