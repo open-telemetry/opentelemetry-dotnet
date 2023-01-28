@@ -40,3 +40,6 @@ jobs:
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
+
+    # - name: ThreadSafety Test ${{ matrix.version }}
+      # run: Commands to rewrite dll with coyote and execute coyote test. Parse output of coyote test to see if bug exists.
