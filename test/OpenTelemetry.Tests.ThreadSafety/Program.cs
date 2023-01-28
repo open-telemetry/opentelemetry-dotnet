@@ -23,7 +23,6 @@ namespace OpenTelemetry.Concurrency.Tests
 {
     public static class Program
     {
-
         public static void Main(string[] args)
         {
             SdkSupportsMultipleReaders();
@@ -79,7 +78,7 @@ namespace OpenTelemetry.Concurrency.Tests
             Assert.True(defaultNamedOptionsConfigureCalled);
             Assert.True(namedOptionsConfigureCalled);
 
-            counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+            counter.Add(10, new KeyValuePair<string, object?>("key", "value"));
 
             meterProvider.ForceFlush();
 
@@ -110,7 +109,7 @@ namespace OpenTelemetry.Concurrency.Tests
             exportedItems1.Clear();
             exportedItems2.Clear();
 
-            counter.Add(15, new KeyValuePair<string, object>("key", "value"));
+            counter.Add(15, new KeyValuePair<string, object?>("key", "value"));
 
             meterProvider.ForceFlush();
 
@@ -120,6 +119,7 @@ namespace OpenTelemetry.Concurrency.Tests
             // Check value exported for Counter
             AssertLongSumValueForMetric(exportedItems1[0], 15);
             AssertLongSumValueForMetric(exportedItems2[0], 25);
+
             // Check value exported for Gauge
             AssertLongSumValueForMetric(exportedItems1[1], 300);
             AssertLongSumValueForMetric(exportedItems2[1], 400);
