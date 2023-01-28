@@ -19,8 +19,8 @@ using System.Diagnostics;
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The Exemplar Filter which samples measurement done inside context
-/// of sampled activity (span).
+/// The Exemplar Reservoir which has a fixed size buffer
+/// implementing naive reservoir algorithm to store exemplars.
 /// </summary>
 internal sealed class SimpleFixedSizeExemplarReservoir : ExemplarReservoir
 {
@@ -42,29 +42,32 @@ internal sealed class SimpleFixedSizeExemplarReservoir : ExemplarReservoir
 
     public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
+        // TODO: Replace simple lock with alternates.
+        // TODO: Also, the updation of MP itself
+        // can be moved inside this.
         lock (this.lockObject)
         {
-            if (numberOfMeasurementsSeen < this.size)
+            if (this.numberOfMeasurementsSeen < this.size)
             {
-                var exemplar = new Exemplar();
+                var exemplar = default(Exemplar);
                 exemplar.Timestamp = DateTime.UtcNow;
                 exemplar.LongValue = value;
-                exemplar.TraceId = Activity.Current?.TraceId.ToHexString();
-                exemplar.SpanId = Activity.Current?.SpanId.ToHexString();
-                this.runningExemplars[numberOfMeasurementsSeen] = exemplar;
-                numberOfMeasurementsSeen++;
+                exemplar.TraceId = Activity.Current?.TraceId;
+                exemplar.SpanId = Activity.Current?.SpanId;
+                this.runningExemplars[this.numberOfMeasurementsSeen] = exemplar;
+                this.numberOfMeasurementsSeen++;
             }
             else
             {
-                numberOfMeasurementsSeen++;
-                var bucket = random.Next((int)numberOfMeasurementsSeen);
+                this.numberOfMeasurementsSeen++;
+                var bucket = this.random.Next((int)this.numberOfMeasurementsSeen);
                 if (bucket < this.size)
                 {
-                    var exemplar = new Exemplar();
+                    var exemplar = default(Exemplar);
                     exemplar.Timestamp = DateTime.UtcNow;
                     exemplar.LongValue = value;
-                    exemplar.TraceId = Activity.Current?.TraceId.ToHexString();
-                    exemplar.SpanId = Activity.Current?.SpanId.ToHexString();
+                    exemplar.TraceId = Activity.Current?.TraceId;
+                    exemplar.SpanId = Activity.Current?.SpanId;
                     this.runningExemplars[bucket] = exemplar;
                 }
             }
@@ -75,27 +78,27 @@ internal sealed class SimpleFixedSizeExemplarReservoir : ExemplarReservoir
     {
         lock (this.lockObject)
         {
-            if (numberOfMeasurementsSeen < this.size)
+            if (this.numberOfMeasurementsSeen < this.size)
             {
-                var exemplar = new Exemplar();
+                var exemplar = default(Exemplar);
                 exemplar.Timestamp = DateTime.UtcNow;
                 exemplar.DoubleValue = value;
-                exemplar.TraceId = Activity.Current?.TraceId.ToHexString();
-                exemplar.SpanId = Activity.Current?.SpanId.ToHexString();
-                this.runningExemplars[numberOfMeasurementsSeen] = exemplar;
-                numberOfMeasurementsSeen++;
+                exemplar.TraceId = (ActivityTraceId)Activity.Current?.TraceId;
+                exemplar.SpanId = (ActivitySpanId)Activity.Current?.SpanId;
+                this.runningExemplars[this.numberOfMeasurementsSeen] = exemplar;
+                this.numberOfMeasurementsSeen++;
             }
             else
             {
-                numberOfMeasurementsSeen++;
-                var bucket = random.Next((int)numberOfMeasurementsSeen);
+                this.numberOfMeasurementsSeen++;
+                var bucket = this.random.Next((int)this.numberOfMeasurementsSeen);
                 if (bucket < this.size)
                 {
-                    var exemplar = new Exemplar();
+                    var exemplar = default(Exemplar);
                     exemplar.Timestamp = DateTime.UtcNow;
                     exemplar.DoubleValue = value;
-                    exemplar.TraceId = Activity.Current?.TraceId.ToHexString();
-                    exemplar.SpanId = Activity.Current?.SpanId.ToHexString();
+                    exemplar.TraceId = (ActivityTraceId)Activity.Current?.TraceId;
+                    exemplar.SpanId = (ActivitySpanId)Activity.Current?.SpanId;
                     this.runningExemplars[bucket] = exemplar;
                 }
             }
@@ -104,14 +107,18 @@ internal sealed class SimpleFixedSizeExemplarReservoir : ExemplarReservoir
 
     public override Exemplar[] Collect()
     {
+        return this.snapshotExemplars;
+    }
+
+    public override void SnapShot()
+    {
         lock (this.lockObject)
         {
-            for (int i = 0 ; i < this.size; i++)
+            for (int i = 0; i < this.size; i++)
             {
                 this.snapshotExemplars[i] = this.runningExemplars[i];
+                this.runningExemplars[i].Timestamp = default;
             }
         }
-
-        return this.snapshotExemplars;
     }
 }

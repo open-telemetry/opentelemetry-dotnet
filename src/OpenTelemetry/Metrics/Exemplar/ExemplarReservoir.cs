@@ -16,53 +16,41 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// The interface defining Exemplar Reservoir.
+/// The base class defining Exemplar Reservoir.
 /// </summary>
 internal abstract class ExemplarReservoir
 {
     /// <summary>
-    /// Determines if a given measurement is eligible for being
-    /// considered for becoming Exemplar.
+    /// Offers a measurement to the Reservoir.
     /// </summary>
     /// <param name="value">The value of the measurement.</param>
     /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    /// <returns>
-    /// Returns
-    /// <c>true</c> to indicate this measurement is eligible to become Exemplar
-    /// and will be given to an ExemplarReservoir.
-    /// Reservoir may further sample, so a true here does not mean that this
-    /// measurement will become an exemplar, it just means it'll be
-    /// eligible for being Exemplar.
-    /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
-    /// and will not be given to the ExemplarReservoir.
-    /// </returns>
     public virtual void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
     }
 
     /// <summary>
-    /// Determines if a given measurement is eligible for being
-    /// considered for becoming Exemplar.
+    /// Offers a measurement to the Reservoir.
     /// </summary>
     /// <param name="value">The value of the measurement.</param>
     /// <param name="tags">The complete set of tags provided with the measurement.</param>
-    /// <returns>
-    /// Returns
-    /// <c>true</c> to indicate this measurement is eligible to become Exemplar
-    /// and will be given to an ExemplarReservoir.
-    /// Reservoir may further sample, so a true here does not mean that this
-    /// measurement will become an exemplar, it just means it'll be
-    /// eligible for being Exemplar.
-    /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
-    /// and will not be given to the ExemplarReservoir.
-    /// </returns>
     public virtual void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
     }
 
+    /// <summary>
+    /// Collects the Exemplars stored in the Reservoir so far.
+    /// </summary>
+    /// <returns>List of Exemplars.</returns>
     public virtual Exemplar[] Collect()
     {
         return Array.Empty<Exemplar>();
     }
 
+    /// <summary>
+    /// Take snapshot of running exemplars.
+    /// </summary>
+    public virtual void SnapShot()
+    {
+    }
 }

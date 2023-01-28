@@ -107,7 +107,6 @@ namespace OpenTelemetry.Exporter
 
                         bool isFirstIteration = true;
                         double previousExplicitBound = default;
-                        int exemplarIndex = 0;
                         foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
                             if (isFirstIteration)
@@ -117,9 +116,6 @@ namespace OpenTelemetry.Exporter
                                 bucketsBuilder.Append(']');
                                 bucketsBuilder.Append(':');
                                 bucketsBuilder.Append(histogramMeasurement.BucketCount);
-                                var exemplar = (metricPoint.GetExemplars())[0];
-                                bucketsBuilder.Append("\t");
-                                bucketsBuilder.Append(exemplar.LongValue);
                                 previousExplicitBound = histogramMeasurement.ExplicitBound;
                                 isFirstIteration = false;
                             }
@@ -171,6 +167,30 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
+                    var exemplarString = new StringBuilder();
+                    foreach (var exemplar in metricPoint.GetExemplars())
+                    {
+                        if (exemplar.Timestamp != default)
+                        {
+                            exemplarString.Append("value: ");
+                            if (exemplar.DoubleValue != default)
+                            {
+                                exemplarString.Append(exemplar.DoubleValue);
+                            }
+                            else
+                            {
+                                exemplarString.Append(exemplar.LongValue);
+                            }
+                            exemplarString.Append(" Timestamp: ");
+                            exemplarString.Append(exemplar.Timestamp);
+                            exemplarString.Append(" TraceId: ");
+                            exemplarString.Append(exemplar.TraceId);
+                            exemplarString.Append(" SpanId: ");
+                            exemplarString.Append(exemplar.SpanId);
+                            exemplarString.AppendLine();
+                        }
+                    }
+
                     msg = new StringBuilder();
                     msg.Append('(');
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
@@ -186,6 +206,13 @@ namespace OpenTelemetry.Exporter
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
+                    if (exemplarString.Length > 0)
+                    {
+                        msg.AppendLine();
+                        msg.Append("Exemplars \n");
+                        msg.Append(exemplarString.ToString());
+                    }
+
                     this.WriteLine(msg.ToString());
                 }
             }

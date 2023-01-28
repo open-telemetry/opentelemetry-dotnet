@@ -14,12 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Represents a Exemplar data.
+    /// Represents an Exemplar data.
     /// </summary>
-    public class Exemplar
+    public struct Exemplar
     {
         /// <summary>
         /// Gets the timestamp.
@@ -29,20 +31,22 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Gets the TraceId.
         /// </summary>
-        public String TraceId { get; internal set; }
+        public ActivityTraceId? TraceId { get; internal set; }
 
         /// <summary>
         /// Gets the SpanId.
         /// </summary>
-        public String SpanId { get; internal set; }
+        public ActivitySpanId? SpanId { get; internal set; }
+
+        // TODO: Leverage MetricPointValueStorage
 
         /// <summary>
-        /// Gets the SpanId.
+        /// Gets the double value.
         /// </summary>
         public double DoubleValue { get; internal set; }
 
         /// <summary>
-        /// Gets the SpanId.
+        /// Gets the long value.
         /// </summary>
         public long LongValue { get; internal set; }
     }

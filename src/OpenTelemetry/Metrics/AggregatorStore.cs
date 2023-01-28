@@ -80,7 +80,7 @@ namespace OpenTelemetry.Metrics
                 this.tagsKeysInterestingCount = hs.Count;
             }
 
-            this.exemplarFilter = ExemplarFilters.WithSampledTrace;
+            this.exemplarFilter = ExemplarFilters.All;
         }
 
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);

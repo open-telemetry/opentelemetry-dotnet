@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.HistogramWithBuckets ||
                 this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
-               this.exemplarReservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Length);
+               this.exemplarReservoir = new AlignedHistogramBucketExemplarReservoir(this.histogramBuckets);
             }
             else
             {
@@ -257,6 +257,8 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Exemplar[] GetExemplars()
         {
+            // TODO: Do not expose Exemplar data structure (array now)
+            // Provide Enumerators like we do for Histogram/Tags
             return this.exemplarReservoir.Collect();
         }
 
@@ -293,6 +295,8 @@ namespace OpenTelemetry.Metrics
 
         internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
+            this.exemplarReservoir.Offer(number, tags);
+
             switch (this.aggType)
             {
                 case AggregationType.LongSumIncomingDelta:
@@ -341,6 +345,8 @@ namespace OpenTelemetry.Metrics
 
         internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
+            this.exemplarReservoir.Offer(number, tags);
+
             switch (this.aggType)
             {
                 case AggregationType.DoubleSumIncomingDelta:
@@ -382,7 +388,6 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithBuckets:
                     {
                         int i = this.histogramBuckets.FindBucketIndex(number);
-                        this.exemplarReservoir.Offer(number, tags);
 
                         var sw = default(SpinWait);
                         while (true)
@@ -436,6 +441,7 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         int i = this.histogramBuckets.FindBucketIndex(number);
+                        this.exemplarReservoir.Offer(number, tags);
 
                         var sw = default(SpinWait);
                         while (true)
@@ -843,6 +849,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
+                                this.exemplarReservoir.SnapShot();
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
@@ -916,6 +923,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
+                                this.exemplarReservoir.SnapShot();
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock

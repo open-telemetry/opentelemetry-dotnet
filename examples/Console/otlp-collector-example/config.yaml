@@ -13,6 +13,15 @@ receivers:
 exporters:
   logging:
     loglevel: debug
+  prometheus:
+    endpoint: ":9201"
+    const_labels:
+      label1: value1
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+    resource_to_telemetry_conversion:
+      enabled: true
 
 service:
   pipelines:
@@ -21,7 +30,7 @@ service:
       exporters: [logging]
     metrics:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [logging,prometheus]
     logs:
       receivers: [otlp]
       exporters: [logging]

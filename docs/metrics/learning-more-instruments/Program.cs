@@ -23,20 +23,38 @@ namespace LearningMoreInstruments;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
-    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("MyHistogram");
+    private static readonly Meter MyMeter = new("FruitCompany.FruitSales", "1.0");
+    private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("FruitsSold");
+    private static readonly Histogram<long> MyFruitSalePrice = MyMeter.CreateHistogram<long>("FruitSalePrice");
 
     public static void Main()
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter("MyCompany.MyProduct.MyLibrary")
+            .AddMeter(MyMeter.Name)
             .AddConsoleExporter()
+            .AddOtlpExporter((exporterOptions, metricReaderOptions) => exporterOptions.Endpoint = new Uri("http://localhost:4317"))
             .Build();
 
-        var random = new Random();
+        var rand = new Random();
+
         for (int i = 0; i < 1000; i++)
         {
-            MyHistogram.Record(random.Next(1, 1000));
+            using (var act = new Activity("Test").Start())
+            {
+                MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+                MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+                MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+                MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+                MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"));
+                MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow"));
+
+                MyFruitSalePrice.Record(rand.Next(1, 1000), new("name", "apple"), new("color", "red"));
+                MyFruitSalePrice.Record(rand.Next(1, 1000), new("name", "lemon"), new("color", "yellow"));
+                MyFruitSalePrice.Record(rand.Next(1, 1000), new("name", "lemon"), new("color", "yellow"));
+                MyFruitSalePrice.Record(rand.Next(1, 1000), new("name", "apple"), new("color", "green"));
+                MyFruitSalePrice.Record(rand.Next(1, 1000), new("name", "apple"), new("color", "red"));
+                MyFruitSalePrice.Record(rand.Next(1, 1000), new("name", "lemon"), new("color", "yellow"));
+            }
         }
     }
 }

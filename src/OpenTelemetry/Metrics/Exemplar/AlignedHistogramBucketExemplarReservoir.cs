@@ -27,45 +27,64 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
     private Exemplar[] runningExemplars;
     private Exemplar[] snapshotExemplars;
 
-    private long numberOfMeasurementsSeen;
     private int size;
     private object lockObject = new object();
+    private HistogramBuckets histogramBuckets;
 
-    public AlignedHistogramBucketExemplarReservoir(int bucketCount)
+    public AlignedHistogramBucketExemplarReservoir(HistogramBuckets histogramBuckets)
     {
-        this.size = bucketCount;
-        this.runningExemplars = new Exemplar[bucketCount];
-        this.snapshotExemplars = new Exemplar[bucketCount];
+        this.size = histogramBuckets.ExplicitBounds.Length;
+        this.runningExemplars = new Exemplar[this.size];
+        this.snapshotExemplars = new Exemplar[this.size];
+        this.histogramBuckets = histogramBuckets;
     }
+
 
     public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
+        int i = this.histogramBuckets.FindBucketIndex(value);
         lock (this.lockObject)
         {
-            var exemplar = new Exemplar();
+            var exemplar = default(Exemplar);
             exemplar.Timestamp = DateTime.UtcNow;
             exemplar.LongValue = value;
-            exemplar.TraceId = Activity.Current?.TraceId.ToHexString();
-            exemplar.SpanId = Activity.Current?.SpanId.ToHexString();
-            this.runningExemplars[numberOfMeasurementsSeen] = exemplar;
-            numberOfMeasurementsSeen++;
+            exemplar.TraceId = Activity.Current?.TraceId;
+            exemplar.SpanId = Activity.Current?.SpanId;
+            this.runningExemplars[i] = exemplar;
         }
     }
 
     public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
+        // TODO: Replace simple lock with alternates.
+        // TODO: Avoid finding index twice, once inside MP and
+        // and one here.
+        int i = this.histogramBuckets.FindBucketIndex(value);
+        lock (this.lockObject)
+        {
+            var exemplar = default(Exemplar);
+            exemplar.Timestamp = DateTime.UtcNow;
+            exemplar.DoubleValue = value;
+            exemplar.TraceId = Activity.Current?.TraceId;
+            exemplar.SpanId = Activity.Current?.SpanId;
+            this.runningExemplars[i] = exemplar;
+        }
     }
 
     public override Exemplar[] Collect()
     {
+        return this.snapshotExemplars;
+    }
+
+    public override void SnapShot()
+    {
         lock (this.lockObject)
         {
-            for (int i = 0 ; i < this.size; i++)
+            for (int i = 0; i < this.size; i++)
             {
                 this.snapshotExemplars[i] = this.runningExemplars[i];
+                this.runningExemplars[i].Timestamp = default;
             }
         }
-
-        return this.snapshotExemplars;
     }
 }
