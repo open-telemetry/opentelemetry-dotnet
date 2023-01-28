@@ -82,11 +82,23 @@ namespace OpenTelemetry.Trace
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreInstrumentationOptions>>().Get(name);
 
-                return BuildAspNetCoreInstrumentation(options);
+                return new AspNetCoreInstrumentation(
+                    new HttpInListener(options));
             });
         }
 
-        internal static void AddAspNetCoreInstrumentationSources(
+        // Note: This is used by unit tests.
+        internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            this TracerProviderBuilder builder,
+            HttpInListener listener)
+        {
+            builder.AddAspNetCoreInstrumentationSources();
+
+            return builder.AddInstrumentation(
+                new AspNetCoreInstrumentation(listener));
+        }
+
+        private static void AddAspNetCoreInstrumentationSources(
             this TracerProviderBuilder builder,
             IServiceProvider serviceProvider = null)
         {
@@ -111,9 +123,5 @@ namespace OpenTelemetry.Trace
             builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
 #endif
         }
-
-        internal static AspNetCoreInstrumentation BuildAspNetCoreInstrumentation(
-            AspNetCoreInstrumentationOptions options)
-            => new(new HttpInListener(options));
     }
 }

@@ -483,7 +483,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    .AddAspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
                             OnEventWrittenCallback = (name, payload) =>
@@ -505,7 +505,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                         break;
                                 }
                             },
-                        }))
+                        })
                     .Build();
             }
 
@@ -761,7 +761,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    .AddAspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
                             OnEventWrittenCallback = (name, payload) =>
@@ -794,7 +794,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                         break;
                                 }
                             },
-                        }))
+                        })
                     .Build();
             }
 
@@ -826,7 +826,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    .AddAspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
                             OnEventWrittenCallback = (name, payload) =>
@@ -870,7 +870,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                         break;
                                 }
                             },
-                        }))
+                        })
                     .Build();
             }
 
@@ -910,7 +910,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // configure SDK
             using var tracerprovider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                .AddAspNetCoreInstrumentation(
                     new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                     {
                         OnEventWrittenCallback = (name, payload) =>
@@ -948,7 +948,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                     break;
                             }
                         },
-                    }))
+                    })
                     .Build();
 
             var builder = WebApplication.CreateBuilder();
