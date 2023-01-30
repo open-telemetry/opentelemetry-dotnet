@@ -172,10 +172,10 @@ namespace OpenTelemetry.Exporter
                     {
                         if (exemplar.Timestamp != default)
                         {
-                            exemplarString.Append("value: ");
+                            exemplarString.Append("Value: ");
                             exemplarString.Append(exemplar.DoubleValue);
                             exemplarString.Append(" Timestamp: ");
-                            exemplarString.Append(exemplar.Timestamp);
+                            exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                             exemplarString.Append(" TraceId: ");
                             exemplarString.Append(exemplar.TraceId);
                             exemplarString.Append(" SpanId: ");
@@ -203,9 +203,10 @@ namespace OpenTelemetry.Exporter
                     if (exemplarString.Length > 0)
                     {
                         msg.AppendLine();
-                        msg.Append("Exemplars \n");
+                        msg.AppendLine("Exemplars");
                         msg.Append(exemplarString.ToString());
                     }
+
                     this.WriteLine(msg.ToString());
                 }
             }
