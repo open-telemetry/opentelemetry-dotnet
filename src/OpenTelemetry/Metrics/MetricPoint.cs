@@ -291,15 +291,28 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramWithBuckets:
-                case AggregationType.HistogramWithMinMaxBuckets:
                 case AggregationType.Histogram:
+                    {
+                        this.UpdateHistogram((double)number);
+                        break;
+                    }
+
                 case AggregationType.HistogramWithMinMax:
                     {
-                        this.Update((double)number);
+                        this.UpdateHistogramWithMinMax((double)number);
+                        break;
+                    }
 
-                        // At this point MetricPointStatus is already set to CollectPending so we can simply return.
-                        return;
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        this.UpdateHistogramWithBuckets((double)number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        this.UpdateHistogramWithBucketsAndMinMax((double)number);
+                        break;
                     }
             }
 
@@ -357,113 +370,27 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.HistogramWithBuckets:
-                    {
-                        int i = this.histogramBuckets.FindBucketIndex(number);
-
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                // Lock acquired
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                    this.histogramBuckets.RunningBucketCounts[i]++;
-                                }
-
-                                // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
-                        break;
-                    }
-
                 case AggregationType.Histogram:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                // Lock acquired
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                }
-
-                                // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
-                        break;
-                    }
-
-                case AggregationType.HistogramWithMinMaxBuckets:
-                    {
-                        int i = this.histogramBuckets.FindBucketIndex(number);
-
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                // Lock acquired
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                    this.histogramBuckets.RunningBucketCounts[i]++;
-                                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
-                                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
-                                }
-
-                                // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
+                        this.UpdateHistogram(number);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                // Lock acquired
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
-                                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
-                                }
+                        this.UpdateHistogramWithMinMax(number);
+                        break;
+                    }
 
-                                // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
-                                break;
-                            }
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        this.UpdateHistogramWithBuckets(number);
+                        break;
+                    }
 
-                            sw.SpinOnce();
-                        }
-
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        this.UpdateHistogramWithBucketsAndMinMax(number);
                         break;
                     }
             }
@@ -726,6 +653,108 @@ namespace OpenTelemetry.Metrics
 
                         break;
                     }
+            }
+        }
+
+        private void UpdateHistogram(double number)
+        {
+            var sw = default(SpinWait);
+            while (true)
+            {
+                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                {
+                    // Lock acquired
+                    unchecked
+                    {
+                        this.runningValue.AsLong++;
+                        this.histogramBuckets.RunningSum += number;
+                    }
+
+                    // Release lock
+                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    break;
+                }
+
+                sw.SpinOnce();
+            }
+        }
+
+        private void UpdateHistogramWithMinMax(double number)
+        {
+            var sw = default(SpinWait);
+            while (true)
+            {
+                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                {
+                    // Lock acquired
+                    unchecked
+                    {
+                        this.runningValue.AsLong++;
+                        this.histogramBuckets.RunningSum += number;
+                        this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                        this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                    }
+
+                    // Release lock
+                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    break;
+                }
+
+                sw.SpinOnce();
+            }
+        }
+
+        private void UpdateHistogramWithBuckets(double number)
+        {
+            int i = this.histogramBuckets.FindBucketIndex(number);
+
+            var sw = default(SpinWait);
+            while (true)
+            {
+                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                {
+                    // Lock acquired
+                    unchecked
+                    {
+                        this.runningValue.AsLong++;
+                        this.histogramBuckets.RunningSum += number;
+                        this.histogramBuckets.RunningBucketCounts[i]++;
+                    }
+
+                    // Release lock
+                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    break;
+                }
+
+                sw.SpinOnce();
+            }
+        }
+
+        private void UpdateHistogramWithBucketsAndMinMax(double number)
+        {
+            int i = this.histogramBuckets.FindBucketIndex(number);
+
+            var sw = default(SpinWait);
+            while (true)
+            {
+                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                {
+                    // Lock acquired
+                    unchecked
+                    {
+                        this.runningValue.AsLong++;
+                        this.histogramBuckets.RunningSum += number;
+                        this.histogramBuckets.RunningBucketCounts[i]++;
+                        this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                        this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                    }
+
+                    // Release lock
+                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    break;
+                }
+
+                sw.SpinOnce();
             }
         }
 
