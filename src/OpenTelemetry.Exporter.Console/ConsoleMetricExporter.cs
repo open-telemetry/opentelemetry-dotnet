@@ -167,6 +167,23 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
+                    var exemplarString = new StringBuilder();
+                    foreach (var exemplar in metricPoint.GetExemplars())
+                    {
+                        if (exemplar.Timestamp != default)
+                        {
+                            exemplarString.Append("value: ");
+                            exemplarString.Append(exemplar.DoubleValue);
+                            exemplarString.Append(" Timestamp: ");
+                            exemplarString.Append(exemplar.Timestamp);
+                            exemplarString.Append(" TraceId: ");
+                            exemplarString.Append(exemplar.TraceId);
+                            exemplarString.Append(" SpanId: ");
+                            exemplarString.Append(exemplar.SpanId);
+                            exemplarString.AppendLine();
+                        }
+                    }
+
                     msg = new StringBuilder();
                     msg.Append('(');
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
@@ -182,6 +199,13 @@ namespace OpenTelemetry.Exporter
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
+
+                    if (exemplarString.Length > 0)
+                    {
+                        msg.AppendLine();
+                        msg.Append("Exemplars \n");
+                        msg.Append(exemplarString.ToString());
+                    }
                     this.WriteLine(msg.ToString());
                 }
             }
