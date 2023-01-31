@@ -20,7 +20,7 @@ and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
 Until a [stable
 version](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/telemetry-stability.md)
 is released, there can be breaking changes. You can track the progress from
-[milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).**
+[milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).
 
 ## Steps to enable OpenTelemetry.Instrumentation.SqlClient
 
