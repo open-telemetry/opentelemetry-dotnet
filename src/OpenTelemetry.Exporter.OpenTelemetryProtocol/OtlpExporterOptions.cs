@@ -184,6 +184,16 @@ namespace OpenTelemetry.Exporter
         public Func<HttpClient> HttpClientFactory { get; set; }
 
         /// <summary>
+        /// Gets or sets the directory for offline storage.
+        /// </summary>
+        public string StorageDirectory { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether offline storage should be used.
+        /// </summary>
+        public bool EnableOfflineStorage { get; set; }
+
+        /// <summary>
         /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
         /// </summary>
         internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
