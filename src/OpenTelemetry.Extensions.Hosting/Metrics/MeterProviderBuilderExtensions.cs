@@ -31,10 +31,10 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        [Obsolete("Call ConfigureBuilder instead this method will be removed in a future version.")]
+        [Obsolete("Configure has been replaced by factory extensions. This method will be removed in a future version.")]
         public static MeterProviderBuilder Configure(this MeterProviderBuilder meterProviderBuilder, Action<IServiceProvider, MeterProviderBuilder> configure)
         {
-            return meterProviderBuilder.ConfigureBuilder(configure);
+            return (meterProviderBuilder as IDeferredMeterProviderBuilder)?.Configure(configure);
         }
 
         /// <summary>

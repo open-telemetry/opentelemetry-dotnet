@@ -31,10 +31,10 @@ namespace OpenTelemetry.Trace
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        [Obsolete("Call ConfigureBuilder instead this method will be removed in a future version.")]
+        [Obsolete("Configure has been replaced by factory extensions. This method will be removed in a future version.")]
         public static TracerProviderBuilder Configure(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            return tracerProviderBuilder.ConfigureBuilder(configure);
+            return (tracerProviderBuilder as IDeferredTracerProviderBuilder)?.Configure(configure);
         }
 
         /// <summary>

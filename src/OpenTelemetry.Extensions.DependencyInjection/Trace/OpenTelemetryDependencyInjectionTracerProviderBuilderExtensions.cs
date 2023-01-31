@@ -167,7 +167,7 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="configure">Configuration callback.</param>
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-    public static TracerProviderBuilder ConfigureBuilder(
+    internal static TracerProviderBuilder ConfigureBuilder(
         this TracerProviderBuilder tracerProviderBuilder,
         Action<IServiceProvider, TracerProviderBuilder> configure)
     {

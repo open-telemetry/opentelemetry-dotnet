@@ -47,13 +47,4 @@ internal interface ITracerProviderBuilder : IDeferredTracerProviderBuilder
     /// <param name="configure">Configuration callback.</param>
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure);
-
-    /// <summary>
-    /// Register a callback action to configure the <see
-    /// cref="TracerProviderBuilder"/> once the application <see
-    /// cref="IServiceProvider"/> is available.
-    /// </summary>
-    /// <param name="configure">Configuration callback.</param>
-    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-    TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure);
 }
