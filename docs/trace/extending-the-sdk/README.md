@@ -362,6 +362,15 @@ register custom OpenTelemetry components into their `TracerProvider`s. These
 extension methods can target either the `TracerProviderBuilder` or the
 `IServiceCollection` classes. Both of these patterns are described below.
 
+**Note:** Libraries providing SDK plugins such as exporters, resource detectors,
+and/or samplers should take a dependency on the [OpenTelemetry SDK
+package](https://www.nuget.org/packages/opentelemetry). Library authors
+providing instrumentation should take a dependency on `OpenTelemetry.Api` or
+`OpenTelemetry.Api.ProviderBuilderExtensions` package.
+`OpenTelemetry.Api.ProviderBuilderExtensions` exposes interfaces for accessing
+the `IServiceCollection` which is a requirement for supporting the [.NET Options
+pattern](https://learn.microsoft.com/dotnet/core/extensions/options).
+
 When providing registration extensions:
 
 * **DO** support the [.NET Options
@@ -449,7 +458,7 @@ namespace OpenTelemetry.Trace
                 services.TryAddSingleton<MyCustomService>();
             });
 
-            builder.ConfigureBuilder((sp, builder) =>
+            builder.AddProcessor(serviceProvider =>
             {
                 // Retrieve MyExporterOptions instance using name.
                 var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<MyExporterOptions>>().Get(name);
@@ -458,16 +467,15 @@ namespace OpenTelemetry.Trace
                 var batchOptions = serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name);
 
                 // Retrieve MyCustomService singleton.
-                var myCustomService = sp.GetRequiredService<MyCustomService>();
+                var myCustomService = serviceProvider.GetRequiredService<MyCustomService>();
 
-                // Registers MyCustomExporter with a batch processor.
-                builder.AddProcessor(
-                    new BatchActivityExportProcessor(
-                        new MyCustomExporter(exporterOptions, myCustomService),
-                        batchOptions.MaxQueueSize,
-                        batchOptions.ScheduledDelayMilliseconds,
-                        batchOptions.ExporterTimeoutMilliseconds,
-                        batchOptions.MaxExportBatchSize));
+                // Return a batch export processor using MyCustomExporter.
+                return new BatchActivityExportProcessor(
+                    new MyCustomExporter(exporterOptions, myCustomService),
+                    batchOptions.MaxQueueSize,
+                    batchOptions.ScheduledDelayMilliseconds,
+                    batchOptions.ExporterTimeoutMilliseconds,
+                    batchOptions.MaxExportBatchSize);
             });
 
             // Return builder for call chaining.
@@ -519,8 +527,10 @@ When providing `TracerProviderBuilder` registration extensions:
 * **DO** Use the `TracerProviderBuilder.ConfigureServices` extension method to
   register dependent services.
 
-* **DO** Use the `TracerProviderBuilder.ConfigureBuilder` extension method to
-  peform configuration once the final `IServiceProvider` is available.
+* **DO** Use [the dependency injection extension
+  methods](../customizing-the-sdk/README.md#dependency-injection-tracerproviderbuilder-extension-method-reference)
+  utilizing factory patterns to perform configuration once the final
+  `IServiceProvider` is available.
 
 ### IServiceCollection extension methods
 
@@ -530,7 +540,8 @@ the target type for registration extension methods.
 
 The following example shows how a library might enable tracing and metric
 support using an `IServiceCollection` extension by calling
-`ConfigureOpenTelemetryTracerProvider`.
+`ConfigureOpenTelemetryTracerProvider` and
+`ConfigureOpenTelemetryMeterProvider`.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -554,7 +565,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<IMyLibraryService, MyLibraryService>();
 
             // Support named options.
-            name ??= Options.DefaultName;
+            name ??= Options.Options.DefaultName;
 
             if (configure != null)
             {
@@ -570,7 +581,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     builder.AddSource("MyLibrary");
                 }
-            }));
+            });
 
             // Configure OpenTelemetry metrics.
             services.ConfigureOpenTelemetryMeterProvider((sp, builder) =>
@@ -580,7 +591,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     builder.AddMeter("MyLibrary");
                 }
-            }));
+            });
 
             return services;
         }
@@ -614,12 +625,14 @@ single `AddMyLibrary` extension to configure the library itself and optionally
 turn on OpenTelemetry integration for multiple signals (tracing & metrics in
 this case).
 
-**Note:** `ConfigureOpenTelemetryTracerProvider` does not automatically start
-OpenTelemetry. The host is responsible for either calling `StartWithHost` in the
+**Note:** `ConfigureOpenTelemetryTracerProvider` and
+`ConfigureOpenTelemetryMeterProvider` do not automatically start OpenTelemetry.
+The host is responsible for either calling `StartWithHost` in the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
-package, calling `Build` when using the `Sdk.CreateTracerProviderBuilder`
-method, or by accessing the `TracerProvider` from the `IServiceCollection` where
-`ConfigureOpenTelemetryTracerProvider` was performed.
+package, calling `Build` when using the `Sdk.CreateTracerProviderBuilder` and
+`Sdk.CreateMeterProviderBuilder` methods, or by accessing the `TracerProvider`
+and `MeterProvider` from the `IServiceCollection` where configuration was
+performed.
 
 When providing `IServiceCollection` registration extensions:
 
@@ -631,8 +644,10 @@ When providing `IServiceCollection` registration extensions:
 
 * **DO** Use the `IServiceCollection` directly to register dependent services.
 
-* **DO** Use the `TracerProviderBuilder.ConfigureBuilder` extension method to
-  peform configuration once the final `IServiceProvider` is available.
+* **DO** Use [the dependency injection extension
+  methods](../customizing-the-sdk/README.md#dependency-injection-tracerproviderbuilder-extension-method-reference)
+  utilizing factory patterns to perform configuration once the final
+  `IServiceProvider` is available.
 
 ## References
 
