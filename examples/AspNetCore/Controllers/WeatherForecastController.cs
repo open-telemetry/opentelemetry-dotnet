@@ -16,6 +16,8 @@
 
 namespace Examples.AspNetCore.Controllers;
 
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -24,16 +26,23 @@ public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] Summaries = new[]
     {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
     };
 
     private static readonly HttpClient HttpClient = new();
 
     private readonly ILogger<WeatherForecastController> logger;
+    private readonly ActivitySource activitySource;
+    private readonly Counter<int> counter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, ActivitySource activitySource, Meter meter)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
+        ArgumentNullException.ThrowIfNull(meter);
+
+        // Create a custom metric
+        this.counter = meter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
     }
 
     [HttpGet]
@@ -45,6 +54,11 @@ public class WeatherForecastController : ControllerBase
         // how dependency calls will be captured and treated
         // automatically as child of incoming request.
         var res = HttpClient.GetStringAsync("http://google.com").Result;
+
+        // Manually create an activity. This will become a child of
+        // the incoming request.
+        using var activity = this.activitySource.StartActivity("calculate forecast");
+
         var rng = new Random();
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
@@ -53,6 +67,9 @@ public class WeatherForecastController : ControllerBase
             Summary = Summaries[rng.Next(Summaries.Length)],
         })
         .ToArray();
+
+        // Count the freezing days
+        this.counter.Add(forecast.Count(f => f.TemperatureC < 0));
 
         this.logger.LogInformation(
             "WeatherForecasts generated {count}: {forecasts}",
