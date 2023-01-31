@@ -480,6 +480,14 @@ it is shutdown.
   implementationFactory)`: Adds a sampler into the `TracerProvider` using a
   factory function to create the sampler instance.
 
+**Note:** The factory functions accepting `IServiceProvider` may always be used
+regardless of how the SDK is initialized. When using an external service
+collection (ex: `appBuilder.Services.AddOpenTelemetry()`), as is common in
+ASP.NET Core hosts, the `IServiceProvider` will be the instance shared and
+managed by the host. When using "Sdk.Create" functions, as is common in .NET
+Framework hosts, the provider creates its own `IServiceCollection` and will
+build an `IServiceProvider` from it to make available to extensions.
+
 ## Configuration files and environment variables
 
 **Note:** This information applies to the OpenTelemetry SDK version 1.4.0 and
