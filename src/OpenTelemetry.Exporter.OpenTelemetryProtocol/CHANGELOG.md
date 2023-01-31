@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Include User-Agent header.
+* Include User-Agent header
+  [per the specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#user-agent).
   ([#4120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4120))
 
 ## 1.4.0-rc.2
