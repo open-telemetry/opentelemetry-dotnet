@@ -202,7 +202,7 @@ tracerProvider.AddProcessor(new MyProcessor3());
 is invoked in order by the SDK. For example if a simple exporting processor is
 added before an enrichment processor the exported data will not contain anything
 added by the enrichment because it happens after the export.
-
+<!-- This comment is to make sure the two notes above and below are not merged -->
 > **Note**
 > A `TracerProvider` assumes ownership of **all** processors added to
 it. This means that the provider will call the `Shutdown` method on all
@@ -244,11 +244,10 @@ For exporting purposes, the SDK provides the following built-in processors:
 [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
 is used by the SDK to chain multiple processors together and may be used as
 needed by users to define sub-pipelines.
-
+<!-- This comment is to make sure the two notes above and below are not merged -->
 > **Note**
-> The processors shipped from this SDK are generic implementations and
-support tracing and logging by implementing `Activity` and `LogRecord`
-respectively.
+> The processors shipped from this SDK are generic implementations and support
+tracing and logging by implementing `Activity` and `LogRecord` respectively.
 
 Follow [this](../extending-the-sdk/README.md#processor) document to learn about
 writing custom processors.
