@@ -5,6 +5,10 @@
 * Removed `ConfigureBuilder` from the public API.
   ([#4103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4103))
 
+* Renamed package from `OpenTelemetry.Extensions.DependencyInjection` to
+  `OpenTelemetry.Api.ProviderBuilderExtensions`.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
