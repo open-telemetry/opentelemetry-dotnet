@@ -32,6 +32,8 @@ namespace OpenTelemetry.Metrics
         internal readonly long[] RunningBucketCounts;
         internal readonly long[] SnapshotBucketCounts;
 
+        internal readonly AlignedHistogramBucketExemplarReservoir ExemplarReservoir;
+
         internal double RunningSum;
         internal double SnapshotSum;
 
@@ -77,6 +79,10 @@ namespace OpenTelemetry.Metrics
 
             this.RunningBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : null;
             this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
+            if (explicitBounds != null)
+            {
+                this.ExemplarReservoir = new AlignedHistogramBucketExemplarReservoir(explicitBounds.Length);
+            }
         }
 
         public Enumerator GetEnumerator() => new(this);
