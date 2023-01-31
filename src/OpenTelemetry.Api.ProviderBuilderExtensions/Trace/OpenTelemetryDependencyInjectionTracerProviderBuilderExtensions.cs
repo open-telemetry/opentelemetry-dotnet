@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Metrics;
+namespace OpenTelemetry.Trace;
 
 /// <summary>
-/// Contains extension methods for the <see cref="MeterProviderBuilder"/> class.
+/// Contains extension methods for the <see cref="TracerProviderBuilder"/> class.
 /// </summary>
-public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensions
+public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensions
 {
     /// <summary>
     /// Adds instrumentation to the provider.
@@ -33,87 +33,87 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// registered as a singleton service into application services.
     /// </remarks>
     /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder)
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : class
     {
-        meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
+        tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
 
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             builder.AddInstrumentation(() => sp.GetRequiredService<T>());
         });
 
-        return meterProviderBuilder;
+        return tracerProviderBuilder;
     }
 
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
     /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="instrumentation">Instrumentation instance.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder, T instrumentation)
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder, T instrumentation)
         where T : class
     {
         Guard.ThrowIfNull(instrumentation);
 
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             builder.AddInstrumentation(() => instrumentation);
         });
 
-        return meterProviderBuilder;
+        return tracerProviderBuilder;
     }
 
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
     /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="instrumentationFactory">Instrumentation factory.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddInstrumentation<T>(
-        this MeterProviderBuilder meterProviderBuilder,
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddInstrumentation<T>(
+        this TracerProviderBuilder tracerProviderBuilder,
         Func<IServiceProvider, T> instrumentationFactory)
         where T : class
     {
         Guard.ThrowIfNull(instrumentationFactory);
 
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             builder.AddInstrumentation(() => instrumentationFactory(sp));
         });
 
-        return meterProviderBuilder;
+        return tracerProviderBuilder;
     }
 
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>
     /// <typeparam name="T">Instrumentation type.</typeparam>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="instrumentationFactory">Instrumentation factory.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddInstrumentation<T>(
-        this MeterProviderBuilder meterProviderBuilder,
-        Func<IServiceProvider, MeterProvider, T> instrumentationFactory)
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder AddInstrumentation<T>(
+        this TracerProviderBuilder tracerProviderBuilder,
+        Func<IServiceProvider, TracerProvider, T> instrumentationFactory)
         where T : class
     {
         Guard.ThrowIfNull(instrumentationFactory);
 
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (builder is IMeterProviderBuilder iMeterProviderBuilder
-                && iMeterProviderBuilder.Provider != null)
+            if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder
+                && iTracerProviderBuilder.Provider != null)
             {
-                builder.AddInstrumentation(() => instrumentationFactory(sp, iMeterProviderBuilder.Provider));
+                builder.AddInstrumentation(() => instrumentationFactory(sp, iTracerProviderBuilder.Provider));
             }
         });
 
-        return meterProviderBuilder;
+        return tracerProviderBuilder;
     }
 
     /// <summary>
@@ -124,24 +124,24 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// Note: Tracing services are only available during the application
     /// configuration phase.
     /// </remarks>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="configure">Configuration callback.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder ConfigureServices(
-        this MeterProviderBuilder meterProviderBuilder,
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    public static TracerProviderBuilder ConfigureServices(
+        this TracerProviderBuilder tracerProviderBuilder,
         Action<IServiceCollection> configure)
     {
-        if (meterProviderBuilder is IMeterProviderBuilder iMeterProviderBuilder)
+        if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder)
         {
-            iMeterProviderBuilder.ConfigureServices(configure);
+            iTracerProviderBuilder.ConfigureServices(configure);
         }
 
-        return meterProviderBuilder;
+        return tracerProviderBuilder;
     }
 
     /// <summary>
     /// Register a callback action to configure the <see
-    /// cref="MeterProviderBuilder"/> once the application <see
+    /// cref="TracerProviderBuilder"/> once the application <see
     /// cref="IServiceProvider"/> is available.
     /// </summary>
     /// <remarks>
@@ -161,21 +161,21 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// cref="ConfigureBuilder"/>.</item>
     /// </list>
     /// For more information see: <see
-    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/metrics/customizing-the-sdk/README.md#dependency-injection-support">Dependency
+    /// href="https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/trace/customizing-the-sdk/README.md#dependency-injection-support">Dependency
     /// injection support</see>.
     /// </remarks>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="configure">Configuration callback.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder ConfigureBuilder(
-        this MeterProviderBuilder meterProviderBuilder,
-        Action<IServiceProvider, MeterProviderBuilder> configure)
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    internal static TracerProviderBuilder ConfigureBuilder(
+        this TracerProviderBuilder tracerProviderBuilder,
+        Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+        if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
         {
-            deferredMeterProviderBuilder.Configure(configure);
+            deferredTracerProviderBuilder.Configure(configure);
         }
 
-        return meterProviderBuilder;
+        return tracerProviderBuilder;
     }
 }

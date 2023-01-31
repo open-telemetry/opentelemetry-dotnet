@@ -10,6 +10,9 @@
   reverted back to the transitive reference of version 3.1
   ([#4093](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4093))
 
+* Added `SetSampler`, `AddProcessor`, & `AddReader` factory extensions.
+  ([#4103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4103))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
