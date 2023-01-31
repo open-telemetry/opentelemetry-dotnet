@@ -28,8 +28,8 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
 
     public AlignedHistogramBucketExemplarReservoir(int length)
     {
-        this.runningExemplars = new Exemplar[length];
-        this.snapshotExemplars = new Exemplar[length];
+        this.runningExemplars = new Exemplar[length + 1];
+        this.snapshotExemplars = new Exemplar[length + 1];
     }
 
     public void OfferAtBoundary(int index, double value)
