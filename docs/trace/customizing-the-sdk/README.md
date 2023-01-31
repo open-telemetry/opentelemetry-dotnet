@@ -446,45 +446,34 @@ it is shutdown.
 `TracerProvider`. Only a single `TraceProvider` may exist in an
 `IServiceCollection` \ `IServiceProvider`.
 
-### Dependency injection `TracerProviderBuilder` extension method reference
+### Dependency injection TracerProviderBuilder extension method reference
 
 * `AddInstrumentation<T>`: Adds instrumentation of type `T` into the
   `TracerProvider`.
 
+* `AddInstrumentation<T>(Func<IServiceProvider, T> instrumentationFactory)`:
+  Adds instrumentation of type `T` into the
+  `TracerProvider` using a factory function to create the instrumentation
+  instance.
+
 * `AddProcessor<T>`: Adds a processor of type `T` (must derive from
   `BaseProcessor<Activity>`) into the `TracerProvider`.
 
-* `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
-  for the `TracerProvider`.
+* `AddProcessor(Func<IServiceProvider, BaseProcessor<Activity>>
+  implementationFactory)`: Adds a processor into the `TracerProvider` using a
+  factory function to create the processor instance.
 
 * `ConfigureServices`: Registers a callback function for configuring the
   `IServiceCollection` used by the `TracerProviderBuilder`. **Note:**
   `ConfigureServices` may only be called before the `IServiceProvider` has been
-  created after which point service can no longer be added.
+  created after which point services can no longer be added.
 
-* `ConfigureBuilder`: Registers a callback function for configuring the
-  `TracerProviderBuilder` once the `IServiceProvider` is available.
+* `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
+  for the `TracerProvider`.
 
-  ```csharp
-   var appBuilder = WebApplication.CreateBuilder(args);
-
-   appBuilder.Services.AddOpenTelemetry()
-      .WithTracing(builder => builder
-         .ConfigureBuilder((sp, builder) =>
-         {
-           builder.AddProcessor(
-             new MyCustomProcessor(
-               // Note: This example uses the final IServiceProvider once it is available.
-               sp.GetRequiredService<MyCustomService>(),
-               sp.GetRequiredService<IOptions<MyOptions>>().Value));
-         }))
-      .StartWithHost();
-  ```
-
-  **Note:** `ConfigureBuilder` is an advanced API and is expected to be used
-  primarily by library authors. Services may NOT be added to the
-  `IServiceCollection` during `ConfigureBuilder` because the `IServiceProvider`
-  has already been created.
+* `SetSampler(Func<IServiceProvider, Sampler>
+  implementationFactory)`: Adds a sampler into the `TracerProvider` using a
+  factory function to create the sampler instance.
 
 ## Configuration files and environment variables
 
