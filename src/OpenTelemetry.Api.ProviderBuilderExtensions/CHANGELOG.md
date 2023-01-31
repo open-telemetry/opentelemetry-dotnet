@@ -7,7 +7,7 @@
 
 * Renamed package from `OpenTelemetry.Extensions.DependencyInjection` to
   `OpenTelemetry.Api.ProviderBuilderExtensions`.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4125](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4125))
 
 ## 1.4.0-rc.2
 
