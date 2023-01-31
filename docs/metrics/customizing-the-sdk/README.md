@@ -329,7 +329,7 @@ ignored. The SDK chooses the key/value combinations in the order in which they
 are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
-**Note:**: One `MetricPoint` is reserved for every `MetricStream` for the
+**Note:** One `MetricPoint` is reserved for every `MetricStream` for the
 special case where there is no key/value pair associated with the metric. The
 maximum number of `MetricPoint`s has to accommodate for this special case.
 

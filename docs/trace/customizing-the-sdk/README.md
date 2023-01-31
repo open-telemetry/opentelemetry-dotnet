@@ -469,9 +469,10 @@ it is shutdown.
   factory function to create the processor instance.
 
 * `ConfigureServices`: Registers a callback function for configuring the
-  `IServiceCollection` used by the `TracerProviderBuilder`. **Note:**
-  `ConfigureServices` may only be called before the `IServiceProvider` has been
-  created after which point services can no longer be added.
+  `IServiceCollection` used by the `TracerProviderBuilder`.
+
+  **Note:** `ConfigureServices` may only be called before the `IServiceProvider`
+  has been created after which point services can no longer be added.
 
 * `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
   for the `TracerProvider`.

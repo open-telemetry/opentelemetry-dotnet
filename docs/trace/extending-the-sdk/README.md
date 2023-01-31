@@ -204,8 +204,10 @@ Writing an instrumentation library typically involves 3 steps.
        * If an extension is not provided, then the name of the `ActivitySource`
          used by the instrumented library must be documented so that end users
          can enable it by calling `AddSource` on the `TracerProviderBuilder`
-         being configured. **Note:** Changing the name of the source should be
-         considered a breaking change.
+         being configured.
+
+         **Note:** Changing the name of the source should be considered a
+         breaking change.
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
