@@ -1,7 +1,3 @@
-OpenTelemetry.Exporter.OtlpExporterOptions.StorageDirectory.get -> string
-OpenTelemetry.Exporter.OtlpExporterOptions.StorageDirectory.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.EnableOfflineStorage.get -> bool
-OpenTelemetry.Exporter.OtlpExporterOptions.EnableOfflineStorage.set -> void
 static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions, OpenTelemetry.Metrics.MetricReaderOptions> configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configureExporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
 *REMOVED*static OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
