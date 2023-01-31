@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Extensions.PersistentStorage;
+using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -71,6 +74,7 @@ namespace Examples.Console
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .ConfigureResource(r => r.AddService("otlp-test"))
+                    .ConfigureServices(services => services.AddSingleton<PersistentBlobProvider>(sp => new FileBlobProvider("/tmp/otel")))
                     .AddOtlpExporter(opt =>
                     {
                         // If endpoint was not specified, the proper one will be selected according to the protocol.
