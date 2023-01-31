@@ -394,6 +394,50 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(innerTestExecuted);
         }
 
+        [Fact]
+        public void TracerProviderSetSamplerFactoryTest()
+        {
+            bool factoryInvoked = false;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(sp =>
+                {
+                    factoryInvoked = true;
+
+                    Assert.NotNull(sp);
+
+                    return new MySampler();
+                })
+                .Build() as TracerProviderSdk;
+
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(tracerProvider);
+            Assert.True(tracerProvider.Sampler is MySampler);
+        }
+
+        [Fact]
+        public void TracerProviderAddProcessorFactoryTest()
+        {
+            bool factoryInvoked = false;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(sp =>
+                {
+                    factoryInvoked = true;
+
+                    Assert.NotNull(sp);
+
+                    return new MyProcessor();
+                })
+                .Build() as TracerProviderSdk;
+
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(tracerProvider);
+            Assert.True(tracerProvider.Processor is MyProcessor);
+        }
+
         private static void RunBuilderServiceLifecycleTest(
             TracerProviderBuilder builder,
             Func<TracerProviderSdk> buildFunc,

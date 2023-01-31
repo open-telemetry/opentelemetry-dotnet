@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddProcessor(sp =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
 
@@ -94,12 +94,11 @@ namespace OpenTelemetry.Trace
                 // instance.
                 var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
+                return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
             });
         }
 
-        internal static TracerProviderBuilder AddOtlpExporter(
-            TracerProviderBuilder builder,
+        internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
             OtlpExporterOptions exporterOptions,
             SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
@@ -116,18 +115,18 @@ namespace OpenTelemetry.Trace
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
+                return new SimpleActivityExportProcessor(otlpExporter);
             }
             else
             {
                 var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
 
-                return builder.AddProcessor(new BatchActivityExportProcessor(
+                return new BatchActivityExportProcessor(
                     otlpExporter,
                     batchOptions.MaxQueueSize,
                     batchOptions.ScheduledDelayMilliseconds,
                     batchOptions.ExporterTimeoutMilliseconds,
-                    batchOptions.MaxExportBatchSize));
+                    batchOptions.MaxExportBatchSize);
             }
         }
     }
