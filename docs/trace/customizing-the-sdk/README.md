@@ -193,6 +193,11 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 tracerProvider.AddProcessor(new MyProcessor3());
 ```
 
+**Note:** The order of processor registration is important. Each processor added
+is invoked in order by the SDK. For example if a simple exporting processor is
+added before an enrichment processor the exported data will not contain anything
+added by the enrichment because it happens after the export.
+
 **Note:** A `TracerProvider` assumes ownership of **all** processors added to
 it. This means that the provider will call the `Shutdown` method on all
 registered processors when it is shutting down and call the `Dispose` method on
@@ -202,7 +207,7 @@ registered on each provider. Otherwise shutting down one provider will cause the
 shared processor(s) in other providers to be shut down as well which may lead to
 undesired results.
 
-Processors can be used for enriching. exporting, and/or filtering telemetry.
+Processors can be used for enriching, exporting, and/or filtering telemetry.
 
 To enrich telemetry, users may write custom processors overriding the `OnStart`
 and/or `OnEnd` methods (as needed) to implement custom logic to change the data
@@ -329,9 +334,9 @@ reducing the number of samples of traces collected and sent to the processors.
 If no sampler is explicitly configured, the default is to use
 `ParentBased(root=AlwaysOn)`. `SetSampler` method on `TracerProviderBuilder` can
 be used to set sampler. Only one sampler can be associated with a provider. If
-multiple `SetSampler` is called, the last one wins. Also, it is not possible to
-change the sampler *after* the provider is built, by calling the `Build()`
-method on the `TracerProviderBuilder`.
+`SetSampler` is called multiple times, the last one wins. Also, it is not
+possible to change the sampler *after* the provider is built, by calling the
+`Build()` method on the `TracerProviderBuilder`.
 
 The snippet below shows configuring a custom sampler to the provider.
 

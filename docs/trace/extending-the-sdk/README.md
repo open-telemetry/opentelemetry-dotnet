@@ -363,9 +363,10 @@ extension methods can target either the `TracerProviderBuilder` or the
 `IServiceCollection` classes. Both of these patterns are described below.
 
 **Note:** Libraries providing SDK plugins such as exporters, resource detectors,
-and/or samplers should take a dependency on the SDK (`OpenTelemetry.dll`)
-package. Library authors providing instrumentation should take a dependency on
-`OpenTelemetry.Api` or `OpenTelemetry.Api.ProviderBuilderExtensions` package.
+and/or samplers should take a dependency on the [OpenTelemetry SDK
+package](https://www.nuget.org/packages/opentelemetry). Library authors
+providing instrumentation should take a dependency on `OpenTelemetry.Api` or
+`OpenTelemetry.Api.ProviderBuilderExtensions` package.
 `OpenTelemetry.Api.ProviderBuilderExtensions` exposes interfaces for accessing
 the `IServiceCollection` which is a requirement for supporting the [.NET Options
 pattern](https://learn.microsoft.com/dotnet/core/extensions/options).
