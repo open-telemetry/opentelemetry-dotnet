@@ -59,7 +59,8 @@ of Windows.
 * Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.2+
 
-**Note:** Visual Studio 2022 preview is **recommended** due to projects needing
+> **Note**
+> Visual Studio 2022 preview is **recommended** due to projects needing
 to target .NET preview versions.
 
 ### Public API

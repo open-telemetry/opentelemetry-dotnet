@@ -488,7 +488,8 @@ Windows-based .NET implementation).
 
     The above requires import of the `System.Diagnostics.Metrics` namespace.
 
-    **Note:** It is important to note that `Meter` instances are created by
+    > **Note**
+    > It is important to note that `Meter` instances are created by
     using its constructor, and *not* by calling a `GetMeter` method on the
     `MeterProvider`. This is an important distinction from the [OpenTelemetry
     specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#get-a-meter),
