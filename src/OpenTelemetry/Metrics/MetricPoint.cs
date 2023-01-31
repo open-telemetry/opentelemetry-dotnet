@@ -262,6 +262,24 @@ namespace OpenTelemetry.Metrics
             return false;
         }
 
+        /// <summary>
+        /// Gets the exemplars associated with the metric point.
+        /// </summary>
+        /// <returns><see cref="Exemplar"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Exemplar[] GetExemplars()
+        {
+            // TODO: Do not expose Exemplar data structure (array now)
+            if (this.histogramBuckets != null && this.histogramBuckets.ExemplarReservoir != null)
+            {
+                return this.histogramBuckets.ExemplarReservoir.Collect();
+            }
+            else
+            {
+                return Array.Empty<Exemplar>();
+            }
+        }
+
         internal readonly MetricPoint Copy()
         {
             MetricPoint copy = this;
@@ -534,6 +552,8 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
+                                this.histogramBuckets.ExemplarReservoir.SnapShot(outputDelta);
+
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
@@ -607,6 +627,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
+                                this.histogramBuckets.ExemplarReservoir.SnapShot(outputDelta);
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
@@ -719,6 +740,7 @@ namespace OpenTelemetry.Metrics
                         this.runningValue.AsLong++;
                         this.histogramBuckets.RunningSum += number;
                         this.histogramBuckets.RunningBucketCounts[i]++;
+                        this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
                     }
 
                     // Release lock
@@ -745,6 +767,7 @@ namespace OpenTelemetry.Metrics
                         this.runningValue.AsLong++;
                         this.histogramBuckets.RunningSum += number;
                         this.histogramBuckets.RunningBucketCounts[i]++;
+                        this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
                         this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
                         this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
                     }

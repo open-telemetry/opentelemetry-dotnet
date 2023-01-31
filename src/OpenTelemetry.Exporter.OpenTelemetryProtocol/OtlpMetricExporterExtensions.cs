@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
 
@@ -88,8 +88,7 @@ namespace OpenTelemetry.Metrics
                     configureExporter(exporterOptions);
                 }
 
-                AddOtlpExporter(
-                    builder,
+                return BuildOtlpExporterMetricReader(
                     exporterOptions,
                     sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
                     sp);
@@ -132,19 +131,18 @@ namespace OpenTelemetry.Metrics
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
                 var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-                AddOtlpExporter(builder, exporterOptions, metricReaderOptions, sp);
+                return BuildOtlpExporterMetricReader(exporterOptions, metricReaderOptions, sp);
             });
         }
 
-        internal static MeterProviderBuilder AddOtlpExporter(
-            MeterProviderBuilder builder,
+        internal static MetricReader BuildOtlpExporterMetricReader(
             OtlpExporterOptions exporterOptions,
             MetricReaderOptions metricReaderOptions,
             IServiceProvider serviceProvider,
@@ -166,11 +164,9 @@ namespace OpenTelemetry.Metrics
                 // TODO
             }
 
-            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+            return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
                 metricReaderOptions);
-
-            return builder.AddReader(metricReader);
         }
     }
 }

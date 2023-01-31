@@ -96,10 +96,6 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         => this.ConfigureServicesInternal(configure);
 
     /// <inheritdoc />
-    MeterProviderBuilder IMeterProviderBuilder.ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
-        => this.ConfigureBuilderInternal(configure);
-
-    /// <inheritdoc />
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         => this.ConfigureBuilderInternal(configure);
 

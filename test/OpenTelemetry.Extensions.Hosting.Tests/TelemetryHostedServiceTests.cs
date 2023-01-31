@@ -48,21 +48,24 @@ public class TelemetryHostedServiceTests
             services.AddOpenTelemetry()
                 .WithTracing(builder =>
                 {
-                    builder.ConfigureBuilder((sp, sdkBuilder) =>
+                    if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
                     {
-                        try
+                        deferredTracerProviderBuilder.Configure((sp, sdkBuilder) =>
                         {
-                            // Note: This throws because services cannot be
-                            // registered after IServiceProvider has been
-                            // created.
-                            sdkBuilder.SetSampler<MySampler>();
-                        }
-                        catch (NotSupportedException)
-                        {
-                            expectedInnerExceptionThrown = true;
-                            throw;
-                        }
-                    });
+                            try
+                            {
+                                // Note: This throws because services cannot be
+                                // registered after IServiceProvider has been
+                                // created.
+                                sdkBuilder.SetSampler<MySampler>();
+                            }
+                            catch (NotSupportedException)
+                            {
+                                expectedInnerExceptionThrown = true;
+                                throw;
+                            }
+                        });
+                    }
                 })
                 .StartWithHost();
         });
