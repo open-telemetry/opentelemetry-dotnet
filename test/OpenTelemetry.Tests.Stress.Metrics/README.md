@@ -14,5 +14,5 @@ for `Counter` and uncomment everything related to `Histogram` in the
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net6.0 --configuration Release
+dotnet run --framework net7.0 --configuration Release
 ```

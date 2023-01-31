@@ -8,8 +8,11 @@
 
 ## Export traces from the application
 
-It is highly recommended to go over the [getting-started](../getting-started/README.md)
-doc before following along this document.
+It is highly recommended to go over the [getting started in 5 minutes - ASP.NET
+Core Application](../getting-started-aspnetcore/README.md) guide or the [getting
+started in 5 minutes - Console
+Application](../getting-started-console/README.md) guide before following along
+this document.
 
 Create a new console application and run it:
 

@@ -112,6 +112,9 @@ namespace Examples.Console
         [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
 
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send metrics (default value depends on protocol).", Default = null)]
+        public string Endpoint { get; set; }
+
         [Option('p', "useGrpc", HelpText = "Use gRPC or HTTP when using the OTLP exporter", Required = false, Default = true)]
         public bool UseGrpc { get; set; }
     }
@@ -149,7 +152,7 @@ namespace Examples.Console
     [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
     internal class OtlpOptions
     {
-        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics (default value depends on protocol).", Default = null)]
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces (default value depends on protocol).", Default = null)]
         public string Endpoint { get; set; }
 
         [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
@@ -161,6 +164,9 @@ namespace Examples.Console
     {
         [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
+
+        [Option('e', "endpoint", HelpText = "Target to which the OTLP exporter is going to send logs (default value depends on protocol).", Default = null)]
+        public string Endpoint { get; set; }
 
         [Option('p', "protocol", HelpText = "Transport protocol used by OTLP exporter. Supported values: grpc and http/protobuf. Only applicable if Exporter is OTLP", Default = "grpc")]
         public string Protocol { get; set; }
