@@ -74,17 +74,22 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                 .ConfigureServices(services =>
                 {
                     services.AddOpenTelemetry()
-                        .WithTracing(builder => builder
-                            .ConfigureBuilder((sp, builder) =>
+                        .WithTracing(builder =>
+                        {
+                            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
                             {
-                                configureBuilderCalled = true;
+                                deferredTracerProviderBuilder.Configure((sp, builder) =>
+                                {
+                                    configureBuilderCalled = true;
 
-                                var configuration = sp.GetRequiredService<IConfiguration>();
+                                    var configuration = sp.GetRequiredService<IConfiguration>();
 
-                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+                                    var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
 
-                                Assert.Equal("TEST_KEY_VALUE", testKeyValue);
-                            }))
+                                    Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                                });
+                            }
+                        })
                         .StartWithHost();
                 });
 

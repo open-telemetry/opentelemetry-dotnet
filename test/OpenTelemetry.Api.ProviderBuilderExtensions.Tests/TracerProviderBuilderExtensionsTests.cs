@@ -19,7 +19,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Extensions.DependencyInjection.Tests;
+namespace OpenTelemetry.Api.ProviderBuilderExtensions.Tests;
 
 public class TracerProviderBuilderExtensionsTests
 {

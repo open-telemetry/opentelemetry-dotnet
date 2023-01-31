@@ -67,10 +67,9 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configureExporter));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
-                AddConsoleExporter(
-                    builder,
+                return BuildConsoleExporterMetricReader(
                     sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name),
                     sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name));
             });
@@ -107,31 +106,28 @@ namespace OpenTelemetry.Metrics
 
             name ??= Options.DefaultName;
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
                 var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-                AddConsoleExporter(builder, exporterOptions, metricReaderOptions);
+                return BuildConsoleExporterMetricReader(exporterOptions, metricReaderOptions);
             });
         }
 
-        private static MeterProviderBuilder AddConsoleExporter(
-            MeterProviderBuilder builder,
+        private static MetricReader BuildConsoleExporterMetricReader(
             ConsoleExporterOptions exporterOptions,
             MetricReaderOptions metricReaderOptions)
         {
             var metricExporter = new ConsoleMetricExporter(exporterOptions);
 
-            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+            return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
                 metricReaderOptions,
                 DefaultExportIntervalMilliseconds,
                 DefaultExportTimeoutMilliseconds);
-
-            return builder.AddReader(metricReader);
         }
     }
 }

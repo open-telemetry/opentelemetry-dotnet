@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.DependencyInjection\OpenTelemetry.Extensions.DependencyInjection.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
 
 </Project>
