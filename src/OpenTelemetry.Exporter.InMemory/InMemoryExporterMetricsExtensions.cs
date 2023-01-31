@@ -84,11 +84,11 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configureMetricReader));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
-                AddInMemoryExporter(builder, exportedItems, options);
+                return BuildInMemoryExporterMetricReader(exportedItems, options);
             });
         }
 
@@ -152,45 +152,39 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configureMetricReader));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
-                AddInMemoryExporter(builder, exportedItems, options);
+                return BuildInMemoryExporterMetricReader(exportedItems, options);
             });
         }
 
-        private static MeterProviderBuilder AddInMemoryExporter(
-            MeterProviderBuilder builder,
+        private static MetricReader BuildInMemoryExporterMetricReader(
             ICollection<Metric> exportedItems,
             MetricReaderOptions metricReaderOptions)
         {
             var metricExporter = new InMemoryExporter<Metric>(exportedItems);
 
-            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+            return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
                 metricReaderOptions,
                 DefaultExportIntervalMilliseconds,
                 DefaultExportTimeoutMilliseconds);
-
-            return builder.AddReader(metricReader);
         }
 
-        private static MeterProviderBuilder AddInMemoryExporter(
-            MeterProviderBuilder builder,
+        private static MetricReader BuildInMemoryExporterMetricReader(
             ICollection<MetricSnapshot> exportedItems,
             MetricReaderOptions metricReaderOptions)
         {
             var metricExporter = new InMemoryExporter<Metric>(
                 exportFunc: (in Batch<Metric> metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
 
-            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+            return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
                 metricReaderOptions,
                 DefaultExportIntervalMilliseconds,
                 DefaultExportTimeoutMilliseconds);
-
-            return builder.AddReader(metricReader);
         }
 
         private static ExportResult ExportMetricSnapshot(in Batch<Metric> batch, ICollection<MetricSnapshot> exportedItems)
