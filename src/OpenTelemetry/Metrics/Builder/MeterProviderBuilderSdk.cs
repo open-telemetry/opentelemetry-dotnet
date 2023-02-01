@@ -34,7 +34,6 @@ namespace OpenTelemetry.Metrics
         private const string DefaultInstrumentationVersion = "1.0.0.0";
 
         private readonly IServiceProvider serviceProvider;
-
         private MeterProviderSdk? meterProvider;
 
         public MeterProviderBuilderSdk(IServiceProvider serviceProvider)
