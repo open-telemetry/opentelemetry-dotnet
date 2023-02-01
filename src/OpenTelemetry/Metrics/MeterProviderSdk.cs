@@ -45,8 +45,8 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-            var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
-            state.RegisterProvider(this);
+            var sdkBuilder = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
+            sdkBuilder.RegisterProvider(this);
 
             this.ServiceProvider = serviceProvider!;
 
@@ -61,25 +61,25 @@ namespace OpenTelemetry.Metrics
             var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
             foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider!, sdkBuilder);
             }
 
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            var resourceBuilder = sdkBuilder.ResourceBuilder ?? ResourceBuilder.CreateDefault();
             resourceBuilder.ServiceProvider = serviceProvider;
             this.Resource = resourceBuilder.Build();
 
-            this.viewConfigs = state.ViewConfigs;
+            this.viewConfigs = sdkBuilder.ViewConfigs;
 
-            foreach (var reader in state.Readers)
+            foreach (var reader in sdkBuilder.Readers)
             {
                 Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
-                reader.SetMaxMetricStreams(state.MaxMetricStreams);
-                reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
+                reader.SetMaxMetricStreams(sdkBuilder.MaxMetricStreams);
+                reader.SetMaxMetricPointsPerMetricStream(sdkBuilder.MaxMetricPointsPerMetricStream);
 
                 if (this.reader == null)
                 {
@@ -118,9 +118,9 @@ namespace OpenTelemetry.Metrics
 
             this.compositeMetricReader = this.reader as CompositeMetricReader;
 
-            if (state.Instrumentation.Any())
+            if (sdkBuilder.Instrumentation.Any())
             {
-                foreach (var instrumentation in state.Instrumentation)
+                foreach (var instrumentation in sdkBuilder.Instrumentation)
                 {
                     this.instrumentations.Add(instrumentation.Instance);
                     instrumentationFactoriesAdded.Append(instrumentation.Name);
@@ -136,23 +136,25 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (state.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
+            if (sdkBuilder.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
+                var regex = WildcardHelper.GetWildcardRegex(sdkBuilder.MeterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
-            else if (state.MeterSources.Any())
+            else if (sdkBuilder.MeterSources.Any())
             {
-                var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
+                var meterSourcesToSubscribe = new HashSet<string>(sdkBuilder.MeterSources, StringComparer.OrdinalIgnoreCase);
                 shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", sdkBuilder.MeterSources)}\".");
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Number of views configured = {viewConfigCount}.");
+
+            var metricNameValidator = serviceProvider.GetRequiredService<MetricNameValidator>();
 
             // We expect that all the readers to be added are provided before MeterProviderSdk is built.
             // If there are no readers added, we do not enable measurements for the instruments.
@@ -183,11 +185,20 @@ namespace OpenTelemetry.Metrics
                             try
                             {
                                 metricStreamConfig = viewConfig(instrument);
+                                if (metricStreamConfig == null)
+                                {
+                                    continue;
+                                }
+
+                                if (!metricNameValidator.IsValidViewName(metricStreamConfig.Name))
+                                {
+                                    throw new InvalidOperationException($"View name '{metricStreamConfig.Name}' is invalid.");
+                                }
 
                                 // The SDK provides some static MetricStreamConfigurations.
                                 // For example, the Drop configuration. The static ViewId
                                 // should not be changed for these configurations.
-                                if (metricStreamConfig != null && !metricStreamConfig.ViewId.HasValue)
+                                if (!metricStreamConfig.ViewId.HasValue)
                                 {
                                     metricStreamConfig.ViewId = i;
                                 }
@@ -195,18 +206,13 @@ namespace OpenTelemetry.Metrics
                                 if (metricStreamConfig is ExplicitBucketHistogramConfiguration
                                     && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
                                 {
-                                    metricStreamConfig = null;
-
-                                    OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
-                                        instrument.Name,
-                                        instrument.Meter.Name,
-                                        "The current SDK does not allow aggregating non-Histogram instruments as Histograms.",
-                                        "Fix the view configuration.");
+                                    throw new InvalidOperationException("The current SDK does not allow aggregating non-Histogram instruments as Histograms.");
                                 }
                             }
                             catch (Exception ex)
                             {
                                 OpenTelemetrySdkEventSource.Log.MetricViewIgnored(instrument.Name, instrument.Meter.Name, ex.Message, "Fix the view configuration.");
+                                metricStreamConfig = null;
                             }
 
                             if (metricStreamConfig != null)
@@ -229,7 +235,7 @@ namespace OpenTelemetry.Metrics
                         {
                             if (this.compositeMetricReader == null)
                             {
-                                var metrics = this.reader.AddMetricsListWithViews(instrument, metricStreamConfigs);
+                                var metrics = this.reader.AddMetricsListWithViews(metricNameValidator, instrument, metricStreamConfigs);
                                 if (metrics.Count > 0)
                                 {
                                     listener.EnableMeasurementEvents(instrument, metrics);
@@ -237,7 +243,7 @@ namespace OpenTelemetry.Metrics
                             }
                             else
                             {
-                                var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(instrument, metricStreamConfigs);
+                                var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(metricNameValidator, instrument, metricStreamConfigs);
                                 if (metricsSuperList.Any(metrics => metrics.Count > 0))
                                 {
                                     listener.EnableMeasurementEvents(instrument, metricsSuperList);
@@ -279,7 +285,7 @@ namespace OpenTelemetry.Metrics
                     {
                         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
 
-                        if (!MeterProviderBuilderSdk.IsValidInstrumentName(instrument.Name))
+                        if (!metricNameValidator.IsValidInstrumentName(instrument.Name))
                         {
                             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                                 instrument.Name,

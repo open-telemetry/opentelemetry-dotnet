@@ -99,7 +99,7 @@ namespace OpenTelemetry.Metrics
             metric.UpdateDouble(value, tags);
         }
 
-        internal List<Metric> AddMetricsListWithViews(Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
+        internal List<Metric> AddMetricsListWithViews(MetricNameValidator metricNameValidator, Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
         {
             var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
 
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Metrics
                     var metricStreamConfig = metricStreamConfigs[i];
                     var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfig);
 
-                    if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
+                    if (!metricNameValidator.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                             metricStreamIdentity.InstrumentName,

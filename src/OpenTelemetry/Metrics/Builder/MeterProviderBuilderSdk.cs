@@ -18,7 +18,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -34,10 +33,8 @@ namespace OpenTelemetry.Metrics
         public const int MaxMetricPointsPerMetricDefault = 2000;
         private const string DefaultInstrumentationVersion = "1.0.0.0";
 
-        private static readonly Regex InstrumentNameRegex = new(
-            @"^[a-z][a-z0-9-._]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         private readonly IServiceProvider serviceProvider;
+
         private MeterProviderSdk? meterProvider;
 
         public MeterProviderBuilderSdk(IServiceProvider serviceProvider)
@@ -60,39 +57,6 @@ namespace OpenTelemetry.Metrics
         public int MaxMetricStreams { get; private set; } = MaxMetricsDefault;
 
         public int MaxMetricPointsPerMetricStream { get; private set; } = MaxMetricPointsPerMetricDefault;
-
-        /// <summary>
-        /// Returns whether the given instrument name is valid according to the specification.
-        /// </summary>
-        /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
-        /// <param name="instrumentName">The instrument name.</param>
-        /// <returns>Boolean indicating if the instrument is valid.</returns>
-        public static bool IsValidInstrumentName(string instrumentName)
-        {
-            if (string.IsNullOrWhiteSpace(instrumentName))
-            {
-                return false;
-            }
-
-            return InstrumentNameRegex.IsMatch(instrumentName);
-        }
-
-        /// <summary>
-        /// Returns whether the given custom view name is valid according to the specification.
-        /// </summary>
-        /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
-        /// <param name="customViewName">The view name.</param>
-        /// <returns>Boolean indicating if the instrument is valid.</returns>
-        public static bool IsValidViewName(string customViewName)
-        {
-            // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
-            if (customViewName == null)
-            {
-                return true;
-            }
-
-            return InstrumentNameRegex.IsMatch(customViewName);
-        }
 
         public void RegisterProvider(MeterProviderSdk meterProvider)
         {

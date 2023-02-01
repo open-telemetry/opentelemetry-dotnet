@@ -68,12 +68,12 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal List<List<Metric>> AddMetricsSuperListWithViews(Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
+        internal List<List<Metric>> AddMetricsSuperListWithViews(MetricNameValidator metricNameValidator, Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
         {
             var metricsSuperList = new List<List<Metric>>(this.count);
             for (var cur = this.Head; cur != null; cur = cur.Next)
             {
-                var metrics = cur.Value.AddMetricsListWithViews(instrument, metricStreamConfigs);
+                var metrics = cur.Value.AddMetricsListWithViews(metricNameValidator, instrument, metricStreamConfigs);
                 metricsSuperList.Add(metrics);
             }
 

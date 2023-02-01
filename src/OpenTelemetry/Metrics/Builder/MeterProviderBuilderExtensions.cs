@@ -111,23 +111,14 @@ namespace OpenTelemetry.Metrics
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
         {
-            if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
+            if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
+                throw new ArgumentException($"View name '{name}' is invalid.", nameof(name));
             }
 
-            if (instrumentName.IndexOf('*') != -1)
-            {
-                throw new ArgumentException(
-                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
-                    $"contains a wildcard character. This is not allowed when using a view to " +
-                    $"rename a metric stream as it would lead to conflicting metric stream names.",
-                    nameof(instrumentName));
-            }
-
-            meterProviderBuilder.AddView(instrumentName, new MetricStreamConfiguration { Name = name });
-
-            return meterProviderBuilder;
+            return meterProviderBuilder.AddView(
+                instrumentName,
+                new MetricStreamConfiguration { Name = name });
         }
 
         /// <summary>
@@ -155,6 +146,12 @@ namespace OpenTelemetry.Metrics
 
             meterProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
+                var metricNameValidator = sp.GetRequiredService<MetricNameValidator>();
+                if (!metricNameValidator.IsValidViewName(metricStreamConfiguration.Name))
+                {
+                    throw new ArgumentException($"View name '{metricStreamConfiguration.Name}' is invalid.");
+                }
+
                 if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
                 {
                     if (instrumentName.IndexOf('*') != -1)

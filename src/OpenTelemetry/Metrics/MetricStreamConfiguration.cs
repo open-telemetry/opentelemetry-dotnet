@@ -21,8 +21,6 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class MetricStreamConfiguration
     {
-        private string name;
-
         /// <summary>
         /// Gets the drop configuration.
         /// </summary>
@@ -38,19 +36,7 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// Note: If not provided the instrument name will be used.
         /// </remarks>
-        public string Name
-        {
-            get => this.name;
-            set
-            {
-                if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
-                {
-                    throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
-                }
-
-                this.name = value;
-            }
-        }
+        public string Name { get; set; }
 
         /// <summary>
         /// Gets or sets the optional description of the metric stream.

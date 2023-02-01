@@ -34,6 +34,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
 
         services!.TryAddSingleton<MeterProviderBuilderSdk>();
         services!.RegisterOptionsFactory(configuration => new MetricReaderOptions(configuration));
+        services!.TryAddSingleton<MetricNameValidator>();
 
         return services!;
     }
@@ -65,6 +66,8 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // those cases.
         services!.TryAddSingleton<IConfiguration>(
             sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+
+        services!.RegisterOptionsFactory(configuration => new SdkExperimentalOptions(configuration));
 
         return services!;
     }

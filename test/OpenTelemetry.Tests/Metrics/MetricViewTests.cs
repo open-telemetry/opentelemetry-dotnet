@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build());
 
-            Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+            Assert.Contains($"View name '{viewNewName}' is invalid.", ex.Message);
 
             ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build());
 
-            Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+            Assert.Contains($"View name '{viewNewName}' is invalid.", ex.Message);
         }
 
         [Fact]
