@@ -36,13 +36,10 @@ var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExpor
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
 
-var instrumentationScopeName = appBuilder.Configuration.GetValue<string>("InstrumentationScopeName");
-var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
-
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: appBuilder.Configuration.GetValue<string>("ServiceName"),
-    serviceVersion: version,
+    serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
 
 // Configure OpenTelemetry tracing & metrics with auto-start using the
@@ -53,11 +50,9 @@ appBuilder.Services.AddOpenTelemetry()
     {
         // Tracing
 
-        // Create an ActivitySource for custom instrumentation
-        // and ensure the TracerPprovider subscribes to it.
-        appBuilder.Services.AddSingleton(new ActivitySource(instrumentationScopeName, version));
+        // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
-            .AddSource(instrumentationScopeName)
+            .AddSource("Examples.AspNetCore")
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -107,11 +102,9 @@ appBuilder.Services.AddOpenTelemetry()
     {
         // Metrics
 
-        // Create a Meter for custom instrumentation
-        // and ensure the MeterProvider subscribes to it.
-        appBuilder.Services.AddSingleton(new Meter(instrumentationScopeName, version));
+        // Ensure the MeterProvider subscribes to any custom Meters.
         builder
-            .AddMeter(instrumentationScopeName)
+            .AddMeter("Examples.AspNetCore")
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();

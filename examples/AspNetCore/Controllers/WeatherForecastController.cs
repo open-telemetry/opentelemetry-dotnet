@@ -30,19 +30,18 @@ public class WeatherForecastController : ControllerBase
     };
 
     private static readonly HttpClient HttpClient = new();
+    private static readonly ActivitySource MyActivitySource = new ActivitySource("Examples.AspNetCore");
+    private static readonly Meter MyMeter = new Meter("Examples.AspNetCore");
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly ActivitySource activitySource;
     private readonly Counter<int> counter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, ActivitySource activitySource, Meter meter)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.activitySource = activitySource ?? throw new ArgumentNullException(nameof(activitySource));
-        ArgumentNullException.ThrowIfNull(meter);
 
         // Create a custom metric
-        this.counter = meter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
+        this.counter = MyMeter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
     }
 
     [HttpGet]
@@ -57,7 +56,7 @@ public class WeatherForecastController : ControllerBase
 
         // Manually create an activity. This will become a child of
         // the incoming request.
-        using var activity = this.activitySource.StartActivity("calculate forecast");
+        using var activity = MyActivitySource.StartActivity("calculate forecast");
 
         var rng = new Random();
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
