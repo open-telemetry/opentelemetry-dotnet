@@ -101,7 +101,8 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-**Note:** A common mistake while configuring `MeterProvider` is forgetting to
+> **Note**
+> A common mistake while configuring `MeterProvider` is forgetting to
 add the required `Meter`s to the provider. It is recommended to leverage the
 wildcard subscription model where it makes sense. For example, if your
 application is expecting to enable instruments from a number of libraries from a
@@ -276,7 +277,8 @@ default boundaries. This requires the use of
     })
 ```
 
-**Note:** The SDK currently does not support any changes to `Aggregation` type
+> **Note**
+> The SDK currently does not support any changes to `Aggregation` type
 by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
@@ -329,7 +331,8 @@ ignored. The SDK chooses the key/value combinations in the order in which they
 are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
-**Note:**: One `MetricPoint` is reserved for every `MetricStream` for the
+> **Note**
+> One `MetricPoint` is reserved for every `MetricStream` for the
 special case where there is no key/value pair associated with the metric. The
 maximum number of `MetricPoint`s has to accommodate for this special case.
 
@@ -395,7 +398,8 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-**Note:** The above limit is *per* metric stream, and applies to all the metric
+> **Note**
+> The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at
 this moment.
 
