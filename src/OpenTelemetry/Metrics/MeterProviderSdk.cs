@@ -45,8 +45,8 @@ namespace OpenTelemetry.Metrics
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-            var sdkBuilder = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
-            sdkBuilder.RegisterProvider(this);
+            var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
+            state.RegisterProvider(this);
 
             this.ServiceProvider = serviceProvider!;
 
@@ -61,25 +61,25 @@ namespace OpenTelemetry.Metrics
             var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
             foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                configureProviderBuilder.ConfigureBuilder(serviceProvider!, sdkBuilder);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
             }
 
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-            var resourceBuilder = sdkBuilder.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
             resourceBuilder.ServiceProvider = serviceProvider;
             this.Resource = resourceBuilder.Build();
 
-            this.viewConfigs = sdkBuilder.ViewConfigs;
+            this.viewConfigs = state.ViewConfigs;
 
-            foreach (var reader in sdkBuilder.Readers)
+            foreach (var reader in state.Readers)
             {
                 Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
-                reader.SetMaxMetricStreams(sdkBuilder.MaxMetricStreams);
-                reader.SetMaxMetricPointsPerMetricStream(sdkBuilder.MaxMetricPointsPerMetricStream);
+                reader.SetMaxMetricStreams(state.MaxMetricStreams);
+                reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
 
                 if (this.reader == null)
                 {
@@ -118,9 +118,9 @@ namespace OpenTelemetry.Metrics
 
             this.compositeMetricReader = this.reader as CompositeMetricReader;
 
-            if (sdkBuilder.Instrumentation.Any())
+            if (state.Instrumentation.Any())
             {
-                foreach (var instrumentation in sdkBuilder.Instrumentation)
+                foreach (var instrumentation in state.Instrumentation)
                 {
                     this.instrumentations.Add(instrumentation.Instance);
                     instrumentationFactoriesAdded.Append(instrumentation.Name);
@@ -136,18 +136,18 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (sdkBuilder.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
+            if (state.MeterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = WildcardHelper.GetWildcardRegex(sdkBuilder.MeterSources);
+                var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
-            else if (sdkBuilder.MeterSources.Any())
+            else if (state.MeterSources.Any())
             {
-                var meterSourcesToSubscribe = new HashSet<string>(sdkBuilder.MeterSources, StringComparer.OrdinalIgnoreCase);
+                var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
                 shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", sdkBuilder.MeterSources)}\".");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
