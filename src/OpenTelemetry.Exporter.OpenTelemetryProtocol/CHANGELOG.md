@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added a direct dependency on System.Reflection.Emit.Lightweight which
+  previously came transitively through the OpenTelemetry SDK.
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
 ## 1.4.0-rc.3
 
 Released 2023-Feb-01
