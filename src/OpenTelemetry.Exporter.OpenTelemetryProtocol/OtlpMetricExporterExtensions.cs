@@ -14,12 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System.Reflection;
-using System.Runtime.Intrinsics.X86;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -155,13 +152,6 @@ namespace OpenTelemetry.Metrics
             if (configureExporterInstance != null)
             {
                 metricExporter = configureExporterInstance(metricExporter);
-            }
-
-            var persistentStorage = serviceProvider.GetService(typeof(PersistentBlobProvider));
-
-            if (persistentStorage != null)
-            {
-                // TODO
             }
 
             return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(

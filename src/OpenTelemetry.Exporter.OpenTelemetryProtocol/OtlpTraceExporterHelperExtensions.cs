@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -111,6 +112,13 @@ namespace OpenTelemetry.Trace
             if (configureExporterInstance != null)
             {
                 otlpExporter = configureExporterInstance(otlpExporter);
+            }
+
+            var persistentStorage = serviceProvider.GetService(typeof(PersistentBlobProvider));
+
+            if (persistentStorage != null)
+            {
+                // TODO
             }
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
