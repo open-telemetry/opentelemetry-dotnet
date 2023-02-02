@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Text.Json;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -42,6 +43,29 @@ namespace OpenTelemetry.Logs
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
             return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
+        }
+
+        /// <summary>
+        /// Adds a JSON Console exporter with default OpenTelemetryLoggerOptions.
+        /// </summary>
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddConsoleJsonExporter(this OpenTelemetryLoggerOptions loggerOptions)
+            => AddConsoleJsonExporter(loggerOptions, configure: null, jsonSerializerOptionsConfigure: null);
+
+        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+        /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+        /// <param name="jsonSerializerOptionsConfigure">Callback action for configuring JSON Serializer Options.</param>
+        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        public static OpenTelemetryLoggerOptions AddConsoleJsonExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure, Action<JsonSerializerOptions> jsonSerializerOptionsConfigure)
+        {
+            Guard.ThrowIfNull(loggerOptions);
+
+            var options = new ConsoleExporterOptions();
+            configure?.Invoke(options);
+            var jsonSerializerOptions = new JsonSerializerOptions();
+            jsonSerializerOptionsConfigure?.Invoke(jsonSerializerOptions);
+            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordJsonExporter(options, jsonSerializerOptions)));
         }
     }
 }
