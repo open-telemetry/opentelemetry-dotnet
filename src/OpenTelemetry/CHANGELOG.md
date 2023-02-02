@@ -1,5 +1,8 @@
 # Changelog
 
+* Added `AddDetector` factory overload on `ResourceBuilder`.
+  ([#4141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4141))
+
 ## Unreleased
 
 * Removed the dependency on
