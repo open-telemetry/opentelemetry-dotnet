@@ -16,8 +16,7 @@
 
 namespace Examples.AspNetCore.Controllers;
 
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
+using Examples.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -30,18 +29,14 @@ public class WeatherForecastController : ControllerBase
     };
 
     private static readonly HttpClient HttpClient = new();
-    private static readonly ActivitySource MyActivitySource = new ActivitySource("Examples.AspNetCore");
-    private static readonly Meter MyMeter = new Meter("Examples.AspNetCore");
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly Counter<int> counter;
+    private readonly ITelemetryService telemetryService;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, ITelemetryService telemetryService)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        // Create a custom metric
-        this.counter = MyMeter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
+        this.telemetryService = telemetryService ?? throw new ArgumentNullException(nameof(telemetryService));
     }
 
     [HttpGet]
@@ -56,7 +51,7 @@ public class WeatherForecastController : ControllerBase
 
         // Manually create an activity. This will become a child of
         // the incoming request.
-        using var activity = MyActivitySource.StartActivity("calculate forecast");
+        using var activity = this.telemetryService.ActivitySource.StartActivity("calculate forecast");
 
         var rng = new Random();
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -68,7 +63,7 @@ public class WeatherForecastController : ControllerBase
         .ToArray();
 
         // Count the freezing days
-        this.counter.Add(forecast.Count(f => f.TemperatureC < 0));
+        this.telemetryService.FreezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
         this.logger.LogInformation(
             "WeatherForecasts generated {count}: {forecasts}",

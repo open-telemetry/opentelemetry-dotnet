@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Reflection;
+using Examples.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
@@ -34,11 +35,18 @@ var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExpor
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
 
+var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: appBuilder.Configuration.GetValue<string>("ServiceName"),
-    serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
+    serviceVersion: version,
     serviceInstanceId: Environment.MachineName);
+
+// Create a container to hold ActivitySource, Meter, and all
+// instruments so that DI can be used to inject these dependencies
+var telemetryService = new TelemetryService(version);
+appBuilder.Services.AddSingleton<ITelemetryService>(telemetryService);
 
 // Configure OpenTelemetry tracing & metrics with auto-start using the
 // StartWithHost extension from OpenTelemetry.Extensions.Hosting.
@@ -50,7 +58,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
-            .AddSource("Examples.AspNetCore")
+            .AddSource(telemetryService.ActivitySource.Name)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -102,7 +110,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the MeterProvider subscribes to any custom Meters.
         builder
-            .AddMeter("Examples.AspNetCore")
+            .AddMeter(telemetryService.Meter.Name)
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
