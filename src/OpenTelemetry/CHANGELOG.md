@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
 * Removed the dependency on
   Microsoft.Extensions.Configuration.EnvironmentVariables
   ([#4092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4092))
