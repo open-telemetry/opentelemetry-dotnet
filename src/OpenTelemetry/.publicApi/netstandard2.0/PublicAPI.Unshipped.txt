@@ -20,6 +20,7 @@ OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<OpenTelemetry.Metri
 OpenTelemetry.OpenTelemetryBuilder.WithTracing() -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryServiceCollectionExtensions
+OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider?, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Metrics.MetricReader!>! implementationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> OpenTelemetry.OpenTelemetryBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
