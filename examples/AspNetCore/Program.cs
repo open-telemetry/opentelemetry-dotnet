@@ -35,7 +35,7 @@ var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExpor
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
 
-var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+var version = typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown";
 
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
