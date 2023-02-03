@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Reflection;
 using Examples.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
@@ -35,18 +34,15 @@ var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExpor
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
 
-var version = typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown";
-
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: appBuilder.Configuration.GetValue<string>("ServiceName"),
-    serviceVersion: version,
+    serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
 
-// Create a container to hold ActivitySource, Meter, and all
-// instruments so that DI can be used to inject these dependencies
-var telemetryService = new TelemetryService(version);
-appBuilder.Services.AddSingleton<ITelemetryService>(telemetryService);
+// Create a service to expose ActivitySource, Meter, and Instruments
+// for manual instrumentation
+appBuilder.Services.AddSingleton<Instrumentation>();
 
 // Configure OpenTelemetry tracing & metrics with auto-start using the
 // StartWithHost extension from OpenTelemetry.Extensions.Hosting.
@@ -58,7 +54,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
-            .AddSource(telemetryService.ActivitySource.Name)
+            .AddSource(Instrumentation.ScopeName)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -110,7 +106,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the MeterProvider subscribes to any custom Meters.
         builder
-            .AddMeter(telemetryService.Meter.Name)
+            .AddMeter(Instrumentation.ScopeName)
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();

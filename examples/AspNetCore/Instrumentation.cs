@@ -1,4 +1,4 @@
-// <copyright file="TelemetryService.cs" company="OpenTelemetry Authors">
+// <copyright file="Instrumentation.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,15 @@ namespace Examples.AspNetCore;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-public class TelemetryService : ITelemetryService
+public class Instrumentation : IDisposable
 {
-    private const string InstrumentationScopeName = "Examples.AspNetCore";
+    internal const string ScopeName = "Examples.AspNetCore";
 
-    public TelemetryService(string version)
+    public Instrumentation()
     {
-        this.ActivitySource = new ActivitySource(InstrumentationScopeName, version);
-        this.Meter = new Meter(InstrumentationScopeName, version);
+        string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
+        this.ActivitySource = new ActivitySource(ScopeName, version);
+        this.Meter = new Meter(ScopeName, version);
         this.FreezingDaysCounter = this.Meter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
     }
 
@@ -35,4 +36,10 @@ public class TelemetryService : ITelemetryService
     public Meter Meter { get; }
 
     public Counter<int> FreezingDaysCounter { get; }
+
+    public void Dispose()
+    {
+        this.ActivitySource.Dispose();
+        this.Meter.Dispose();
+    }
 }

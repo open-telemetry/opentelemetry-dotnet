@@ -31,12 +31,12 @@ public class WeatherForecastController : ControllerBase
     private static readonly HttpClient HttpClient = new();
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly ITelemetryService telemetryService;
+    private readonly Instrumentation instrumentation;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, ITelemetryService telemetryService)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.telemetryService = telemetryService ?? throw new ArgumentNullException(nameof(telemetryService));
+        this.instrumentation = instrumentation ?? throw new ArgumentNullException(nameof(instrumentation));
     }
 
     [HttpGet]
@@ -51,7 +51,7 @@ public class WeatherForecastController : ControllerBase
 
         // Manually create an activity. This will become a child of
         // the incoming request.
-        using var activity = this.telemetryService.ActivitySource.StartActivity("calculate forecast");
+        using var activity = this.instrumentation.ActivitySource.StartActivity("calculate forecast");
 
         var rng = new Random();
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -63,7 +63,7 @@ public class WeatherForecastController : ControllerBase
         .ToArray();
 
         // Count the freezing days
-        this.telemetryService.FreezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
+        this.instrumentation.FreezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
         this.logger.LogInformation(
             "WeatherForecasts generated {count}: {forecasts}",
