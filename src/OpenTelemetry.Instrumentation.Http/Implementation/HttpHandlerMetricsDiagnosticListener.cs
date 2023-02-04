@@ -60,12 +60,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            var request = response.RequestMessage;
-            if (!this.TryFilterHttpRequestMessage(activity.OperationName, request))
+            if (!this.TryFilterHttpRequestMessage(activity.OperationName, response))
             {
                 return;
             }
 
+            var request = response.RequestMessage;
             TagList tags = default;
             tags.Add(new(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
             tags.Add(new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
             }
 
-            this.EnrichWithHttpRequestMessage(ref tags, request);
+            this.EnrichWithHttpRequestMessage(ref tags, response);
 
             this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
         }
@@ -100,11 +100,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// </list></item>
         /// </list>
         /// </returns>
-        private bool TryFilterHttpRequestMessage(string operationName, HttpRequestMessage request)
+        private bool TryFilterHttpRequestMessage(string operationName, HttpResponseMessage request)
         {
             try
             {
-                var shouldCollect = this.options.FilterHttpRequestMessage?.Invoke(request) ?? true;
+                var shouldCollect = this.options.FilterHttpResponseMessage?.Invoke(request) ?? true;
 
                 if (shouldCollect)
                 {
@@ -121,11 +121,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        private void EnrichWithHttpRequestMessage(ref TagList tagList, HttpRequestMessage request)
+        private void EnrichWithHttpRequestMessage(ref TagList tagList, HttpResponseMessage response)
         {
             try
             {
-                this.options.EnrichWithHttpRequestMessage?.Invoke(HttpClientMetricName, request, ref tagList);
+                this.options.EnrichWithHttpResponseMessage?.Invoke(HttpClientMetricName, response, ref tagList);
             }
             catch (Exception ex)
             {

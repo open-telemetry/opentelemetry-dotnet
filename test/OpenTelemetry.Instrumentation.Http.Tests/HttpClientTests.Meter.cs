@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !NETFRAMEWORK
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http;
@@ -23,11 +24,11 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.Http.Tests
+namespace OpenTelemetry.Instrumentation.Http.Tests;
+
+public partial class HttpClientTests
 {
-    public partial class HttpClientTests
-    {
-        private const string MetricName = "http.client.duration";
+    private const string MetricName = "http.client.duration";
 
         [Theory]
         [Description("Check that enrich delegate from options works")]
@@ -37,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             // given
             var metrics = new List<Metric>();
-            const string enrichedTagKey = nameof(HttpClientInstrumentationMeterOptions.EnrichWithHttpRequestMessage);
+            const string enrichedTagKey = nameof(HttpClientInstrumentationMeterOptions.EnrichWithHttpResponseMessage);
             const string enrichedTagValue = "yes";
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation(o =>
@@ -47,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         return;
                     }
 
-                    o.EnrichWithHttpRequestMessage = (string _, HttpRequestMessage _, ref TagList tags) =>
+                    o.EnrichWithHttpResponseMessage = (string _, HttpResponseMessage _, ref TagList tags) =>
                         tags.Add(new KeyValuePair<string, object>(enrichedTagKey, enrichedTagValue));
                 })
                 .AddInMemoryExporter(metrics)
@@ -85,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var metrics = new List<Metric>();
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation(o =>
-                    o.EnrichWithHttpRequestMessage = (string _, HttpRequestMessage _, ref TagList _) =>
+                    o.EnrichWithHttpResponseMessage = (string _, HttpResponseMessage _, ref TagList _) =>
                         throw new Exception())
                 .AddInMemoryExporter(metrics)
                 .Build()!;
@@ -114,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .AddHttpClientInstrumentation(
                     opt =>
                     {
-                        opt.FilterHttpRequestMessage = _ => false;
+                        opt.FilterHttpResponseMessage = _ => false;
                     })
                 .AddInMemoryExporter(exportedItems)
                 .Build()!;
@@ -139,7 +140,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .AddHttpClientInstrumentation(
                     opt =>
                     {
-                        opt.FilterHttpRequestMessage = _ => throw new Exception();
+                        opt.FilterHttpResponseMessage = _ => throw new Exception();
                     })
                 .AddInMemoryExporter(exportedItems)
                 .Build()!;
@@ -240,5 +241,5 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             return metricTags;
         }
-    }
 }
+#endif
