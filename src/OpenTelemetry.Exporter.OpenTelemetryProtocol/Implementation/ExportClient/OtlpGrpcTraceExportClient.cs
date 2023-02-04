@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Google.Protobuf;
 using Grpc.Core;
 using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
