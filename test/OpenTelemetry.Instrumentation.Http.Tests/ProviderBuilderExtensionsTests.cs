@@ -75,23 +75,6 @@ public class ProviderBuilderExtensionsTests
     }
 
     [Fact]
-    public void MeterProvider_AddHttpClientInstrumentation_NamedOptions()
-    {
-        int defaultExporterOptionsConfigureOptionsInvocations = 0;
-        int namedExporterOptionsConfigureOptionsInvocations = 0;
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddHttpClientInstrumentation(configureOptions: _ => defaultExporterOptionsConfigureOptionsInvocations++)
-            .AddHttpClientInstrumentation(
-                "Instrumentation2",
-                configureOptions: _ => namedExporterOptionsConfigureOptionsInvocations++)
-            .Build();
-
-        Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
-        Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
-    }
-
-    [Fact]
     public void TraceProvider_AddHttpClientInstrumentation_NullBuilder()
     {
         TracerProviderBuilder builder = null;

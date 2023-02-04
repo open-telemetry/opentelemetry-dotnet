@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (!this.TryFilterHttpRequestMessage(activity.OperationName, response))
+            if (!this.TryFilter(activity.OperationName, response))
             {
                 return;
             }
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
             }
 
-            this.EnrichWithHttpRequestMessage(ref tags, response);
+            this.EnrichTags(ref tags, response);
 
             this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
         }
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// </list></item>
         /// </list>
         /// </returns>
-        private bool TryFilterHttpRequestMessage(string operationName, HttpResponseMessage request)
+        private bool TryFilter(string operationName, HttpResponseMessage request)
         {
             try
             {
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
         }
 
-        private void EnrichWithHttpRequestMessage(ref TagList tagList, HttpResponseMessage response)
+        private void EnrichTags(ref TagList tagList, HttpResponseMessage response)
         {
             try
             {

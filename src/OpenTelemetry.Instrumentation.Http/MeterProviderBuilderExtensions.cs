@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Internal;
 
@@ -43,39 +41,18 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddHttpClientInstrumentation(
             this MeterProviderBuilder builder,
-            Action<HttpClientInstrumentationMeterOptions> configureOptions) =>
-            builder.AddHttpClientInstrumentation(optionsName: null, configureOptions);
-
-        /// <summary>
-        /// Enables HttpClient instrumentation.
-        /// </summary>
-        /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
-        /// <param name="optionsName"> Name which is used when retrieving options.</param>
-        /// <param name="configureOptions">Callback action for configuring <see cref="HttpClientInstrumentationMeterOptions"/>.</param>
-        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        public static MeterProviderBuilder AddHttpClientInstrumentation(
-            this MeterProviderBuilder builder,
-            string optionsName,
             Action<HttpClientInstrumentationMeterOptions> configureOptions)
         {
             // TODO: Implement an IDeferredMeterProviderBuilder
 
             Guard.ThrowIfNull(builder);
 
-            optionsName ??= Options.DefaultName;
+            var options = new HttpClientInstrumentationMeterOptions();
+            configureOptions?.Invoke(options);
 
-            if (configureOptions != null)
-            {
-                builder.ConfigureServices(services => services.Configure(optionsName, configureOptions));
-            }
-
-            builder.ConfigureBuilder((sp, builder) =>
-            {
-                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationMeterOptions>>().Get(optionsName);
-                var instrumentation = new HttpClientMetrics(options);
-                builder.AddMeter(HttpClientMetrics.InstrumentationName);
-                builder.AddInstrumentation(() => instrumentation);
-            });
+            var instrumentation = new HttpClientMetrics(options);
+            builder.AddMeter(HttpClientMetrics.InstrumentationName);
+            builder.AddInstrumentation(() => instrumentation);
 
             return builder;
         }
