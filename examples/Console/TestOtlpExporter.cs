@@ -74,7 +74,7 @@ namespace Examples.Console
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .ConfigureResource(r => r.AddService("otlp-test"))
-                    .ConfigureServices(services => services.AddSingleton<PersistentBlobProvider>(sp => new FileBlobProvider("/tmp/otel")))
+                    .ConfigureServices(services => services.AddSingleton<PersistentBlobProvider>(sp => new FileBlobProvider("C:\\tmp")))
                     .AddOtlpExporter(opt =>
                     {
                         // If endpoint was not specified, the proper one will be selected according to the protocol.
