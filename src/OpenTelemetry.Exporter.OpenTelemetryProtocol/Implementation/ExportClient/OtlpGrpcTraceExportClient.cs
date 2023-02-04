@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using Google.Protobuf;
 using Grpc.Core;
+using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
@@ -24,8 +26,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         private readonly OtlpCollector.TraceService.TraceServiceClient traceClient;
 
-        public OtlpGrpcTraceExportClient(OtlpExporterOptions options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null)
-            : base(options)
+        public OtlpGrpcTraceExportClient(OtlpExporterOptions options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null, PersistentBlobProvider persistentBlobProvider = null)
+            : base(options, persistentBlobProvider)
         {
             if (traceServiceClient != null)
             {
@@ -49,6 +51,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             catch (RpcException ex)
             {
+                if (this.PersistentBlobProvider != null)
+                {
+                    // TODO: Write blob to storage
+                }
+
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
                 return false;

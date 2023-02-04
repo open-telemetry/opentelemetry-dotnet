@@ -15,6 +15,7 @@
 // </copyright>
 
 using Grpc.Core;
+using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
+        protected BaseOtlpGrpcExportClient(OtlpExporterOptions options, PersistentBlobProvider persistentBlobProvider = null)
         {
             Guard.ThrowIfNull(options);
             Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
@@ -36,6 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             this.Endpoint = new UriBuilder(options.Endpoint).Uri;
             this.Headers = options.GetMetadataFromHeaders();
             this.TimeoutMilliseconds = options.TimeoutMilliseconds;
+            this.PersistentBlobProvider = persistentBlobProvider;
         }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
@@ -49,6 +51,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         internal Metadata Headers { get; }
 
         internal int TimeoutMilliseconds { get; }
+
+        internal PersistentBlobProvider PersistentBlobProvider { get; }
 
         /// <inheritdoc/>
         public abstract bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);

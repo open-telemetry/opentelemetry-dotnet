@@ -107,18 +107,12 @@ namespace OpenTelemetry.Trace
         {
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
+            PersistentBlobProvider persistentBlobProvider = serviceProvider.GetService<PersistentBlobProvider>();
+            BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, null, persistentBlobProvider);
 
             if (configureExporterInstance != null)
             {
                 otlpExporter = configureExporterInstance(otlpExporter);
-            }
-
-            var persistentStorage = serviceProvider.GetService(typeof(PersistentBlobProvider));
-
-            if (persistentStorage != null)
-            {
-                // TODO
             }
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
