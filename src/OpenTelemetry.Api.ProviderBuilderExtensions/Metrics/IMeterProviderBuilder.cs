@@ -47,13 +47,4 @@ internal interface IMeterProviderBuilder : IDeferredMeterProviderBuilder
     /// <param name="configure">Configuration callback.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     MeterProviderBuilder ConfigureServices(Action<IServiceCollection> configure);
-
-    /// <summary>
-    /// Register a callback action to configure the <see
-    /// cref="MeterProviderBuilder"/> once the application <see
-    /// cref="IServiceProvider"/> is available.
-    /// </summary>
-    /// <param name="configure">Configuration callback.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure);
 }

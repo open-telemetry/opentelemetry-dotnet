@@ -306,6 +306,28 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.True(innerTestExecuted);
         }
 
+        [Fact]
+        public void MeterProviderAddReaderFactoryTest()
+        {
+            bool factoryInvoked = false;
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddReader(sp =>
+                {
+                    factoryInvoked = true;
+
+                    Assert.NotNull(sp);
+
+                    return new MyReader();
+                })
+                .Build() as MeterProviderSdk;
+
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(meterProvider);
+            Assert.True(meterProvider.Reader is MyReader);
+        }
+
         private static void RunBuilderServiceLifecycleTest(
             MeterProviderBuilder builder,
             Func<MeterProviderSdk> buildFunc,

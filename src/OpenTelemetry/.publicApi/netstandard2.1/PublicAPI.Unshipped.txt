@@ -20,6 +20,7 @@ OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<OpenTelemetry.Metri
 OpenTelemetry.OpenTelemetryBuilder.WithTracing() -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryServiceCollectionExtensions
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Metrics.MetricReader!>! implementationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.OpenTelemetryServiceCollectionExtensions.AddOpenTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> OpenTelemetry.OpenTelemetryBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string?
@@ -28,7 +29,9 @@ OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDe
 *REMOVED*static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>!>! implementationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!>! implementationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!

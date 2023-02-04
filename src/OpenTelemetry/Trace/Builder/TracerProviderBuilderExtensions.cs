@@ -97,6 +97,29 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Sets the sampler on the provider.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="implementationFactory">The factory that creates the service.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetSampler(
+            this TracerProviderBuilder tracerProviderBuilder,
+            Func<IServiceProvider, Sampler> implementationFactory)
+        {
+            Guard.ThrowIfNull(implementationFactory);
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.SetSampler(implementationFactory(sp));
+                }
+            });
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// You should usually use <see cref="ConfigureResource(TracerProviderBuilder, Action{ResourceBuilder})"/> instead
@@ -183,6 +206,29 @@ namespace OpenTelemetry.Trace
                 if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
                 {
                     tracerProviderBuilderSdk.AddProcessor(sp.GetRequiredService<T>());
+                }
+            });
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds a processor to the provider which will be retrieved using dependency injection.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="implementationFactory">The factory that creates the service.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddProcessor(
+            this TracerProviderBuilder tracerProviderBuilder,
+            Func<IServiceProvider, BaseProcessor<Activity>> implementationFactory)
+        {
+            Guard.ThrowIfNull(implementationFactory);
+
+            tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+                {
+                    tracerProviderBuilderSdk.AddProcessor(implementationFactory(sp));
                 }
             });
 

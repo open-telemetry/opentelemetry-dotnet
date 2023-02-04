@@ -32,11 +32,13 @@ Targeting `OpenTelemetry.OpenTelemetryBuilder`:
 
 ### Obsolete OpenTelemetry SDK pre-1.4.0 extensions
 
-**Note:** The below extension methods should be called by application host code
+> **Note**
+> The below extension methods should be called by application host code
 only. Library authors see: [Registration extension method guidance for library
 authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
-
-**Note:** Multiple calls to the below extensions will **NOT** result in multiple
+<!-- This comment is to make sure the two notes above and below are not merged -->
+> **Note**
+> Multiple calls to the below extensions will **NOT** result in multiple
 providers. To establish multiple providers use the
 `Sdk.CreateTracerProviderBuilder()` and/or `Sdk.CreateMeterProviderBuilder()`
 methods. See [TracerProvider
