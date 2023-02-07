@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Reflection;
+using Examples.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
@@ -37,8 +37,12 @@ var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").To
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: appBuilder.Configuration.GetValue<string>("ServiceName"),
-    serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
+    serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
+
+// Create a service to expose ActivitySource, and Metric Instruments
+// for manual instrumentation
+appBuilder.Services.AddSingleton<Instrumentation>();
 
 // Configure OpenTelemetry tracing & metrics with auto-start using the
 // StartWithHost extension from OpenTelemetry.Extensions.Hosting.
@@ -48,7 +52,9 @@ appBuilder.Services.AddOpenTelemetry()
     {
         // Tracing
 
+        // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
+            .AddSource(Instrumentation.ActivitySourceName)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -98,7 +104,9 @@ appBuilder.Services.AddOpenTelemetry()
     {
         // Metrics
 
+        // Ensure the MeterProvider subscribes to any custom Meters.
         builder
+            .AddMeter(Instrumentation.MeterName)
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
