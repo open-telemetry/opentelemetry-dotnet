@@ -153,6 +153,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                 }
             }
+            
+            try
+            {
+                this.options.Enrich?.Invoke(activity, "OnCustom", eventData.Payload);
+            }
+            catch (Exception ex)
+            {
+                 SqlClientInstrumentationEventSource.Log.EnrichmentException(ex);
+            }
         }
 
         private void OnEndExecute(EventWrittenEventArgs eventData)
