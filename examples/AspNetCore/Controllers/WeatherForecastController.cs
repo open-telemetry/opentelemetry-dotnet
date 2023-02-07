@@ -16,6 +16,8 @@
 
 namespace Examples.AspNetCore.Controllers;
 
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Examples.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,12 +33,16 @@ public class WeatherForecastController : ControllerBase
     private static readonly HttpClient HttpClient = new();
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly Instrumentation instrumentation;
+    private readonly ActivitySource activitySource;
+    private readonly Counter<long> freezingDaysCounter;
 
     public WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.instrumentation = instrumentation ?? throw new ArgumentNullException(nameof(instrumentation));
+
+        ArgumentNullException.ThrowIfNull(instrumentation);
+        this.activitySource = instrumentation.ActivitySource;
+        this.freezingDaysCounter = instrumentation.FreezingDaysCounter;
     }
 
     [HttpGet]
@@ -51,7 +57,7 @@ public class WeatherForecastController : ControllerBase
 
         // Manually create an activity. This will become a child of
         // the incoming request.
-        using var activity = this.instrumentation.ActivitySource.StartActivity("calculate forecast");
+        using var activity = this.activitySource.StartActivity("calculate forecast");
 
         var rng = new Random();
         var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -63,7 +69,7 @@ public class WeatherForecastController : ControllerBase
         .ToArray();
 
         // Count the freezing days
-        this.instrumentation.FreezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
+        this.freezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
         this.logger.LogInformation(
             "WeatherForecasts generated {count}: {forecasts}",
