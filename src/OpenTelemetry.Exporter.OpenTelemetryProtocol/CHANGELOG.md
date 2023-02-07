@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Added a direct dependency on System.Reflection.Emit.Lightweight which
+  previously came transitively through the OpenTelemetry SDK.
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
+* Include User-Agent header
+  [per the specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#user-agent).
+  ([#4120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4120))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09

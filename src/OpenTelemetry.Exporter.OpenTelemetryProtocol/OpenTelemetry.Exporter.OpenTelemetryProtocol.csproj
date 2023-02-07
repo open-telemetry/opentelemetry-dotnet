@@ -10,27 +10,19 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0'" />
+    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
     <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" Condition="'$(TargetFramework)' != 'net6.0'" />
+  </ItemGroup>
 
+  <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
