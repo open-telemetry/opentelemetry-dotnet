@@ -199,7 +199,7 @@ internal static class HostingHelper
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-            this.serviceProvider = serviceProvider;
+            this.serviceProvider = serviceProvider!;
         }
 
         public void Start()
