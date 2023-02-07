@@ -37,7 +37,8 @@
     <MicrosoftCodeCoveragePkgVer>[17.4.1]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsDependencyInjectionPkgVer>[3.1.0,)</MicrosoftExtensionsDependencyInjectionPkgVer>
     <MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>$(MicrosoftExtensionsDependencyInjectionPkgVer)</MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>
-    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
+    <MicrosoftExtensionsHostingPkgVer>[2.1.0,)</MicrosoftExtensionsHostingPkgVer>
+    <MicrosoftExtensionsHostingAbstractionsPkgVer>$(MicrosoftExtensionsHostingPkgVer)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>$(MicrosoftExtensionsLoggingPkgVer)</MicrosoftExtensionsLoggingConfigurationPkgVer>
     <MicrosoftExtensionsOptionsPkgVer>[3.1.0,)</MicrosoftExtensionsOptionsPkgVer>

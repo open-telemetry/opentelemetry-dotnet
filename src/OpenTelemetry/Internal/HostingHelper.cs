@@ -31,31 +31,17 @@ internal static class HostingHelper
 {
     private static readonly object LockObject = new();
     private static bool initialized;
+    private static Type? hostedServiceImplementation;
 
     public static void AddOpenTelemetryHostedServiceIntoServiceCollection(IServiceCollection services)
     {
-        lock (LockObject)
+        if (TryAddOpenTelemetryHostedServiceIntoServiceCollection(services, out var reason))
         {
-            if (!initialized)
-            {
-                try
-                {
-                    if (TryAddOpenTelemetryHostedServiceIntoServiceCollection(services, out var reason))
-                    {
-                        OpenTelemetrySdkEventSource.Log.HostedServiceRegistered();
-                    }
-                    else
-                    {
-                        OpenTelemetrySdkEventSource.Log.HostedServiceRegistrationSkipped(reason);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.HostedServiceRegistrationFailure(ex);
-                }
-
-                initialized = true;
-            }
+            OpenTelemetrySdkEventSource.Log.HostedServiceRegistered();
+        }
+        else
+        {
+            OpenTelemetrySdkEventSource.Log.HostedServiceRegistrationSkipped(reason);
         }
     }
 
@@ -67,7 +53,6 @@ internal static class HostingHelper
         // Note: This is for .NET Framework and/or .NET Standard 2.0 targets.
         bool isDynamicCodeSupported = true;
 #endif
-
         if (!isDynamicCodeSupported)
         {
             reason = "Dynamic code not supported";
@@ -83,8 +68,33 @@ internal static class HostingHelper
             return false;
         }
 
+        lock (LockObject)
+        {
+            if (!initialized)
+            {
+                try
+                {
+                    hostedServiceImplementation = CreateHostedServiceImplementation(iHostedServiceType);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.HostedServiceRegistrationFailure(ex);
+                }
+                finally
+                {
+                    initialized = true;
+                }
+            }
+        }
+
+        if (hostedServiceImplementation == null)
+        {
+            reason = "Initialization failure";
+            return false;
+        }
+
         services.TryAddSingleton<TelemetryHostedService>();
-        services.TryAddSingleton(iHostedServiceType, CreateHostedServiceImplementation(iHostedServiceType));
+        services.TryAddSingleton(iHostedServiceType, hostedServiceImplementation);
 
         reason = null;
         return true;
