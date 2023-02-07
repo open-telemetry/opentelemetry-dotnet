@@ -5,6 +5,10 @@
 * Removed the dependency on System.Reflection.Emit.Lightweight
   ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
 
+* The `AddOpenTelemetry` extension will now register an `IHostedService` if
+  `Microsoft.Extensions.Hosting.Abstractions` is detected.
+  ([#4151](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4151))
+
 ## 1.4.0-rc.3
 
 Released 2023-Feb-01
