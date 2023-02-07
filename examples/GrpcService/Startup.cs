@@ -61,8 +61,7 @@ namespace Examples.GrpcService
                             builder.AddConsoleExporter();
                             break;
                     }
-                })
-                .StartWithHost();
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

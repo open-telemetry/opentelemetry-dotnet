@@ -119,8 +119,7 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddConsoleExporter();
                 break;
         }
-    })
-    .StartWithHost();
+    });
 
 // Clear default logging providers used by WebApplication host.
 appBuilder.Logging.ClearProviders();
