@@ -55,8 +55,14 @@ public class WeatherForecastController : ControllerBase
         // automatically as child of incoming request.
         var res = HttpClient.GetStringAsync("http://google.com").Result;
 
-        // Manually create an activity. This will become a child of
-        // the incoming request.
+        // Optional: Manually create an activity. This will become a child of
+        // the activity created from the instrumentation library for AspNetCore.
+        // Manually created activities are useful when there is a desire to track
+        // a specific subset of the request. In this example one could imagine
+        // that calculating the forecast is an expensive operation and therefore
+        // something to be distinguished from the overall request.
+        // Note: Tags can be added to the current activity without the need for
+        // a manual activity using Acitivty.Current?.SetTag()
         using var activity = this.activitySource.StartActivity("calculate forecast");
 
         var rng = new Random();
@@ -68,7 +74,7 @@ public class WeatherForecastController : ControllerBase
         })
         .ToArray();
 
-        // Count the freezing days
+        // Optional: Count the freezing days
         this.freezingDaysCounter.Add(forecast.Count(f => f.TemperatureC < 0));
 
         this.logger.LogInformation(
