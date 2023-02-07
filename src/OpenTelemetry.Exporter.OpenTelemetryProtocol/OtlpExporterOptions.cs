@@ -39,11 +39,19 @@ namespace OpenTelemetry.Exporter
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
         internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
+        internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
+        {
+            new KeyValuePair<string, string>("User-Agent", UserAgentProductVersion != null ? $"{UserAgentProduct}/{UserAgentProductVersion}" : UserAgentProduct),
+        };
+
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
         private const string DefaultHttpEndpoint = "http://localhost:4318";
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+        private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
+
+        private static readonly Version UserAgentProductVersion = GetAssemblyVersion();
 
         private Uri endpoint;
 
@@ -194,6 +202,19 @@ namespace OpenTelemetry.Exporter
                 (sp, configuration, name) => new OtlpExporterOptions(
                     configuration,
                     sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+        }
+
+        private static Version GetAssemblyVersion()
+        {
+            try
+            {
+                var assemblyName = typeof(OtlpExporterOptions).Assembly.GetName();
+                return assemblyName.Version;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }
