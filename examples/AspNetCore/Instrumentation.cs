@@ -19,6 +19,11 @@ namespace Examples.AspNetCore;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
+/// <summary>
+/// It is recommended to use a custom type to hold references for
+/// ActivitySource and Instruments. This avoids possible type collisions
+/// with other components in the DI container.
+/// </summary>
 public class Instrumentation : IDisposable
 {
     internal const string ActivitySourceName = "Examples.AspNetCore";
