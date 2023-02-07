@@ -22,24 +22,23 @@ using System.Diagnostics.Metrics;
 public class Instrumentation : IDisposable
 {
     internal const string ScopeName = "Examples.AspNetCore";
+    private readonly Meter meter;
 
     public Instrumentation()
     {
         string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
         this.ActivitySource = new ActivitySource(ScopeName, version);
-        this.Meter = new Meter(ScopeName, version);
-        this.FreezingDaysCounter = this.Meter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
+        this.meter = new Meter(ScopeName, version);
+        this.FreezingDaysCounter = this.meter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
     }
 
     public ActivitySource ActivitySource { get; }
-
-    public Meter Meter { get; }
 
     public Counter<int> FreezingDaysCounter { get; }
 
     public void Dispose()
     {
         this.ActivitySource.Dispose();
-        this.Meter.Dispose();
+        this.meter.Dispose();
     }
 }
