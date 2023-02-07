@@ -993,7 +993,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task RouteInformationIsNotAddedToRequestsOutsideofMVC()
+        public async Task RouteInformationIsNotAddedToRequestsOutsideOfMVC()
         {
             var exportedItems = new List<Activity>();
 
