@@ -136,14 +136,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// raw <c>SqlCommand</c> object.
         /// </summary>
         /// <remarks>
-        /// <para><b>Enrich is only executed on .NET and .NET Core
+        /// <para><b>Enrich is only executed on .NET Framework and .NET
         /// runtimes.</b></para>
         /// The parameters passed to the enrich action are:
         /// <list type="number">
         /// <item>The <see cref="Activity"/> being enriched.</item>
         /// <item>The name of the event. Currently only <c>"OnCustom"</c> is
         /// used but more events may be added in the future.</item>
-        /// <item>The raw <c>SqlCommand</c> object from which additional
+        /// <item>The raw <c>SqlCommand</c> object (.NET) or Event payload (.NET Framework) from which additional
         /// information can be extracted to enrich the <see
         /// cref="Activity"/>.</item>
         /// </list>
