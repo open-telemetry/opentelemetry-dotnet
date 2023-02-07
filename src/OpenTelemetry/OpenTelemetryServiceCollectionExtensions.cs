@@ -16,11 +16,11 @@
 
 #nullable enable
 
-using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry;
+namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Contains <see cref="IServiceCollection"/> extension methods for registering OpenTelemetry SDK artifacts.
