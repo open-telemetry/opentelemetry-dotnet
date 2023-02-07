@@ -21,14 +21,15 @@ using System.Diagnostics.Metrics;
 
 public class Instrumentation : IDisposable
 {
-    internal const string ScopeName = "Examples.AspNetCore";
+    internal const string ActivitySourceName = "Examples.AspNetCore";
+    internal const string MeterName = "Examples.AspNetCore";
     private readonly Meter meter;
 
     public Instrumentation()
     {
         string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
-        this.ActivitySource = new ActivitySource(ScopeName, version);
-        this.meter = new Meter(ScopeName, version);
+        this.ActivitySource = new ActivitySource(ActivitySourceName, version);
+        this.meter = new Meter(MeterName, version);
         this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", "The number of days where the temperature is below freezing");
     }
 

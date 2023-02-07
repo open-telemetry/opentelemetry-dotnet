@@ -54,7 +54,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
-            .AddSource(Instrumentation.ScopeName)
+            .AddSource(Instrumentation.ActivitySourceName)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -106,7 +106,7 @@ appBuilder.Services.AddOpenTelemetry()
 
         // Ensure the MeterProvider subscribes to any custom Meters.
         builder
-            .AddMeter(Instrumentation.ScopeName)
+            .AddMeter(Instrumentation.MeterName)
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
