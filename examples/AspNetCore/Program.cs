@@ -40,7 +40,7 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
 
-// Create a service to expose ActivitySource, Meter, and Instruments
+// Create a service to expose ActivitySource, and Metric Instruments
 // for manual instrumentation
 appBuilder.Services.AddSingleton<Instrumentation>();
 
