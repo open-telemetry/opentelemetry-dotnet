@@ -430,22 +430,28 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(48);
         }
 
-        [Event(49, Message = "OpenTelemetry IHostedService could not be registered in application services. Error: '{0}'", Level = EventLevel.Warning)]
+        [Event(49, Message = "OpenTelemetry IHostedService application services registration skipped. Reason: '{0}'", Level = EventLevel.Informational)]
+        public void HostedServiceRegistrationSkipped(string reason)
+        {
+            this.WriteEvent(49, reason);
+        }
+
+        [Event(50, Message = "OpenTelemetry IHostedService could not be registered in application services. Error: '{0}'", Level = EventLevel.Warning)]
         public void HostedServiceRegistrationFailure(string error)
         {
-            this.WriteEvent(49, error);
+            this.WriteEvent(50, error);
         }
 
-        [Event(50, Message = "OpenTelemetry TracerProvider was not found in application services. Tracing will remain disabled.", Level = EventLevel.Warning)]
+        [Event(51, Message = "OpenTelemetry TracerProvider was not found in application services. Tracing will remain disabled.", Level = EventLevel.Warning)]
         public void TracerProviderNotRegistered()
         {
-            this.WriteEvent(50);
+            this.WriteEvent(51);
         }
 
-        [Event(51, Message = "OpenTelemetry MeterProvider was not found in application services. Metrics will remain disabled.", Level = EventLevel.Warning)]
+        [Event(52, Message = "OpenTelemetry MeterProvider was not found in application services. Metrics will remain disabled.", Level = EventLevel.Warning)]
         public void MeterProviderNotRegistered()
         {
-            this.WriteEvent(51);
+            this.WriteEvent(52);
         }
 
 #if DEBUG

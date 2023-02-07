@@ -40,9 +40,13 @@ internal static class HostingHelper
             {
                 try
                 {
-                    if (TryAddOpenTelemetryHostedServiceIntoServiceCollection(services))
+                    if (TryAddOpenTelemetryHostedServiceIntoServiceCollection(services, out var reason))
                     {
                         OpenTelemetrySdkEventSource.Log.HostedServiceRegistered();
+                    }
+                    else
+                    {
+                        OpenTelemetrySdkEventSource.Log.HostedServiceRegistrationSkipped(reason);
                     }
                 }
                 catch (Exception ex)
@@ -55,7 +59,7 @@ internal static class HostingHelper
         }
     }
 
-    private static bool TryAddOpenTelemetryHostedServiceIntoServiceCollection(IServiceCollection services)
+    private static bool TryAddOpenTelemetryHostedServiceIntoServiceCollection(IServiceCollection services, out string? reason)
     {
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
         bool isDynamicCodeSupported = RuntimeFeature.IsDynamicCodeSupported;
@@ -64,18 +68,26 @@ internal static class HostingHelper
         bool isDynamicCodeSupported = true;
 #endif
 
-        var iHostedServiceType = isDynamicCodeSupported
-            ? Type.GetType("Microsoft.Extensions.Hosting.IHostedService, Microsoft.Extensions.Hosting.Abstractions", throwOnError: false)
-            : null;
-
-        if (iHostedServiceType != null)
+        if (!isDynamicCodeSupported)
         {
-            services.TryAddSingleton<TelemetryHostedService>();
-            services.TryAddSingleton(iHostedServiceType, CreateHostedServiceImplementation(iHostedServiceType));
-            return true;
+            reason = "Dynamic code not supported";
+            return false;
         }
 
-        return false;
+        var iHostedServiceType = Type.GetType(
+            "Microsoft.Extensions.Hosting.IHostedService, Microsoft.Extensions.Hosting.Abstractions", throwOnError: false);
+
+        if (iHostedServiceType == null)
+        {
+            reason = "Microsoft.Extensions.Hosting.IHostedService not found";
+            return false;
+        }
+
+        services.TryAddSingleton<TelemetryHostedService>();
+        services.TryAddSingleton(iHostedServiceType, CreateHostedServiceImplementation(iHostedServiceType));
+
+        reason = null;
+        return true;
     }
 
     private static Type CreateHostedServiceImplementation(Type iHostedServiceType)
