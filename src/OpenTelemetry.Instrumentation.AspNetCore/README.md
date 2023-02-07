@@ -58,8 +58,7 @@ public void ConfigureServices(IServiceCollection services)
     services.AddOpenTelemetry()
         .WithTracing(builder => builder
             .AddAspNetCoreInstrumentation()
-            .AddJaegerExporter())
-        .StartWithHost();
+            .AddJaegerExporter());
 }
 ```
 
@@ -88,8 +87,7 @@ services.Configure<AspNetCoreInstrumentationOptions>(options =>
 services.AddOpenTelemetry()
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddJaegerExporter())
-    .StartWithHost();
+        .AddJaegerExporter());
 ```
 
 ### Filter
@@ -112,8 +110,7 @@ services.AddOpenTelemetry()
             // only collect telemetry about HTTP GET requests
             return httpContext.Request.Method.Equals("GET");
         })
-        .AddJaegerExporter())
-    .StartWithHost();
+        .AddJaegerExporter());
 ```
 
 It is important to note that this `Filter` option is specific to this
@@ -150,8 +147,7 @@ services.AddOpenTelemetry()
             {
                 activity.SetTag("exceptionType", exception.GetType().ToString());
             };
-        }))
-    .StartWithHost();
+        }));
 ```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor),

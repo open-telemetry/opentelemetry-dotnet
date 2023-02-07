@@ -120,8 +120,7 @@ services.AddOpenTelemetry()
             {
                 activity.SetTag("responseVersion", httpResponseMessage.Version);
             };
-        })
-    .StartWithHost();
+        });
 ```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor),

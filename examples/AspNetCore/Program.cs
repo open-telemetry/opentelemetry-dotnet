@@ -40,8 +40,7 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
 
-// Configure OpenTelemetry tracing & metrics with auto-start using the
-// StartWithHost extension from OpenTelemetry.Extensions.Hosting.
+// Configure OpenTelemetry tracing & metrics.
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(configureResource)
     .WithTracing(builder =>
