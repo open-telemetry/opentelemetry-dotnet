@@ -94,7 +94,7 @@ internal static class HostingHelper
         }
 
         services.TryAddSingleton<TelemetryHostedService>();
-        services.TryAddSingleton(iHostedServiceType, hostedServiceImplementation);
+        services.TryAddEnumerable(ServiceDescriptor.Singleton(iHostedServiceType, hostedServiceImplementation));
 
         reason = null;
         return true;
