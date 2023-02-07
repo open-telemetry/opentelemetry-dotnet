@@ -29,12 +29,12 @@ public class Instrumentation : IDisposable
         string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
         this.ActivitySource = new ActivitySource(ScopeName, version);
         this.meter = new Meter(ScopeName, version);
-        this.FreezingDaysCounter = this.meter.CreateCounter<int>("weather.days.freezing", "The number of days where the temperature is below freezing");
+        this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", "The number of days where the temperature is below freezing");
     }
 
     public ActivitySource ActivitySource { get; }
 
-    public Counter<int> FreezingDaysCounter { get; }
+    public Counter<long> FreezingDaysCounter { get; }
 
     public void Dispose()
     {
