@@ -93,7 +93,7 @@ internal static class HostingHelper
             return false;
         }
 
-        services.TryAddSingleton<TelemetryHostedService>();
+        services.TryAddSingleton<TelemetryHostedServiceHelper>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton(iHostedServiceType, hostedServiceImplementation));
 
         reason = null;
@@ -105,18 +105,20 @@ internal static class HostingHelper
         /*
          * Note: This code builds a class dynamically that does this...
          *
-         * class OpenTelemetryHostedService : IHostedService
-         * {
-         *   private readonly TelemetryHostedService telemetryHostedService;
+         * namespace OpenTelemetry.Extensions.Hosting.Implementation;
          *
-         *   public OpenTelemetryHostedService(TelemetryHostedService telemetryHostedService)
+         * class TelemetryHostedService : IHostedService
+         * {
+         *   private readonly TelemetryHostedServiceHelper telemetryHostedServiceHelper;
+         *
+         *   public TelemetryHostedService(TelemetryHostedServiceHelper telemetryHostedServiceHelper)
          *   {
-         *      this.telemetryHostedService = telemetryHostedService;
+         *      this.telemetryHostedServiceHelper = telemetryHostedServiceHelper;
          *   }
          *
          *   public Task StartAsync(CancellationToken cancellationToken)
          *   {
-         *      this.telemetryHostedService.Start();
+         *      this.telemetryHostedServiceHelper.Start();
          *      return Task.CompletedTask;
          *   }
          *
@@ -130,7 +132,14 @@ internal static class HostingHelper
         var getCompletedTaskMethod = typeof(Task).GetProperty(nameof(Task.CompletedTask), BindingFlags.Static | BindingFlags.Public)?.GetMethod
             ?? throw new InvalidOperationException("Task.CompletedTask could not be found reflectively.");
 
-        var assemblyName = new AssemblyName("OpenTelemetry.Dynamic");
+        // Note: It is important that the assembly is named
+        // OpenTelemetry.Extensions.Hosting and the type is named
+        // OpenTelemetry.Extensions.Hosting.Implementation.TelemetryHostedService
+        // to preserve compatibility with Azure Functions:
+        // https://github.com/Azure/azure-functions-host/blob/d4655cc4fbb34fc14e6861731991118a9acd02ed/src/WebJobs.Script.WebHost/DependencyInjection/DependencyValidator/DependencyValidator.cs#L57.
+        var assemblyName = new AssemblyName("OpenTelemetry.Extensions.Hosting");
+
+        assemblyName.SetPublicKey(typeof(HostingHelper).Assembly.GetName().GetPublicKey());
 
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
 
@@ -139,25 +148,25 @@ internal static class HostingHelper
         // OpenTelemetry.dll.
         var ignoresAccessChecksTo = new CustomAttributeBuilder(
             typeof(IgnoresAccessChecksToAttribute).GetConstructor(new Type[] { typeof(string) }) ?? throw new InvalidOperationException("IgnoresAccessChecksToAttribute constructor could not be found reflectively."),
-            new object[] { typeof(TelemetryHostedService).Assembly.GetName().Name! });
+            new object[] { typeof(TelemetryHostedServiceHelper).Assembly.GetName().Name! });
 
         assemblyBuilder.SetCustomAttribute(ignoresAccessChecksTo);
 
         var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
 
-        var typeBuilder = moduleBuilder.DefineType("OpenTelemetryHostedService", TypeAttributes.NotPublic);
+        var typeBuilder = moduleBuilder.DefineType("OpenTelemetry.Extensions.Hosting.Implementation.TelemetryHostedService", TypeAttributes.NotPublic);
 
         typeBuilder.AddInterfaceImplementation(iHostedServiceType);
 
         var hostedServiceImplementationField = typeBuilder.DefineField(
-            "telemetryHostedService",
-            typeof(TelemetryHostedService),
+            "telemetryHostedServiceHelper",
+            typeof(TelemetryHostedServiceHelper),
             FieldAttributes.Private | FieldAttributes.InitOnly);
 
         var constructor = typeBuilder.DefineConstructor(
             MethodAttributes.Public,
             CallingConventions.Standard,
-            new Type[] { typeof(TelemetryHostedService) });
+            new Type[] { typeof(TelemetryHostedServiceHelper) });
 
         var constructorGenerator = constructor.GetILGenerator();
 
@@ -182,7 +191,7 @@ internal static class HostingHelper
         startAsyncMethodGenerator.Emit(OpCodes.Ldfld, hostedServiceImplementationField);
         startAsyncMethodGenerator.Emit(
             OpCodes.Call,
-            typeof(TelemetryHostedService).GetMethod(nameof(TelemetryHostedService.Start)) ?? throw new InvalidOperationException($"{nameof(TelemetryHostedService)}.{nameof(TelemetryHostedService.Start)} could not be found reflectively."));
+            typeof(TelemetryHostedServiceHelper).GetMethod(nameof(TelemetryHostedServiceHelper.Start)) ?? throw new InvalidOperationException($"{nameof(TelemetryHostedServiceHelper)}.{nameof(TelemetryHostedServiceHelper.Start)} could not be found reflectively."));
         startAsyncMethodGenerator.Emit(OpCodes.Call, getCompletedTaskMethod);
         startAsyncMethodGenerator.Emit(OpCodes.Ret);
 
@@ -213,11 +222,11 @@ internal static class HostingHelper
              ?? throw new InvalidOperationException("IHostedService implementation could not be created dynamically.");
     }
 
-    private sealed class TelemetryHostedService
+    private sealed class TelemetryHostedServiceHelper
     {
         private readonly IServiceProvider serviceProvider;
 
-        public TelemetryHostedService(IServiceProvider serviceProvider)
+        public TelemetryHostedServiceHelper(IServiceProvider serviceProvider)
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
