@@ -178,7 +178,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void HostedServiceRegistrationFailure(Exception ex)
         {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.HostedServiceRegistrationFailure(ex.ToInvariantString());
             }
@@ -436,7 +436,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(49, reason);
         }
 
-        [Event(50, Message = "OpenTelemetry IHostedService could not be registered in application services. Error: '{0}'", Level = EventLevel.Warning)]
+        [Event(50, Message = "OpenTelemetry IHostedService could not be registered in application services. Error: '{0}'", Level = EventLevel.Error)]
         public void HostedServiceRegistrationFailure(string error)
         {
             this.WriteEvent(50, error);
