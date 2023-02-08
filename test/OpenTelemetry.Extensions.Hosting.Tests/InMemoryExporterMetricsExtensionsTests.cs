@@ -16,11 +16,8 @@
 
 #if NET6_0_OR_GREATER
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Net;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -89,7 +86,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             using var host = await new HostBuilder()
                .ConfigureWebHost(webBuilder => webBuilder
                    .UseTestServer()
-                   .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure).StartWithHost())
+                   .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure))
                    .Configure(app => app.Run(httpContext =>
                    {
                        testAction.Invoke();

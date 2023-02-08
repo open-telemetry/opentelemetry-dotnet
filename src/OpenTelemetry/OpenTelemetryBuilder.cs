@@ -74,18 +74,9 @@ public class OpenTelemetryBuilder
     /// Adds metric services into the builder.
     /// </summary>
     /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>A <see cref="MeterProvider"/> will not be created automatically
-    /// using this method. To begin collecting metrics either use the
-    /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
-    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
-    /// cref="MeterProvider"/> through the application <see
-    /// cref="IServiceProvider"/>.</item>
-    /// <item>This is safe to be called multiple times and by library authors.
+    /// Note: This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="MeterProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.</item>
-    /// </list>
+    /// <see cref="IServiceCollection"/>.
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
@@ -115,18 +106,9 @@ public class OpenTelemetryBuilder
     /// Adds tracing services into the builder.
     /// </summary>
     /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>A <see cref="TracerProvider"/> will not be created automatically
-    /// using this method. To begin collecting traces either use the
-    /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
-    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
-    /// cref="TracerProvider"/> through the application <see
-    /// cref="IServiceProvider"/>.</item>
-    /// <item>This is safe to be called multiple times and by library authors.
+    /// Note: This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.</item>
-    /// </list>
+    /// <see cref="IServiceCollection"/>.
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>

@@ -21,17 +21,6 @@ and metrics (`MeterProvider`) in [ASP.NET
 
 ## Extension method reference
 
-### Current OpenTelemetry SDK v1.4.0 and newer extensions
-
-Targeting `OpenTelemetry.OpenTelemetryBuilder`:
-
-* `StartWithHost`: Registers an
-  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
-  to automatically start tracing and/or metric services in the supplied
-  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
-
-### Obsolete OpenTelemetry SDK pre-1.4.0 extensions
-
 > **Note**
 > The below extension methods should be called by application host code
 only. Library authors see: [Registration extension method guidance for library
@@ -72,10 +61,9 @@ using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddConsoleExporter())
-    .WithMetrics(builder => builder.AddConsoleExporter())
-    .StartWithHost();
+appBuilder.Services.AddOpenTelemetryTracing(builder => builder.AddConsoleExporter());
+
+appBuilder.Services.AddOpenTelemetryMetrics(builder => builder.AddConsoleExporter());
 
 var app = appBuilder.Build();
 
