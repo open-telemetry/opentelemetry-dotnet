@@ -430,7 +430,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(48);
         }
 
-        [Event(49, Message = "OpenTelemetry IHostedService application services registration skipped. Reason: '{0}'", Level = EventLevel.Informational)]
+        [Event(49, Message = "OpenTelemetry IHostedService application services registration skipped. Reason: '{0}'", Level = EventLevel.Warning)]
         public void HostedServiceRegistrationSkipped(string reason)
         {
             this.WriteEvent(49, reason);
