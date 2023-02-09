@@ -57,7 +57,7 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.HistogramWithBuckets ||
                 this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
-                this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+                this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds, aggregatorStore.IsExemplarEnabled());
             }
             else if (this.aggType == AggregationType.Histogram ||
                      this.aggType == AggregationType.HistogramWithMinMax)
@@ -348,6 +348,68 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
+        internal void UpdateWithExemplar(long number)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.LongSumIncomingDelta:
+                    {
+                        Interlocked.Add(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.LongSumIncomingCumulative:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.LongGauge:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        this.UpdateHistogram((double)number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        this.UpdateHistogramWithMinMax((double)number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        this.UpdateHistogramWithBuckets((double)number, true);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        this.UpdateHistogramWithBucketsAndMinMax((double)number, true);
+                        break;
+                    }
+            }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+        }
+
+
         internal void Update(double number)
         {
             switch (this.aggType)
@@ -409,6 +471,85 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         this.UpdateHistogramWithBucketsAndMinMax(number);
+                        break;
+                    }
+            }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+        }
+
+        internal void UpdateWithExemplar(double number)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.DoubleSumIncomingDelta:
+                    {
+                        double initValue, newValue;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            initValue = this.runningValue.AsDouble;
+
+                            unchecked
+                            {
+                                newValue = initValue + number;
+                            }
+
+                            if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
+                            {
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.DoubleSumIncomingCumulative:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        break;
+                    }
+
+                case AggregationType.DoubleGauge:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        this.UpdateHistogram(number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        this.UpdateHistogramWithMinMax(number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        this.UpdateHistogramWithBuckets(number, true);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        this.UpdateHistogramWithBucketsAndMinMax(number, true);
                         break;
                     }
             }
@@ -725,7 +866,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithBuckets(double number)
+        private void UpdateHistogramWithBuckets(double number, bool reportExemplar = false)
         {
             int i = this.histogramBuckets.FindBucketIndex(number);
 
@@ -740,7 +881,10 @@ namespace OpenTelemetry.Metrics
                         this.runningValue.AsLong++;
                         this.histogramBuckets.RunningSum += number;
                         this.histogramBuckets.RunningBucketCounts[i]++;
-                        this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
+                        if (reportExemplar)
+                        {
+                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
+                        }
                     }
 
                     // Release lock
@@ -752,7 +896,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithBucketsAndMinMax(double number)
+        private void UpdateHistogramWithBucketsAndMinMax(double number, bool reportExemplar = false)
         {
             int i = this.histogramBuckets.FindBucketIndex(number);
 
@@ -767,7 +911,10 @@ namespace OpenTelemetry.Metrics
                         this.runningValue.AsLong++;
                         this.histogramBuckets.RunningSum += number;
                         this.histogramBuckets.RunningBucketCounts[i]++;
-                        this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
+                        if (reportExemplar)
+                        {
+                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
+                        }
                         this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
                         this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
                     }

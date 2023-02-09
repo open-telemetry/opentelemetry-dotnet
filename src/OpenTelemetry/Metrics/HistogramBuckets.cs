@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly Func<double, int> findHistogramBucketIndex;
 
-        internal HistogramBuckets(double[] explicitBounds)
+        internal HistogramBuckets(double[] explicitBounds, bool enableExemplar = false)
         {
             this.ExplicitBounds = explicitBounds;
             this.findHistogramBucketIndex = this.FindBucketIndexLinear;
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics
 
             this.RunningBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : null;
             this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
-            if (explicitBounds != null)
+            if (explicitBounds != null && enableExemplar)
             {
                 this.ExemplarReservoir = new AlignedHistogramBucketExemplarReservoir(explicitBounds.Length);
             }
