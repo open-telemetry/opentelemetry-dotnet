@@ -653,7 +653,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             .WithTracing(builder => builder
                                 .AddAspNetCoreInstrumentation()
                                 .AddSource(activitySourceName)
-                                .AddInMemoryExporter(exportedItems));
+                                .AddInMemoryExporter(exportedItems))
+                            .StartWithHost();
                     });
                     builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
                 })
@@ -691,7 +692,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 services.AddOpenTelemetry()
                     .WithTracing(builder => builder
                         .AddAspNetCoreInstrumentation()
-                        .AddInMemoryExporter(exportedItems));
+                        .AddInMemoryExporter(exportedItems))
+                    .StartWithHost();
 
                 // Register ActivitySource here so that it will be used
                 // by ASP.NET Core to create activities

@@ -27,7 +27,8 @@ appBuilder.Services.AddOpenTelemetry()
         .AddService(serviceName: "OTel.NET Getting Started"))
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter());
+        .AddConsoleExporter())
+    .StartWithHost();
 
 var app = appBuilder.Build();
 

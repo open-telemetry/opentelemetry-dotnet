@@ -87,7 +87,8 @@ services.AddOpenTelemetry()
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
             return client;
-        }));
+        }))
+    .StartWithHost();
 ```
 
 For users using
