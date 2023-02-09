@@ -46,7 +46,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 services.AddOpenTelemetry()
                     .WithTracing(builder => builder
-                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
 
                 services.Configure<AspNetCoreInstrumentationOptions>(name, options =>
                 {
@@ -77,7 +78,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 services.AddOpenTelemetry()
                     .WithMetrics(builder => builder
-                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                        .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null))
+                    .StartWithHost();
 
                 services.Configure<AspNetCoreMetricsInstrumentationOptions>(name, options =>
                 {

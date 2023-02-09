@@ -42,7 +42,8 @@ namespace WorkerService
                             {
                                 var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
                                 b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                            }));
+                            }))
+                        .StartWithHost();
                 });
     }
 }
