@@ -85,7 +85,7 @@ namespace Examples.Console
 
                         System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint}");
                     },
-                        () => new FileBlobProvider("C:\\tmp"))
+                        services => new FileBlobProvider("C:\\tmp"))
                     .Build();
 
             // The above line is required only in Applications
