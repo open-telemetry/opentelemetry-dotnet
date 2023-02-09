@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 using Xunit.Sdk;
@@ -37,11 +38,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             };
             var metadata = options.GetMetadataFromHeaders();
 
-            Assert.Equal(keys.Length, metadata.Count);
+            Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + keys.Length, metadata.Count);
 
             for (int i = 0; i < keys.Length; i++)
             {
                 Assert.Contains(metadata, entry => entry.Key == keys[i] && entry.Value == values[i]);
+            }
+
+            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            {
+                // Metadata key is always converted to lowercase.
+                // See: https://cloud.google.com/dotnet/docs/reference/Grpc.Core/latest/Grpc.Core.Metadata.Entry#Grpc_Core_Metadata_Entry__ctor_System_String_System_String_
+                Assert.Contains(metadata, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key.ToLower() && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
             }
         }
 
@@ -71,7 +79,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("")]
         [InlineData(null)]
-        public void GetHeaders_NoOptionHeaders_ReturnsEmptyHeaders(string optionHeaders)
+        public void GetHeaders_NoOptionHeaders_ReturnsStandardHeaders(string optionHeaders)
         {
             var options = new OtlpExporterOptions
             {
@@ -80,7 +88,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
 
-            Assert.Empty(headers);
+            Assert.Equal(OtlpExporterOptions.StandardHeaders.Length, headers.Count);
+
+            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            {
+                Assert.Contains(headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            }
         }
 
         [Theory]
