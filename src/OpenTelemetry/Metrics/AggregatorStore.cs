@@ -320,7 +320,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                 // TODO: can special case built-in filters to be bit faster.
+                // TODO: can special case built-in filters to be bit faster.
                 if (this.exemplarFilter.ShouldSample(value, tags))
                 {
                     this.metricPoints[index].UpdateWithExemplar(value);
@@ -351,7 +351,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                 // TODO: can special case built-in filters to be bit faster.
+                // TODO: can special case built-in filters to be bit faster.
                 if (this.exemplarFilter.ShouldSample(value, tags))
                 {
                     this.metricPoints[index].UpdateWithExemplar(value);
