@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="name">Name which is used when retrieving options.</param>
         /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
-        /// <param name="persistentStorageFactory">TODO.</param>
+        /// <param name="persistentStorageFactory">Factory for creating an offline storage implementation.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddOtlpExporter(
             this TracerProviderBuilder builder,
