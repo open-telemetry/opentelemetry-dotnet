@@ -49,12 +49,12 @@ namespace OpenTelemetry.Exporter
         /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
         /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
         /// <param name="exportClient">Client used for sending export request.</param>
-        /// <param name="persistentBlobProvider"><see cref="PersistentBlobProvider"/>.</param>
+        /// <param name="persistentStorageFactory"><see cref="PersistentBlobProvider"/>.</param>
         internal OtlpTraceExporter(
             OtlpExporterOptions exporterOptions,
             SdkLimitOptions sdkLimitOptions,
             IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null,
-            PersistentBlobProvider persistentBlobProvider = null)
+            Func<PersistentBlobProvider> persistentStorageFactory = null)
         {
             Debug.Assert(exporterOptions != null, "exporterOptions was null");
             Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter
             }
             else
             {
-                this.exportClient = exporterOptions.GetTraceExportClient(persistentBlobProvider);
+                this.exportClient = exporterOptions.GetTraceExportClient(persistentStorageFactory());
             }
         }
 
