@@ -35,7 +35,8 @@ Targeting `Microsoft.Extensions.DependencyInjection.IServiceCollection`:
   > `AddOpenTelemetry` should be called by application host code only. Library
   authors see: [Registration extension method guidance for library
   authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
-  <!-- This comment is to make sure the two notes above and below are not merged -->
+  <!-- This comment is to make sure the two notes above and below are not merged
+  -->
   > **Note**
   > Multiple calls to `AddOpenTelemetry` will **NOT** result in multiple
   providers. Only a single `TracerProvider` and/or `MeterProvider` will be
