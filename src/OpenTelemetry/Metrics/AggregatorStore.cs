@@ -94,7 +94,7 @@ namespace OpenTelemetry.Metrics
         {
             // Using this filter to indicate On/Off
             // instead of another separate flag.
-            return (this.exemplarFilter is not AlwaysOffExemplarFilter);
+            return this.exemplarFilter is not AlwaysOffExemplarFilter;
         }
 
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)

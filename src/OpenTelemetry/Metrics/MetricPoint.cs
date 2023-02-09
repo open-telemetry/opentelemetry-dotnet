@@ -409,7 +409,6 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-
         internal void Update(double number)
         {
             switch (this.aggType)
@@ -915,6 +914,7 @@ namespace OpenTelemetry.Metrics
                         {
                             this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
                         }
+
                         this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
                         this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
                     }
