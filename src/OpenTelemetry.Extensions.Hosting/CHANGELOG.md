@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Added `AddOpenTelemetry` extension from SDK and removed `StartWithHost`.
+  `AddOpenTelemetry` now registers the `IHostedService` used to start collecting
+  traces and/or metrics.
+  ([#4174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4174))
+
 ## 1.4.0-rc.3
 
 Released 2023-Feb-01
