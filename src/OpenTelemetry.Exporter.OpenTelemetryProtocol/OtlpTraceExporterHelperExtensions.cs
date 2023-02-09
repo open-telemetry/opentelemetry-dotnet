@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
         /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure)
-            => AddOtlpExporter(builder, name: null, configure, null);
+            => AddOtlpExporter(builder, name: null, configure, persistentStorageFactory: null);
 
         /// <summary>
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
@@ -101,19 +101,13 @@ namespace OpenTelemetry.Trace
                     configure(exporterOptions);
                 }
 
-                PersistentBlobProvider persistentBlobProvider = null;
-                if (persistentStorageFactory != null)
-                {
-                    persistentBlobProvider = persistentStorageFactory(sp);
-                }
-
                 // Note: Not using finalOptionsName here for SdkLimitOptions.
                 // There should only be one provider for a given service
                 // collection so SdkLimitOptions is treated as a single default
                 // instance.
                 var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-                return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp, null, persistentBlobProvider);
+                return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp, null, persistentStorageFactory);
             });
         }
 
@@ -124,9 +118,15 @@ namespace OpenTelemetry.Trace
             SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
             Func<BaseExporter<Activity>, BaseExporter<Activity>> configureExporterInstance = null,
-            PersistentBlobProvider persistentBlobProvider = null)
+            Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory = null)
         {
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
+
+            PersistentBlobProvider persistentBlobProvider = null;
+            if (persistentStorageFactory != null)
+            {
+                persistentBlobProvider = persistentStorageFactory(serviceProvider);
+            }
 
             BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, null, persistentBlobProvider);
 
