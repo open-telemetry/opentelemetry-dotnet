@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter
 
         internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
         {
-            new KeyValuePair<string, string>("User-Agent", UserAgentProductVersion != null ? $"{UserAgentProduct}/{UserAgentProductVersion}" : UserAgentProduct),
+            new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
         };
 
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
@@ -51,8 +51,6 @@ namespace OpenTelemetry.Exporter
         private const string DefaultHttpEndpoint = "http://localhost:4318";
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
         private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
-
-        private static readonly string UserAgentProductVersion = GetAssemblyVersion();
 
         private Uri endpoint;
 
@@ -205,16 +203,17 @@ namespace OpenTelemetry.Exporter
                     sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
         }
 
-        private static string GetAssemblyVersion()
+        private static string GetUserAgentString()
         {
             try
             {
                 var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-                return assemblyVersion.InformationalVersion;
+                var informationalVersion = assemblyVersion.InformationalVersion;
+                return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
             }
             catch (Exception)
             {
-                return null;
+                return UserAgentProduct;
             }
         }
     }
