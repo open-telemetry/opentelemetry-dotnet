@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Reflection;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -51,7 +52,7 @@ namespace OpenTelemetry.Exporter
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
         private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
-        private static readonly Version UserAgentProductVersion = GetAssemblyVersion();
+        private static readonly string UserAgentProductVersion = GetAssemblyVersion();
 
         private Uri endpoint;
 
@@ -204,12 +205,12 @@ namespace OpenTelemetry.Exporter
                     sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
         }
 
-        private static Version GetAssemblyVersion()
+        private static string GetAssemblyVersion()
         {
             try
             {
-                var assemblyName = typeof(OtlpExporterOptions).Assembly.GetName();
-                return assemblyName.Version;
+                var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+                return assemblyVersion.InformationalVersion;
             }
             catch (Exception)
             {
