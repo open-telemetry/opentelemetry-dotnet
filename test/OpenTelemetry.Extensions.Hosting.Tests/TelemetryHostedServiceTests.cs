@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -27,8 +28,7 @@ public class TelemetryHostedServiceTests
     {
         var builder = new HostBuilder().ConfigureServices(services =>
         {
-            services.AddOpenTelemetry()
-                .StartWithHost();
+            services.AddOpenTelemetry();
         });
 
         var host = builder.Build();
@@ -66,8 +66,7 @@ public class TelemetryHostedServiceTests
                             }
                         });
                     }
-                })
-                .StartWithHost();
+                });
         });
 
         var host = builder.Build();

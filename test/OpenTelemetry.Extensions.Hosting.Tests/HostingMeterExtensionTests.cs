@@ -37,8 +37,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                         {
                             callbackRun = true;
                             return new object();
-                        }))
-                    .StartWithHost();
+                        }));
             });
 
             var host = builder.Build();
@@ -89,8 +88,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
                                     Assert.Equal("TEST_KEY_VALUE", testKeyValue);
                                 });
                             }
-                        })
-                        .StartWithHost();
+                        });
                 });
 
             var host = builder.Build();
