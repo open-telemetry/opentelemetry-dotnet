@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter
         /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
         /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
         /// <param name="exportClient">Client used for sending export request.</param>
-        /// <param name="persistentStorageFactory"><see cref="PersistentBlobProvider"/>.</param>
+        /// <param name="persistentBlobProvider"><see cref="PersistentBlobProvider"/>.</param>
         internal OtlpTraceExporter(
             OtlpExporterOptions exporterOptions,
             SdkLimitOptions sdkLimitOptions,
