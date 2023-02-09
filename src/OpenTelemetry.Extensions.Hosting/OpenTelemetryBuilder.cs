@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -28,7 +26,7 @@ namespace OpenTelemetry;
 /// Contains methods for configuring the OpenTelemetry SDK inside an <see
 /// cref="IServiceCollection"/>.
 /// </summary>
-public class OpenTelemetryBuilder
+public sealed class OpenTelemetryBuilder
 {
     internal OpenTelemetryBuilder(IServiceCollection services)
     {
