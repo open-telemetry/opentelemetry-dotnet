@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
@@ -132,6 +133,53 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
+    public async Task AddOpenTelemetry_WithTracing_HostConfigurationHonoredTest()
+    {
+        bool configureBuilderCalled = false;
+
+        var builder = new HostBuilder()
+            .ConfigureAppConfiguration(builder =>
+            {
+                builder.AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["TEST_KEY"] = "TEST_KEY_VALUE",
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddOpenTelemetry()
+                    .WithTracing(builder =>
+                    {
+                        if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+                        {
+                            deferredTracerProviderBuilder.Configure((sp, builder) =>
+                            {
+                                configureBuilderCalled = true;
+
+                                var configuration = sp.GetRequiredService<IConfiguration>();
+
+                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                                Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                            });
+                        }
+                    });
+            });
+
+        var host = builder.Build();
+
+        Assert.False(configureBuilderCalled);
+
+        await host.StartAsync().ConfigureAwait(false);
+
+        Assert.True(configureBuilderCalled);
+
+        await host.StopAsync().ConfigureAwait(false);
+
+        host.Dispose();
+    }
+
+    [Fact]
     public void AddOpenTelemetry_WithMetrics_SingleProviderForServiceCollectionTest()
     {
         var services = new ServiceCollection();
@@ -181,6 +229,53 @@ public class OpenTelemetryServicesExtensionsTests
         serviceProvider.Dispose();
 
         Assert.True(provider.Disposed);
+    }
+
+    [Fact]
+    public async Task AddOpenTelemetry_WithMetrics_HostConfigurationHonoredTest()
+    {
+        bool configureBuilderCalled = false;
+
+        var builder = new HostBuilder()
+            .ConfigureAppConfiguration(builder =>
+            {
+                builder.AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["TEST_KEY"] = "TEST_KEY_VALUE",
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddOpenTelemetry()
+                    .WithMetrics(builder =>
+                    {
+                        if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+                        {
+                            deferredMeterProviderBuilder.Configure((sp, builder) =>
+                            {
+                                configureBuilderCalled = true;
+
+                                var configuration = sp.GetRequiredService<IConfiguration>();
+
+                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                                Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                            });
+                        }
+                    });
+            });
+
+        var host = builder.Build();
+
+        Assert.False(configureBuilderCalled);
+
+        await host.StartAsync().ConfigureAwait(false);
+
+        Assert.True(configureBuilderCalled);
+
+        await host.StopAsync().ConfigureAwait(false);
+
+        host.Dispose();
     }
 
     private sealed class MySampler : Sampler
