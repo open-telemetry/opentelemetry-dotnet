@@ -101,9 +101,9 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 appBuilder.Services.AddOpenTelemetry()
+    .ConfigureResource(builder => builder.AddService(serviceName: "MyService"))
     .WithTracing(builder => builder.AddConsoleExporter())
-    .WithMetrics(builder => builder.AddConsoleExporter())
-    .StartWithHost();
+    .WithMetrics(builder => builder.AddConsoleExporter());
 
 var app = appBuilder.Build();
 
