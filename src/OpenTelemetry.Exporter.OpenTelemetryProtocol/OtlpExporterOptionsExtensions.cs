@@ -90,6 +90,11 @@ namespace OpenTelemetry.Exporter
                     });
             }
 
+            foreach (var header in OtlpExporterOptions.StandardHeaders)
+            {
+                addHeader(headers, header.Key, header.Value);
+            }
+
             return headers;
         }
 
