@@ -44,7 +44,7 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
 appBuilder.Services.AddSingleton<Instrumentation>();
 
 // Configure OpenTelemetry tracing & metrics with auto-start using the
-// StartWithHost extension from OpenTelemetry.Extensions.Hosting.
+// AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(configureResource)
     .WithTracing(builder =>
