@@ -23,12 +23,41 @@ and metrics (`MeterProvider`) in [ASP.NET
 
 ### Current OpenTelemetry SDK v1.4.0 and newer extensions
 
-Targeting `OpenTelemetry.OpenTelemetryBuilder`:
+Targeting `Microsoft.Extensions.DependencyInjection.IServiceCollection`:
 
-* `StartWithHost`: Registers an
+* `AddOpenTelemetry`: Registers an
   [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
   to automatically start tracing and/or metric services in the supplied
-  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection)
+  and then returns an `OpenTelemetryBuilder` class.
+
+  > **Note**
+  > `AddOpenTelemetry` should be called by application host code only. Library
+  authors see: [Registration extension method guidance for library
+  authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
+  <!-- This comment is to make sure the two notes above and below are not merged
+  -->
+  > **Note**
+  > Multiple calls to `AddOpenTelemetry` will **NOT** result in multiple
+  providers. Only a single `TracerProvider` and/or `MeterProvider` will be
+  created in the target `IServiceCollection`. To establish multiple providers
+  use the `Sdk.CreateTracerProviderBuilder()` and/or
+  `Sdk.CreateMeterProviderBuilder()` methods. See [TracerProvider
+  configuration](../../docs/trace/customizing-the-sdk/README.md#tracerprovider-configuration)
+  and [Building a
+  MeterProvider](../../docs/metrics/customizing-the-sdk/README.md#building-a-meterprovider)
+  for more details.
+
+  `OpenTelemetryBuilder` methods:
+
+  * `ConfigureResource`: Registers a callback action to configure the
+  `ResourceBuilder` for tracing and metric providers.
+
+  * `WithTracing`: Enables tracing and optionally configures the
+  `TracerProvider`.
+
+  * `WithMetrics`: Enables metrics and optionally configures the
+  `MeterProvider`.
 
 ### Obsolete OpenTelemetry SDK pre-1.4.0 extensions
 
@@ -73,9 +102,9 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 appBuilder.Services.AddOpenTelemetry()
+    .ConfigureResource(builder => builder.AddService(serviceName: "MyService"))
     .WithTracing(builder => builder.AddConsoleExporter())
-    .WithMetrics(builder => builder.AddConsoleExporter())
-    .StartWithHost();
+    .WithMetrics(builder => builder.AddConsoleExporter());
 
 var app = appBuilder.Build();
 

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -61,8 +60,7 @@ namespace Examples.GrpcService
                             builder.AddConsoleExporter();
                             break;
                     }
-                })
-                .StartWithHost();
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
