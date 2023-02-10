@@ -15,7 +15,6 @@
 // </copyright>
 
 using Examples.AspNetCore;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
@@ -44,7 +43,8 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
 // for manual instrumentation
 appBuilder.Services.AddSingleton<Instrumentation>();
 
-// Configure OpenTelemetry tracing & metrics.
+// Configure OpenTelemetry tracing & metrics with auto-start using the
+// AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(configureResource)
     .WithTracing(builder =>

@@ -2,11 +2,10 @@
 
 ## Unreleased
 
-* Removed the `OpenTelemetryBuilder.StartWithHost` extension and moved the
-  functionality into the SDK `AddOpenTelemetry` extension. With this change
-  `OpenTelemetry.Extensions.Hosting` is no longer needed and will be marked as
-  deprecated.
-  ([#4151](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4151))
+* Added `AddOpenTelemetry` extension from SDK and removed `StartWithHost`.
+  `AddOpenTelemetry` now registers the `IHostedService` used to start collecting
+  traces and/or metrics.
+  ([#4174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4174))
 
 ## 1.4.0-rc.3
 
