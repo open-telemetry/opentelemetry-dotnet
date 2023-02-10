@@ -78,12 +78,11 @@ appBuilder.Services.AddOpenTelemetry()
         .AddService(serviceName: "OTel.NET Getting Started"))
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter())
-    .StartWithHost();
+        .AddConsoleExporter());
 ```
 
 > **Note**
-> The `StartWithHost` extension is part of the
+> The `AddOpenTelemetry` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
 

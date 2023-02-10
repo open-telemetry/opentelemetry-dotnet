@@ -39,7 +39,7 @@ public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExte
     /// <item>A <see cref="TracerProvider"/> will not be created automatically
     /// using this method. To begin collecting metrics use the
     /// <c>IServiceCollection.AddOpenTelemetry</c> extension in the
-    /// <c>OpenTelemetry</c> package.</item>
+    /// <c>OpenTelemetry.Extensions.Hosting</c> package.</item>
     /// </list>
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add
