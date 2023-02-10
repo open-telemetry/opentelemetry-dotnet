@@ -86,7 +86,7 @@ app.Run();
 
 > **Note**
 > The below extension methods were removed in v1.4.0.
-
+<!-- This comment is to make sure the two notes above and below are not merged -->
 > **Note**
 > The below extension methods should be called by application host code
 only. Library authors see: [Registration extension method guidance for library
