@@ -43,8 +43,8 @@ test, navigate to Grafana running at: "http://localhost:3000/".
 Now that the required dependencies are ready, lets run the demo app.
 This tutorial is using the existing ASP.NET Core app from the repo.
 
-Navigate to [Example Asp.Net Core App](../../../examples/AspNetCore/) directory
-and run the following command:
+Navigate to [Example Asp.Net Core App](../../../examples/AspNetCore/Program.cs)
+directory and run the following command:
 
 ```sh
 dotnet run
@@ -89,4 +89,3 @@ the corresponding Trace in Tempo.
 [Exemplars in Prometheus](https://prometheus.io/docs/prometheus/latest/feature_flags/#exemplars-storage)
 [Exemplars in Grafana](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/)
 [Tempo](https://github.com/grafana/tempo)
-
