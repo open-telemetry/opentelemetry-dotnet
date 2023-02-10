@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry;
+using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -27,6 +30,29 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class OpenTelemetryServicesExtensions
 {
+    /// <summary>
+    /// Adds OpenTelemetry SDK services into the supplied <see
+    /// cref="IServiceCollection"/>.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="TracerProvider"/> and/or <see
+    /// cref="MeterProvider"/> will be created for a given <see
+    /// cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="services"><see cref="IServiceCollection"/>.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public static OpenTelemetryBuilder AddOpenTelemetry(this IServiceCollection services)
+    {
+        Guard.ThrowIfNull(services);
+
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+
+        return new(services);
+    }
+
     /// <summary>
     /// Configure OpenTelemetry and register a <see cref="IHostedService"/>
     /// to automatically start tracing services in the supplied <see
@@ -51,7 +77,7 @@ public static class OpenTelemetryServicesExtensions
     /// <param name="services"><see cref="IServiceCollection"/>.</param>
     /// <returns>Supplied <see cref="IServiceCollection"/> for chaining
     /// calls.</returns>
-    [Obsolete("Use the AddOpenTelemetry().WithTracing(configure).StartWithHost() pattern instead. This method will be removed in a future version.")]
+    [Obsolete("Use the AddOpenTelemetry().WithTracing(configure) pattern instead. This method will be removed in a future version.")]
     public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
         => AddOpenTelemetryTracing(services, b => { });
 
@@ -68,10 +94,10 @@ public static class OpenTelemetryServicesExtensions
     /// cref="TracerProviderBuilder"/>.</param>
     /// <returns>Supplied <see cref="IServiceCollection"/> for chaining
     /// calls.</returns>
-    [Obsolete("Use the AddOpenTelemetry().WithTracing(configure).StartWithHost() pattern instead. This method will be removed in a future version.")]
+    [Obsolete("Use the AddOpenTelemetry().WithTracing(configure) pattern instead. This method will be removed in a future version.")]
     public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
     {
-        services.AddOpenTelemetry().WithTracing(configure).StartWithHost();
+        services.AddOpenTelemetry().WithTracing(configure);
 
         return services;
     }
@@ -100,7 +126,7 @@ public static class OpenTelemetryServicesExtensions
     /// <param name="services"><see cref="IServiceCollection"/>.</param>
     /// <returns>Supplied <see cref="IServiceCollection"/> for chaining
     /// calls.</returns>
-    [Obsolete("Use the AddOpenTelemetry().WithMetrics(configure).StartWithHost() pattern instead. This method will be removed in a future version.")]
+    [Obsolete("Use the AddOpenTelemetry().WithMetrics(configure) pattern instead. This method will be removed in a future version.")]
     public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services)
         => AddOpenTelemetryMetrics(services, b => { });
 
@@ -117,10 +143,10 @@ public static class OpenTelemetryServicesExtensions
     /// cref="TracerProviderBuilder"/>.</param>
     /// <returns>Supplied <see cref="IServiceCollection"/> for chaining
     /// calls.</returns>
-    [Obsolete("Use the AddOpenTelemetry().WithMetrics(configure).StartWithHost() pattern instead. This method will be removed in a future version.")]
+    [Obsolete("Use the AddOpenTelemetry().WithMetrics(configure) pattern instead. This method will be removed in a future version.")]
     public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
     {
-        services.AddOpenTelemetry().WithMetrics(configure).StartWithHost();
+        services.AddOpenTelemetry().WithMetrics(configure);
 
         return services;
     }
