@@ -20,6 +20,10 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
+// Warning: Do not change the namespace or class name in this file! Azure
+// Functions has taken a dependency on the specific details:
+// https://github.com/Azure/azure-functions-host/blob/d4655cc4fbb34fc14e6861731991118a9acd02ed/src/WebJobs.Script.WebHost/DependencyInjection/DependencyValidator/DependencyValidator.cs#L57
+
 namespace OpenTelemetry.Extensions.Hosting.Implementation;
 
 internal sealed class TelemetryHostedService : IHostedService

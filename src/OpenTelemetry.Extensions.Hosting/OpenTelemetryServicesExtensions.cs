@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryServiceCollectionExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryServicesExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,42 +14,42 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
+using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry;
+namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Contains <see cref="IServiceCollection"/> extension methods for registering OpenTelemetry SDK artifacts.
+/// Extension methods for setting up OpenTelemetry services in an <see
+/// cref="IServiceCollection" />.
 /// </summary>
-public static class OpenTelemetryServiceCollectionExtensions
+public static class OpenTelemetryServicesExtensions
 {
     /// <summary>
     /// Adds OpenTelemetry SDK services into the supplied <see
     /// cref="IServiceCollection"/>.
     /// </summary>
     /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>A <see cref="TracerProvider"/> and/or <see cref="MeterProvider"/>
-    /// will not be created automatically using this method. To begin collecting
-    /// traces and/or metrics either use the
-    /// <c>OpenTelemetryBuilder.StartWithHost</c> extension in the
-    /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
-    /// cref="TracerProvider"/> and/or <see cref="MeterProvider"/> through the
-    /// application <see cref="IServiceProvider"/>.</item>
-    /// <item>This is safe to be called multiple times and by library authors.
+    /// Note: This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> and/or <see
     /// cref="MeterProvider"/> will be created for a given <see
-    /// cref="IServiceCollection"/>.</item>
-    /// </list>
+    /// cref="IServiceCollection"/>.
     /// </remarks>
     /// <param name="services"><see cref="IServiceCollection"/>.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
     public static OpenTelemetryBuilder AddOpenTelemetry(this IServiceCollection services)
-        => new(services);
+    {
+        Guard.ThrowIfNull(services);
+
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+
+        return new(services);
+    }
 }
