@@ -80,6 +80,9 @@ var app = appBuilder.Build();
 app.Run();
 ```
 
+A fully functional example can be found
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore).
+
 ## Migrating from pre-release versions of OpenTelemetry.Extensions.Hosting
 
 Pre-release versions (all versions prior to 1.4.0) of
@@ -97,7 +100,11 @@ configuring tracing and metrics:
   [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
 
 These methods were marked obsolete and later removed. You should migrate your
-code to the new `AddOpenTelemetry` method documented above.
+code to the new `AddOpenTelemetry` method documented above. Refer the
+[old](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.3.2/examples/AspNetCore/Program.cs)
+and
+[new](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore)
+versions of the example application to assist you in your migration.
 
 ## References
 
