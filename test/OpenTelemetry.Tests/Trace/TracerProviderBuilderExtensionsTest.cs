@@ -297,29 +297,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerProviderNestedResolutionUsingConfigureTest()
-        {
-            bool innerTestExecuted = false;
-
-            var services = new ServiceCollection();
-
-            services.ConfigureOpenTelemetryTracerProvider((sp, builder) =>
-            {
-                builder.ConfigureBuilder((sp, builder) =>
-                {
-                    innerTestExecuted = true;
-                    Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
-                });
-            });
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var resolvedProvider = serviceProvider.GetRequiredService<TracerProvider>();
-
-            Assert.True(innerTestExecuted);
-        }
-
-        [Fact]
         public void TracerProviderSetSamplerFactoryTest()
         {
             bool factoryInvoked = false;

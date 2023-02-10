@@ -180,6 +180,30 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
+    public void AddOpenTelemetry_WithTracing_NestedResolutionUsingConfigureTest()
+    {
+        bool innerTestExecuted = false;
+
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry().WithTracing(builder =>
+        {
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
+                });
+            }
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var resolvedProvider = serviceProvider.GetRequiredService<TracerProvider>();
+        Assert.True(innerTestExecuted);
+    }
+
+    [Fact]
     public void AddOpenTelemetry_WithMetrics_SingleProviderForServiceCollectionTest()
     {
         var services = new ServiceCollection();
@@ -276,6 +300,30 @@ public class OpenTelemetryServicesExtensionsTests
         await host.StopAsync().ConfigureAwait(false);
 
         host.Dispose();
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithMetrics_NestedResolutionUsingConfigureTest()
+    {
+        bool innerTestExecuted = false;
+
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry().WithMetrics(builder =>
+        {
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+                });
+            }
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
+        Assert.True(innerTestExecuted);
     }
 
     private sealed class MySampler : Sampler

@@ -209,29 +209,6 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void MeterProviderNestedResolutionUsingConfigureTest()
-        {
-            bool innerTestExecuted = false;
-
-            var services = new ServiceCollection();
-
-            services.ConfigureOpenTelemetryMeterProvider((sp, builder) =>
-            {
-                builder.ConfigureBuilder((sp, builder) =>
-                {
-                    innerTestExecuted = true;
-                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
-                });
-            });
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
-
-            Assert.True(innerTestExecuted);
-        }
-
-        [Fact]
         public void MeterProviderAddReaderFactoryTest()
         {
             bool factoryInvoked = false;
