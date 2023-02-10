@@ -34,13 +34,12 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddConsoleExporter())
-    .StartWithHost();
+    .WithTracing(builder => builder.AddConsoleExporter());
 ```
 
 > **Note**
 > The
-[StartWithHost](../../../src/OpenTelemetry.Extensions.Hosting/README.md#extension-method-reference)
+[AddOpenTelemetry](../../../src/OpenTelemetry.Extensions.Hosting/README.md#extension-method-reference)
 extension automatically starts and stops the `TracerProvider` with the host.
 
 ### Using Sdk.CreateTracerProviderBuilder
@@ -442,8 +441,7 @@ appBuilder.Services.AddSingleton<MyCustomService>();
 
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
-        .AddProcessor<MyCustomProcessor>())
-    .StartWithHost();
+        .AddProcessor<MyCustomProcessor>());
 ```
 
 When using the `AddOpenTelemetry` & `WithTracing` extension methods the
@@ -451,7 +449,7 @@ When using the `AddOpenTelemetry` & `WithTracing` extension methods the
 into an existing collection (typically the collection used is the one managed by
 the application host). The `TracerProviderBuilder` will be able to access all
 services registered into that collection. For lifecycle management, the
-`StartWithHost` registers an [IHostedService
+`AddOpenTelemetry` registers an [IHostedService
 ](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
 which is used to automatically start the `TracerProvider` when the host starts
 and the host will automatically shutdown and dispose the `TracerProvider` when
@@ -651,8 +649,7 @@ appBuilder.Services.Configure<JaegerExporterOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Jaeger"));
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddJaegerExporter())
-    .StartWithHost();
+    .WithTracing(builder => builder.AddJaegerExporter());
 ```
 
 The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
@@ -696,6 +693,5 @@ appBuilder.Services.Configure<JaegerExporterOptions>(
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
         .AddJaegerExporter(name: "JaegerPrimary", configure: null)
-        .AddJaegerExporter(name: "JaegerSecondary", configure: null))
-    .StartWithHost();
+        .AddJaegerExporter(name: "JaegerSecondary", configure: null));
 ```
