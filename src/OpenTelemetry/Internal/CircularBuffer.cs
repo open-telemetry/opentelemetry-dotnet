@@ -175,5 +175,47 @@ namespace OpenTelemetry.Internal
                 return previous;
             }
         }
+
+        /// <summary>
+        /// Attempts to read an item from the <see cref="CircularBuffer{T}"/>.
+        /// </summary>
+        /// <param name="value">The item read.</param>
+        /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number or zero, will spin indefinitely.</param>
+        /// <returns>
+        /// Returns <c>true</c> if an item read from the buffer successfully;
+        /// <c>false</c> if the spin count exceeded <paramref name="maxSpinCount"/>.
+        /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryRead(ref T value, int maxSpinCount)
+        {
+            if (maxSpinCount <= 0)
+            {
+                value = this.Read();
+                return true;
+            }
+
+            var spinCountDown = maxSpinCount;
+
+            var tail = Volatile.Read(ref this.tail);
+            var index = (int)(tail % this.Capacity);
+            while (true)
+            {
+                var previous = Interlocked.Exchange(ref this.trait[index], null);
+                if (previous == null)
+                {
+                    if (spinCountDown-- == 0)
+                    {
+                        return false; // exceeded maximum spin count
+                    }
+
+                    // If we got here it means a writer isn't done.
+                    continue;
+                }
+
+                Volatile.Write(ref this.tail, tail + 1);
+                value = previous;
+                return true;
+            }
+        }
     }
 }
