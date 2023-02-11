@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
 * Removed the dependency on System.Reflection.Emit.Lightweight
   ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
 

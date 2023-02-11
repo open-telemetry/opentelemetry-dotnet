@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
 * Added `AddOpenTelemetry` extension from SDK and removed `StartWithHost`.
   `AddOpenTelemetry` now registers the `IHostedService` used to start collecting
   traces and/or metrics.
