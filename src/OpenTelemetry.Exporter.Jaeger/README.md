@@ -98,8 +98,7 @@ services.AddOpenTelemetry()
                 client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
                 return client;
             };
-        }))
-    .StartWithHost();
+        }));
 ```
 
 For users using

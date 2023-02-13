@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -27,8 +26,7 @@ appBuilder.Services.AddOpenTelemetry()
         .AddService(serviceName: "OTel.NET Getting Started"))
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter())
-    .StartWithHost();
+        .AddConsoleExporter());
 
 var app = appBuilder.Build();
 

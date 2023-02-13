@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
             : base(name)
         {
-            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
+            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         }
 
         public override void OnEventWritten(string name, object payload)

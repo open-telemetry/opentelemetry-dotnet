@@ -635,7 +635,7 @@ this case).
 > **Note**
 > `ConfigureOpenTelemetryTracerProvider` and
 `ConfigureOpenTelemetryMeterProvider` do not automatically start OpenTelemetry.
-The host is responsible for either calling `StartWithHost` in the
+The host is responsible for either calling `AddOpenTelemetry` in the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package, calling `Build` when using the `Sdk.CreateTracerProviderBuilder` and
 `Sdk.CreateMeterProviderBuilder` methods, or by accessing the `TracerProvider`
