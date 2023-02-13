@@ -22,6 +22,7 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -196,6 +197,12 @@ namespace OpenTelemetry.Exporter
         /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
         /// </summary>
         internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="PersistentBlobProvider"/> used at
+        /// runtime to save data from retryable errors to offline storage.
+        /// </summary>
+        internal PersistentBlobProvider PersistentBlobProvider { get; set; }
 
         internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
         {

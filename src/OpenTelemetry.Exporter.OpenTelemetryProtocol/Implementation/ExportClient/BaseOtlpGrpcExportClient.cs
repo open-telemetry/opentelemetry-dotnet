@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpGrpcExportClient(OtlpExporterOptions options, PersistentBlobProvider persistentBlobProvider = null)
+        protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
         {
             Guard.ThrowIfNull(options);
             Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             this.Endpoint = new UriBuilder(options.Endpoint).Uri;
             this.Headers = options.GetMetadataFromHeaders();
             this.TimeoutMilliseconds = options.TimeoutMilliseconds;
-            this.PersistentBlobProvider = persistentBlobProvider;
+            this.PersistentBlobProvider = options.PersistentBlobProvider;
         }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
