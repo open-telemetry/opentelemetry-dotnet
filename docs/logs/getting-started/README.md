@@ -63,7 +63,7 @@ instance, which is then used to do the logging. The log is sent to the
 
 Adding logging providers, obtaining `ILogger` instance, etc. could be done
 differently based on the application type depending on if the application type
-is already setting up a `ILogger` based logging pipeline.
+is already setting up an `ILogger` based logging pipeline.
 
 > **Note**
 > Application types like [ASP.NET Core](https://learn.microsoft.com/aspnet/core)
