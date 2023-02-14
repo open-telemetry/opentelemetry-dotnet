@@ -61,18 +61,17 @@ instance, which is then used to do the logging. The log is sent to the
 `OpenTelemetryLoggerProvider`, which is configured to export logs to
 `ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
 
-Adding logging providers, obtaining `ILogger` instance, etc. could be done
-differently based on the application type depending on if the application type
-is already setting up a `ILogger` based logging pipeline.
-
-> **Note**
-> Application types like [ASP.NET Core](https://learn.microsoft.com/aspnet/core)
-and [.NET Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)
-sets up logging pipeline by default. In such apps, enabling OpenTelemetry should
-be done by adding OpenTelemetry as a provider to the *existing* logging
-pipeline, and users should not create a new `LoggerFactory` (which sets up a
-totally new logging pipeline). See [OpenTelemetry Example ASP.NET Core
-application](../../../examples/AspNetCore/Program.cs) for an example.
+Certain types of applications (e.g. [ASP.NET
+Core](https://learn.microsoft.com/aspnet/core) and [.NET
+Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)) have an
+`ILogger` based logging pipeline set up by default. In such apps, enabling
+OpenTelemetry should be done by adding OpenTelemetry as a provider to the
+*existing* logging pipeline, and users should not create a new `LoggerFactory`
+(which sets up a totally new logging pipeline). Also, obtaining `ILogger`
+instance could be done differently as well. See [Example ASP.NET Core
+application](../../../examples/AspNetCore/Program.cs) for an example which shows
+how to add OpenTelemetry to the logging pipeline already setup by the
+application.
 
 ## Learn more
 
