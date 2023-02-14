@@ -73,7 +73,7 @@ The application sends metrics (with exemplars), and traces to the OTel
 Collector, which export metrics and traces to Prometheus and Tempo
 respectively.
 
-Please wait for 1-2 minute(s) before continuing so that enough data is generated
+Please wait for 2 minutes before continuing so that enough data is generated
 and exported.
 
 Open Grafana, select Explore, and select Prometheus as the source. Select the
