@@ -61,7 +61,8 @@ instance, which is then used to do the logging. The log is sent to the
 `OpenTelemetryLoggerProvider`, which is configured to export logs to
 `ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
 
-Certain types of applications (e.g. [ASP.NET
+> **Note**
+> Certain types of applications (e.g. [ASP.NET
 Core](https://learn.microsoft.com/aspnet/core) and [.NET
 Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)) have an
 `ILogger` based logging pipeline set up by default. In such apps, enabling
