@@ -23,6 +23,10 @@ enable Exemplar feature. To make it easy for users, these components are
 pre-configured to enable Exemplars, and a docker-compose is provided to spun
  them all up, in the required configurations.
 
+## Pre-requisite
+
+Install docker: <https://docs.docker.com/get-docker/>.
+
 ## Run pre-requisites
 
 As mentioned in the intro, this tutorial uses OTel Collector, Prometheus, Tempo,
@@ -58,7 +62,7 @@ to the application.
 ```powershell
 while($true)
 {
-    $s = Invoke-WebRequest http://localhost:5000/weatherforecast
+    Invoke-WebRequest http://localhost:5000/weatherforecast
     Start-Sleep -Milliseconds 500
 }
 ```
@@ -72,9 +76,11 @@ respectively.
 Please wait 1-2 minutes before continuing so that enough data is generated and
 exported.
 
-Open Grafana, select Explorer, and open Prometheus as source. Select a metric
+Open Grafana, select Explore, and open Prometheus as source. Select a metric
 named "http_server_duration_bucket", and plot the chart. Enable "Exemplar"
 Toggle in the UI and refresh.
+
+![Enable Exemplar](img width="487" alt="exemplar_1" src="https://user-images.githubusercontent.com/16979322/218627781-9886f837-11ae-4d52-94d3-f1821503209c.png")
 
 The Exemplars appear as special "diamond shaped dots" along with the metric
 charts in the UI. Select any Exemplar to see the exemplar data, which includes
@@ -83,9 +89,11 @@ when the recording was done. The "trace_id" enables jumping to the tracing
 backed (tempo). Click the "Query with Tempo" near the "trace_id" field, to open
 the corresponding Trace in Tempo.
 
+![Navigate to trace with exemplar](img width="475" alt="graph_3" src="https://user-images.githubusercontent.com/16979322/218629999-1d1cd6ba-2385-4683-975a-d4797df8361a.png")
+
 ## References
 
-[Exemplar specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
-[Exemplars in Prometheus](https://prometheus.io/docs/prometheus/latest/feature_flags/#exemplars-storage)
-[Exemplars in Grafana](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/)
-[Tempo](https://github.com/grafana/tempo)
+* [Exemplar specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
+* [Exemplars in Prometheus](https://prometheus.io/docs/prometheus/latest/feature_flags/#exemplars-storage)
+* [Exemplars in Grafana](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/)
+* [Tempo](https://github.com/grafana/tempo)
