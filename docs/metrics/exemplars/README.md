@@ -80,7 +80,7 @@ Open Grafana, select Explore, and open Prometheus as source. Select a metric
 named "http_server_duration_bucket", and plot the chart. Enable "Exemplar"
 Toggle in the UI and refresh.
 
-![Enable Exemplar](<img width="487" alt="exemplar_1" src="https://user-images.githubusercontent.com/16979322/218627781-9886f837-11ae-4d52-94d3-f1821503209c.png">)
+![Enable Exemplar](https://user-images.githubusercontent.com/16979322/218627781-9886f837-11ae-4d52-94d3-f1821503209c.png)
 
 The Exemplars appear as special "diamond shaped dots" along with the metric
 charts in the UI. Select any Exemplar to see the exemplar data, which includes
@@ -89,7 +89,7 @@ when the recording was done. The "trace_id" enables jumping to the tracing
 backed (tempo). Click the "Query with Tempo" near the "trace_id" field, to open
 the corresponding Trace in Tempo.
 
-![Navigate to trace with exemplar](<img width="475" alt="graph_3" src="https://user-images.githubusercontent.com/16979322/218629999-1d1cd6ba-2385-4683-975a-d4797df8361a.png">)
+![Navigate to trace with exemplar](https://user-images.githubusercontent.com/16979322/218629999-1d1cd6ba-2385-4683-975a-d4797df8361a.png)
 
 ## References
 
