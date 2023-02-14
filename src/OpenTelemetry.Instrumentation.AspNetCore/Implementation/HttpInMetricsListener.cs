@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 // We are relying here on ASP.NET Core to set duration before writing the stop event.
-                // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
+                // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449-L452
                 this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
         }
