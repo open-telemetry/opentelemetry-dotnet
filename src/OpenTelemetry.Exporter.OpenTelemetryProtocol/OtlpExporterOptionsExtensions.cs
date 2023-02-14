@@ -100,7 +100,7 @@ namespace OpenTelemetry.Exporter
         public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
             options.Protocol switch
             {
-                OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options, null),
+                OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
                 OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
                     options,
                     options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
