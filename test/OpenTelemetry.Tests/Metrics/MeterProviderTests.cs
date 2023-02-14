@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Reflection;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Exporter;
 using Xunit;
 
@@ -33,39 +31,6 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric> inMemoryExporter));
             Assert.False(meterProvider.TryFindExporter(out MyExporter myExporter));
-        }
-
-        [Fact]
-        public void InstrumentNameRegexReflectionReplacementTest()
-        {
-            var meterProviderBuilderSdkType = typeof(MeterProviderBuilderSdk).Assembly.GetType("OpenTelemetry.Metrics.MeterProviderBuilderSdk", throwOnError: false)
-                ?? throw new InvalidOperationException("OpenTelemetry.Metrics.MeterProviderBuilderSdk type could not be found reflectively.");
-
-            var instrumentNameRegexProperty = meterProviderBuilderSdkType.GetProperty("InstrumentNameRegex", BindingFlags.Public | BindingFlags.Static)
-                ?? throw new InvalidOperationException("OpenTelemetry.Metrics.MeterProviderBuilderSdk.InstrumentNameRegex field could not be found reflectively.");
-
-            if (instrumentNameRegexProperty.GetValue(null) is not Regex originalInstrumentNameRegex)
-            {
-                throw new InvalidOperationException("OpenTelemetry.Metrics.MeterProviderBuilderSdk.InstrumentNameRegex return null when accessed reflectively.");
-            }
-
-            Assert.DoesNotMatch(originalInstrumentNameRegex, "Metric\\Name");
-
-            try
-            {
-                instrumentNameRegexProperty.SetValue(null, new Regex(".*"));
-
-                if (instrumentNameRegexProperty.GetValue(null) is not Regex instrumentNameRegex)
-                {
-                    throw new InvalidOperationException("OpenTelemetry.Metrics.MeterProviderBuilderSdk.InstrumentNameRegex return null when accessed reflectively.");
-                }
-
-                Assert.Matches(instrumentNameRegex, "Metric\\Name");
-            }
-            finally
-            {
-                instrumentNameRegexProperty.SetValue(null, originalInstrumentNameRegex);
-            }
         }
 
         private class MyExporter : BaseExporter<Metric>
