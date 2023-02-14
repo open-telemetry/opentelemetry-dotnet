@@ -53,7 +53,8 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             int maxMetricPoints,
             double[] histogramBounds,
-            string[] tagKeysInteresting = null)
+            string[] tagKeysInteresting = null,
+            ExemplarFilter exemplarFilter = null)
         {
             this.name = name;
             this.maxMetricPoints = maxMetricPoints;
@@ -65,8 +66,7 @@ namespace OpenTelemetry.Metrics
             this.histogramBounds = histogramBounds;
             this.StartTimeExclusive = DateTimeOffset.UtcNow;
 
-            // TODO: Allow changing the ExemplarFilter.
-            this.exemplarFilter = new TraceBasedExemplarFilter();
+            this.exemplarFilter = exemplarFilter ?? new AlwaysOffExemplarFilter();
             if (tagKeysInteresting == null)
             {
                 this.updateLongCallback = this.UpdateLong;
