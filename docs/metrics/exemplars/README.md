@@ -73,21 +73,21 @@ The application sends metrics (with exemplars), and traces to the OTel
 Collector, which export metrics and traces to Prometheus and Tempo
 respectively.
 
-Please wait for 1-2 minute(s) before continuing so that enough data is generated and
-exported.
+Please wait for 1-2 minute(s) before continuing so that enough data is generated
+and exported.
 
-Open Grafana, select Explore, and select Prometheus as the source. Select the metric
-named "http_server_duration_bucket", and plot the chart. Toggle on the "Exemplar"
-option from the UI and hit refresh.
+Open Grafana, select Explore, and select Prometheus as the source. Select the
+metric named "http_server_duration_bucket", and plot the chart. Toggle on the
+"Exemplar" option from the UI and hit refresh.
 
 ![Enable Exemplar](https://user-images.githubusercontent.com/16979322/218627781-9886f837-11ae-4d52-94d3-f1821503209c.png)
 
 The Exemplars appear as special "diamond shaped dots" along with the metric
 charts in the UI. Select any Exemplar to see the exemplar data, which includes
-the timestamp when the measurement was recorded, the raw value, and trace context
-when the recording was done. The "trace_id" enables jumping to the tracing
-backed (tempo). Click on the "Query with Tempo" button next to the "trace_id" field
-to open the corresponding `Trace` in Tempo.
+the timestamp when the measurement was recorded, the raw value, and trace
+context when the recording was done. The "trace_id" enables jumping to the
+tracing backed (tempo). Click on the "Query with Tempo" button next to the
+"trace_id" field to open the corresponding `Trace` in Tempo.
 
 ![Navigate to trace with exemplar](https://user-images.githubusercontent.com/16979322/218629999-1d1cd6ba-2385-4683-975a-d4797df8361a.png)
 
