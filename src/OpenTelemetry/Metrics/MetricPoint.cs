@@ -692,7 +692,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
-                                this.histogramBuckets.ExemplarReservoir.SnapShot(outputDelta);
+                                this.histogramBuckets.ExemplarReservoir?.SnapShot(outputDelta);
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -767,7 +767,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
-                                this.histogramBuckets.ExemplarReservoir.SnapShot(outputDelta);
+                                this.histogramBuckets.ExemplarReservoir?.SnapShot(outputDelta);
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
