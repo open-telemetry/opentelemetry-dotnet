@@ -80,6 +80,12 @@ See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) and
 repo](https://github.com/open-telemetry/opentelemetry-dotnet-contrib) for more
 components.
 
+## Troubleshooting
+
+See [Troubleshooting](./src/OpenTelemetry/README.md#troubleshooting).
+Additionally check readme file for the individual components for any additional
+troubleshooting information.
+
 ## Extensibility
 
 OpenTelemetry .NET is designed to be extensible. Here are the most common
