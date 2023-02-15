@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterOptionsPersistentStorageExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExporterPersistentStorageExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage;
 /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter
 /// with persistent storage.
 /// </summary>
-public static class OtlpExporterOptionsPersistentStorageExtensions
+public static class OtlpExporterPersistentStorageExtensions
 {
     /// <summary>
     /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider
@@ -69,7 +69,7 @@ public static class OtlpExporterOptionsPersistentStorageExtensions
                 configure(exporterOptions);
             }
 
-            exporterOptions.PersistentBlobProvider = persistentStorageFactory(sp);
+            exporterOptions.PersistentStorageFactory = persistentStorageFactory;
             var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
             return OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp, null);
         });
