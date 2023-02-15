@@ -72,24 +72,17 @@ will be easily spotted in pull request. It will also ensure that OpenTelemetry
 doesn't expose APIs outside of the library primary concerns like a generic
 helper methods.
 
-#### How to enable and configure
+#### How to configure
 
 * Create a folder in your project called `.publicApi` with the frameworks that
   as folders you target.
 * Create two files called `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt`
    in each framework that you target.
-* Add the following lines to your csproj:
-
-```xml
-<ItemGroup>
-  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
-</ItemGroup>
-```
-
 * Use
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
    to update the publicApi files.
+
+Enabled by default, add `<RunApiCompat>false</RunApiCompat>` to your csproj to disable.
 
 ## Pull Requests
 
