@@ -76,7 +76,7 @@ namespace Examples.Console
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .ConfigureResource(r => r.AddService("otlp-test"))
                     .AddOtlpExporterWithPersistentStorage(
-                        "name",
+                        null,
                         opt =>
                     {
                         // If endpoint was not specified, the proper one will be selected according to the protocol.
