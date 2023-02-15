@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -43,8 +42,7 @@ namespace WebApi
                     {
                         var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
                         b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                    }))
-                .StartWithHost();
+                    }));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -18,7 +18,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The base class for defining Exemplar Filter.
 /// </summary>
-internal abstract class ExemplarFilter
+public abstract class ExemplarFilter
 {
     /// <summary>
     /// Determines if a given measurement is eligible for being

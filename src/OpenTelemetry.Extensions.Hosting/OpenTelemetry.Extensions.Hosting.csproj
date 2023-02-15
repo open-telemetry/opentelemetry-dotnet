@@ -1,13 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>Contains extensions to start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <!--Do not run ApiCompat for netstandard2.0 as this is newly added. Remove this property once we have released a stable version.-->

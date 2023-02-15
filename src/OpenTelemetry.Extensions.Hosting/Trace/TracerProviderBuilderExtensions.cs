@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -34,7 +35,12 @@ namespace OpenTelemetry.Trace
         [Obsolete("Configure has been replaced by factory extensions. This method will be removed in a future version.")]
         public static TracerProviderBuilder Configure(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            return (tracerProviderBuilder as IDeferredTracerProviderBuilder)?.Configure(configure);
+            if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                deferredTracerProviderBuilder.Configure(configure);
+            }
+
+            return tracerProviderBuilder;
         }
 
         /// <summary>
@@ -47,8 +53,17 @@ namespace OpenTelemetry.Trace
         [Obsolete("Call ConfigureServices instead this method will be removed in a future version.")]
         public static IServiceCollection GetServices(this TracerProviderBuilder tracerProviderBuilder)
         {
-            IServiceCollection services = null;
+            Guard.ThrowIfNull(tracerProviderBuilder);
+
+            IServiceCollection? services = null;
+
             tracerProviderBuilder.ConfigureServices(s => services = s);
+
+            if (services == null)
+            {
+                throw new NotSupportedException($"GetServices is not supported on the '{tracerProviderBuilder.GetType()}' builder type.");
+            }
+
             return services;
         }
     }
