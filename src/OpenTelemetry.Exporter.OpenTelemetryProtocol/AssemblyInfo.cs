@@ -29,7 +29,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests")]
 [assembly: InternalsVisibleTo("Benchmarks")]
 [assembly: InternalsVisibleTo("MockOpenTelemetryCollector")]
-[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs")]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage")]
 
 // Used by Moq.
