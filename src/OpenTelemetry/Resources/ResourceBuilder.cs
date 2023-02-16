@@ -33,7 +33,7 @@ namespace OpenTelemetry.Resources
 
         static ResourceBuilder()
         {
-            string serviceName = GetServiceName();
+            string? serviceName = GetServiceName();
 
             DefaultResource = new Resource(new Dictionary<string, object>
             {
@@ -69,7 +69,7 @@ namespace OpenTelemetry.Resources
             return defaultServiceName;
         }
 
-        private static string GetGeneratedServiceName()
+        private static string? GetGeneratedServiceName()
         {
 #if NETFRAMEWORK
             // System.Web.dll is only available on .NET Framework
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Resources
                 return (System.Web.Hosting.HostingEnvironment.SiteName + System.Web.Hosting.HostingEnvironment.ApplicationVirtualPath).TrimEnd('/');
             }
 #endif
-            return Assembly.GetEntryAssembly()?.GetName().Name ?? GetCurrentProcessName();
+            return Assembly.GetEntryAssembly()?.GetName().Name;
         }
 
         /// <summary>

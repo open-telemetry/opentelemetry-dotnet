@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Updated how the service.name is generated. It only uses unknown_service when it can't be retrieved via reflection.
+    It now is generated when possible by the Assembly Name, if the service is hosted in IIS and using .NET Framework
+    it will use the SiteName/VirtualDirectory
+  ([#2781](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2781))
+
 ## 1.4.0-rc.4
 
 Released 2023-Feb-10
