@@ -21,7 +21,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="OpenTelemetry.Extensions.PersistentStorage" Version="$(PersistentStoragePkgVer)" />
 
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
   </ItemGroup>
@@ -39,6 +38,5 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage.csproj" />
   </ItemGroup>
 </Project>

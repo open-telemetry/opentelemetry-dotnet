@@ -67,15 +67,12 @@ namespace Examples.Console
                 otlpExportProtocol = OtlpExportProtocol.Grpc;
             }
 
-            var storagePath = Path.GetTempPath();
-
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .ConfigureResource(r => r.AddService("otlp-test"))
-                    .AddOtlpExporterWithPersistentStorage(
-                        opt =>
+                    .AddOtlpExporter(opt =>
                     {
                         // If endpoint was not specified, the proper one will be selected according to the protocol.
                         if (!string.IsNullOrEmpty(endpoint))
@@ -85,9 +82,8 @@ namespace Examples.Console
 
                         opt.Protocol = otlpExportProtocol.Value;
 
-                        System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint} and storage path {storagePath}");
-                    },
-                        _ => new FileBlobProvider(storagePath))
+                        System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint}");
+                    })
                     .Build();
 
             // The above line is required only in Applications
