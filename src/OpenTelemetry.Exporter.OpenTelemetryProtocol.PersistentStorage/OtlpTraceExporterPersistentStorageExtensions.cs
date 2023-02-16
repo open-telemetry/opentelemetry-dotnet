@@ -42,20 +42,39 @@ public static class OtlpTraceExporterPersistentStorageExtensions
         Action<OtlpExporterOptions> configure,
         Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
     {
-        Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(persistentStorageFactory);
 
-        builder.ConfigureServices(services =>
+        Action<OtlpExporterOptions, IServiceProvider>? inlineConfigurationAction;
+        if (name is not null)
         {
-            services
-                  .AddOptions<OtlpExporterOptions>(name)
-                  .Configure<IServiceProvider>((otlpExporterOptions, serviceProvider) =>
-                  {
-                      otlpExporterOptions.PersistentBlobProvider = persistentStorageFactory(serviceProvider);
-                  });
-        });
+            // Note: If we are using named options we can safely use Options API
+            // to act on the instance that will be created. See:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+            builder.ConfigureServices(services =>
+            {
+                services
+                      .AddOptions<OtlpExporterOptions>(name)
+                      .Configure<IServiceProvider>(ConfigureOptionsAction);
+            });
 
-        return builder.AddOtlpExporter(name, configure);
+            inlineConfigurationAction = null;
+        }
+        else
+        {
+            // Note: If we are NOT using named options we need to execute inline
+            // to prevent potentially impacting options for other signals.
+            inlineConfigurationAction = ConfigureOptionsAction;
+        }
+
+        return builder.AddOtlpExporter(
+            name,
+            configure,
+            inlineConfigurationAction);
+
+        void ConfigureOptionsAction(OtlpExporterOptions options, IServiceProvider serviceProvider)
+        {
+            options.PersistentBlobProvider = persistentStorageFactory(serviceProvider);
+        }
     }
 
     /// <summary>
