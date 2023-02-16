@@ -16,7 +16,6 @@
 
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage;
 using OpenTelemetry.Extensions.PersistentStorage;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -76,7 +75,6 @@ namespace Examples.Console
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .ConfigureResource(r => r.AddService("otlp-test"))
                     .AddOtlpExporterWithPersistentStorage(
-                        null,
                         opt =>
                     {
                         // If endpoint was not specified, the proper one will be selected according to the protocol.

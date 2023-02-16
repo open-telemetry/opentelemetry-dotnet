@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterPersistentStorageExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpTraceExporterPersistentStorageExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +15,17 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage;
+namespace OpenTelemetry.Trace;
 
 /// <summary>
 /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter
 /// with persistent storage.
 /// </summary>
-public static class OtlpExporterPersistentStorageExtensions
+public static class OtlpTraceExporterPersistentStorageExtensions
 {
     /// <summary>
     /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider
@@ -47,31 +45,33 @@ public static class OtlpExporterPersistentStorageExtensions
         Guard.ThrowIfNull(builder);
         Guard.ThrowIfNull(persistentStorageFactory);
 
-        var finalOptionsName = name ?? Options.DefaultName;
-
         builder.ConfigureServices(services =>
         {
-            if (name != null && configure != null)
-            {
-                services.Configure(finalOptionsName, configure);
-            }
-
-            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            // Try this if it doesn't work there are other ways to plug into options
+            services
+                  .AddOptions<OtlpExporterOptions>()
+                  .Configure<IServiceProvider>((otlpExporterOptions, serviceProvider) =>
+                  {
+                      otlpExporterOptions.PersistentBlobProvider = persistentStorageFactory(serviceProvider);
+                  });
         });
 
-        return builder.AddProcessor(sp =>
-        {
-            var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+        return builder.AddOtlpExporter(name, configure);
+    }
 
-            if (name == null && configure != null)
-            {
-                configure(exporterOptions);
-            }
-
-            exporterOptions.PersistentBlobProvider = persistentStorageFactory(sp);
-            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
-            return OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
-        });
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider
+    /// with access to persistent storage.
+    /// </summary>
+    /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+    /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <param name="persistentStorageFactory">Factory function to create a <see cref="PersistentBlobProvider"/>.</param>
+    /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+    public static TracerProviderBuilder AddOtlpExporterWithPersistentStorage(
+        this TracerProviderBuilder builder,
+        Action<OtlpExporterOptions> configure,
+        Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
+    {
+        return builder.AddOtlpExporterWithPersistentStorage(configure, persistentStorageFactory);
     }
 }
