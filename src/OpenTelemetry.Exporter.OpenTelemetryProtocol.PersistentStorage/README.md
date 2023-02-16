@@ -9,6 +9,6 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSource("ActivitySourceName")
     .AddOtlpExporterWithPersistentStorage(
         opt => {},
-        serviceProvider => new FileBlobProvider(storagePath)))
+        serviceProvider => new FileBlobProvider(storagePath))
     .Build();
 ```
