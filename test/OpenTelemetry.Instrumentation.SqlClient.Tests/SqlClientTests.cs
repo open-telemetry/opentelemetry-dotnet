@@ -16,6 +16,8 @@
 
 using System.Data;
 using System.Diagnostics;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
@@ -25,7 +27,7 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 {
-    public class SqlClientTests : IDisposable
+    public class SqlClientTests : IAsyncLifetime, IDisposable
     {
         /*
             To run the integration tests, set the OTEL_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
@@ -35,16 +37,47 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
              2) Set OTEL_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
          */
 
-        private const string SqlConnectionStringEnvVarName = "OTEL_SQLCONNECTIONSTRING";
         private const string TestConnectionString = "Data Source=(localdb)\\MSSQLLocalDB;Database=master";
 
-        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
+        // Please note this image is not compatible with macOS running on Apple silicon.
+        // Maybe we should replace it with mcr.microsoft.com/azure-sql-edge.
+        private const string MsSqlImage = "mcr.microsoft.com/mssql/server:2019-CU18-ubuntu-20.04";
+
+        private const ushort MsSqlPort = 1433;
+
+        private const string MsSqlDatabase = "master";
+
+        private const string MsSqlUsername = "sa";
+
+        private const string MsSqlPassword = "yourStrong(!)Password";
 
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
+
+        // With the next version of Testcontainers for .NET we can replace the generic build with the Microsoft SQL Server module
+        // The module takes care of the entire configuration incl. constructing the connection string. This will be a one-liner in the future.
+        private readonly IContainer mssqlContainer = new ContainerBuilder()
+            .WithImage(MsSqlImage)
+            .WithPortBinding(MsSqlPort, true)
+            .WithEnvironment("ACCEPT_EULA", "Y")
+            .WithEnvironment("SQLCMDUSER", MsSqlUsername)
+            .WithEnvironment("SQLCMDPASSWORD", MsSqlPassword)
+            .WithEnvironment("MSSQL_SA_PASSWORD", MsSqlPassword)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("/opt/mssql-tools/bin/sqlcmd", "-Q", "SELECT 1;"))
+            .Build();
 
         public SqlClientTests()
         {
             this.fakeSqlClientDiagnosticSource = new FakeSqlClientDiagnosticSource();
+        }
+
+        public Task InitializeAsync()
+        {
+            return this.mssqlContainer.StartAsync();
+        }
+
+        public Task DisposeAsync()
+        {
+            return this.mssqlContainer.DisposeAsync().AsTask();
         }
 
         public void Dispose()
@@ -82,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Trait("CategoryName", "SqlIntegrationTests")]
-        [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
+        [Theory]
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/1", false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
@@ -105,6 +138,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             shouldEnrich = false;
 #endif
 
+            var connectionString = $"Server={this.mssqlContainer.Hostname},{this.mssqlContainer.GetMappedPublicPort(MsSqlPort)};Database={MsSqlDatabase};User Id={MsSqlUsername};Password={MsSqlPassword};TrustServerCertificate=True";
+
             var sampler = new TestSampler();
             var activities = new List<Activity>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -126,7 +161,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 })
                 .Build();
 
-            using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
+            using SqlConnection sqlConnection = new SqlConnection(connectionString);
 
             sqlConnection.Open();
 
