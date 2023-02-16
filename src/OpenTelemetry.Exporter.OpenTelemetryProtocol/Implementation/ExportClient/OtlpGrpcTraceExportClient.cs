@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Google.Protobuf;
 using Grpc.Core;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
@@ -51,7 +52,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             {
                 if (this.PersistentBlobProvider != null)
                 {
-                    // TODO: Write blob to storage
+                    this.PersistentBlobProvider.TryCreateBlob(request.ToByteArray(), out _);
                 }
 
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
