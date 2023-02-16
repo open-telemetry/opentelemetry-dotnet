@@ -23,6 +23,8 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public struct Exemplar
     {
+        internal List<KeyValuePair<string, object>> AllTags;
+
         /// <summary>
         /// Gets the timestamp.
         /// </summary>
@@ -45,5 +47,10 @@ namespace OpenTelemetry.Metrics
         /// Gets the double value.
         /// </summary>
         public double DoubleValue { get; internal set; }
+
+        /// <summary>
+        /// Gets the FilteredTags (i.e any tags that were dropped during aggregation).
+        /// </summary>
+        public List<KeyValuePair<string, object>> FilteredTags { get; internal set; }
     }
 }

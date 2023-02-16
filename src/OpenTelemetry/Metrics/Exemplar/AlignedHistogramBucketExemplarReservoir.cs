@@ -32,14 +32,43 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
         this.snapshotExemplars = new Exemplar[length + 1];
     }
 
-    public void OfferAtBoundary(int index, double value)
+    public void OfferAtBoundary(int index, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
-        var exemplar = default(Exemplar);
+        ref var exemplar = ref this.runningExemplars[index];
         exemplar.Timestamp = DateTime.UtcNow;
         exemplar.DoubleValue = value;
         exemplar.TraceId = Activity.Current?.TraceId;
         exemplar.SpanId = Activity.Current?.SpanId;
-        this.runningExemplars[index] = exemplar;
+
+        if (tags == default)
+        {
+            // default tag is used to indicate
+            // the special case where all tags provided at measurement
+            // recording time are stored.
+            // In this case, Exemplars does not have to store any tags.
+            // In other words, FilteredTags will be empty.
+            return;
+        }
+
+        if (exemplar.AllTags == null)
+        {
+            exemplar.AllTags = new List<KeyValuePair<string, object>>(tags.Length);
+        }
+        else
+        {
+            // Keep the list, but clear contents.
+            exemplar.AllTags.Clear();
+        }
+
+        // Though only those tags that are filtered need to be
+        // stored, finding filtered list from the full tag list
+        // is expensive. So all the tags are stored in hot path (this).
+        // During snapshot, the filtered list is calculated.
+        // TODO: Evaluate alternative approaches based on perf.
+        foreach (var tag in tags)
+        {
+            exemplar.AllTags.Add(tag);
+        }
     }
 
     public Exemplar[] Collect()
@@ -47,11 +76,18 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
         return this.snapshotExemplars;
     }
 
-    public void SnapShot(bool reset)
+    public void SnapShot(ReadOnlyTagCollection actualTags, bool reset)
     {
         for (int i = 0; i < this.runningExemplars.Length; i++)
         {
             this.snapshotExemplars[i] = this.runningExemplars[i];
+            if (this.snapshotExemplars[i].AllTags != null)
+            {
+                // TODO: Better data structure to avoid this Linq.
+                // This is doing filtered = alltags - storedtags.
+                this.snapshotExemplars[i].FilteredTags = this.snapshotExemplars[i].AllTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+            }
+
             if (reset)
             {
                 this.runningExemplars[i].Timestamp = default;
