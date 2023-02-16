@@ -54,7 +54,7 @@ directory and run the following command:
 dotnet run
 ```
 
-The above command would start the application at port 5000. Navigate to
+Once the application is running, navigate to
 [http://localhost:5000/weatherforecast]("http://localhost:5000/weatherforecast")
 from a web browser. You may use the following Powershell script to generate load
 to the application.
