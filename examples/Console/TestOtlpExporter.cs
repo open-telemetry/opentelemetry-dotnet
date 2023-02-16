@@ -16,7 +16,6 @@
 
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Extensions.PersistentStorage;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
