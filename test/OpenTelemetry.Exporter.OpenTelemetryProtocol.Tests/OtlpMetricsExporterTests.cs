@@ -214,7 +214,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
             else
             {
-                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && !string.IsNullOrEmpty(kvp.Value.StringValue));
             }
 
             Assert.Single(resourceMetric.ScopeMetrics);

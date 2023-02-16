@@ -184,7 +184,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
-            Assert.StartsWith("unknown_service:", process.ServiceName);
+            Assert.NotEmpty(process.ServiceName);
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddService("MyService").Build());
 

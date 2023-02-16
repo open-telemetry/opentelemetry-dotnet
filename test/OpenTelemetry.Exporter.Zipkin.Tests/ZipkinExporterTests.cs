@@ -298,7 +298,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             zipkinExporter.SetLocalEndpointFromResource(Resource.Empty);
 
-            Assert.StartsWith("unknown_service:", zipkinExporter.LocalEndpoint.ServiceName);
+            Assert.NotEmpty(zipkinExporter.LocalEndpoint.ServiceName);
         }
 
         [Fact]

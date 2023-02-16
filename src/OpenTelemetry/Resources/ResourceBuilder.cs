@@ -17,6 +17,8 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -31,14 +33,32 @@ namespace OpenTelemetry.Resources
 
         static ResourceBuilder()
         {
+            string serviceName = GetServiceName();
+
+            DefaultResource = new Resource(new Dictionary<string, object>
+            {
+                [ResourceSemanticConventions.AttributeServiceName] = serviceName,
+            });
+        }
+
+        private ResourceBuilder()
+        {
+        }
+
+        private static string GetServiceName()
+        {
             var defaultServiceName = "unknown_service";
 
             try
             {
-                var processName = Process.GetCurrentProcess().ProcessName;
-                if (!string.IsNullOrWhiteSpace(processName))
+                var serviceName = GetGeneratedServiceName();
+                if (string.IsNullOrWhiteSpace(serviceName))
                 {
-                    defaultServiceName = $"{defaultServiceName}:{processName}";
+                    defaultServiceName = $"{defaultServiceName}:{Process.GetCurrentProcess().ProcessName}";
+                }
+                else
+                {
+                    defaultServiceName = serviceName;
                 }
             }
             catch
@@ -46,14 +66,38 @@ namespace OpenTelemetry.Resources
                 // GetCurrentProcess can throw PlatformNotSupportedException
             }
 
-            DefaultResource = new Resource(new Dictionary<string, object>
-            {
-                [ResourceSemanticConventions.AttributeServiceName] = defaultServiceName,
-            });
+            return defaultServiceName;
         }
 
-        private ResourceBuilder()
+        private static string GetGeneratedServiceName()
         {
+#if NETFRAMEWORK
+            // System.Web.dll is only available on .NET Framework
+            if (System.Web.Hosting.HostingEnvironment.IsHosted)
+            {
+                // if this app is an ASP.NET application, return "SiteName/ApplicationVirtualPath".
+                // note that ApplicationVirtualPath includes a leading slash.
+                return (System.Web.Hosting.HostingEnvironment.SiteName + System.Web.Hosting.HostingEnvironment.ApplicationVirtualPath).TrimEnd('/');
+            }
+#endif
+            return Assembly.GetEntryAssembly()?.GetName().Name ?? GetCurrentProcessName();
+        }
+
+        /// <summary>
+        /// Wrapper around <see cref="Process.GetCurrentProcess"/> and <see cref="Process.ProcessName"/>
+        ///
+        /// On .NET Framework the <see cref="Process"/> class is guarded by a
+        /// LinkDemand for FullTrust, so partial trust callers will throw an exception.
+        /// This exception is thrown when the caller method is being JIT compiled, NOT
+        /// when Process.GetCurrentProcess is called, so this wrapper method allows
+        /// us to catch the exception.
+        /// </summary>
+        /// <returns>Returns the name of the current process.</returns>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static string GetCurrentProcessName()
+        {
+            using var currentProcess = Process.GetCurrentProcess();
+            return currentProcess.ProcessName;
         }
 
         internal IServiceProvider? ServiceProvider { get; set; }

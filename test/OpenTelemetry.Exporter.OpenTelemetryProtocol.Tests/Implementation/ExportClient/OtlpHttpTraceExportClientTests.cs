@@ -209,7 +209,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 }
                 else
                 {
-                    Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                    Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && !string.IsNullOrEmpty(kvp.Value.StringValue));
                 }
             }
         }
