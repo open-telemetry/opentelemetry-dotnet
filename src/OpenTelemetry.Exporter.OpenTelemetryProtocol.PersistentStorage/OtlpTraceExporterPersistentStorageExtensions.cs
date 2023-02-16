@@ -38,7 +38,7 @@ public static class OtlpTraceExporterPersistentStorageExtensions
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
     public static TracerProviderBuilder AddOtlpExporterWithPersistentStorage(
         this TracerProviderBuilder builder,
-        string name,
+        string? name,
         Action<OtlpExporterOptions> configure,
         Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
     {
@@ -72,6 +72,6 @@ public static class OtlpTraceExporterPersistentStorageExtensions
         Action<OtlpExporterOptions> configure,
         Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
     {
-        return builder.AddOtlpExporterWithPersistentStorage(configure, persistentStorageFactory);
+        return builder.AddOtlpExporterWithPersistentStorage(name: null, configure, persistentStorageFactory);
     }
 }
