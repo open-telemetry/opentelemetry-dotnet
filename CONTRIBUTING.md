@@ -82,7 +82,10 @@ helper methods.
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
    to update the publicApi files.
 
-Enabled by default, add `<RunApiCompat>false</RunApiCompat>` to your csproj to disable.
+It is enabled by default. Add `<RunApiCompat>false</RunApiCompat>` to your
+`.csproj` file to temporarily disable it. This should only be done when
+bypassing api check while developing locally or until a stable version of the
+package has been released.
 
 ## Pull Requests
 
