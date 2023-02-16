@@ -47,9 +47,8 @@ public static class OtlpTraceExporterPersistentStorageExtensions
 
         builder.ConfigureServices(services =>
         {
-            // Try this if it doesn't work there are other ways to plug into options
             services
-                  .AddOptions<OtlpExporterOptions>()
+                  .AddOptions<OtlpExporterOptions>(name)
                   .Configure<IServiceProvider>((otlpExporterOptions, serviceProvider) =>
                   {
                       otlpExporterOptions.PersistentBlobProvider = persistentStorageFactory(serviceProvider);
