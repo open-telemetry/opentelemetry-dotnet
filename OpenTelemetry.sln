@@ -249,7 +249,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-console", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-jaeger", "docs\trace\getting-started-jaeger\getting-started-jaeger.csproj", "{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage.csproj", "{2DA349A7-814F-43A6-AA22-28D03421EAF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage.csproj", "{2DA349A7-814F-43A6-AA22-28D03421EAF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.PersistentStorage.Tests.csproj", "{448837FD-6DEA-4B37-A1F5-42BC7AD8E9BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -529,6 +531,10 @@ Global
 		{2DA349A7-814F-43A6-AA22-28D03421EAF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2DA349A7-814F-43A6-AA22-28D03421EAF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2DA349A7-814F-43A6-AA22-28D03421EAF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{448837FD-6DEA-4B37-A1F5-42BC7AD8E9BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{448837FD-6DEA-4B37-A1F5-42BC7AD8E9BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{448837FD-6DEA-4B37-A1F5-42BC7AD8E9BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{448837FD-6DEA-4B37-A1F5-42BC7AD8E9BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
