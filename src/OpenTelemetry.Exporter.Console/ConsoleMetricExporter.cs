@@ -180,6 +180,21 @@ namespace OpenTelemetry.Exporter
                             exemplarString.Append(exemplar.TraceId);
                             exemplarString.Append(" SpanId: ");
                             exemplarString.Append(exemplar.SpanId);
+
+                            if (exemplar.FilteredTags != null && exemplar.FilteredTags.Count > 0)
+                            {
+                                exemplarString.Append(" Filtered Tags : ");
+
+                                foreach (var tag in exemplar.FilteredTags)
+                                {
+                                    if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                                    {
+                                        exemplarString.Append(result);
+                                        exemplarString.Append(' ');
+                                    }
+                                }
+                            }
+
                             exemplarString.AppendLine();
                         }
                     }

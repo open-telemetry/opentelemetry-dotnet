@@ -281,13 +281,26 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                     byte[] spanIdBytes = new byte[8];
                                     examplar.SpanId?.CopyTo(spanIdBytes);
 
-                                    dataPoint.Exemplars.Add(new OtlpMetrics.Exemplar()
+                                    var otlpExemplar = new OtlpMetrics.Exemplar
                                     {
                                         TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
                                         TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
                                         SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
                                         AsDouble = examplar.DoubleValue,
-                                    });
+                                    };
+
+                                    if (examplar.FilteredTags != null)
+                                    {
+                                        foreach (var tag in examplar.FilteredTags)
+                                        {
+                                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+                                            {
+                                                otlpExemplar.FilteredAttributes.Add(result);
+                                            }
+                                        }
+                                    }
+
+                                    dataPoint.Exemplars.Add(otlpExemplar);
                                 }
                             }
 
