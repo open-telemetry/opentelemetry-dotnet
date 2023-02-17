@@ -990,6 +990,57 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             await app.DisposeAsync().ConfigureAwait(false);
         }
 
+        [Fact]
+        public async Task RouteInformationIsNotAddedToRequestsOutsideOfMVC()
+        {
+            var exportedItems = new List<Activity>();
+
+            // configure SDK
+            using var tracerprovider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var builder = WebApplication.CreateBuilder();
+            builder.Logging.ClearProviders();
+            var app = builder.Build();
+
+            app.MapGet("/custom/{name:alpha}", () => "Hello");
+
+            _ = app.RunAsync();
+
+            using var client = new HttpClient();
+            var res = await client.GetStringAsync("http://localhost:5000/custom/abc").ConfigureAwait(false);
+            Assert.NotNull(res);
+
+            tracerprovider.ForceFlush();
+            for (var i = 0; i < 10; i++)
+            {
+                if (exportedItems.Count > 0)
+                {
+                    break;
+                }
+
+                // We need to let End callback execute as it is executed AFTER response was returned.
+                // In unit tests environment there may be a lot of parallel unit tests executed, so
+                // giving some breezing room for the End callback to complete
+                await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+            }
+
+            var activity = exportedItems[0];
+
+            Assert.NotNull(activity);
+
+            // After fix update to Contains http.route
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+
+            // After fix this should be /custom/{name:alpha}
+            Assert.Equal("/custom/abc", activity.DisplayName);
+
+            await app.DisposeAsync().ConfigureAwait(false);
+        }
+
         public void Dispose()
         {
             this.tracerProvider?.Dispose();

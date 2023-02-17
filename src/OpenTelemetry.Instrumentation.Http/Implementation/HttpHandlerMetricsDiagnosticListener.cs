@@ -62,6 +62,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                     }
 
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
                     this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
                 }
             }

@@ -34,9 +34,6 @@ namespace OpenTelemetry.Metrics
         public const int MaxMetricPointsPerMetricDefault = 2000;
         private const string DefaultInstrumentationVersion = "1.0.0.0";
 
-        private static readonly Regex InstrumentNameRegex = new(
-            @"^[a-z][a-z0-9-._]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         private readonly IServiceProvider serviceProvider;
         private MeterProviderSdk? meterProvider;
 
@@ -44,6 +41,14 @@ namespace OpenTelemetry.Metrics
         {
             this.serviceProvider = serviceProvider;
         }
+
+        // Note: We don't use static readonly here because some customers
+        // replace this using reflection which is not allowed on initonly static
+        // fields. See: https://github.com/dotnet/runtime/issues/11571.
+        // Customers: This is not guaranteed to work forever. We may change this
+        // mechanism in the future do this at your own risk.
+        public static Regex InstrumentNameRegex { get; set; } = new(
+            @"^[a-z][a-z0-9-._]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public List<InstrumentationRegistration> Instrumentation { get; } = new();
 

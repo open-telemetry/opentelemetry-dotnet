@@ -348,7 +348,7 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-        internal void UpdateWithExemplar(long number)
+        internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             switch (this.aggType)
             {
@@ -384,13 +384,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithBuckets:
                     {
-                        this.UpdateHistogramWithBuckets((double)number, true);
+                        this.UpdateHistogramWithBuckets((double)number, tags, true);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
-                        this.UpdateHistogramWithBucketsAndMinMax((double)number, true);
+                        this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, true);
                         break;
                     }
             }
@@ -488,7 +488,7 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-        internal void UpdateWithExemplar(double number)
+        internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             switch (this.aggType)
             {
@@ -542,13 +542,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithBuckets:
                     {
-                        this.UpdateHistogramWithBuckets(number, true);
+                        this.UpdateHistogramWithBuckets(number, tags, true);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
-                        this.UpdateHistogramWithBucketsAndMinMax(number, true);
+                        this.UpdateHistogramWithBucketsAndMinMax(number, tags, true);
                         break;
                     }
             }
@@ -692,7 +692,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
-                                this.histogramBuckets.ExemplarReservoir?.SnapShot(outputDelta);
+                                this.histogramBuckets.ExemplarReservoir?.SnapShot(this.Tags, outputDelta);
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -767,7 +767,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
-                                this.histogramBuckets.ExemplarReservoir?.SnapShot(outputDelta);
+                                this.histogramBuckets.ExemplarReservoir?.SnapShot(this.Tags, outputDelta);
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
@@ -865,7 +865,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithBuckets(double number, bool reportExemplar = false)
+        private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
             int i = this.histogramBuckets.FindBucketIndex(number);
 
@@ -882,7 +882,7 @@ namespace OpenTelemetry.Metrics
                         this.histogramBuckets.RunningBucketCounts[i]++;
                         if (reportExemplar)
                         {
-                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
+                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number, tags);
                         }
                     }
 
@@ -895,7 +895,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithBucketsAndMinMax(double number, bool reportExemplar = false)
+        private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
             int i = this.histogramBuckets.FindBucketIndex(number);
 
@@ -912,7 +912,7 @@ namespace OpenTelemetry.Metrics
                         this.histogramBuckets.RunningBucketCounts[i]++;
                         if (reportExemplar)
                         {
-                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number);
+                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number, tags);
                         }
 
                         this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);

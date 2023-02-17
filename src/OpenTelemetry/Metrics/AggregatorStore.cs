@@ -323,7 +323,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: can special case built-in filters to be bit faster.
                 if (this.exemplarFilter.ShouldSample(value, tags))
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default);
                 }
                 else
                 {
@@ -354,7 +354,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: can special case built-in filters to be bit faster.
                 if (this.exemplarFilter.ShouldSample(value, tags))
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
                 }
                 else
                 {
@@ -385,7 +385,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: can special case built-in filters to be bit faster.
                 if (this.exemplarFilter.ShouldSample(value, tags))
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default);
                 }
                 else
                 {
@@ -416,7 +416,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: can special case built-in filters to be bit faster.
                 if (this.exemplarFilter.ShouldSample(value, tags))
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
                 }
                 else
                 {
