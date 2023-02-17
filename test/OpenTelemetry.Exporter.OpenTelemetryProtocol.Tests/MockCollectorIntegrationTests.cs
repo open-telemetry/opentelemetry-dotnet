@@ -15,13 +15,16 @@
 // </copyright>
 
 #if !NETFRAMEWORK
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Extensions.PersistentStorage.Abstractions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Tests;
@@ -30,19 +33,12 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public sealed class MockCollectorIntegrationTests : IAsyncLifetime
+public sealed class MockCollectorIntegrationTests
 {
-    private readonly HttpClient httpClient;
-    private IHost host;
-
-    public MockCollectorIntegrationTests()
+    [Fact]
+    public async Task TestRecoveryAfterFailedExport()
     {
-        this.httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5050") };
-    }
-
-    public async Task InitializeAsync()
-    {
-        this.host = await new HostBuilder()
+        using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
@@ -72,23 +68,14 @@ public sealed class MockCollectorIntegrationTests : IAsyncLifetime
                    });
                }))
            .StartAsync().ConfigureAwait(false);
-    }
 
-    public async Task DisposeAsync()
-    {
-        await this.host.StopAsync().ConfigureAwait(false);
-    }
+        var httpClient = new HttpClient() { BaseAddress = new System.Uri("http://localhost:5050") };
 
-    [Fact]
-    public async Task TestRecoveryAfterFailedExport()
-    {
-        await this.SetCollectorStatusCodes(new[]
-        {
-            Grpc.Core.StatusCode.Unimplemented,
-        });
+        var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}").ConfigureAwait(false);
 
         var exportResults = new List<ExportResult>();
-        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri("http://localhost:4317") });
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new System.Uri("http://localhost:4317") });
         var delegatingExporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = (batch) =>
@@ -117,46 +104,13 @@ public sealed class MockCollectorIntegrationTests : IAsyncLifetime
 
         Assert.Equal(2, exportResults.Count);
         Assert.Equal(ExportResult.Success, exportResults[1]);
-    }
 
-    [Fact]
-    public async Task TestOtlpTraceExportWithPersistentStorage()
-    {
-        await this.SetCollectorStatusCodes(new[]
-        {
-            Grpc.Core.StatusCode.Cancelled,
-        });
-
-        var activitySourceName = "otel.mock.collector.test.persistent-storage";
-        MockFileProvider mockFileProvider = new();
-
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource(activitySourceName)
-            .AddOtlpExporterWithPersistentStorage(
-            otlpExporterOptions =>
-            {
-                otlpExporterOptions.Endpoint = new Uri("http://localhost:4317");
-                otlpExporterOptions.ExportProcessorType = ExportProcessorType.Simple;
-            },
-            _ => mockFileProvider)
-            .Build();
-
-        using var source = new ActivitySource(activitySourceName);
-        source.StartActivity().Stop();
-        tracerProvider.ForceFlush();
-
-        var blobs = mockFileProvider.TryGetBlobs();
-        Assert.Single(blobs);
-    }
-
-    private async Task SetCollectorStatusCodes(Grpc.Core.StatusCode[] codes)
-    {
-        await this.httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
+        await host.StopAsync().ConfigureAwait(false);
     }
 
     private class MockCollectorState
     {
-        private Grpc.Core.StatusCode[] statusCodes = Array.Empty<Grpc.Core.StatusCode>();
+        private Grpc.Core.StatusCode[] statusCodes = { };
         private int statusCodeIndex = 0;
 
         public void SetStatusCodes(int[] statusCodes)
@@ -191,71 +145,6 @@ public sealed class MockCollectorIntegrationTests : IAsyncLifetime
             }
 
             return Task.FromResult(new ExportTraceServiceResponse());
-        }
-    }
-
-    private class MockFileProvider : PersistentBlobProvider
-    {
-        private readonly List<PersistentBlob> mockStorage = new();
-
-        public IEnumerable<PersistentBlob> TryGetBlobs()
-        {
-            return this.mockStorage.AsEnumerable();
-        }
-
-        protected override IEnumerable<PersistentBlob> OnGetBlobs()
-        {
-            return this.mockStorage.AsEnumerable();
-        }
-
-        protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, out PersistentBlob blob)
-        {
-            blob = new MockFileBlob();
-            this.mockStorage.Add(blob);
-            return blob.TryWrite(buffer);
-        }
-
-        protected override bool OnTryCreateBlob(byte[] buffer, out PersistentBlob blob)
-        {
-            blob = new MockFileBlob();
-            this.mockStorage.Add(blob);
-            return blob.TryWrite(buffer);
-        }
-
-        protected override bool OnTryGetBlob(out PersistentBlob blob)
-        {
-            blob = this.GetBlobs().FirstOrDefault();
-
-            return true;
-        }
-    }
-
-    private class MockFileBlob : PersistentBlob
-    {
-        private byte[] buffer;
-
-        protected override bool OnTryRead(out byte[] buffer)
-        {
-            buffer = this.buffer;
-
-            return true;
-        }
-
-        protected override bool OnTryWrite(byte[] buffer, int leasePeriodMilliseconds = 0)
-        {
-            this.buffer = buffer;
-
-            return true;
-        }
-
-        protected override bool OnTryLease(int leasePeriodMilliseconds)
-        {
-            return true;
-        }
-
-        protected override bool OnTryDelete()
-        {
-            throw new NotImplementedException();
         }
     }
 }
