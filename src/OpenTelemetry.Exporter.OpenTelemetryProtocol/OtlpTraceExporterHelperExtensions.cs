@@ -56,7 +56,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             string name,
             Action<OtlpExporterOptions> configure)
-            => AddOtlpExporter(builder, name: null, configure, inlineConfigurationAction: null);
+            => AddOtlpExporter(builder, name, configure, inlineConfigurationAction: null);
 
         internal static TracerProviderBuilder AddOtlpExporter(
             this TracerProviderBuilder builder,

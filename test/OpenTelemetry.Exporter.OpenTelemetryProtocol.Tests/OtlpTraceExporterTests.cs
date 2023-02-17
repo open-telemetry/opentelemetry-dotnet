@@ -51,7 +51,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             ActivitySource.AddActivityListener(listener);
         }
 
-        [Fact(Skip="Unblocking OTLP Exporter PersistentStorage")]
+        [Fact]
         public void AddOtlpTraceExporterNamedOptionsSupported()
         {
             int defaultExporterOptionsConfigureOptionsInvocations = 0;
