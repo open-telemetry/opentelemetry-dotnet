@@ -67,7 +67,9 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configureAspNetCoreInstrumentationOptions));
             }
 
-            builder.ConfigureBuilder((sp, builder) =>
+            builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
+
+            builder.AddInstrumentation(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreMetricsInstrumentationOptions>>().Get(name);
 
@@ -75,9 +77,7 @@ namespace OpenTelemetry.Metrics
                 //   RecordException - probably doesn't make sense for metric instrumentation
                 //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
 
-                var instrumentation = new AspNetCoreMetrics(options);
-                builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
-                builder.AddInstrumentation(() => instrumentation);
+                return new AspNetCoreMetrics(options);
             });
 
             return builder;

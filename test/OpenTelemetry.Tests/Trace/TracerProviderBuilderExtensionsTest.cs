@@ -145,81 +145,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void ServiceLifecycleAvailableToServicesBuilderTest()
-        {
-            var services = new ServiceCollection();
-
-            bool testRun = false;
-
-            ServiceProvider serviceProvider = null;
-            TracerProviderSdk provider = null;
-
-            services.AddOpenTelemetry().WithTracing(builder =>
-            {
-                testRun = true;
-
-                RunBuilderServiceLifecycleTest(
-                    builder,
-                    () =>
-                    {
-                        // Note: Build can't be called directly on builder tied to external services
-                        Assert.Throws<NotSupportedException>(() => builder.Build());
-
-                        serviceProvider = services.BuildServiceProvider();
-
-                        provider = serviceProvider.GetRequiredService<TracerProvider>() as TracerProviderSdk;
-
-                        Assert.NotNull(provider);
-                        Assert.Null(provider.OwnedServiceProvider);
-
-                        return provider;
-                    },
-                    (provider) => { });
-            });
-
-            Assert.True(testRun);
-
-            Assert.NotNull(serviceProvider);
-            Assert.NotNull(provider);
-
-            Assert.False(provider.Disposed);
-
-            serviceProvider.Dispose();
-
-            Assert.True(provider.Disposed);
-        }
-
-        [Fact]
-        public void SingleProviderForServiceCollectionTest()
-        {
-            var services = new ServiceCollection();
-
-            services.AddOpenTelemetry().WithTracing(builder =>
-            {
-                builder.AddInstrumentation<MyInstrumentation>(() => new());
-            });
-
-            services.AddOpenTelemetry().WithTracing(builder =>
-            {
-                builder.AddInstrumentation<MyInstrumentation>(() => new());
-            });
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            Assert.NotNull(serviceProvider);
-
-            var tracerProviders = serviceProvider.GetServices<TracerProvider>();
-
-            Assert.Single(tracerProviders);
-
-            var provider = tracerProviders.First() as TracerProviderSdk;
-
-            Assert.NotNull(provider);
-
-            Assert.Equal(2, provider.Instrumentations.Count);
-        }
-
-        [Fact]
         public void AddProcessorUsingDependencyInjectionTest()
         {
             var builder = Sdk.CreateTracerProviderBuilder();
@@ -356,7 +281,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     if (callNestedConfigure)
                     {
-                        services.AddOpenTelemetry().WithTracing(builder => { });
+                        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => { });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
@@ -372,26 +297,47 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerProviderNestedResolutionUsingConfigureTest()
+        public void TracerProviderSetSamplerFactoryTest()
         {
-            bool innerTestExecuted = false;
+            bool factoryInvoked = false;
 
-            var services = new ServiceCollection();
-
-            services.AddOpenTelemetry().WithTracing(builder =>
-            {
-                builder.ConfigureBuilder((sp, builder) =>
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(sp =>
                 {
-                    innerTestExecuted = true;
-                    Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
-                });
-            });
+                    factoryInvoked = true;
 
-            using var serviceProvider = services.BuildServiceProvider();
+                    Assert.NotNull(sp);
 
-            var resolvedProvider = serviceProvider.GetRequiredService<TracerProvider>();
+                    return new MySampler();
+                })
+                .Build() as TracerProviderSdk;
 
-            Assert.True(innerTestExecuted);
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(tracerProvider);
+            Assert.True(tracerProvider.Sampler is MySampler);
+        }
+
+        [Fact]
+        public void TracerProviderAddProcessorFactoryTest()
+        {
+            bool factoryInvoked = false;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(sp =>
+                {
+                    factoryInvoked = true;
+
+                    Assert.NotNull(sp);
+
+                    return new MyProcessor();
+                })
+                .Build() as TracerProviderSdk;
+
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(tracerProvider);
+            Assert.True(tracerProvider.Processor is MyProcessor);
         }
 
         private static void RunBuilderServiceLifecycleTest(

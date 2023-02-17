@@ -112,10 +112,6 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         => this.ConfigureServicesInternal(configure);
 
     /// <inheritdoc />
-    TracerProviderBuilder ITracerProviderBuilder.ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
-        => this.ConfigureBuilderInternal(configure);
-
-    /// <inheritdoc />
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         => this.ConfigureBuilderInternal(configure);
 

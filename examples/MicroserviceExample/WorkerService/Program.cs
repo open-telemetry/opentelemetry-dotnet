@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
@@ -42,8 +41,7 @@ namespace WorkerService
                             {
                                 var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
                                 b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                            }))
-                        .StartWithHost();
+                            }));
                 });
     }
 }

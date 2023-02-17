@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Reflection;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -39,11 +40,17 @@ namespace OpenTelemetry.Exporter
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
         internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
+        internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
+        {
+            new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
+        };
+
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
         private const string DefaultHttpEndpoint = "http://localhost:4318";
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+        private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
         private Uri endpoint;
 
@@ -194,6 +201,20 @@ namespace OpenTelemetry.Exporter
                 (sp, configuration, name) => new OtlpExporterOptions(
                     configuration,
                     sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+        }
+
+        private static string GetUserAgentString()
+        {
+            try
+            {
+                var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+                var informationalVersion = assemblyVersion.InformationalVersion;
+                return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
+            }
+            catch (Exception)
+            {
+                return UserAgentProduct;
+            }
         }
     }
 }

@@ -641,6 +641,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void NonnamedOptionsMutateSharedInstanceTest()
         {
+            var testOptionsInstance = new OtlpExporterOptions();
+
             OtlpExporterOptions tracerOptions = null;
             OtlpExporterOptions meterOptions = null;
 
@@ -649,11 +651,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             services.AddOpenTelemetry()
                 .WithTracing(builder => builder.AddOtlpExporter(o =>
                 {
+                    Assert.Equal(testOptionsInstance.Endpoint, o.Endpoint);
+
                     tracerOptions = o;
                     o.Endpoint = new("http://localhost/traces");
                 }))
                 .WithMetrics(builder => builder.AddOtlpExporter(o =>
                 {
+                    Assert.Equal(testOptionsInstance.Endpoint, o.Endpoint);
+
                     meterOptions = o;
                     o.Endpoint = new("http://localhost/metrics");
                 }));
@@ -676,12 +682,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.NotNull(meterOptions);
             Assert.Equal("http://localhost/metrics", meterOptions.Endpoint.OriginalString);
 
-            // Note: tracerOptions & meterOptions are actually the same instance
-            // in memory and that instance was actually mutated after
-            // OtlpTraceExporter was created but this is OK because it doesn't
-            // use the options after ctor.
-            Assert.True(ReferenceEquals(tracerOptions, meterOptions));
-            Assert.Equal("http://localhost/metrics", tracerOptions.Endpoint.OriginalString);
+            Assert.False(ReferenceEquals(tracerOptions, meterOptions));
         }
 
         [Fact]

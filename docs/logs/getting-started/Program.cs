@@ -32,6 +32,14 @@ public class Program
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+
+        logger.LogInformation(eventId: 123, "Hello from {name} {price}.", "tomato", 2.99);
+
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            // If logger.IsEnabled returned false, the code doesn't have to spend time evaluating the arguments.
+            // This can be especially helpful if the arguments are expensive to calculate.
+            logger.LogDebug(eventId: 501, "System.Environment.Version: {version}.", System.Environment.Version);
+        }
     }
 }

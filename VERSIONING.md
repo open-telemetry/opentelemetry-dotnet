@@ -35,6 +35,10 @@ Zipkin exporter has a bug fix and is released as 1.0.1, then all other core
 components are also released as 1.0.1, even if there is no code change in other
 components.
 
+Starting with 1.4.0,
+[OpenTelemetry.Extensions.Hosting](./src/OpenTelemetry.Extensions.Hosting/README.md)
+will also be versioned and released together as a core component.
+
 ## Pre-releases
 
 Pre-release packages are denoted by appending identifiers such as -Alpha, -Beta,
@@ -75,10 +79,7 @@ of separate packages.
 OpenTelemetry .NET relies on .NET runtime to provide several instrumentation
 APIs. Currently, `System.Diagnostics.DiagnosticSource` and
 `Microsoft.Extensions.Logging.Abstractions` are the packages from .NET runtime
-this repository is dependent on. In the future, APIs for Metrics, Propagators
-etc. will also come from .NET runtime itself. Depending on whether .NET runtime
-choses to use same package or separate package for these, users may be required
-to install separate packages for instrumenting.
+this repository is dependent on.
 
 ### Packaging non-stable signals
 
