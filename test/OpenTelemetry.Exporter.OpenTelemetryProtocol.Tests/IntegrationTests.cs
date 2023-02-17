@@ -77,8 +77,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var builder = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName);
 
-            OtlpTraceExporterHelperExtensions.AddOtlpExporter(
-                builder,
+            builder.AddProcessor(OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
                 exporterOptions,
                 DefaultSdkLimitOptions,
                 serviceProvider: null,
@@ -95,7 +94,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                         },
                     };
                     return delegatingExporter;
-                });
+                }));
 
             using (var tracerProvider = builder.Build())
             {
@@ -157,8 +156,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var readerOptions = new MetricReaderOptions();
             readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = useManualExport ? Timeout.Infinite : ExportIntervalMilliseconds;
 
-            OtlpMetricExporterExtensions.AddOtlpExporter(
-                builder,
+            builder.AddReader(OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
                 exporterOptions,
                 readerOptions,
                 serviceProvider: null,
@@ -175,7 +173,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                         },
                     };
                     return delegatingExporter;
-                });
+                }));
 
             using (var meterProvider = builder.Build())
             {

@@ -79,9 +79,6 @@ values of the `JaegerExporterOptions`
 | `OTEL_EXPORTER_JAEGER_ENDPOINT`   | `Endpoint`                                                |
 | `OTEL_EXPORTER_JAEGER_PROTOCOL`   | `Protocol` (`udp/thrift.compact` or `http/thrift.binary`) |
 
-`FormatException` is thrown in case of an invalid value for any of the
-supported environment variables.
-
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `JaegerExporterOptions` for users
@@ -101,8 +98,7 @@ services.AddOpenTelemetry()
                 client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
                 return client;
             };
-        }))
-    .StartWithHost();
+        }));
 ```
 
 For users using

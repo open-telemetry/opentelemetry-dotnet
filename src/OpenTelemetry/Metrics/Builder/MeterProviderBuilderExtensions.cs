@@ -78,6 +78,29 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Adds a reader to the provider.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="implementationFactory">The factory that creates the service.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder AddReader(
+            this MeterProviderBuilder meterProviderBuilder,
+            Func<IServiceProvider, MetricReader> implementationFactory)
+        {
+            Guard.ThrowIfNull(implementationFactory);
+
+            meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+                {
+                    meterProviderBuilderSdk.AddReader(implementationFactory(sp));
+                }
+            });
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Add metric view, which can be used to customize the Metrics outputted
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>

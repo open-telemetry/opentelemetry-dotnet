@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -31,10 +32,15 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        [Obsolete("Call ConfigureBuilder instead this method will be removed in a future version.")]
+        [Obsolete("Configure has been replaced by factory extensions. This method will be removed in a future version.")]
         public static MeterProviderBuilder Configure(this MeterProviderBuilder meterProviderBuilder, Action<IServiceProvider, MeterProviderBuilder> configure)
         {
-            return meterProviderBuilder.ConfigureBuilder(configure);
+            if (meterProviderBuilder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                deferredMeterProviderBuilder.Configure(configure);
+            }
+
+            return meterProviderBuilder;
         }
 
         /// <summary>
@@ -47,8 +53,17 @@ namespace OpenTelemetry.Metrics
         [Obsolete("Call ConfigureServices instead this method will be removed in a future version.")]
         public static IServiceCollection GetServices(this MeterProviderBuilder meterProviderBuilder)
         {
-            IServiceCollection services = null;
+            Guard.ThrowIfNull(meterProviderBuilder);
+
+            IServiceCollection? services = null;
+
             meterProviderBuilder.ConfigureServices(s => services = s);
+
+            if (services == null)
+            {
+                throw new NotSupportedException($"GetServices is not supported on the '{meterProviderBuilder.GetType()}' builder type.");
+            }
+
             return services;
         }
     }

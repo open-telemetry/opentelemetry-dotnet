@@ -6,6 +6,14 @@
 network failures.
 ([#4098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4098))
 
+## 1.4.0-rc9.13
+
+Released 2023-Feb-10
+
+## 1.0.0-rc9.12
+
+Released 2023-Feb-01
+
 ## 1.0.0-rc9.11
 
 Released 2023-Jan-09

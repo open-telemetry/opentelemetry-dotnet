@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+* Removed the dependency on System.Reflection.Emit.Lightweight
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
+* Moved the `AddOpenTelemetry` extension into the
+  `OpenTelemetry.Extensions.Hosting` package so that the `StartWithHost` API
+  could be removed.
+  ([#4174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4174))
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
+* Removed the dependency on
+  Microsoft.Extensions.Configuration.EnvironmentVariables
+  ([#4092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4092))
+
+* Removed the explicit reference to Microsoft.Extensions.Options version 5.0 and
+  reverted back to the transitive reference of version 3.1
+  ([#4093](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4093))
+
+* Added `SetSampler`, `AddProcessor`, & `AddReader` factory extensions.
+  ([#4103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4103))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
