@@ -50,14 +50,14 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
             return;
         }
 
-        if (exemplar.AllTags == null)
+        if (exemplar.FilteredTags == null)
         {
-            exemplar.AllTags = new List<KeyValuePair<string, object>>(tags.Length);
+            exemplar.FilteredTags = new List<KeyValuePair<string, object>>(tags.Length);
         }
         else
         {
             // Keep the list, but clear contents.
-            exemplar.AllTags.Clear();
+            exemplar.FilteredTags.Clear();
         }
 
         // Though only those tags that are filtered need to be
@@ -67,7 +67,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
         // TODO: Evaluate alternative approaches based on perf.
         foreach (var tag in tags)
         {
-            exemplar.AllTags.Add(tag);
+            exemplar.FilteredTags.Add(tag);
         }
     }
 
@@ -81,11 +81,11 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
         for (int i = 0; i < this.runningExemplars.Length; i++)
         {
             this.snapshotExemplars[i] = this.runningExemplars[i];
-            if (this.snapshotExemplars[i].AllTags != null)
+            if (this.runningExemplars[i].FilteredTags != null)
             {
                 // TODO: Better data structure to avoid this Linq.
                 // This is doing filtered = alltags - storedtags.
-                this.snapshotExemplars[i].FilteredTags = this.snapshotExemplars[i].AllTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+                this.snapshotExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
             }
 
             if (reset)

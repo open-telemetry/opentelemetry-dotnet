@@ -23,8 +23,6 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public struct Exemplar
     {
-        internal List<KeyValuePair<string, object>> AllTags;
-
         /// <summary>
         /// Gets the timestamp.
         /// </summary>
