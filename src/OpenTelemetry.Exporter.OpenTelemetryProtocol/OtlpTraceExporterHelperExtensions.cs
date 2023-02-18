@@ -76,16 +76,25 @@ namespace OpenTelemetry.Trace
 
             return builder.AddProcessor(sp =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+                OtlpExporterOptions exporterOptions;
 
-                if (name == null && configure != null)
+                if (name == null)
                 {
-                    // If we are NOT using named options, we execute the
-                    // configuration delegate inline. The reason for this is
+                    // If we are NOT using named options we create a new
+                    // instance always. The reason for this is
                     // OtlpExporterOptions is shared by all signals. Without a
                     // name, delegates for all signals will mix together. See:
                     // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
-                    configure(exporterOptions);
+                    exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+
+                    // Configuration delegate is executed inline on the fresh instance.
+                    configure?.Invoke(exporterOptions);
+                }
+                else
+                {
+                    // When using named options we can properly utilize Options
+                    // API to create or reuse an instance.
+                    exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
                 }
 
                 // Note: Not using finalOptionsName here for SdkLimitOptions.
