@@ -24,12 +24,12 @@ namespace OpenTelemetry.Metrics;
 internal sealed class AlignedHistogramBucketExemplarReservoir
 {
     private readonly Exemplar[] runningExemplars;
-    private readonly Exemplar[] snapshotExemplars;
+    private readonly Exemplar[] tempExemplars;
 
     public AlignedHistogramBucketExemplarReservoir(int length)
     {
         this.runningExemplars = new Exemplar[length + 1];
-        this.snapshotExemplars = new Exemplar[length + 1];
+        this.tempExemplars = new Exemplar[length + 1];
     }
 
     public void OfferAtBoundary(int index, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
@@ -75,7 +75,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
     {
         for (int i = 0; i < this.runningExemplars.Length; i++)
         {
-            this.snapshotExemplars[i] = this.runningExemplars[i];
+            this.tempExemplars[i] = this.runningExemplars[i];
             if (this.runningExemplars[i].FilteredTags != null)
             {
                 // TODO: Better data structure to avoid this Linq.
@@ -86,7 +86,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
                 // TODO: The cost is paid irrespective of whether the
                 // Exporter supports Exemplar or not. One idea is to
                 // defer this until first exporter attempts read.
-                this.snapshotExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
             }
 
             if (reset)
@@ -95,6 +95,6 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
             }
         }
 
-        return this.snapshotExemplars;
+        return this.tempExemplars;
     }
 }
