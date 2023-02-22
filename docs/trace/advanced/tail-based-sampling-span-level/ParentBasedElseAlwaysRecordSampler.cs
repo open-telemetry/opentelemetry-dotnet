@@ -52,6 +52,10 @@ internal class ParentBasedElseAlwaysRecordSampler : Sampler
         // Parentbased sampler decided to drop it. We will return a RecordOnly
         // decision so that the span filtering processors later in the pipeline
         // can apply tailbased sampling rules (e.g., to sample all failed spans).
+        // Returning a RecordOnly decision is relevant because:
+        // 1. It causes the Processor pipeline to be invoked.
+        // 2. It causes activity.IsAllDataRequested to return true, so most
+        //    instrumentations end up populating the required attributes.
         return new SamplingResult(SamplingDecision.RecordOnly);
     }
 }
