@@ -45,6 +45,8 @@ namespace OpenTelemetry.Metrics
 
         internal int IsCriticalSectionOccupied = 0;
 
+        internal Exemplar[] Exemplars;
+
         private readonly BucketLookupNode bucketLookupTreeRoot;
 
         private readonly Func<double, int> findHistogramBucketIndex;
