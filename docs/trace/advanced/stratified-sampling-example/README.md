@@ -1,7 +1,6 @@
 # Stratified Sampling: An Example
 
-This is a proof of concept for how we can achieve stratified sampling in
-OpenTelemetry.NET.
+This example shows how to achieve stratified sampling in OpenTelemetry.NET.
 
 ## What is stratified sampling?
 
@@ -12,6 +11,12 @@ stratum is then sampled using a probabilistic sampling method. This ensures
 that all sub-populations are represented.
 
 ## How does this example do stratified sampling?
+
+We achieve this by using a custom Sampler that internally holds two samplers.
+Based on the stratum, the appropriate sampler is invoked.
+
+One prerequisite for this is that the tag (e.g. queryType) used for the
+stratified sampling decision must be provided as part of activity creation.
 
 We use disproportionate stratified sampling here - i.e., the sample size of
 each sub-population is not proportionate to their occurrence in the overall
