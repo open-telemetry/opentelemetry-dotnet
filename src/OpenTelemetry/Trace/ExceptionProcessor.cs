@@ -75,7 +75,7 @@ namespace OpenTelemetry.Trace
 
             if (snapshot != pointers)
             {
-                activity.SetStatus(Status.Error);
+                activity.SetStatus(ActivityStatusCode.Error);
             }
         }
     }
