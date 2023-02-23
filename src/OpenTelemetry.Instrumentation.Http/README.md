@@ -43,9 +43,9 @@ HTTP instrumentation must be enabled at application startup.
 #### For Trace
 
 The following example demonstrates adding HTTP client instrumentation with the
-extension method `.AddHttpClientInstrumentation()` on `TracerProviderBuilder` to a console application.
-This example also sets up the OpenTelemetry Console Exporter, which requires
-adding the package
+extension method `.AddHttpClientInstrumentation()` on `TracerProviderBuilder` to
+a console application. This example also sets up the OpenTelemetry Console
+Exporter, which requires adding the package
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
