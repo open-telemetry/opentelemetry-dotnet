@@ -8,8 +8,8 @@ implementation.
 
 ## Prerequisite
 
-* An endpoint capable of accepting OTLP, like
-  [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) or a remote endpoint.
+* An endpoint capable of accepting OTLP, like [OpenTelemetry
+  Collector](https://opentelemetry.io/docs/collector/) or similar.
 
 ## Installation
 
