@@ -43,7 +43,7 @@ HTTP instrumentation must be enabled at application startup.
 #### For Trace
 
 The following example demonstrates adding HTTP client instrumentation with the
-extension method `.AddHttpClientInstrumentation()` to a console application.
+extension method `.AddHttpClientInstrumentation()` on `TracerProviderBuilder` to a console application.
 This example also sets up the OpenTelemetry Console Exporter, which requires
 adding the package
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
@@ -68,15 +68,8 @@ public class Program
 #### For Metrics
 
 The following example demonstrates adding HTTP client instrumentation with the
-extension method `.AddHttpClientInstrumentation()` to a console application.
-
-The metric and its attributes being implemented are following Opentelemetry
-[metrics semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
-
-| Name  | Instrument Type | Unit | Description | Attributes |
-|-------|-----------------|------|-------------|------------|
-| `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. | http.method, http.scheme, http.status_code, http.flavor, net.peer.name |
+extension method `.AddHttpClientInstrumentation()` on `MeterProviderBuilder` to
+a console application.
 
 ```csharp
 using OpenTelemetry;
@@ -94,29 +87,27 @@ public class Program
 }
 ```
 
+### Metrics
+
+The instrumentation was implemented based on [metrics semantic
+conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
+Currently, the instrumentation supports the following metric.
+
+| Name  | Instrument Type | Unit | Description | Attributes |
+|-------|-----------------|------|-------------|------------|
+| `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. | http.method, http.scheme, http.status_code, http.flavor, net.peer.name |
+
+### .NET Core & .NET
+
 For an ASP.NET Core application, adding instrumentation is typically done in the
 `ConfigureServices` of your `Startup` class. Refer to documentation for
 [OpenTelemetry.Instrumentation.AspNetCore](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
 In addition, check how to enable `OpenTelemetry.Instrumentation.Http` for Trace
-and Metrics with this [demo](../../examples/AspNetCore/Program.cs). Optionally,
-modify the [App settings file](../../examples/AspNetCore/appsettings.json) to
-use your preferred Exporter.
+and Metrics with this [demo](../../examples/AspNetCore/Program.cs).
 
 For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to the documentation for
 [OpenTelemetry.Instrumentation.AspNet](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md).
-
-## Advanced configuration
-
-This instrumentation can be configured to change the default behavior by using
-`HttpClientInstrumentationOptions`. It is important to note that there are
-differences between .NET Framework and newer .NET/.NET Core runtimes which
-govern what options are used. On .NET Framework, `HttpClient` uses the
-`HttpWebRequest` API. On .NET & .NET Core, `HttpWebRequest` uses the
-`HttpClient` API. As such, depending on the runtime, only one half of the
-"filter" & "enrich" options are used.
-
-### .NET & .NET Core
 
 #### Filter HttpClient API
 
