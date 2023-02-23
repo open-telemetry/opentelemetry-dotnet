@@ -1,5 +1,4 @@
 Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions
-OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 OpenTelemetry.OpenTelemetryBuilder
 OpenTelemetry.OpenTelemetryBuilder.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
@@ -7,13 +6,5 @@ OpenTelemetry.OpenTelemetryBuilder.WithMetrics() -> OpenTelemetry.OpenTelemetryB
 OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing() -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
-OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> OpenTelemetry.OpenTelemetryBuilder!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Configure(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.GetServices(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Configure(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.GetServices(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+
