@@ -6,7 +6,7 @@
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Api.ProviderBuilderExtensions
+dotnet add package --prerelease OpenTelemetry.Api.ProviderBuilderExtensions
 ```
 
 ## Overview
