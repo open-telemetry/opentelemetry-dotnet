@@ -36,7 +36,7 @@ runnable example.
 ## Enable Metric Exporter
 
 This exporter provides `AddOtlpExporter()` extension method on `MeterProviderBuilder`
-to enable exporting of traces. The following snippet adds the Exporter with default
+to enable exporting of metrics. The following snippet adds the Exporter with default
 [configuration](#configuration).
 
 ```csharp
@@ -46,7 +46,7 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
+See the [`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for
 runnable example.
 
 ## Enable Log Exporter
