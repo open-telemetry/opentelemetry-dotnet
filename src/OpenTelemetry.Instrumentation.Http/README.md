@@ -110,6 +110,16 @@ Currently, the instrumentation supports the following metric.
 |-------|-----------------|------|-------------|------------|
 | `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. | http.method, http.scheme, http.status_code, http.flavor, net.peer.name |
 
+## Advanced configuration
+
+This instrumentation can be configured to change the default behavior by using
+`HttpClientInstrumentationOptions`. It is important to note that there are
+differences between .NET Framework and newer .NET/.NET Core runtimes which
+govern what options are used. On .NET Framework, `HttpClient` uses the
+`HttpWebRequest` API. On .NET & .NET Core, `HttpWebRequest` uses the
+`HttpClient` API. As such, depending on the runtime, only one half of the
+"filter" & "enrich" options are used.
+
 ### .NET & .NET Core
 
 #### Filter HttpClient API
