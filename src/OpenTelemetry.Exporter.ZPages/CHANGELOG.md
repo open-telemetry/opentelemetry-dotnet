@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.14
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
 ## 1.4.0-rc9.13
 
 Released 2023-Feb-10
