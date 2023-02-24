@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.4.0
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
 * `AddOtlpExporter` extension methods will now always create a new options
   instance when named options are NOT used.
   ([#4200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4200))
