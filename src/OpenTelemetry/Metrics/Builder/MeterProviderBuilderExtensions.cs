@@ -304,6 +304,26 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from in-place.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder ConfigureResource(this MeterProviderBuilder meterProviderBuilder, Action<ResourceBuilder, IServiceProvider> configure)
+        {
+            meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+                {
+                    meterProviderBuilderSdk.ConfigureResource(resourceBuilder => configure(resourceBuilder, sp));
+                }
+            });
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Run the given actions to initialize the <see cref="MeterProvider"/>.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
