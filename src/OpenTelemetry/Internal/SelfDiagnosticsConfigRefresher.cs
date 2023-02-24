@@ -30,7 +30,7 @@ namespace OpenTelemetry.Internal
     /// </summary>
     internal class SelfDiagnosticsConfigRefresher : IDisposable
     {
-        public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("Successfully opened file.\n");
+        public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.\n");
 
         private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
@@ -208,7 +208,7 @@ namespace OpenTelemetry.Internal
 
                 // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on
                 // .NET Framework and .NET Core, here I am using the [FileStream version][2] of it.
-                // Taking the last four prameter values from [.NET Framework]
+                // Taking the last four parameter values from [.NET Framework]
                 // (https://referencesource.microsoft.com/#system.core/System/IO/MemoryMappedFiles/MemoryMappedFile.cs,148)
                 // and [.NET Core]
                 // (https://github.com/dotnet/runtime/blob/master/src/libraries/System.IO.MemoryMappedFiles/src/System/IO/MemoryMappedFiles/MemoryMappedFile.cs#L152)
@@ -263,7 +263,7 @@ namespace OpenTelemetry.Internal
                         this.cancellationTokenSource.Dispose();
                     }
 
-                    // Dispose EventListner before files, because EventListner writes to files.
+                    // Dispose EventListener before files, because EventListener writes to files.
                     if (this.eventListener != null)
                     {
                         this.eventListener.Dispose();
