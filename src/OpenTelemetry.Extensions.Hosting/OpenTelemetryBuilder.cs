@@ -78,7 +78,7 @@ public sealed class OpenTelemetryBuilder
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
     public OpenTelemetryBuilder ConfigureResource(
-        Action<ResourceBuilder, IServiceProvider> configure)
+        Action<IServiceProvider, ResourceBuilder> configure)
     {
         Guard.ThrowIfNull(configure);
 

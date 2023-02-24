@@ -172,7 +172,7 @@ namespace OpenTelemetry.Trace
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder, IServiceProvider> configure)
+        public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, ResourceBuilder> configure)
         {
             Guard.ThrowIfNull(configure);
 
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Trace
             {
                 if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
                 {
-                    tracerProviderBuilderSdk.ConfigureResource(traceBuilder => configure(traceBuilder, sp));
+                    tracerProviderBuilderSdk.ConfigureResource(traceBuilder => configure(sp, traceBuilder));
                 }
             });
 
