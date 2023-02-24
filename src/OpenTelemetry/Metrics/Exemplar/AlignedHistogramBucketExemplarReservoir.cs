@@ -44,6 +44,33 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
         this.OfferAtBoundary(value, tags, index);
     }
 
+    public override Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
+    {
+        for (int i = 0; i < this.runningExemplars.Length; i++)
+        {
+            this.tempExemplars[i] = this.runningExemplars[i];
+            if (this.runningExemplars[i].FilteredTags != null)
+            {
+                // TODO: Better data structure to avoid this Linq.
+                // This is doing filtered = alltags - storedtags.
+                // TODO: At this stage, this logic is done inside Reservoir.
+                // Kinda hard for end users who write own reservoirs.
+                // Evaluate if this logic can be moved elsewhere.
+                // TODO: The cost is paid irrespective of whether the
+                // Exporter supports Exemplar or not. One idea is to
+                // defer this until first exporter attempts read.
+                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+            }
+
+            if (reset)
+            {
+                this.runningExemplars[i].Timestamp = default;
+            }
+        }
+
+        return this.tempExemplars;
+    }
+
     private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index)
     {
         ref var exemplar = ref this.runningExemplars[index];
@@ -81,32 +108,5 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
         {
             exemplar.FilteredTags.Add(tag);
         }
-    }
-
-    public override Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
-    {
-        for (int i = 0; i < this.runningExemplars.Length; i++)
-        {
-            this.tempExemplars[i] = this.runningExemplars[i];
-            if (this.runningExemplars[i].FilteredTags != null)
-            {
-                // TODO: Better data structure to avoid this Linq.
-                // This is doing filtered = alltags - storedtags.
-                // TODO: At this stage, this logic is done inside Reservoir.
-                // Kinda hard for end users who write own reservoirs.
-                // Evaluate if this logic can be moved elsewhere.
-                // TODO: The cost is paid irrespective of whether the
-                // Exporter supports Exemplar or not. One idea is to
-                // defer this until first exporter attempts read.
-                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
-            }
-
-            if (reset)
-            {
-                this.runningExemplars[i].Timestamp = default;
-            }
-        }
-
-        return this.tempExemplars;
     }
 }
