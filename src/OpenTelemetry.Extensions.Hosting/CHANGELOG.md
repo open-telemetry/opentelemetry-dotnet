@@ -5,6 +5,9 @@
 * Removed deprecated extensions: `AddOpenTelemetryTracing`,
   `AddOpenTelemetryMetrics`, `Configure`, & `GetServices`.
   ([#4071](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4071))
+* Added optional IServiceProvider arguments to the callbacks
+  of `ConfigureResource`, `WithTracing`, & `WithMetrics`.
+  ([#4229](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4229))
 
 ## 1.4.0-rc.4
 
