@@ -121,16 +121,6 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     internal TracerProvider InvokeBuild()
         => this.Build();
 
-    internal void Configure(Action<TracerProviderBuilder> configure)
-    {
-        this.ConfigureBuilderInternal((_, builder) => configure(builder));
-    }
-
-    internal void Configure(Action<TracerProviderBuilder, IServiceProvider> configure)
-    {
-        this.ConfigureBuilderInternal((sp, builder) => configure(builder, sp));
-    }
-
     /// <summary>
     /// Adds instrumentation to the provider.
     /// </summary>d

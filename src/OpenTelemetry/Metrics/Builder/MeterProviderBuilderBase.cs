@@ -102,16 +102,6 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     internal MeterProvider InvokeBuild()
         => this.Build();
 
-    internal void Configure(Action<MeterProviderBuilder> configure)
-    {
-        this.ConfigureBuilderInternal((_, builder) => configure(builder));
-    }
-
-    internal void Configure(Action<MeterProviderBuilder, IServiceProvider> configure)
-    {
-        this.ConfigureBuilderInternal((sp, builder) => configure(builder, sp));
-    }
-
     /// <summary>
     /// Run the configured actions to initialize the <see cref="MeterProvider"/>.
     /// </summary>
