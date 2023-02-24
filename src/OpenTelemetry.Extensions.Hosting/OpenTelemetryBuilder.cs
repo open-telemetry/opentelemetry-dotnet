@@ -69,29 +69,6 @@ public sealed class OpenTelemetryBuilder
     }
 
     /// <summary>
-    /// Registers an action to configure the <see cref="ResourceBuilder"/>s used
-    /// by tracing and metrics.
-    /// </summary>
-    /// <remarks><inheritdoc cref="ConfigureResource(System.Action{OpenTelemetry.Resources.ResourceBuilder})" path="/remarks"/></remarks>
-    /// <param name="configure"><see cref="ResourceBuilder"/> configuration
-    /// action.</param>
-    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
-    /// calls.</returns>
-    public OpenTelemetryBuilder ConfigureResource(
-        Action<IServiceProvider, ResourceBuilder> configure)
-    {
-        Guard.ThrowIfNull(configure);
-
-        this.Services.ConfigureOpenTelemetryMeterProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
-
-        this.Services.ConfigureOpenTelemetryTracerProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
-
-        return this;
-    }
-
-    /// <summary>
     /// Adds metric services into the builder.
     /// </summary>
     /// <remarks>

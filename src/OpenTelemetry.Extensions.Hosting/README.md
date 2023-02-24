@@ -87,7 +87,7 @@ A fully functional example can be found
 To dynamically add resources at startup from the dependency injection you can provide an `IResourceDetector`.
 To make use of it add it to the dependency injection and they you can use the `ISerivceProvider` add it to OpenTelemetry:
 ```csharp
-public class YourResourceDetector : IResourceDetector
+public class MyResourceDetector : IResourceDetector
 {
     public Resource Detect()
     {
@@ -97,11 +97,11 @@ public class YourResourceDetector : IResourceDetector
     }
 }
 
-services.AddSingleton<YourResourceDetector>();
+services.AddSingleton<MyResourceDetector>();
 
 services.AddOpenTelemetry()
     .ConfigureResource(builder =>
-        builder.AddDetector(sp => sp!.GetRequiredService<YourResourceDetector>()))
+        builder.AddDetector(sp => sp!.GetRequiredService<MyResourceDetector>()))
     WithTracing(builder => builder.AddConsoleExporter());
 ```
 
