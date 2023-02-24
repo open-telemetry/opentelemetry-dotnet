@@ -53,8 +53,6 @@ namespace OpenTelemetry.Logs.Tests
                         counter++;
                     }
 
-                    //Thread.Sleep(3000); // increase the odds of 2 tasks overlaps
-
                     processor1.Shutdown();
                 }),
 
