@@ -21,18 +21,57 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The AlignedHistogramBucketExemplarReservoir implementation.
 /// </summary>
-internal sealed class AlignedHistogramBucketExemplarReservoir
+internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoir
 {
+    private readonly int length;
     private readonly Exemplar[] runningExemplars;
     private readonly Exemplar[] tempExemplars;
 
     public AlignedHistogramBucketExemplarReservoir(int length)
     {
+        this.length = length;
         this.runningExemplars = new Exemplar[length + 1];
         this.tempExemplars = new Exemplar[length + 1];
     }
 
-    public void OfferAtBoundary(int index, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    {
+        this.OfferAtBoundary(value, tags, index);
+    }
+
+    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    {
+        this.OfferAtBoundary(value, tags, index);
+    }
+
+    public override Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
+    {
+        for (int i = 0; i < this.runningExemplars.Length; i++)
+        {
+            this.tempExemplars[i] = this.runningExemplars[i];
+            if (this.runningExemplars[i].FilteredTags != null)
+            {
+                // TODO: Better data structure to avoid this Linq.
+                // This is doing filtered = alltags - storedtags.
+                // TODO: At this stage, this logic is done inside Reservoir.
+                // Kinda hard for end users who write own reservoirs.
+                // Evaluate if this logic can be moved elsewhere.
+                // TODO: The cost is paid irrespective of whether the
+                // Exporter supports Exemplar or not. One idea is to
+                // defer this until first exporter attempts read.
+                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+            }
+
+            if (reset)
+            {
+                this.runningExemplars[i].Timestamp = default;
+            }
+        }
+
+        return this.tempExemplars;
+    }
+
+    private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index)
     {
         ref var exemplar = ref this.runningExemplars[index];
         exemplar.Timestamp = DateTime.UtcNow;
@@ -69,32 +108,5 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
         {
             exemplar.FilteredTags.Add(tag);
         }
-    }
-
-    public Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
-    {
-        for (int i = 0; i < this.runningExemplars.Length; i++)
-        {
-            this.tempExemplars[i] = this.runningExemplars[i];
-            if (this.runningExemplars[i].FilteredTags != null)
-            {
-                // TODO: Better data structure to avoid this Linq.
-                // This is doing filtered = alltags - storedtags.
-                // TODO: At this stage, this logic is done inside Reservoir.
-                // Kinda hard for end users who write own reservoirs.
-                // Evaluate if this logic can be moved elsewhere.
-                // TODO: The cost is paid irrespective of whether the
-                // Exporter supports Exemplar or not. One idea is to
-                // defer this until first exporter attempts read.
-                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
-            }
-
-            if (reset)
-            {
-                this.runningExemplars[i].Timestamp = default;
-            }
-        }
-
-        return this.tempExemplars;
     }
 }
