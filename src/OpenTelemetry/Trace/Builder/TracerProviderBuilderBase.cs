@@ -41,7 +41,8 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
             .AddOpenTelemetrySharedProviderBuilderServices()
             .AddOpenTelemetryTracerProviderBuilderServices()
             .TryAddSingleton<TracerProvider>(
-                sp => throw new NotSupportedException("Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead."));
+                sp => throw new NotSupportedException(
+                    "Self-contained TracerProvider cannot be accessed using the application IServiceProvider call Build instead."));
 
         services.ConfigureOpenTelemetryTracerProvider((sp, builder) => this.services = null);
 
@@ -69,7 +70,8 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     TracerProvider? ITracerProviderBuilder.Provider => null;
 
     /// <inheritdoc />
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
+        Func<TInstrumentation> instrumentationFactory)
     {
         Guard.ThrowIfNull(instrumentationFactory);
 
@@ -112,11 +114,22 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         => this.ConfigureServicesInternal(configure);
 
     /// <inheritdoc />
-    TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
+    TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(
+        Action<IServiceProvider, TracerProviderBuilder> configure)
         => this.ConfigureBuilderInternal(configure);
 
     internal TracerProvider InvokeBuild()
         => this.Build();
+
+    internal void Configure(Action<TracerProviderBuilder> configure)
+    {
+        this.ConfigureBuilderInternal((_, builder) => configure(builder));
+    }
+
+    internal void Configure(Action<TracerProviderBuilder, IServiceProvider> configure)
+    {
+        this.ConfigureBuilderInternal((sp, builder) => configure(builder, sp));
+    }
 
     /// <summary>
     /// Adds instrumentation to the provider.
@@ -154,7 +167,8 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     {
         if (!this.allowBuild)
         {
-            throw new NotSupportedException("A TracerProviderBuilder bound to external service cannot be built directly. Access the TracerProvider using the application IServiceProvider instead.");
+            throw new NotSupportedException(
+                "A TracerProviderBuilder bound to external service cannot be built directly. Access the TracerProvider using the application IServiceProvider instead.");
         }
 
         var services = this.services;

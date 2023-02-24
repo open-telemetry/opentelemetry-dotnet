@@ -69,6 +69,29 @@ public sealed class OpenTelemetryBuilder
     }
 
     /// <summary>
+    /// Registers an action to configure the <see cref="ResourceBuilder"/>s used
+    /// by tracing and metrics.
+    /// </summary>
+    /// <remarks><inheritdoc cref="ConfigureResource(System.Action{OpenTelemetry.Resources.ResourceBuilder})" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="ResourceBuilder"/> configuration
+    /// action.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder ConfigureResource(
+        Action<ResourceBuilder, IServiceProvider> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        this.Services.ConfigureOpenTelemetryMeterProvider(
+            (sp, builder) => builder.ConfigureResource(configure));
+
+        this.Services.ConfigureOpenTelemetryTracerProvider(
+            (sp, builder) => builder.ConfigureResource(configure));
+
+        return this;
+    }
+
+    /// <summary>
     /// Adds metric services into the builder.
     /// </summary>
     /// <remarks>
@@ -95,7 +118,26 @@ public sealed class OpenTelemetryBuilder
 
         var builder = new MeterProviderBuilderBase(this.Services);
 
-        configure(builder);
+        builder.Configure(configure);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds metric services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithMetrics()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="MeterProviderBuilder"/>
+    /// configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder, IServiceProvider> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var builder = new MeterProviderBuilderBase(this.Services);
+
+        builder.Configure(configure);
 
         return this;
     }
@@ -127,7 +169,26 @@ public sealed class OpenTelemetryBuilder
 
         var builder = new TracerProviderBuilderBase(this.Services);
 
-        configure(builder);
+        builder.Configure(configure);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds tracing services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithTracing()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="TracerProviderBuilder"/>
+    /// configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithTracing(Action<TracerProviderBuilder, IServiceProvider> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        var builder = new TracerProviderBuilderBase(this.Services);
+
+        builder.Configure(configure);
 
         return this;
     }
