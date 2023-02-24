@@ -407,9 +407,9 @@ this moment.
 
 Exemplars are example data points for aggregated data. They provide access to
 the raw measurement value, time stamp when measurement was made, and trace
-context, if any. It also provides "Filtered Tags", which are those attributes
-(Tags) [dropped by a view](#select-specific-tags). Exemplars are an opt-in
-feature, and allows customization via ExemplarFilter and ExemplarReservoir.
+context, if any. It also provides "Filtered Tags", which are attributes (Tags)
+that are [dropped by a view](#select-specific-tags). Exemplars are an opt-in
+feature, and allow customization via ExemplarFilter and ExemplarReservoir.
 
 #### ExemplarFilter
 
@@ -453,8 +453,8 @@ feature. It can be turned off by using `AlwaysOffExemplarFilter`.
 and is responsible for storing Exemplars.
 `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
 Histograms with buckets, and it stores one exemplar per histogram bucket. The
-exemplar stored is the last measurement - i.e. any new measurement overwrites
-the previous one.
+exemplar stored is the last measurement recorded - i.e. any new measurement
+overwrites the previous one.
 
 Currently there is no ability to change the Reservoir used.
 
