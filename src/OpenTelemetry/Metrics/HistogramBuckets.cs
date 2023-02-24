@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         internal readonly long[] RunningBucketCounts;
         internal readonly long[] SnapshotBucketCounts;
 
-        internal readonly AlignedHistogramBucketExemplarReservoir ExemplarReservoir;
+        internal readonly ExemplarReservoir ExemplarReservoir;
 
         internal double RunningSum;
         internal double SnapshotSum;

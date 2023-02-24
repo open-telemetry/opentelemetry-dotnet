@@ -21,18 +21,30 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The AlignedHistogramBucketExemplarReservoir implementation.
 /// </summary>
-internal sealed class AlignedHistogramBucketExemplarReservoir
+internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoir
 {
+    private readonly int length;
     private readonly Exemplar[] runningExemplars;
     private readonly Exemplar[] tempExemplars;
 
     public AlignedHistogramBucketExemplarReservoir(int length)
     {
+        this.length = length;
         this.runningExemplars = new Exemplar[length + 1];
         this.tempExemplars = new Exemplar[length + 1];
     }
 
-    public void OfferAtBoundary(int index, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    {
+        this.OfferAtBoundary(value, tags, index);
+    }
+
+    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    {
+        this.OfferAtBoundary(value, tags, index);
+    }
+
+    private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index)
     {
         ref var exemplar = ref this.runningExemplars[index];
         exemplar.Timestamp = DateTime.UtcNow;
@@ -71,7 +83,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir
         }
     }
 
-    public Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
+    public override Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset)
     {
         for (int i = 0; i < this.runningExemplars.Length; i++)
         {

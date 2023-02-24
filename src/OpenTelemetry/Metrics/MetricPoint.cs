@@ -875,7 +875,7 @@ namespace OpenTelemetry.Metrics
                         this.histogramBuckets.RunningBucketCounts[i]++;
                         if (reportExemplar)
                         {
-                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number, tags);
+                            this.histogramBuckets.ExemplarReservoir.Offer(number, tags, i);
                         }
                     }
 
@@ -905,7 +905,7 @@ namespace OpenTelemetry.Metrics
                         this.histogramBuckets.RunningBucketCounts[i]++;
                         if (reportExemplar)
                         {
-                            this.histogramBuckets.ExemplarReservoir.OfferAtBoundary(i, number, tags);
+                            this.histogramBuckets.ExemplarReservoir.Offer(number, tags, i);
                         }
 
                         this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
