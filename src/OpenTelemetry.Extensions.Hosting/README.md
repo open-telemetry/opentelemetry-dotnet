@@ -83,6 +83,28 @@ app.Run();
 A fully functional example can be found
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore).
 
+### Resources
+To dynamically add resources at startup from the dependency injection you can provide an `IResourceDetector`.
+To make use of it add it to the dependency injection and they you can use the `ISerivceProvider` add it to OpenTelemetry:
+```csharp
+public class YourResourceDetector : IResourceDetector
+{
+    public Resource Detect()
+    {
+        return ResourceBuilder.CreateEmpty()
+            .AddService("your service name")
+            .Build();
+    }
+}
+
+services.AddSingleton<YourResourceDetector>();
+
+services.AddOpenTelemetry()
+    .ConfigureResource(builder =>
+        builder.AddDetector(sp => sp!.GetRequiredService<YourResourceDetector>()))
+    WithTracing(builder => builder.AddConsoleExporter());
+```
+
 ## Migrating from pre-release versions of OpenTelemetry.Extensions.Hosting
 
 Pre-release versions (all versions prior to 1.4.0) of
