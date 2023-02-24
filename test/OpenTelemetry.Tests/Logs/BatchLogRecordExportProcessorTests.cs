@@ -26,6 +26,61 @@ namespace OpenTelemetry.Logs.Tests
     public sealed class BatchLogRecordExportProcessorTests
     {
         [Fact]
+        public void ShutdownDrainTargetTest()
+        {
+            List<LogRecord> exportedItems1 = new();
+            List<LogRecord> exportedItems2 = new();
+
+            List<LogRecord> dogfood = new();
+            for (int i = 0; i < 100; ++i)
+            {
+                var testLog = new LogRecord();
+                dogfood.Add(testLog);
+            }
+
+            var tasks = new List<Task>()
+            {
+                Task.Run(() =>
+                {
+                    using var processor1 = new BatchLogRecordExportProcessor(
+                        new InMemoryExporter<LogRecord>(exportedItems1),
+                        scheduledDelayMilliseconds: int.MaxValue);
+
+                    int counter = 0;
+                    while (dogfood.Count != 0)
+                    {
+                        processor1.OnEnd(dogfood[counter]);
+                        counter++;
+                    }
+
+                    //Thread.Sleep(3000); // increase the odds of 2 tasks overlaps
+
+                    processor1.Shutdown();
+                }),
+
+                Task.Run(() =>
+                {
+                    using var processor2 = new BatchLogRecordExportProcessor(
+                        new InMemoryExporter<LogRecord>(exportedItems2),
+                        scheduledDelayMilliseconds: int.MaxValue);
+
+                    int counter = 0;
+                    while (dogfood.Count != 0)
+                    {
+                        processor2.OnEnd(dogfood[counter]);
+                        counter++;
+                    }
+
+                    //Thread.Sleep(3000); // increase the odds of 2 tasks overlaps
+                    processor2.Shutdown();
+                }),
+            };
+
+            Assert.Equal(100, exportedItems1.Count);
+            Assert.Equal(100, exportedItems2.Count);
+        }
+
+        [Fact]
         public void StateValuesAndScopeBufferingTest()
         {
             var scopeProvider = new LoggerExternalScopeProvider();

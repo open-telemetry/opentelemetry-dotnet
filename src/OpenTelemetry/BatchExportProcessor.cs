@@ -85,6 +85,8 @@ namespace OpenTelemetry
         /// </summary>
         internal long DroppedCount => this.droppedCount;
 
+        internal long ShutdownDrainTarget => this.shutdownDrainTarget;
+
         /// <summary>
         /// Gets the number of telemetry objects received by the processor.
         /// </summary>
