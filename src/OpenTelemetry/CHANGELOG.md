@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Create spans even on a sampling decision of drop. This conforms the .NET SDK
+  to the specification regarding
+  [span creation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sdk-span-creation).
+  This may have a performance impact as an `Activity` will always be allocated
+  irrespective of sampling decision.
+  ([#3841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3841))
+
 ## 1.4.0
 
 Released 2023-Feb-24
