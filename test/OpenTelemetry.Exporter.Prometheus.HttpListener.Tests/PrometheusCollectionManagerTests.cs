@@ -14,13 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics.Metrics;
 #if NETFRAMEWORK
 using System.Linq;
 #endif
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;

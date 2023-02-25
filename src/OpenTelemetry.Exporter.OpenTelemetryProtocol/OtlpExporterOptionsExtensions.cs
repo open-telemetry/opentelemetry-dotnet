@@ -14,8 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -86,6 +87,11 @@ namespace OpenTelemetry.Exporter
                         var value = keyValueData[1].Trim();
                         addHeader(headers, key, value);
                     });
+            }
+
+            foreach (var header in OtlpExporterOptions.StandardHeaders)
+            {
+                addHeader(headers, header.Key, header.Value);
             }
 
             return headers;

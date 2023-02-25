@@ -2,6 +2,62 @@
 
 ## Unreleased
 
+## 1.4.0
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
+* `AddOtlpExporter` extension methods will now always create a new options
+  instance when named options are NOT used.
+  ([#4200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4200))
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+* Added a direct dependency on System.Reflection.Emit.Lightweight which
+  previously came transitively through the OpenTelemetry SDK.
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
+* Include User-Agent header
+  [per the specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#user-agent).
+  ([#4120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4120))
+
+## 1.4.0-rc.2
+
+Released 2023-Jan-09
+
+* For `AddOtlpExporter` extension methods, configuration delegates will be
+  executed inline and not through Options API when named options are NOT used.
+  ([#4058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4058))
+
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
+* Fix default values for `OTEL_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_SPAN_EVENT_COUNT_LIMIT`,
+  `OTEL_SPAN_LINK_COUNT_LIMIT`,
+  `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT`,
+  `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`. All of them are defaulted to `128`.
+  ([#3978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3978))
+
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
+* Log Exporter modified to no longer prefix scope-depth when exporting ILogger
+  scopes as attributes. Empty keys and {OriginalFormat} key will be ignored from
+  scopes.
+  ([#3843](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3843))
+
 ## 1.4.0-beta.2
 
 Released 2022-Oct-17

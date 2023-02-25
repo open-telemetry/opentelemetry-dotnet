@@ -16,8 +16,6 @@
 
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -82,19 +80,6 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(resourceBuilder);
 
             this.ResourceBuilder = resourceBuilder;
-            return this;
-        }
-
-        /// <summary>
-        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
-        /// this provider is built from in-place.
-        /// </summary>
-        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
-        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-        public OpenTelemetryLoggerOptions ConfigureResource(Action<ResourceBuilder> configure)
-        {
-            Guard.ThrowIfNull(configure, nameof(configure));
-            configure(this.ResourceBuilder);
             return this;
         }
     }

@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
             : base(name)
         {
-            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
+            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -49,16 +50,21 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     var request = response.RequestMessage;
 
-                    // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
-                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-client
-                    var tags = new KeyValuePair<string, object>[]
-                    {
-                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
-                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
-                        new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
-                    };
+                    TagList tags = default;
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
 
+                    if (!request.RequestUri.IsDefaultPort)
+                    {
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+                    }
+
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
                     this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
                 }
             }

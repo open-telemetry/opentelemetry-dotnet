@@ -52,28 +52,28 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 For more information on Processors, please review [Extending the SDK](../extending-the-sdk/README.md#processor)
 
-### ConfigureResource
+### SetResourceBuilder
 
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry.
 If no `Resource` is explicitly configured, the default is to use a resource
 indicating this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-The `ConfigureResource` method on `OpenTelemetryLoggerOptions` can be used to
-configure the `ResourceBuilder`. It is not possible to change the resources
+The `SetResourceBuilder` method on `OpenTelemetryLoggerOptions` can be used to
+set a single `ResourceBuilder`. If `SetResourceBuilder` is called multiple
+times, only the last is kept. It is not possible to change the resource builder
 *after* creating the `LoggerFactory`.
 
-The snippet below shows configuring the `ResourceBuilder` of the provider.
+The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
 ```csharp
 var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddOpenTelemetry(options =>
     {
-        options.ConfigureResource(r => r.AddService(
+        options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
             serviceName: "MyService",
-            serviceVersion: "1.0.0"
-            ));
+            serviceVersion: "1.0.0"));
     });
 });
 ```

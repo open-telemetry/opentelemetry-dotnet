@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
@@ -54,7 +50,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var httpClient = ClientTestHelpers.CreateTestClient(async request =>
             {
-                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
+                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
                 var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
                 response.TrailingHeaders().Add("grpc-message", "value");
                 return response;
@@ -62,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
@@ -141,7 +137,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 c.SetTag("enrichedWithHttpResponseMessage", "no");
             });
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()
@@ -198,7 +194,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uri = new Uri($"http://localhost:{this.server.Port}");
             var processor = new Mock<BaseProcessor<Activity>>();
 
-            var parent = new Activity("parent")
+            using var parent = new Activity("parent")
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()

@@ -14,10 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;
@@ -50,7 +48,7 @@ public partial class Program
                 options => options.UriPrefixes = new string[] { $"http://localhost:9185/" })
             .Build();
 
-        Stress(prometheusPort: 9184);
+        Stress(prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

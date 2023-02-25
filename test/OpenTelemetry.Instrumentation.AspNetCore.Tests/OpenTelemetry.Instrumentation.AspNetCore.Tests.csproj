@@ -3,6 +3,9 @@
     <Description>Unit test project for OpenTelemetry ASP.NET Core instrumentation</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
+
+    <!-- this is temporary. will remove in future PR. -->
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.0-rc.1.22427.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">

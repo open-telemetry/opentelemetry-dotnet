@@ -14,11 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-#if DEBUG
-using System.Collections.Generic;
-using System.Linq;
-#endif
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Security;
@@ -412,6 +407,12 @@ namespace OpenTelemetry.Internal
         public void TracerProviderSdkEvent(string message)
         {
             this.WriteEvent(46, message);
+        }
+
+        [Event(47, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
+        public void InvalidEnvironmentVariable(string key, string value)
+        {
+            this.WriteEvent(47, key, value);
         }
 
 #if DEBUG

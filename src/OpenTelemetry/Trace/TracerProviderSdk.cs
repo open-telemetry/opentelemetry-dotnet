@@ -16,19 +16,11 @@
 
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-
-using CallbackHelper = OpenTelemetry.ProviderBuilderServiceCollectionCallbackHelper<
-    OpenTelemetry.Trace.TracerProviderBuilderSdk,
-    OpenTelemetry.Trace.TracerProviderSdk,
-    OpenTelemetry.Trace.TracerProviderBuilderState>;
 
 namespace OpenTelemetry.Trace
 {
@@ -52,8 +44,8 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
-            var state = serviceProvider!.GetRequiredService<TracerProviderBuilderState>();
-            state.RegisterProvider(nameof(TracerProvider), this);
+            var state = serviceProvider!.GetRequiredService<TracerProviderBuilderSdk>();
+            state.RegisterProvider(this);
 
             this.ServiceProvider = serviceProvider!;
 
@@ -65,17 +57,16 @@ namespace OpenTelemetry.Trace
 
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-            CallbackHelper.InvokeRegisteredConfigureStateCallbacks(
-                serviceProvider!,
-                state);
+            var configureProviderBuilders = serviceProvider!.GetServices<IConfigureTracerProviderBuilder>();
+            foreach (var configureProviderBuilder in configureProviderBuilders)
+            {
+                configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
+            }
 
             StringBuilder processorsAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
-            if (state.SetErrorStatusOnException)
-            {
-                state.EnableErrorStatusOnException();
-            }
+            state.AddExceptionProcessorIfEnabled();
 
             var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
             resourceBuilder.ServiceProvider = serviceProvider;

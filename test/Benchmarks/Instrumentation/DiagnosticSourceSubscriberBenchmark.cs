@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Instrumentation;

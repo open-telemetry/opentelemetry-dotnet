@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -26,6 +23,7 @@ namespace OpenTelemetry.Metrics
     internal sealed class AggregatorStore
     {
         private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
+        private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
         private readonly object lockZeroTags = new();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
@@ -164,7 +162,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!this.zeroTagMetricPointInitialized)
                     {
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramBounds);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -172,9 +170,9 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int LookupAggregatorStore(string[] tagKeys, object[] tagValues, int length)
+        private int LookupAggregatorStore(KeyValuePair<string, object>[] tagKeysAndValues, int length)
         {
-            var givenTags = new Tags(tagKeys, tagValues);
+            var givenTags = new Tags(tagKeysAndValues);
 
             if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out var aggregatorIndex))
             {
@@ -183,11 +181,11 @@ namespace OpenTelemetry.Metrics
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                     // Create or obtain new arrays to temporarily hold the sorted tag Keys and Values
                     var storage = ThreadStaticStorage.GetStorage();
-                    storage.CloneKeysAndValues(tagKeys, tagValues, length, out var tempSortedTagKeys, out var tempSortedTagValues);
+                    storage.CloneKeysAndValues(tagKeysAndValues, length, out var tempSortedTagKeysAndValues);
 
-                    Array.Sort(tempSortedTagKeys, tempSortedTagValues);
+                    Array.Sort(tempSortedTagKeysAndValues, DimensionComparisonDelegate);
 
-                    var sortedTags = new Tags(tempSortedTagKeys, tempSortedTagValues);
+                    var sortedTags = new Tags(tempSortedTagKeysAndValues);
 
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                     {
@@ -201,22 +199,19 @@ namespace OpenTelemetry.Metrics
                             return -1;
                         }
 
-                        // Note: We are using storage from ThreadStatic for both the input order of tags and the sorted order of tags,
+                        // Note: We are using storage from ThreadStatic (for upto MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
                         // so we need to make a deep copy for Dictionary storage.
-                        var givenKeys = new string[length];
-                        tagKeys.CopyTo(givenKeys, 0);
+                        if (length <= ThreadStaticStorage.MaxTagCacheSize)
+                        {
+                            var givenTagKeysAndValues = new KeyValuePair<string, object>[length];
+                            tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
-                        var givenValues = new object[length];
-                        tagValues.CopyTo(givenValues, 0);
+                            var sortedTagKeysAndValues = new KeyValuePair<string, object>[length];
+                            tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
 
-                        var sortedTagKeys = new string[length];
-                        tempSortedTagKeys.CopyTo(sortedTagKeys, 0);
-
-                        var sortedTagValues = new object[length];
-                        tempSortedTagValues.CopyTo(sortedTagValues, 0);
-
-                        givenTags = new Tags(givenKeys, givenValues);
-                        sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                            givenTags = new Tags(givenTagKeysAndValues);
+                            sortedTags = new Tags(sortedTagKeysAndValues);
+                        }
 
                         lock (this.tagsToMetricPointIndexDictionary)
                         {
@@ -234,7 +229,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramBounds);
 
                                 // Add to dictionary *after* initializing MetricPoint
                                 // as other threads can start writing to the
@@ -249,15 +244,7 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    var givenKeys = new string[length];
-                    var givenValues = new object[length];
-
-                    tagKeys.CopyTo(givenKeys, 0);
-                    tagValues.CopyTo(givenValues, 0);
-
-                    givenTags = new Tags(givenKeys, givenValues);
-
+                    // This else block is for tag length = 1
                     aggregatorIndex = this.metricPointIndex;
                     if (aggregatorIndex >= this.maxMetricPoints)
                     {
@@ -267,6 +254,13 @@ namespace OpenTelemetry.Metrics
                         // we can re-claim them here.
                         return -1;
                     }
+
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                    var givenTagKeysAndValues = new KeyValuePair<string, object>[length];
+
+                    tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
+
+                    givenTags = new Tags(givenTagKeysAndValues);
 
                     lock (this.tagsToMetricPointIndexDictionary)
                     {
@@ -284,7 +278,7 @@ namespace OpenTelemetry.Metrics
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            metricPoint = new MetricPoint(this, this.aggType, givenTags.Keys, givenTags.Values, this.histogramBounds);
+                            metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramBounds);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
@@ -403,9 +397,9 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, out var tagKeys, out var tagValues);
+            storage.SplitToKeysAndValues(tags, tagLength, out var tagKeysAndValues);
 
-            return this.LookupAggregatorStore(tagKeys, tagValues, tagLength);
+            return this.LookupAggregatorStore(tagKeysAndValues, tagLength);
         }
 
         private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags)
@@ -422,7 +416,7 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKeys, out var tagValues, out var actualLength);
+            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKeysAndValues, out var actualLength);
 
             // Actual number of tags depend on how many
             // of the incoming tags has user opted to
@@ -433,7 +427,7 @@ namespace OpenTelemetry.Metrics
                 return 0;
             }
 
-            return this.LookupAggregatorStore(tagKeys, tagValues, actualLength);
+            return this.LookupAggregatorStore(tagKeysAndValues, actualLength);
         }
     }
 }

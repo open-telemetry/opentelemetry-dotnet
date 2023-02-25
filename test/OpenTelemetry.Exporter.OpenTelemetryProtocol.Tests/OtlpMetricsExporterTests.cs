@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
@@ -161,8 +158,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             services.AddHttpClient("OtlpMetricExporter", configureClient: (client) => invocations++);
 
-            services.AddOpenTelemetryMetrics(builder => builder.AddOtlpExporter(
-                o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+            services.AddOpenTelemetry().WithMetrics(builder => builder
+                .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
 
             using var serviceProvider = services.BuildServiceProvider();
 

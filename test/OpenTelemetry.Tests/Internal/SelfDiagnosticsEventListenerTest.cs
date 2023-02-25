@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics.Tracing;
-using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Text;
 using Moq;

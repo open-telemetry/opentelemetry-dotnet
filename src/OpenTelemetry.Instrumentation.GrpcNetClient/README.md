@@ -32,7 +32,7 @@ Add a reference to the
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
-dotnet add package OpenTelemetry.Instrumentation.GrpcNetClient
+dotnet add package --prerelease OpenTelemetry.Instrumentation.GrpcNetClient
 ```
 
 ### Step 2: Enable Grpc.Net.Client Instrumentation at application startup
@@ -108,20 +108,19 @@ can be enriched), the name of the event, and the actual raw object. The
 following code snippet shows how to add additional tags using these options.
 
 ```csharp
-services.AddOpenTelemetryTracing((builder) =>
-{
-    builder
-    .AddGrpcClientInstrumentation((options) =>
-    {
-        options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder
+        .AddGrpcClientInstrumentation(options =>
         {
-            activity.SetTag("requestVersion", httpRequestMessage.Version);
-        };
-        options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
-        {
-            activity.SetTag("responseVersion", httpResponseMessage.Version);
-        };
-    })
+            options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+            {
+                activity.SetTag("requestVersion", httpRequestMessage.Version);
+            };
+            options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+            {
+                activity.SetTag("responseVersion", httpResponseMessage.Version);
+            };
+        });
 ```
 
 [Processor](../../docs/trace/extending-the-sdk/README.md#processor),

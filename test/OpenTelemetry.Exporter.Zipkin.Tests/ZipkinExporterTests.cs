@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -132,8 +128,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 Endpoint = new Uri($"http://{this.testServerHost}:{this.testServerPort}/api/v2/spans?requestId={requestId}"),
             };
-            var zipkinExporter = new ZipkinExporter(exporterOptions);
-            var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
+            using var zipkinExporter = new ZipkinExporter(exporterOptions);
+            using var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
 
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
@@ -142,8 +138,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 .AddHttpClientInstrumentation()
                 .Build();
 
-            var source = new ActivitySource(ActivitySourceName);
-            var activity = source.StartActivity("Test Zipkin Activity");
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity = source.StartActivity("Test Zipkin Activity");
             activity?.Stop();
 
             // We call ForceFlush on the exporter twice, so that in the event
@@ -193,14 +189,16 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3690")]
         public void ErrorGettingUriFromEnvVarSetsDefaultEndpointValue()
         {
             try
             {
                 Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "InvalidUri");
 
-                Assert.Throws<FormatException>(() => new ZipkinExporterOptions());
+                var options = new ZipkinExporterOptions();
+
+                Assert.Equal(new Uri(ZipkinExporterOptions.DefaultZipkinEndpoint), options.Endpoint);
             }
             finally
             {
@@ -220,7 +218,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
                 .AddInMemoryCollection(values)
                 .Build();
 
-            var options = new ZipkinExporterOptions(configuration);
+            var options = new ZipkinExporterOptions(configuration, new());
 
             Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
         }
@@ -283,7 +281,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             services.AddHttpClient("ZipkinExporter", configureClient: (client) => invocations++);
 
-            services.AddOpenTelemetryTracing(builder => builder.AddZipkinExporter());
+            services.AddOpenTelemetry().WithTracing(builder => builder
+                .AddZipkinExporter());
 
             using var serviceProvider = services.BuildServiceProvider();
 
@@ -319,7 +318,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
 
             var zipkinExporter = new ZipkinExporter(new ZipkinExporterOptions());
 
-            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, zipkinExporter);
+            tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(zipkinExporter));
 
             using var provider = tracerProviderBuilder.Build();
 

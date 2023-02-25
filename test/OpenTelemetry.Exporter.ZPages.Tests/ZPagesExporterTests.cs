@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -118,8 +114,8 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             ZPagesExporter exporter = new ZPagesExporter(options);
             var zpagesProcessor = new ZPagesProcessor(exporter);
 
-            var source = new ActivitySource(ActivitySourceName);
-            var activity0 = source.StartActivity("Test Zipkin Activity 1");
+            using var source = new ActivitySource(ActivitySourceName);
+            using var activity0 = source.StartActivity("Test Zipkin Activity 1");
             zpagesProcessor.OnStart(activity0);
 
             // checking size of dictionaries from ZPagesActivityTracker
@@ -129,7 +125,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Single(ZPagesActivityTracker.TotalErrorCount);
             Assert.Single(ZPagesActivityTracker.TotalLatency);
 
-            var activity1 = source.StartActivity("Test Zipkin Activity 1");
+            using var activity1 = source.StartActivity("Test Zipkin Activity 1");
             zpagesProcessor.OnStart(activity1);
 
             // checking size of dictionaries from ZPagesActivityTracker
@@ -139,7 +135,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             Assert.Single(ZPagesActivityTracker.TotalErrorCount);
             Assert.Single(ZPagesActivityTracker.TotalLatency);
 
-            var activity2 = source.StartActivity("Test Zipkin Activity 2");
+            using var activity2 = source.StartActivity("Test Zipkin Activity 2");
             zpagesProcessor.OnStart(activity2);
 
             // checking size of dictionaries from ZPagesActivityTracker
@@ -164,10 +160,10 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
             var zpagesServer = new ZPagesExporterStatsHttpServer(exporter);
             zpagesServer.Start();
 
-            using var httpResponseMessage = await HttpClient.GetAsync("http://localhost:7284/rpcz/");
+            using var httpResponseMessage = await HttpClient.GetAsync("http://localhost:7284/rpcz/").ConfigureAwait(false);
             Assert.True(httpResponseMessage.IsSuccessStatusCode);
 
-            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+            var content = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
             Assert.Contains($"<td>Test Zipkin Activity 1</td>", content);
             Assert.Contains($"<td>Test Zipkin Activity 2</td>", content);
 

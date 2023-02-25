@@ -14,19 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -57,8 +53,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
         }
 
-        [Fact]
-        public async Task StatusIsUnsetOn200Response()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task StatusIsUnsetOn200Response(bool disableLogging)
         {
             var exportedItems = new List<Activity>();
             void ConfigureTestServices(IServiceCollection services)
@@ -72,11 +70,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    if (disableLogging)
+                    {
+                        builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                    }
+                })
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values");
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -116,11 +120,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values");
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -150,19 +157,24 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
+                {
                     builder.ConfigureTestServices(services =>
                     {
-                        this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
+                        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddAspNetCoreInstrumentation()
                         .AddInMemoryExporter(exportedItems)
                         .Build();
-                    })))
+                    });
+
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
             {
                 using var client = testFactory.CreateClient();
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/values/2");
                 request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedSpanId}-01");
 
                 // Act
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -203,17 +215,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Arrange
                 using (var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
-                        builder.ConfigureTestServices(services =>
                         {
-                            Sdk.SetDefaultTextMapPropagator(propagator.Object);
-                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                                .AddAspNetCoreInstrumentation()
-                                .AddInMemoryExporter(exportedItems)
-                                .Build();
-                        })))
+                            builder.ConfigureTestServices(services =>
+                            {
+                                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                                this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation().AddInMemoryExporter(exportedItems).Build();
+                            });
+                            builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                        }))
                 {
                     using var client = testFactory.CreateClient();
-                    var response = await client.GetAsync("/api/values/2");
+                    using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                     response.EnsureSuccessStatusCode(); // Status Code 200-299
 
                     WaitForActivityExport(exportedItems, 1);
@@ -256,13 +268,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices)))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
             {
                 using var client = testFactory.CreateClient();
 
                 // Act
-                var response1 = await client.GetAsync("/api/values");
-                var response2 = await client.GetAsync("/api/values/2");
+                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                 // Assert
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -303,15 +318,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var testFactory = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices)))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
             {
                 using var client = testFactory.CreateClient();
 
                 // Act
                 using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
                 {
-                    var response1 = await client.GetAsync("/api/values");
-                    var response2 = await client.GetAsync("/api/values/2");
+                    using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                    using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
                     response1.EnsureSuccessStatusCode(); // Status Code 200-299
                     response2.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -347,18 +365,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Arrange
                 using var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
-                        builder.ConfigureTestServices(services =>
                         {
-                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                                .SetSampler(new TestSampler(samplingDecision))
-                                .AddAspNetCoreInstrumentation()
-                                .Build();
-                        }));
+                            builder.ConfigureTestServices(services => { this.tracerProvider = Sdk.CreateTracerProviderBuilder().SetSampler(new TestSampler(samplingDecision)).AddAspNetCoreInstrumentation().Build(); });
+                            builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                        });
                 using var client = testFactory.CreateClient();
 
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
                 var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
@@ -370,7 +385,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Test Baggage Context Propagation
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                response = await client.SendAsync(request);
+                response = await client.SendAsync(request).ConfigureAwait(false);
                 var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
@@ -404,6 +419,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 bool isFilterCalled = false;
                 using var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
+                    {
                         builder.ConfigureTestServices(services =>
                         {
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -416,12 +432,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                     };
                                 })
                                 .Build();
-                        }));
+                        });
+                        builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                    });
                 using var client = testFactory.CreateClient();
 
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
 
                 // Ensure that filter was called
                 Assert.True(isFilterCalled);
@@ -437,7 +455,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Test Baggage Context Propagation
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                response = await client.SendAsync(request);
+                response = await client.SendAsync(request).ConfigureAwait(false);
                 var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
@@ -465,7 +483,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    .AddAspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
                             OnEventWrittenCallback = (name, payload) =>
@@ -487,14 +505,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                                         break;
                                 }
                             },
-                        }))
+                        })
                     .Build();
             }
 
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
@@ -502,7 +523,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request.Headers.TryAddWithoutValidation("baggage", "TestKey1=123,TestKey2=456");
 
                 // Act
-                using var response = await client.SendAsync(request);
+                using var response = await client.SendAsync(request).ConfigureAwait(false);
             }
 
             stopSignal.WaitOne(5000);
@@ -549,11 +570,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient();
 
             // Act
-            var response = await client.GetAsync("/api/values");
+            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
@@ -582,10 +606,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
-                var response = await client.GetAsync("/api/values/2");
+                using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 WaitForActivityExport(exportedItems, 2);
             }
@@ -618,16 +645,21 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
+                {
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestNullHostActivityMiddlewareImpl(activitySourceName, activityName));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
-                        .AddSource(activitySourceName)
-                        .AddInMemoryExporter(exportedItems));
-                    }))
+                        services.AddOpenTelemetry()
+                            .WithTracing(builder => builder
+                                .AddAspNetCoreInstrumentation()
+                                .AddSource(activitySourceName)
+                                .AddInMemoryExporter(exportedItems));
+                    });
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
-                var response = await client.GetAsync("/api/values/2");
+                using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 WaitForActivityExport(exportedItems, 2);
             }
@@ -656,11 +688,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var exportedItems = new List<Activity>();
             void ConfigureTestServices(IServiceCollection services)
             {
-                services.AddOpenTelemetryTracing(options =>
-                {
-                    options.AddAspNetCoreInstrumentation()
-                    .AddInMemoryExporter(exportedItems);
-                });
+                services.AddOpenTelemetry()
+                    .WithTracing(builder => builder
+                        .AddAspNetCoreInstrumentation()
+                        .AddInMemoryExporter(exportedItems));
 
                 // Register ActivitySource here so that it will be used
                 // by ASP.NET Core to create activities
@@ -671,11 +702,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/values");
+                using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
 
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -699,12 +733,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             // Arrange
             using (var client = this.factory
-                .WithWebHostBuilder(builder => builder.ConfigureTestServices(
-                    (s) => this.ConfigureExceptionFilters(s, mode, ref exportedItems)))
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureTestServices(
+                    (s) => this.ConfigureExceptionFilters(s, mode, ref exportedItems));
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 // Act
-                var response = await client.GetAsync("/api/error");
+                using var response = await client.GetAsync("/api/error").ConfigureAwait(false);
 
                 WaitForActivityExport(exportedItems, 1);
             }
@@ -714,83 +752,133 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task DiagnosticSourceCustomCallbacksAreReceivedOnlyForSubscribedEvents()
+        public async Task DiagnosticSourceCallbacksAreReceivedOnlyForSubscribedEvents()
         {
-            int numberOfCustomCallbacks = 0;
-            string expectedCustomEventName = "Microsoft.AspNetCore.Mvc.BeforeAction";
-            string actualCustomEventName = null;
+            int numberOfUnSubscribedEvents = 0;
+            int numberofSubscribedEvents = 0;
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    .AddAspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
                             OnEventWrittenCallback = (name, payload) =>
                             {
                                 switch (name)
                                 {
+                                    case HttpInListener.OnStartEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnStopEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
                                     case HttpInListener.OnMvcBeforeActionEvent:
                                         {
-                                            actualCustomEventName = name;
-                                            numberOfCustomCallbacks++;
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    default:
+                                        {
+                                            numberOfUnSubscribedEvents++;
                                         }
 
                                         break;
                                 }
                             },
-                        }))
+                        })
                     .Build();
             }
 
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
 
                 // Act
-                using var response = await client.SendAsync(request);
+                using var response = await client.SendAsync(request).ConfigureAwait(false);
             }
 
-            Assert.Equal(1, numberOfCustomCallbacks);
-            Assert.Equal(expectedCustomEventName, actualCustomEventName);
+            Assert.Equal(0, numberOfUnSubscribedEvents);
+            Assert.Equal(3, numberofSubscribedEvents);
         }
 
         [Fact]
         public async Task DiagnosticSourceExceptionCallbackIsReceivedForUnHandledException()
         {
+            int numberOfUnSubscribedEvents = 0;
+            int numberofSubscribedEvents = 0;
             int numberOfExceptionCallbacks = 0;
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    .AddAspNetCoreInstrumentation(
                         new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                         {
                             OnEventWrittenCallback = (name, payload) =>
                             {
                                 switch (name)
                                 {
+                                    case HttpInListener.OnStartEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnStopEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+                                    case HttpInListener.OnMvcBeforeActionEvent:
+                                        {
+                                            numberofSubscribedEvents++;
+                                        }
+
+                                        break;
+
                                     // TODO: Add test case for validating name for both the types
                                     // of exception event.
                                     case HttpInListener.OnUnhandledHostingExceptionEvent:
                                     case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                         {
+                                            numberofSubscribedEvents++;
                                             numberOfExceptionCallbacks++;
+                                        }
+
+                                        break;
+                                    default:
+                                        {
+                                            numberOfUnSubscribedEvents++;
                                         }
 
                                         break;
                                 }
                             },
-                        }))
+                        })
                     .Build();
             }
 
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices(ConfigureTestServices))
+                {
+                    builder.ConfigureTestServices(ConfigureTestServices);
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 try
@@ -798,7 +886,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     using var request = new HttpRequestMessage(HttpMethod.Get, "/api/error");
 
                     // Act
-                    using var response = await client.SendAsync(request);
+                    using var response = await client.SendAsync(request).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -807,42 +895,69 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(1, numberOfExceptionCallbacks);
+            Assert.Equal(0, numberOfUnSubscribedEvents);
+            Assert.Equal(4, numberofSubscribedEvents);
         }
 
         [Fact]
         public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
         {
+            int numberOfUnSubscribedEvents = 0;
+            int numberofSubscribedEvents = 0;
             int numberOfExceptionCallbacks = 0;
 
             // configure SDK
             using var tracerprovider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                .AddAspNetCoreInstrumentation(
                     new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                     {
                         OnEventWrittenCallback = (name, payload) =>
                         {
                             switch (name)
                             {
+                                case HttpInListener.OnStartEvent:
+                                    {
+                                        numberofSubscribedEvents++;
+                                    }
+
+                                    break;
+                                case HttpInListener.OnStopEvent:
+                                    {
+                                        numberofSubscribedEvents++;
+                                    }
+
+                                    break;
+
+                                // TODO: Add test case for validating name for both the types
+                                // of exception event.
                                 case HttpInListener.OnUnhandledHostingExceptionEvent:
                                 case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                     {
+                                        numberofSubscribedEvents++;
                                         numberOfExceptionCallbacks++;
+                                    }
+
+                                    break;
+                                default:
+                                    {
+                                        numberOfUnSubscribedEvents++;
                                     }
 
                                     break;
                             }
                         },
-                    }))
+                    })
                     .Build();
 
             var builder = WebApplication.CreateBuilder();
+            builder.Logging.ClearProviders();
             var app = builder.Build();
 
             app.UseExceptionHandler(handler =>
             {
                 handler.Run(async (ctx) =>
                 {
-                    await ctx.Response.WriteAsync("handled");
+                    await ctx.Response.WriteAsync("handled").ConfigureAwait(false);
                 });
             });
 
@@ -861,7 +976,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             using var client = new HttpClient();
             try
             {
-                await client.GetStringAsync("http://localhost:5000/error");
+                await client.GetStringAsync("http://localhost:5000/error").ConfigureAwait(false);
             }
             catch
             {
@@ -869,8 +984,61 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             Assert.Equal(0, numberOfExceptionCallbacks);
+            Assert.Equal(0, numberOfUnSubscribedEvents);
+            Assert.Equal(2, numberofSubscribedEvents);
 
-            await app.DisposeAsync();
+            await app.DisposeAsync().ConfigureAwait(false);
+        }
+
+        [Fact]
+        public async Task RouteInformationIsNotAddedToRequestsOutsideOfMVC()
+        {
+            var exportedItems = new List<Activity>();
+
+            // configure SDK
+            using var tracerprovider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var builder = WebApplication.CreateBuilder();
+            builder.Logging.ClearProviders();
+            var app = builder.Build();
+
+            app.MapGet("/custom/{name:alpha}", () => "Hello");
+
+            _ = app.RunAsync();
+
+            using var client = new HttpClient();
+            var res = await client.GetStringAsync("http://localhost:5000/custom/abc").ConfigureAwait(false);
+            Assert.NotNull(res);
+
+            tracerprovider.ForceFlush();
+            for (var i = 0; i < 10; i++)
+            {
+                if (exportedItems.Count > 0)
+                {
+                    break;
+                }
+
+                // We need to let End callback execute as it is executed AFTER response was returned.
+                // In unit tests environment there may be a lot of parallel unit tests executed, so
+                // giving some breezing room for the End callback to complete
+                await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+            }
+
+            var activity = exportedItems[0];
+
+            Assert.NotNull(activity);
+
+            // After fix update to Contains http.route
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+
+            // After fix this should be /custom/{name:alpha}
+            Assert.Equal("/custom/abc", activity.DisplayName);
+
+            await app.DisposeAsync().ConfigureAwait(false);
         }
 
         public void Dispose()
@@ -903,26 +1071,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
 #endif
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
-        }
-
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
-        {
-            Assert.True(activity.IsAllDataRequested);
-            switch (method)
-            {
-                case "OnStartActivity":
-                    Assert.True(obj is HttpRequest);
-                    break;
-
-                case "OnStopActivity":
-                    Assert.True(obj is HttpResponse);
-                    break;
-
-                default:
-                    break;
-            }
-
-            activity.SetTag("enriched", "yes");
         }
 
         private static void AssertException(List<Activity> exportedItems)

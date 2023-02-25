@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
@@ -28,10 +29,6 @@ namespace OpenTelemetry.Exporter
     /// OTEL_EXPORTER_JAEGER_AGENT_HOST, OTEL_EXPORTER_JAEGER_AGENT_PORT
     /// environment variables are parsed during object construction.
     /// </summary>
-    /// <remarks>
-    /// The constructor throws <see cref="FormatException"/> if it fails to parse
-    /// any of the supported environment variables.
-    /// </remarks>
     public class JaegerExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
@@ -48,12 +45,17 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="JaegerExporterOptions"/> class.
         /// </summary>
         public JaegerExporterOptions()
-            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
         {
         }
 
-        internal JaegerExporterOptions(IConfiguration configuration)
+        internal JaegerExporterOptions(
+            IConfiguration configuration,
+            BatchExportActivityProcessorOptions defaultBatchOptions)
         {
+            Debug.Assert(configuration != null, "configuration was null");
+            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
             if (configuration.TryGetValue<JaegerExportProtocol>(
                 OTelProtocolEnvVarKey,
                 JaegerExporterProtocolParser.TryParse,
@@ -77,7 +79,7 @@ namespace OpenTelemetry.Exporter
                 this.Endpoint = endpoint;
             }
 
-            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>

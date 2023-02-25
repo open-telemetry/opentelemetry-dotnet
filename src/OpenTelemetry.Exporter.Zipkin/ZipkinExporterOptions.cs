@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
@@ -28,10 +29,6 @@ namespace OpenTelemetry.Exporter
     /// OTEL_EXPORTER_ZIPKIN_ENDPOINT
     /// environment variables are parsed during object construction.
     /// </summary>
-    /// <remarks>
-    /// The constructor throws <see cref="FormatException"/> if it fails to parse
-    /// any of the supported environment variables.
-    /// </remarks>
     public sealed class ZipkinExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
@@ -45,18 +42,23 @@ namespace OpenTelemetry.Exporter
         /// Initializes zipkin endpoint.
         /// </summary>
         public ZipkinExporterOptions()
-             : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+             : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
         {
         }
 
-        internal ZipkinExporterOptions(IConfiguration configuration)
+        internal ZipkinExporterOptions(
+            IConfiguration configuration,
+            BatchExportActivityProcessorOptions defaultBatchOptions)
         {
+            Debug.Assert(configuration != null, "configuration was null");
+            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
             if (configuration.TryGetUriValue(ZipkinEndpointEnvVar, out var endpoint))
             {
                 this.Endpoint = endpoint;
             }
 
-            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>

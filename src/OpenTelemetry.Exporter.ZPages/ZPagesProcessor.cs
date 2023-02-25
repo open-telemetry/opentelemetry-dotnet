@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Trace;
@@ -38,7 +37,6 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public override void OnStart(Activity activity)
         {
             Debug.Assert(activity != null, "Activity should not be null");
@@ -63,7 +61,6 @@ namespace OpenTelemetry.Exporter.ZPages
         }
 
         /// <inheritdoc />
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public override void OnEnd(Activity activity)
         {
             Debug.Assert(activity != null, "Activity should not be null");
