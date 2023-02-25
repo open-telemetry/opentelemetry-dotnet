@@ -251,39 +251,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerSdkSetsActivitySamplingResultAsPropagationWhenParentIsRemote()
-        {
-            var activitySourceName = Utils.GetCurrentMethodName();
-            var testSampler = new TestSampler();
-            using var activitySource = new ActivitySource(activitySourceName);
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .AddSource(activitySourceName)
-                    .SetSampler(testSampler)
-                    .Build();
-
-            testSampler.SamplingAction = (samplingParameters) =>
-            {
-                return new SamplingResult(SamplingDecision.Drop);
-            };
-
-            ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
-
-            using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
-            {
-                // Even if sampling returns false, for activities with remote parent,
-                // activity is still created with PropagationOnly.
-                Assert.NotNull(activity);
-                Assert.False(activity.IsAllDataRequested);
-                Assert.False(activity.Recorded);
-
-                // This is not a root activity and parent is not remote.
-                // If sampling returns false, no activity is created at all.
-                using var innerActivity = activitySource.StartActivity("inner");
-                Assert.Null(innerActivity);
-            }
-        }
-
-        [Fact]
         public void TracerSdkSetsActivitySamplingResultBasedOnSamplingDecision()
         {
             var activitySourceName = Utils.GetCurrentMethodName();
@@ -327,16 +294,31 @@ namespace OpenTelemetry.Trace.Tests
 
             using (var activity = activitySource.StartActivity("root"))
             {
-                // Even if sampling returns false, for root activities,
-                // activity is still created with PropagationOnly.
+                // Even if sampling returns false, for root activities and their children,
+                // are still created with PropagationOnly.
                 Assert.NotNull(activity);
                 Assert.False(activity.IsAllDataRequested);
                 Assert.False(activity.Recorded);
 
-                // This is not a root activity.
-                // If sampling returns false, no activity is created at all.
                 using var innerActivity = activitySource.StartActivity("inner");
-                Assert.Null(innerActivity);
+                Assert.NotNull(innerActivity);
+                Assert.False(activity.IsAllDataRequested);
+                Assert.False(activity.Recorded);
+            }
+
+            ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
+            using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
+            {
+                // Even if sampling returns false, for activities with remote parent and their children,
+                // are still created with PropagationOnly.
+                Assert.NotNull(activity);
+                Assert.False(activity.IsAllDataRequested);
+                Assert.False(activity.Recorded);
+
+                using var innerActivity = activitySource.StartActivity("inner");
+                Assert.NotNull(innerActivity);
+                Assert.False(innerActivity.IsAllDataRequested);
+                Assert.False(innerActivity.Recorded);
             }
         }
 
