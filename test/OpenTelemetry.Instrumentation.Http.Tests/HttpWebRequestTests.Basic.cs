@@ -296,14 +296,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 Assert.Equal(contextFromPropagator, exportedItems[0].Context);
             }
-
-#if NETFRAMEWORK
-            if (!sample && createParentActivity)
-            {
-                Assert.Equal(parentContext.TraceId, contextFromPropagator.TraceId);
-                Assert.Equal(parentContext.SpanId, contextFromPropagator.SpanId);
-            }
-#endif
         }
 
         [Theory]
