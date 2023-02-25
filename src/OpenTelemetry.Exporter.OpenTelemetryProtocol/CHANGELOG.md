@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Bumped the version of `Google.Protobuf` used by the project to `3.22.0` so
+  that a new performance feature can be used instead of reflection. Removed the
+  dependency on `System.Reflection.Emit.Lightweight`.
+  ([#4201](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4201))
+
 ## 1.4.0
 
 Released 2023-Feb-24
