@@ -50,6 +50,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             catch (RpcException ex)
             {
+                // TODO: Add check to only create blob for a retryable error
                 if (this.PersistentBlobProvider != null)
                 {
                     this.PersistentBlobProvider.TryCreateBlob(request.ToByteArray(), out _);
