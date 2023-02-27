@@ -26,5 +26,13 @@ namespace OpenTelemetry.Metrics
     internal sealed class MetricPointOptionalComponents
     {
         public HistogramBuckets HistogramBuckets;
+
+        internal MetricPointOptionalComponents Copy()
+        {
+            MetricPointOptionalComponents copy = new MetricPointOptionalComponents();
+            copy.HistogramBuckets = this.HistogramBuckets.Copy();
+
+            return copy;
+        }
     }
 }

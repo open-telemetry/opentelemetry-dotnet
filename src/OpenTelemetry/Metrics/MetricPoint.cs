@@ -278,7 +278,7 @@ namespace OpenTelemetry.Metrics
         internal readonly MetricPoint Copy()
         {
             MetricPoint copy = this;
-            copy.mpComponents.HistogramBuckets = this.mpComponents?.HistogramBuckets?.Copy();
+            copy.mpComponents = this.mpComponents?.Copy();
             return copy;
         }
 
