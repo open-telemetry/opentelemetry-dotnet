@@ -20,7 +20,6 @@
     <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
     <PackageReference Include="OpenTelemetry.Extensions.PersistentStorage.Abstractions" Version="$(PersistentStoragePkgVer)" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" Condition="'$(TargetFramework)' != 'net6.0'" />
   </ItemGroup>
 
   <ItemGroup>
