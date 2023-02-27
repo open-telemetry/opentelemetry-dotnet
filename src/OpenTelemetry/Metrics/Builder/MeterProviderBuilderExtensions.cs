@@ -304,6 +304,26 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
+        /// This is applied to all the metrics from this provider.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+        {
+            meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+                {
+                    meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
+                }
+            });
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Run the given actions to initialize the <see cref="MeterProvider"/>.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
