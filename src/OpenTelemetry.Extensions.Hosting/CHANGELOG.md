@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.4.0
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
+* Removed deprecated extensions: `AddOpenTelemetryTracing`,
+  `AddOpenTelemetryMetrics`, `Configure`, & `GetServices`.
+  ([#4071](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4071))
+
 ## 1.4.0-rc.4
 
 Released 2023-Feb-10
