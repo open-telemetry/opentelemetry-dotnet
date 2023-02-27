@@ -8,7 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.4.0-rc.1" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
+
   </ItemGroup>
 
 </Project>
