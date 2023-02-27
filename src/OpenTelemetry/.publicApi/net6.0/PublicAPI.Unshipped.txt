@@ -9,6 +9,7 @@ OpenTelemetry.Metrics.Exemplar.SpanId.get -> System.Diagnostics.ActivitySpanId?
 OpenTelemetry.Metrics.Exemplar.Timestamp.get -> System.DateTime
 OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId?
 OpenTelemetry.Metrics.ExemplarFilter
+OpenTelemetry.Metrics.ExemplarFilter.ExemplarFilter() -> void
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilter! exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
