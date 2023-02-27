@@ -18,7 +18,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// The base class for defining Exemplar Reservoir.
 /// </summary>
-public abstract class ExemplarReservoir
+internal abstract class ExemplarReservoir
 {
     /// <summary>
     /// Offers measurement to the reservoir.
