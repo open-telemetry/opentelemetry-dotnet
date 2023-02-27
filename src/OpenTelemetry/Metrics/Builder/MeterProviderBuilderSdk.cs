@@ -54,6 +54,8 @@ namespace OpenTelemetry.Metrics
 
         public ResourceBuilder? ResourceBuilder { get; private set; }
 
+        public ExemplarFilter? ExemplarFilter { get; private set; }
+
         public MeterProvider? Provider => this.meterProvider;
 
         public List<MetricReader> Readers { get; } = new();
@@ -156,6 +158,15 @@ namespace OpenTelemetry.Metrics
             Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
 
             this.ResourceBuilder = resourceBuilder;
+
+            return this;
+        }
+
+        public MeterProviderBuilder SetExemplarFilter(ExemplarFilter exemplarFilter)
+        {
+            Debug.Assert(exemplarFilter != null, "exemplarFilter was null");
+
+            this.ExemplarFilter = exemplarFilter;
 
             return this;
         }

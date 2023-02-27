@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationType aggType;
 
-        private HistogramBuckets histogramBuckets;
+        private MetricPointOptionalComponents mpComponents;
 
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
@@ -57,16 +57,18 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.HistogramWithBuckets ||
                 this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
-                this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+                this.mpComponents = new MetricPointOptionalComponents();
+                this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds, aggregatorStore.IsExemplarEnabled());
             }
             else if (this.aggType == AggregationType.Histogram ||
                      this.aggType == AggregationType.HistogramWithMinMax)
             {
-                this.histogramBuckets = new HistogramBuckets(null);
+                this.mpComponents = new MetricPointOptionalComponents();
+                this.mpComponents.HistogramBuckets = new HistogramBuckets(null);
             }
             else
             {
-                this.histogramBuckets = null;
+                this.mpComponents = null;
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.
@@ -214,7 +216,7 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
 
-            return this.histogramBuckets.SnapshotSum;
+            return this.mpComponents.HistogramBuckets.SnapshotSum;
         }
 
         /// <summary>
@@ -235,7 +237,7 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
 
-            return this.histogramBuckets;
+            return this.mpComponents.HistogramBuckets;
         }
 
         /// <summary>
@@ -250,10 +252,10 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.HistogramWithMinMax ||
                             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
-                Debug.Assert(this.histogramBuckets != null, "histogramBuckets was null");
+                Debug.Assert(this.mpComponents.HistogramBuckets != null, "histogramBuckets was null");
 
-                min = this.histogramBuckets.SnapshotMin;
-                max = this.histogramBuckets.SnapshotMax;
+                min = this.mpComponents.HistogramBuckets.SnapshotMin;
+                max = this.mpComponents.HistogramBuckets.SnapshotMax;
                 return true;
             }
 
@@ -262,10 +264,21 @@ namespace OpenTelemetry.Metrics
             return false;
         }
 
+        /// <summary>
+        /// Gets the exemplars associated with the metric point.
+        /// </summary>
+        /// <returns><see cref="Exemplar"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Exemplar[] GetExemplars()
+        {
+            // TODO: Do not expose Exemplar data structure (array now)
+            return this.mpComponents.HistogramBuckets?.Exemplars ?? Array.Empty<Exemplar>();
+        }
+
         internal readonly MetricPoint Copy()
         {
             MetricPoint copy = this;
-            copy.histogramBuckets = this.histogramBuckets?.Copy();
+            copy.mpComponents = this.mpComponents?.Copy();
             return copy;
         }
 
@@ -312,6 +325,67 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         this.UpdateHistogramWithBucketsAndMinMax((double)number);
+                        break;
+                    }
+            }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+        }
+
+        internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.LongSumIncomingDelta:
+                    {
+                        Interlocked.Add(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.LongSumIncomingCumulative:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.LongGauge:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        this.UpdateHistogram((double)number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        this.UpdateHistogramWithMinMax((double)number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        this.UpdateHistogramWithBuckets((double)number, tags, true);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, true);
                         break;
                     }
             }
@@ -391,6 +465,85 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         this.UpdateHistogramWithBucketsAndMinMax(number);
+                        break;
+                    }
+            }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+        }
+
+        internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.DoubleSumIncomingDelta:
+                    {
+                        double initValue, newValue;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            initValue = this.runningValue.AsDouble;
+
+                            unchecked
+                            {
+                                newValue = initValue + number;
+                            }
+
+                            if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
+                            {
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.DoubleSumIncomingCumulative:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        break;
+                    }
+
+                case AggregationType.DoubleGauge:
+                    {
+                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        this.UpdateHistogram(number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        this.UpdateHistogramWithMinMax(number);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        this.UpdateHistogramWithBuckets(number, tags, true);
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        this.UpdateHistogramWithBucketsAndMinMax(number, tags, true);
                         break;
                     }
             }
@@ -510,34 +663,37 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithBuckets:
                     {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
-                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
-                                    this.histogramBuckets.RunningSum = 0;
+                                    histogramBuckets.RunningSum = 0;
                                 }
 
-                                for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
+                                for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
                                 {
-                                    this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
+                                    histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
                                     if (outputDelta)
                                     {
-                                        this.histogramBuckets.RunningBucketCounts[i] = 0;
+                                        histogramBuckets.RunningBucketCounts[i] = 0;
                                     }
                                 }
+
+                                histogramBuckets.Exemplars = histogramBuckets.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -549,25 +705,26 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
-                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
-                                    this.histogramBuckets.RunningSum = 0;
+                                    histogramBuckets.RunningSum = 0;
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -579,38 +736,40 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
-                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
-                                this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
-                                this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                                histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                                histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
-                                    this.histogramBuckets.RunningSum = 0;
-                                    this.histogramBuckets.RunningMin = double.PositiveInfinity;
-                                    this.histogramBuckets.RunningMax = double.NegativeInfinity;
+                                    histogramBuckets.RunningSum = 0;
+                                    histogramBuckets.RunningMin = double.PositiveInfinity;
+                                    histogramBuckets.RunningMax = double.NegativeInfinity;
                                 }
 
-                                for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
+                                for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
                                 {
-                                    this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
+                                    histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
                                     if (outputDelta)
                                     {
-                                        this.histogramBuckets.RunningBucketCounts[i] = 0;
+                                        histogramBuckets.RunningBucketCounts[i] = 0;
                                     }
                                 }
 
+                                histogramBuckets.Exemplars = histogramBuckets.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -622,29 +781,30 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithMinMax:
                     {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
-                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
-                                this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
-                                this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                                histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                                histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
-                                    this.histogramBuckets.RunningSum = 0;
-                                    this.histogramBuckets.RunningMin = double.PositiveInfinity;
-                                    this.histogramBuckets.RunningMax = double.NegativeInfinity;
+                                    histogramBuckets.RunningSum = 0;
+                                    histogramBuckets.RunningMin = double.PositiveInfinity;
+                                    histogramBuckets.RunningMax = double.NegativeInfinity;
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
-                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -658,20 +818,21 @@ namespace OpenTelemetry.Metrics
 
         private void UpdateHistogram(double number)
         {
+            var histogramBuckets = this.mpComponents.HistogramBuckets;
             var sw = default(SpinWait);
             while (true)
             {
-                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                 {
                     // Lock acquired
                     unchecked
                     {
                         this.runningValue.AsLong++;
-                        this.histogramBuckets.RunningSum += number;
+                        histogramBuckets.RunningSum += number;
                     }
 
                     // Release lock
-                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                     break;
                 }
 
@@ -681,22 +842,23 @@ namespace OpenTelemetry.Metrics
 
         private void UpdateHistogramWithMinMax(double number)
         {
+            var histogramBuckets = this.mpComponents.HistogramBuckets;
             var sw = default(SpinWait);
             while (true)
             {
-                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                 {
                     // Lock acquired
                     unchecked
                     {
                         this.runningValue.AsLong++;
-                        this.histogramBuckets.RunningSum += number;
-                        this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
-                        this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                        histogramBuckets.RunningSum += number;
+                        histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
+                        histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
                     }
 
                     // Release lock
-                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                     break;
                 }
 
@@ -704,25 +866,30 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithBuckets(double number)
+        private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
-            int i = this.histogramBuckets.FindBucketIndex(number);
+            var histogramBuckets = this.mpComponents.HistogramBuckets;
+            int i = histogramBuckets.FindBucketIndex(number);
 
             var sw = default(SpinWait);
             while (true)
             {
-                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                 {
                     // Lock acquired
                     unchecked
                     {
                         this.runningValue.AsLong++;
-                        this.histogramBuckets.RunningSum += number;
-                        this.histogramBuckets.RunningBucketCounts[i]++;
+                        histogramBuckets.RunningSum += number;
+                        histogramBuckets.RunningBucketCounts[i]++;
+                        if (reportExemplar)
+                        {
+                            histogramBuckets.ExemplarReservoir.Offer(number, tags, i);
+                        }
                     }
 
                     // Release lock
-                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                     break;
                 }
 
@@ -730,27 +897,33 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithBucketsAndMinMax(double number)
+        private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
-            int i = this.histogramBuckets.FindBucketIndex(number);
+            var histogramBuckets = this.mpComponents.HistogramBuckets;
+            int i = histogramBuckets.FindBucketIndex(number);
 
             var sw = default(SpinWait);
             while (true)
             {
-                if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                 {
                     // Lock acquired
                     unchecked
                     {
                         this.runningValue.AsLong++;
-                        this.histogramBuckets.RunningSum += number;
-                        this.histogramBuckets.RunningBucketCounts[i]++;
-                        this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
-                        this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                        histogramBuckets.RunningSum += number;
+                        histogramBuckets.RunningBucketCounts[i]++;
+                        if (reportExemplar)
+                        {
+                            histogramBuckets.ExemplarReservoir.Offer(number, tags, i);
+                        }
+
+                        histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
+                        histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
                     }
 
                     // Release lock
-                    Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                    Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                     break;
                 }
 

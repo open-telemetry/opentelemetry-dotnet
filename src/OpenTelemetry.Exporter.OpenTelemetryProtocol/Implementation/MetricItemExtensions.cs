@@ -16,6 +16,7 @@
 
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -263,6 +264,40 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
                                     dataPoint.ExplicitBounds.Add(histogramMeasurement.ExplicitBound);
+                                }
+                            }
+
+                            var exemplars = metricPoint.GetExemplars();
+                            foreach (var examplar in exemplars)
+                            {
+                                if (examplar.Timestamp != default)
+                                {
+                                    byte[] traceIdBytes = new byte[16];
+                                    examplar.TraceId?.CopyTo(traceIdBytes);
+
+                                    byte[] spanIdBytes = new byte[8];
+                                    examplar.SpanId?.CopyTo(spanIdBytes);
+
+                                    var otlpExemplar = new OtlpMetrics.Exemplar
+                                    {
+                                        TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
+                                        TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
+                                        SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
+                                        AsDouble = examplar.DoubleValue,
+                                    };
+
+                                    if (examplar.FilteredTags != null)
+                                    {
+                                        foreach (var tag in examplar.FilteredTags)
+                                        {
+                                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+                                            {
+                                                otlpExemplar.FilteredAttributes.Add(result);
+                                            }
+                                        }
+                                    }
+
+                                    dataPoint.Exemplars.Add(otlpExemplar);
                                 }
                             }
 
