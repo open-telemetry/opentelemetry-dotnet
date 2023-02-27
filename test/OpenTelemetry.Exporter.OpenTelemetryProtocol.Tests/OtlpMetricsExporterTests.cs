@@ -566,7 +566,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Empty(dataPoint.Attributes);
             }
 
-            // Assert.Empty(dataPoint.Exemplars);
+            Assert.Empty(dataPoint.Exemplars);
         }
 
         private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
