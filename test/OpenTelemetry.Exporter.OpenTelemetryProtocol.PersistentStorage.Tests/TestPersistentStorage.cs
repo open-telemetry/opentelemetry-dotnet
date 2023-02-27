@@ -160,10 +160,7 @@ public sealed class TestPersistentStorage : IAsyncLifetime
     {
         private readonly List<PersistentBlob> mockStorage = new();
 
-        public IEnumerable<PersistentBlob> TryGetBlobs()
-        {
-            return this.mockStorage.AsEnumerable();
-        }
+        public IEnumerable<PersistentBlob> TryGetBlobs() => this.mockStorage.AsEnumerable();
 
         protected override IEnumerable<PersistentBlob> OnGetBlobs()
         {
@@ -172,52 +169,60 @@ public sealed class TestPersistentStorage : IAsyncLifetime
 
         protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, out PersistentBlob blob)
         {
-            blob = new MockFileBlob();
-            this.mockStorage.Add(blob);
+            blob = new MockFileBlob(this.mockStorage);
             return blob.TryWrite(buffer);
         }
 
         protected override bool OnTryCreateBlob(byte[] buffer, out PersistentBlob blob)
         {
-            blob = new MockFileBlob();
-            this.mockStorage.Add(blob);
+            blob = new MockFileBlob(this.mockStorage);
             return blob.TryWrite(buffer);
         }
 
         protected override bool OnTryGetBlob(out PersistentBlob blob)
         {
-            blob = this.GetBlobs().FirstOrDefault();
-
+            blob = this.GetBlobs().First();
             return true;
         }
     }
 
     private class MockFileBlob : PersistentBlob
     {
-        private byte[] buffer;
+        private readonly List<PersistentBlob> mockStorage;
+        private byte[] buffer = Array.Empty<byte>();
+
+        public MockFileBlob(List<PersistentBlob> mockStorage)
+        {
+            this.mockStorage = mockStorage;
+        }
 
         protected override bool OnTryRead(out byte[] buffer)
         {
             buffer = this.buffer;
-
             return true;
         }
 
         protected override bool OnTryWrite(byte[] buffer, int leasePeriodMilliseconds = 0)
         {
             this.buffer = buffer;
-
+            this.mockStorage.Add(this);
             return true;
         }
 
-        protected override bool OnTryLease(int leasePeriodMilliseconds)
-        {
-            return true;
-        }
+        protected override bool OnTryLease(int leasePeriodMilliseconds) => true;
 
         protected override bool OnTryDelete()
         {
-            throw new NotImplementedException();
+            try
+            {
+                this.mockStorage.Remove(this);
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
