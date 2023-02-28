@@ -38,5 +38,15 @@ internal abstract class ExemplarReservoir
     /// This is optional and is only relevant for Histogram with buckets.</param>
     public abstract void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default);
 
+    /// <summary>
+    /// Collects all the exemplars accumulated by the Reservoir.
+    /// </summary>
+    /// <param name="actualTags">The actual tags that are part of the metric. Exemplars are
+    /// only expected to contain any filtered tags, so this will allow the reservoir
+    /// prepare the filtered tags from all the tags it is given by doing the
+    /// equivalent of filtered tags = all tags - actual tags.
+    /// </param>
+    /// <param name="reset">Flag to indicate if the reservoir should be reset after this call.</param>
+    /// <returns>Array of Exemplars.</returns>
     public abstract Exemplar[] Collect(ReadOnlyTagCollection actualTags, bool reset);
 }

@@ -312,6 +312,8 @@ namespace OpenTelemetry.Metrics
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
         {
+            Guard.ThrowIfNull(exemplarFilter);
+
             meterProviderBuilder.ConfigureBuilder((sp, builder) =>
             {
                 if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
