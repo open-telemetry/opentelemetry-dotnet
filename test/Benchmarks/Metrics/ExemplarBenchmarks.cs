@@ -30,12 +30,14 @@ BenchmarkDotNet=v0.13.3, OS=Windows 11 (10.0.22621.1265)
   DefaultJob : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
 
 
-|                    Method | EnableExemplar |     Mean |   Error |  StdDev | Allocated |
-|-------------------------- |--------------- |---------:|--------:|--------:|----------:|
-|   HistogramNoTagReduction |          False | 256.5 ns | 4.84 ns | 4.53 ns |         - |
-| HistogramWithTagReduction |          False | 246.6 ns | 4.90 ns | 4.81 ns |         - |
-|   HistogramNoTagReduction |           True | 286.4 ns | 5.30 ns | 7.25 ns |         - |
-| HistogramWithTagReduction |           True | 293.6 ns | 5.77 ns | 7.09 ns |         - |
+|                    Method | ExemplarFilter |     Mean |   Error |  StdDev |
+|-------------------------- |--------------- |---------:|--------:|--------:|
+|   HistogramNoTagReduction |      AlwaysOff | 359.7 ns | 2.20 ns | 2.06 ns |
+| HistogramWithTagReduction |      AlwaysOff | 353.1 ns | 1.67 ns | 1.40 ns |
+|   HistogramNoTagReduction |       AlwaysOn | 412.9 ns | 1.93 ns | 1.81 ns |
+| HistogramWithTagReduction |       AlwaysOn | 464.9 ns | 7.18 ns | 6.71 ns |
+|   HistogramNoTagReduction |  HighValueOnly | 376.2 ns | 2.25 ns | 1.99 ns |
+| HistogramWithTagReduction |  HighValueOnly | 387.2 ns | 7.65 ns | 7.16 ns |
 
 */
 
@@ -52,8 +54,16 @@ namespace Benchmarks.Metrics
         private MeterProvider provider;
         private Meter meter;
 
-        [Params(true, false)]
-        public bool EnableExemplar { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
+        public enum ExemplarFilterTouse
+        {
+            AlwaysOff,
+            AlwaysOn,
+            HighValueOnly,
+        }
+
+        [Params(ExemplarFilterTouse.AlwaysOn, ExemplarFilterTouse.AlwaysOff, ExemplarFilterTouse.HighValueOnly)]
+        public ExemplarFilterTouse ExemplarFilter { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -63,9 +73,19 @@ namespace Benchmarks.Metrics
             this.histogramWithTagReduction = this.meter.CreateHistogram<long>("HistogramWithTagReduction");
             var exportedItems = new List<Metric>();
 
+            ExemplarFilter exemplarFilter = new AlwaysOffExemplarFilter();
+            if (this.ExemplarFilter == ExemplarFilterTouse.AlwaysOn)
+            {
+                exemplarFilter = new AlwaysOnExemplarFilter();
+            }
+            else if (this.ExemplarFilter == ExemplarFilterTouse.HighValueOnly)
+            {
+                exemplarFilter = new LowValueExemplarFilter();
+            }
+
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
-                .SetExemplarFilter(this.EnableExemplar ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+                .SetExemplarFilter(exemplarFilter)
                 .AddView("HistogramWithTagReduction", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
@@ -111,6 +131,19 @@ namespace Benchmarks.Metrics
             };
 
             this.histogramWithTagReduction.Record(random.Next(1000), tags);
+        }
+
+        public class LowValueExemplarFilter : ExemplarFilter
+        {
+            public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            {
+                return value > 800;
+            }
+
+            public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            {
+                return value > 800;
+            }
         }
     }
 }
