@@ -80,7 +80,7 @@ namespace Benchmarks.Metrics
             }
             else if (this.ExemplarFilter == ExemplarFilterTouse.HighValueOnly)
             {
-                exemplarFilter = new LowValueExemplarFilter();
+                exemplarFilter = new HighValueExemplarFilter();
             }
 
             this.provider = Sdk.CreateMeterProviderBuilder()
@@ -133,7 +133,7 @@ namespace Benchmarks.Metrics
             this.histogramWithTagReduction.Record(random.Next(1000), tags);
         }
 
-        public class LowValueExemplarFilter : ExemplarFilter
+        public class HighValueExemplarFilter : ExemplarFilter
         {
             public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             {
