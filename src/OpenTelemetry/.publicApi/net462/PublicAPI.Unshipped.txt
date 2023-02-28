@@ -6,7 +6,7 @@ OpenTelemetry.Metrics.Exemplar
 OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
 OpenTelemetry.Metrics.Exemplar.SpanId.get -> System.Diagnostics.ActivitySpanId?
-OpenTelemetry.Metrics.Exemplar.Timestamp.get -> System.DateTime
+OpenTelemetry.Metrics.Exemplar.Timestamp.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId?
 OpenTelemetry.Metrics.ExemplarFilter
 OpenTelemetry.Metrics.ExemplarFilter.ExemplarFilter() -> void

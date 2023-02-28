@@ -74,7 +74,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
     private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index)
     {
         ref var exemplar = ref this.runningExemplars[index];
-        exemplar.Timestamp = DateTime.UtcNow;
+        exemplar.Timestamp = DateTimeOffset.UtcNow;
         exemplar.DoubleValue = value;
         exemplar.TraceId = Activity.Current?.TraceId;
         exemplar.SpanId = Activity.Current?.SpanId;
@@ -104,6 +104,8 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
         // is expensive. So all the tags are stored in hot path (this).
         // During snapshot, the filtered list is calculated.
         // TODO: Evaluate alternative approaches based on perf.
+        // TODO: This is not user friendly to Reservoir authors
+        // and must be handled as transparently as feasible.
         foreach (var tag in tags)
         {
             exemplar.FilteredTags.Add(tag);
