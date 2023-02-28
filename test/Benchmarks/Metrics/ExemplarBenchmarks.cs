@@ -23,8 +23,8 @@ using OpenTelemetry.Tests;
 
 /*
 // * Summary *
-BenchmarkDotNet=v0.13.3, OS=Windows 11 (10.0.22621.1265)
-11th Gen Intel Core i7-1185G7 3.00GHz, 1 CPU, 8 logical and 4 physical cores
+BenchmarkDotNet=v0.13.3, OS=Windows 10 (10.0.19045.2604)
+Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 .NET SDK=7.0.103
   [Host]     : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
   DefaultJob : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
@@ -32,12 +32,12 @@ BenchmarkDotNet=v0.13.3, OS=Windows 11 (10.0.22621.1265)
 
 |                    Method | ExemplarFilter |     Mean |   Error |  StdDev |
 |-------------------------- |--------------- |---------:|--------:|--------:|
-|   HistogramNoTagReduction |      AlwaysOff | 359.7 ns | 2.20 ns | 2.06 ns |
-| HistogramWithTagReduction |      AlwaysOff | 353.1 ns | 1.67 ns | 1.40 ns |
-|   HistogramNoTagReduction |       AlwaysOn | 412.9 ns | 1.93 ns | 1.81 ns |
-| HistogramWithTagReduction |       AlwaysOn | 464.9 ns | 7.18 ns | 6.71 ns |
-|   HistogramNoTagReduction |  HighValueOnly | 376.2 ns | 2.25 ns | 1.99 ns |
-| HistogramWithTagReduction |  HighValueOnly | 387.2 ns | 7.65 ns | 7.16 ns |
+|   HistogramNoTagReduction |      AlwaysOff | 380.7 ns | 5.92 ns | 5.53 ns |
+| HistogramWithTagReduction |      AlwaysOff | 356.5 ns | 3.33 ns | 2.95 ns |
+|   HistogramNoTagReduction |       AlwaysOn | 412.3 ns | 2.11 ns | 1.64 ns |
+| HistogramWithTagReduction |       AlwaysOn | 461.0 ns | 4.65 ns | 4.35 ns |
+|   HistogramNoTagReduction |  HighValueOnly | 378.3 ns | 2.22 ns | 2.08 ns |
+| HistogramWithTagReduction |  HighValueOnly | 383.1 ns | 7.48 ns | 7.35 ns |
 
 */
 
