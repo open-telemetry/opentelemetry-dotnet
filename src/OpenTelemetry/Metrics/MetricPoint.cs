@@ -85,12 +85,12 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Gets the start time associated with the metric point.
+        /// Gets the start time (UTC) associated with the metric point.
         /// </summary>
         public readonly DateTimeOffset StartTime => this.aggregatorStore.StartTimeExclusive;
 
         /// <summary>
-        /// Gets the end time associated with the metric point.
+        /// Gets the end time (UTC) associated with the metric point.
         /// </summary>
         public readonly DateTimeOffset EndTime => this.aggregatorStore.EndTimeInclusive;
 

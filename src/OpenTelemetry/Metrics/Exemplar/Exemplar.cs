@@ -24,9 +24,9 @@ namespace OpenTelemetry.Metrics
     public struct Exemplar
     {
         /// <summary>
-        /// Gets the timestamp.
+        /// Gets the timestamp (UTC).
         /// </summary>
-        public DateTime Timestamp { get; internal set; }
+        public DateTimeOffset Timestamp { get; internal set; }
 
         /// <summary>
         /// Gets the TraceId.

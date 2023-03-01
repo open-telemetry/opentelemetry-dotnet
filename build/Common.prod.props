@@ -7,7 +7,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <!-- TODO: Temp disable Public API <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition=" $(OS) == 'Windows_NT'">
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition=" $(OS) == 'Windows_NT'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference> -->
   </ItemGroup>
