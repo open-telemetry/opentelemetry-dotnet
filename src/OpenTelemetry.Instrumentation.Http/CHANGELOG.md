@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Fixed an issue of missing `http.client.duration` metric data in case of
-network failures.
+network failures (when response is not available).
 ([#4098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4098))
 
 ## 1.4.0-rc9.13
