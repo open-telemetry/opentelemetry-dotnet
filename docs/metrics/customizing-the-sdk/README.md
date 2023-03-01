@@ -447,6 +447,9 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 > As of today, there is no separate toggle for enable/disable Exemplar
 feature. It can be turned off by using `AlwaysOffExemplarFilter`.
 
+If the built-in `ExemplarFilter`s are not meeting the needs, one may
+author custom `ExemplarFilter` as shown [here](../extending-the-sdk/README.md#exemplarfilter).
+
 #### ExemplarReservoir
 
 `ExemplarReservoir` receives the measurements sampled in by the `ExemplarFilter`
