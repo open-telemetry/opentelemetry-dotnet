@@ -23,19 +23,21 @@ using OpenTelemetry.Tests;
 
 /*
 // * Summary *
-BenchmarkDotNet=v0.13.3, OS=Windows 11 (10.0.22621.1265)
-11th Gen Intel Core i7-1185G7 3.00GHz, 1 CPU, 8 logical and 4 physical cores
+BenchmarkDotNet=v0.13.3, OS=Windows 10 (10.0.19045.2604)
+Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 .NET SDK=7.0.103
   [Host]     : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
   DefaultJob : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
 
 
-|                    Method | EnableExemplar |     Mean |   Error |  StdDev | Allocated |
-|-------------------------- |--------------- |---------:|--------:|--------:|----------:|
-|   HistogramNoTagReduction |          False | 256.5 ns | 4.84 ns | 4.53 ns |         - |
-| HistogramWithTagReduction |          False | 246.6 ns | 4.90 ns | 4.81 ns |         - |
-|   HistogramNoTagReduction |           True | 286.4 ns | 5.30 ns | 7.25 ns |         - |
-| HistogramWithTagReduction |           True | 293.6 ns | 5.77 ns | 7.09 ns |         - |
+|                    Method | ExemplarFilter |     Mean |   Error |  StdDev |
+|-------------------------- |--------------- |---------:|--------:|--------:|
+|   HistogramNoTagReduction |      AlwaysOff | 380.7 ns | 5.92 ns | 5.53 ns |
+| HistogramWithTagReduction |      AlwaysOff | 356.5 ns | 3.33 ns | 2.95 ns |
+|   HistogramNoTagReduction |       AlwaysOn | 412.3 ns | 2.11 ns | 1.64 ns |
+| HistogramWithTagReduction |       AlwaysOn | 461.0 ns | 4.65 ns | 4.35 ns |
+|   HistogramNoTagReduction |  HighValueOnly | 378.3 ns | 2.22 ns | 2.08 ns |
+| HistogramWithTagReduction |  HighValueOnly | 383.1 ns | 7.48 ns | 7.35 ns |
 
 */
 
@@ -52,8 +54,16 @@ namespace Benchmarks.Metrics
         private MeterProvider provider;
         private Meter meter;
 
-        [Params(true, false)]
-        public bool EnableExemplar { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
+        public enum ExemplarFilterTouse
+        {
+            AlwaysOff,
+            AlwaysOn,
+            HighValueOnly,
+        }
+
+        [Params(ExemplarFilterTouse.AlwaysOn, ExemplarFilterTouse.AlwaysOff, ExemplarFilterTouse.HighValueOnly)]
+        public ExemplarFilterTouse ExemplarFilter { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -63,9 +73,19 @@ namespace Benchmarks.Metrics
             this.histogramWithTagReduction = this.meter.CreateHistogram<long>("HistogramWithTagReduction");
             var exportedItems = new List<Metric>();
 
+            ExemplarFilter exemplarFilter = new AlwaysOffExemplarFilter();
+            if (this.ExemplarFilter == ExemplarFilterTouse.AlwaysOn)
+            {
+                exemplarFilter = new AlwaysOnExemplarFilter();
+            }
+            else if (this.ExemplarFilter == ExemplarFilterTouse.HighValueOnly)
+            {
+                exemplarFilter = new HighValueExemplarFilter();
+            }
+
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
-                .SetExemplarFilter(this.EnableExemplar ? new AlwaysOnExemplarFilter() : new AlwaysOffExemplarFilter())
+                .SetExemplarFilter(exemplarFilter)
                 .AddView("HistogramWithTagReduction", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
@@ -111,6 +131,19 @@ namespace Benchmarks.Metrics
             };
 
             this.histogramWithTagReduction.Record(random.Next(1000), tags);
+        }
+
+        public class HighValueExemplarFilter : ExemplarFilter
+        {
+            public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            {
+                return value > 800;
+            }
+
+            public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+            {
+                return value > 800;
+            }
         }
     }
 }
