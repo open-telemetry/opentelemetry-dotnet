@@ -81,7 +81,7 @@ OpenTelemetry .NET SDK has provided the following built-in `ExemplarFilter`s:
 
 Custom exemplar filters can be implemented to achieve filtering based on other criterion:
 
-* `ExemplarFilter` should derive from `OpenTelemetry.ExemplarFilter>` (which
+* `ExemplarFilter` should derive from `OpenTelemetry.ExemplarFilter` (which
   belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
   and implement the `ShouldSample` method.
 
@@ -94,7 +94,7 @@ exemplars for non-sampled traces may be undesired.
 ```csharp
 public sealed class HighValueFilter : ExemplarFilter
 {
-    private double maxValue;
+    private readonly double maxValue;
 
     public HighValueFilter(double maxValue)
     {
