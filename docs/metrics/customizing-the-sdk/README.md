@@ -451,7 +451,7 @@ If the built-in `ExemplarFilter`s are not meeting the needs, one may author
 custom `ExemplarFilter` as shown
 [here](../extending-the-sdk/README.md#exemplarfilter). A custom filter, which
 eliminates all un-interesting measurements from becoming Exemplar is a
-recommended way to avoid performance overhead associated with collecting
+recommended way to control performance overhead associated with collecting
 Exemplars. See
 [benchmark](../../../test/Benchmarks/Metrics/ExemplarBenchmarks.cs) to see how
 much impact can `ExemplarFilter` have on performance.
