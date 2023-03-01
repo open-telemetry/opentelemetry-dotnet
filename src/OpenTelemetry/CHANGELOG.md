@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Added Exemplar support.
+  ([#4217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4217))
+
+## 1.4.0
+
+Released 2023-Feb-24
+
 ## 1.4.0-rc.4
 
 Released 2023-Feb-10
