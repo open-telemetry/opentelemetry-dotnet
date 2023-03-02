@@ -295,7 +295,7 @@ namespace OpenTelemetry.Metrics
         public readonly Exemplar[] GetExemplars()
         {
             // TODO: Do not expose Exemplar data structure (array now)
-            return this.mpComponents.Exemplars ?? Array.Empty<Exemplar>();
+            return this.mpComponents?.Exemplars ?? Array.Empty<Exemplar>();
         }
 
         internal readonly MetricPoint Copy()
@@ -380,10 +380,11 @@ namespace OpenTelemetry.Metrics
                                 // Lock acquired
                                 unchecked
                                 {
-                                    this.runningValue.AsLong++;
+                                    this.runningValue.AsLong += number;
                                 }
 
                                 this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
                                 // Release lock
                                 Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
                                 break;
