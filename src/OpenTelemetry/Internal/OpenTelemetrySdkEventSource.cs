@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Security;
 
 namespace OpenTelemetry.Internal
 {
@@ -78,24 +77,6 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.TracestateKeyIsInvalid(key.ToString());
-            }
-        }
-
-        [NonEvent]
-        public void TracestateValueIsInvalid(ReadOnlySpan<char> value)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.TracestateValueIsInvalid(value.ToString());
-            }
-        }
-
-        [NonEvent]
         public void ActivityStarted(Activity activity)
         {
             if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
@@ -107,7 +88,7 @@ namespace OpenTelemetry.Internal
                 // https://github.com/dotnet/runtime/issues/61857
                 var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
                 activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
-                this.ActivityStarted(activity.OperationName, activityId);
+                this.ActivityStarted(activity.DisplayName, activityId);
             }
         }
 
@@ -116,7 +97,7 @@ namespace OpenTelemetry.Internal
         {
             if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
             {
-                this.ActivityStopped(activity.OperationName, activity.Id);
+                this.ActivityStopped(activity.DisplayName, activity.Id);
             }
         }
 
@@ -148,15 +129,6 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
         public void DroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
         {
             if (droppedCount > 0)
@@ -175,18 +147,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
-        public void SpanProcessorQueueIsExhausted()
-        {
-            this.WriteEvent(1);
-        }
-
-        [Event(2, Message = "Shutdown complete. '{0}' spans left in queue unprocessed.", Level = EventLevel.Informational)]
-        public void ShutdownEvent(int spansLeftUnprocessed)
-        {
-            this.WriteEvent(2, spansLeftUnprocessed);
-        }
-
         [Event(3, Message = "Exporter returned error '{0}'.", Level = EventLevel.Warning)]
         public void ExporterErrorResult(ExportResult exportResult)
         {
@@ -199,52 +159,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(4, evnt, ex);
         }
 
-        [Event(5, Message = "Calling '{0}' on ended span.", Level = EventLevel.Warning)]
-        public void UnexpectedCallOnEndedSpan(string methodName)
-        {
-            this.WriteEvent(5, methodName);
-        }
-
-        [Event(6, Message = "Attempting to dispose scope '{0}' that is not current", Level = EventLevel.Warning)]
-        public void AttemptToEndScopeWhichIsNotCurrent(string spanName)
-        {
-            this.WriteEvent(6, spanName);
-        }
-
-        [Event(7, Message = "Attempting to activate span: '{0}'", Level = EventLevel.Informational)]
-        public void AttemptToActivateActiveSpan(string spanName)
-        {
-            this.WriteEvent(7, spanName);
-        }
-
         [Event(8, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
         public void InvalidArgument(string methodName, string argumentName, string issue)
         {
             this.WriteEvent(8, methodName, argumentName, issue);
-        }
-
-        [Event(10, Message = "Failed to inject activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
-        public void FailedToInjectActivityContext(string format, string error)
-        {
-            this.WriteEvent(10, format, error);
-        }
-
-        [Event(11, Message = "Failed to parse tracestate: too many items", Level = EventLevel.Warning)]
-        public void TooManyItemsInTracestate()
-        {
-            this.WriteEvent(11);
-        }
-
-        [Event(12, Message = "Tracestate key is invalid, key = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateKeyIsInvalid(string key)
-        {
-            this.WriteEvent(12, key);
-        }
-
-        [Event(13, Message = "Tracestate value is invalid, value = '{0}'", Level = EventLevel.Warning)]
-        public void TracestateValueIsInvalid(string value)
-        {
-            this.WriteEvent(13, value);
         }
 
         [Event(14, Message = "Tracestate parse error: '{0}'", Level = EventLevel.Warning)]
@@ -253,40 +171,22 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(14, error);
         }
 
-        [Event(15, Message = "Attempting to activate out-of-band span '{0}'", Level = EventLevel.Warning)]
-        public void AttemptToActivateOobSpan(string spanName)
-        {
-            this.WriteEvent(15, spanName);
-        }
-
         [Event(16, Message = "Exception occurred while invoking Observable instrument callback. Exception: '{0}'", Level = EventLevel.Warning)]
         public void ObservableInstrumentCallbackException(string exception)
         {
             this.WriteEvent(16, exception);
         }
 
-        [Event(22, Message = "ForceFlush complete. '{0}' spans left in queue unprocessed.", Level = EventLevel.Informational)]
-        public void ForceFlushCompleted(int spansLeftUnprocessed)
+        [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+        public void ActivityStarted(string name, string id)
         {
-            this.WriteEvent(22, spansLeftUnprocessed);
+            this.WriteEvent(24, name, id);
         }
 
-        [Event(23, Message = "Timeout reached waiting on SpanExporter. '{0}' spans attempted.", Level = EventLevel.Warning)]
-        public void SpanExporterTimeout(int spansAttempted)
+        [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+        public void ActivityStopped(string name, string id)
         {
-            this.WriteEvent(23, spansAttempted);
-        }
-
-        [Event(24, Message = "Activity started. OperationName = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-        public void ActivityStarted(string operationName, string id)
-        {
-            this.WriteEvent(24, operationName, id);
-        }
-
-        [Event(25, Message = "Activity stopped. OperationName = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-        public void ActivityStopped(string operationName, string id)
-        {
-            this.WriteEvent(25, operationName, id);
+            this.WriteEvent(25, name, id);
         }
 
         [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
@@ -299,18 +199,6 @@ namespace OpenTelemetry.Internal
         public void TracerProviderException(string evnt, string ex)
         {
             this.WriteEvent(28, evnt, ex);
-        }
-
-        [Event(29, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
-        public void FailedToParseEnvironmentVariable(string name, string value)
-        {
-            this.WriteEvent(29, name, value);
-        }
-
-        [Event(30, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
-        public void MissingPermissionsToReadEnvironmentVariable(string exception)
-        {
-            this.WriteEvent(30, exception);
         }
 
         [Event(31, Message = "'{0}' exporting to '{1}' dropped '0' items.", Level = EventLevel.Informational)]
