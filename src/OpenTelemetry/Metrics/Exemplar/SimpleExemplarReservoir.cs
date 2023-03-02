@@ -79,6 +79,11 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
 
     private void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
+        if (this.measurementsSeen < 0)
+        {
+            this.measurementsSeen = 0;
+        }
+
         if (this.measurementsSeen < this.poolSize)
         {
             ref var exemplar = ref this.runningExemplars[this.measurementsSeen];
@@ -90,7 +95,14 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
         }
         else
         {
-            var index = this.random.NextInt64(0, this.measurementsSeen);
+            // TODO: RandomNext64 is only available in .NET 6 or newer.
+            int upperBound = 0;
+            unchecked
+            {
+                upperBound = (int)this.measurementsSeen;
+            }
+
+            var index = this.random.Next(0, upperBound);
             if (index < this.poolSize)
             {
                 ref var exemplar = ref this.runningExemplars[index];
