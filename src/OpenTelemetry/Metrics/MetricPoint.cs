@@ -58,7 +58,11 @@ namespace OpenTelemetry.Metrics
                 this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
                 this.mpComponents = new MetricPointOptionalComponents();
-                this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds, aggregatorStore.IsExemplarEnabled());
+                this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+                if (aggregatorStore.IsExemplarEnabled())
+                {
+                    this.mpComponents.ExemplarReservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Length);
+                }
             }
             else if (this.aggType == AggregationType.Histogram ||
                      this.aggType == AggregationType.HistogramWithMinMax)
@@ -272,7 +276,7 @@ namespace OpenTelemetry.Metrics
         public readonly Exemplar[] GetExemplars()
         {
             // TODO: Do not expose Exemplar data structure (array now)
-            return this.mpComponents.HistogramBuckets?.Exemplars ?? Array.Empty<Exemplar>();
+            return this.mpComponents.Exemplars ?? Array.Empty<Exemplar>();
         }
 
         internal readonly MetricPoint Copy()
@@ -688,7 +692,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
-                                histogramBuckets.Exemplars = histogramBuckets.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -765,7 +769,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                 }
 
-                                histogramBuckets.Exemplars = histogramBuckets.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
@@ -884,7 +888,7 @@ namespace OpenTelemetry.Metrics
                         histogramBuckets.RunningBucketCounts[i]++;
                         if (reportExemplar)
                         {
-                            histogramBuckets.ExemplarReservoir.Offer(number, tags, i);
+                            this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
                         }
                     }
 
@@ -915,7 +919,7 @@ namespace OpenTelemetry.Metrics
                         histogramBuckets.RunningBucketCounts[i]++;
                         if (reportExemplar)
                         {
-                            histogramBuckets.ExemplarReservoir.Offer(number, tags, i);
+                            this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
                         }
 
                         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);

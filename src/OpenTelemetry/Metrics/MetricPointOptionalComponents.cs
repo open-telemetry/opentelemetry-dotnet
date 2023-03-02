@@ -27,6 +27,10 @@ namespace OpenTelemetry.Metrics
     {
         public HistogramBuckets HistogramBuckets;
 
+        public ExemplarReservoir ExemplarReservoir;
+
+        public Exemplar[] Exemplars;
+
         internal MetricPointOptionalComponents Copy()
         {
             MetricPointOptionalComponents copy = new MetricPointOptionalComponents();
