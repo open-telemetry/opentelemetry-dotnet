@@ -31,6 +31,8 @@ namespace OpenTelemetry.Metrics
 
         public Exemplar[] Exemplars;
 
+        public int IsCriticalSectionOccupied = 0;
+
         internal MetricPointOptionalComponents Copy()
         {
             MetricPointOptionalComponents copy = new MetricPointOptionalComponents();
