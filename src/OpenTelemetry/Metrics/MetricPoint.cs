@@ -30,8 +30,6 @@ namespace OpenTelemetry.Metrics
 
         private MetricPointOptionalComponents mpComponents;
 
-        private Base2ExponentialBucketHistogram exponentialBucketHistogram;
-
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
 
@@ -73,19 +71,15 @@ namespace OpenTelemetry.Metrics
                 this.mpComponents = new MetricPointOptionalComponents();
                 this.mpComponents.HistogramBuckets = new HistogramBuckets(null);
             }
+            else if (this.aggType == AggregationType.ExponentialHistogram ||
+                this.aggType == AggregationType.ExponentialHistogramWithMinMax)
+            {
+                this.mpComponents = new MetricPointOptionalComponents();
+                this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize);
+            }
             else
             {
                 this.mpComponents = null;
-            }
-
-            if (this.aggType == AggregationType.ExponentialHistogram ||
-                this.aggType == AggregationType.ExponentialHistogramWithMinMax)
-            {
-                this.exponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize);
-            }
-            else
-            {
-                this.exponentialBucketHistogram = null;
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.
@@ -239,7 +233,7 @@ namespace OpenTelemetry.Metrics
 
             return this.mpComponents.HistogramBuckets != null
                 ? this.mpComponents.HistogramBuckets.SnapshotSum
-                : this.exponentialBucketHistogram.SnapshotSum;
+                : this.mpComponents.Base2ExponentialBucketHistogram.SnapshotSum;
         }
 
         /// <summary>
@@ -284,10 +278,10 @@ namespace OpenTelemetry.Metrics
 
             if (this.aggType == AggregationType.ExponentialHistogramWithMinMax)
             {
-                Debug.Assert(this.exponentialBucketHistogram != null, "exponentialBucketHistogram was null");
+                Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "base2ExponentialBucketHistogram was null");
 
-                min = this.exponentialBucketHistogram.SnapshotMin;
-                max = this.exponentialBucketHistogram.SnapshotMax;
+                min = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMin;
+                max = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMax;
                 return true;
             }
 
@@ -343,8 +337,6 @@ namespace OpenTelemetry.Metrics
                     }
 
                 case AggregationType.HistogramWithMinMax:
-                case AggregationType.ExponentialHistogram:
-                case AggregationType.ExponentialHistogramWithMinMax:
                     {
                         this.UpdateHistogramWithMinMax((double)number);
                         break;
@@ -359,6 +351,18 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         this.UpdateHistogramWithBucketsAndMinMax((double)number);
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogram:
+                    {
+                        this.UpdateBase2ExponentialHistogram((double)number);
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogramWithMinMax:
+                    {
+                        this.UpdateBase2ExponentialHistogramWithMinMax((double)number);
                         break;
                     }
             }
@@ -420,6 +424,18 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, true);
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogram:
+                    {
+                        this.UpdateBase2ExponentialHistogram((double)number, tags, true);
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogramWithMinMax:
+                    {
+                        this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, true);
                         break;
                     }
             }
@@ -499,6 +515,18 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
                         this.UpdateHistogramWithBucketsAndMinMax(number);
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogram:
+                    {
+                        this.UpdateBase2ExponentialHistogram(number);
+                        break;
+                    }
+
+                case AggregationType.ExponentialHistogramWithMinMax:
+                    {
+                        this.UpdateBase2ExponentialHistogramWithMinMax(number);
                         break;
                     }
             }
@@ -583,53 +611,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.ExponentialHistogram:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                // Lock acquired
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.exponentialBucketHistogram.RunningSum += number;
-                                }
-
-                                // Release lock
-                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
+                        this.UpdateBase2ExponentialHistogram(number, tags, true);
                         break;
                     }
 
                 case AggregationType.ExponentialHistogramWithMinMax:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                // Lock acquired
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.exponentialBucketHistogram.RunningSum += number;
-                                    this.exponentialBucketHistogram.RunningMin = Math.Min(this.exponentialBucketHistogram.RunningMin, number);
-                                    this.exponentialBucketHistogram.RunningMax = Math.Max(this.exponentialBucketHistogram.RunningMax, number);
-                                }
-
-                                // Release lock
-                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
+                        this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, true);
                         break;
                     }
             }
@@ -902,25 +890,26 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.ExponentialHistogram:
                     {
+                        var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
-                                this.exponentialBucketHistogram.SnapshotSum = this.exponentialBucketHistogram.RunningSum;
+                                histogram.SnapshotSum = histogram.RunningSum;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
-                                    this.exponentialBucketHistogram.RunningSum = 0;
+                                    histogram.RunningSum = 0;
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
-                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
+                                Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -932,29 +921,30 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.ExponentialHistogramWithMinMax:
                     {
+                        var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
-                                this.exponentialBucketHistogram.SnapshotSum = this.exponentialBucketHistogram.RunningSum;
-                                this.exponentialBucketHistogram.SnapshotMin = this.exponentialBucketHistogram.RunningMin;
-                                this.exponentialBucketHistogram.SnapshotMax = this.exponentialBucketHistogram.RunningMax;
+                                histogram.SnapshotSum = histogram.RunningSum;
+                                histogram.SnapshotMin = histogram.RunningMin;
+                                histogram.SnapshotMax = histogram.RunningMax;
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
-                                    this.exponentialBucketHistogram.RunningSum = 0;
-                                    this.exponentialBucketHistogram.RunningMin = double.PositiveInfinity;
-                                    this.exponentialBucketHistogram.RunningMax = double.NegativeInfinity;
+                                    histogram.RunningSum = 0;
+                                    histogram.RunningMin = double.PositiveInfinity;
+                                    histogram.RunningMax = double.NegativeInfinity;
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                                 // Release lock
-                                Interlocked.Exchange(ref this.exponentialBucketHistogram.IsCriticalSectionOccupied, 0);
+                                Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -1074,6 +1064,63 @@ namespace OpenTelemetry.Metrics
 
                     // Release lock
                     Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
+                    break;
+                }
+
+                sw.SpinOnce();
+            }
+        }
+
+#pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
+        private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+#pragma warning restore IDE0060 // Remove unused parameter
+        {
+            var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
+
+            var sw = default(SpinWait);
+            while (true)
+            {
+                if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
+                {
+                    // Lock acquired
+                    unchecked
+                    {
+                        this.runningValue.AsLong++;
+                        histogram.RunningSum += number;
+                    }
+
+                    // Release lock
+                    Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
+                    break;
+                }
+
+                sw.SpinOnce();
+            }
+        }
+
+#pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
+        private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+#pragma warning restore IDE0060 // Remove unused parameter
+        {
+            var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
+
+            var sw = default(SpinWait);
+            while (true)
+            {
+                if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
+                {
+                    // Lock acquired
+                    unchecked
+                    {
+                        this.runningValue.AsLong++;
+                        histogram.RunningSum += number;
+
+                        histogram.RunningMin = Math.Min(histogram.RunningMin, number);
+                        histogram.RunningMax = Math.Max(histogram.RunningMax, number);
+                    }
+
+                    // Release lock
+                    Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
                     break;
                 }
 
