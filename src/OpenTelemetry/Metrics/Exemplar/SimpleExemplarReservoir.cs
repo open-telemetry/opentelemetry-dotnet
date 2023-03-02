@@ -28,7 +28,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
     private readonly Exemplar[] runningExemplars;
     private readonly Exemplar[] tempExemplars;
 
-    private int measurementsSeen;
+    private long measurementsSeen;
 
     public SimpleExemplarReservoir(int poolSize)
     {
@@ -70,6 +70,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
             if (reset)
             {
                 this.runningExemplars[i].Timestamp = default;
+                this.measurementsSeen = 0;
             }
         }
 
@@ -80,16 +81,16 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
     {
         if (this.measurementsSeen < this.poolSize)
         {
-                ref var exemplar = ref this.runningExemplars[this.measurementsSeen];
-                exemplar.Timestamp = DateTimeOffset.UtcNow;
-                exemplar.DoubleValue = value;
-                exemplar.TraceId = Activity.Current?.TraceId;
-                exemplar.SpanId = Activity.Current?.SpanId;
-                this.StoreTags(ref exemplar, tags);
+            ref var exemplar = ref this.runningExemplars[this.measurementsSeen];
+            exemplar.Timestamp = DateTimeOffset.UtcNow;
+            exemplar.DoubleValue = value;
+            exemplar.TraceId = Activity.Current?.TraceId;
+            exemplar.SpanId = Activity.Current?.SpanId;
+            this.StoreTags(ref exemplar, tags);
         }
         else
         {
-            var index = this.random.Next(0, this.measurementsSeen);
+            var index = this.random.NextInt64(0, this.measurementsSeen);
             if (index < this.poolSize)
             {
                 ref var exemplar = ref this.runningExemplars[index];
