@@ -17,6 +17,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -76,15 +77,15 @@ namespace OpenTelemetry.Trace
                         sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddProcessor(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<ZipkinExporterOptions>>().Get(name);
 
-                AddZipkinExporter(builder, options, sp);
+                return BuildZipkinExporterProcessor(builder, options, sp);
             });
         }
 
-        private static TracerProviderBuilder AddZipkinExporter(
+        private static BaseProcessor<Activity> BuildZipkinExporterProcessor(
             TracerProviderBuilder builder,
             ZipkinExporterOptions options,
             IServiceProvider serviceProvider)
@@ -120,16 +121,16 @@ namespace OpenTelemetry.Trace
 
             if (options.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(zipkinExporter));
+                return new SimpleActivityExportProcessor(zipkinExporter);
             }
             else
             {
-                return builder.AddProcessor(new BatchActivityExportProcessor(
+                return new BatchActivityExportProcessor(
                     zipkinExporter,
                     options.BatchExportProcessorOptions.MaxQueueSize,
                     options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
                     options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    options.BatchExportProcessorOptions.MaxExportBatchSize));
+                    options.BatchExportProcessorOptions.MaxExportBatchSize);
             }
         }
     }

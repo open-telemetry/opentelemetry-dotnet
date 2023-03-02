@@ -71,22 +71,30 @@ namespace OpenTelemetry.Metrics
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+                OtlpExporterOptions exporterOptions;
 
-                if (name == null && configureExporter != null)
+                if (name == null)
                 {
-                    // If we are NOT using named options, we execute the
-                    // configuration delegate inline. The reason for this is
+                    // If we are NOT using named options we create a new
+                    // instance always. The reason for this is
                     // OtlpExporterOptions is shared by all signals. Without a
                     // name, delegates for all signals will mix together. See:
                     // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
-                    configureExporter(exporterOptions);
+                    exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+
+                    // Configuration delegate is executed inline on the fresh instance.
+                    configureExporter?.Invoke(exporterOptions);
+                }
+                else
+                {
+                    // When using named options we can properly utilize Options
+                    // API to create or reuse an instance.
+                    exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
                 }
 
-                AddOtlpExporter(
-                    builder,
+                return BuildOtlpExporterMetricReader(
                     exporterOptions,
                     sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
                     sp);
@@ -129,19 +137,18 @@ namespace OpenTelemetry.Metrics
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
                 var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
 
                 configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 
-                AddOtlpExporter(builder, exporterOptions, metricReaderOptions, sp);
+                return BuildOtlpExporterMetricReader(exporterOptions, metricReaderOptions, sp);
             });
         }
 
-        internal static MeterProviderBuilder AddOtlpExporter(
-            MeterProviderBuilder builder,
+        internal static MetricReader BuildOtlpExporterMetricReader(
             OtlpExporterOptions exporterOptions,
             MetricReaderOptions metricReaderOptions,
             IServiceProvider serviceProvider,
@@ -156,11 +163,9 @@ namespace OpenTelemetry.Metrics
                 metricExporter = configureExporterInstance(metricExporter);
             }
 
-            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+            return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
                 metricReaderOptions);
-
-            return builder.AddReader(metricReader);
         }
     }
 }

@@ -34,12 +34,12 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddConsoleExporter())
-    .StartWithHost();
+    .WithTracing(builder => builder.AddConsoleExporter());
 ```
 
-**Note:** The
-[StartWithHost](../../../src/OpenTelemetry.Extensions.Hosting/README.md#extension-method-reference)
+> **Note**
+> The
+[AddOpenTelemetry](../../../src/OpenTelemetry.Extensions.Hosting/README.md#extension-method-reference)
 extension automatically starts and stops the `TracerProvider` with the host.
 
 ### Using Sdk.CreateTracerProviderBuilder
@@ -51,7 +51,8 @@ required.
 Call `Sdk.CreateTracerProviderBuilder()` to obtain a builder and then call
 `Build()` once configuration is done to retrieve the `TracerProvider` instance.
 
-**Note:** Once built changes to `TracerProvider` configuration are not allowed,
+> **Note**
+> Once built changes to `TracerProvider` configuration are not allowed,
 with the exception of adding more processors.
 
 In most cases a single `TracerProvider` is created at the application startup,
@@ -127,7 +128,8 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-**Note:** A common mistake while configuring `TracerProvider` is forgetting to
+> **Note**
+> A common mistake while configuring `TracerProvider` is forgetting to
 add all `ActivitySources` to the provider. It is recommended to leverage the
 wild card subscription model where it makes sense. For example, if your
 application is expecting to enable tracing from a number of libraries from a
@@ -171,7 +173,8 @@ processor classes `SimpleExportProcessor` & `BatchExportProcessor` are provided
 to support invoking exporters through the processor pipeline and implement the
 standard behaviors prescribed by the OpenTelemetry specification.
 
-**Note:** The SDK only ever invokes processors and has no direct knowledge of
+> **Note**
+> The SDK only ever invokes processors and has no direct knowledge of
 any registered exporters.
 
 #### Processor Configuration
@@ -193,7 +196,14 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 tracerProvider.AddProcessor(new MyProcessor3());
 ```
 
-**Note:** A `TracerProvider` assumes ownership of **all** processors added to
+> **Note**
+> The order of processor registration is important. Each processor added
+is invoked in order by the SDK. For example if a simple exporting processor is
+added before an enrichment processor the exported data will not contain anything
+added by the enrichment because it happens after the export.
+<!-- This comment is to make sure the two notes above and below are not merged -->
+> **Note**
+> A `TracerProvider` assumes ownership of **all** processors added to
 it. This means that the provider will call the `Shutdown` method on all
 registered processors when it is shutting down and call the `Dispose` method on
 all registered processors when it is disposed. If multiple providers are being
@@ -202,7 +212,7 @@ registered on each provider. Otherwise shutting down one provider will cause the
 shared processor(s) in other providers to be shut down as well which may lead to
 undesired results.
 
-Processors can be used for enriching. exporting, and/or filtering telemetry.
+Processors can be used for enriching, exporting, and/or filtering telemetry.
 
 To enrich telemetry, users may write custom processors overriding the `OnStart`
 and/or `OnEnd` methods (as needed) to implement custom logic to change the data
@@ -224,21 +234,19 @@ For exporting purposes, the SDK provides the following built-in processors:
   | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                 |
   | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
 
-  `FormatException` is thrown in case of an invalid value for any of the
-  supported environment variables.
-
 * [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor)
   : This is an exporting processor which passes telemetry to the configured
   exporter immediately without any batching.
 
-**Note:** A special processor
+> **Note**
+> A special processor
 [CompositeProcessor&lt;T&gt;](../../../src/OpenTelemetry/CompositeProcessor.cs)
 is used by the SDK to chain multiple processors together and may be used as
 needed by users to define sub-pipelines.
-
-**Note:** The processors shipped from this SDK are generic implementations and
-support tracing and logging by implementing `Activity` and `LogRecord`
-respectively.
+<!-- This comment is to make sure the two notes above and below are not merged -->
+> **Note**
+> The processors shipped from this SDK are generic implementations and support
+tracing and logging by implementing `Activity` and `LogRecord` respectively.
 
 Follow [this](../extending-the-sdk/README.md#processor) document to learn about
 writing custom processors.
@@ -332,9 +340,9 @@ reducing the number of samples of traces collected and sent to the processors.
 If no sampler is explicitly configured, the default is to use
 `ParentBased(root=AlwaysOn)`. `SetSampler` method on `TracerProviderBuilder` can
 be used to set sampler. Only one sampler can be associated with a provider. If
-multiple `SetSampler` is called, the last one wins. Also, it is not possible to
-change the sampler *after* the provider is built, by calling the `Build()`
-method on the `TracerProviderBuilder`.
+`SetSampler` is called multiple times, the last one wins. Also, it is not
+possible to change the sampler *after* the provider is built, by calling the
+`Build()` method on the `TracerProviderBuilder`.
 
 The snippet below shows configuring a custom sampler to the provider.
 
@@ -366,7 +374,8 @@ Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 
 ## Dependency injection support
 
-**Note:** This information applies to the OpenTelemetry SDK version 1.4.0 and
+> **Note**
+> This information applies to the OpenTelemetry SDK version 1.4.0 and
 newer only.
 
 The SDK implementation of `TracerProviderBuilder` is backed by an
@@ -410,13 +419,15 @@ When using the `Sdk.CreateTracerProviderBuilder` method the `TracerProvider`
 owns its own `IServiceCollection`. It will only be able to see services
 registered into that collection.
 
-**Note:** It is important to correctly manage the lifecycle of the
+> **Note**
+> It is important to correctly manage the lifecycle of the
 `TracerProvider`. See [Building a TracerProvider](#building-a-tracerprovider)
 for details.
 
 #### Using the OpenTelemetry.Extensions.Hosting package
 
-**Note:** If you are authoring an [ASP.NET Core
+> **Note**
+> If you are authoring an [ASP.NET Core
 application](https://learn.microsoft.com/aspnet/core/fundamentals/host/web-host)
 or using the [.NET Generic
 Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host) the
@@ -430,8 +441,7 @@ appBuilder.Services.AddSingleton<MyCustomService>();
 
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
-        .AddProcessor<MyCustomProcessor>())
-    .StartWithHost();
+        .AddProcessor<MyCustomProcessor>());
 ```
 
 When using the `AddOpenTelemetry` & `WithTracing` extension methods the
@@ -439,59 +449,61 @@ When using the `AddOpenTelemetry` & `WithTracing` extension methods the
 into an existing collection (typically the collection used is the one managed by
 the application host). The `TracerProviderBuilder` will be able to access all
 services registered into that collection. For lifecycle management, the
-`StartWithHost` registers an [IHostedService
+`AddOpenTelemetry` registers an [IHostedService
 ](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
 which is used to automatically start the `TracerProvider` when the host starts
 and the host will automatically shutdown and dispose the `TracerProvider` when
 it is shutdown.
 
-**Note:** Multiple calls to `WithTracing` will configure the same
+> **Note**
+> Multiple calls to `WithTracing` will configure the same
 `TracerProvider`. Only a single `TraceProvider` may exist in an
 `IServiceCollection` \ `IServiceProvider`.
 
-### Dependency injection `TracerProviderBuilder` extension method reference
+### Dependency injection TracerProviderBuilder extension method reference
 
 * `AddInstrumentation<T>`: Adds instrumentation of type `T` into the
   `TracerProvider`.
 
+* `AddInstrumentation<T>(Func<IServiceProvider, T> instrumentationFactory)`:
+  Adds instrumentation of type `T` into the
+  `TracerProvider` using a factory function to create the instrumentation
+  instance.
+
 * `AddProcessor<T>`: Adds a processor of type `T` (must derive from
   `BaseProcessor<Activity>`) into the `TracerProvider`.
+
+* `AddProcessor(Func<IServiceProvider, BaseProcessor<Activity>>
+  implementationFactory)`: Adds a processor into the `TracerProvider` using a
+  factory function to create the processor instance.
+
+* `ConfigureServices`: Registers a callback function for configuring the
+  `IServiceCollection` used by the `TracerProviderBuilder`.
+
+  > **Note**
+  > `ConfigureServices` may only be called before the `IServiceProvider`
+  has been created after which point services can no longer be added.
 
 * `SetSampler<T>`: Register type `T` (must derive from `Sampler`) as the sampler
   for the `TracerProvider`.
 
-* `ConfigureServices`: Registers a callback function for configuring the
-  `IServiceCollection` used by the `TracerProviderBuilder`. **Note:**
-  `ConfigureServices` may only be called before the `IServiceProvider` has been
-  created after which point service can no longer be added.
+* `SetSampler(Func<IServiceProvider, Sampler>
+  implementationFactory)`: Adds a sampler into the `TracerProvider` using a
+  factory function to create the sampler instance.
 
-* `ConfigureBuilder`: Registers a callback function for configuring the
-  `TracerProviderBuilder` once the `IServiceProvider` is available.
-
-  ```csharp
-   var appBuilder = WebApplication.CreateBuilder(args);
-
-   appBuilder.Services.AddOpenTelemetry()
-      .WithTracing(builder => builder
-         .ConfigureBuilder((sp, builder) =>
-         {
-           builder.AddProcessor(
-             new MyCustomProcessor(
-               // Note: This example uses the final IServiceProvider once it is available.
-               sp.GetRequiredService<MyCustomService>(),
-               sp.GetRequiredService<IOptions<MyOptions>>().Value));
-         }))
-      .StartWithHost();
-  ```
-
-  **Note:** `ConfigureBuilder` is an advanced API and is expected to be used
-  primarily by library authors. Services may NOT be added to the
-  `IServiceCollection` during `ConfigureBuilder` because the `IServiceProvider`
-  has already been created.
+> **Note**
+> The factory functions accepting `IServiceProvider` may always be used
+regardless of how the SDK is initialized. When using an external service
+collection (ex: `appBuilder.Services.AddOpenTelemetry()`), as is common in
+ASP.NET Core hosts, the `IServiceProvider` will be the instance shared and
+managed by the host. When using "Sdk.Create" functions, as is common in .NET
+Framework hosts, the provider creates its own `IServiceCollection` and will
+build an `IServiceProvider` from it to make available to extensions.
 
 ## Configuration files and environment variables
 
-**Note:** This information applies to the OpenTelemetry SDK version 1.4.0 and
+> **Note**
+> This information applies to the OpenTelemetry SDK version 1.4.0 and
 newer only.
 
 The OpenTelemetry .NET SDK integrates with the standard
@@ -555,7 +567,8 @@ variables users may also manage these settings via the command-line,
 configuration files, or any other source registered with the .NET configuration
 engine. This provides greater flexibility than what the specification defines.
 
-**Note:** Not all of the environment variables defined in the specification are
+> **Note**
+> Not all of the environment variables defined in the specification are
 supported. Consult the individual project README files for details on specific
 environment variable support.
 
@@ -589,7 +602,8 @@ environment variables.
   dotnet run --OTEL_SERVICE_NAME "MyService"
   ```
 
-**Note:** The [.NET
+> **Note**
+> The [.NET
   Configuration](https://learn.microsoft.com/dotnet/core/extensions/configuration)
   pattern is hierarchical meaning the order of registered configuration sources
   controls which value will seen by the SDK when it is defined in multiple
@@ -635,8 +649,7 @@ appBuilder.Services.Configure<JaegerExporterOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Jaeger"));
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddJaegerExporter())
-    .StartWithHost();
+    .WithTracing(builder => builder.AddJaegerExporter());
 ```
 
 The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
@@ -680,6 +693,5 @@ appBuilder.Services.Configure<JaegerExporterOptions>(
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
         .AddJaegerExporter(name: "JaegerPrimary", configure: null)
-        .AddJaegerExporter(name: "JaegerSecondary", configure: null))
-    .StartWithHost();
+        .AddJaegerExporter(name: "JaegerSecondary", configure: null));
 ```

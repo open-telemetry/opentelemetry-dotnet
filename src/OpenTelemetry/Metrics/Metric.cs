@@ -35,7 +35,8 @@ namespace OpenTelemetry.Metrics
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
             string[] tagKeysInteresting = null,
-            bool histogramRecordMinMax = true)
+            bool histogramRecordMinMax = true,
+            ExemplarFilter exemplarFilter = null)
         {
             this.InstrumentIdentity = instrumentIdentity;
 
@@ -128,7 +129,7 @@ namespace OpenTelemetry.Metrics
                 throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
             }
 
-            this.aggStore = new AggregatorStore(instrumentIdentity.InstrumentName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, DefaultExponentialHistogramMaxBuckets, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(instrumentIdentity.InstrumentName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, DefaultExponentialHistogramMaxBuckets, tagKeysInteresting, exemplarFilter);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }

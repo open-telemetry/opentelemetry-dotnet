@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             this.meter = meter;
             this.options = options;
-            this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "measures the duration of the inbound HTTP request");
+            this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -110,6 +110,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
 
+                // We are relying here on ASP.NET Core to set duration before writing the stop event.
+                // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
+                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
                 this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
         }

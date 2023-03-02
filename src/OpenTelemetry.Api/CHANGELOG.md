@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.4.0
+
+Released 2023-Feb-24
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09

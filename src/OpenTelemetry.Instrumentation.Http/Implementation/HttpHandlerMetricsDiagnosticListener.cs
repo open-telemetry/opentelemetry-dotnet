@@ -28,12 +28,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
+        private readonly PropertyFetcher<HttpRequestMessage> stopRequestFetcher = new("Request");
         private readonly Histogram<double> httpClientDuration;
 
         public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
             : base(name)
         {
-            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
+            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -46,14 +47,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
 
                 var activity = Activity.Current;
-                if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                if (this.stopRequestFetcher.TryFetch(payload, out HttpRequestMessage request) && request != null)
                 {
-                    var request = response.RequestMessage;
-
                     TagList tags = default;
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
 
@@ -62,6 +60,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                     }
 
+                    if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                    {
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
+                    }
+
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
                     this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
                 }
             }

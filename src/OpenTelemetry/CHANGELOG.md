@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+* Added Exemplar support.
+  ([#4217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4217))
+
+## 1.4.0
+
+Released 2023-Feb-24
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+* Removed the dependency on System.Reflection.Emit.Lightweight
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
+* Moved the `AddOpenTelemetry` extension into the
+  `OpenTelemetry.Extensions.Hosting` package so that the `StartWithHost` API
+  could be removed.
+  ([#4174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4174))
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
+* Removed the dependency on
+  Microsoft.Extensions.Configuration.EnvironmentVariables
+  ([#4092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4092))
+
+* Removed the explicit reference to Microsoft.Extensions.Options version 5.0 and
+  reverted back to the transitive reference of version 3.1
+  ([#4093](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4093))
+
+* Added `SetSampler`, `AddProcessor`, & `AddReader` factory extensions.
+  ([#4103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4103))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
@@ -134,6 +168,10 @@ Released 2022-Aug-02
   ([#3378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3378))
 * Handle possible exception when initializing the default service name.
   ([#3405](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3405))
+* Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
+  in most cases and has greater flexibility (applies to TracerProviderBuilder,
+  MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 * `LogRecord` instances are now reused to reduce memory pressure
   ([#3385](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3385))
 * Fix exact match of activity source name when `wildcard` is used.
@@ -155,10 +193,6 @@ Released 2022-June-1
 * Swallow `ObjectDisposedException` in `BatchExportProcessor` and
   `PeriodicExportingMetricReader`.
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
-* Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
-  in most cases and has greater flexibility (applies to TracerProviderBuilder,
-  MeterProviderBuilder, OpenTelemetryLoggingOptions).
-  ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0-beta.2
 

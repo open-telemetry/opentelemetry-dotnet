@@ -239,9 +239,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Open
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{011E70E1-152A-47BB-AF83-12DD12B125ED}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.DependencyInjection", "src\OpenTelemetry.Extensions.DependencyInjection\OpenTelemetry.Extensions.DependencyInjection.csproj", "{171A87CB-393C-4296-913F-E704CD8CEAE9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.ProviderBuilderExtensions", "src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj", "{171A87CB-393C-4296-913F-E704CD8CEAE9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.DependencyInjection.Tests", "test\OpenTelemetry.Extensions.DependencyInjection.Tests\OpenTelemetry.Extensions.DependencyInjection.Tests.csproj", "{662476AA-5875-4E74-B992-DDF309168EFB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.ProviderBuilderExtensions.Tests", "test\OpenTelemetry.Api.ProviderBuilderExtensions.Tests\OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj", "{662476AA-5875-4E74-B992-DDF309168EFB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-aspnetcore", "docs\trace\getting-started-aspnetcore\getting-started-aspnetcore.csproj", "{DEDE8442-03CA-48CF-99B9-EA224D89D148}"
 EndProject

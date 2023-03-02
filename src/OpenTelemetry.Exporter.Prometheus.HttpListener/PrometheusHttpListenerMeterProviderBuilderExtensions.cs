@@ -67,16 +67,15 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<PrometheusHttpListenerOptions>>().Get(name);
 
-                AddPrometheusHttpListener(builder, options);
+                return BuildPrometheusHttpListenerMetricReader(options);
             });
         }
 
-        private static MeterProviderBuilder AddPrometheusHttpListener(
-            MeterProviderBuilder builder,
+        private static MetricReader BuildPrometheusHttpListenerMetricReader(
             PrometheusHttpListenerOptions options)
         {
             var exporter = new PrometheusExporter(new PrometheusExporterOptions { ScrapeResponseCacheDurationMilliseconds = 0 });
@@ -105,7 +104,7 @@ namespace OpenTelemetry.Metrics
                 throw new InvalidOperationException("PrometheusExporter HttpListener could not be started.", ex);
             }
 
-            return builder.AddReader(reader);
+            return reader;
         }
     }
 }

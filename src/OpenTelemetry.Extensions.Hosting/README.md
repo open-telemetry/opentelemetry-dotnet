@@ -6,7 +6,7 @@
 ## Installation
 
 ```shell
-dotnet add package --prerelease OpenTelemetry.Extensions.Hosting
+dotnet add package OpenTelemetry.Extensions.Hosting
 ```
 
 ## Overview
@@ -21,41 +21,41 @@ and metrics (`MeterProvider`) in [ASP.NET
 
 ## Extension method reference
 
-### Current OpenTelemetry SDK v1.4.0 and newer extensions
-
-Targeting `OpenTelemetry.OpenTelemetryBuilder`:
-
-* `StartWithHost`: Registers an
-  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
-  to automatically start tracing and/or metric services in the supplied
-  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
-
-### Obsolete OpenTelemetry SDK pre-1.4.0 extensions
-
-**Note:** The below extension methods should be called by application host code
-only. Library authors see: [Registration extension method guidance for library
-authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
-
-**Note:** Multiple calls to the below extensions will **NOT** result in multiple
-providers. To establish multiple providers use the
-`Sdk.CreateTracerProviderBuilder()` and/or `Sdk.CreateMeterProviderBuilder()`
-methods. See [TracerProvider
-configuration](../../docs/trace/customizing-the-sdk/README.md#tracerprovider-configuration)
-and [Building a
-MeterProvider](../../docs/metrics/customizing-the-sdk/README.md#building-a-meterprovider)
-for more details.
-
 Targeting `Microsoft.Extensions.DependencyInjection.IServiceCollection`:
 
-* `AddOpenTelemetryTracing`: Configure OpenTelemetry and register an
+* `AddOpenTelemetry`: Registers an
   [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
-  to automatically start tracing services in the supplied
-  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+  to automatically start tracing and/or metric services in the supplied
+  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection)
+  and then returns an `OpenTelemetryBuilder` class.
 
-* `AddOpenTelemetryMetrics`: Configure OpenTelemetry and register an
-  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
-  to automatically start metric services in the supplied
-  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+  > **Note**
+  > `AddOpenTelemetry` should be called by application host code only. Library
+  authors see: [Registration extension method guidance for library
+  authors](../../docs/trace/extending-the-sdk/README.md#registration-extension-method-guidance-for-library-authors).
+  <!-- This comment is to make sure the two notes above and below are not merged
+  -->
+  > **Note**
+  > Multiple calls to `AddOpenTelemetry` will **NOT** result in multiple
+  providers. Only a single `TracerProvider` and/or `MeterProvider` will be
+  created in the target `IServiceCollection`. To establish multiple providers
+  use the `Sdk.CreateTracerProviderBuilder()` and/or
+  `Sdk.CreateMeterProviderBuilder()` methods. See [TracerProvider
+  configuration](../../docs/trace/customizing-the-sdk/README.md#tracerprovider-configuration)
+  and [Building a
+  MeterProvider](../../docs/metrics/customizing-the-sdk/README.md#building-a-meterprovider)
+  for more details.
+
+  `OpenTelemetryBuilder` methods:
+
+  * `ConfigureResource`: Registers a callback action to configure the
+  `ResourceBuilder` for tracing and metric providers.
+
+  * `WithTracing`: Enables tracing and optionally configures the
+  `TracerProvider`.
+
+  * `WithMetrics`: Enables metrics and optionally configures the
+  `MeterProvider`.
 
 ## Usage
 
@@ -71,14 +71,40 @@ using OpenTelemetry.Trace;
 var appBuilder = WebApplication.CreateBuilder(args);
 
 appBuilder.Services.AddOpenTelemetry()
+    .ConfigureResource(builder => builder.AddService(serviceName: "MyService"))
     .WithTracing(builder => builder.AddConsoleExporter())
-    .WithMetrics(builder => builder.AddConsoleExporter())
-    .StartWithHost();
+    .WithMetrics(builder => builder.AddConsoleExporter());
 
 var app = appBuilder.Build();
 
 app.Run();
 ```
+
+A fully functional example can be found
+[here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore).
+
+## Migrating from pre-release versions of OpenTelemetry.Extensions.Hosting
+
+Pre-release versions (all versions prior to 1.4.0) of
+`OpenTelemetry.Extenions.Hosting` contained signal-specific methods for
+configuring tracing and metrics:
+
+* `AddOpenTelemetryTracing`: Configure OpenTelemetry and register an
+  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
+  to automatically start tracing services in the supplied
+  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+
+* `AddOpenTelemetryMetrics`: Configure OpenTelemetry and register an
+  [IHostedService](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostedservice)
+  to automatically start metric services in the supplied
+  [IServiceCollection](https://learn.microsoft.com/dotnet/api/microsoft.extensions.dependencyinjection.iservicecollection).
+
+These methods were marked obsolete and later removed. You should migrate your
+code to the new `AddOpenTelemetry` method documented above. Refer the
+[old](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.3.2/examples/AspNetCore/Program.cs)
+and
+[new](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore)
+versions of the example application to assist you in your migration.
 
 ## References
 

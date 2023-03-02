@@ -72,9 +72,6 @@ values of the `ZipkinExporterOptions`.
 | --------------------------------| -------------------------------- |
 | `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | `Endpoint`                       |
 
-`FormatException` is thrown in case of an invalid value for any of the
-supported environment variables.
-
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `ZipkinExporterOptions` for users
@@ -90,8 +87,7 @@ services.AddOpenTelemetry()
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
             return client;
-        }))
-    .StartWithHost();
+        }));
 ```
 
 For users using

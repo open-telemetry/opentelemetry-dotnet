@@ -63,8 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         services.AddOpenTelemetry()
                             .WithTracing(builder => builder
                                 .AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
-                                .AddInMemoryExporter(exportedItems))
-                            .StartWithHost();
+                                .AddInMemoryExporter(exportedItems));
                     });
                     builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
                 })

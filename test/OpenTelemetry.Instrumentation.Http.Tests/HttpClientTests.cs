@@ -157,58 +157,59 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.True(enrichWithExceptionCalled);
             }
 
+#if NETFRAMEWORK
+            Assert.Empty(requestMetrics);
+#else
+            Assert.Single(requestMetrics);
+
+            var metric = requestMetrics[0];
+            Assert.NotNull(metric);
+            Assert.True(metric.MetricType == MetricType.Histogram);
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (var p in metric.GetMetricPoints())
+            {
+                metricPoints.Add(p);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+
+            var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+
+            Assert.Equal(1L, count);
+            Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+
+            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            int i = 0;
+            foreach (var tag in metricPoint.Tags)
+            {
+                attributes[i++] = tag;
+            }
+
+            var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
+            var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
+            var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
+            var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
+            Assert.Contains(hostName, attributes);
+            Assert.Contains(portNumber, attributes);
+            Assert.Contains(method, attributes);
+            Assert.Contains(scheme, attributes);
+            Assert.Contains(flavor, attributes);
             if (tc.ResponseExpected)
             {
-#if NETFRAMEWORK
-                Assert.Empty(requestMetrics);
-#else
-                Assert.Single(requestMetrics);
-
-                var metric = requestMetrics[0];
-                Assert.NotNull(metric);
-                Assert.True(metric.MetricType == MetricType.Histogram);
-
-                var metricPoints = new List<MetricPoint>();
-                foreach (var p in metric.GetMetricPoints())
-                {
-                    metricPoints.Add(p);
-                }
-
-                Assert.Single(metricPoints);
-                var metricPoint = metricPoints[0];
-
-                var count = metricPoint.GetHistogramCount();
-                var sum = metricPoint.GetHistogramSum();
-
-                Assert.Equal(1L, count);
-                Assert.Equal(activity.Duration.TotalMilliseconds, sum);
-
-                var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
-                int i = 0;
-                foreach (var tag in metricPoint.Tags)
-                {
-                    attributes[i++] = tag;
-                }
-
-                var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
-                var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
-                var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
-                var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
-                var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, host);
-                var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
-                Assert.Contains(method, attributes);
-                Assert.Contains(scheme, attributes);
                 Assert.Contains(statusCode, attributes);
-                Assert.Contains(flavor, attributes);
-                Assert.Contains(hostName, attributes);
-                Assert.Contains(portNumber, attributes);
                 Assert.Equal(6, attributes.Length);
-#endif
             }
             else
             {
-                Assert.Empty(requestMetrics);
+                Assert.DoesNotContain(statusCode, attributes);
+                Assert.Equal(5, attributes.Length);
             }
+#endif
         }
 
         [Fact]
