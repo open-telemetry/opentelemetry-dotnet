@@ -41,6 +41,7 @@ namespace OpenTelemetry.Metrics
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
+        private readonly ExemplarFilter exemplarFilter;
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
@@ -52,7 +53,8 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             int maxMetricPoints,
             double[] histogramBounds,
-            string[] tagKeysInteresting = null)
+            string[] tagKeysInteresting = null,
+            ExemplarFilter exemplarFilter = null)
         {
             this.name = name;
             this.maxMetricPoints = maxMetricPoints;
@@ -63,6 +65,8 @@ namespace OpenTelemetry.Metrics
             this.outputDelta = temporality == AggregationTemporality.Delta;
             this.histogramBounds = histogramBounds;
             this.StartTimeExclusive = DateTimeOffset.UtcNow;
+
+            this.exemplarFilter = exemplarFilter ?? new AlwaysOffExemplarFilter();
             if (tagKeysInteresting == null)
             {
                 this.updateLongCallback = this.UpdateLong;
@@ -85,6 +89,13 @@ namespace OpenTelemetry.Metrics
         internal DateTimeOffset StartTimeExclusive { get; private set; }
 
         internal DateTimeOffset EndTimeInclusive { get; private set; }
+
+        internal bool IsExemplarEnabled()
+        {
+            // Using this filter to indicate On/Off
+            // instead of another separate flag.
+            return this.exemplarFilter is not AlwaysOffExemplarFilter;
+        }
 
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
@@ -309,7 +320,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -332,7 +351,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -355,7 +382,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -378,7 +413,15 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.exemplarFilter.ShouldSample(value, tags))
+                {
+                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {

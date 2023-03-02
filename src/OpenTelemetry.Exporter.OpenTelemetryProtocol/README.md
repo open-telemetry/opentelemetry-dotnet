@@ -8,7 +8,8 @@ implementation.
 
 ## Prerequisite
 
-* [Get OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
+* An endpoint capable of accepting OTLP, like [OpenTelemetry
+  Collector](https://opentelemetry.io/docs/collector/) or similar.
 
 ## Installation
 
@@ -16,24 +17,79 @@ implementation.
 dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 ```
 
+## Enable Trace Exporter
+
+This exporter provides `AddOtlpExporter()` extension method on `TracerProviderBuilder`
+to enable exporting of traces. The following snippet adds the Exporter with default
+[configuration](#configuration).
+
+```csharp
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    // rest of config not shown here.
+    .AddOtlpExporter()
+    .Build();
+```
+
+See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
+runnable example.
+
+## Enable Metric Exporter
+
+This exporter provides `AddOtlpExporter()` extension method on `MeterProviderBuilder`
+to enable exporting of metrics. The following snippet adds the Exporter with default
+[configuration](#configuration).
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    // rest of config not shown here.
+    .AddOtlpExporter()
+    .Build();
+```
+
+See the [`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for
+runnable example.
+
+## Enable Log Exporter
+
+This package currently only supports exporting traces and metrics. Support for
+exporting logs is provided by installing the
+[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/README.md)
+package.
+
+Once the OTLP log exporter is stable, it'll be folded into this package. Check
+[this](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/35)
+milestone for tracking.
+
 ## Configuration
 
-You can configure the `OtlpExporter` through `Options` types properties
+You can configure the `OtlpExporter` through `OtlpExporterOptions`
 and environment variables.
-The `Options` type setters take precedence over the environment variables.
+The `OtlpExporterOptions` type setters take precedence over the environment variables.
 
-## Options Properties
+This can be achieved by providing an `Action<OtlpExporterOptions>` delegate to the
+`AddOtlpExporter()` method.
 
-* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
-  Only used if ExportProcessorType is set to Batch.
+TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
-* `Endpoint`: Target to which the exporter is going to send traces or metrics.
-  The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
-  contain a port and path.
+## OtlpExporterOptions
 
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
   exporting
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
+  The default is Batch.
+
+* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
+  Only used if ExportProcessorType is set to Batch.
+
+* `Protocol`: OTLP transport protocol. Supported values:
+  `OtlpExportProtocol.Grpc` and `OtlpExportProtocol.HttpProtobuf`.
+   The default is `OtlpExportProtocol.Grpc`.
+
+* `Endpoint`: Target to which the exporter is going to send traces or metrics.
+  The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
+  contain a port and path. The default is "localhost:4317" for
+  `OtlpExportProtocol.Grpc` and "localhost:4318" for
+  `OtlpExportProtocol.HttpProtobuf`.
 
 * `Headers`: Optional headers for the connection.
 
@@ -43,9 +99,6 @@ The `Options` type setters take precedence over the environment variables.
   HttpClient](#configure-httpclient) for more details.
 
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
-
-* `Protocol`: OTLP transport protocol. Supported values:
-  `OtlpExportProtocol.Grpc` and `OtlpExportProtocol.HttpProtobuf`.
 
 See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
 an example of how to use the exporter.
@@ -89,31 +142,6 @@ values of the span limits
 * `OTEL_SPAN_LINK_COUNT_LIMIT`
 * `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT`
 * `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`
-
-## OTLP Logs
-
-This package currently only supports exporting traces and metrics. Support for
-exporting logs is provided by installing the
-[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/README.md)
-package.
-
-Once the OTLP log exporter is stable, it'll be folded into this package. Check
-[this](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/35)
-milestone for tracking.
-
-## Special case when using insecure channel
-
-If your application is targeting .NET Core 3.1, and you are using an insecure
-(HTTP) endpoint, the following switch must be set before adding `OtlpExporter`.
-
-```csharp
-AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport",
- true);
-```
-
-See
-[this](https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client)
-for more information.
 
 ## Configure HttpClient
 

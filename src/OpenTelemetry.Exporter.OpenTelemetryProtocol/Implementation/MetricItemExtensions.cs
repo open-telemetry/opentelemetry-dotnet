@@ -15,9 +15,8 @@
 // </copyright>
 
 using System.Collections.Concurrent;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -30,7 +29,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class MetricItemExtensions
     {
         private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
-        private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
         internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
@@ -81,7 +79,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var scope in resourceMetrics.ScopeMetrics)
             {
-                RepeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
+                scope.Metrics.Clear();
                 MetricListPool.Add(scope);
             }
         }
@@ -269,6 +267,40 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 }
                             }
 
+                            var exemplars = metricPoint.GetExemplars();
+                            foreach (var examplar in exemplars)
+                            {
+                                if (examplar.Timestamp != default)
+                                {
+                                    byte[] traceIdBytes = new byte[16];
+                                    examplar.TraceId?.CopyTo(traceIdBytes);
+
+                                    byte[] spanIdBytes = new byte[8];
+                                    examplar.SpanId?.CopyTo(spanIdBytes);
+
+                                    var otlpExemplar = new OtlpMetrics.Exemplar
+                                    {
+                                        TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
+                                        TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
+                                        SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
+                                        AsDouble = examplar.DoubleValue,
+                                    };
+
+                                    if (examplar.FilteredTags != null)
+                                    {
+                                        foreach (var tag in examplar.FilteredTags)
+                                        {
+                                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+                                            {
+                                                otlpExemplar.FilteredAttributes.Add(result);
+                                            }
+                                        }
+                                    }
+
+                                    dataPoint.Exemplars.Add(otlpExemplar);
+                                }
+                            }
+
                             histogram.DataPoints.Add(dataPoint);
                         }
 
@@ -338,26 +370,5 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpExemplar;
         }
         */
-
-        private static Action<RepeatedField<OtlpMetrics.Metric>, int> CreateRepeatedFieldOfMetricSetCountAction()
-        {
-            FieldInfo repeatedFieldOfMetricCountField = typeof(RepeatedField<OtlpMetrics.Metric>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
-
-            DynamicMethod dynamicMethod = new DynamicMethod(
-                "CreateSetCountAction",
-                null,
-                new[] { typeof(RepeatedField<OtlpMetrics.Metric>), typeof(int) },
-                typeof(MetricItemExtensions).Module,
-                skipVisibility: true);
-
-            var generator = dynamicMethod.GetILGenerator();
-
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldarg_1);
-            generator.Emit(OpCodes.Stfld, repeatedFieldOfMetricCountField);
-            generator.Emit(OpCodes.Ret);
-
-            return (Action<RepeatedField<OtlpMetrics.Metric>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<OtlpMetrics.Metric>, int>));
-        }
     }
 }
