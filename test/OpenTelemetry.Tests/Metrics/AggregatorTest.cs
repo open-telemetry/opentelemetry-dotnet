@@ -184,10 +184,10 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationType.ExponentialHistogram, AggregationTemporality.Cumulative)]
-        [InlineData(AggregationType.ExponentialHistogram, AggregationTemporality.Delta)]
-        [InlineData(AggregationType.ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative)]
-        [InlineData(AggregationType.ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
         internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality)
         {
             var aggregatorStore = new AggregatorStore(
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(40, sum);
             Assert.Equal(7, count);
 
-            if (aggregationType == AggregationType.ExponentialHistogramWithMinMax)
+            if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 Assert.True(hasMinMax);
                 Assert.Equal(-10, min);
@@ -244,7 +244,7 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Equal(40, sum);
                 Assert.Equal(7, count);
 
-                if (aggregationType == AggregationType.ExponentialHistogramWithMinMax)
+                if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
                 {
                     Assert.True(hasMinMax);
                     Assert.Equal(-10, min);
@@ -260,7 +260,7 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Equal(0, sum);
                 Assert.Equal(0, count);
 
-                if (aggregationType == AggregationType.ExponentialHistogramWithMinMax)
+                if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
                 {
                     Assert.True(hasMinMax);
                     Assert.Equal(double.PositiveInfinity, min);

@@ -71,8 +71,8 @@ namespace OpenTelemetry.Metrics
                 this.mpComponents = new MetricPointOptionalComponents();
                 this.mpComponents.HistogramBuckets = new HistogramBuckets(null);
             }
-            else if (this.aggType == AggregationType.ExponentialHistogram ||
-                this.aggType == AggregationType.ExponentialHistogramWithMinMax)
+            else if (this.aggType == AggregationType.Base2ExponentialHistogram ||
+                this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 this.mpComponents = new MetricPointOptionalComponents();
                 this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize);
@@ -202,8 +202,8 @@ namespace OpenTelemetry.Metrics
                 this.aggType != AggregationType.Histogram &&
                 this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
                 this.aggType != AggregationType.HistogramWithMinMax &&
-                this.aggType != AggregationType.ExponentialHistogram &&
-                this.aggType != AggregationType.ExponentialHistogramWithMinMax)
+                this.aggType != AggregationType.Base2ExponentialHistogram &&
+                this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
             }
@@ -225,8 +225,8 @@ namespace OpenTelemetry.Metrics
                 this.aggType != AggregationType.Histogram &&
                 this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
                 this.aggType != AggregationType.HistogramWithMinMax &&
-                this.aggType != AggregationType.ExponentialHistogram &&
-                this.aggType != AggregationType.ExponentialHistogramWithMinMax)
+                this.aggType != AggregationType.Base2ExponentialHistogram &&
+                this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
@@ -276,7 +276,7 @@ namespace OpenTelemetry.Metrics
                 return true;
             }
 
-            if (this.aggType == AggregationType.ExponentialHistogramWithMinMax)
+            if (this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "base2ExponentialBucketHistogram was null");
 
@@ -354,13 +354,13 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.ExponentialHistogram:
+                case AggregationType.Base2ExponentialHistogram:
                     {
                         this.UpdateBase2ExponentialHistogram((double)number);
                         break;
                     }
 
-                case AggregationType.ExponentialHistogramWithMinMax:
+                case AggregationType.Base2ExponentialHistogramWithMinMax:
                     {
                         this.UpdateBase2ExponentialHistogramWithMinMax((double)number);
                         break;
@@ -427,13 +427,13 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.ExponentialHistogram:
+                case AggregationType.Base2ExponentialHistogram:
                     {
                         this.UpdateBase2ExponentialHistogram((double)number, tags, true);
                         break;
                     }
 
-                case AggregationType.ExponentialHistogramWithMinMax:
+                case AggregationType.Base2ExponentialHistogramWithMinMax:
                     {
                         this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, true);
                         break;
@@ -518,13 +518,13 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.ExponentialHistogram:
+                case AggregationType.Base2ExponentialHistogram:
                     {
                         this.UpdateBase2ExponentialHistogram(number);
                         break;
                     }
 
-                case AggregationType.ExponentialHistogramWithMinMax:
+                case AggregationType.Base2ExponentialHistogramWithMinMax:
                     {
                         this.UpdateBase2ExponentialHistogramWithMinMax(number);
                         break;
@@ -609,13 +609,13 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.ExponentialHistogram:
+                case AggregationType.Base2ExponentialHistogram:
                     {
                         this.UpdateBase2ExponentialHistogram(number, tags, true);
                         break;
                     }
 
-                case AggregationType.ExponentialHistogramWithMinMax:
+                case AggregationType.Base2ExponentialHistogramWithMinMax:
                     {
                         this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, true);
                         break;
@@ -888,7 +888,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.ExponentialHistogram:
+                case AggregationType.Base2ExponentialHistogram:
                     {
                         var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
                         var sw = default(SpinWait);
@@ -919,7 +919,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                case AggregationType.ExponentialHistogramWithMinMax:
+                case AggregationType.Base2ExponentialHistogramWithMinMax:
                     {
                         var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
                         var sw = default(SpinWait);

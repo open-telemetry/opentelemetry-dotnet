@@ -76,11 +76,11 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Exponential Histogram with sum, count.
         /// </summary>
-        ExponentialHistogram = 10,
+        Base2ExponentialHistogram = 10,
 
         /// <summary>
         /// Exponential Histogram with sum, count, min, max.
         /// </summary>
-        ExponentialHistogramWithMinMax = 11,
+        Base2ExponentialHistogramWithMinMax = 11,
     }
 }
