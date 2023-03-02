@@ -86,7 +86,7 @@ namespace OpenTelemetry.Metrics
 
             if (reservoir != null)
             {
-                if (mpComponents == null)
+                if (this.mpComponents == null)
                 {
                     this.mpComponents = new MetricPointOptionalComponents();
                 }
@@ -414,6 +414,7 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
@@ -435,6 +436,7 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
@@ -574,6 +576,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
                                 // Release lock
                                 Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
                                 break;
@@ -581,6 +584,7 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
@@ -598,6 +602,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
                                 // Release lock
                                 Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
                                 break;
@@ -605,6 +610,7 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
@@ -622,6 +628,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
                                 // Release lock
                                 Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
                                 break;
@@ -629,6 +636,7 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
@@ -960,13 +968,14 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
                 case AggregationType.DoubleSumIncomingDelta:
                 case AggregationType.DoubleSumIncomingCumulative:
                     {
-						var sw = default(SpinWait);
+                        var sw = default(SpinWait);
                         while (true)
                         {
                             if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
@@ -994,12 +1003,13 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
                 case AggregationType.LongGauge:
                     {
-						var sw = default(SpinWait);
+                        var sw = default(SpinWait);
                         while (true)
                         {
                             if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
@@ -1017,12 +1027,13 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
                 case AggregationType.DoubleGauge:
                     {
-						var sw = default(SpinWait);
+                        var sw = default(SpinWait);
                         while (true)
                         {
                             if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
@@ -1040,6 +1051,7 @@ namespace OpenTelemetry.Metrics
 
                             sw.SpinOnce();
                         }
+
                         break;
                     }
 
