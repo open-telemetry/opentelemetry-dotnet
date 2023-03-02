@@ -79,11 +79,6 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
 
     private void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
-        if (this.measurementsSeen < 0)
-        {
-            this.measurementsSeen = 0;
-        }
-
         if (this.measurementsSeen < this.poolSize)
         {
             ref var exemplar = ref this.runningExemplars[this.measurementsSeen];
