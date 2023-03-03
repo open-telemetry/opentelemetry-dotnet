@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added Exemplar support.
+  ([#4217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4217))
+
 * Added `AddDetector` factory overload on `ResourceBuilder`.
   ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
 
