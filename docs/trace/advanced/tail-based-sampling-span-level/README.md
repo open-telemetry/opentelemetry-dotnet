@@ -10,12 +10,16 @@ This is a way to achieve a combination of:
 
 ## How does this sampling example work?
 
-The main idea here is to use a hybrid approach. We want to do basic head
-based sampling to get a probabilistic subset of all spans which includes both
-successful spans and failure spans. In addition, we want to capture all failure
-spans. To do this, at the end of a span, we check if the span is a failure and
-if so we decide to sample it in. In this example, each span is filtered
-individually without consideration to any other spans.
+We use a hybrid approach: we do head based sampling to get a
+probabilistic subset of all spans which includes both successful spans
+and failure spans. In addition, we want to capture all failure spans.
+To do this, if the parent based sampler's decision is to drop it, we return
+a "Record-Only" sampling result. This ensures that the Span processor
+receives that span. In the span processor, at the end of a span, we check if
+it is a failure span. If so, we change the decision from "Record-Only"
+to set the sampled flag so that the exporter receives the span.
+In this example, each span is filtered individually without consideration to any
+other spans.
 
 This is a basic form of tail-based sampling at a span level. If a span failed,
 we always sample it in addition to all head-sampled spans.
@@ -36,7 +40,7 @@ only at the end, so there is additional memory cost.
 
 2. Partial traces: Since this sampling is at a span level, the generated trace
 will be partial. For example, if another part of the call tree is successful,
-those spans may not be sampled in leading to a partial trace.
+those spans may not be exported leading to an incomplete trace.
 
 3. If multiple exporters are used, this decision will impact all of them:
 [Issue 3861](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3861).
