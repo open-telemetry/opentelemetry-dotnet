@@ -8,11 +8,6 @@
     <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
 
-  <!--Do not run ApiCompat as this is newly added. Remove this property once we have released a stable version.-->
-  <PropertyGroup>
-    <RunApiCompat>false</RunApiCompat>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
   </ItemGroup>
