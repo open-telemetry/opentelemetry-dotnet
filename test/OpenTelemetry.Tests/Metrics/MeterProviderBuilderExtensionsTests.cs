@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -31,8 +28,6 @@ namespace OpenTelemetry.Metrics.Tests
         public void ServiceLifecycleAvailableToSDKBuilderTest()
         {
             var builder = Sdk.CreateMeterProviderBuilder();
-
-            builder.ConfigureServices(services => services.AddSingleton<MyInstrumentation>());
 
             MyInstrumentation myInstrumentation = null;
 
@@ -59,81 +54,6 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.NotNull(myInstrumentation);
             Assert.True(myInstrumentation.Disposed);
-        }
-
-        [Fact]
-        public void ServiceLifecycleAvailableToServicesBuilderTest()
-        {
-            var services = new ServiceCollection();
-
-            bool testRun = false;
-
-            ServiceProvider serviceProvider = null;
-            MeterProviderSdk provider = null;
-
-            services.ConfigureOpenTelemetryMetrics(builder =>
-            {
-                testRun = true;
-
-                RunBuilderServiceLifecycleTest(
-                    builder,
-                    () =>
-                    {
-                        // Note: Build can't be called directly on builder tied to external services
-                        Assert.Throws<NotSupportedException>(() => builder.Build());
-
-                        serviceProvider = services.BuildServiceProvider();
-
-                        provider = serviceProvider.GetRequiredService<MeterProvider>() as MeterProviderSdk;
-
-                        Assert.NotNull(provider);
-                        Assert.Null(provider.OwnedServiceProvider);
-
-                        return provider;
-                    },
-                    (provider) => { });
-            });
-
-            Assert.True(testRun);
-
-            Assert.NotNull(serviceProvider);
-            Assert.NotNull(provider);
-
-            Assert.False(provider.Disposed);
-
-            serviceProvider.Dispose();
-
-            Assert.True(provider.Disposed);
-        }
-
-        [Fact]
-        public void SingleProviderForServiceCollectionTest()
-        {
-            var services = new ServiceCollection();
-
-            services.ConfigureOpenTelemetryMetrics(builder =>
-            {
-                builder.AddInstrumentation<MyInstrumentation>(() => new());
-            });
-
-            services.ConfigureOpenTelemetryMetrics(builder =>
-            {
-                builder.AddInstrumentation<MyInstrumentation>(() => new());
-            });
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            Assert.NotNull(serviceProvider);
-
-            var meterProviders = serviceProvider.GetServices<MeterProvider>();
-
-            Assert.Single(meterProviders);
-
-            var provider = meterProviders.First() as MeterProviderSdk;
-
-            Assert.NotNull(provider);
-
-            Assert.Equal(2, provider.Instrumentations.Count);
         }
 
         [Fact]
@@ -273,7 +193,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryMetrics();
+                        services.ConfigureOpenTelemetryMeterProvider((sp, builder) => { });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
@@ -289,26 +209,25 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void MeterProviderNestedResolutionUsingConfigureTest()
+        public void MeterProviderAddReaderFactoryTest()
         {
-            bool innerTestExecuted = false;
+            bool factoryInvoked = false;
 
-            var serviceCollection = new ServiceCollection();
-
-            serviceCollection.ConfigureOpenTelemetryMetrics(builder =>
-            {
-                builder.ConfigureBuilder((sp, builder) =>
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddReader(sp =>
                 {
-                    innerTestExecuted = true;
-                    Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
-                });
-            });
+                    factoryInvoked = true;
 
-            using var serviceProvider = serviceCollection.BuildServiceProvider();
+                    Assert.NotNull(sp);
 
-            var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
+                    return new MyReader();
+                })
+                .Build() as MeterProviderSdk;
 
-            Assert.True(innerTestExecuted);
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(meterProvider);
+            Assert.True(meterProvider.Reader is MyReader);
         }
 
         private static void RunBuilderServiceLifecycleTest(
@@ -317,7 +236,6 @@ namespace OpenTelemetry.Metrics.Tests
             Action<MeterProviderSdk> postAction)
         {
             var baseBuilder = builder as MeterProviderBuilderBase;
-            Assert.Null(baseBuilder.State);
 
             builder.AddMeter("TestSource");
 
@@ -328,12 +246,15 @@ namespace OpenTelemetry.Metrics.Tests
 
                 Assert.NotNull(services);
 
+                services.TryAddSingleton<MyInstrumentation>();
                 services.TryAddSingleton<MyReader>();
 
-                services.ConfigureOpenTelemetryMetrics(b =>
+                // Note: This is strange to call ConfigureOpenTelemetryMeterProvider here, but supported
+                services.ConfigureOpenTelemetryMeterProvider((sp, b) =>
                 {
-                    // Note: This is strange to call ConfigureOpenTelemetryMetrics here, but supported
-                    b.AddInstrumentation<MyInstrumentation>();
+                    Assert.Throws<NotSupportedException>(() => b.ConfigureServices(services => { }));
+
+                    b.AddInstrumentation(sp.GetRequiredService<MyInstrumentation>());
                 });
             });
 
@@ -342,13 +263,13 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 configureBuilderInvocations++;
 
-                var baseBuilder = builder as MeterProviderBuilderBase;
-                Assert.NotNull(baseBuilder?.State);
+                var sdkBuilder = builder as MeterProviderBuilderSdk;
+                Assert.NotNull(sdkBuilder);
 
                 builder.AddMeter("TestSource2");
 
-                Assert.Contains(baseBuilder.State.MeterSources, s => s == "TestSource");
-                Assert.Contains(baseBuilder.State.MeterSources, s => s == "TestSource2");
+                Assert.Contains(sdkBuilder.MeterSources, s => s == "TestSource");
+                Assert.Contains(sdkBuilder.MeterSources, s => s == "TestSource2");
 
                 // Note: Services can't be configured at this stage
                 Assert.Throws<NotSupportedException>(

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -62,11 +61,11 @@ namespace OpenTelemetry.Trace
                 builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddProcessor(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
 
-                builder.AddProcessor(new SimpleActivityExportProcessor(new ConsoleActivityExporter(options)));
+                return new SimpleActivityExportProcessor(new ConsoleActivityExporter(options));
             });
         }
     }

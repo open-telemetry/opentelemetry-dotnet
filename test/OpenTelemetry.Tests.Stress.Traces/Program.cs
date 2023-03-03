@@ -31,7 +31,7 @@ public partial class Program
             .AddSource(ActivitySource.Name)
             .Build();
 
-        Stress(prometheusPort: 9184);
+        Stress(prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

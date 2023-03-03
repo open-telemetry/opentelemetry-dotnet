@@ -45,9 +45,10 @@ namespace Examples.Console
             // the reporoot\examples\Console\.
             // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
             //
-            // dotnet run jaeger -h localhost -p 6831
+            // dotnet run --project Examples.Console.csproj -- jaeger -h localhost -p 6831
             // For non-Windows (e.g., MacOS)
             // dotnet run jaeger -- -h localhost -p 6831
+            // Navigate to http://localhost:16686 to access the Jaeger UI.
             return RunWithActivity(host, port);
         }
 

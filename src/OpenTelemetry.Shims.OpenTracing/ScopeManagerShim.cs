@@ -14,11 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Runtime.CompilerServices;
-#if DEBUG
-using System.Threading;
-#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;

@@ -14,14 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.Data.SqlClient;
-using Moq;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -64,12 +60,31 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddSqlClientInstrumentation());
         }
 
+        [Fact]
+        public void SqlClient_NamedOptions()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<SqlClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<SqlClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddSqlClientInstrumentation()
+                .AddSqlClientInstrumentation("Instrumentation2", configureSqlClientInstrumentationOptions: null)
+                .Build();
+
+            Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
+        }
+
         [Trait("CategoryName", "SqlIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
         [InlineData(CommandType.Text, "select 1/1", false)]
-#if !NETFRAMEWORK
         [InlineData(CommandType.Text, "select 1/1", false, true)]
-#endif
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true, false, false)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
@@ -84,6 +99,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool recordException = false,
             bool shouldEnrich = true)
         {
+#if NETFRAMEWORK
+            // Disable things not available on netfx
+            recordException = false;
+            shouldEnrich = false;
+#endif
+
             var sampler = new TestSampler();
             var activities = new List<Activity>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -94,21 +115,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 #if !NETFRAMEWORK
                     options.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
                     options.SetDbStatementForText = captureTextCommandContent;
-                    options.RecordException = recordException;
 #else
-                    options.SetDbStatement = captureStoredProcedureCommandName;
+                    options.SetDbStatementForText = captureStoredProcedureCommandName || captureTextCommandContent;
 #endif
+                    options.RecordException = recordException;
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
                     }
                 })
                 .Build();
-
-#if NETFRAMEWORK
-            // RecordException not available on netfx
-            recordException = false;
-#endif
 
             using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 
@@ -473,7 +489,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
 #if !NETFRAMEWORK
-        private Activity[] RunCommandWithFilter(Action<SqlCommand> sqlCommandSetup, Func<object, bool> filter)
+        private Activity[] RunCommandWithFilter(
+            Action<SqlCommand> sqlCommandSetup,
+            Func<object, bool> filter)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
@@ -529,7 +547,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             public void Write(string name, object value)
             {
-                this.listener.Write(name, value);
+                if (this.listener.IsEnabled(name))
+                {
+                    this.listener.Write(name, value);
+                }
             }
 
             public void Dispose()

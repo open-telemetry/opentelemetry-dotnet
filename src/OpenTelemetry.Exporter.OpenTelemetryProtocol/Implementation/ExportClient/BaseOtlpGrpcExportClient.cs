@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER

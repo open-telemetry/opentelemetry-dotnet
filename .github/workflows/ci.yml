@@ -13,14 +13,13 @@ on:
 jobs:
   build-test:
     strategy:
+      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ windows-latest, ubuntu-latest ]
         version: [ net462, net6.0, net7.0 ]
         exclude:
         - os: ubuntu-latest
           version: net462
-        - os: ubuntu-latest
-          version: net7.0
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -28,10 +27,10 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - uses: actions/setup-dotnet@v3.0.2
+    - name: Setup .NET 7.0
+      uses: actions/setup-dotnet@v3.0.3
       with:
         dotnet-version: '7.0.x'
-        include-prerelease: true
 
     - name: Install dependencies
       run: dotnet restore
@@ -40,4 +39,4 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
+      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"

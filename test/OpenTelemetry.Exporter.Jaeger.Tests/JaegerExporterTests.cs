@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
@@ -124,8 +120,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             services.AddHttpClient("JaegerExporter", configureClient: (client) => invocations++);
 
-            services.AddOpenTelemetryTracing(builder => builder.AddJaegerExporter(
-                o => o.Protocol = JaegerExportProtocol.HttpBinaryThrift));
+            services.AddOpenTelemetry().WithTracing(builder => builder
+                .AddJaegerExporter(o => o.Protocol = JaegerExportProtocol.HttpBinaryThrift));
 
             using var serviceProvider = services.BuildServiceProvider();
 
@@ -267,7 +263,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
 
             var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
 
-            tracerProviderBuilder.AddExporter(ExportProcessorType.Batch, jaegerTraceExporter);
+            tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(jaegerTraceExporter));
 
             using var provider = tracerProviderBuilder.Build();
 

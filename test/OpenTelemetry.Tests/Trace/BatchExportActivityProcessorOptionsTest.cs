@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -62,7 +60,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void ExportActivityProcessorOptions_UsingIConfiguration()
+        public void BatchExportProcessorOptions_UsingIConfiguration()
         {
             var values = new Dictionary<string, string>()
             {
@@ -76,13 +74,6 @@ namespace OpenTelemetry.Trace.Tests
                 .AddInMemoryCollection(values)
                 .Build();
 
-            var parentOptions = new ExportActivityProcessorOptions(configuration);
-
-            Assert.Equal(1, parentOptions.BatchExportProcessorOptions.MaxQueueSize);
-            Assert.Equal(2, parentOptions.BatchExportProcessorOptions.MaxExportBatchSize);
-            Assert.Equal(3, parentOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds);
-            Assert.Equal(4, parentOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds);
-
             var options = new BatchExportActivityProcessorOptions(configuration);
 
             Assert.Equal(1, options.MaxQueueSize);
@@ -92,11 +83,19 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void BatchExportProcessorOptions_InvalidPortEnvironmentVariableOverride()
+        public void BatchExportProcessorOptions_InvalidEnvironmentVariableOverride()
         {
             Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ScheduledDelayEnvVarKey, "invalid");
 
-            Assert.Throws<FormatException>(() => new BatchExportActivityProcessorOptions());
+            var options = new BatchExportActivityProcessorOptions();
+
+            Assert.Equal(30000, options.ExporterTimeoutMilliseconds);
+            Assert.Equal(512, options.MaxExportBatchSize);
+            Assert.Equal(2048, options.MaxQueueSize);
+            Assert.Equal(5000, options.ScheduledDelayMilliseconds);
         }
 
         [Fact]

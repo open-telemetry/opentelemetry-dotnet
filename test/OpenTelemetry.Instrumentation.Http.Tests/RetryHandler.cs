@@ -15,14 +15,12 @@
 // </copyright>
 
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Tests
 {
     public class RetryHandler : DelegatingHandler
     {
-        private int maxRetries;
+        private readonly int maxRetries;
 
         public RetryHandler(HttpMessageHandler innerHandler, int maxRetries)
             : base(innerHandler)
@@ -37,9 +35,11 @@ namespace OpenTelemetry.Tests
             HttpResponseMessage response = null;
             for (int i = 0; i < this.maxRetries; i++)
             {
+                response?.Dispose();
+
                 try
                 {
-                    response = await base.SendAsync(request, cancellationToken);
+                    response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {

@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 using Xunit;
 using Xunit.Abstractions;
@@ -44,7 +43,7 @@ namespace OpenTelemetry.Internal.Tests
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
                 // Emitting event of EventLevel.Warning
-                OpenTelemetrySdkEventSource.Log.SpanProcessorQueueIsExhausted();
+                OpenTelemetrySdkEventSource.Log.ExporterErrorResult(ExportResult.Success);
 
                 int bufferSize = 512;
                 byte[] actualBytes = ReadFile(bufferSize);
@@ -70,9 +69,10 @@ namespace OpenTelemetry.Internal.Tests
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
                 // Emitting event of EventLevel.Error
-                OpenTelemetrySdkEventSource.Log.SpanProcessorException("Event string sample", "Exception string sample");
+                OpenTelemetrySdkEventSource.Log.TracerProviderException("Event string sample", "Exception string sample");
+                string expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
 
-                int bufferSize = 512;
+                int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
                 byte[] actualBytes = ReadFile(bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 Assert.StartsWith(MessageOnNewFileString, logText);
@@ -80,7 +80,6 @@ namespace OpenTelemetry.Internal.Tests
                 // The event was captured
                 string logLine = logText.Substring(MessageOnNewFileString.Length);
                 string logMessage = ParseLogMessage(logLine);
-                string expectedMessage = "Unknown error in SpanProcessor event '{0}': '{1}'.{Event string sample}{Exception string sample}";
                 Assert.StartsWith(expectedMessage, logMessage);
             }
             finally

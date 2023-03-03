@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Threading;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
@@ -1356,26 +1352,26 @@ namespace OpenTelemetry.Metrics.Tests
             // for no tag point!
             // This may be changed later.
             counterLong.Add(10);
-            for (int i = 0; i < MeterProviderBuilderState.MaxMetricPointsPerMetricDefault + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(MeterProviderBuilderState.MaxMetricPointsPerMetricDefault, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
             exportedItems.Clear();
             counterLong.Add(10);
-            for (int i = 0; i < MeterProviderBuilderState.MaxMetricPointsPerMetricDefault + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(MeterProviderBuilderState.MaxMetricPointsPerMetricDefault, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
             counterLong.Add(10);
-            for (int i = 0; i < MeterProviderBuilderState.MaxMetricPointsPerMetricDefault + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
@@ -1386,7 +1382,7 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(MeterProviderBuilderState.MaxMetricPointsPerMetricDefault, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault, MetricPointCount());
         }
 
         [Fact]

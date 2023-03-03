@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -22,7 +21,6 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class SamplersTest
     {
-        private const string ActivitySourceName = "SamplerTest";
         private static readonly ActivityKind ActivityKindServer = ActivityKind.Server;
         private readonly ActivityTraceId traceId;
         private readonly ActivitySpanId spanId;
@@ -91,13 +89,13 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            var operationNameForLegacyActivity = "TestOperationName";
+            var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .SetSampler(testSampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            Activity activity = new Activity(operationNameForLegacyActivity);
+            using Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             Assert.NotNull(activity);
             if (samplingDecision != SamplingDecision.Drop)
@@ -125,17 +123,17 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            var operationNameForLegacyActivity = "TestOperationName";
+            var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .SetSampler(testSampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            Activity parentActivity = new Activity("Foo");
+            using var parentActivity = new Activity("Foo");
             parentActivity.TraceStateString = existingTraceState;
             parentActivity.Start();
 
-            Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             Assert.NotNull(activity);
             if (samplingDecision != SamplingDecision.Drop)
@@ -163,17 +161,17 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            var operationNameForLegacyActivity = "TestOperationName";
+            var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                         .SetSampler(testSampler)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
-            Activity parentActivity = new Activity("Foo");
+            using var parentActivity = new Activity("Foo");
             parentActivity.TraceStateString = existingTraceState;
             parentActivity.Start();
 
-            Activity activity = new Activity(operationNameForLegacyActivity);
+            using var activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
             Assert.NotNull(activity);
             if (samplingDecision != SamplingDecision.Drop)
@@ -202,9 +200,10 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(testSampler)
                 .Build();
 
@@ -238,9 +237,10 @@ namespace OpenTelemetry.Trace.Tests
                 },
             };
 
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(testSampler)
                 .Build();
 
@@ -250,6 +250,31 @@ namespace OpenTelemetry.Trace.Tests
             if (sampling != SamplingDecision.Drop)
             {
                 Assert.Equal(parentTraceState, activity.TraceStateString);
+            }
+        }
+
+        [Fact]
+        public void SamplerExceptionBubblesUpTest()
+        {
+            // Note: This test verifies there is NO try/catch around sampling
+            // and it will throw. For the discussion behind this see:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/4072
+
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(activitySourceName)
+                .SetSampler(new ThrowingSampler())
+                .Build();
+
+            Assert.Throws<InvalidOperationException>(() => activitySource.StartActivity("ThrowingSampler"));
+        }
+
+        private sealed class ThrowingSampler : Sampler
+        {
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                throw new InvalidOperationException("ThrowingSampler");
             }
         }
     }

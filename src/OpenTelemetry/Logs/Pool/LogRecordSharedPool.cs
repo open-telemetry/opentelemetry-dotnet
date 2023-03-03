@@ -17,7 +17,6 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
@@ -95,12 +94,6 @@ namespace OpenTelemetry.Internal
         public void TracestateExtractError(string error)
         {
             this.WriteEvent(6, error);
-        }
-
-        [Event(7, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
-        public void InvalidArgument(string methodName, string argumentName, string issue)
-        {
-            this.WriteEvent(7, methodName, argumentName, issue);
         }
 
         [Event(8, Message = "Failed to extract activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]

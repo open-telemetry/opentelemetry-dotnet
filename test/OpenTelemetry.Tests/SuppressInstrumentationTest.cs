@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Tests
@@ -75,7 +74,7 @@ namespace OpenTelemetry.Tests
                 Assert.False(Sdk.SuppressInstrumentation);
                 SuppressInstrumentationScope.Enter();
                 Assert.True(Sdk.SuppressInstrumentation);
-            });
+            }).ConfigureAwait(false);
 
             Assert.False(Sdk.SuppressInstrumentation); // Changes made by SuppressInstrumentationScope.Enter in the task above are not reflected here as it's not part of the same async flow
         }

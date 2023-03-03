@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Reflection;
-using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -100,11 +100,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
+            if (Sdk.SuppressInstrumentation)
             {
                 return;
             }
@@ -122,13 +118,22 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
 
+            // For .NET7.0 or higher versions, activity is created using activity source.
+            // However the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                activity.IsAllDataRequested = false;
+            }
+
             // enrich Activity from payload only if sampling decision
             // is favorable.
             if (activity.IsAllDataRequested)
             {
                 try
                 {
-                    if (this.options.EventFilter(activity.OperationName, request) == false)
+                    if (this.options.EventFilterHttpRequestMessage(activity.OperationName, request) == false)
                     {
                         HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
                         activity.IsAllDataRequested = false;
@@ -154,7 +159,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
-                activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
+                activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+                if (!request.RequestUri.IsDefaultPort)
+                {
+                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
 
@@ -171,15 +181,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public void OnStopActivity(Activity activity, object payload)
         {
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
@@ -229,15 +230,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public void OnException(Activity activity, object payload)
         {
-            // For .NET7.0 or higher versions, activity is created using activity source
-            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
-            // To prevent processing such activities we first check the source name to confirm if it was created using
-            // activity source or not.
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)

@@ -25,7 +25,7 @@ namespace OpenTelemetry.Benchmarks
         [Benchmark]
         public void EventWithIdAllocation()
         {
-            Activity activity = new Activity("TestActivity");
+            using var activity = new Activity("TestActivity");
             activity.SetIdFormat(ActivityIdFormat.W3C);
             activity.Start();
             activity.Stop();
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Benchmarks
         [Benchmark]
         public void EventWithCheck()
         {
-            Activity activity = new Activity("TestActivity");
+            using var activity = new Activity("TestActivity");
             activity.SetIdFormat(ActivityIdFormat.W3C);
             activity.Start();
             activity.Stop();

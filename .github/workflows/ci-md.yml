@@ -14,7 +14,7 @@ on:
     - '**.md'
 
 jobs:
-    build-test:
+  build-test:
     strategy:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
@@ -22,8 +22,6 @@ jobs:
         exclude:
         - os: ubuntu-latest
           version: net462
-        - os: ubuntu-latest
-          version: net7.0
 
     runs-on: ubuntu-latest
     steps:

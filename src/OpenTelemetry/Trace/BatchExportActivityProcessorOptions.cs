@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
@@ -28,10 +27,6 @@ namespace OpenTelemetry.Trace
     /// OTEL_BSP_MAX_QUEUE_SIZE, OTEL_BSP_MAX_EXPORT_BATCH_SIZE, OTEL_BSP_EXPORT_TIMEOUT, OTEL_BSP_SCHEDULE_DELAY
     /// environment variables are parsed during object construction.
     /// </summary>
-    /// <remarks>
-    /// The constructor throws <see cref="FormatException"/> if it fails to parse
-    /// any of the supported environment variables.
-    /// </remarks>
     public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
     {
         internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
@@ -50,11 +45,7 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BatchExportActivityProcessorOptions"/> class.
-        /// </summary>
-        /// <param name="configuration"><see cref="IConfiguration"/>.</param>
-        public BatchExportActivityProcessorOptions(IConfiguration configuration)
+        internal BatchExportActivityProcessorOptions(IConfiguration configuration)
         {
             if (configuration.TryGetIntValue(ExporterTimeoutEnvVarKey, out int value))
             {

@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 
@@ -35,6 +33,8 @@ namespace OpenTelemetry.Metrics
         private Metric[] metrics;
         private Metric[] metricsCurrentBatch;
         private int metricIndex = -1;
+
+        private ExemplarFilter exemplarFilter;
 
         internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
         {
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Metrics
                     Metric metric = null;
                     try
                     {
-                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream);
+                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
                     }
                     catch (NotSupportedException nse)
                     {
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Metrics
                     }
                     else
                     {
-                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax);
+                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax, this.exemplarFilter);
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;
@@ -223,6 +223,11 @@ namespace OpenTelemetry.Metrics
             this.maxMetricStreams = maxMetricStreams;
             this.metrics = new Metric[maxMetricStreams];
             this.metricsCurrentBatch = new Metric[maxMetricStreams];
+        }
+
+        internal void SetExemplarFilter(ExemplarFilter exemplarFilter)
+        {
+            this.exemplarFilter = exemplarFilter;
         }
 
         internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -68,24 +67,22 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configure));
             }
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddReader(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<PrometheusAspNetCoreOptions>>().Get(name);
 
-                AddPrometheusExporter(builder, options);
+                return BuildPrometheusExporterMetricReader(options);
             });
         }
 
-        private static MeterProviderBuilder AddPrometheusExporter(MeterProviderBuilder builder, PrometheusAspNetCoreOptions options)
+        private static MetricReader BuildPrometheusExporterMetricReader(PrometheusAspNetCoreOptions options)
         {
             var exporter = new PrometheusExporter(options.ExporterOptions);
 
-            var reader = new BaseExportingMetricReader(exporter)
+            return new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
             };
-
-            return builder.AddReader(reader);
         }
     }
 }

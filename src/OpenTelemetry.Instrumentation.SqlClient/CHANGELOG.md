@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.14
+
+Released 2023-Feb-24
+
+* Updated OpenTelemetry.Api.ProviderBuilderExtensions dependency to 1.4.0
+
+## 1.4.0-rc9.13
+
+Released 2023-Feb-10
+
+## 1.0.0-rc9.12
+
+Released 2023-Feb-01
+
+## 1.0.0-rc9.11
+
+Released 2023-Jan-09
+
+## 1.0.0-rc9.10
+
+Released 2022-Dec-12
+
+* **Breaking change**: The same API is now exposed for `net462` and
+  `netstandard2.0` targets. `SetDbStatement` has been removed. Use
+  `SetDbStatementForText` to capture command text and stored procedure names on
+  .NET Framework. Note: `Enrich`, `Filter`, `RecordException`, and
+  `SetDbStatementForStoredProcedure` options are NOT supported on .NET
+  Framework.
+  ([#3900](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3900))
+
+* Added overloads which accept a name to the `TracerProviderBuilder`
+  `AddSqlClientInstrumentation` extension to allow for more fine-grained options
+  management
+  ([#3994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3994))
+
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
 ## 1.0.0-rc9.8
 
 Released 2022-Oct-17

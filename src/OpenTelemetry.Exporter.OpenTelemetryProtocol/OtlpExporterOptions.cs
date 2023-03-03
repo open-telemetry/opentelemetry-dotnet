@@ -14,10 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
+using System.Reflection;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -29,10 +33,6 @@ namespace OpenTelemetry.Exporter
     /// OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_TIMEOUT, OTEL_EXPORTER_OTLP_PROTOCOL
     /// environment variables are parsed during object construction.
     /// </summary>
-    /// <remarks>
-    /// The constructor throws <see cref="FormatException"/> if it fails to parse
-    /// any of the supported environment variables.
-    /// </remarks>
     public class OtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
@@ -40,11 +40,17 @@ namespace OpenTelemetry.Exporter
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
         internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
+        internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
+        {
+            new KeyValuePair<string, string>("User-Agent", GetUserAgentString()),
+        };
+
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
         private const string DefaultHttpEndpoint = "http://localhost:4318";
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+        private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
 
         private Uri endpoint;
 
@@ -52,12 +58,17 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
         public OtlpExporterOptions()
-            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
         {
         }
 
-        internal OtlpExporterOptions(IConfiguration configuration)
+        internal OtlpExporterOptions(
+            IConfiguration configuration,
+            BatchExportActivityProcessorOptions defaultBatchOptions)
         {
+            Debug.Assert(configuration != null, "configuration was null");
+            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
             if (configuration.TryGetUriValue(EndpointEnvVarName, out var endpoint))
             {
                 this.endpoint = endpoint;
@@ -89,7 +100,7 @@ namespace OpenTelemetry.Exporter
                 };
             };
 
-            this.BatchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+            this.BatchExportProcessorOptions = defaultBatchOptions;
         }
 
         /// <summary>
@@ -183,5 +194,27 @@ namespace OpenTelemetry.Exporter
         /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
         /// </summary>
         internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
+
+        internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
+        {
+            services.RegisterOptionsFactory(
+                (sp, configuration, name) => new OtlpExporterOptions(
+                    configuration,
+                    sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+        }
+
+        private static string GetUserAgentString()
+        {
+            try
+            {
+                var assemblyVersion = typeof(OtlpExporterOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+                var informationalVersion = assemblyVersion.InformationalVersion;
+                return string.IsNullOrEmpty(informationalVersion) ? UserAgentProduct : $"{UserAgentProduct}/{informationalVersion}";
+            }
+            catch (Exception)
+            {
+                return UserAgentProduct;
+            }
+        }
     }
 }

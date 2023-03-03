@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -89,7 +87,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddInMemoryCollection(values)
                 .Build();
 
-            var options = new OtlpExporterOptions(configuration);
+            var options = new OtlpExporterOptions(configuration, new());
 
             Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
             Assert.Equal("A=2,B=3", options.Headers);
@@ -98,27 +96,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void OtlpExporterOptions_InvalidEndpointVariableOverride()
+        public void OtlpExporterOptions_InvalidEnvironmentVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "invalid");
-
-            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
-        }
-
-        [Fact]
-        public void OtlpExporterOptions_InvalidTimeoutVariableOverride()
-        {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "invalid");
-
-            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
-        }
-
-        [Fact]
-        public void OtlpExporterOptions_InvalidProtocolVariableOverride()
-        {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "invalid");
 
-            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
+            var options = new OtlpExporterOptions();
+
+            Assert.Equal(new Uri("http://localhost:4317"), options.Endpoint);
+            Assert.Equal(10000, options.TimeoutMilliseconds);
+            Assert.Equal(default, options.Protocol);
         }
 
         [Fact]

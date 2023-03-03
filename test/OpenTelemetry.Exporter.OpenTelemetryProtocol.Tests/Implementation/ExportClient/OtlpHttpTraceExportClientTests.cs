@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
-using System.Threading;
 #if !NET6_0_OR_GREATER
 using System.Threading.Tasks;
 #endif
@@ -67,9 +63,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(client.HttpClient);
 
-            Assert.Equal(2, client.Headers.Count);
+            Assert.Equal(2 + OtlpExporterOptions.StandardHeaders.Length, client.Headers.Count);
             Assert.Contains(client.Headers, kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
             Assert.Contains(client.Headers, kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
+
+            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            {
+                Assert.Contains(client.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            }
         }
 
         [Theory]
@@ -124,7 +125,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     httpRequest = r;
 
                     // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                    httpRequestContent = await r.Content.ReadAsByteArrayAsync();
+                    httpRequestContent = await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                 })
 #endif
                 .Verifiable();
@@ -183,9 +184,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.NotNull(httpRequest);
                 Assert.Equal(HttpMethod.Post, httpRequest.Method);
                 Assert.Equal("http://localhost:4317/", httpRequest.RequestUri.AbsoluteUri);
-                Assert.Equal(2, httpRequest.Headers.Count());
+                Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + 2, httpRequest.Headers.Count());
                 Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);
                 Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);
+
+                for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+                {
+                    Assert.Contains(httpRequest.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value.First() == OtlpExporterOptions.StandardHeaders[i].Value);
+                }
 
                 Assert.NotNull(httpRequest.Content);
                 Assert.IsType<OtlpHttpTraceExportClient.ExportRequestContent>(httpRequest.Content);

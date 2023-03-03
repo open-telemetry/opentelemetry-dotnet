@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -97,7 +95,7 @@ namespace OpenTelemetry.Exporter
                                 ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", listKvp[i].Value)
                                 : listKvp[i];
 
-                            if (ConsoleTagTransformer.Instance.TryTransformTag(listKvp[i], out var result))
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                             {
                                 this.WriteLine($"{string.Empty,-4}{result}");
                             }

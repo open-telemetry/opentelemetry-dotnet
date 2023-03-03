@@ -16,7 +16,6 @@
 
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Tests.Stress;
 
@@ -37,7 +36,7 @@ public partial class Program
 
         logger = loggerFactory.CreateLogger<Program>();
 
-        Stress(prometheusPort: 9184);
+        Stress(prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

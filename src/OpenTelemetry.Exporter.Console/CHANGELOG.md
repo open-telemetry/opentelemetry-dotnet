@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## 1.4.0
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
+## 1.4.0-rc.2
+
+Released 2023-Jan-09
+
+## 1.4.0-rc.1
+
+Released 2022-Dec-12
+
+* Bug fix to prevent ConsoleExporter from failing when exporting an
+  `ActivityLink` without Tags.
+  ([#3932](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3932))
+
+## 1.4.0-beta.3
+
+Released 2022-Nov-07
+
 * Bumped the minimum required version of `System.Text.Json` to 4.7.2 in response
 to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
 ([#3789](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3789))

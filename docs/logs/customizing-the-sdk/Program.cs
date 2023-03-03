@@ -15,7 +15,6 @@
 // </copyright>
 
 using Microsoft.Extensions.Logging;
-
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
@@ -30,22 +29,26 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.ConfigureResource(r => r.AddService(serviceName: "MyService", serviceVersion: "1.0.0"));
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                    serviceName: "MyService",
+                    serviceVersion: "1.0.0"));
                 options.AddConsoleExporter();
             });
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
 
-        logger.LogInformation("Hello Information");
-        logger.LogWarning("Hello Warning");
-        logger.LogError("Hello Error");
+        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogWarning("Hello from {name} {price}.", "tomato", 2.99);
+        logger.LogError("Hello from {name} {price}.", "tomato", 2.99);
 
         // log with scopes
-        using (logger.BeginScope("operation"))
-        using (logger.BeginScope("hardware"))
+        using (logger.BeginScope(new List<KeyValuePair<string, object>>
         {
-            logger.LogError("{name} is broken.", "refrigerator");
+            new KeyValuePair<string, object>("store", "Seattle"),
+        }))
+        {
+            logger.LogInformation("Hello from {food} {price}.", "tomato", 2.99);
         }
     }
 }

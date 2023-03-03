@@ -14,28 +14,25 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
     public class TracerProviderBuilderExtensionsTest
     {
-        private const string ActivitySourceName = "TracerProviderBuilderExtensionsTest";
-
         [Fact]
         public void SetErrorStatusOnExceptionEnabled()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .SetErrorStatusOnException(false)
                 .SetErrorStatusOnException(false)
@@ -64,9 +61,10 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetErrorStatusOnExceptionDisabled()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .SetErrorStatusOnException()
                 .SetErrorStatusOnException(false)
@@ -91,9 +89,10 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void SetErrorStatusOnExceptionDefault()
         {
-            using var activitySource = new ActivitySource(ActivitySourceName);
+            var activitySourceName = Utils.GetCurrentMethodName();
+            using var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(ActivitySourceName)
+                .AddSource(activitySourceName)
                 .SetSampler(new AlwaysOnSampler())
                 .Build();
 
@@ -117,8 +116,6 @@ namespace OpenTelemetry.Trace.Tests
         public void ServiceLifecycleAvailableToSDKBuilderTest()
         {
             var builder = Sdk.CreateTracerProviderBuilder();
-
-            builder.ConfigureServices(services => services.AddSingleton<MyInstrumentation>());
 
             MyInstrumentation myInstrumentation = null;
 
@@ -145,81 +142,6 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotNull(myInstrumentation);
             Assert.True(myInstrumentation.Disposed);
-        }
-
-        [Fact]
-        public void ServiceLifecycleAvailableToServicesBuilderTest()
-        {
-            var services = new ServiceCollection();
-
-            bool testRun = false;
-
-            ServiceProvider serviceProvider = null;
-            TracerProviderSdk provider = null;
-
-            services.ConfigureOpenTelemetryTracing(builder =>
-            {
-                testRun = true;
-
-                RunBuilderServiceLifecycleTest(
-                    builder,
-                    () =>
-                    {
-                        // Note: Build can't be called directly on builder tied to external services
-                        Assert.Throws<NotSupportedException>(() => builder.Build());
-
-                        serviceProvider = services.BuildServiceProvider();
-
-                        provider = serviceProvider.GetRequiredService<TracerProvider>() as TracerProviderSdk;
-
-                        Assert.NotNull(provider);
-                        Assert.Null(provider.OwnedServiceProvider);
-
-                        return provider;
-                    },
-                    (provider) => { });
-            });
-
-            Assert.True(testRun);
-
-            Assert.NotNull(serviceProvider);
-            Assert.NotNull(provider);
-
-            Assert.False(provider.Disposed);
-
-            serviceProvider.Dispose();
-
-            Assert.True(provider.Disposed);
-        }
-
-        [Fact]
-        public void SingleProviderForServiceCollectionTest()
-        {
-            var services = new ServiceCollection();
-
-            services.ConfigureOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation<MyInstrumentation>(() => new());
-            });
-
-            services.ConfigureOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation<MyInstrumentation>(() => new());
-            });
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            Assert.NotNull(serviceProvider);
-
-            var tracerProviders = serviceProvider.GetServices<TracerProvider>();
-
-            Assert.Single(tracerProviders);
-
-            var provider = tracerProviders.First() as TracerProviderSdk;
-
-            Assert.NotNull(provider);
-
-            Assert.Equal(2, provider.Instrumentations.Count);
         }
 
         [Fact]
@@ -294,114 +216,6 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void AddExporterTest()
-        {
-            var builder = Sdk.CreateTracerProviderBuilder();
-
-            builder.AddExporter(ExportProcessorType.Simple, new MyExporter());
-            builder.AddExporter<MyExporter>(ExportProcessorType.Batch);
-
-            using var provider = builder.Build() as TracerProviderSdk;
-
-            Assert.NotNull(provider);
-
-            var processor = provider.Processor as CompositeProcessor<Activity>;
-
-            Assert.NotNull(processor);
-
-            var firstProcessor = processor.Head.Value;
-            var secondProcessor = processor.Head.Next?.Value;
-
-            Assert.True(firstProcessor is SimpleActivityExportProcessor simpleProcessor && simpleProcessor.Exporter is MyExporter);
-            Assert.True(secondProcessor is BatchActivityExportProcessor batchProcessor && batchProcessor.Exporter is MyExporter);
-        }
-
-        [Fact]
-        public void AddExporterWithOptionsTest()
-        {
-            int optionsInvocations = 0;
-
-            var builder = Sdk.CreateTracerProviderBuilder();
-
-            builder.ConfigureServices(services =>
-            {
-                services.Configure<ExportActivityProcessorOptions>(options =>
-                {
-                    // Note: This is testing options integration
-
-                    optionsInvocations++;
-
-                    options.BatchExportProcessorOptions.MaxExportBatchSize = 18;
-                });
-            });
-
-            builder.AddExporter(
-                ExportProcessorType.Simple,
-                new MyExporter(),
-                options =>
-                {
-                    // Note: Options delegate isn't invoked for simple processor type
-                    Assert.True(false);
-                });
-            builder.AddExporter<MyExporter>(
-                ExportProcessorType.Batch,
-                options =>
-                {
-                    optionsInvocations++;
-
-                    Assert.Equal(18, options.BatchExportProcessorOptions.MaxExportBatchSize);
-
-                    options.BatchExportProcessorOptions.MaxExportBatchSize = 100;
-                });
-
-            using var provider = builder.Build() as TracerProviderSdk;
-
-            Assert.NotNull(provider);
-
-            Assert.Equal(2, optionsInvocations);
-
-            var processor = provider.Processor as CompositeProcessor<Activity>;
-
-            Assert.NotNull(processor);
-
-            var firstProcessor = processor.Head.Value;
-            var secondProcessor = processor.Head.Next?.Value;
-
-            Assert.True(firstProcessor is SimpleActivityExportProcessor simpleProcessor && simpleProcessor.Exporter is MyExporter);
-            Assert.True(secondProcessor is BatchActivityExportProcessor batchProcessor
-                && batchProcessor.Exporter is MyExporter
-                && batchProcessor.MaxExportBatchSize == 100);
-        }
-
-        [Fact]
-        public void AddExporterNamedOptionsTest()
-        {
-            var builder = Sdk.CreateTracerProviderBuilder();
-
-            int defaultOptionsConfigureInvocations = 0;
-            int namedOptionsConfigureInvocations = 0;
-
-            builder.ConfigureServices(services =>
-            {
-                services.Configure<ExportActivityProcessorOptions>(o => defaultOptionsConfigureInvocations++);
-
-                services.Configure<ExportActivityProcessorOptions>("Exporter2", o => namedOptionsConfigureInvocations++);
-            });
-
-            builder.AddExporter(ExportProcessorType.Batch, new MyExporter());
-            builder.AddExporter(ExportProcessorType.Batch, new MyExporter(), name: "Exporter2", configure: null);
-            builder.AddExporter<MyExporter>(ExportProcessorType.Batch);
-            builder.AddExporter<MyExporter>(ExportProcessorType.Batch, name: "Exporter2", configure: null);
-
-            using var provider = builder.Build() as TracerProviderSdk;
-
-            Assert.NotNull(provider);
-
-            Assert.Equal(1, defaultOptionsConfigureInvocations);
-            Assert.Equal(1, namedOptionsConfigureInvocations);
-        }
-
-        [Fact]
         public void ConfigureBuilderIConfigurationAvailableTest()
         {
             Environment.SetEnvironmentVariable("TEST_KEY", "TEST_KEY_VALUE");
@@ -467,7 +281,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryTracing();
+                        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => { });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
@@ -483,26 +297,47 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void TracerProviderNestedResolutionUsingConfigureTest()
+        public void TracerProviderSetSamplerFactoryTest()
         {
-            bool innerTestExecuted = false;
+            bool factoryInvoked = false;
 
-            var serviceCollection = new ServiceCollection();
-
-            serviceCollection.ConfigureOpenTelemetryTracing(builder =>
-            {
-                builder.ConfigureBuilder((sp, builder) =>
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .SetSampler(sp =>
                 {
-                    innerTestExecuted = true;
-                    Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
-                });
-            });
+                    factoryInvoked = true;
 
-            using var serviceProvider = serviceCollection.BuildServiceProvider();
+                    Assert.NotNull(sp);
 
-            var resolvedProvider = serviceProvider.GetRequiredService<TracerProvider>();
+                    return new MySampler();
+                })
+                .Build() as TracerProviderSdk;
 
-            Assert.True(innerTestExecuted);
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(tracerProvider);
+            Assert.True(tracerProvider.Sampler is MySampler);
+        }
+
+        [Fact]
+        public void TracerProviderAddProcessorFactoryTest()
+        {
+            bool factoryInvoked = false;
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(sp =>
+                {
+                    factoryInvoked = true;
+
+                    Assert.NotNull(sp);
+
+                    return new MyProcessor();
+                })
+                .Build() as TracerProviderSdk;
+
+            Assert.True(factoryInvoked);
+
+            Assert.NotNull(tracerProvider);
+            Assert.True(tracerProvider.Processor is MyProcessor);
         }
 
         private static void RunBuilderServiceLifecycleTest(
@@ -511,11 +346,10 @@ namespace OpenTelemetry.Trace.Tests
             Action<TracerProviderSdk> postAction)
         {
             var baseBuilder = builder as TracerProviderBuilderBase;
-            Assert.Null(baseBuilder.State);
 
             builder
-                .AddSource("TestSource")
-                .AddLegacySource("TestLegacySource")
+                .AddSource("TestSource1")
+                .AddLegacySource("TestLegacySource1")
                 .SetSampler<MySampler>();
 
             bool configureServicesCalled = false;
@@ -525,12 +359,15 @@ namespace OpenTelemetry.Trace.Tests
 
                 Assert.NotNull(services);
 
+                services.TryAddSingleton<MyInstrumentation>();
                 services.TryAddSingleton<MyProcessor>();
 
-                services.ConfigureOpenTelemetryTracing(b =>
+                // Note: This is strange to call ConfigureOpenTelemetryTracerProvider here, but supported
+                services.ConfigureOpenTelemetryTracerProvider((sp, b) =>
                 {
-                    // Note: This is strange to call ConfigureOpenTelemetryTracing here, but supported
-                    b.AddInstrumentation<MyInstrumentation>();
+                    Assert.Throws<NotSupportedException>(() => b.ConfigureServices(services => { }));
+
+                    b.AddInstrumentation(sp.GetRequiredService<MyInstrumentation>());
                 });
             });
 
@@ -539,17 +376,17 @@ namespace OpenTelemetry.Trace.Tests
             {
                 configureBuilderInvocations++;
 
-                var baseBuilder = builder as TracerProviderBuilderBase;
-                Assert.NotNull(baseBuilder?.State);
+                var sdkBuilder = builder as TracerProviderBuilderSdk;
+                Assert.NotNull(sdkBuilder);
 
                 builder
                     .AddSource("TestSource2")
                     .AddLegacySource("TestLegacySource2");
 
-                Assert.Contains(baseBuilder.State.Sources, s => s == "TestSource");
-                Assert.Contains(baseBuilder.State.Sources, s => s == "TestSource2");
-                Assert.Contains(baseBuilder.State.LegacyActivityOperationNames, s => s == "TestLegacySource");
-                Assert.Contains(baseBuilder.State.LegacyActivityOperationNames, s => s == "TestLegacySource2");
+                Assert.Contains(sdkBuilder.Sources, s => s == "TestSource1");
+                Assert.Contains(sdkBuilder.Sources, s => s == "TestSource2");
+                Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource1");
+                Assert.Contains(sdkBuilder.LegacyActivityOperationNames, s => s == "TestLegacySource2");
 
                 // Note: Services can't be configured at this stage
                 Assert.Throws<NotSupportedException>(

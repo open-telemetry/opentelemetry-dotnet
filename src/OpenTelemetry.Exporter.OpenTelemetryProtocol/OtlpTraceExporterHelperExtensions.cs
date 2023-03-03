@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -60,34 +59,55 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
-            name ??= Options.DefaultName;
+            var finalOptionsName = name ?? Options.DefaultName;
 
             builder.ConfigureServices(services =>
             {
-                if (configure != null)
+                if (name != null && configure != null)
                 {
-                    services.Configure(name, configure);
+                    // If we are using named options we register the
+                    // configuration delegate into options pipeline.
+                    services.Configure(finalOptionsName, configure);
                 }
 
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-                services.RegisterOptionsFactory(configuration => new OtlpExporterOptions(configuration));
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddProcessor(sp =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
+                OtlpExporterOptions exporterOptions;
 
-                // Note: Not using name here for SdkLimitOptions. There should
-                // only be one provider for a given service collection so
-                // SdkLimitOptions is treated as a single default instance.
+                if (name == null)
+                {
+                    // If we are NOT using named options we create a new
+                    // instance always. The reason for this is
+                    // OtlpExporterOptions is shared by all signals. Without a
+                    // name, delegates for all signals will mix together. See:
+                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+                    exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+
+                    // Configuration delegate is executed inline on the fresh instance.
+                    configure?.Invoke(exporterOptions);
+                }
+                else
+                {
+                    // When using named options we can properly utilize Options
+                    // API to create or reuse an instance.
+                    exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+                }
+
+                // Note: Not using finalOptionsName here for SdkLimitOptions.
+                // There should only be one provider for a given service
+                // collection so SdkLimitOptions is treated as a single default
+                // instance.
                 var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
+                return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
             });
         }
 
-        internal static TracerProviderBuilder AddOtlpExporter(
-            TracerProviderBuilder builder,
+        internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
             OtlpExporterOptions exporterOptions,
             SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
@@ -104,18 +124,18 @@ namespace OpenTelemetry.Trace
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
+                return new SimpleActivityExportProcessor(otlpExporter);
             }
             else
             {
-                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new();
+                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
 
-                return builder.AddProcessor(new BatchActivityExportProcessor(
+                return new BatchActivityExportProcessor(
                     otlpExporter,
                     batchOptions.MaxQueueSize,
                     batchOptions.ScheduledDelayMilliseconds,
                     batchOptions.ExporterTimeoutMilliseconds,
-                    batchOptions.MaxExportBatchSize));
+                    batchOptions.MaxExportBatchSize);
             }
         }
     }

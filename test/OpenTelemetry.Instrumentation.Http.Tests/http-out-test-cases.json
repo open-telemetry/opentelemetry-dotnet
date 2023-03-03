@@ -9,8 +9,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/"
     }
@@ -25,8 +26,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "POST",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/"
     }
@@ -42,8 +44,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/path/to/resource/"
     }
@@ -59,8 +62,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
@@ -76,8 +80,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
@@ -85,35 +90,37 @@
   {
     "name": "Call that cannot resolve DNS will be reported as error span",
     "method": "GET",
-    "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
+    "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "Error",
     "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": false,
     "spanAttributes": {
-      "http.scheme": "https",
+      "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
-      "http.flavor": "2.0",
-      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
+      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
+      "http.url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
     }
   },
   {
     "name": "Call that cannot resolve DNS will be reported as error span. And Records exception",
     "method": "GET",
-    "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
+    "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "Error",
     "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": true,
     "spanAttributes": {
-      "http.scheme": "https",
+      "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
-      "http.flavor": "2.0",
-      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
+      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
+      "http.url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
     }
   },
   {
@@ -127,8 +134,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/"
     }
@@ -144,8 +152,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/"
     }
@@ -161,8 +170,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "399",
       "http.url": "http://{host}:{port}/"
     }
@@ -178,8 +188,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "400",
       "http.url": "http://{host}:{port}/"
     }
@@ -195,8 +206,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "401",
       "http.url": "http://{host}:{port}/"
     }
@@ -212,8 +224,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "403",
       "http.url": "http://{host}:{port}/"
     }
@@ -229,8 +242,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "404",
       "http.url": "http://{host}:{port}/"
     }
@@ -246,8 +260,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "429",
       "http.url": "http://{host}:{port}/"
     }
@@ -263,8 +278,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "501",
       "http.url": "http://{host}:{port}/"
     }
@@ -280,8 +296,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "503",
       "http.url": "http://{host}:{port}/"
     }
@@ -297,8 +314,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "504",
       "http.url": "http://{host}:{port}/"
     }
@@ -314,8 +332,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "600",
       "http.url": "http://{host}:{port}/"
     }
@@ -331,8 +350,9 @@
     "spanAttributes": {
       "http.scheme": "http",
       "http.method": "GET",
-      "http.host": "{host}:{port}",
-      "http.flavor": "2.0",
+      "net.peer.name": "{host}",
+      "net.peer.port": "{port}",
+      "http.flavor": "{flavor}",
       "http.status_code": "200",
       "http.url": "http://{host}:{port}/"
     }

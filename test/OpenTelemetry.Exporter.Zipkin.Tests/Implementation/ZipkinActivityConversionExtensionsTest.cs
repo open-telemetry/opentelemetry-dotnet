@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 using Xunit;
@@ -36,7 +35,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            Activity activity = new Activity("TestActivity");
+            using var activity = new Activity("TestActivity");
             activity.SetTag(key, value);
 
             attributeEnumerationState.EnumerateTags(activity);
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            Activity activity = new Activity("TestActivity");
+            using var activity = new Activity("TestActivity");
             activity.SetTag(key, value);
 
             attributeEnumerationState.EnumerateTags(activity);

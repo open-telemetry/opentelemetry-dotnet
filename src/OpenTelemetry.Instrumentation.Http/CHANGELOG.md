@@ -2,7 +2,48 @@
 
 ## Unreleased
 
-* *Breaking change** The `Enrich` callback option has been removed. For better
+* Fixed an issue of missing `http.client.duration` metric data in case of
+network failures (when response is not available).
+([#4098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4098))
+
+## 1.0.0-rc9.14
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
+## 1.4.0-rc9.13
+
+Released 2023-Feb-10
+
+## 1.0.0-rc9.12
+
+Released 2023-Feb-01
+
+## 1.0.0-rc9.11
+
+Released 2023-Jan-09
+
+## 1.0.0-rc9.10
+
+Released 2022-Dec-12
+
+* Added `net.peer.name` and `net.peer.port` as dimensions on
+  `http.client.duration` metric.
+  ([#3907](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3907))
+
+* **Breaking change** `http.host` will no longer be populated on activity.
+  `net.peer.name` and `net.peer.port` attributes will be populated instead.
+  ([#3832](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3832))
+
+## 1.0.0-rc9.9
+
+Released 2022-Nov-07
+
+* Added back `netstandard2.0` target.
+  ([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
+
+* **Breaking change**: The `Enrich` callback option has been removed. For better
   usability, it has been replaced by three separate options: In case of
   `HttpClient` the new options are `EnrichWithHttpRequestMessage`,
   `EnrichWithHttpResponseMessage` and `EnrichWithException` and in case of
@@ -15,11 +56,18 @@
   `HttpClient` and `HttpWebRequest`,`HttpWebResponse` and `Exception` in case of
   `HttpWebRequest`. The separate callbacks make it clear what event triggers
   them and there is no longer the need to cast the argument to the expected
-type.
-([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
+  type.
+  ([#3792](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3792))
 
-* Added back `netstandard2.0` target.
-([#3787](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3787))
+* Fixed an issue which prevented custom propagators from being called on .NET 7+
+  runtimes for non-sampled outgoing `HttpClient` spans.
+  ([#3828](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3828))
+
+* **Breaking change**: The same API is now exposed for `net462` and
+  `netstandard2.0` targets. The `Filter` property on options is now exposed as
+  `FilterHttpRequestMessage` (called for .NET & .NET Core) and
+  `FilterHttpWebRequest` (called for .NET Framework).
+  ([#3793](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3793))
 
 ## 1.0.0-rc9.8
 

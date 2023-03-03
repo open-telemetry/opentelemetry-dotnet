@@ -14,16 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
 using Xunit;
@@ -58,12 +56,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
+                {
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
-                        .AddInMemoryExporter(exportedItems));
-                    }))
+                        services.AddOpenTelemetry()
+                            .WithTracing(builder => builder
+                                .AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
+                                .AddInMemoryExporter(exportedItems));
+                    });
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
                 .CreateClient())
             {
                 try
@@ -80,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         path += query;
                     }
 
-                    var response = await client.GetAsync(path);
+                    using var response = await client.GetAsync(path).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
@@ -97,7 +100,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     // We need to let End callback execute as it is executed AFTER response was returned.
                     // In unit tests environment there may be a lot of parallel unit tests executed, so
                     // giving some breezing room for the End callback to complete
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                 }
             }
 
@@ -105,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = exportedItems[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
-            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeHttpFlavor));
             Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeHttpScheme));
@@ -171,7 +174,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 context.Response.StatusCode = this.statusCode;
                 context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = this.reasonPhrase;
-                await context.Response.WriteAsync("empty");
+                await context.Response.WriteAsync("empty").ConfigureAwait(false);
 
                 if (context.Request.Path.Value.EndsWith("exception"))
                 {

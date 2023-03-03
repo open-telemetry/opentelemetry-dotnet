@@ -98,9 +98,9 @@ namespace OpenTelemetry.Exporter
                         var sum = metricPoint.GetHistogramSum();
                         var count = metricPoint.GetHistogramCount();
                         bucketsBuilder.Append($"Sum: {sum} Count: {count} ");
-                        if (metricPoint.HasMinMax())
+                        if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
                         {
-                            bucketsBuilder.Append($"Min: {metricPoint.GetHistogramMin()} Max: {metricPoint.GetHistogramMax()} ");
+                            bucketsBuilder.Append($"Min: {min} Max: {max} ");
                         }
 
                         bucketsBuilder.AppendLine();
@@ -127,6 +127,7 @@ namespace OpenTelemetry.Exporter
                                 if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
                                     bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                    previousExplicitBound = histogramMeasurement.ExplicitBound;
                                 }
                                 else
                                 {
@@ -166,6 +167,38 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
+                    var exemplarString = new StringBuilder();
+                    foreach (var exemplar in metricPoint.GetExemplars())
+                    {
+                        if (exemplar.Timestamp != default)
+                        {
+                            exemplarString.Append("Value: ");
+                            exemplarString.Append(exemplar.DoubleValue);
+                            exemplarString.Append(" Timestamp: ");
+                            exemplarString.Append(exemplar.Timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                            exemplarString.Append(" TraceId: ");
+                            exemplarString.Append(exemplar.TraceId);
+                            exemplarString.Append(" SpanId: ");
+                            exemplarString.Append(exemplar.SpanId);
+
+                            if (exemplar.FilteredTags != null && exemplar.FilteredTags.Count > 0)
+                            {
+                                exemplarString.Append(" Filtered Tags : ");
+
+                                foreach (var tag in exemplar.FilteredTags)
+                                {
+                                    if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                                    {
+                                        exemplarString.Append(result);
+                                        exemplarString.Append(' ');
+                                    }
+                                }
+                            }
+
+                            exemplarString.AppendLine();
+                        }
+                    }
+
                     msg = new StringBuilder();
                     msg.Append('(');
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
@@ -181,6 +214,14 @@ namespace OpenTelemetry.Exporter
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
+
+                    if (exemplarString.Length > 0)
+                    {
+                        msg.AppendLine();
+                        msg.AppendLine("Exemplars");
+                        msg.Append(exemplarString.ToString());
+                    }
+
                     this.WriteLine(msg.ToString());
                 }
             }

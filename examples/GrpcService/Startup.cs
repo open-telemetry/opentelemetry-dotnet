@@ -14,13 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -39,34 +32,35 @@ namespace Examples.GrpcService
         {
             services.AddGrpc();
 
-            // Switch between Jaeger/Zipkin by setting UseExporter in appsettings.json.
-            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
-            switch (exporter)
-            {
-                case "jaeger":
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
-                        .AddAspNetCoreInstrumentation()
-                        .AddJaegerExporter(jaegerOptions =>
-                        {
-                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
-                        }));
-                    break;
-                case "zipkin":
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
-                        .AddZipkinExporter(zipkinOptions =>
-                        {
-                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
-                        }));
-                    break;
-                default:
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
-                        .AddConsoleExporter());
-                    break;
-            }
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
+                {
+                    builder
+                        .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")))
+                        .AddAspNetCoreInstrumentation();
+
+                    // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
+                    var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+                    switch (exporter)
+                    {
+                        case "jaeger":
+                            builder.AddJaegerExporter(jaegerOptions =>
+                            {
+                                jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
+                                jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                            });
+                            break;
+                        case "zipkin":
+                            builder.AddZipkinExporter(zipkinOptions =>
+                            {
+                                zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                            });
+                            break;
+                        default:
+                            builder.AddConsoleExporter();
+                            break;
+                    }
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -84,7 +78,7 @@ namespace Examples.GrpcService
 
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                    await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909").ConfigureAwait(false);
                 });
             });
         }

@@ -101,7 +101,8 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-**Note:** A common mistake while configuring `MeterProvider` is forgetting to
+> **Note**
+> A common mistake while configuring `MeterProvider` is forgetting to
 add the required `Meter`s to the provider. It is recommended to leverage the
 wildcard subscription model where it makes sense. For example, if your
 application is expecting to enable instruments from a number of libraries from a
@@ -204,7 +205,7 @@ with the metric are of interest to you.
         instrumentName: "MyFruitCounter",
         metricStreamConfiguration: new MetricStreamConfiguration
         {
-            TagKeys = new string[] { },
+            TagKeys = Array.Empty<string>(),
         })
 
     ...
@@ -251,11 +252,11 @@ default boundaries. This requires the use of
         new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
 
     // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
-    // the SDK will only export the sum and count for the measurements.
+    // the SDK will only export the sum, count, min and max for the measurements.
     // There are no buckets exported in this case.
     .AddView(
         instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
+        new ExplicitBucketHistogramConfiguration { Boundaries = Array.Empty<double>() })
 ```
 
 ```csharp
@@ -276,7 +277,8 @@ default boundaries. This requires the use of
     })
 ```
 
-**NOTE:** The SDK currently does not support any changes to `Aggregation` type
+> **Note**
+> The SDK currently does not support any changes to `Aggregation` type
 by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
@@ -329,9 +331,10 @@ ignored. The SDK chooses the key/value combinations in the order in which they
 are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
-**NOTE**: One `MetricPoint` is reserved for every `MetricStream` for the special
-case where there is no key/value pair associated with the metric. The maximum
-number of `MetricPoint`s has to accommodate for this special case.
+> **Note**
+> One `MetricPoint` is reserved for every `MetricStream` for the
+special case where there is no key/value pair associated with the metric. The
+maximum number of `MetricPoint`s has to accommodate for this special case.
 
 Consider the below example. Here we set the maximum number of `MetricPoint`s
 allowed to be `3`. This means that for every `MetricStream`, the SDK will export
@@ -395,9 +398,74 @@ AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Ex
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
 
-**NOTE:** The above limit is *per* metric stream, and applies to all the metric
+> **Note**
+> The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at
 this moment.
+
+### Exemplars
+
+Exemplars are example data points for aggregated data. They provide access to
+the raw measurement value, time stamp when measurement was made, and trace
+context, if any. It also provides "Filtered Tags", which are attributes (Tags)
+that are [dropped by a view](#select-specific-tags). Exemplars are an opt-in
+feature, and allow customization via ExemplarFilter and ExemplarReservoir.
+
+#### ExemplarFilter
+
+`ExemplarFilter` determines which measurements are eligible to become an
+Exemplar. i.e. `ExemplarFilter` determines which measurements are offered to
+`ExemplarReservoir`, which makes the final decision about whether the offered
+measurement gets stored as an exemplar. They can be used to control the noise
+and overhead associated with Exemplar collection.
+
+OpenTelemetry SDK comes with the following Filters:
+
+* `AlwaysOnExemplarFilter` - makes all measurements eligible for being an Exemplar.
+* `AlwaysOffExemplarFilter` - makes no measurements eligible for being an
+  Exemplar. Use this to turn-off Exemplar feature.
+* `TraceBasedExemplarFilter` - makes those measurements eligible for being an
+Exemplar, which are recorded in the context of a sampled parent `Activity`
+(span).
+
+`SetExemplarFilter` method on `MeterProviderBuilder` can be used to set the
+desired `ExemplarFilter`.
+
+The snippet below shows how to set `ExemplarFilter`.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    // rest of config not shown
+    .SetExemplarFilter(new TraceBasedExemplarFilter())
+    .Build();
+```
+
+> **Note**
+> As of today, there is no separate toggle for enable/disable Exemplar
+feature. It can be turned off by using `AlwaysOffExemplarFilter`.
+
+If the built-in `ExemplarFilter`s are not meeting the needs, one may author
+custom `ExemplarFilter` as shown
+[here](../extending-the-sdk/README.md#exemplarfilter). A custom filter, which
+eliminates all un-interesting measurements from becoming Exemplar is a
+recommended way to control performance overhead associated with collecting
+Exemplars. See
+[benchmark](../../../test/Benchmarks/Metrics/ExemplarBenchmarks.cs) to see how
+much impact can `ExemplarFilter` have on performance.
+
+#### ExemplarReservoir
+
+`ExemplarReservoir` receives the measurements sampled in by the `ExemplarFilter`
+and is responsible for storing Exemplars.
+`AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
+Histograms with buckets, and it stores one exemplar per histogram bucket. The
+exemplar stored is the last measurement recorded - i.e. any new measurement
+overwrites the previous one.
+
+Currently there is no ability to change the Reservoir used.
 
 ### Instrumentation
 
