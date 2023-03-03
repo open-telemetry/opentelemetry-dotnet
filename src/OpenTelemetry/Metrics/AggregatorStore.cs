@@ -339,6 +339,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
+                // TODO: can special case built-in filters to be bit faster.
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
@@ -370,6 +371,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
+                // TODO: can special case built-in filters to be bit faster.
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
@@ -401,6 +403,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
+                // TODO: can special case built-in filters to be bit faster.
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
@@ -432,6 +435,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
+                // TODO: can special case built-in filters to be bit faster.
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
