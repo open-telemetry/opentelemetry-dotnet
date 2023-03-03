@@ -20,12 +20,12 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
-        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
         {
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
             histogramPoint.Update(-1);
             histogramPoint.Update(0);
             histogramPoint.Update(2);
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramDistributeToAllBucketsCustom()
         {
             var boundaries = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Metrics.Tests
                 boundaries[i] = i;
             }
 
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             // Act
             histogramPoint.Update(-1);
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramWithOnlySumCount()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);
@@ -181,6 +181,96 @@ namespace OpenTelemetry.Metrics.Tests
             // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
             var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
             Assert.False(enumerator.MoveNext());
+        }
+
+        [Theory]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
+        internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality)
+        {
+            var aggregatorStore = new AggregatorStore(
+                $"{nameof(this.ExponentialHistogramTests)}",
+                aggregationType,
+                aggregationTemporality,
+                maxMetricPoints: 1024,
+                Metric.DefaultHistogramBounds,
+                Metric.DefaultExponentialHistogramMaxBuckets);
+
+            var metricPoint = new MetricPoint(
+                aggregatorStore,
+                aggregationType, // TODO: Why is this here? AggregationType is already declared when AggregatorStore was instantiated.
+                tagKeysAndValues: null,
+                Metric.DefaultHistogramBounds,
+                Metric.DefaultExponentialHistogramMaxBuckets);
+
+            metricPoint.Update(-10);
+            metricPoint.Update(0);
+            metricPoint.Update(1);
+            metricPoint.Update(9);
+            metricPoint.Update(10);
+            metricPoint.Update(11);
+            metricPoint.Update(19);
+
+            metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
+
+            var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+            var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+
+            if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
+            {
+                Assert.True(hasMinMax);
+                Assert.Equal(-10, min);
+                Assert.Equal(19, max);
+            }
+            else
+            {
+                Assert.False(hasMinMax);
+            }
+
+            metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
+
+            count = metricPoint.GetHistogramCount();
+            sum = metricPoint.GetHistogramSum();
+            hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out min, out max);
+
+            if (aggregationTemporality == AggregationTemporality.Cumulative)
+            {
+                Assert.Equal(40, sum);
+                Assert.Equal(7, count);
+
+                if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
+                {
+                    Assert.True(hasMinMax);
+                    Assert.Equal(-10, min);
+                    Assert.Equal(19, max);
+                }
+                else
+                {
+                    Assert.False(hasMinMax);
+                }
+            }
+            else
+            {
+                Assert.Equal(0, sum);
+                Assert.Equal(0, count);
+
+                if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
+                {
+                    Assert.True(hasMinMax);
+                    Assert.Equal(double.PositiveInfinity, min);
+                    Assert.Equal(double.NegativeInfinity, max);
+                }
+                else
+                {
+                    Assert.False(hasMinMax);
+                }
+            }
         }
     }
 }
