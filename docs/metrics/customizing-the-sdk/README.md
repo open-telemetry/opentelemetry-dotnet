@@ -411,6 +411,24 @@ context, if any. It also provides "Filtered Tags", which are attributes (Tags)
 that are [dropped by a view](#select-specific-tags). Exemplars are an opt-in
 feature, and allow customization via ExemplarFilter and ExemplarReservoir.
 
+#### Enabling Exemplars
+
+Exemplars feature is not enabled by default. The following
+snippet shows how to enable the feature.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    // rest of config not shown
+    .EnableExemplar()
+    .Build();
+```
+
+Enabling Exemplar as shown here will enable it default settings for
+[ExemplarFilter](#exemplarfilter) and [ExemplarReservoir](#exemplarreservoir).
+
 #### ExemplarFilter
 
 `ExemplarFilter` determines which measurements are eligible to become an
@@ -423,10 +441,10 @@ OpenTelemetry SDK comes with the following Filters:
 
 * `AlwaysOnExemplarFilter` - makes all measurements eligible for being an Exemplar.
 * `AlwaysOffExemplarFilter` - makes no measurements eligible for being an
-  Exemplar. Use this to turn-off Exemplar feature.
-* `TraceBasedExemplarFilter` - makes those measurements eligible for being an
-Exemplar, which are recorded in the context of a sampled parent `Activity`
-(span).
+  Exemplar. Using this is as good as turning-off Exemplar feature.
+* `TraceBasedExemplarFilter` - (Default) makes those measurements eligible for
+being an Exemplar, which are recorded in the context of a sampled parent
+`Activity` (span).
 
 `SetExemplarFilter` method on `MeterProviderBuilder` can be used to set the
 desired `ExemplarFilter`.
@@ -442,10 +460,6 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetExemplarFilter(new TraceBasedExemplarFilter())
     .Build();
 ```
-
-> **Note**
-> As of today, there is no separate toggle for enable/disable Exemplar
-feature. It can be turned off by using `AlwaysOffExemplarFilter`.
 
 If the built-in `ExemplarFilter`s are not meeting the needs, one may author
 custom `ExemplarFilter` as shown
@@ -463,7 +477,10 @@ and is responsible for storing Exemplars.
 `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
 Histograms with buckets, and it stores one exemplar per histogram bucket. The
 exemplar stored is the last measurement recorded - i.e. any new measurement
-overwrites the previous one.
+overwrites the previous one. `SimpleExemplarReservoir` is the default reservoir
+used for all other metric types. This exemplar uses the equivalent of [naive
+reservoir sampling](https://en.wikipedia.org/wiki/Reservoir_sampling) algorithm
+to determine which measurements gets stored as exemplars.
 
 Currently there is no ability to change the Reservoir used.
 

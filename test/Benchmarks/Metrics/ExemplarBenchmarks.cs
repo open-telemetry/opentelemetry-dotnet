@@ -85,6 +85,7 @@ namespace Benchmarks.Metrics
 
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
+                .EnableExemplar()
                 .SetExemplarFilter(exemplarFilter)
                 .AddView("HistogramWithTagReduction", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
