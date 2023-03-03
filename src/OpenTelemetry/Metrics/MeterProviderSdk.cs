@@ -81,6 +81,10 @@ namespace OpenTelemetry.Metrics
                 reader.SetMaxMetricStreams(state.MaxMetricStreams);
                 reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
                 reader.SetExemplarFilter(state.ExemplarFilter);
+                if (state.EnableExemplarSampling)
+                {
+                    reader.EnableExemplar();
+                }
 
                 if (this.reader == null)
                 {

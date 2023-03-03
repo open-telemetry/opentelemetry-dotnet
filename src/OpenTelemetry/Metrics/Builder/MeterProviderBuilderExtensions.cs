@@ -326,6 +326,24 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Enables Exemplars.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder EnableExemplar(this MeterProviderBuilder meterProviderBuilder)
+        {
+            meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+                {
+                    meterProviderBuilderSdk.EnableExemplar();
+                }
+            });
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Run the given actions to initialize the <see cref="MeterProvider"/>.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>

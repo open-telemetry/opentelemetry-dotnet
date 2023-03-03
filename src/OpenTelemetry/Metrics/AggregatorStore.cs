@@ -43,6 +43,7 @@ namespace OpenTelemetry.Metrics
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
         private readonly ExemplarFilter exemplarFilter;
+        private readonly bool enableExemplarSampling;
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
@@ -56,7 +57,8 @@ namespace OpenTelemetry.Metrics
             double[] histogramBounds,
             int exponentialHistogramMaxBuckets,
             string[] tagKeysInteresting = null,
-            ExemplarFilter exemplarFilter = null)
+            ExemplarFilter exemplarFilter = null,
+            bool enableExemplarSampling = false)
         {
             this.name = name;
             this.maxMetricPoints = maxMetricPoints;
@@ -68,8 +70,8 @@ namespace OpenTelemetry.Metrics
             this.histogramBounds = histogramBounds;
             this.exponentialHistogramMaxBuckets = exponentialHistogramMaxBuckets;
             this.StartTimeExclusive = DateTimeOffset.UtcNow;
-
-            this.exemplarFilter = exemplarFilter ?? new AlwaysOffExemplarFilter();
+            this.exemplarFilter = exemplarFilter ?? new TraceBasedExemplarFilter();
+            this.enableExemplarSampling = enableExemplarSampling && this.exemplarFilter is not AlwaysOffExemplarFilter;
             if (tagKeysInteresting == null)
             {
                 this.updateLongCallback = this.UpdateLong;
@@ -95,9 +97,7 @@ namespace OpenTelemetry.Metrics
 
         internal bool IsExemplarEnabled()
         {
-            // Using this filter to indicate On/Off
-            // instead of another separate flag.
-            return this.exemplarFilter is not AlwaysOffExemplarFilter;
+            return this.enableExemplarSampling;
         }
 
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
@@ -137,7 +137,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                if (this.IsExemplarEnabled())
+                if (this.enableExemplarSampling)
                 {
                     metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
                 }
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                if (this.IsExemplarEnabled())
+                if (this.enableExemplarSampling)
                 {
                     metricPoint.TakeSnapshotWithExemplar(outputDelta: false);
                 }
@@ -339,10 +339,10 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                // TODO: can special case built-in filters to be bit faster.
-                if (this.exemplarFilter.ShouldSample(value, tags))
+                if (this.enableExemplarSampling)
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value, tags: default);
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
                 }
                 else
                 {
@@ -370,10 +370,10 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                // TODO: can special case built-in filters to be bit faster.
-                if (this.exemplarFilter.ShouldSample(value, tags))
+                if (this.enableExemplarSampling)
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
                 }
                 else
                 {
@@ -401,10 +401,10 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                // TODO: can special case built-in filters to be bit faster.
-                if (this.exemplarFilter.ShouldSample(value, tags))
+                if (this.enableExemplarSampling)
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value, tags: default);
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
                 }
                 else
                 {
@@ -432,10 +432,10 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                // TODO: can special case built-in filters to be bit faster.
-                if (this.exemplarFilter.ShouldSample(value, tags))
+                if (this.enableExemplarSampling)
                 {
-                    this.metricPoints[index].UpdateWithExemplar(value, tags);
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
                 }
                 else
                 {

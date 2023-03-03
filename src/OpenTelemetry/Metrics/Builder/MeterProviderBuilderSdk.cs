@@ -56,6 +56,8 @@ namespace OpenTelemetry.Metrics
 
         public ExemplarFilter? ExemplarFilter { get; private set; }
 
+        public bool EnableExemplarSampling { get; private set; }
+
         public MeterProvider? Provider => this.meterProvider;
 
         public List<MetricReader> Readers { get; } = new();
@@ -168,6 +170,12 @@ namespace OpenTelemetry.Metrics
 
             this.ExemplarFilter = exemplarFilter;
 
+            return this;
+        }
+
+        public MeterProviderBuilder EnableExemplar()
+        {
+            this.EnableExemplarSampling = true;
             return this;
         }
 

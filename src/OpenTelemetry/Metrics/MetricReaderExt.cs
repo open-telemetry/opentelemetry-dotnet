@@ -36,6 +36,8 @@ namespace OpenTelemetry.Metrics
 
         private ExemplarFilter exemplarFilter;
 
+        private bool enableExemplarSampling;
+
         internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
         {
             return this.temporalityFunc(instrumentType);
@@ -71,7 +73,7 @@ namespace OpenTelemetry.Metrics
                     Metric metric = null;
                     try
                     {
-                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
+                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter, enableExemplarSampling: this.enableExemplarSampling);
                     }
                     catch (NotSupportedException nse)
                     {
@@ -156,7 +158,7 @@ namespace OpenTelemetry.Metrics
                     }
                     else
                     {
-                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax, this.exemplarFilter);
+                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax, this.exemplarFilter, this.enableExemplarSampling);
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;
@@ -228,6 +230,11 @@ namespace OpenTelemetry.Metrics
         internal void SetExemplarFilter(ExemplarFilter exemplarFilter)
         {
             this.exemplarFilter = exemplarFilter;
+        }
+
+        internal void EnableExemplar()
+        {
+            this.enableExemplarSampling = true;
         }
 
         internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
