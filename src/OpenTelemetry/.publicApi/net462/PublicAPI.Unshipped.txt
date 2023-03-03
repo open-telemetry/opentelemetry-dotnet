@@ -1,0 +1,1 @@
+OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider!, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
