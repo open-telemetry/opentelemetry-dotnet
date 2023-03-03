@@ -6,7 +6,7 @@
   ([#4217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4217))
 
 * Added `AddDetector` factory overload on `ResourceBuilder`.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4261))
 
 ## 1.4.0
 
