@@ -400,7 +400,7 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-        internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags, bool isSampled)
         {
             switch (this.aggType)
             {
@@ -417,7 +417,10 @@ namespace OpenTelemetry.Metrics
                                     this.runningValue.AsLong += number;
                                 }
 
-                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                                if (isSampled)
+                                {
+                                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                                }
 
                                 // Release lock
                                 Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
@@ -616,7 +619,7 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-        internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags, bool isSampled)
         {
             switch (this.aggType)
             {
@@ -633,7 +636,10 @@ namespace OpenTelemetry.Metrics
                                     this.runningValue.AsDouble += number;
                                 }
 
-                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                                if (isSampled)
+                                {
+                                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                                }
 
                                 // Release lock
                                 Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
