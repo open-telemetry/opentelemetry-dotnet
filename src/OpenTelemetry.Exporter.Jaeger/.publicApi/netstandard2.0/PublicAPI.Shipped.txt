@@ -24,4 +24,6 @@ OpenTelemetry.Exporter.JaegerExportProtocol.UdpCompactThrift = 0 -> OpenTelemetr
 OpenTelemetry.Trace.JaegerExporterHelperExtensions
 override OpenTelemetry.Exporter.JaegerExporter.Dispose(bool disposing) -> void
 override OpenTelemetry.Exporter.JaegerExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
-static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.JaegerExporterHelperExtensions.AddJaegerExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.JaegerExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
