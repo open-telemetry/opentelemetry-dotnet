@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added `AddDetector` factory overload on `ResourceBuilder`.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.4.0
 
 Released 2023-Feb-24
