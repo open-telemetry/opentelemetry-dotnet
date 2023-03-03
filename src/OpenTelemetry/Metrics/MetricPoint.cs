@@ -24,6 +24,9 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public struct MetricPoint
     {
+        // TODO: Ask spec to define a default value for this.
+        private const int DefaultSimpleReservoirPoolSize = 10;
+
         private readonly AggregatorStore aggregatorStore;
 
         private readonly AggregationType aggType;
@@ -55,6 +58,7 @@ namespace OpenTelemetry.Metrics
             this.deltaLastValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
+            ExemplarReservoir reservoir = null;
             if (this.aggType == AggregationType.HistogramWithBuckets ||
                 this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
@@ -62,7 +66,7 @@ namespace OpenTelemetry.Metrics
                 this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
                 if (aggregatorStore.IsExemplarEnabled())
                 {
-                    this.mpComponents.ExemplarReservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Length);
+                    reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Length);
                 }
             }
             else if (this.aggType == AggregationType.Histogram ||
@@ -80,6 +84,21 @@ namespace OpenTelemetry.Metrics
             else
             {
                 this.mpComponents = null;
+            }
+
+            if (aggregatorStore.IsExemplarEnabled() && reservoir == null)
+            {
+                reservoir = new SimpleExemplarReservoir(DefaultSimpleReservoirPoolSize);
+            }
+
+            if (reservoir != null)
+            {
+                if (this.mpComponents == null)
+                {
+                    this.mpComponents = new MetricPointOptionalComponents();
+                }
+
+                this.mpComponents.ExemplarReservoir = reservoir;
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.
@@ -298,7 +317,7 @@ namespace OpenTelemetry.Metrics
         public readonly Exemplar[] GetExemplars()
         {
             // TODO: Do not expose Exemplar data structure (array now)
-            return this.mpComponents.Exemplars ?? Array.Empty<Exemplar>();
+            return this.mpComponents?.Exemplars ?? Array.Empty<Exemplar>();
         }
 
         internal readonly MetricPoint Copy()
@@ -387,31 +406,83 @@ namespace OpenTelemetry.Metrics
             {
                 case AggregationType.LongSumIncomingDelta:
                     {
-                        Interlocked.Add(ref this.runningValue.AsLong, number);
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsLong += number;
+                                }
+
+                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
                         break;
                     }
 
                 case AggregationType.LongSumIncomingCumulative:
                     {
-                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.runningValue.AsLong = number;
+                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
                         break;
                     }
 
                 case AggregationType.LongGauge:
                     {
-                        Interlocked.Exchange(ref this.runningValue.AsLong, number);
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.runningValue.AsLong = number;
+                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
                         break;
                     }
 
                 case AggregationType.Histogram:
                     {
-                        this.UpdateHistogram((double)number);
+                        this.UpdateHistogram((double)number, tags, true);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        this.UpdateHistogramWithMinMax((double)number);
+                        this.UpdateHistogramWithMinMax((double)number, tags, true);
                         break;
                     }
 
@@ -551,19 +622,21 @@ namespace OpenTelemetry.Metrics
             {
                 case AggregationType.DoubleSumIncomingDelta:
                     {
-                        double initValue, newValue;
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            initValue = this.runningValue.AsDouble;
-
-                            unchecked
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
                             {
-                                newValue = initValue + number;
-                            }
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsDouble += number;
+                                }
 
-                            if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
-                            {
+                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -575,25 +648,65 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.DoubleSumIncomingCumulative:
                     {
-                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsDouble = number;
+                                }
+
+                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
                         break;
                     }
 
                 case AggregationType.DoubleGauge:
                     {
-                        Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                unchecked
+                                {
+                                    this.runningValue.AsDouble = number;
+                                }
+
+                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
                         break;
                     }
 
                 case AggregationType.Histogram:
                     {
-                        this.UpdateHistogram(number);
+                        this.UpdateHistogram(number, tags, true);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        this.UpdateHistogramWithMinMax(number);
+                        this.UpdateHistogramWithMinMax(number, tags, true);
                         break;
                     }
 
@@ -956,7 +1069,286 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogram(double number)
+        internal void TakeSnapshotWithExemplar(bool outputDelta)
+        {
+            switch (this.aggType)
+            {
+                case AggregationType.LongSumIncomingDelta:
+                case AggregationType.LongSumIncomingCumulative:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+
+                                if (outputDelta)
+                                {
+                                    long initValue = this.runningValue.AsLong;
+                                    this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
+                                    this.deltaLastValue.AsLong = initValue;
+                                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                                }
+                                else
+                                {
+                                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                }
+
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.DoubleSumIncomingDelta:
+                case AggregationType.DoubleSumIncomingCumulative:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+
+                                if (outputDelta)
+                                {
+                                    double initValue = this.runningValue.AsDouble;
+                                    this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
+                                    this.deltaLastValue.AsDouble = initValue;
+                                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                                }
+                                else
+                                {
+                                    this.snapshotValue.AsDouble = this.runningValue.AsDouble;
+                                }
+
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.LongGauge:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.DoubleGauge:
+                    {
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+
+                                this.snapshotValue.AsDouble = this.runningValue.AsDouble;
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramWithBuckets:
+                    {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    histogramBuckets.RunningSum = 0;
+                                }
+
+                                for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                                {
+                                    histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
+                                    if (outputDelta)
+                                    {
+                                        histogramBuckets.RunningBucketCounts[i] = 0;
+                                    }
+                                }
+
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    histogramBuckets.RunningSum = 0;
+                                }
+
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMaxBuckets:
+                    {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                                histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                                histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    histogramBuckets.RunningSum = 0;
+                                    histogramBuckets.RunningMin = double.PositiveInfinity;
+                                    histogramBuckets.RunningMax = double.NegativeInfinity;
+                                }
+
+                                for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                                {
+                                    histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
+                                    if (outputDelta)
+                                    {
+                                        histogramBuckets.RunningBucketCounts[i] = 0;
+                                    }
+                                }
+
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramWithMinMax:
+                    {
+                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                                histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                                histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    histogramBuckets.RunningSum = 0;
+                                    histogramBuckets.RunningMin = double.PositiveInfinity;
+                                    histogramBuckets.RunningMax = double.NegativeInfinity;
+                                }
+
+                                this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+            }
+        }
+
+        private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
             var histogramBuckets = this.mpComponents.HistogramBuckets;
             var sw = default(SpinWait);
@@ -971,6 +1363,11 @@ namespace OpenTelemetry.Metrics
                         histogramBuckets.RunningSum += number;
                     }
 
+                    if (reportExemplar)
+                    {
+                        this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                    }
+
                     // Release lock
                     Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
                     break;
@@ -980,7 +1377,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void UpdateHistogramWithMinMax(double number)
+        private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
             var histogramBuckets = this.mpComponents.HistogramBuckets;
             var sw = default(SpinWait);
@@ -995,6 +1392,11 @@ namespace OpenTelemetry.Metrics
                         histogramBuckets.RunningSum += number;
                         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
                         histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
+                    }
+
+                    if (reportExemplar)
+                    {
+                        this.mpComponents.ExemplarReservoir.Offer(number, tags);
                     }
 
                     // Release lock

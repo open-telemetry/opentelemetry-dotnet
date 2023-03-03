@@ -137,7 +137,15 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(outputDelta: true);
+                if (this.IsExemplarEnabled())
+                {
+                    metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
+                }
+                else
+                {
+                    metricPoint.TakeSnapshot(outputDelta: true);
+                }
+
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -158,7 +166,15 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(outputDelta: false);
+                if (this.IsExemplarEnabled())
+                {
+                    metricPoint.TakeSnapshotWithExemplar(outputDelta: false);
+                }
+                else
+                {
+                    metricPoint.TakeSnapshot(outputDelta: false);
+                }
+
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
