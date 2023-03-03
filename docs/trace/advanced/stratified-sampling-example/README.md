@@ -1,6 +1,7 @@
 # Stratified Sampling: An Example
 
-This example shows how to achieve stratified sampling in OpenTelemetry.NET.
+This example shows one possible way to achieve stratified sampling in
+OpenTelemetry.NET.
 
 ## What is stratified sampling?
 
@@ -18,16 +19,17 @@ Based on the stratum, the appropriate sampler is invoked.
 One prerequisite for this is that the tag (e.g. queryType) used for the
 stratified sampling decision must be provided as part of activity creation.
 
-We use disproportionate stratified sampling here - i.e., the sample size of
-each sub-population is not proportionate to their occurrence in the overall
-population. In this example, we want to ensure that all user initiated queries
-are represented, so we use a 100% sampling rate for it, while the sampling
-rate chosen for programmatic queries is much lower.
+We use disproportionate stratified sampling (also known as "unequal probability
+sampling") here - i.e., the sample size of each sub-population is not
+proportionate to their occurrence in the overall population. In this example,
+we want to ensure that all user initiated queries are represented, so we use a
+100% sampling rate for it, while the sampling rate chosen for programmatic
+queries is much lower.
 
 ## What is an example output?
 
-You should see the following output on the Console when you run this
-application. This shows that the two sub-populations (strata) are being
+You should see the following output on the Console when you use "dotnet run" to
+run this application. This shows that the two sub-populations (strata) are being
 sampled independently.
 
 ```text
