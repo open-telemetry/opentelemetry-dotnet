@@ -43,7 +43,6 @@ namespace OpenTelemetry.Metrics
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
         private readonly ExemplarFilter exemplarFilter;
-        private readonly bool enableExemplarSampling;
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
