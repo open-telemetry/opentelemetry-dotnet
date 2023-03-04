@@ -284,6 +284,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns><see cref="Base2ExponentialBucketHistogram"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#pragma warning disable SA1202 // Elements should be ordered by access. GetExponentialBucketSnapshot will be public soon.
         internal readonly ExponentialBucketSnapshot GetExponentialBucketSnapshot()
         {
             if (this.aggType != AggregationType.Base2ExponentialHistogram &&
@@ -303,6 +304,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>True if minimum and maximum value exist, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHistogramMinMaxValues(out double min, out double max)
+#pragma warning restore SA1202 // Elements should be ordered by access
         {
             if (this.aggType == AggregationType.HistogramWithMinMax ||
                             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
