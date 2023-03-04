@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -231,6 +232,26 @@ namespace OpenTelemetry.Metrics.Tests
             else
             {
                 Assert.False(hasMinMax);
+            }
+
+            // These asserts are mostly bogus right now. Ignore them at the moment.
+            // This just gives a sense of what the public API will look like
+            // from the standpoint of an exporter author.
+            // For reference, consider the OTLP data model: https://github.com/open-telemetry/opentelemetry-proto/blob/ce4475566d50cf2b2dd377953e2cddab8ff59117/opentelemetry/proto/metrics/v1/metrics.proto#L463
+            var buckets = metricPoint.GetExponentialBucketSnapshot();
+            Assert.True(buckets.Scale > 0);
+            Assert.Equal(1, buckets.ZeroCount);
+            Assert.True(buckets.PositiveOffset > int.MinValue);
+            Assert.True(buckets.NegativeOffset > int.MinValue);
+
+            foreach (var bucketCount in buckets.PositiveBuckets)
+            {
+                // Assert something.
+            }
+
+            foreach (var bucketCount in buckets.NegativeBuckets)
+            {
+                // Assert something.
             }
 
             metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
