@@ -86,7 +86,7 @@ A fully functional example can be found
 ## Migrating from pre-release versions of OpenTelemetry.Extensions.Hosting
 
 Pre-release versions (all versions prior to 1.4.0) of
-`OpenTelemetry.Extenions.Hosting` contained signal-specific methods for
+`OpenTelemetry.Extensions.Hosting` contained signal-specific methods for
 configuring tracing and metrics:
 
 * `AddOpenTelemetryTracing`: Configure OpenTelemetry and register an
