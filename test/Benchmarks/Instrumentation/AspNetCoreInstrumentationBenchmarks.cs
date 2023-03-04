@@ -32,10 +32,10 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 
 Job=InProcess  Toolchain=InProcessEmitToolchain
 
-|                                      Method |     Mean |   Error |  StdDev |
-|-------------------------------------------- |---------:|--------:|--------:|
-|                 UninstrumentedAspNetCoreApp | 147.8 us | 2.58 us | 2.41 us |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 173.3 us | 3.44 us | 3.22 us |
+|                                      Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
+|-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
+|                 UninstrumentedAspNetCoreApp | 149.4 us | 2.94 us | 2.75 us | 0.4883 |   2.54 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions | 171.9 us | 2.65 us | 2.48 us | 0.7324 |   3.79 KB |
 */
 
 namespace Benchmarks.Instrumentation
