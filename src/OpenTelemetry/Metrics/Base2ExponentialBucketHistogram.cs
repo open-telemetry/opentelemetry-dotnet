@@ -27,6 +27,17 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class Base2ExponentialBucketHistogram
 {
+    internal double RunningSum;
+    internal double SnapshotSum;
+
+    internal double RunningMin = double.PositiveInfinity;
+    internal double SnapshotMin;
+
+    internal double RunningMax = double.NegativeInfinity;
+    internal double SnapshotMax;
+
+    internal int IsCriticalSectionOccupied = 0;
+
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 

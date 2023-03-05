@@ -1,30 +1,25 @@
-OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
-OpenTelemetry.Logs.LogRecord.EventId.set -> void
-OpenTelemetry.Logs.LogRecord.Exception.set -> void
-OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
-OpenTelemetry.Logs.LogRecord.SpanId.set -> void
-OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
-OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
-OpenTelemetry.Logs.LogRecord.TraceId.set -> void
-OpenTelemetry.Logs.LogRecord.TraceState.set -> void
-OpenTelemetry.Metrics.HistogramConfiguration
-OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
-OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.get -> bool
-OpenTelemetry.Metrics.HistogramConfiguration.RecordMinMax.set -> void
-OpenTelemetry.Metrics.MetricPoint.TryGetHistogramMinMaxValues(out double min, out double max) -> bool
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Metrics.MetricReader!>! implementationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string?
-OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string! traceStateString) -> void
-OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>? attributes, string? traceStateString) -> void
-*REMOVED*static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>!>! implementationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!>! implementationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
-OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
-OpenTelemetry.Metrics.MetricType.DoubleSumNonMonotonic = 141 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.AlwaysOffExemplarFilter
+OpenTelemetry.Metrics.AlwaysOffExemplarFilter.AlwaysOffExemplarFilter() -> void
+OpenTelemetry.Metrics.AlwaysOnExemplarFilter
+OpenTelemetry.Metrics.AlwaysOnExemplarFilter.AlwaysOnExemplarFilter() -> void
+OpenTelemetry.Metrics.Exemplar
+OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
+OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
+OpenTelemetry.Metrics.Exemplar.SpanId.get -> System.Diagnostics.ActivitySpanId?
+OpenTelemetry.Metrics.Exemplar.Timestamp.get -> System.DateTimeOffset
+OpenTelemetry.Metrics.Exemplar.TraceId.get -> System.Diagnostics.ActivityTraceId?
+OpenTelemetry.Metrics.ExemplarFilter
+OpenTelemetry.Metrics.ExemplarFilter.ExemplarFilter() -> void
+OpenTelemetry.Metrics.TraceBasedExemplarFilter
+OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilter! exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~OpenTelemetry.Metrics.Exemplar.FilteredTags.get -> System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>
+~OpenTelemetry.Metrics.MetricPoint.GetExemplars() -> OpenTelemetry.Metrics.Exemplar[]
+~override OpenTelemetry.Metrics.AlwaysOffExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~override OpenTelemetry.Metrics.AlwaysOffExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~override OpenTelemetry.Metrics.AlwaysOnExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~override OpenTelemetry.Metrics.AlwaysOnExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~override OpenTelemetry.Metrics.TraceBasedExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~override OpenTelemetry.Metrics.TraceBasedExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool

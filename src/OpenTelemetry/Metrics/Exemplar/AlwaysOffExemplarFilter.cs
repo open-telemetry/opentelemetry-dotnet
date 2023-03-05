@@ -1,4 +1,4 @@
-// <copyright file="ValuesController.cs" company="OpenTelemetry Authors">
+// <copyright file="AlwaysOffExemplarFilter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-#if !NETFRAMEWORK
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
+namespace OpenTelemetry.Metrics;
 
-namespace Benchmark.Helper
+/// <summary>
+/// An ExemplarFilter which makes no measurements eligible for being an Exemplar.
+/// Using this ExemplarFilter is as good as disabling Exemplar feature.
+/// </summary>
+public sealed class AlwaysOffExemplarFilter : ExemplarFilter
 {
-    [Route("api/[controller]")]
-    public class ValuesController : Controller
+    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
+        return false;
+    }
+
+    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    {
+        return false;
     }
 }
-#endif

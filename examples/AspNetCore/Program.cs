@@ -106,6 +106,7 @@ appBuilder.Services.AddOpenTelemetry()
         // Ensure the MeterProvider subscribes to any custom Meters.
         builder
             .AddMeter(Instrumentation.MeterName)
+            .SetExemplarFilter(new TraceBasedExemplarFilter())
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
