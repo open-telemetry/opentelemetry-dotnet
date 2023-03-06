@@ -84,8 +84,12 @@ A fully functional example can be found
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore).
 
 ### Resources
-To dynamically add resources at startup from the dependency injection you can provide an `IResourceDetector`.
-To make use of it add it to the dependency injection and they you can use the `ISerivceProvider` add it to OpenTelemetry:
+
+To dynamically add resources at startup from the dependency injection you can
+provide an `IResourceDetector`.
+To make use of it add it to the dependency injection and they you can use the
+`ISerivceProvider` add it to OpenTelemetry:
+
 ```csharp
 public class MyResourceDetector : IResourceDetector
 {
