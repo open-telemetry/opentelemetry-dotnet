@@ -411,6 +411,19 @@ context, if any. It also provides "Filtered Tags", which are attributes (Tags)
 that are [dropped by a view](#select-specific-tags). Exemplars are an opt-in
 feature, and allow customization via ExemplarFilter and ExemplarReservoir.
 
+Exemplar collection in OpenTelemetry .NET is done automatically (once Exemplar
+feature itself is enabled on `MeterProvider`). There is no separate API
+to report exemplar data. If an app is already using existing Metrics API
+(manually or via instrumentation libraries), exemplars can be configured/enabled
+without requiring instrumentation changes.
+
+While the SDK is capable of producing exemplars automatically, the exporters
+(and the backends) must also support them in order to be useful. OTLP Metric
+Exporter has support for this today, and this [end-to-end
+tutorial](../exemplars/README.md) demonstrates how to use exemplars to achieve
+correlation from metrics to traces, which is one of the primary use cases for
+exemplars.
+
 #### ExemplarFilter
 
 `ExemplarFilter` determines which measurements are eligible to become an
@@ -423,7 +436,8 @@ OpenTelemetry SDK comes with the following Filters:
 
 * `AlwaysOnExemplarFilter` - makes all measurements eligible for being an Exemplar.
 * `AlwaysOffExemplarFilter` - makes no measurements eligible for being an
-  Exemplar. Use this to turn-off Exemplar feature.
+  Exemplar. Using this is as good as turning off Exemplar feature, and is the current
+  default.
 * `TraceBasedExemplarFilter` - makes those measurements eligible for being an
 Exemplar, which are recorded in the context of a sampled parent `Activity`
 (span).
@@ -444,8 +458,11 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 ```
 
 > **Note**
-> As of today, there is no separate toggle for enable/disable Exemplar
-feature. It can be turned off by using `AlwaysOffExemplarFilter`.
+> As of today, there is no separate toggle for enable/disable Exemplar feature.
+Exemplars can be disabled by setting filter as `AlwaysOffExemplarFilter`, which
+is also the default (i.e Exemplar feature is disabled by default). Users can
+enable the feature by setting filter to anything other than
+`AlwaysOffExemplarFilter`. For example: `.SetExemplarFilter(new TraceBasedExemplarFilter())`.
 
 If the built-in `ExemplarFilter`s are not meeting the needs, one may author
 custom `ExemplarFilter` as shown
@@ -459,13 +476,24 @@ much impact can `ExemplarFilter` have on performance.
 #### ExemplarReservoir
 
 `ExemplarReservoir` receives the measurements sampled in by the `ExemplarFilter`
-and is responsible for storing Exemplars.
-`AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
-Histograms with buckets, and it stores one exemplar per histogram bucket. The
-exemplar stored is the last measurement recorded - i.e. any new measurement
-overwrites the previous one.
+and is responsible for storing Exemplars. `ExemplarReservoir` ultimately decides
+which measurements get stored as exemplars. The following are the default
+reservoirs:
 
-Currently there is no ability to change the Reservoir used.
+* `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
+Histograms with buckets, and it stores at most one exemplar per histogram
+bucket. The exemplar stored is the last measurement recorded - i.e. any new
+measurement overwrites the previous one in that bucket.
+
+`SimpleExemplarReservoir` is the default reservoir used for all metrics except
+Histograms with buckets. It has a fixed reservoir pool, and implements the
+equivalent of [naive
+reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
+size (currently defaulting to 10) determines the maximum number of exemplars
+stored.
+
+> **Note**
+> Currently there is no ability to change or configure Reservoir.
 
 ### Instrumentation
 
