@@ -12,7 +12,7 @@
   <PropertyGroup>
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
   </ItemGroup>
