@@ -151,7 +151,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .SetExemplarFilter(new AlwaysOnExemplarFilter())
-                .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" }})
+                .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" } })
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
                     metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
@@ -161,7 +161,7 @@ namespace OpenTelemetry.Metrics.Tests
             var measurementValues = GenerateRandomValues(10);
             foreach (var value in measurementValues)
             {
-                histogram.Record(value, new ("key1", "value1"), new ("key2", "value1"));
+                histogram.Record(value, new("key1", "value1"), new("key2", "value1"));
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
