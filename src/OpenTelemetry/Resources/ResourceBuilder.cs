@@ -132,18 +132,24 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Add a <see cref="IResourceDetector"/> to the builder which will be resolved using the application <see cref="IServiceProvider"/>.
         /// </summary>
-        /// <remarks>
-        /// Note: The supplied <paramref name="resourceDetectorFactory"/> may be
-        /// called with a <see langword="null"/> <see cref="IServiceProvider"/>
-        /// for detached <see cref="ResourceBuilder"/> instances. Factories
-        /// should either throw if a <see langword="null"/> cannot be handled,
-        /// or return a default <see cref="IResourceDetector"/> when <see
-        /// cref="IServiceProvider"/> is not available.
-        /// </remarks>
         /// <param name="resourceDetectorFactory">Resource detector factory.</param>
         /// <returns>Supplied <see cref="ResourceBuilder"/> for call chaining.</returns>
-        // Note: This API may be made public if there is a need for it.
-        internal ResourceBuilder AddDetector(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
+        public ResourceBuilder AddDetector(Func<IServiceProvider, IResourceDetector> resourceDetectorFactory)
+        {
+            Guard.ThrowIfNull(resourceDetectorFactory);
+
+            return this.AddDetectorInternal(sp =>
+            {
+                if (sp == null)
+                {
+                    throw new NotSupportedException("IResourceDetector factory pattern is not supported when calling ResourceBuilder.Build() directly.");
+                }
+
+                return resourceDetectorFactory(sp);
+            });
+        }
+
+        internal ResourceBuilder AddDetectorInternal(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
         {
             Guard.ThrowIfNull(resourceDetectorFactory);
 
