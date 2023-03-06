@@ -101,8 +101,9 @@ services.AddSingleton<MyResourceDetector>();
 
 services.AddOpenTelemetry()
     .ConfigureResource(builder =>
-        builder.AddDetector(sp => sp!.GetRequiredService<MyResourceDetector>()))
-    WithTracing(builder => builder.AddConsoleExporter());
+        builder.AddDetector(sp => sp.GetRequiredService<MyResourceDetector>()))
+    .WithTracing(builder => builder.AddConsoleExporter())
+    .WithMetrics(builder => builder.AddConsoleExporter());
 ```
 
 ## Migrating from pre-release versions of OpenTelemetry.Extensions.Hosting
