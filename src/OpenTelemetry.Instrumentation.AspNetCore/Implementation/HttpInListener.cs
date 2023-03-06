@@ -286,12 +286,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
             }
-
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (textMapPropagator is not TraceContextPropagator)
-            {
-                Baggage.Current = default;
-            }
         }
 
         public void OnMvcBeforeAction(Activity activity, object payload)
