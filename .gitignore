@@ -345,3 +345,6 @@ ASALocalRun/
 /.sonarqube
 
 /src/LastMajorVersionBinaries
+
+# Tempo files
+tempo-data/

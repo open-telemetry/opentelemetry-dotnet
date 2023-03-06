@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added Exemplar support.
+  ([#4217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4217))
+
+* Added `AddDetector` factory overload on `ResourceBuilder`.
+  ([#4261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4261))
+
 ## 1.4.0
 
 Released 2023-Feb-24

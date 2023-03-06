@@ -80,6 +80,7 @@ namespace OpenTelemetry.Metrics
                 reader.SetParentProvider(this);
                 reader.SetMaxMetricStreams(state.MaxMetricStreams);
                 reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
+                reader.SetExemplarFilter(state.ExemplarFilter);
 
                 if (this.reader == null)
                 {

@@ -11,6 +11,11 @@ and
 [System.Data.SqlClient](https://www.nuget.org/packages/System.Data.SqlClient)
 and collects traces about database operations.
 
+> **Warning**
+> Instrumentation is not working with `Microsoft.Data.SqlClient` v3.* due to
+the [issue](https://github.com/dotnet/SqlClient/pull/1258). It was fixed in 4.0
+and later.
+>
 > **Note**
 > This component is based on the OpenTelemetry semantic conventions for
 [traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).

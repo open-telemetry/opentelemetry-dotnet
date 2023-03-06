@@ -34,6 +34,8 @@ namespace OpenTelemetry.Metrics
         private Metric[] metricsCurrentBatch;
         private int metricIndex = -1;
 
+        private ExemplarFilter exemplarFilter;
+
         internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
         {
             return this.temporalityFunc(instrumentType);
@@ -69,7 +71,7 @@ namespace OpenTelemetry.Metrics
                     Metric metric = null;
                     try
                     {
-                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream);
+                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
                     }
                     catch (NotSupportedException nse)
                     {
@@ -154,7 +156,7 @@ namespace OpenTelemetry.Metrics
                     }
                     else
                     {
-                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax);
+                        Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys, metricStreamIdentity.HistogramRecordMinMax, this.exemplarFilter);
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;
@@ -221,6 +223,11 @@ namespace OpenTelemetry.Metrics
             this.maxMetricStreams = maxMetricStreams;
             this.metrics = new Metric[maxMetricStreams];
             this.metricsCurrentBatch = new Metric[maxMetricStreams];
+        }
+
+        internal void SetExemplarFilter(ExemplarFilter exemplarFilter)
+        {
+            this.exemplarFilter = exemplarFilter;
         }
 
         internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
