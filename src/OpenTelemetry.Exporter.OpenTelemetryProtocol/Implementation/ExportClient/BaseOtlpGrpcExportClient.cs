@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
 
             this.Endpoint = new UriBuilder(options.Endpoint).Uri;
-            this.Headers = options.GetMetadataFromHeaders();
+            this.Headers = () => options.GetMetadataFromHeaders();
             this.TimeoutMilliseconds = options.TimeoutMilliseconds;
         }
 
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
         internal Uri Endpoint { get; }
 
-        internal Metadata Headers { get; }
+        internal Func<Metadata> Headers { get; }
 
         internal int TimeoutMilliseconds { get; }
 

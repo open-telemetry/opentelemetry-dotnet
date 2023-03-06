@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 ? options.Endpoint.AppendPathIfNotPresent(signalPath)
                 : options.Endpoint;
             this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
-            this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+            this.Headers = () => options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient;
         }
 
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
         internal Uri Endpoint { get; set; }
 
-        internal IReadOnlyDictionary<string, string> Headers { get; }
+        internal Func<IReadOnlyDictionary<string, string>> Headers { get; }
 
         /// <inheritdoc/>
         public bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         protected HttpRequestMessage CreateHttpRequest(TRequest exportRequest)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
-            foreach (var header in this.Headers)
+            foreach (var header in this.Headers())
             {
                 request.Headers.Add(header.Key, header.Value);
             }

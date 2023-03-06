@@ -63,13 +63,43 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(client.HttpClient);
 
-            Assert.Equal(2 + OtlpExporterOptions.StandardHeaders.Length, client.Headers.Count);
-            Assert.Contains(client.Headers, kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
-            Assert.Contains(client.Headers, kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
+            Assert.Equal(2 + OtlpExporterOptions.StandardHeaders.Length, client.Headers().Count);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
 
             for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
             {
-                Assert.Contains(client.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+                Assert.Contains(client.Headers(), entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            }
+        }
+
+        [Fact]
+        public void NewOtlpHttpTraceExportClient_OtlpExporterOptions_ExporterHasCorrectPropertiesFromFactory()
+        {
+            var header1 = new { Name = "hdr1", Value = "val1" };
+            var header2 = new { Name = "hdr2", Value = "val2" };
+            var header3 = new { Name = "hdr3", Value = "val3" };
+            var header4 = new { Name = "hdr4", Value = "val4" };
+
+            var options = new OtlpExporterOptions
+            {
+                Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
+                HeadersFactory = () => $"{header3.Name}={header3.Value}, {header4.Name} = {header4.Value}",
+            };
+
+            var client = new OtlpHttpTraceExportClient(options, options.HttpClientFactory());
+
+            Assert.NotNull(client.HttpClient);
+
+            Assert.Equal(4 + OtlpExporterOptions.StandardHeaders.Length, client.Headers().Count);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header3.Name && kvp.Value == header3.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header4.Name && kvp.Value == header4.Value);
+
+            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            {
+                Assert.Contains(client.Headers(), entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
             }
         }
 

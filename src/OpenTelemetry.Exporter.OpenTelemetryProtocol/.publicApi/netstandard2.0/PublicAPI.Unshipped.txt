@@ -1,0 +1,2 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.HeadersFactory.get -> System.Func<string>
+OpenTelemetry.Exporter.OtlpExporterOptions.HeadersFactory.set -> void
