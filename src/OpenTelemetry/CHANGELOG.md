@@ -18,9 +18,6 @@ Released 2023-Feb-10
   could be removed.
   ([#4174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4174))
 
-* Made the `IServiceProvider` variant of `AddDetector` publicly available.
-  ([#4230](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4230))
-
 ## 1.4.0-rc.3
 
 Released 2023-Feb-01
