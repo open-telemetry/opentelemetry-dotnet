@@ -1,9 +1,9 @@
 # gRPC-based implementation of OTLP Exporter for OpenTelemetry .NET
 
-[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc)
-[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc)
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol.Http)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol.Http)
 
-[gRPC-based implementation of OTLP Exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
+[HTTP-based implementation of OTLP Exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
 implementation.
 
 ## Prerequisite
@@ -13,7 +13,7 @@ implementation.
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc --prerelease
+dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol.HTTP --prerelease
 ```
 
 ## Configuration
