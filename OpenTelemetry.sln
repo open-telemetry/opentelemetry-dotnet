@@ -251,7 +251,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-jaeger", "d
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "stratified-sampling-example", "docs\trace\advanced\stratified-sampling-example\stratified-sampling-example.csproj", "{9C99621C-343E-479C-A943-332DB6129B71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Http", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Http\OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.csproj", "{877F8535-7851-4DC8-984A-461B097DE154}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Http", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Http\OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.csproj", "{877F8535-7851-4DC8-984A-461B097DE154}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.Tests.csproj", "{FA9B9576-1158-40A8-9CF3-8878CBDA873A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Http.Tests.csproj", "{BBCF30A4-D470-4C25-AA03-D151C551225D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -535,6 +539,14 @@ Global
 		{877F8535-7851-4DC8-984A-461B097DE154}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{877F8535-7851-4DC8-984A-461B097DE154}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{877F8535-7851-4DC8-984A-461B097DE154}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA9B9576-1158-40A8-9CF3-8878CBDA873A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA9B9576-1158-40A8-9CF3-8878CBDA873A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA9B9576-1158-40A8-9CF3-8878CBDA873A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA9B9576-1158-40A8-9CF3-8878CBDA873A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBCF30A4-D470-4C25-AA03-D151C551225D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBCF30A4-D470-4C25-AA03-D151C551225D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBCF30A4-D470-4C25-AA03-D151C551225D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBCF30A4-D470-4C25-AA03-D151C551225D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
