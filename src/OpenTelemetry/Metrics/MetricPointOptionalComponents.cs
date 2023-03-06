@@ -39,6 +39,7 @@ namespace OpenTelemetry.Metrics
         {
             MetricPointOptionalComponents copy = new MetricPointOptionalComponents();
             copy.HistogramBuckets = this.HistogramBuckets.Copy();
+            Array.Copy(this.Exemplars, copy.Exemplars, this.Exemplars.Length);
 
             return copy;
         }
