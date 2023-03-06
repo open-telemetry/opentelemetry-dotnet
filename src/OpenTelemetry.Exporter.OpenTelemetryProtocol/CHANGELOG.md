@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added HeadersFactory to OtlpExporterOptions and adjusted exporter clients to use the function.
+
 * Bumped the version of `Google.Protobuf` used by the project to `3.22.0` so
   that a new performance feature can be used instead of reflection. Removed the
   dependency on `System.Reflection.Emit.Lightweight`.
