@@ -9,10 +9,12 @@ following the [OpenTelemetry specification](https://github.com/open-telemetry/op
 The exporter communicates to a Jaeger Agent through the Thrift protocol on
 the Compact Thrift API port, and as such only supports Thrift over UDP.
 
-## Getting Started
-
-Refer to the [Getting Started with
-Jaeger](../../docs/trace/getting-started-jaeger/README.md) tutorial.
+> **Note** This component is scheduled to be
+> [deprecated](https://github.com/open-telemetry/opentelemetry-specification/pull/2858)
+and users are advised to move to [OTLP
+Exporter](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md). The
+[getting started with Jaeger](../../docs/trace/getting-started-jaeger/README.md)
+tutorial shows how to use OTLP Exporter to export traces to Jaeger.
 
 ## Installation
 
