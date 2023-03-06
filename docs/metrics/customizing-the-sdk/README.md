@@ -414,8 +414,8 @@ feature, and allow customization via ExemplarFilter and ExemplarReservoir.
 Exemplar collection in OpenTelemetry .NET is done automatically (once Exemplar
 feature itself is enabled on `MeterProvider`). There is no separate API
 to report exemplar data. If an app is already using existing Metrics API
-(manually or via instrumentation libraries), then they would require no
-instrumentation change to collect exemplars.
+(manually or via instrumentation libraries), exemplars can be configured/enabled
+without requiring instrumentation changes.
 
 While the SDK is capable of producing exemplars automatically, the exporters
 (and the backends) must also support them in order to be useful. OTLP Metric
