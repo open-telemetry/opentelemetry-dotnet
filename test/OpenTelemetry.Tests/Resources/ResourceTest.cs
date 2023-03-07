@@ -498,13 +498,39 @@ namespace OpenTelemetry.Resources.Tests
         }
 
         [Fact]
-        public void ResourceBuilder_ServiceProvider_Available()
+        public void ResourceBuilder_AddDetector_Test()
+        {
+            bool factoryExecuted = false;
+
+            var builder = ResourceBuilder.CreateDefault();
+
+            builder.AddDetector(sp =>
+            {
+                factoryExecuted = true;
+                return new NoopResourceDetector();
+            });
+
+            Assert.Throws<NotSupportedException>(() => builder.Build());
+            Assert.False(factoryExecuted);
+
+            var serviceCollection = new ServiceCollection();
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            builder.ServiceProvider = serviceProvider;
+
+            var resource = builder.Build();
+
+            Assert.True(factoryExecuted);
+        }
+
+        [Fact]
+        public void ResourceBuilder_AddDetectorInternal_Test()
         {
             var builder = ResourceBuilder.CreateDefault();
 
             bool nullTestRun = false;
 
-            builder.AddDetector(sp =>
+            builder.AddDetectorInternal(sp =>
             {
                 nullTestRun = true;
                 Assert.Null(sp);
@@ -524,7 +550,7 @@ namespace OpenTelemetry.Resources.Tests
 
             builder.ServiceProvider = serviceProvider;
 
-            builder.AddDetector(sp =>
+            builder.AddDetectorInternal(sp =>
             {
                 validTestRun = true;
                 Assert.NotNull(sp);

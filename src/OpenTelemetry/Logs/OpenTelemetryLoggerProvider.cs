@@ -80,6 +80,8 @@ namespace OpenTelemetry.Logs
 
             Guard.ThrowIfNull(options);
 
+            this.ServiceProvider = serviceProvider;
+
             this.IncludeScopes = options.IncludeScopes;
             this.IncludeFormattedMessage = options.IncludeFormattedMessage;
             this.ParseStateValues = options.ParseStateValues;
@@ -95,6 +97,8 @@ namespace OpenTelemetry.Logs
 
             OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("OpenTelemetryLoggerProvider built successfully.");
         }
+
+        internal IServiceProvider? ServiceProvider { get; }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
 
