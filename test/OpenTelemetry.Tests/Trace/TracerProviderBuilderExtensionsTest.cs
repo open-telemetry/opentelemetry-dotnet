@@ -196,7 +196,7 @@ namespace OpenTelemetry.Trace.Tests
 
                 Assert.Empty(builder.ResourceDetectors);
 
-                builder.AddDetector(sp =>
+                builder.AddDetectorInternal(sp =>
                 {
                     serviceProviderTestExecuted = true;
                     Assert.NotNull(sp);
