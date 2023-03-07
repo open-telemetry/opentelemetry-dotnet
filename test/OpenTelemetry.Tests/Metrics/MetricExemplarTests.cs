@@ -126,9 +126,8 @@ namespace OpenTelemetry.Metrics.Tests
             measurementValues = GenerateRandomValues(10);
             foreach (var value in measurementValues)
             {
-                var act = new Activity("test").Start();
+                using var act = new Activity("test").Start();
                 histogram.Record(value);
-                act.Stop();
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -171,9 +170,12 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.True(metricPoint.Value.EndTime != default);
             var exemplars = GetExemplars(metricPoint.Value);
             Assert.NotNull(exemplars);
-            var filteredTags = exemplars[0].FilteredTags;
-            Assert.Equal(2, filteredTags.Count);
-            Assert.NotNull(filteredTags);
+            foreach (var exemplar in exemplars)
+            {
+                Assert.NotNull(exemplar.FilteredTags);
+                Assert.Contains(new("key2", "value1"), exemplar.FilteredTags);
+                Assert.Contains(new("key3", "value1"), exemplar.FilteredTags);
+            }
         }
 
         private static double[] GenerateRandomValues(int count)
