@@ -13,7 +13,7 @@ implementation.
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol.HTTP --prerelease
+dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol.Http --prerelease
 ```
 
 ## Configuration
