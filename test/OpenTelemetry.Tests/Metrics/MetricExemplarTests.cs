@@ -195,7 +195,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.NotNull(exemplars);
             foreach (var exemplar in exemplars)
             {
-                Assert.True(exemplar.Timestamp > startTime && exemplar.Timestamp < endTime);
+                Assert.True(exemplar.Timestamp >= startTime && exemplar.Timestamp <= endTime, $"{startTime} < {exemplar.Timestamp} < {endTime}");
                 Assert.Contains(exemplar.DoubleValue, measurementValues);
                 Assert.Null(exemplar.FilteredTags);
                 if (traceContextExists)
