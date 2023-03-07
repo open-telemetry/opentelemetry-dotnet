@@ -90,11 +90,8 @@ public class Program
 }
 ```
 
-For an ASP.NET Core application, adding instrumentation is typically done in the
-`ConfigureServices` of your `Startup` class. Refer to documentation for
-[OpenTelemetry.Instrumentation.AspNetCore](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
-In addition, check how to enable `OpenTelemetry.Instrumentation.Http` for Trace
-and Metrics with this [demo](../../examples/AspNetCore/Program.cs).
+Check how to enable `OpenTelemetry.Instrumentation.Http` for Trace
+and Metrics with this [example](../../examples/AspNetCore/Program.cs).
 
 For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to the documentation for
@@ -106,9 +103,9 @@ The instrumentation was implemented based on [metrics semantic
 conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
 Currently, the instrumentation supports the following metric.
 
-| Name  | Instrument Type | Unit | Description | Attributes |
-|-------|-----------------|------|-------------|------------|
-| `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. | http.method, http.scheme, http.status_code, http.flavor, net.peer.name |
+| Name  | Instrument Type | Unit | Description |
+|-------|-----------------|------|-------------|
+| `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. |
 
 ## Advanced configuration
 
