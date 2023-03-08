@@ -217,7 +217,7 @@ build. Breaking the rules will result in a build failure.
 
 ## New projects
 
-New projects are required to...
+New projects are required to:
 
 * Use [nullable reference
 types](https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/nullable-reference-types).
