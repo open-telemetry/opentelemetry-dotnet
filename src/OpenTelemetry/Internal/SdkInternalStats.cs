@@ -22,17 +22,16 @@ namespace OpenTelemetry.Internal
     {
         internal static SdkInternalStats Instance = new();
         private const string SdkInternalStatsMeterName = "SdkInternalStats";
+        private readonly Meter sdkInternalStatsMeter;
 
         private SdkInternalStats()
         {
-            this.SdkInternalStatsMeter = new Meter(SdkInternalStatsMeterName, "1.0");
+            this.sdkInternalStatsMeter = new Meter(SdkInternalStatsMeterName, "1.0");
             AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
             {
                 Instance.Dispose();
             };
         }
-
-        internal Meter SdkInternalStatsMeter { get; }
 
         /// <inheritdoc/>
         public void Dispose()
@@ -45,7 +44,7 @@ namespace OpenTelemetry.Internal
         {
             if (disposing)
             {
-                this.SdkInternalStatsMeter.Dispose();
+                this.sdkInternalStatsMeter.Dispose();
             }
         }
     }
