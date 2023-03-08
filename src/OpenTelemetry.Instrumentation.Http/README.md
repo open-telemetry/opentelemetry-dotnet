@@ -42,7 +42,7 @@ HTTP instrumentation must be enabled at application startup.
 
 #### Traces
 
-The following example demonstrates adding HTTP client instrumentation with the
+The following example demonstrates adding `HttpClient` instrumentation with the
 extension method `.AddHttpClientInstrumentation()` on `TracerProviderBuilder` to
 a console application. This example also sets up the OpenTelemetry Console
 Exporter, which requires adding the package
@@ -67,7 +67,7 @@ public class Program
 
 #### Metrics
 
-The following example demonstrates adding HTTP client instrumentation with the
+The following example demonstrates adding `HttpClient` instrumentation with the
 extension method `.AddHttpClientInstrumentation()` on `MeterProviderBuilder` to
 a console application. This example also sets up the OpenTelemetry Console
 Exporter, which requires adding the package
@@ -97,7 +97,7 @@ For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to the documentation for
 [OpenTelemetry.Instrumentation.AspNet](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md).
 
-### List of Metrics produced
+### List of metrics produced
 
 The instrumentation was implemented based on [metrics semantic
 conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
