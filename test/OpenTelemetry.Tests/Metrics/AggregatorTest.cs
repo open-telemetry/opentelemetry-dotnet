@@ -191,6 +191,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
         internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality)
         {
+            var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
+
             var aggregatorStore = new AggregatorStore(
                 $"{nameof(this.ExponentialHistogramTests)}",
                 aggregationType,
@@ -206,13 +208,13 @@ namespace OpenTelemetry.Metrics.Tests
                 Metric.DefaultHistogramBounds,
                 Metric.DefaultExponentialHistogramMaxBuckets);
 
-            metricPoint.Update(-10);
-            metricPoint.Update(0);
-            metricPoint.Update(1);
-            metricPoint.Update(9);
-            metricPoint.Update(10);
-            metricPoint.Update(11);
-            metricPoint.Update(19);
+            var expectedHistogram = new Base2ExponentialBucketHistogram();
+
+            foreach (var value in valuesToRecord)
+            {
+                metricPoint.Update(value);
+                expectedHistogram.Record(value);
+            }
 
             metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
 
@@ -220,6 +222,7 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = metricPoint.GetHistogramSum();
             var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
 
+            AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialBucketSnapshot());
             Assert.Equal(40, sum);
             Assert.Equal(7, count);
 
@@ -234,26 +237,6 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.False(hasMinMax);
             }
 
-            // These asserts are mostly bogus right now. Ignore them at the moment.
-            // This just gives a sense of what the public API will look like
-            // from the standpoint of an exporter author.
-            // For reference, consider the OTLP data model: https://github.com/open-telemetry/opentelemetry-proto/blob/ce4475566d50cf2b2dd377953e2cddab8ff59117/opentelemetry/proto/metrics/v1/metrics.proto#L463
-            var buckets = metricPoint.GetExponentialBucketSnapshot();
-            Assert.True(buckets.Scale > 0);
-            Assert.Equal(1, buckets.ZeroCount);
-            Assert.True(buckets.PositiveOffset > int.MinValue);
-            Assert.True(buckets.NegativeOffset > int.MinValue);
-
-            foreach (var bucketCount in buckets.PositiveBuckets)
-            {
-                // Assert something.
-            }
-
-            foreach (var bucketCount in buckets.NegativeBuckets)
-            {
-                // Assert something.
-            }
-
             metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
 
             count = metricPoint.GetHistogramCount();
@@ -262,6 +245,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             if (aggregationTemporality == AggregationTemporality.Cumulative)
             {
+                AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialBucketSnapshot());
                 Assert.Equal(40, sum);
                 Assert.Equal(7, count);
 
@@ -278,6 +262,8 @@ namespace OpenTelemetry.Metrics.Tests
             }
             else
             {
+                expectedHistogram.Reset();
+                AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialBucketSnapshot());
                 Assert.Equal(0, sum);
                 Assert.Equal(0, count);
 
@@ -291,6 +277,26 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     Assert.False(hasMinMax);
                 }
+            }
+        }
+
+        private static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialBucketSnapshot buckets)
+        {
+            Assert.Equal(expectedHistogram.Scale, buckets.Scale);
+            Assert.Equal(expectedHistogram.ZeroCount, buckets.ZeroCount);
+            Assert.Equal(expectedHistogram.PositiveBuckets.Offset, buckets.PositiveOffset);
+            Assert.Equal(expectedHistogram.NegativeBuckets.Offset, buckets.NegativeOffset);
+
+            var index = expectedHistogram.PositiveBuckets.Offset;
+            foreach (var bucketCount in buckets.PositiveBuckets)
+            {
+                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
+            }
+
+            index = expectedHistogram.NegativeBuckets.Offset;
+            foreach (var bucketCount in buckets.NegativeBuckets)
+            {
+                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
             }
         }
     }
