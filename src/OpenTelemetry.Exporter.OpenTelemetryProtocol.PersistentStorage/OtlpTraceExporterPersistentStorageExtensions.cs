@@ -39,7 +39,7 @@ public static class OtlpTraceExporterPersistentStorageExtensions
     public static TracerProviderBuilder AddOtlpExporterWithPersistentStorage(
         this TracerProviderBuilder builder,
         string? name,
-        Action<OtlpExporterOptions> configure,
+        Action<OtlpExporterOptions>? configure,
         Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
     {
         Guard.ThrowIfNull(persistentStorageFactory);
@@ -90,6 +90,21 @@ public static class OtlpTraceExporterPersistentStorageExtensions
         Action<OtlpExporterOptions> configure,
         Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
     {
+        Guard.ThrowIfNull(configure);
         return builder.AddOtlpExporterWithPersistentStorage(name: null, configure, persistentStorageFactory);
+    }
+
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider
+    /// with access to persistent storage.
+    /// </summary>
+    /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+    /// <param name="persistentStorageFactory">Factory function to create a <see cref="PersistentBlobProvider"/>.</param>
+    /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+    public static TracerProviderBuilder AddOtlpExporterWithPersistentStorage(
+        this TracerProviderBuilder builder,
+        Func<IServiceProvider, PersistentBlobProvider> persistentStorageFactory)
+    {
+        return builder.AddOtlpExporterWithPersistentStorage(name: null, configure: null, persistentStorageFactory);
     }
 }
