@@ -40,6 +40,9 @@ namespace OpenTelemetry
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
             SelfDiagnostics.EnsureInitialized();
+
+            // Access the instance here once so that it is initialized
+            _ = SdkInternalStats.Instance;
         }
 
         /// <summary>
