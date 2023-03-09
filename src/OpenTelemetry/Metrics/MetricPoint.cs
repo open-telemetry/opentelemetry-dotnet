@@ -277,23 +277,22 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Gets the buckets of the histogram associated with the metric point.
+        /// Gets the exponential histogram data associated with the metric point.
         /// </summary>
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns><see cref="Base2ExponentialBucketHistogram"/>.</returns>
+        /// <returns><see cref="ExponentialHistogramData"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#pragma warning disable SA1202 // Elements should be ordered by access. GetExponentialBucketSnapshot will be public soon.
-        internal readonly ExponentialBucketSnapshot GetExponentialBucketSnapshot()
+        public readonly ExponentialHistogramData GetExponentialHistogramData()
         {
             if (this.aggType != AggregationType.Base2ExponentialHistogram &&
                 this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
             {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialBucketSnapshot));
+                this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
             }
 
-            return this.mpComponents.Base2ExponentialBucketHistogram.ExponentialBucketSnapshot;
+            return this.mpComponents.Base2ExponentialBucketHistogram.SnapshotExponentialHistogramBuckets;
         }
 
         /// <summary>
@@ -304,7 +303,6 @@ namespace OpenTelemetry.Metrics
         /// <returns>True if minimum and maximum value exist, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHistogramMinMaxValues(out double min, out double max)
-#pragma warning restore SA1202 // Elements should be ordered by access
         {
             if (this.aggType == AggregationType.HistogramWithMinMax ||
                             this.aggType == AggregationType.HistogramWithMinMaxBuckets)

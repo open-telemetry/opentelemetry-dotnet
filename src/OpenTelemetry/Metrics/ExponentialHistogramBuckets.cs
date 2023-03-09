@@ -1,4 +1,4 @@
-// <copyright file="ExponentialBuckets.cs" company="OpenTelemetry Authors">
+// <copyright file="ExponentialHistogramBuckets.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,20 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
-internal class ExponentialBuckets
+public class ExponentialHistogramBuckets
 {
     private readonly CircularBufferBuckets buckets;
 
-    internal ExponentialBuckets(CircularBufferBuckets buckets)
+    internal ExponentialHistogramBuckets(CircularBufferBuckets buckets)
     {
         this.buckets = buckets;
     }
+
+    public int Offset => this.buckets.Offset;
 
     public Enumerator GetEnumerator() => new(this.buckets);
 

@@ -135,8 +135,8 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal CircularBufferBuckets NegativeBuckets { get; }
 
-    internal ExponentialBucketSnapshot ExponentialBucketSnapshot =>
-        new ExponentialBucketSnapshot(this.SnapshotScale, this.SnapshotZeroCount, this.SnapshotPositiveBuckets, this.SnapshotNegativeBuckets);
+    internal ExponentialHistogramData SnapshotExponentialHistogramBuckets =>
+        new ExponentialHistogramData(this.SnapshotScale, this.SnapshotZeroCount, this.SnapshotPositiveBuckets, this.SnapshotNegativeBuckets);
 
     /// <summary>
     /// Maps a finite positive IEEE 754 double-precision floating-point

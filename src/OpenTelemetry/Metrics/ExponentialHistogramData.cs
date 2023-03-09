@@ -1,4 +1,4 @@
-// <copyright file="ExponentialBucketSnapshot.cs" company="OpenTelemetry Authors">
+// <copyright file="ExponentialHistogramData.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
-internal class ExponentialBucketSnapshot
+public class ExponentialHistogramData
 {
-    internal ExponentialBucketSnapshot(int scale, long snapshotZeroCount, CircularBufferBuckets positiveBuckets, CircularBufferBuckets negativeBuckets)
+    internal ExponentialHistogramData(int scale, long zeroCount, CircularBufferBuckets positiveBuckets, CircularBufferBuckets negativeBuckets)
     {
         this.Scale = scale;
-        this.ZeroCount = snapshotZeroCount;
-        this.PositiveOffset = positiveBuckets.Offset;
-        this.NegativeOffset = negativeBuckets.Offset;
+        this.ZeroCount = zeroCount;
         this.PositiveBuckets = new(positiveBuckets);
         this.NegativeBuckets = new(negativeBuckets);
     }
@@ -32,11 +32,7 @@ internal class ExponentialBucketSnapshot
 
     public long ZeroCount { get; }
 
-    public int PositiveOffset { get; }
+    public ExponentialHistogramBuckets PositiveBuckets { get; }
 
-    public int NegativeOffset { get; }
-
-    public ExponentialBuckets PositiveBuckets { get; }
-
-    public ExponentialBuckets NegativeBuckets { get; }
+    public ExponentialHistogramBuckets NegativeBuckets { get; }
 }
