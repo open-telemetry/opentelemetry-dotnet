@@ -277,6 +277,26 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Gets the buckets of the histogram associated with the metric point.
+        /// </summary>
+        /// <remarks>
+        /// Applies to <see cref="MetricType.Histogram"/> metric type.
+        /// </remarks>
+        /// <returns><see cref="Base2ExponentialBucketHistogram"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#pragma warning disable SA1202 // Elements should be ordered by access. GetExponentialBucketSnapshot will be public soon.
+        internal readonly ExponentialBucketSnapshot GetExponentialBucketSnapshot()
+        {
+            if (this.aggType != AggregationType.Base2ExponentialHistogram &&
+                this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
+            {
+                this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialBucketSnapshot));
+            }
+
+            return this.mpComponents.Base2ExponentialBucketHistogram.ExponentialBucketSnapshot;
+        }
+
+        /// <summary>
         /// Gets the Histogram Min and Max values.
         /// </summary>
         /// <param name="min"> The histogram minimum value.</param>
@@ -284,6 +304,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>True if minimum and maximum value exist, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHistogramMinMaxValues(out double min, out double max)
+#pragma warning restore SA1202 // Elements should be ordered by access
         {
             if (this.aggType == AggregationType.HistogramWithMinMax ||
                             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
@@ -1018,11 +1039,13 @@ namespace OpenTelemetry.Metrics
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
                                 histogram.SnapshotSum = histogram.RunningSum;
+                                histogram.Snapshot();
 
                                 if (outputDelta)
                                 {
                                     this.runningValue.AsLong = 0;
                                     histogram.RunningSum = 0;
+                                    histogram.Reset();
                                 }
 
                                 this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -1049,6 +1072,7 @@ namespace OpenTelemetry.Metrics
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
                                 histogram.SnapshotSum = histogram.RunningSum;
+                                histogram.Snapshot();
                                 histogram.SnapshotMin = histogram.RunningMin;
                                 histogram.SnapshotMax = histogram.RunningMax;
 
@@ -1056,6 +1080,7 @@ namespace OpenTelemetry.Metrics
                                 {
                                     this.runningValue.AsLong = 0;
                                     histogram.RunningSum = 0;
+                                    histogram.Reset();
                                     histogram.RunningMin = double.PositiveInfinity;
                                     histogram.RunningMax = double.NegativeInfinity;
                                 }
@@ -1495,6 +1520,7 @@ namespace OpenTelemetry.Metrics
                     {
                         this.runningValue.AsLong++;
                         histogram.RunningSum += number;
+                        histogram.Record(number);
                     }
 
                     // Release lock
@@ -1522,6 +1548,7 @@ namespace OpenTelemetry.Metrics
                     {
                         this.runningValue.AsLong++;
                         histogram.RunningSum += number;
+                        histogram.Record(number);
 
                         histogram.RunningMin = Math.Min(histogram.RunningMin, number);
                         histogram.RunningMax = Math.Max(histogram.RunningMax, number);

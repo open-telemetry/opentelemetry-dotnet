@@ -267,6 +267,37 @@ internal sealed class CircularBufferBuckets
         }
     }
 
+    internal void Reset()
+    {
+        if (this.trait != null)
+        {
+            for (var i = 0; i < this.trait.Length; ++i)
+            {
+                this.trait[i] = 0;
+            }
+        }
+    }
+
+    internal CircularBufferBuckets Copy()
+    {
+        // TODO: Consider avoiding allocating a new one every time.
+        // Maybe we can have two instances that we swap between snapshots.
+        var copy = new CircularBufferBuckets(this.Capacity);
+        copy.begin = this.begin;
+        copy.end = this.end;
+
+        if (this.trait != null)
+        {
+            copy.trait = new long[this.trait.Length];
+            for (var i = 0; i < copy.trait.Length; ++i)
+            {
+                copy.trait[i] = this.trait[i];
+            }
+        }
+
+        return copy;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ModuloIndex(int value)
     {
