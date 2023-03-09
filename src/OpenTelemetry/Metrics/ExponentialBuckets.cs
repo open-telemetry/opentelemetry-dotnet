@@ -33,7 +33,7 @@ internal class ExponentialBuckets
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
     public struct Enumerator
     {
-        private readonly int numberOfBuckets;
+        private readonly int lastIndex;
         private readonly CircularBufferBuckets buckets;
         private int index;
 
@@ -42,7 +42,7 @@ internal class ExponentialBuckets
             this.buckets = buckets;
             this.index = buckets.Offset;
             this.Current = default;
-            this.numberOfBuckets = buckets.Offset + buckets.Size;
+            this.lastIndex = buckets.Size - 1;
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ internal class ExponentialBuckets
         /// collection.</returns>
         public bool MoveNext()
         {
-            if (this.index < this.numberOfBuckets)
+            if (this.index < this.buckets.Size)
             {
                 this.Current = this.buckets[this.index++];
                 return true;
