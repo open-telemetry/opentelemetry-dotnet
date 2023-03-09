@@ -1,11 +1,13 @@
-Fixes #.
+Fixes #
+Design discussion issue #
 
 ## Changes
 
 Please provide a brief description of the changes here.
 
-For significant contributions please make sure you have completed the following items:
+## Merge requirement checklist
 
-* [ ] Appropriate `CHANGELOG.md` updated for non-trivial changes
-* [ ] Design discussion issue #
-* [ ] Changes in public API reviewed
+* [ ] [CONTRIBUTING](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md) guidelines followed (nullable enabled, static analysis, etc.)
+* [ ] Unit tests added/updated
+* [ ] Appropriate `CHANGELOG.md` files updated for non-trivial changes
+* [ ] Changes in public API reviewed (if applicable)
