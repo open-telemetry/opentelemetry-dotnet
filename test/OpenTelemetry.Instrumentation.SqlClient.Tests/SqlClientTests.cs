@@ -16,13 +16,12 @@
 
 using System.Data;
 using System.Diagnostics;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
+using Testcontainers.MsSql;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Tests
@@ -39,31 +38,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
         private const string TestConnectionString = "Data Source=(localdb)\\MSSQLLocalDB;Database=master";
 
-        // Please note this image is not compatible with macOS running on Apple silicon.
-        // Maybe we should replace it with mcr.microsoft.com/azure-sql-edge.
-        private const string MsSqlImage = "mcr.microsoft.com/mssql/server:2019-CU18-ubuntu-20.04";
-
-        private const ushort MsSqlPort = 1433;
-
-        private const string MsSqlDatabase = "master";
-
-        private const string MsSqlUsername = "sa";
-
-        private const string MsSqlPassword = "yourStrong(!)Password";
-
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
 
-        // With the next version of Testcontainers for .NET we can replace the generic build with the Microsoft SQL Server module
-        // The module takes care of the entire configuration incl. constructing the connection string. This will be a one-liner in the future.
-        private readonly IContainer mssqlContainer = new ContainerBuilder()
-            .WithImage(MsSqlImage)
-            .WithPortBinding(MsSqlPort, true)
-            .WithEnvironment("ACCEPT_EULA", "Y")
-            .WithEnvironment("SQLCMDUSER", MsSqlUsername)
-            .WithEnvironment("SQLCMDPASSWORD", MsSqlPassword)
-            .WithEnvironment("MSSQL_SA_PASSWORD", MsSqlPassword)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("/opt/mssql-tools/bin/sqlcmd", "-Q", "SELECT 1;"))
-            .Build();
+        // Please note this image is not compatible with macOS running on Apple silicon.
+        // Maybe we should replace it with mcr.microsoft.com/azure-sql-edge (the SqlEdge module).
+        private readonly MsSqlContainer mssqlContainer = new MsSqlBuilder().Build();
 
         public SqlClientTests()
         {
@@ -138,8 +117,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             shouldEnrich = false;
 #endif
 
-            var connectionString = $"Server={this.mssqlContainer.Hostname},{this.mssqlContainer.GetMappedPublicPort(MsSqlPort)};Database={MsSqlDatabase};User Id={MsSqlUsername};Password={MsSqlPassword};TrustServerCertificate=True";
-
             var sampler = new TestSampler();
             var activities = new List<Activity>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -161,7 +138,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 })
                 .Build();
 
-            using SqlConnection sqlConnection = new SqlConnection(connectionString);
+            using SqlConnection sqlConnection = new SqlConnection(this.mssqlContainer.GetConnectionString());
 
             sqlConnection.Open();
 
