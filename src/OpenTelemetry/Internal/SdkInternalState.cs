@@ -22,11 +22,11 @@ namespace OpenTelemetry.Internal
     {
         internal static SdkInternalState Instance = new();
         private const string SdkInternalStateMeterName = "SdkInternalState";
-        private readonly Meter SdkInternalStateMeter;
+        private readonly Meter sdkInternalStateMeter;
 
         private SdkInternalState()
         {
-            this.SdkInternalStateMeter = new Meter(SdkInternalStateMeterName, "1.0");
+            this.sdkInternalStateMeter = new Meter(SdkInternalStateMeterName, "1.0");
             AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
             {
                 Instance.Dispose();
