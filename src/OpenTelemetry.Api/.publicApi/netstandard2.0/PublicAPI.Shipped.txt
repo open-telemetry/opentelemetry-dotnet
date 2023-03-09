@@ -201,6 +201,7 @@ static OpenTelemetry.Context.RuntimeContext.SetValue(string slotName, object val
 static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string slotName, T value) -> void
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity activity) -> OpenTelemetry.Trace.Status
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex) -> void
+static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex, in System.Diagnostics.TagList tags) -> void
 static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity activity, OpenTelemetry.Trace.Status status) -> void
 static OpenTelemetry.Trace.Link.operator !=(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool
 static OpenTelemetry.Trace.Link.operator ==(OpenTelemetry.Trace.Link link1, OpenTelemetry.Trace.Link link2) -> bool

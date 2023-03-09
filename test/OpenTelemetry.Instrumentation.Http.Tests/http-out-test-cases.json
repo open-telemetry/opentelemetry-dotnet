@@ -90,35 +90,37 @@
   {
     "name": "Call that cannot resolve DNS will be reported as error span",
     "method": "GET",
-    "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
+    "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "Error",
     "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": false,
     "spanAttributes": {
-      "http.scheme": "https",
+      "http.scheme": "http",
       "http.method": "GET",
-      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
+      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf",
+      "net.peer.port": "{port}",
       "http.flavor": "{flavor}",
-      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
+      "http.url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
     }
   },
   {
     "name": "Call that cannot resolve DNS will be reported as error span. And Records exception",
     "method": "GET",
-    "url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/",
+    "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "Error",
     "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": true,
     "spanAttributes": {
-      "http.scheme": "https",
+      "http.scheme": "http",
       "http.method": "GET",
-      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
+      "net.peer.name": "sdlfaldfjalkdfjlkajdflkajlsdjf",
+      "net.peer.port": "{port}",
       "http.flavor": "{flavor}",
-      "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
+      "http.url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/"
     }
   },
   {

@@ -15,29 +15,27 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Net.Http;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
 // * Summary *
 
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.521)
-Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
-.NET SDK=7.0.100-preview.6.22275.1
-  [Host] : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT AVX2
+BenchmarkDotNet=v0.13.3, OS=Windows 10 (10.0.19045.2604)
+Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
+.NET SDK=7.0.103
+  [Host] : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
 
 Job=InProcess  Toolchain=InProcessEmitToolchain
 
 |                                      Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 172.3 us | 2.35 us | 2.09 us | 0.9766 |   4.73 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 175.2 us | 2.52 us | 2.10 us | 0.9766 |   4.86 KB |
+|                 UninstrumentedAspNetCoreApp | 149.4 us | 2.94 us | 2.75 us | 0.4883 |   2.54 KB |
+| InstrumentedAspNetCoreAppWithDefaultOptions | 171.9 us | 2.65 us | 2.48 us | 0.7324 |   3.79 KB |
 */
 
 namespace Benchmarks.Instrumentation
@@ -48,6 +46,7 @@ namespace Benchmarks.Instrumentation
         private HttpClient httpClient;
         private WebApplication app;
         private TracerProvider tracerProvider;
+        private MeterProvider meterProvider;
 
         [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
         public void UninstrumentedAspNetCoreAppGlobalSetup()
@@ -65,6 +64,12 @@ namespace Benchmarks.Instrumentation
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetCoreInstrumentation()
                 .Build();
+
+            var exportedItems = new List<Metric>();
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
         }
 
         [GlobalCleanup(Target = nameof(UninstrumentedAspNetCoreApp))]
@@ -80,29 +85,29 @@ namespace Benchmarks.Instrumentation
             this.httpClient.Dispose();
             await this.app.DisposeAsync().ConfigureAwait(false);
             this.tracerProvider.Dispose();
+            this.meterProvider.Dispose();
         }
 
         [Benchmark]
         public async Task UninstrumentedAspNetCoreApp()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values").ConfigureAwait(false);
+            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 
         [Benchmark]
         public async Task InstrumentedAspNetCoreAppWithDefaultOptions()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values").ConfigureAwait(false);
+            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 
         private void StartWebApplication()
         {
             var builder = WebApplication.CreateBuilder();
-            builder.Services.AddControllers();
             builder.Logging.ClearProviders();
             var app = builder.Build();
-            app.MapControllers();
+            app.MapGet("/", () => $"Hello World!");
             app.RunAsync();
 
             this.app = app;

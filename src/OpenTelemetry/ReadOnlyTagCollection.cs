@@ -25,17 +25,17 @@ namespace OpenTelemetry
     // prevent accidental boxing.
     public readonly struct ReadOnlyTagCollection
     {
-        private readonly KeyValuePair<string, object>[] keyAndValues;
+        internal readonly KeyValuePair<string, object>[] KeyAndValues;
 
         internal ReadOnlyTagCollection(KeyValuePair<string, object>[]? keyAndValues)
         {
-            this.keyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object>>();
+            this.KeyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object>>();
         }
 
         /// <summary>
         /// Gets the number of tags in the collection.
         /// </summary>
-        public int Count => this.keyAndValues.Length;
+        public int Count => this.KeyAndValues.Length;
 
         /// <summary>
         /// Returns an enumerator that iterates through the tags.
@@ -78,7 +78,7 @@ namespace OpenTelemetry
 
                 if (index < this.source.Count)
                 {
-                    this.Current = this.source.keyAndValues[index];
+                    this.Current = this.source.KeyAndValues[index];
 
                     this.index++;
                     return true;
