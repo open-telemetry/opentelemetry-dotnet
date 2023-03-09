@@ -44,7 +44,7 @@ namespace OpenTelemetry.Internal
         {
             if (disposing)
             {
-                this.SdkInternalStateMeter.Dispose();
+                this.sdkInternalStateMeter.Dispose();
             }
         }
     }
