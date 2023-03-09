@@ -42,7 +42,7 @@ namespace OpenTelemetry
             SelfDiagnostics.EnsureInitialized();
 
             // Access the instance here once so that it is initialized
-            _ = SdkInternalStats.Instance;
+            _ = SdkInternalState.Instance;
         }
 
         /// <summary>
