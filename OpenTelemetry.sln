@@ -249,7 +249,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-console", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-jaeger", "docs\trace\getting-started-jaeger\getting-started-jaeger.csproj", "{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "stratified-sampling-example", "docs\trace\advanced\stratified-sampling-example\stratified-sampling-example.csproj", "{9C99621C-343E-479C-A943-332DB6129B71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "stratified-sampling-example", "docs\trace\stratified-sampling-example\stratified-sampling-example.csproj", "{9C99621C-343E-479C-A943-332DB6129B71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
