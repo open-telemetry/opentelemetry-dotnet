@@ -342,7 +342,7 @@ namespace OpenTelemetry.Metrics
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags, shouldSample);
                 }
                 else
                 {
@@ -374,7 +374,7 @@ namespace OpenTelemetry.Metrics
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                    this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags, shouldSample);
                 }
                 else
                 {
@@ -406,7 +406,7 @@ namespace OpenTelemetry.Metrics
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags, shouldSample);
                 }
                 else
                 {
@@ -438,7 +438,7 @@ namespace OpenTelemetry.Metrics
                 if (this.IsExemplarEnabled())
                 {
                     var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                    this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags, shouldSample);
                 }
                 else
                 {
