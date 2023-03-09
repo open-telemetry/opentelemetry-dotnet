@@ -17,6 +17,7 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -46,6 +47,11 @@ namespace OpenTelemetry
         /// Gets a value indicating whether instrumentation is suppressed (disabled).
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
+
+        /// <summary>
+        /// Gets meter to create instruments for reporting metrics on Sdk internal state.
+        /// </summary>
+        internal static Meter SdkInternalStateMeter { get; } = new Meter("SdkInternalStateMeter");
 
         /// <summary>
         /// Sets the Default TextMapPropagator.
