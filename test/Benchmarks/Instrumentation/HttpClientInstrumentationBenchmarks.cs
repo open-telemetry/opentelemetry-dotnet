@@ -1,4 +1,4 @@
-// <copyright file="AspNetCoreInstrumentationBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientInstrumentationBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,55 +32,56 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 
 Job=InProcess  Toolchain=InProcessEmitToolchain
 
-|                                      Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
-|-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 149.4 us | 2.94 us | 2.75 us | 0.4883 |   2.54 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 171.9 us | 2.65 us | 2.48 us | 0.7324 |   3.79 KB |
+
+|                   Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
+|------------------------- |---------:|--------:|--------:|-------:|----------:|
+| UninstrumentedHttpClient | 153.3 us | 2.95 us | 3.83 us | 0.4883 |   2.54 KB |
+|   InstrumentedHttpClient | 170.4 us | 3.37 us | 4.14 us | 0.9766 |   4.51 KB |
 */
 
 namespace Benchmarks.Instrumentation
 {
     [InProcess]
-    public class AspNetCoreInstrumentationBenchmarks
+    public class HttpClientInstrumentationBenchmarks
     {
         private HttpClient httpClient;
         private WebApplication app;
         private TracerProvider tracerProvider;
         private MeterProvider meterProvider;
 
-        [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
-        public void UninstrumentedAspNetCoreAppGlobalSetup()
+        [GlobalSetup(Target = nameof(UninstrumentedHttpClient))]
+        public void UninstrumentedSetup()
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
         }
 
-        [GlobalSetup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
-        public void InstrumentedAspNetCoreAppWithDefaultOptionsGlobalSetup()
+        [GlobalSetup(Target = nameof(InstrumentedHttpClient))]
+        public void InstrumentedSetup()
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
                 .Build();
 
             var exportedItems = new List<Metric>();
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
         }
 
-        [GlobalCleanup(Target = nameof(UninstrumentedAspNetCoreApp))]
-        public async Task GlobalCleanupUninstrumentedAspNetCoreAppAsync()
+        [GlobalCleanup(Target = nameof(UninstrumentedHttpClient))]
+        public async Task UninstrumentedCleanupAsync()
         {
             this.httpClient.Dispose();
             await this.app.DisposeAsync().ConfigureAwait(false);
         }
 
-        [GlobalCleanup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
-        public async Task GlobalCleanupInstrumentedAspNetCoreAppWithDefaultOptionsAsync()
+        [GlobalCleanup(Target = nameof(InstrumentedHttpClient))]
+        public async Task InstrumentedCleanupAsync()
         {
             this.httpClient.Dispose();
             await this.app.DisposeAsync().ConfigureAwait(false);
@@ -89,14 +90,14 @@ namespace Benchmarks.Instrumentation
         }
 
         [Benchmark]
-        public async Task UninstrumentedAspNetCoreApp()
+        public async Task UninstrumentedHttpClient()
         {
             var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 
         [Benchmark]
-        public async Task InstrumentedAspNetCoreAppWithDefaultOptions()
+        public async Task InstrumentedHttpClient()
         {
             var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();

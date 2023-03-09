@@ -122,4 +122,9 @@ public class MetricTestsBase
             index++;
         }
     }
+
+    public static Exemplar[] GetExemplars(MetricPoint mp)
+    {
+        return mp.GetExemplars().Where(exemplar => exemplar.Timestamp != default).ToArray();
+    }
 }

@@ -23,3 +23,4 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(th
 ~override OpenTelemetry.Metrics.AlwaysOnExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~override OpenTelemetry.Metrics.TraceBasedExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~override OpenTelemetry.Metrics.TraceBasedExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider!, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
