@@ -18,19 +18,17 @@
 
 namespace OpenTelemetry.Metrics;
 
-public readonly struct ExponentialHistogramData
+public class ExponentialHistogramData
 {
-    internal ExponentialHistogramData(int scale, long zeroCount, CircularBufferBuckets positiveBuckets, CircularBufferBuckets negativeBuckets)
+    internal ExponentialHistogramData()
     {
-        this.Scale = scale;
-        this.ZeroCount = zeroCount;
-        this.PositiveBuckets = new(positiveBuckets);
-        this.NegativeBuckets = new(negativeBuckets);
+        this.PositiveBuckets = new();
+        this.NegativeBuckets = new();
     }
 
-    public int Scale { get; }
+    public int Scale { get; internal set; }
 
-    public long ZeroCount { get; }
+    public long ZeroCount { get; internal set; }
 
     public ExponentialHistogramBuckets PositiveBuckets { get; }
 

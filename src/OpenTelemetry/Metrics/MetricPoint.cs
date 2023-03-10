@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -284,7 +286,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns><see cref="ExponentialHistogramData"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly ExponentialHistogramData GetExponentialHistogramData()
+        public ExponentialHistogramData GetExponentialHistogramData()
         {
             if (this.aggType != AggregationType.Base2ExponentialHistogram &&
                 this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
