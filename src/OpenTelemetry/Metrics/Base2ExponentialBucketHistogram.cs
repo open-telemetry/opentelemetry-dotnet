@@ -38,10 +38,7 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal int IsCriticalSectionOccupied = 0;
 
-    internal int SnapshotScale;
-    internal long SnapshotZeroCount;
-    internal CircularBufferBuckets SnapshotPositiveBuckets;
-    internal CircularBufferBuckets SnapshotNegativeBuckets;
+    internal ExponentialHistogramData SnapshotExponentialHistogramData = new ExponentialHistogramData();
 
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
@@ -134,9 +131,6 @@ internal sealed class Base2ExponentialBucketHistogram
     internal long ZeroCount { get; private set; }
 
     internal CircularBufferBuckets NegativeBuckets { get; }
-
-    internal ExponentialBucketSnapshot ExponentialBucketSnapshot =>
-        new ExponentialBucketSnapshot(this.SnapshotScale, this.SnapshotZeroCount, this.SnapshotPositiveBuckets, this.SnapshotNegativeBuckets);
 
     /// <summary>
     /// Maps a finite positive IEEE 754 double-precision floating-point
@@ -231,9 +225,14 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal void Snapshot()
     {
-        this.SnapshotScale = this.Scale;
-        this.SnapshotZeroCount = this.ZeroCount;
-        this.SnapshotPositiveBuckets = this.PositiveBuckets.Copy();
-        this.SnapshotNegativeBuckets = this.NegativeBuckets.Copy();
+        this.SnapshotExponentialHistogramData.Scale = this.Scale;
+        this.SnapshotExponentialHistogramData.ZeroCount = this.ZeroCount;
+        this.SnapshotExponentialHistogramData.PositiveBuckets.SnapshotBuckets(this.PositiveBuckets);
+        this.SnapshotExponentialHistogramData.NegativeBuckets.SnapshotBuckets(this.NegativeBuckets);
+    }
+
+    internal ExponentialHistogramData GetExponentialHistogramData()
+    {
+        return this.SnapshotExponentialHistogramData;
     }
 }
