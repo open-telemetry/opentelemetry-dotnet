@@ -20,8 +20,8 @@ OpenTelemetry.Metrics.ExponentialHistogramBuckets.GetEnumerator() -> OpenTelemet
 OpenTelemetry.Metrics.ExponentialHistogramBuckets.Offset.get -> int
 OpenTelemetry.Metrics.ExponentialHistogramData
 OpenTelemetry.Metrics.ExponentialHistogramData.ExponentialHistogramData() -> void
-OpenTelemetry.Metrics.ExponentialHistogramData.NegativeBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets
-OpenTelemetry.Metrics.ExponentialHistogramData.PositiveBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets
+OpenTelemetry.Metrics.ExponentialHistogramData.NegativeBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
+OpenTelemetry.Metrics.ExponentialHistogramData.PositiveBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
 OpenTelemetry.Metrics.ExponentialHistogramData.Scale.get -> int
 OpenTelemetry.Metrics.ExponentialHistogramData.ZeroCount.get -> long
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
@@ -30,8 +30,8 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(th
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~OpenTelemetry.Metrics.Exemplar.FilteredTags.get -> System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>
-~OpenTelemetry.Metrics.MetricPoint.GetExemplars() -> OpenTelemetry.Metrics.Exemplar[]
-OpenTelemetry.Metrics.MetricPoint.GetExponentialHistogramData() -> OpenTelemetry.Metrics.ExponentialHistogramData
+OpenTelemetry.Metrics.MetricPoint.GetExemplars() -> OpenTelemetry.Metrics.Exemplar[]!
+OpenTelemetry.Metrics.MetricPoint.GetExponentialHistogramData() -> OpenTelemetry.Metrics.ExponentialHistogramData!
 ~override OpenTelemetry.Metrics.AlwaysOffExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~override OpenTelemetry.Metrics.AlwaysOffExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~override OpenTelemetry.Metrics.AlwaysOnExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
