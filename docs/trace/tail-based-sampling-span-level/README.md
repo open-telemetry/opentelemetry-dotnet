@@ -1,6 +1,6 @@
 # Tail Based Sampling at a span level: An Example
 
-This is an example / proof of concept to achieve tail-based sampling at a
+This document describes one possible way to achieve a form of tail-based sampling to include all failed spans, on top of the regular head-based sampling. This is done by leveraging extensibility mechanisms on the OTel sdk, and uses a combination of a custom sampler and an activity processor.
 span level using the extensibility mechanisms in OpenTelemetry.NET.
 
 This is a way to achieve a combination of:
@@ -34,9 +34,9 @@ at a SDK level without having to install any additional components.
 
 Tail-sampling this way involves many tradeoffs such as:
 
-1. Additional memory cost: Unlike head-based sampling where the sampling
+1. Additional performance cost: Unlike head-based sampling where the sampling
 decision is made at span creation time, in tail sampling the decision is made
-only at the end, so there is additional memory cost.
+only at the end, so there is additional memory/processing cost.
 
 2. Partial traces: Since this sampling is at a span level, the generated trace
 will be partial. For example, if another part of the call tree is successful,
