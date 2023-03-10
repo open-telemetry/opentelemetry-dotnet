@@ -27,7 +27,7 @@ public readonly struct ExponentialHistogramBuckets
         this.buckets = buckets;
     }
 
-    public int Offset => this.buckets.Offset;
+    public readonly int Offset => this.buckets.Offset;
 
     public Enumerator GetEnumerator() => new(this.buckets);
 
