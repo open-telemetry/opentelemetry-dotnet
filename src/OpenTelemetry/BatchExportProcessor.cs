@@ -17,6 +17,7 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -37,6 +38,7 @@ namespace OpenTelemetry
         internal readonly int MaxExportBatchSize;
 
         private readonly CircularBuffer<T> circularBuffer;
+        private readonly ObservableCounter<long> circularBufferDroppedCount;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
         private readonly Thread exporterThread;
@@ -69,6 +71,7 @@ namespace OpenTelemetry
             Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
+            this.circularBufferDroppedCount = Sdk.SdkInternalStateMeter.CreateObservableCounter($"{typeof(T)}.CircularBufferDroppedCount", () => this.DroppedCount);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
@@ -116,11 +119,6 @@ namespace OpenTelemetry
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
-
-            if (Sdk.CircularBufferDroppedCount.Enabled)
-            {
-                Sdk.CircularBufferDroppedCount.Add(1);
-            }
 
             return false;
         }

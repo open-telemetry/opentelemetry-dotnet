@@ -51,12 +51,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets meter to create instruments for reporting metrics on Sdk internal state.
         /// </summary>
-        internal static Meter SdkInternalStateMeter { get; } = new Meter("SdkInternalStateMeter");
-
-        /// <summary>
-        /// Gets the counter that reports number of items dropped by BatchExportProcessor's cicular buffer.
-        /// </summary>
-        internal static Counter<long> CircularBufferDroppedCount { get; } = SdkInternalStateMeter.CreateCounter<long>("CircularBufferDroppedCount");
+        internal static Meter SdkInternalStateMeter { get; } = new Meter("OpenTelemetry.Sdk");
 
         /// <summary>
         /// Sets the Default TextMapPropagator.
