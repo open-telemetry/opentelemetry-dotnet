@@ -117,6 +117,11 @@ namespace OpenTelemetry
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
 
+            if (Sdk.CircularBufferDroppedCount.Enabled)
+            {
+                Sdk.CircularBufferDroppedCount.Add(1);
+            }
+
             return false;
         }
 
