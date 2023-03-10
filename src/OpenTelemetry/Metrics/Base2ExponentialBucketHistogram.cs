@@ -38,6 +38,11 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal int IsCriticalSectionOccupied = 0;
 
+    internal int SnapshotScale;
+    internal long SnapshotZeroCount;
+    internal CircularBufferBuckets SnapshotPositiveBuckets;
+    internal CircularBufferBuckets SnapshotNegativeBuckets;
+
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -130,6 +135,9 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal CircularBufferBuckets NegativeBuckets { get; }
 
+    internal ExponentialBucketSnapshot ExponentialBucketSnapshot =>
+        new ExponentialBucketSnapshot(this.SnapshotScale, this.SnapshotZeroCount, this.SnapshotPositiveBuckets, this.SnapshotNegativeBuckets);
+
     /// <summary>
     /// Maps a finite positive IEEE 754 double-precision floating-point
     /// number to <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
@@ -210,5 +218,22 @@ internal sealed class Base2ExponentialBucketHistogram
         this.Scale -= n;
         n = buckets.TryIncrement(index >> n);
         Debug.Assert(n == 0, "Increment should always succeed after scale down.");
+    }
+
+    internal void Reset()
+    {
+        // TODO: Determine if this is sufficient for delta temporality.
+        // I'm not sure we should be resetting the scale.
+        this.ZeroCount = 0;
+        this.PositiveBuckets.Reset();
+        this.NegativeBuckets.Reset();
+    }
+
+    internal void Snapshot()
+    {
+        this.SnapshotScale = this.Scale;
+        this.SnapshotZeroCount = this.ZeroCount;
+        this.SnapshotPositiveBuckets = this.PositiveBuckets.Copy();
+        this.SnapshotNegativeBuckets = this.NegativeBuckets.Copy();
     }
 }
