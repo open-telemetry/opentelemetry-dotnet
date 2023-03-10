@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Baggage will not be reset during request stop event. This will allow
+processors to access it during OnEnd call.
+([#4274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4274))
+
 ## 1.0.0-rc9.14
 
 Released 2023-Feb-24
