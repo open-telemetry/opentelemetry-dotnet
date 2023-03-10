@@ -249,6 +249,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-console", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-jaeger", "docs\trace\getting-started-jaeger\getting-started-jaeger.csproj", "{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail-based-sampling-example", "docs\trace\tail-based-sampling-span-level\tail-based-sampling-example.csproj", "{800DB925-6014-4136-AC01-3356CF7CADD3}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "stratified-sampling-example", "docs\trace\stratified-sampling-example\stratified-sampling-example.csproj", "{9C99621C-343E-479C-A943-332DB6129B71}"
 EndProject
 Global
@@ -525,6 +527,10 @@ Global
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{800DB925-6014-4136-AC01-3356CF7CADD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{800DB925-6014-4136-AC01-3356CF7CADD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{800DB925-6014-4136-AC01-3356CF7CADD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{800DB925-6014-4136-AC01-3356CF7CADD3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -568,6 +574,7 @@ Global
 		{DEDE8442-03CA-48CF-99B9-EA224D89D148} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{EF4F6280-14D1-49D4-8095-1AC36E169AA8} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{A0C0B77C-6C7B-4EC2-AC61-EA1F489811B9} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{800DB925-6014-4136-AC01-3356CF7CADD3} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{9C99621C-343E-479C-A943-332DB6129B71} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
