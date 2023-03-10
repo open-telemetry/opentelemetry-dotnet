@@ -18,7 +18,7 @@
 
 namespace OpenTelemetry.Metrics;
 
-public class ExponentialHistogramData
+public readonly struct ExponentialHistogramData
 {
     internal ExponentialHistogramData(int scale, long zeroCount, CircularBufferBuckets positiveBuckets, CircularBufferBuckets negativeBuckets)
     {

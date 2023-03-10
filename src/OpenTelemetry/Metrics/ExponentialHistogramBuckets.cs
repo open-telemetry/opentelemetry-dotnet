@@ -18,7 +18,7 @@
 
 namespace OpenTelemetry.Metrics;
 
-public class ExponentialHistogramBuckets
+public readonly struct ExponentialHistogramBuckets
 {
     private readonly CircularBufferBuckets buckets;
 
