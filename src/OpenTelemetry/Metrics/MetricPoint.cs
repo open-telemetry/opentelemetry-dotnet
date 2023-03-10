@@ -292,7 +292,7 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
             }
 
-            return this.mpComponents.Base2ExponentialBucketHistogram.SnapshotExponentialHistogramBuckets;
+            return this.mpComponents.Base2ExponentialBucketHistogram.GetExponentialHistogramData();
         }
 
         /// <summary>
