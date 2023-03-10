@@ -18,7 +18,7 @@
 
 namespace OpenTelemetry.Metrics;
 
-public class ExponentialHistogramData
+public sealed class ExponentialHistogramData
 {
     internal ExponentialHistogramData()
     {
