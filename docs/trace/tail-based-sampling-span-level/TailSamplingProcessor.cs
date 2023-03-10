@@ -36,10 +36,12 @@ internal sealed class TailSamplingProcessor : BaseProcessor<Activity>
             // This means that this activity was included based on head-based sampling,
             // we continue with that decision and no further change is needed.
             Console.WriteLine($"Including head-sampled activity with id {activity.Id} and status {activity.Status}");
-            return;
+        }
+        else
+        {
+            this.IncludeForExportIfFailedActivity(activity);
         }
 
-        this.IncludeFailedActivityForExport(activity);
         base.OnEnd(activity);
     }
 
@@ -53,7 +55,7 @@ internal sealed class TailSamplingProcessor : BaseProcessor<Activity>
     // 2. Traces will not be complete: Since this sampling is at a span level, the generated trace will be partial and won't be complete.
     //     For example, if another part of the call tree is successful, those spans may not be sampled in leading to a partial trace.
     // 3. If multiple exporters are used, this decision will impact all of them: https://github.com/open-telemetry/opentelemetry-dotnet/issues/3861.
-    private void IncludeFailedActivityForExport(Activity activity)
+    private void IncludeForExportIfFailedActivity(Activity activity)
     {
         if (activity.Status == ActivityStatusCode.Error)
         {
