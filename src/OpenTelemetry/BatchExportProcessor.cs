@@ -71,7 +71,7 @@ namespace OpenTelemetry
             Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
-            this.circularBufferDroppedCount = Sdk.SdkInternalStateMeter.CreateObservableCounter($"{typeof(T)}.CircularBufferDroppedCount", () => this.DroppedCount);
+            this.circularBufferDroppedCount = Sdk.SdkInternalStateMeter.CreateObservableCounter($"{typeof(T).Name}.BatchExportProcessorDroppedCount", () => this.DroppedCount);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
