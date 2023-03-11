@@ -16,8 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="Microsoft.Coyote" Version="1.7.5" />
-	<PackageReference Include="Microsoft.Coyote.Test" Version="1.7.5" />
 	<PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingPkgVer)" />
   </ItemGroup>
 
