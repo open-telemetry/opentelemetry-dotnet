@@ -62,7 +62,7 @@ namespace OpenTelemetry.Metrics
             this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
             this.outputDelta = temporality == AggregationTemporality.Delta;
-            this.histogramBounds = metricStreamIdentity.HistogramBucketBounds;
+            this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? Metric.DefaultHistogramBounds;
             this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
             this.StartTimeExclusive = DateTimeOffset.UtcNow;
             this.exemplarFilter = exemplarFilter ?? new AlwaysOffExemplarFilter();
