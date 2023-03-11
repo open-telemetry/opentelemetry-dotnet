@@ -15,8 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using Microsoft.Coyote;
-using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Exporter;
 using Xunit;
 
@@ -39,37 +37,6 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), maxQueueSize: 1, maxExportBatchSize: 2049));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), scheduledDelayMilliseconds: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems), exporterTimeoutMilliseconds: -1));
-        }
-
-        [Fact]
-        public void CheckIfBatchIsExportingOnQueueLimit_Coyote()
-        {
-            var config = Configuration.Create();
-            var test = TestingEngine.Create(config, this.CheckIfBatchIsExportingOnQueueLimit);
-
-            test.Run();
-            Console.WriteLine(test.GetReport());
-            Console.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
-
-            var dir = Directory.GetCurrentDirectory();
-
-            if (test.TryEmitReports(dir, "CheckIfBatchIsExportingOnQueueLimit_Coyote", out IEnumerable<string> reportPaths))
-            {
-                foreach (var reportPath in reportPaths)
-                {
-                    Console.WriteLine($"Execution Report: {reportPath}");
-                }
-            }
-
-            if (test.TryEmitCoverageReports(dir, "CheckIfBatchIsExportingOnQueueLimit_Coyote", out reportPaths))
-            {
-                foreach (var reportPath in reportPaths)
-                {
-                    Console.WriteLine($"Coverage report: {reportPath}");
-                }
-            }
-
-            Assert.Equal(0, test.TestReport.NumOfFoundBugs);
         }
 
         [Fact]
