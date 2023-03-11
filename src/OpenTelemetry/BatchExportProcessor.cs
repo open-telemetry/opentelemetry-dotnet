@@ -85,8 +85,6 @@ namespace OpenTelemetry
         /// </summary>
         internal long DroppedCount => this.droppedCount;
 
-        internal long ShutdownDrainTarget => Volatile.Read(ref this.shutdownDrainTarget);
-
         /// <summary>
         /// Gets the number of telemetry objects received by the processor.
         /// </summary>
@@ -200,7 +198,7 @@ namespace OpenTelemetry
                     return true;
                 }
 
-                if (Volatile.Read(ref this.shutdownDrainTarget) != long.MaxValue)
+                if (this.shutdownDrainTarget != long.MaxValue)
                 {
                     return false;
                 }
@@ -210,7 +208,7 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            Volatile.Write(ref this.shutdownDrainTarget, this.circularBuffer.AddedCount);
+            this.shutdownDrainTarget = this.circularBuffer.AddedCount;
 
             try
             {
@@ -297,7 +295,7 @@ namespace OpenTelemetry
                     }
                 }
 
-                if (this.circularBuffer.RemovedCount >= Volatile.Read(ref this.shutdownDrainTarget))
+                if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
                 {
                     return;
                 }
