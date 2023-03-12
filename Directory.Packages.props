@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.3.3]" />
-    <PackageReference Include="Microsoft.CodeCoverage" Version="[3.3.3]" />
+    <PackageReference Include="Microsoft.CodeCoverage" Version="[17.4.1]" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[2.1.0,)" />
