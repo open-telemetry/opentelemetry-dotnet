@@ -1,0 +1,29 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="[4.2.0,5.0)" />
+    <PackageReference Include="Google.Protobuf" Version="[3.22.0,4.0)" />
+    <PackageReference Include="Grpc" Version="[2.44.0,3.0)" />
+    <PackageReference Include="Grpc.Net.Client" Version="[2.43.0,3.0)" />
+    <PackageReference Include="Grpc.Tools" Version="[2.44.0,3.0)" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.3.3]" />
+    <PackageReference Include="Microsoft.CodeCoverage" Version="[3.3.3]" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[2.1.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[3.1.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="[3.1.0,)" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
+    <PackageReference Include="OpenTracing" Version="[0.12.1,0.13)" />
+    <PackageReference Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.0" />
+    <PackageReference Include="System.Text.Json" Version="4.7.2" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+</Project>
