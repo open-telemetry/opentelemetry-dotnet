@@ -26,7 +26,7 @@
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.20" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
   <ItemGroup>

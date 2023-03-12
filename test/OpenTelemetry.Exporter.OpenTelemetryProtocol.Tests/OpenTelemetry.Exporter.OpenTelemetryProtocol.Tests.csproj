@@ -19,17 +19,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.20" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore.Server" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <PackageReference Include="Grpc.AspNetCore.Server" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
   </ItemGroup>
 
   <ItemGroup>
