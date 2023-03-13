@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -31,7 +33,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationType aggType;
 
-        private MetricPointOptionalComponents mpComponents;
+        private MetricPointOptionalComponents? mpComponents;
 
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
@@ -58,15 +60,15 @@ namespace OpenTelemetry.Metrics
             this.deltaLastValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
-            ExemplarReservoir reservoir = null;
+            ExemplarReservoir? reservoir = null;
             if (this.aggType == AggregationType.HistogramWithBuckets ||
                 this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
                 this.mpComponents = new MetricPointOptionalComponents();
                 this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
-                if (aggregatorStore.IsExemplarEnabled())
+                if (aggregatorStore!.IsExemplarEnabled())
                 {
-                    reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Length);
+                    reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
                 }
             }
             else if (this.aggType == AggregationType.Histogram ||
@@ -86,7 +88,7 @@ namespace OpenTelemetry.Metrics
                 this.mpComponents = null;
             }
 
-            if (aggregatorStore.IsExemplarEnabled() && reservoir == null)
+            if (aggregatorStore!.IsExemplarEnabled() && reservoir == null)
             {
                 reservoir = new SimpleExemplarReservoir(DefaultSimpleReservoirPoolSize);
             }
@@ -250,7 +252,7 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
 
-            return this.mpComponents.HistogramBuckets != null
+            return this.mpComponents!.HistogramBuckets != null
                 ? this.mpComponents.HistogramBuckets.SnapshotSum
                 : this.mpComponents.Base2ExponentialBucketHistogram.SnapshotSum;
         }
@@ -273,27 +275,26 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
 
-            return this.mpComponents.HistogramBuckets;
+            return this.mpComponents!.HistogramBuckets;
         }
 
         /// <summary>
-        /// Gets the buckets of the histogram associated with the metric point.
+        /// Gets the exponential histogram data associated with the metric point.
         /// </summary>
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns><see cref="Base2ExponentialBucketHistogram"/>.</returns>
+        /// <returns><see cref="ExponentialHistogramData"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#pragma warning disable SA1202 // Elements should be ordered by access. GetExponentialBucketSnapshot will be public soon.
-        internal readonly ExponentialBucketSnapshot GetExponentialBucketSnapshot()
+        public ExponentialHistogramData GetExponentialHistogramData()
         {
             if (this.aggType != AggregationType.Base2ExponentialHistogram &&
                 this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
             {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialBucketSnapshot));
+                this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
             }
 
-            return this.mpComponents.Base2ExponentialBucketHistogram.ExponentialBucketSnapshot;
+            return this.mpComponents!.Base2ExponentialBucketHistogram.GetExponentialHistogramData();
         }
 
         /// <summary>
@@ -304,24 +305,23 @@ namespace OpenTelemetry.Metrics
         /// <returns>True if minimum and maximum value exist, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHistogramMinMaxValues(out double min, out double max)
-#pragma warning restore SA1202 // Elements should be ordered by access
         {
             if (this.aggType == AggregationType.HistogramWithMinMax ||
                             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
             {
-                Debug.Assert(this.mpComponents.HistogramBuckets != null, "histogramBuckets was null");
+                Debug.Assert(this.mpComponents!.HistogramBuckets != null, "histogramBuckets was null");
 
-                min = this.mpComponents.HistogramBuckets.SnapshotMin;
-                max = this.mpComponents.HistogramBuckets.SnapshotMax;
+                min = this.mpComponents!.HistogramBuckets!.SnapshotMin;
+                max = this.mpComponents!.HistogramBuckets!.SnapshotMax;
                 return true;
             }
 
             if (this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
-                Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "base2ExponentialBucketHistogram was null");
+                Debug.Assert(this.mpComponents!.Base2ExponentialBucketHistogram != null, "base2ExponentialBucketHistogram was null");
 
-                min = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMin;
-                max = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMax;
+                min = this.mpComponents!.Base2ExponentialBucketHistogram!.SnapshotMin;
+                max = this.mpComponents!.Base2ExponentialBucketHistogram!.SnapshotMax;
                 return true;
             }
 
@@ -430,7 +430,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 unchecked
@@ -459,7 +459,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.runningValue.AsLong = number;
@@ -481,7 +481,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.runningValue.AsLong = number;
@@ -649,7 +649,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 unchecked
@@ -678,7 +678,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 unchecked
@@ -704,7 +704,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 unchecked
@@ -877,7 +877,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithBuckets:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -919,7 +919,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -950,7 +950,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -995,7 +995,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1030,7 +1030,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Base2ExponentialHistogram:
                     {
-                        var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
+                        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1063,7 +1063,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Base2ExponentialHistogramWithMinMax:
                     {
-                        var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
+                        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1110,7 +1110,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
 
@@ -1145,7 +1145,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
 
@@ -1179,7 +1179,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
 
@@ -1203,7 +1203,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 1) == 0)
+                            if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
 
@@ -1224,7 +1224,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithBuckets:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1266,7 +1266,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1298,7 +1298,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithMinMaxBuckets:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1343,7 +1343,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        var histogramBuckets = this.mpComponents.HistogramBuckets;
+                        var histogramBuckets = this.mpComponents!.HistogramBuckets;
                         var sw = default(SpinWait);
                         while (true)
                         {
@@ -1381,7 +1381,7 @@ namespace OpenTelemetry.Metrics
 
         private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
-            var histogramBuckets = this.mpComponents.HistogramBuckets;
+            var histogramBuckets = this.mpComponents!.HistogramBuckets;
             var sw = default(SpinWait);
             while (true)
             {
@@ -1410,7 +1410,7 @@ namespace OpenTelemetry.Metrics
 
         private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
-            var histogramBuckets = this.mpComponents.HistogramBuckets;
+            var histogramBuckets = this.mpComponents!.HistogramBuckets;
             var sw = default(SpinWait);
             while (true)
             {
@@ -1441,7 +1441,7 @@ namespace OpenTelemetry.Metrics
 
         private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
-            var histogramBuckets = this.mpComponents.HistogramBuckets;
+            var histogramBuckets = this.mpComponents!.HistogramBuckets;
             int i = histogramBuckets.FindBucketIndex(number);
 
             var sw = default(SpinWait);
@@ -1472,7 +1472,7 @@ namespace OpenTelemetry.Metrics
 
         private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
         {
-            var histogramBuckets = this.mpComponents.HistogramBuckets;
+            var histogramBuckets = this.mpComponents!.HistogramBuckets;
             int i = histogramBuckets.FindBucketIndex(number);
 
             var sw = default(SpinWait);
@@ -1508,7 +1508,7 @@ namespace OpenTelemetry.Metrics
         private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
+            var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
             var sw = default(SpinWait);
             while (true)
@@ -1536,7 +1536,7 @@ namespace OpenTelemetry.Metrics
         private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            var histogram = this.mpComponents.Base2ExponentialBucketHistogram;
+            var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
             var sw = default(SpinWait);
             while (true)
