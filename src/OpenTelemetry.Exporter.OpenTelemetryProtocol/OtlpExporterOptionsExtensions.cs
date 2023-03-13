@@ -59,17 +59,17 @@ namespace OpenTelemetry.Exporter
 #endif
         }
 
-        public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
+        public static Func<Metadata> GetMetadataFromHeaders(this OtlpExporterOptions options)
         {
             return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
         }
 
-        public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+        public static Func<THeaders> GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
             where THeaders : new()
         {
             var optionHeaders = options.Headers;
 
-            var headers = new THeaders();
+            var headersCollection = new Dictionary<string, string>();
             if (!string.IsNullOrEmpty(optionHeaders))
             {
                 Array.ForEach(
@@ -86,16 +86,27 @@ namespace OpenTelemetry.Exporter
 
                         var key = keyValueData[0].Trim();
                         var value = keyValueData[1].Trim();
-                        addHeader(headers, key, value);
+                        headersCollection.Add(key, value);
                     });
             }
 
             foreach (var header in OtlpExporterOptions.StandardHeaders)
             {
-                addHeader(headers, header.Key, header.Value);
+                headersCollection.Add(header.Key, header.Value);
             }
 
-            return headers;
+            return () =>
+            {
+                var headers = new THeaders();
+                var resolvedHeaders = options.HeadersResolver(headersCollection);
+
+                foreach (var header in resolvedHeaders)
+                {
+                    addHeader(headers, header.Key, header.Value);
+                }
+
+                return headers;
+            };
         }
 
         public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>

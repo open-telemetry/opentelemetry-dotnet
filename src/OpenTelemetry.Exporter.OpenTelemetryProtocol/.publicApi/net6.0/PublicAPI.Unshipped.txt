@@ -1,2 +1,2 @@
-OpenTelemetry.Exporter.OtlpExporterOptions.HeadersFactory.get -> System.Func<string>
-OpenTelemetry.Exporter.OtlpExporterOptions.HeadersFactory.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.HeadersResolver.get -> System.Func<System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>>
+OpenTelemetry.Exporter.OtlpExporterOptions.HeadersResolver.set -> void

@@ -73,6 +73,44 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
         }
 
+        [Fact]
+        public void NewOtlpHttpTraceExportClient_OtlpExporterOptions_CustomHeadersResolver()
+        {
+            var header1 = new { Name = "hdr1", Value = "val1" };
+            var header2 = new { Name = "hdr2", Value = "val2" };
+            var header3 = new { Name = "hdr3", Value = "val3" };
+            var header4 = new { Name = "hdr4", Value = "val4" };
+
+            var options = new OtlpExporterOptions
+            {
+                Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
+                HeadersResolver = (defaultHeaders) =>
+                {
+                    var customHeaders = defaultHeaders.ToDictionary(x => x.Key, x => x.Value);
+
+                    customHeaders.Add(header3.Name, header3.Value);
+                    customHeaders.Add(header4.Name, header4.Value);
+
+                    return customHeaders;
+                },
+            };
+
+            var client = new OtlpHttpTraceExportClient(options, options.HttpClientFactory());
+
+            Assert.NotNull(client.HttpClient);
+
+            Assert.Equal(4 + OtlpExporterOptions.StandardHeaders.Length, client.Headers().Count);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header3.Name && kvp.Value == header3.Value);
+            Assert.Contains(client.Headers(), kvp => kvp.Key == header4.Name && kvp.Value == header4.Value);
+
+            for (int i = 0; i < OtlpExporterOptions.StandardHeaders.Length; i++)
+            {
+                Assert.Contains(client.Headers(), entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value == OtlpExporterOptions.StandardHeaders[i].Value);
+            }
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

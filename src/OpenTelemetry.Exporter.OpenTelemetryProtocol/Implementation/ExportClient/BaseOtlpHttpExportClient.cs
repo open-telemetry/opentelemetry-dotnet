@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 ? options.Endpoint.AppendPathIfNotPresent(signalPath)
                 : options.Endpoint;
             this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
-            this.Headers = () => options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+            this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient;
         }
 

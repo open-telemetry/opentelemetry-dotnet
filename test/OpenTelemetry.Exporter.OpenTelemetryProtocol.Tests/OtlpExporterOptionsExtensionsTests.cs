@@ -36,7 +36,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Headers = headers,
             };
-            var metadata = options.GetMetadataFromHeaders();
+            var metadataFunc = options.GetMetadataFromHeaders();
+            var metadata = metadataFunc();
 
             Assert.Equal(OtlpExporterOptions.StandardHeaders.Length + keys.Length, metadata.Count);
 
@@ -86,7 +87,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Headers = optionHeaders,
             };
 
-            var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+            var headersFunc = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+            var headers = headersFunc();
 
             Assert.Equal(OtlpExporterOptions.StandardHeaders.Length, headers.Count);
 
