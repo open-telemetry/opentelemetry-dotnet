@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-* Added HeadersFactory to OtlpExporterOptions and adjusted exporter clients to use the function.
-
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07

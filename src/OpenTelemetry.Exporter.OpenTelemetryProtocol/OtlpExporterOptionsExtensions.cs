@@ -68,17 +68,6 @@ namespace OpenTelemetry.Exporter
             where THeaders : new()
         {
             var optionHeaders = options.Headers;
-            var resolvedHeaders = options.HeadersFactory?.Invoke();
-
-            if (!string.IsNullOrEmpty(resolvedHeaders))
-            {
-                if (!string.IsNullOrEmpty(optionHeaders))
-                {
-                    optionHeaders += ",";
-                }
-
-                optionHeaders += resolvedHeaders;
-            }
 
             var headers = new THeaders();
             if (!string.IsNullOrEmpty(optionHeaders))
