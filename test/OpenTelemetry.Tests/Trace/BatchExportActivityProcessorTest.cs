@@ -42,59 +42,31 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
-            var exportedItems1 = new List<Activity>();
-            var exportedItems2 = new List<Activity>();
+            var exportedItems = new List<Activity>();
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
+            using var processor = new BatchActivityExportProcessor(
+                exporter,
+                maxQueueSize: 1,
+                maxExportBatchSize: 1,
+                scheduledDelayMilliseconds: 100_000);
 
             using var activity = new Activity("start")
             {
                 ActivityTraceFlags = ActivityTraceFlags.Recorded,
             };
 
-            using var exporter1 = new InMemoryExporter<Activity>(exportedItems1);
-            using var processor1 = new BatchActivityExportProcessor(
-                exporter1,
-                maxQueueSize: 1,
-                maxExportBatchSize: 1,
-                scheduledDelayMilliseconds: 100_000);
+            processor.OnEnd(activity);
 
-            using var exporter2 = new InMemoryExporter<Activity>(exportedItems2);
-            using var processor2 = new BatchActivityExportProcessor(
-                exporter2,
-                maxQueueSize: 1,
-                maxExportBatchSize: 1,
-                scheduledDelayMilliseconds: 100_000);
-
-            var tasks = new List<Task>()
+            for (int i = 0; i < 10 && exportedItems.Count == 0; i++)
             {
-                Task.Run(
-                    () =>
-                    {
-                        processor1.OnEnd(activity);
-                        Thread.Sleep(2500);
-                        processor1.ForceFlush();
-                        Thread.Sleep(2500);
-                        processor1.Shutdown();
-                    }),
+                Thread.Sleep(500);
+            }
 
-                Task.Run(
-                    () =>
-                    {
-                        processor2.OnEnd(activity);
-                        Thread.Sleep(2500);
-                        processor2.ForceFlush();
-                        Thread.Sleep(2500);
-                        processor2.Shutdown();
-                    }),
-            };
+            Assert.Single(exportedItems);
 
-            Assert.Single(exportedItems2);
-            Assert.Equal(1, processor2.ProcessedCount);
-            Assert.Equal(1, processor2.ReceivedCount);
-            Assert.Equal(0, processor2.DroppedCount);
-            Assert.Single(exportedItems2);
-            Assert.Equal(1, processor2.ProcessedCount);
-            Assert.Equal(1, processor2.ReceivedCount);
-            Assert.Equal(0, processor2.DroppedCount);
+            Assert.Equal(1, processor.ProcessedCount);
+            Assert.Equal(1, processor.ReceivedCount);
+            Assert.Equal(0, processor.DroppedCount);
         }
 
         [Fact]
