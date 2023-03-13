@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 1.5.0-alpha.1
+
+Released 2023-Mar-07
+
+* Added Exemplar support. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+
+* Added `AddDetector` factory overload on `ResourceBuilder`.
+  ([#4261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4261))
+
+## 1.4.0
+
+Released 2023-Feb-24
+
 ## 1.4.0-rc.4
 
 Released 2023-Feb-10

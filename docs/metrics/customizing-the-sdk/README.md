@@ -403,6 +403,98 @@ AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not
 streams. There is no ability to apply different limits for each instrument at
 this moment.
 
+### Exemplars
+
+Exemplars are example data points for aggregated data. They provide access to
+the raw measurement value, time stamp when measurement was made, and trace
+context, if any. It also provides "Filtered Tags", which are attributes (Tags)
+that are [dropped by a view](#select-specific-tags). Exemplars are an opt-in
+feature, and allow customization via ExemplarFilter and ExemplarReservoir.
+
+Exemplar collection in OpenTelemetry .NET is done automatically (once Exemplar
+feature itself is enabled on `MeterProvider`). There is no separate API
+to report exemplar data. If an app is already using existing Metrics API
+(manually or via instrumentation libraries), exemplars can be configured/enabled
+without requiring instrumentation changes.
+
+While the SDK is capable of producing exemplars automatically, the exporters
+(and the backends) must also support them in order to be useful. OTLP Metric
+Exporter has support for this today, and this [end-to-end
+tutorial](../exemplars/README.md) demonstrates how to use exemplars to achieve
+correlation from metrics to traces, which is one of the primary use cases for
+exemplars.
+
+#### ExemplarFilter
+
+`ExemplarFilter` determines which measurements are eligible to become an
+Exemplar. i.e. `ExemplarFilter` determines which measurements are offered to
+`ExemplarReservoir`, which makes the final decision about whether the offered
+measurement gets stored as an exemplar. They can be used to control the noise
+and overhead associated with Exemplar collection.
+
+OpenTelemetry SDK comes with the following Filters:
+
+* `AlwaysOnExemplarFilter` - makes all measurements eligible for being an Exemplar.
+* `AlwaysOffExemplarFilter` - makes no measurements eligible for being an
+  Exemplar. Using this is as good as turning off Exemplar feature, and is the current
+  default.
+* `TraceBasedExemplarFilter` - makes those measurements eligible for being an
+Exemplar, which are recorded in the context of a sampled parent `Activity`
+(span).
+
+`SetExemplarFilter` method on `MeterProviderBuilder` can be used to set the
+desired `ExemplarFilter`.
+
+The snippet below shows how to set `ExemplarFilter`.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    // rest of config not shown
+    .SetExemplarFilter(new TraceBasedExemplarFilter())
+    .Build();
+```
+
+> **Note**
+> As of today, there is no separate toggle for enable/disable Exemplar feature.
+Exemplars can be disabled by setting filter as `AlwaysOffExemplarFilter`, which
+is also the default (i.e Exemplar feature is disabled by default). Users can
+enable the feature by setting filter to anything other than
+`AlwaysOffExemplarFilter`. For example: `.SetExemplarFilter(new TraceBasedExemplarFilter())`.
+
+If the built-in `ExemplarFilter`s are not meeting the needs, one may author
+custom `ExemplarFilter` as shown
+[here](../extending-the-sdk/README.md#exemplarfilter). A custom filter, which
+eliminates all un-interesting measurements from becoming Exemplar is a
+recommended way to control performance overhead associated with collecting
+Exemplars. See
+[benchmark](../../../test/Benchmarks/Metrics/ExemplarBenchmarks.cs) to see how
+much impact can `ExemplarFilter` have on performance.
+
+#### ExemplarReservoir
+
+`ExemplarReservoir` receives the measurements sampled in by the `ExemplarFilter`
+and is responsible for storing Exemplars. `ExemplarReservoir` ultimately decides
+which measurements get stored as exemplars. The following are the default
+reservoirs:
+
+* `AlignedHistogramBucketExemplarReservoir` is the default reservoir used for
+Histograms with buckets, and it stores at most one exemplar per histogram
+bucket. The exemplar stored is the last measurement recorded - i.e. any new
+measurement overwrites the previous one in that bucket.
+
+`SimpleExemplarReservoir` is the default reservoir used for all metrics except
+Histograms with buckets. It has a fixed reservoir pool, and implements the
+equivalent of [naive
+reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
+size (currently defaulting to 10) determines the maximum number of exemplars
+stored.
+
+> **Note**
+> Currently there is no ability to change or configure Reservoir.
+
 ### Instrumentation
 
 // TODO
