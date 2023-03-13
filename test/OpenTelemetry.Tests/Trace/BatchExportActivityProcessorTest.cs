@@ -75,56 +75,25 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckIfBatchIsExportingOnQueueLimit()
         {
-            var exportedItems1 = new List<Activity>();
-            var exportedItems2 = new List<Activity>();
+            var exportedItems = new List<Activity>();
 
             using var activity = new Activity("start")
             {
                 ActivityTraceFlags = ActivityTraceFlags.Recorded,
             };
 
-            using var exporter1 = new InMemoryExporter<Activity>(exportedItems1);
-            using var processor1 = new BatchActivityExportProcessor(
-                exporter1,
+            using var exporter = new InMemoryExporter<Activity>(exportedItems);
+            using var processor = new BatchActivityExportProcessor(
+                exporter,
                 maxQueueSize: 1,
                 maxExportBatchSize: 1,
                 scheduledDelayMilliseconds: 100_000);
 
-            using var exporter2 = new InMemoryExporter<Activity>(exportedItems2);
-            using var processor2 = new BatchActivityExportProcessor(
-                exporter2,
-                maxQueueSize: 1,
-                maxExportBatchSize: 1,
-                scheduledDelayMilliseconds: 100_000);
+            processor.OnEnd(activity);
+            processor.ForceFlush();
+            processor.Shutdown();
 
-            var tasks = new List<Task>()
-            {
-                Task.Run(
-                    () =>
-                    {
-                        processor1.OnEnd(activity);
-                        Thread.Sleep(2500);
-                        processor1.ForceFlush();
-                        Thread.Sleep(2500);
-                        processor1.Shutdown();
-                    }),
-
-                Task.Run(
-                    () =>
-                    {
-                        processor2.OnEnd(activity);
-                        Thread.Sleep(2500);
-                        processor2.ForceFlush();
-                        Thread.Sleep(2500);
-                        processor2.Shutdown();
-                    }),
-            };
-
-            Task.WaitAll(tasks.ToArray());
-
-            Assert.Single(exportedItems1);
-
-            Assert.Single(exportedItems2);
+            Assert.Single(exportedItems);
         }
 
         [Fact]
