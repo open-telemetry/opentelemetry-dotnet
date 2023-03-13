@@ -278,24 +278,14 @@ internal sealed class CircularBufferBuckets
         }
     }
 
-    internal CircularBufferBuckets Copy()
+    internal void Copy(long[] dst)
     {
-        // TODO: Consider avoiding allocating a new one every time.
-        // Maybe we can have two instances that we swap between snapshots.
-        var copy = new CircularBufferBuckets(this.Capacity);
-        copy.begin = this.begin;
-        copy.end = this.end;
+        Debug.Assert(dst.Length == this.Capacity, "The length of the destination array must equal the capacity.");
 
         if (this.trait != null)
         {
-            copy.trait = new long[this.trait.Length];
-            for (var i = 0; i < copy.trait.Length; ++i)
-            {
-                copy.trait[i] = this.trait[i];
-            }
+            Array.Copy(this.trait, dst, this.Capacity);
         }
-
-        return copy;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
