@@ -83,7 +83,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets the number of telemetry objects dropped by the processor.
         /// </summary>
-        internal long DroppedCount => this.droppedCount;
+        internal long DroppedCount => Volatile.Read(ref this.droppedCount);
 
         /// <summary>
         /// Gets the number of telemetry objects received by the processor.
