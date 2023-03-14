@@ -43,6 +43,15 @@ public sealed class ExponentialHistogramBuckets
         buckets.Copy(this.buckets);
     }
 
+    internal ExponentialHistogramBuckets Copy()
+    {
+        var copy = new ExponentialHistogramBuckets();
+        copy.Offset = this.Offset;
+        copy.buckets = new long[this.buckets.Length];
+        Array.Copy(this.buckets, copy.buckets, this.buckets.Length);
+        return copy;
+    }
+
     /// <summary>
     /// Enumerates the bucket counts of an exponential histogram.
     /// </summary>
