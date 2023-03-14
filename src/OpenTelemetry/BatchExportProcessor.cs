@@ -219,7 +219,7 @@ namespace OpenTelemetry
                 return false;
             }
 
-            OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.droppedCount);
+            OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.DroppedCount);
 
             if (timeoutMilliseconds == Timeout.Infinite)
             {
