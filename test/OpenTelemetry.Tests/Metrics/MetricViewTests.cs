@@ -205,6 +205,18 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData(-1)]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void AddViewWithInvalidExponentialHistogramConfigThrowsArgumentException(int maxSize)
+        {
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddView("name1", new Base2ExponentialBucketHistogramConfiguration { MaxSize = maxSize }));
+
+            Assert.Contains("Histogram max size is invalid", ex.Message);
+        }
+
+        [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsIgnored(double[] boundaries)
         {
@@ -461,7 +473,8 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("NotAHistogram", new ExplicitBucketHistogramConfiguration() { Name = "ImAHistogram" })
+                .AddView("NotAHistogram", new ExplicitBucketHistogramConfiguration() { Name = "ImAnExplicitBoundsHistogram" })
+                .AddView("NotAHistogram", new Base2ExponentialBucketHistogramConfiguration() { Name = "ImAnExponentialHistogram" })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -567,6 +580,50 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             Assert.Equal(boundaries.Length + 1, actualCount);
+        }
+
+        [Fact]
+        public void ViewToProduceExponentialHistogram()
+        {
+            var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("MyHistogram", new Base2ExponentialBucketHistogramConfiguration())
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var histogram = meter.CreateHistogram<long>("MyHistogram");
+            var expectedHistogram = new Base2ExponentialBucketHistogram();
+            foreach (var value in valuesToRecord)
+            {
+                histogram.Record(value);
+                expectedHistogram.Record(value);
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+
+            Assert.Equal("MyHistogram", metric.Name);
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+
+            var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+
+            AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
         }
 
         [Theory]

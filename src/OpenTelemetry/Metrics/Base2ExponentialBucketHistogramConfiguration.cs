@@ -19,13 +19,31 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Stores configuration for a histogram metric stream with base-2 exponential bucket boundaries.
 /// </summary>
-internal sealed class Base2ExponentialBucketHistogramConfiguration : MetricStreamConfiguration
+internal sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConfiguration
 {
+    private int maxSize = 160;
+
     /// <summary>
     /// Gets or sets the maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket.
     /// </summary>
     /// <remarks>
-    /// The default value is 160.
+    /// The default value is 160. The minimum size is 2.
     /// </remarks>
-    public int MaxSize { get; set; } = 160;
+    public int MaxSize
+    {
+        get
+        {
+            return this.maxSize;
+        }
+
+        set
+        {
+            if (value < 2)
+            {
+                throw new ArgumentException($"Histogram max size is invalid. Minimum size is 2.", nameof(value));
+            }
+
+            this.maxSize = value;
+        }
+    }
 }
