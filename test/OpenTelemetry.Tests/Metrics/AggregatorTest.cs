@@ -14,13 +14,18 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
-        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
+        private static readonly Meter Meter = new("testMeter");
+        private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
+        private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
+        private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
+        private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
@@ -192,13 +197,14 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
 
+            var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
+            var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
             var aggregatorStore = new AggregatorStore(
-                $"{nameof(this.ExponentialHistogramTests)}",
+                metricStreamIdentity,
                 aggregationType,
                 aggregationTemporality,
-                maxMetricPoints: 1024,
-                Metric.DefaultHistogramBounds,
-                Metric.DefaultExponentialHistogramMaxBuckets);
+                maxMetricPoints: 1024);
 
             var metricPoint = new MetricPoint(
                 aggregatorStore,

@@ -83,7 +83,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets the number of telemetry objects dropped by the processor.
         /// </summary>
-        internal long DroppedCount => this.droppedCount;
+        internal long DroppedCount => Volatile.Read(ref this.droppedCount);
 
         /// <summary>
         /// Gets the number of telemetry objects received by the processor.
@@ -198,7 +198,7 @@ namespace OpenTelemetry
                     return true;
                 }
 
-                if (this.shutdownDrainTarget != long.MaxValue)
+                if (Volatile.Read(ref this.shutdownDrainTarget) != long.MaxValue)
                 {
                     return false;
                 }
@@ -208,7 +208,7 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            this.shutdownDrainTarget = this.circularBuffer.AddedCount;
+            Volatile.Write(ref this.shutdownDrainTarget, this.circularBuffer.AddedCount);
 
             try
             {
@@ -219,7 +219,7 @@ namespace OpenTelemetry
                 return false;
             }
 
-            OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.droppedCount);
+            OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.DroppedCount);
 
             if (timeoutMilliseconds == Timeout.Infinite)
             {
@@ -295,7 +295,7 @@ namespace OpenTelemetry
                     }
                 }
 
-                if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
+                if (this.circularBuffer.RemovedCount >= Volatile.Read(ref this.shutdownDrainTarget))
                 {
                     return;
                 }
