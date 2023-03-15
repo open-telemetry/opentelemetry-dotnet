@@ -40,9 +40,12 @@ dotnet add package --prerelease OpenTelemetry.Instrumentation.Http
 
 HTTP instrumentation must be enabled at application startup.
 
-The following example demonstrates adding HTTP instrumentation to a console
-application. This example also sets up the OpenTelemetry Console exporter, which
-requires adding the package
+#### Traces
+
+The following example demonstrates adding `HttpClient` instrumentation with the
+extension method `.AddHttpClientInstrumentation()` on `TracerProviderBuilder` to
+a console application. This example also sets up the OpenTelemetry Console
+Exporter, which requires adding the package
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
@@ -62,13 +65,50 @@ public class Program
 }
 ```
 
-For an ASP.NET Core application, adding instrumentation is typically done in the
-`ConfigureServices` of your `Startup` class. Refer to documentation for
-[OpenTelemetry.Instrumentation.AspNetCore](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
+#### Metrics
 
-For an ASP.NET application, adding instrumentation is typically done in the
-`Global.asax.cs`. Refer to the documentation for
-[OpenTelemetry.Instrumentation.AspNet](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md).
+> **Note**
+> Metrics are not available for .NET Framework.
+
+The following example demonstrates adding `HttpClient` instrumentation with the
+extension method `.AddHttpClientInstrumentation()` on `MeterProviderBuilder` to
+a console application. This example also sets up the OpenTelemetry Console
+Exporter, which requires adding the package
+[`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
+to the application.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter()
+            .Build();
+    }
+}
+```
+
+Refer to this [example](../../examples/AspNetCore/Program.cs) to see how to
+enable this instrumentation in an ASP.NET core application.
+
+Refer to this
+[example](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md)
+to see how to enable this instrumentation in an ASP.NET application.
+
+#### List of metrics produced
+
+The instrumentation was implemented based on [metrics semantic
+conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
+Currently, the instrumentation supports the following metric.
+
+| Name  | Instrument Type | Unit | Description |
+|-------|-----------------|------|-------------|
+| `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. |
 
 ## Advanced configuration
 
