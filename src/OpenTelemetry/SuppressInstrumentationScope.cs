@@ -72,9 +72,9 @@ namespace OpenTelemetry
 
         /// <summary>
         /// Enters suppression mode.
-        /// If suppression mode is enabled (slot is a negative integer), do nothing.
+        /// If suppression mode is enabled (slot.Depth is a negative integer), do nothing.
         /// If suppression mode is not enabled (slot is null), enter reference-counting suppression mode.
-        /// If suppression mode is enabled (slot is a positive integer), increment the ref count.
+        /// If suppression mode is enabled (slot.Depth is a positive integer), increment the ref count.
         /// </summary>
         /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,14 +90,14 @@ namespace OpenTelemetry
                         Depth = 1,
                     });
 
-                return 0;
+                return 1;
             }
 
             var currentDepth = currentScope.Depth;
 
             if (currentDepth >= 0)
             {
-                currentScope.Depth = currentDepth + 1;
+                currentScope.Depth = ++currentDepth;
             }
 
             return currentDepth;
@@ -127,7 +127,7 @@ namespace OpenTelemetry
 
             if (currentScope.Depth > 0)
             {
-                currentScope.Depth = currentDepth + 1;
+                currentScope.Depth = ++currentDepth;
             }
 
             return currentDepth;
@@ -145,13 +145,16 @@ namespace OpenTelemetry
 
             var currentDepth = currentScope.Depth;
 
-            if (currentDepth == 1)
+            if (currentScope.Depth > 0)
             {
-                Slot.Set(currentScope.previousScope);
-            }
-            else if (currentScope.Depth > 0)
-            {
-                currentScope.Depth = currentDepth - 1;
+                if (--currentDepth == 0)
+                {
+                    Slot.Set(currentScope.previousScope);
+                }
+                else
+                {
+                    currentScope.Depth = currentDepth;
+                }
             }
 
             return currentDepth;
