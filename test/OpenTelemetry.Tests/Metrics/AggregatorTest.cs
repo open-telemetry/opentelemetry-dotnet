@@ -195,17 +195,36 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(expectedHistogram.PositiveBuckets.Offset, data.PositiveBuckets.Offset);
             Assert.Equal(expectedHistogram.NegativeBuckets.Offset, data.NegativeBuckets.Offset);
 
-            var index = expectedHistogram.PositiveBuckets.Offset;
+            expectedHistogram.Snapshot();
+            var expectedData = expectedHistogram.GetExponentialHistogramData();
+
+            var actual = new List<long>();
             foreach (var bucketCount in data.PositiveBuckets)
             {
-                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
+                actual.Add(bucketCount);
             }
 
-            index = expectedHistogram.NegativeBuckets.Offset;
+            var expected = new List<long>();
+            foreach (var bucketCount in expectedData.PositiveBuckets)
+            {
+                expected.Add(bucketCount);
+            }
+
+            Assert.Equal(expected, actual);
+
+            actual = new List<long>();
             foreach (var bucketCount in data.NegativeBuckets)
             {
-                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
+                actual.Add(bucketCount);
             }
+
+            expected = new List<long>();
+            foreach (var bucketCount in expectedData.NegativeBuckets)
+            {
+                expected.Add(bucketCount);
+            }
+
+            Assert.Equal(expected, actual);
         }
 
         [Theory]
