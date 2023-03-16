@@ -188,6 +188,45 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.False(enumerator.MoveNext());
         }
 
+        internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
+        {
+            Assert.Equal(expectedHistogram.Scale, data.Scale);
+            Assert.Equal(expectedHistogram.ZeroCount, data.ZeroCount);
+            Assert.Equal(expectedHistogram.PositiveBuckets.Offset, data.PositiveBuckets.Offset);
+            Assert.Equal(expectedHistogram.NegativeBuckets.Offset, data.NegativeBuckets.Offset);
+
+            expectedHistogram.Snapshot();
+            var expectedData = expectedHistogram.GetExponentialHistogramData();
+
+            var actual = new List<long>();
+            foreach (var bucketCount in data.PositiveBuckets)
+            {
+                actual.Add(bucketCount);
+            }
+
+            var expected = new List<long>();
+            foreach (var bucketCount in expectedData.PositiveBuckets)
+            {
+                expected.Add(bucketCount);
+            }
+
+            Assert.Equal(expected, actual);
+
+            actual = new List<long>();
+            foreach (var bucketCount in data.NegativeBuckets)
+            {
+                actual.Add(bucketCount);
+            }
+
+            expected = new List<long>();
+            foreach (var bucketCount in expectedData.NegativeBuckets)
+            {
+                expected.Add(bucketCount);
+            }
+
+            Assert.Equal(expected, actual);
+        }
+
         [Theory]
         [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative)]
         [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta)]
@@ -282,26 +321,6 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     Assert.False(hasMinMax);
                 }
-            }
-        }
-
-        private static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
-        {
-            Assert.Equal(expectedHistogram.Scale, data.Scale);
-            Assert.Equal(expectedHistogram.ZeroCount, data.ZeroCount);
-            Assert.Equal(expectedHistogram.PositiveBuckets.Offset, data.PositiveBuckets.Offset);
-            Assert.Equal(expectedHistogram.NegativeBuckets.Offset, data.NegativeBuckets.Offset);
-
-            var index = expectedHistogram.PositiveBuckets.Offset;
-            foreach (var bucketCount in data.PositiveBuckets)
-            {
-                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
-            }
-
-            index = expectedHistogram.NegativeBuckets.Offset;
-            foreach (var bucketCount in data.NegativeBuckets)
-            {
-                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
             }
         }
     }

@@ -30,7 +30,17 @@ public sealed class ExponentialHistogramData
 
     public long ZeroCount { get; internal set; }
 
-    public ExponentialHistogramBuckets PositiveBuckets { get; }
+    public ExponentialHistogramBuckets PositiveBuckets { get; private set; }
 
-    public ExponentialHistogramBuckets NegativeBuckets { get; }
+    public ExponentialHistogramBuckets NegativeBuckets { get; private set; }
+
+    internal ExponentialHistogramData Copy()
+    {
+        var copy = new ExponentialHistogramData();
+        copy.Scale = this.Scale;
+        copy.ZeroCount = this.ZeroCount;
+        copy.PositiveBuckets = this.PositiveBuckets.Copy();
+        copy.NegativeBuckets = this.NegativeBuckets.Copy();
+        return copy;
+    }
 }
