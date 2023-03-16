@@ -58,6 +58,7 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { new double[] { double.NegativeInfinity, 0, double.PositiveInfinity }, new HistogramConfiguration(), double.NegativeInfinity, double.PositiveInfinity },
                     new object[] { new double[] { 1 }, new HistogramConfiguration(), 1, 1 },
                     new object[] { new double[] { 5, 100, 4, 101, -2, 97 }, new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } }, -2, 101 },
+                    new object[] { new double[] { 5, 100, 4, 101, -2, 97 }, new Base2ExponentialBucketHistogramConfiguration(), -2, 101 },
            };
 
         public static IEnumerable<object[]> InvalidHistogramMinMax
@@ -65,6 +66,7 @@ namespace OpenTelemetry.Metrics.Tests
            {
                     new object[] { new double[] { 1 }, new HistogramConfiguration() { RecordMinMax = false } },
                     new object[] { new double[] { 1 }, new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 }, RecordMinMax = false } },
+                    new object[] { new double[] { 1 }, new Base2ExponentialBucketHistogramConfiguration() { RecordMinMax = false } },
            };
     }
 }

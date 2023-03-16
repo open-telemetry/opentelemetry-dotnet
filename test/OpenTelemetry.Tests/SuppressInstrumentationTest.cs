@@ -72,7 +72,7 @@ namespace OpenTelemetry.Tests
             await Task.Factory.StartNew(() =>
             {
                 Assert.False(Sdk.SuppressInstrumentation);
-                SuppressInstrumentationScope.Enter();
+                Assert.Equal(1, SuppressInstrumentationScope.Enter());
                 Assert.True(Sdk.SuppressInstrumentation);
             }).ConfigureAwait(false);
 
@@ -84,13 +84,13 @@ namespace OpenTelemetry.Tests
         {
             // Instrumentation is not suppressed, DecrementIfTriggered is a no op
             Assert.False(Sdk.SuppressInstrumentation);
-            SuppressInstrumentationScope.DecrementIfTriggered();
+            Assert.Equal(0, SuppressInstrumentationScope.DecrementIfTriggered());
             Assert.False(Sdk.SuppressInstrumentation);
 
             // Instrumentation is suppressed in reference counting mode, DecrementIfTriggered should work
-            SuppressInstrumentationScope.Enter();
+            Assert.Equal(1, SuppressInstrumentationScope.Enter());
             Assert.True(Sdk.SuppressInstrumentation);
-            SuppressInstrumentationScope.DecrementIfTriggered();
+            Assert.Equal(0, SuppressInstrumentationScope.DecrementIfTriggered());
             Assert.False(Sdk.SuppressInstrumentation); // Instrumentation is not suppressed anymore
         }
 
@@ -99,16 +99,16 @@ namespace OpenTelemetry.Tests
         {
             // Instrumentation is not suppressed, IncrementIfTriggered is a no op
             Assert.False(Sdk.SuppressInstrumentation);
-            SuppressInstrumentationScope.IncrementIfTriggered();
+            Assert.Equal(0, SuppressInstrumentationScope.IncrementIfTriggered());
             Assert.False(Sdk.SuppressInstrumentation);
 
             // Instrumentation is suppressed in reference counting mode, IncrementIfTriggered should work
-            SuppressInstrumentationScope.Enter();
-            SuppressInstrumentationScope.IncrementIfTriggered();
+            Assert.Equal(1, SuppressInstrumentationScope.Enter());
+            Assert.Equal(2, SuppressInstrumentationScope.IncrementIfTriggered());
             Assert.True(Sdk.SuppressInstrumentation);
-            SuppressInstrumentationScope.DecrementIfTriggered();
+            Assert.Equal(1, SuppressInstrumentationScope.DecrementIfTriggered());
             Assert.True(Sdk.SuppressInstrumentation); // Instrumentation is still suppressed as IncrementIfTriggered incremented the slot count after Enter, need to decrement the slot count again to enable instrumentation
-            SuppressInstrumentationScope.DecrementIfTriggered();
+            Assert.Equal(0, SuppressInstrumentationScope.DecrementIfTriggered());
             Assert.False(Sdk.SuppressInstrumentation); // Instrumentation is not suppressed anymore
         }
     }
