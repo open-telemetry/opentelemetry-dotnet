@@ -46,6 +46,7 @@ namespace OpenTelemetry
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
+        private TagList tags = default;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
@@ -78,6 +79,9 @@ namespace OpenTelemetry
                 Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",
             };
             this.exporterThread.Start();
+
+            this.tags.Add(new KeyValuePair<string, object?>("BatchExportProcessorType", typeof(T).Name));
+            this.tags.Add(new KeyValuePair<string, object?>("BatchExporterName", exporter.GetType().Name));
         }
 
         /// <summary>
@@ -98,6 +102,7 @@ namespace OpenTelemetry
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExport(T data)
         {
+            this.ParentProvider?.GetSdkHealthReporter()?.BatchExportProcessorDroppedCount.Add(1, this.tags);
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.MaxExportBatchSize)
@@ -113,6 +118,8 @@ namespace OpenTelemetry
 
                 return true; // enqueue succeeded
             }
+
+            this.ParentProvider?.GetSdkHealthReporter()?.BatchExportProcessorDroppedCount.Add(1, this.tags);
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);

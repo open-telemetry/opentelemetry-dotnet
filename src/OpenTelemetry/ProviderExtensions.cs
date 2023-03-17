@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -86,6 +87,16 @@ namespace OpenTelemetry
             if (baseProvider is MeterProviderSdk meterProviderSdk)
             {
                 return meterProviderSdk.CollectObservableInstruments;
+            }
+
+            return null;
+        }
+
+        internal static SdkHealthReporter? GetSdkHealthReporter(this BaseProvider baseProvider)
+        {
+            if (baseProvider is TracerProviderSdk tracerProviderSdk)
+            {
+                return tracerProviderSdk.SdkHealthReporter;
             }
 
             return null;

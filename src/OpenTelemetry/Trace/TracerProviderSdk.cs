@@ -32,6 +32,7 @@ namespace OpenTelemetry.Trace
         internal int ShutdownCount;
         internal bool Disposed;
 
+        private static int providerCount = 0;
         private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
@@ -69,6 +70,7 @@ namespace OpenTelemetry.Trace
 
             state.AddExceptionProcessorIfEnabled();
 
+            this.SdkHealthReporter = new SdkHealthReporter($"{nameof(TracerProvider)}{Interlocked.Increment(ref providerCount)}");
             var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
             resourceBuilder.ServiceProvider = serviceProvider;
             this.Resource = resourceBuilder.Build();
@@ -294,6 +296,8 @@ namespace OpenTelemetry.Trace
             this.listener = listener;
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
+
+        internal SdkHealthReporter SdkHealthReporter { get; }
 
         internal Resource Resource { get; }
 
