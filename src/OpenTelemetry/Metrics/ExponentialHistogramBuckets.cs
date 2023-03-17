@@ -20,12 +20,11 @@ namespace OpenTelemetry.Metrics;
 
 public sealed class ExponentialHistogramBuckets
 {
-    private readonly long[] buckets;
+    private long[] buckets = Array.Empty<long>();
     private int size = 0;
 
-    internal ExponentialHistogramBuckets(int maxSize)
+    internal ExponentialHistogramBuckets()
     {
-        this.buckets = new long[maxSize];
     }
 
     public int Offset { get; private set; }
@@ -34,6 +33,11 @@ public sealed class ExponentialHistogramBuckets
 
     internal void SnapshotBuckets(CircularBufferBuckets buckets)
     {
+        if (this.buckets.Length != buckets.Capacity)
+        {
+            this.buckets = new long[buckets.Capacity];
+        }
+
         this.size = buckets.Size;
         this.Offset = buckets.Offset;
         buckets.Copy(this.buckets);
@@ -41,9 +45,10 @@ public sealed class ExponentialHistogramBuckets
 
     internal ExponentialHistogramBuckets Copy()
     {
-        var copy = new ExponentialHistogramBuckets(this.buckets.Length);
+        var copy = new ExponentialHistogramBuckets();
         copy.size = this.size;
         copy.Offset = this.Offset;
+        copy.buckets = new long[this.buckets.Length];
         Array.Copy(this.buckets, copy.buckets, this.buckets.Length);
         return copy;
     }
