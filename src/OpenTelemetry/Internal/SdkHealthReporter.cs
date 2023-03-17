@@ -28,10 +28,5 @@ namespace OpenTelemetry.Internal
         internal Counter<long> BatchExportProcessorDroppedCount { get; }
 
         private static Meter InternalMeter { get; } = new Meter("OpenTelemetry.Sdk");
-
-        internal void RecordBatchExportProcessorDroppedCount(int count, params KeyValuePair<string, object>[] tags)
-        {
-            this.BatchExportProcessorDroppedCount.Add(count, tags);
-        }
     }
 }
