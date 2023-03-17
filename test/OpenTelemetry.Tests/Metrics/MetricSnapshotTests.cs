@@ -117,6 +117,9 @@ namespace OpenTelemetry.Metrics.Tests
             ref readonly var metricPoint1 = ref metricPoints1Enumerator.Current;
             Assert.Equal(1, metricPoint1.GetHistogramCount());
             Assert.Equal(10, metricPoint1.GetHistogramSum());
+            metricPoint1.TryGetHistogramMinMaxValues(out var min, out var max);
+            Assert.Equal(10, min);
+            Assert.Equal(10, max);
 
             // Verify Snapshot 1
             Assert.Single(exportedSnapshots);
@@ -124,6 +127,9 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(snapshot1.MetricPoints);
             Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
             Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
+            snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+            Assert.Equal(10, min);
+            Assert.Equal(10, max);
 
             // Verify Metric == Snapshot
             Assert.Equal(metric1.Name, snapshot1.Name);
@@ -141,6 +147,9 @@ namespace OpenTelemetry.Metrics.Tests
             // This value is expected to be updated.
             Assert.Equal(2, metricPoint1.GetHistogramCount());
             Assert.Equal(15, metricPoint1.GetHistogramSum());
+            metricPoint1.TryGetHistogramMinMaxValues(out min, out max);
+            Assert.Equal(5, min);
+            Assert.Equal(10, max);
 
             // Verify Metric 2
             Assert.Equal(2, exportedMetrics.Count);
@@ -150,11 +159,17 @@ namespace OpenTelemetry.Metrics.Tests
             ref readonly var metricPoint2 = ref metricPoints2Enumerator.Current;
             Assert.Equal(2, metricPoint2.GetHistogramCount());
             Assert.Equal(15, metricPoint2.GetHistogramSum());
+            metricPoint2.TryGetHistogramMinMaxValues(out min, out max);
+            Assert.Equal(5, min);
+            Assert.Equal(10, max);
 
             // Verify Snapshot 1 after second export
             // This value is expected to be unchanged.
             Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
             Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
+            snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+            Assert.Equal(10, min);
+            Assert.Equal(10, max);
 
             // Verify Snapshot 2
             Assert.Equal(2, exportedSnapshots.Count);
@@ -162,6 +177,9 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(snapshot2.MetricPoints);
             Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
             Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
+            snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+            Assert.Equal(5, min);
+            Assert.Equal(10, max);
         }
 
         [Fact]
