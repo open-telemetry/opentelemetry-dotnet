@@ -20,32 +20,30 @@ namespace OpenTelemetry.Metrics;
 
 public sealed class ExponentialHistogramBuckets
 {
-    private long[] buckets = Array.Empty<long>();
+    private readonly long[] buckets;
+    private int size = 0;
 
-    internal ExponentialHistogramBuckets()
+    internal ExponentialHistogramBuckets(int maxSize)
     {
+        this.buckets = new long[maxSize];
     }
 
     public int Offset { get; private set; }
 
-    public Enumerator GetEnumerator() => new(this.buckets);
+    public Enumerator GetEnumerator() => new(this.buckets, this.size);
 
     internal void SnapshotBuckets(CircularBufferBuckets buckets)
     {
-        if (this.buckets.Length != buckets.Capacity)
-        {
-            this.buckets = new long[buckets.Capacity];
-        }
-
+        this.size = buckets.Size;
         this.Offset = buckets.Offset;
         buckets.Copy(this.buckets);
     }
 
     internal ExponentialHistogramBuckets Copy()
     {
-        var copy = new ExponentialHistogramBuckets();
+        var copy = new ExponentialHistogramBuckets(this.buckets.Length);
+        copy.size = this.size;
         copy.Offset = this.Offset;
-        copy.buckets = new long[this.buckets.Length];
         Array.Copy(this.buckets, copy.buckets, this.buckets.Length);
         return copy;
     }
@@ -58,10 +56,12 @@ public sealed class ExponentialHistogramBuckets
     {
         private readonly long[] buckets;
         private int index;
+        private int size;
 
-        internal Enumerator(long[] buckets)
+        internal Enumerator(long[] buckets, int size)
         {
             this.index = 0;
+            this.size = size;
             this.buckets = buckets;
             this.Current = default;
         }
@@ -81,7 +81,7 @@ public sealed class ExponentialHistogramBuckets
         /// collection.</returns>
         public bool MoveNext()
         {
-            if (this.index < this.buckets.Length)
+            if (this.index < this.size)
             {
                 this.Current = this.buckets[this.index++];
                 return true;

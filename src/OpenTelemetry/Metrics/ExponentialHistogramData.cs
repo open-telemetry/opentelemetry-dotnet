@@ -20,10 +20,13 @@ namespace OpenTelemetry.Metrics;
 
 public sealed class ExponentialHistogramData
 {
-    internal ExponentialHistogramData()
+    private readonly int maxSize;
+
+    internal ExponentialHistogramData(int maxSize)
     {
-        this.PositiveBuckets = new();
-        this.NegativeBuckets = new();
+        this.maxSize = maxSize;
+        this.PositiveBuckets = new(maxSize);
+        this.NegativeBuckets = new(maxSize);
     }
 
     public int Scale { get; internal set; }
@@ -36,7 +39,7 @@ public sealed class ExponentialHistogramData
 
     internal ExponentialHistogramData Copy()
     {
-        var copy = new ExponentialHistogramData();
+        var copy = new ExponentialHistogramData(this.maxSize);
         copy.Scale = this.Scale;
         copy.ZeroCount = this.ZeroCount;
         copy.PositiveBuckets = this.PositiveBuckets.Copy();

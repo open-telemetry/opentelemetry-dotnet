@@ -27,6 +27,8 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class Base2ExponentialBucketHistogram
 {
+    internal readonly ExponentialHistogramData SnapshotExponentialHistogramData;
+
     internal double RunningSum;
     internal double SnapshotSum;
 
@@ -37,8 +39,6 @@ internal sealed class Base2ExponentialBucketHistogram
     internal double SnapshotMax;
 
     internal int IsCriticalSectionOccupied = 0;
-
-    internal ExponentialHistogramData SnapshotExponentialHistogramData = new ExponentialHistogramData();
 
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
@@ -54,7 +54,7 @@ internal sealed class Base2ExponentialBucketHistogram
     {
     }
 
-    internal Base2ExponentialBucketHistogram(int maxBuckets, int scale)
+    internal Base2ExponentialBucketHistogram(int maxBuckets, int scale, ExponentialHistogramData data = null)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
@@ -109,6 +109,7 @@ internal sealed class Base2ExponentialBucketHistogram
         this.Scale = scale;
         this.PositiveBuckets = new CircularBufferBuckets(maxBuckets);
         this.NegativeBuckets = new CircularBufferBuckets(maxBuckets);
+        this.SnapshotExponentialHistogramData = data ?? new ExponentialHistogramData(maxBuckets);
     }
 
     internal int Scale
@@ -239,11 +240,10 @@ internal sealed class Base2ExponentialBucketHistogram
     internal Base2ExponentialBucketHistogram Copy()
     {
         Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
-        var copy = new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale);
+        var copy = new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale, this.SnapshotExponentialHistogramData.Copy());
         copy.SnapshotSum = this.SnapshotSum;
         copy.SnapshotMin = this.SnapshotMin;
         copy.SnapshotMax = this.SnapshotMax;
-        copy.SnapshotExponentialHistogramData = this.SnapshotExponentialHistogramData.Copy();
         return copy;
     }
 }

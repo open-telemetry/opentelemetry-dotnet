@@ -284,7 +284,10 @@ internal sealed class CircularBufferBuckets
 
         if (this.trait != null)
         {
-            Array.Copy(this.trait, dst, this.Capacity);
+            for (var i = 0; i < this.Size; ++i)
+            {
+                dst[i] = this[this.Offset + i];
+            }
         }
     }
 
