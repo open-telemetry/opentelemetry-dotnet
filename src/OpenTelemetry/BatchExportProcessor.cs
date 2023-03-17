@@ -102,7 +102,6 @@ namespace OpenTelemetry
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExport(T data)
         {
-            this.ParentProvider?.GetSdkHealthReporter()?.BatchExportProcessorDroppedCount.Add(1, this.tags);
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.MaxExportBatchSize)
