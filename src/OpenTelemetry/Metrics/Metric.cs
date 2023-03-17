@@ -33,9 +33,6 @@ namespace OpenTelemetry.Metrics
             MetricStreamIdentity instrumentIdentity,
             AggregationTemporality temporality,
             int maxMetricPointsPerMetricStream,
-            double[] histogramBounds = null,
-            string[] tagKeysInteresting = null,
-            bool histogramRecordMinMax = true,
             ExemplarFilter exemplarFilter = null)
         {
             this.InstrumentIdentity = instrumentIdentity;
@@ -118,18 +115,31 @@ namespace OpenTelemetry.Metrics
                 || instrumentIdentity.InstrumentType == typeof(Histogram<float>)
                 || instrumentIdentity.InstrumentType == typeof(Histogram<double>))
             {
-                this.MetricType = MetricType.Histogram;
+                var explicitBucketBounds = instrumentIdentity.HistogramBucketBounds;
+                var exponentialMaxSize = instrumentIdentity.ExponentialHistogramMaxSize;
+                var histogramRecordMinMax = instrumentIdentity.HistogramRecordMinMax;
 
-                aggType = histogramBounds != null && histogramBounds.Length == 0
-                    ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
-                    : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
+                this.MetricType = exponentialMaxSize == 0
+                    ? MetricType.Histogram
+                    : MetricType.ExponentialHistogram;
+
+                if (this.MetricType == MetricType.Histogram)
+                {
+                    aggType = explicitBucketBounds != null && explicitBucketBounds.Length == 0
+                        ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
+                        : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
+                }
+                else
+                {
+                    aggType = histogramRecordMinMax ? AggregationType.Base2ExponentialHistogramWithMinMax : AggregationType.Base2ExponentialHistogram;
+                }
             }
             else
             {
                 throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
             }
 
-            this.aggStore = new AggregatorStore(instrumentIdentity.InstrumentName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, DefaultExponentialHistogramMaxBuckets, tagKeysInteresting, exemplarFilter);
+            this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, exemplarFilter);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }
