@@ -21,7 +21,7 @@ namespace OpenTelemetry.Metrics;
 public sealed class ExponentialHistogramBuckets
 {
     private long[] buckets = Array.Empty<long>();
-    private int size = 0;
+    private int size;
 
     internal ExponentialHistogramBuckets()
     {
@@ -60,8 +60,8 @@ public sealed class ExponentialHistogramBuckets
     public struct Enumerator
     {
         private readonly long[] buckets;
+        private readonly int size;
         private int index;
-        private int size;
 
         internal Enumerator(long[] buckets, int size)
         {
