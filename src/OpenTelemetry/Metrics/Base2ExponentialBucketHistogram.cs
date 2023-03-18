@@ -38,6 +38,8 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal int IsCriticalSectionOccupied = 0;
 
+    internal ExponentialHistogramData SnapshotExponentialHistogramData = new ExponentialHistogramData();
+
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -210,5 +212,38 @@ internal sealed class Base2ExponentialBucketHistogram
         this.Scale -= n;
         n = buckets.TryIncrement(index >> n);
         Debug.Assert(n == 0, "Increment should always succeed after scale down.");
+    }
+
+    internal void Reset()
+    {
+        // TODO: Determine if this is sufficient for delta temporality.
+        // I'm not sure we should be resetting the scale.
+        this.ZeroCount = 0;
+        this.PositiveBuckets.Reset();
+        this.NegativeBuckets.Reset();
+    }
+
+    internal void Snapshot()
+    {
+        this.SnapshotExponentialHistogramData.Scale = this.Scale;
+        this.SnapshotExponentialHistogramData.ZeroCount = this.ZeroCount;
+        this.SnapshotExponentialHistogramData.PositiveBuckets.SnapshotBuckets(this.PositiveBuckets);
+        this.SnapshotExponentialHistogramData.NegativeBuckets.SnapshotBuckets(this.NegativeBuckets);
+    }
+
+    internal ExponentialHistogramData GetExponentialHistogramData()
+    {
+        return this.SnapshotExponentialHistogramData;
+    }
+
+    internal Base2ExponentialBucketHistogram Copy()
+    {
+        Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
+        var copy = new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale);
+        copy.SnapshotSum = this.SnapshotSum;
+        copy.SnapshotMin = this.SnapshotMin;
+        copy.SnapshotMax = this.SnapshotMax;
+        copy.SnapshotExponentialHistogramData = this.SnapshotExponentialHistogramData.Copy();
+        return copy;
     }
 }

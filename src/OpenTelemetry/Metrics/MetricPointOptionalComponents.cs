@@ -38,13 +38,13 @@ namespace OpenTelemetry.Metrics
         internal MetricPointOptionalComponents Copy()
         {
             MetricPointOptionalComponents copy = new MetricPointOptionalComponents();
-            copy.HistogramBuckets = this.HistogramBuckets.Copy();
+            copy.HistogramBuckets = this.HistogramBuckets?.Copy();
+            copy.Base2ExponentialBucketHistogram = this.Base2ExponentialBucketHistogram?.Copy();
             if (this.Exemplars != null)
             {
                 Array.Copy(this.Exemplars, copy.Exemplars, this.Exemplars.Length);
             }
 
-            // TODO: Copy Base2ExponentialBucketHistogram
             return copy;
         }
     }
