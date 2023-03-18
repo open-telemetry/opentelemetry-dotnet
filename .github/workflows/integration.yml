@@ -20,8 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run sql docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+      - name: Run sql integration
+        run: dotnet test test/OpenTelemetry.Instrumentation.SqlClient.Tests/OpenTelemetry.Instrumentation.SqlClient.Tests.csproj --framework ${{ matrix.version }} --filter CategoryName=SqlIntegrationTests
 
   w3c-trace-context-test:
     runs-on: ubuntu-latest
