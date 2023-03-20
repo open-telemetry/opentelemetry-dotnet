@@ -14,13 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Coyote;
+using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
+using Configuration = Microsoft.Coyote.Configuration;
 
 namespace OpenTelemetry.Metrics.Tests
 {
@@ -1516,6 +1520,37 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Empty(exportedItems);
+        }
+
+        [Fact]
+        public void MultithreadedLongHistogramTest_Coyote()
+        {
+            var config = Configuration.Create();
+            var test = TestingEngine.Create(config, this.MultithreadedLongHistogramTest);
+
+            test.Run();
+            Console.WriteLine(test.GetReport());
+            Console.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
+
+            var dir = Directory.GetCurrentDirectory();
+
+            if (test.TryEmitReports(dir, "MultithreadedLongHistogramTest_Coyote", out IEnumerable<string> reportPaths))
+            {
+                foreach (var reportPath in reportPaths)
+                {
+                    Console.WriteLine($"Execution Report: {reportPath}");
+                }
+            }
+
+            if (test.TryEmitCoverageReports(dir, "MultithreadedLongHistogramTest_Coyote", out reportPaths))
+            {
+                foreach (var reportPath in reportPaths)
+                {
+                    Console.WriteLine($"Coverage report: {reportPath}");
+                }
+            }
+
+            Assert.Equal(0, test.TestReport.NumOfFoundBugs);
         }
 
         private static void CounterUpdateThread<T>(object obj)
