@@ -87,6 +87,8 @@ namespace OpenTelemetry.Metrics
 
             Array.Copy(this.SnapshotBucketCounts, copy.SnapshotBucketCounts, this.SnapshotBucketCounts.Length);
             copy.SnapshotSum = this.SnapshotSum;
+            copy.SnapshotMin = this.SnapshotMin;
+            copy.SnapshotMax = this.SnapshotMax;
 
             return copy;
         }
