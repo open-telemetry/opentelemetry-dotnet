@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics.Tests
             argsToThread.MreToEnsureAllThreadsStart.WaitOne();
             argsToThread.MreToBlockUpdateThread.Set();
 
-            for (int i = 0; i < numberOfThreads;  ++i)
+            for (int i = 0; i < numberOfThreads; ++i)
             {
                 t[i].Join();
             }
