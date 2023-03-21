@@ -23,15 +23,6 @@ internal class MyRedactionProcessor : BaseProcessor<LogRecord>
 {
     public override void OnEnd(LogRecord logRecord)
     {
-        if (logRecord.State == null)
-        {
-            // When State is null, OTel SDK guarantees StateValues is populated
-            // TODO: Debug.Assert?
-            logRecord.StateValues = new MyClassWithRedactionEnumerator(logRecord.StateValues);
-        }
-        else if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listOfKvp)
-        {
-            logRecord.State = new MyClassWithRedactionEnumerator(listOfKvp);
-        }
+        logRecord.Attributes ??= new MyClassWithRedactionEnumerator(logRecord.Attributes);
     }
 }

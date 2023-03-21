@@ -113,9 +113,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     bodyPopulatedFromFormattedMessage = true;
                 }
 
-                if (logRecord.StateValues != null)
+                if (logRecord.Attributes != null)
                 {
-                    foreach (var stateValue in logRecord.StateValues)
+                    foreach (var stateValue in logRecord.Attributes)
                     {
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182

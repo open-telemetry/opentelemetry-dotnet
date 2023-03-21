@@ -81,42 +81,22 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.FormattedMessage:",-RightPaddingLength}{logRecord.FormattedMessage}");
                 }
 
-                if (logRecord.State != null)
+                if (logRecord.Body != null)
                 {
-                    if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listKvp)
-                    {
-                        this.WriteLine("LogRecord.State (Key:Value):");
-                        for (int i = 0; i < listKvp.Count; i++)
-                        {
-                            // Special casing {OriginalFormat}
-                            // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
-                            // for explanation.
-                            var valueToTransform = listKvp[i].Key.Equals("{OriginalFormat}")
-                                ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", listKvp[i].Value)
-                                : listKvp[i];
-
-                            if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
-                            {
-                                this.WriteLine($"{string.Empty,-4}{result}");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        this.WriteLine($"{"LogRecord.State:",-RightPaddingLength}{logRecord.State}");
-                    }
+                    this.WriteLine($"{"LogRecord.Body:",-RightPaddingLength}{logRecord.Body}");
                 }
-                else if (logRecord.StateValues != null)
+
+                if (logRecord.Attributes != null)
                 {
-                    this.WriteLine("LogRecord.StateValues (Key:Value):");
-                    for (int i = 0; i < logRecord.StateValues.Count; i++)
+                    this.WriteLine("LogRecord.Attributes (Key:Value):");
+                    for (int i = 0; i < logRecord.Attributes.Count; i++)
                     {
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalFormat}")
-                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.StateValues[i].Value)
-                            : logRecord.StateValues[i];
+                        var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}")
+                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
+                            : logRecord.Attributes[i];
 
                         if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                         {

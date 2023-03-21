@@ -140,6 +140,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void LoggerParseStateException<TState>(Exception exception)
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.LoggerParseStateException(typeof(TState).FullName!, exception.ToInvariantString());
+            }
+        }
+
         [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
         public void SpanProcessorException(string evnt, string ex)
         {
@@ -282,6 +291,12 @@ namespace OpenTelemetry.Internal
         public void InvalidEnvironmentVariable(string key, string? value)
         {
             this.WriteEvent(47, key, value);
+        }
+
+        [Event(48, Message = "Exception thrown parsing log state of type '{0}'. Exception: '{1}'", Level = EventLevel.Warning)]
+        public void LoggerParseStateException(string type, string error)
+        {
+            this.WriteEvent(48, type, error);
         }
 
 #if DEBUG

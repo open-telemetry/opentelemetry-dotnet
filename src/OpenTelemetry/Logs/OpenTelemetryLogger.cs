@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
@@ -51,29 +52,64 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
+                var activity = Activity.Current;
+
                 var pool = provider.LogRecordPool;
 
                 var record = pool.Rent();
 
-                record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
-                record.State = provider.ParseStateValues ? null : state;
-                record.StateValues = provider.ParseStateValues ? ParseState(record, state) : null;
-                record.BufferedScopes = null;
+                ref LogRecord.LogRecordILoggerData iloggerData = ref record.ILoggerData;
+
+                iloggerData.TraceState = provider.IncludeTraceState && activity != null
+                    ? activity.TraceStateString
+                    : null;
+                iloggerData.CategoryName = this.categoryName;
+                iloggerData.EventId = eventId;
+                iloggerData.LogLevel = logLevel;
+                iloggerData.Exception = exception;
+                iloggerData.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
+                iloggerData.BufferedScopes = null;
 
                 ref LogRecordData data = ref record.Data;
 
                 data.TimestampBacking = DateTime.UtcNow;
-                data.CategoryName = this.categoryName;
-                data.LogLevel = logLevel;
-                data.EventId = eventId;
-                data.Message = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
-                data.Exception = exception;
 
-                LogRecordData.SetActivityContext(ref data, Activity.Current);
+                LogRecordData.SetActivityContext(ref data, activity);
+
+                var attributes = record.Attributes = provider.IncludeState
+                    ? ProcessState(record, state, provider.ParseStateValues)
+                    : null;
+
+                if (attributes != null && attributes.Count > 0)
+                {
+                    iloggerData.State = null;
+
+                    var lastAttribute = attributes[attributes.Count - 1];
+                    data.Body = lastAttribute.Key == "{OriginalFormat}"
+                        ? lastAttribute.Value as string
+                        : null;
+                }
+                else
+                {
+                    iloggerData.State = !provider.ParseStateValues ? state : null;
+
+                    data.Body = null;
+                }
+
+                if (data.Body == null)
+                {
+                    iloggerData.FormattedMessage = data.Body = formatter?.Invoke(state, exception) ?? state?.ToString();
+                }
+                else
+                {
+                    iloggerData.FormattedMessage = provider.IncludeFormattedMessage
+                        ? formatter?.Invoke(state, exception) ?? state?.ToString()
+                        : null;
+                }
 
                 processor.OnEnd(record);
 
-                record.ScopeProvider = null;
+                iloggerData.ScopeProvider = null;
 
                 // Attempt to return the LogRecord to the pool. This will no-op
                 // if a batch exporter has added a reference.
@@ -89,7 +125,7 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private static IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
+        private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(LogRecord logRecord, TState state, bool parseStateValues)
         {
             /* TODO: Enable this if/when LogRecordAttributeList becomes public.
             if (state is LogRecordAttributeList logRecordAttributes)
@@ -117,9 +153,41 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(LogRecordPoolHelper.DefaultMaxNumberOfAttributes);
-                attributeStorage.Add(new KeyValuePair<string, object?>(string.Empty, state));
-                return attributeStorage;
+                if (!parseStateValues || state is null)
+                {
+                    return null;
+                }
+
+                try
+                {
+                    PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state);
+
+                    var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(itemProperties.Count);
+
+                    foreach (PropertyDescriptor? itemProperty in itemProperties)
+                    {
+                        if (itemProperty == null)
+                        {
+                            continue;
+                        }
+
+                        object? value = itemProperty.GetValue(state);
+                        if (value == null)
+                        {
+                            continue;
+                        }
+
+                        attributeStorage.Add(new KeyValuePair<string, object?>(itemProperty.Name, value));
+                    }
+
+                    return attributeStorage;
+                }
+                catch (Exception parseException)
+                {
+                    OpenTelemetrySdkEventSource.Log.LoggerParseStateException<TState>(parseException);
+
+                    return Array.Empty<KeyValuePair<string, object?>>();
+                }
             }
         }
 
