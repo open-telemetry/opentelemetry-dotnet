@@ -221,8 +221,8 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = histogramPoint.GetHistogramSum();
             Assert.Equal(4000, sum);
 
-            //var count = histogramPoint.GetHistogramCount();
-            //Assert.Equal(70, count);
+            var count = histogramPoint.GetHistogramCount();
+            Assert.Equal(70, count);
 
             // restart all HistogramUpdateThread to take the second snapshot
 
