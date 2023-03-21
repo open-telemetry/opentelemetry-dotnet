@@ -452,6 +452,21 @@ and
 [extract](../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
 context.
 
+**Note on instrumentation libraries**: If you are using the instrumentation
+libraries shipped from this repo [e.g. [ASP.NET
+Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore)
+or
+[HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http)],
+context propagation is done by using the
+[default](https://github.com/open-telemetry/opentelemetry-dotnet/blob/d924663dc3d6bfdf737bc49ceaa1addcec90a2d6/src/OpenTelemetry/Sdk.cs#L34-L38)
+propagator. The default can be updated by calling
+`Sdk.SetDefaultTextMapPropagator` and passing the propagator of your choice.
+
+Propagator Api used by the instrumentation libraries is different than
+[DistributedContextPropagator](https://learn.microsoft.com/dotnet/api/system.diagnostics.distributedcontextpropagator)
+available in `System.Diagnostics`. Implementing this will have no impact on the
+propagation, if used alongside instrumentation libraries.
+
 ## Introduction to OpenTelemetry .NET Metrics API
 
 Metrics in OpenTelemetry .NET are a somewhat unique implementation of the

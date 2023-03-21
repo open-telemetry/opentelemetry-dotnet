@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Trace;
 
@@ -32,19 +34,19 @@ namespace OpenTelemetry.Exporter
 
         public interface IPeerServiceState
         {
-            string PeerService { get; set; }
+            string? PeerService { get; set; }
 
             int? PeerServicePriority { get; set; }
 
-            string HostName { get; set; }
+            string? HostName { get; set; }
 
-            string IpAddress { get; set; }
+            string? IpAddress { get; set; }
 
             long Port { get; set; }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InspectTag<T>(ref T state, string key, string value)
+        public static void InspectTag<T>(ref T state, string key, string? value)
             where T : struct, IPeerServiceState
         {
             if (PeerServiceKeyResolutionDictionary.TryGetValue(key, out int priority)
@@ -78,7 +80,7 @@ namespace OpenTelemetry.Exporter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Resolve<T>(ref T state, out string peerServiceName, out bool addAsTag)
+        public static void Resolve<T>(ref T state, out string? peerServiceName, out bool addAsTag)
             where T : struct, IPeerServiceState
         {
             peerServiceName = state.PeerService;
