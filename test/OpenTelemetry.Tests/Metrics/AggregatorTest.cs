@@ -192,7 +192,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultiThreadedHistogramUpdateAndSnapShotTest()
         {
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
+            var boundaries = Array.Empty<double>();
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             var argsToThread = new UpdateThreadArguments
             {
@@ -222,8 +223,8 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = histogramPoint.GetHistogramSum();
             Assert.Equal(4000, sum);
 
-            //var count = histogramPoint.GetHistogramCount();
-            //Assert.Equal(70, count);
+            var count = histogramPoint.GetHistogramCount();
+            Assert.Equal(70, count);
 
             // Reset Updatethread arguments
             argsToThread.MreToEnsureAllThreadsStart.Reset();
@@ -248,8 +249,8 @@ namespace OpenTelemetry.Metrics.Tests
             var sum2 = histogramPoint.GetHistogramSum();
             Assert.Equal(4000, sum2);
 
-            //var count2 = histogramPoint.GetHistogramCount();
-            //Assert.Equal(70, count2);
+            var count2 = histogramPoint.GetHistogramCount();
+            Assert.Equal(70, count2);
 
             // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
             var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
