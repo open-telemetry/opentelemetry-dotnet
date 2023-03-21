@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
@@ -36,15 +38,6 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.SpanProcessorException(evnt, ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void TracestateExtractException(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.TracestateExtractError(ex.ToInvariantString());
             }
         }
 
@@ -147,12 +140,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        [Event(3, Message = "Exporter returned error '{0}'.", Level = EventLevel.Warning)]
-        public void ExporterErrorResult(ExportResult exportResult)
-        {
-            this.WriteEvent(3, exportResult);
-        }
-
         [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
         public void SpanProcessorException(string evnt, string ex)
         {
@@ -163,12 +150,6 @@ namespace OpenTelemetry.Internal
         public void InvalidArgument(string methodName, string argumentName, string issue)
         {
             this.WriteEvent(8, methodName, argumentName, issue);
-        }
-
-        [Event(14, Message = "Tracestate parse error: '{0}'", Level = EventLevel.Warning)]
-        public void TracestateExtractError(string error)
-        {
-            this.WriteEvent(14, error);
         }
 
         [Event(16, Message = "Exception occurred while invoking Observable instrument callback. Exception: '{0}'", Level = EventLevel.Warning)]
@@ -184,7 +165,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-        public void ActivityStopped(string name, string id)
+        public void ActivityStopped(string name, string? id)
         {
             this.WriteEvent(25, name, id);
         }
@@ -298,7 +279,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(47, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
-        public void InvalidEnvironmentVariable(string key, string value)
+        public void InvalidEnvironmentVariable(string key, string? value)
         {
             this.WriteEvent(47, key, value);
         }
@@ -321,7 +302,7 @@ namespace OpenTelemetry.Internal
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource?.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase) == true)
+                if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
                 {
                     this.eventSources.Add(eventSource);
                     this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
@@ -332,8 +313,8 @@ namespace OpenTelemetry.Internal
 
             protected override void OnEventWritten(EventWrittenEventArgs e)
             {
-                string message;
-                if (e.Message != null && (e.Payload?.Count ?? 0) > 0)
+                string? message;
+                if (e.Message != null && e.Payload != null && e.Payload.Count > 0)
                 {
                     message = string.Format(e.Message, e.Payload.ToArray());
                 }
