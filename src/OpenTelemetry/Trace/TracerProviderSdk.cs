@@ -70,7 +70,7 @@ namespace OpenTelemetry.Trace
 
             state.AddExceptionProcessorIfEnabled();
 
-            this.SdkHealthReporter = new SdkHealthReporter($"{nameof(TracerProvider)}{Interlocked.Increment(ref providerCount)}");
+            this.SdkHealthReporter = new SdkHealthReporter(Interlocked.Increment(ref providerCount).ToString(), nameof(TracerProvider));
             var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
             resourceBuilder.ServiceProvider = serviceProvider;
             this.Resource = resourceBuilder.Build();

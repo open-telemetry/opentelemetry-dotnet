@@ -36,6 +36,9 @@ namespace OpenTelemetry
 
         internal readonly int MaxExportBatchSize;
 
+        private const string BatchExportProcessorTypeKey = "batchprocessor.type";
+        private const string BatchExporterNameKey = "batchprocessor.exporter.name";
+
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -43,10 +46,11 @@ namespace OpenTelemetry
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
         private readonly ManualResetEvent shutdownTrigger = new(false);
+        private TagList tags = default;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
-        private TagList tags = default;
+        private SdkHealthReporter? sdkHealthReporter;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
@@ -80,8 +84,8 @@ namespace OpenTelemetry
             };
             this.exporterThread.Start();
 
-            this.tags.Add(new KeyValuePair<string, object?>("BatchExportProcessorType", typeof(T).Name));
-            this.tags.Add(new KeyValuePair<string, object?>("BatchExporterName", exporter.GetType().Name));
+            this.tags.Add(BatchExportProcessorTypeKey, typeof(T).Name);
+            this.tags.Add(BatchExporterNameKey, exporter.GetType().Name);
         }
 
         /// <summary>
@@ -98,6 +102,9 @@ namespace OpenTelemetry
         /// Gets the number of telemetry objects processed by the underlying exporter.
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
+
+        // TODO: Add Noop reporter for null case.
+        private SdkHealthReporter? HealthReporter => this.sdkHealthReporter ??= this.ParentProvider?.GetSdkHealthReporter();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExport(T data)
@@ -118,7 +125,7 @@ namespace OpenTelemetry
                 return true; // enqueue succeeded
             }
 
-            this.ParentProvider?.GetSdkHealthReporter()?.BatchExportProcessorDroppedCount.Add(1, this.tags);
+            this.HealthReporter?.ReportBatchProcessorDroppedCount(1, ref this.tags);
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
