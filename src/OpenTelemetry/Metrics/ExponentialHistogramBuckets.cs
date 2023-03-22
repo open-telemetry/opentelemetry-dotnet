@@ -21,6 +21,7 @@ namespace OpenTelemetry.Metrics;
 public sealed class ExponentialHistogramBuckets
 {
     private long[] buckets = Array.Empty<long>();
+    private int size;
 
     internal ExponentialHistogramBuckets()
     {
@@ -28,7 +29,7 @@ public sealed class ExponentialHistogramBuckets
 
     public int Offset { get; private set; }
 
-    public Enumerator GetEnumerator() => new(this.buckets);
+    public Enumerator GetEnumerator() => new(this.buckets, this.size);
 
     internal void SnapshotBuckets(CircularBufferBuckets buckets)
     {
@@ -37,6 +38,7 @@ public sealed class ExponentialHistogramBuckets
             this.buckets = new long[buckets.Capacity];
         }
 
+        this.size = buckets.Size;
         this.Offset = buckets.Offset;
         buckets.Copy(this.buckets);
     }
@@ -44,6 +46,7 @@ public sealed class ExponentialHistogramBuckets
     internal ExponentialHistogramBuckets Copy()
     {
         var copy = new ExponentialHistogramBuckets();
+        copy.size = this.size;
         copy.Offset = this.Offset;
         copy.buckets = new long[this.buckets.Length];
         Array.Copy(this.buckets, copy.buckets, this.buckets.Length);
@@ -57,11 +60,13 @@ public sealed class ExponentialHistogramBuckets
     public struct Enumerator
     {
         private readonly long[] buckets;
+        private readonly int size;
         private int index;
 
-        internal Enumerator(long[] buckets)
+        internal Enumerator(long[] buckets, int size)
         {
             this.index = 0;
+            this.size = size;
             this.buckets = buckets;
             this.Current = default;
         }
@@ -81,7 +86,7 @@ public sealed class ExponentialHistogramBuckets
         /// collection.</returns>
         public bool MoveNext()
         {
-            if (this.index < this.buckets.Length)
+            if (this.index < this.size)
             {
                 this.Current = this.buckets[this.index++];
                 return true;
