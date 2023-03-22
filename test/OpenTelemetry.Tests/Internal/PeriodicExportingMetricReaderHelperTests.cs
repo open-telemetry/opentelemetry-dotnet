@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
@@ -21,7 +23,7 @@ using Xunit;
 
 namespace OpenTelemetry.Internal.Tests
 {
-    public class PeriodicExportingMetricReaderHelperTests : IDisposable
+    public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         public PeriodicExportingMetricReaderHelperTests()
         {
@@ -140,14 +142,11 @@ namespace OpenTelemetry.Internal.Tests
         }
 
         private static PeriodicExportingMetricReader CreatePeriodicExportingMetricReader(
-            MetricReaderOptions options = null)
+            MetricReaderOptions? options = null)
         {
-            if (options == null)
-            {
-                options = new();
-            }
+            options ??= new();
 
-            var dummyMetricExporter = new InMemoryExporter<Metric>(new Metric[0]);
+            var dummyMetricExporter = new InMemoryExporter<Metric>(Array.Empty<Metric>());
             return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(dummyMetricExporter, options);
         }
     }

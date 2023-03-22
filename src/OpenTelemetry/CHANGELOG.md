@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Implementation of `SuppressInstrumentationScope` changed to improve
+  performance.
+  ([#4304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4304))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07
