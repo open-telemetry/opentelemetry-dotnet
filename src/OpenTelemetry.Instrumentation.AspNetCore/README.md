@@ -49,9 +49,8 @@ is shutdown.
 The following example demonstrates adding ASP.NET Core instrumentation with the
 extension method `WithTracing()` on `OpenTelemetryBuilder`.
 then extension method `AddAspNetCoreInstrumentation()` on `TracerProviderBuilder`
-to the application. This example also sets up the OTLP (OpenTelemetry Protocol)
-Exporter, which requires adding the package
-[`OpenTelemetry.Exporter.OpenTelemetryProtocol`](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+to the application. This example also sets up the Console Exporter,
+which requires adding the package [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
 ```csharp
@@ -63,7 +62,7 @@ public void ConfigureServices(IServiceCollection services)
     services.AddOpenTelemetry()
         .WithTracing(builder => builder
             .AddAspNetCoreInstrumentation()
-            .AddOtlpExporter());
+            .AddConsoleExporter());
 }
 ```
 
@@ -72,9 +71,8 @@ public void ConfigureServices(IServiceCollection services)
 The following example demonstrates adding ASP.NET Core instrumentation with the
 extension method `WithMetrics()` on `OpenTelemetryBuilder`
 then extension method `AddAspNetCoreInstrumentation()` on `MeterProviderBuilder`
-to the application. This example also sets up the OTLP (OpenTelemetry Protocol)
-Exporter, which requires adding the package
-[`OpenTelemetry.Exporter.OpenTelemetryProtocol`](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+to the application. This example also sets up the Console Exporter,
+which requires adding the package [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
 ```csharp
@@ -86,7 +84,7 @@ public void ConfigureServices(IServiceCollection services)
     services.AddOpenTelemetry()
         .WithMetrics(builder => builder
             .AddAspNetCoreInstrumentation()
-            .AddOtlpExporter());
+            .AddConsoleExporter());
 }
 ```
 
@@ -125,7 +123,7 @@ services.Configure<AspNetCoreInstrumentationOptions>(options =>
 services.AddOpenTelemetry()
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddOtlpExporter());
+        .AddConsoleExporter());
 ```
 
 ### Filter
@@ -148,7 +146,7 @@ services.AddOpenTelemetry()
             // only collect telemetry about HTTP GET requests
             return httpContext.Request.Method.Equals("GET");
         })
-        .AddOtlpExporter());
+        .AddConsoleExporter());
 ```
 
 It is important to note that this `Filter` option is specific to this
