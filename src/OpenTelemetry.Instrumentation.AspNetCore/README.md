@@ -87,7 +87,7 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-The instrumentation was implemented based on [metrics semantic
+The instrumentation is implemented based on [metrics semantic
 conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
 Currently, the instrumentation supports the following metric.
 
