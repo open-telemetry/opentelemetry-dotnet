@@ -38,7 +38,7 @@ dotnet add package --prerelease OpenTelemetry.Instrumentation.AspNetCore
 
 ASP.NET Core instrumentation must be enabled at application startup. This is
 typically done in the `ConfigureServices` of your `Startup` class. Both examples
-below enables OpenTelemetry by `AddOpenTelemetry()` on `IServiceCollection`.
+below enables OpenTelemetry by calling `AddOpenTelemetry()` on `IServiceCollection`.
  This extension method requires adding the package
 [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md)
 to the application. This ensures instrumentations are disposed when the host
