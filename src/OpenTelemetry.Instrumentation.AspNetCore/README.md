@@ -37,12 +37,17 @@ dotnet add package --prerelease OpenTelemetry.Instrumentation.AspNetCore
 ### Step 2: Enable ASP.NET Core Instrumentation at application startup
 
 ASP.NET Core instrumentation must be enabled at application startup. This is
-typically done in the `ConfigureServices` of your `Startup` class.
+typically done in the `ConfigureServices` of your `Startup` class. Both examples
+below enables OpenTelemetry by `AddOpenTelemetry()` on `IServiceCollection`.
+ This extension method requires adding the package
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md)
+to the application. This ensures instrumentations are disposed when the host
+is shutdown.
 
 #### Traces
 
 The following example demonstrates adding ASP.NET Core instrumentation with the
-extension method `AddOpenTelemetry().WithTracing()` on `IServiceCollection`
+extension method `WithTracing()` on `OpenTelemetryBuilder`.
 then extension method `AddAspNetCoreInstrumentation()` on `TracerProviderBuilder`
 to the application. This example also sets up the OTLP (OpenTelemetry Protocol)
 Exporter, which requires adding the package
@@ -65,7 +70,7 @@ public void ConfigureServices(IServiceCollection services)
 #### Metrics
 
 The following example demonstrates adding ASP.NET Core instrumentation with the
-extension method `AddOpenTelemetry().WithMetrics()` on `IServiceCollection`
+extension method `WithMetrics()` on `OpenTelemetryBuilder`
 then extension method `AddAspNetCoreInstrumentation()` on `MeterProviderBuilder`
 to the application. This example also sets up the OTLP (OpenTelemetry Protocol)
 Exporter, which requires adding the package
