@@ -143,8 +143,6 @@ namespace OpenTelemetry.Exporter
 
                                 bucketsBuilder.AppendLine();
                             }
-
-                            valueDisplay = bucketsBuilder.ToString();
                         }
                         else
                         {
@@ -152,6 +150,8 @@ namespace OpenTelemetry.Exporter
                             // If I recall, the collector's console exporter does not currently display buckets in any way.
                             // Java I think does display buckets, but also Java writes to the console in OTLP/JSON format.
                         }
+
+                        valueDisplay = bucketsBuilder.ToString();
                     }
                     else if (metricType.IsDouble())
                     {
