@@ -11,18 +11,6 @@ on:
     - '**.md'
 
 jobs:
-  sql-test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [net6.0,net7.0]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run sql integration
-        run: dotnet test test/OpenTelemetry.Instrumentation.SqlClient.Tests/OpenTelemetry.Instrumentation.SqlClient.Tests.csproj --framework ${{ matrix.version }} --filter CategoryName=SqlIntegrationTests
-
   w3c-trace-context-test:
     runs-on: ubuntu-latest
     strategy:

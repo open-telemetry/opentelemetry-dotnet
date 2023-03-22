@@ -94,7 +94,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Trait("CategoryName", "SqlIntegrationTests")]
-        [Theory]
+        [SkipOnWindowsRunnerTheory]
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/1", false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
