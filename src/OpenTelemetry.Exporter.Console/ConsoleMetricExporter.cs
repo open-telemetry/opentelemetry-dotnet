@@ -92,7 +92,7 @@ namespace OpenTelemetry.Exporter
 
                     var metricType = metric.MetricType;
 
-                    if (metricType.IsHistogram())
+                    if (metricType == MetricType.Histogram || metricType == MetricType.ExponentialHistogram)
                     {
                         var bucketsBuilder = new StringBuilder();
                         var sum = metricPoint.GetHistogramSum();
@@ -105,44 +105,53 @@ namespace OpenTelemetry.Exporter
 
                         bucketsBuilder.AppendLine();
 
-                        bool isFirstIteration = true;
-                        double previousExplicitBound = default;
-                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                        if (metricType == MetricType.Histogram)
                         {
-                            if (isFirstIteration)
+                            bool isFirstIteration = true;
+                            double previousExplicitBound = default;
+                            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
-                                bucketsBuilder.Append("(-Infinity,");
-                                bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
-                                bucketsBuilder.Append(']');
-                                bucketsBuilder.Append(':');
-                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
-                                previousExplicitBound = histogramMeasurement.ExplicitBound;
-                                isFirstIteration = false;
-                            }
-                            else
-                            {
-                                bucketsBuilder.Append('(');
-                                bucketsBuilder.Append(previousExplicitBound);
-                                bucketsBuilder.Append(',');
-                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                                if (isFirstIteration)
                                 {
+                                    bucketsBuilder.Append("(-Infinity,");
                                     bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(histogramMeasurement.BucketCount);
                                     previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                    isFirstIteration = false;
                                 }
                                 else
                                 {
-                                    bucketsBuilder.Append("+Infinity");
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(previousExplicitBound);
+                                    bucketsBuilder.Append(',');
+                                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                                    {
+                                        bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                        previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                    }
+                                    else
+                                    {
+                                        bucketsBuilder.Append("+Infinity");
+                                    }
+
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(histogramMeasurement.BucketCount);
                                 }
 
-                                bucketsBuilder.Append(']');
-                                bucketsBuilder.Append(':');
-                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
+                                bucketsBuilder.AppendLine();
                             }
 
-                            bucketsBuilder.AppendLine();
+                            valueDisplay = bucketsBuilder.ToString();
                         }
-
-                        valueDisplay = bucketsBuilder.ToString();
+                        else
+                        {
+                            // TODO: Consider how/if to display buckets for exponential histograms.
+                            // If I recall, the collector's console exporter does not currently display buckets in any way.
+                            // Java I think does display buckets, but also Java writes to the console in OTLP/JSON format.
+                        }
                     }
                     else if (metricType.IsDouble())
                     {
