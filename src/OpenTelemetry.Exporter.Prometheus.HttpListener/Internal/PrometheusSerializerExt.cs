@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
             }
-            else
+            else if (metric.MetricType.IsHistogram())
             {
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
@@ -193,6 +193,10 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
+            }
+            else
+            {
+                // TODO: Support exponential histogram.
             }
 
             buffer[cursor++] = ASCII_LINEFEED;
