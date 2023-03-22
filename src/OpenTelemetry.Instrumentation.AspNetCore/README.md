@@ -43,7 +43,7 @@ typically done in the `ConfigureServices` of your `Startup` class.
 
 The following example demonstrates adding ASP.NET Core instrumentation with the
 extension method `AddOpenTelemetry().WithTracing()` on `IServiceCollection`
-then extension method `AddHttpClientInstrumentation()` on `TracerProviderBuilder`
+then extension method `AddAspNetCoreInstrumentation()` on `TracerProviderBuilder`
 to the application. This example also sets up the OTLP (OpenTelemetry Protocol)
 Exporter, which requires adding the package
 [`OpenTelemetry.Exporter.OpenTelemetryProtocol`](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
@@ -66,7 +66,7 @@ public void ConfigureServices(IServiceCollection services)
 
 The following example demonstrates adding ASP.NET Core instrumentation with the
 extension method `AddOpenTelemetry().WithMetrics()` on `IServiceCollection`
-then extension method `AddHttpClientInstrumentation()` on `MeterProviderBuilder`
+then extension method `AddAspNetCoreInstrumentation()` on `MeterProviderBuilder`
 to the application. This example also sets up the OTLP (OpenTelemetry Protocol)
 Exporter, which requires adding the package
 [`OpenTelemetry.Exporter.OpenTelemetryProtocol`](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
@@ -88,12 +88,12 @@ public void ConfigureServices(IServiceCollection services)
 #### List of metrics produced
 
 The instrumentation is implemented based on [metrics semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientduration).
+conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpserverduration).
 Currently, the instrumentation supports the following metric.
 
 | Name  | Instrument Type | Unit | Description |
 |-------|-----------------|------|-------------|
-| `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. |
+| `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
 
 ## Advanced configuration
 
