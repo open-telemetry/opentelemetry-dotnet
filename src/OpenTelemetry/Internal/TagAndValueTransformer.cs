@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Internal;
 
 internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
+    where T : notnull
 {
     protected TValue TransformValue(object value)
     {
@@ -44,7 +47,7 @@ internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
                 return this.TransformFloatingPointValue(Convert.ToDouble(value));
             default:
                 // This could throw an exception. The caller is expected to handle.
-                return this.TransformStringValue(value.ToString());
+                return this.TransformStringValue(value?.ToString());
         }
     }
 
@@ -54,7 +57,7 @@ internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
 
     protected abstract TValue TransformBooleanValue(bool value);
 
-    protected abstract TValue TransformStringValue(string value);
+    protected abstract TValue TransformStringValue(string? value);
 
-    protected abstract TValue TransformArrayValue(Array value);
+    protected abstract TValue? TransformArrayValue(Array value);
 }

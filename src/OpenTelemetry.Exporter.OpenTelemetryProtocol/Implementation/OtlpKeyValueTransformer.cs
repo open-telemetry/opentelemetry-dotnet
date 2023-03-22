@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using OpenTelemetry.Internal;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
@@ -67,12 +69,12 @@ internal sealed class OtlpKeyValueTransformer : TagAndValueTransformer<OtlpCommo
         return new OtlpCommon.AnyValue { BoolValue = value };
     }
 
-    protected override OtlpCommon.AnyValue TransformStringValue(string value)
+    protected override OtlpCommon.AnyValue TransformStringValue(string? value)
     {
         return new OtlpCommon.AnyValue { StringValue = value };
     }
 
-    protected override OtlpCommon.AnyValue TransformArrayValue(Array array)
+    protected override OtlpCommon.AnyValue? TransformArrayValue(Array array)
     {
         var arrayValue = new OtlpCommon.ArrayValue();
 

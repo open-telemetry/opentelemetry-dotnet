@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation;

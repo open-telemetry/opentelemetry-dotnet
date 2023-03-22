@@ -211,13 +211,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal("value", process.Tags["Tag"].VStr);
         }
 
+#nullable enable
         [Fact]
         public void JaegerTraceExporter_SetResource_CombinesTags()
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            JaegerTagTransformer.Instance.TryTransformTag(new KeyValuePair<string, object>("Tag1", "value1"), out var result);
+            JaegerTagTransformer.Instance.TryTransformTag(new KeyValuePair<string, object?>("Tag1", "value1"), out var result);
             process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = result };
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
@@ -230,6 +231,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal("value1", process.Tags["Tag1"].VStr);
             Assert.Equal("value2", process.Tags["Tag2"].VStr);
         }
+#nullable disable
 
         [Fact]
         public void JaegerTraceExporter_SetResource_IgnoreServiceResources()

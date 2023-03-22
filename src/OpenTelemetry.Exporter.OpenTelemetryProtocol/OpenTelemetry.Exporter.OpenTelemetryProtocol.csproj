@@ -35,6 +35,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagAndValueTransformer.cs" Link="Includes\TagAndValueTransformer.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\NullableAttributes.cs" Link="Includes\NullableAttributes.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -25,19 +27,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void NullValueAttribute()
         {
-            var kvp = new KeyValuePair<string, object>("key", null);
+            var kvp = new KeyValuePair<string, object?>("key", null);
             Assert.False(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var _));
         }
 
         [Fact]
         public void EmptyArrays()
         {
-            var kvp = new KeyValuePair<string, object>("key", Array.Empty<int>());
+            var kvp = new KeyValuePair<string, object?>("key", Array.Empty<int>());
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Empty(attribute.Value.ArrayValue.Values);
 
-            kvp = new KeyValuePair<string, object>("key", Array.Empty<object>());
+            kvp = new KeyValuePair<string, object?>("key", Array.Empty<object>());
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Empty(attribute.Value.ArrayValue.Values);
@@ -60,7 +62,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(new long[] { 1, 2, 3 })]
         public void IntegralTypesSupported(object value)
         {
-            var kvp = new KeyValuePair<string, object>("key", value);
+            var kvp = new KeyValuePair<string, object?>("key", value);
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
 
             switch (value)
@@ -89,7 +91,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(new double[] { 1, 2, 3 })]
         public void FloatingPointTypesSupported(object value)
         {
-            var kvp = new KeyValuePair<string, object>("key", value);
+            var kvp = new KeyValuePair<string, object?>("key", value);
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
 
             switch (value)
@@ -116,7 +118,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(new bool[] { true, false, true })]
         public void BooleanTypeSupported(object value)
         {
-            var kvp = new KeyValuePair<string, object>("key", value);
+            var kvp = new KeyValuePair<string, object?>("key", value);
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
 
             switch (value)
@@ -143,7 +145,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("string")]
         public void StringTypesSupported(object value)
         {
-            var kvp = new KeyValuePair<string, object>("key", value);
+            var kvp = new KeyValuePair<string, object?>("key", value);
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
             Assert.Equal(Convert.ToString(value), attribute.Value.StringValue);
@@ -153,14 +155,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void StringArrayTypesSupported()
         {
             var charArray = new char[] { 'a', 'b', 'c' };
-            var stringArray = new string[] { "a", "b", "c", string.Empty, null };
+            var stringArray = new string?[] { "a", "b", "c", string.Empty, null };
 
-            var kvp = new KeyValuePair<string, object>("key", charArray);
+            var kvp = new KeyValuePair<string, object?>("key", charArray);
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Equal(charArray.Select(x => x.ToString()), attribute.Value.ArrayValue.Values.Select(x => x.StringValue));
 
-            kvp = new KeyValuePair<string, object>("key", stringArray);
+            kvp = new KeyValuePair<string, object?>("key", stringArray);
             Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
 
@@ -195,12 +197,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new nint[] { 1, 2, 3 },
                 new nuint[] { 1, 2, 3 },
                 new decimal[] { 1, 2, 3 },
-                new object[] { 1, new object(), false, null },
+                new object?[] { 1, new object(), false, null },
             };
 
             foreach (var value in testValues)
             {
-                var kvp = new KeyValuePair<string, object>("key", value);
+                var kvp = new KeyValuePair<string, object?>("key", value);
                 Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
                 Assert.Equal(value.ToString(), attribute.Value.StringValue);
@@ -208,14 +210,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             foreach (var value in testArrayValues)
             {
-                var kvp = new KeyValuePair<string, object>("key", value);
+                var kvp = new KeyValuePair<string, object?>("key", value);
                 Assert.True(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var attribute));
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
 
                 var array = value as Array;
                 for (var i = 0; i < attribute.Value.ArrayValue.Values.Count; ++i)
                 {
-                    var expectedValue = array.GetValue(i)?.ToString();
+                    var expectedValue = array?.GetValue(i)?.ToString();
                     var expectedValueCase = expectedValue != null
                         ? OtlpCommon.AnyValue.ValueOneofCase.StringValue
                         : OtlpCommon.AnyValue.ValueOneofCase.None;
@@ -223,7 +225,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     Assert.Equal(expectedValueCase, attribute.Value.ArrayValue.Values[i].ValueCase);
                     if (expectedValueCase != OtlpCommon.AnyValue.ValueOneofCase.None)
                     {
-                        Assert.Equal(array.GetValue(i).ToString(), attribute.Value.ArrayValue.Values[i].StringValue);
+                        Assert.Equal(array?.GetValue(i)?.ToString(), attribute.Value.ArrayValue.Values[i].StringValue);
                     }
                 }
             }
@@ -232,10 +234,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void ExceptionInToStringIsCaught()
         {
-            var kvp = new KeyValuePair<string, object>("key", new MyToStringMethodThrowsAnException());
+            var kvp = new KeyValuePair<string, object?>("key", new MyToStringMethodThrowsAnException());
             Assert.False(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var _));
 
-            kvp = new KeyValuePair<string, object>("key", new object[] { 1, false, new MyToStringMethodThrowsAnException() });
+            kvp = new KeyValuePair<string, object?>("key", new object[] { 1, false, new MyToStringMethodThrowsAnException() });
             Assert.False(OtlpKeyValueTransformer.Instance.TryTransformTag(kvp, out var _));
         }
 

@@ -14,11 +14,16 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System.Diagnostics.CodeAnalysis;
+
 namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
+    where T : notnull
 {
-    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result, int? maxLength = null)
+    public bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out T? result, int? maxLength = null)
     {
         if (tag.Value == null)
         {
@@ -28,9 +33,11 @@ internal abstract class TagTransformer<T>
 
         switch (tag.Value)
         {
-            case char:
-            case string:
-                result = this.TransformStringTag(tag.Key, TruncateString(Convert.ToString(tag.Value), maxLength));
+            case char c:
+                result = this.TransformStringTag(tag.Key, TruncateString(c.ToString(), maxLength));
+                break;
+            case string s:
+                result = this.TransformStringTag(tag.Key, TruncateString(s, maxLength));
                 break;
             case bool b:
                 result = this.TransformBooleanTag(tag.Key, b);
@@ -74,7 +81,15 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    result = this.TransformStringTag(tag.Key, TruncateString(tag.Value.ToString(), maxLength));
+                    var value = tag.Value.ToString();
+
+                    if (value == null)
+                    {
+                        result = default;
+                        return false;
+                    }
+
+                    result = this.TransformStringTag(tag.Key, TruncateString(value, maxLength));
                 }
                 catch
                 {
@@ -102,7 +117,7 @@ internal abstract class TagTransformer<T>
 
     private static string TruncateString(string value, int? maxLength)
     {
-        return maxLength.HasValue && value?.Length > maxLength
+        return maxLength.HasValue && value.Length > maxLength
             ? value.Substring(0, maxLength.Value)
             : value;
     }
@@ -130,9 +145,9 @@ internal abstract class TagTransformer<T>
 
     private T ConvertToStringArrayThenTransformArrayTag(string key, Array array, int? maxStringValueLength)
     {
-        string[] stringArray;
+        string?[] stringArray;
 
-        if (array is string[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength)))
+        if (array is string[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s.Length > maxStringValueLength)))
         {
             stringArray = arrayAsStringArray;
         }
@@ -141,7 +156,8 @@ internal abstract class TagTransformer<T>
             stringArray = new string[array.Length];
             for (var i = 0; i < array.Length; ++i)
             {
-                stringArray[i] = TruncateString(array.GetValue(i)?.ToString(), maxStringValueLength);
+                var value = array.GetValue(i)?.ToString();
+                stringArray[i] = value == null ? null : TruncateString(value, maxStringValueLength);
             }
         }
 
