@@ -228,11 +228,15 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative)]
-        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta)]
-        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative)]
-        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
-        internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality)
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative, false)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta, false)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative, false)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta, false)]
+        internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality, bool exemplarsEnabled)
         {
             var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
 
@@ -243,24 +247,28 @@ namespace OpenTelemetry.Metrics.Tests
                 metricStreamIdentity,
                 aggregationType,
                 aggregationTemporality,
-                maxMetricPoints: 1024);
-
-            var metricPoint = new MetricPoint(
-                aggregatorStore,
-                aggregationType, // TODO: Why is this here? AggregationType is already declared when AggregatorStore was instantiated.
-                tagKeysAndValues: null,
-                Metric.DefaultHistogramBounds,
-                Metric.DefaultExponentialHistogramMaxBuckets);
+                maxMetricPoints: 1024,
+                exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
             var expectedHistogram = new Base2ExponentialBucketHistogram();
 
             foreach (var value in valuesToRecord)
             {
-                metricPoint.Update(value);
+                aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object>>());
                 expectedHistogram.Record(value);
             }
 
-            metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
+            aggregatorStore.Snapshot();
+
+            var metricPoints = new List<MetricPoint>();
+
+            foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
 
             var count = metricPoint.GetHistogramCount();
             var sum = metricPoint.GetHistogramSum();
