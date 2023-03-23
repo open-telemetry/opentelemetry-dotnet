@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Metrics;
 using Examples.AspNetCore;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
@@ -32,6 +33,9 @@ var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExpor
 
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+
+// Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
+var histogramAggregation = appBuilder.Configuration.GetValue<string>("HistogramAggregation").ToLowerInvariant();
 
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
@@ -110,6 +114,22 @@ appBuilder.Services.AddOpenTelemetry()
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
+
+        switch (histogramAggregation)
+        {
+            case "exponential":
+                builder.AddView(instrument =>
+                {
+                    return instrument.GetType().GetGenericTypeDefinition() == typeof(Histogram<>)
+                        ? new Base2ExponentialBucketHistogramConfiguration()
+                        : null;
+                });
+                break;
+            default:
+                // Explicit bounds histogram is the default.
+                // No additional configuration necessary.
+                break;
+        }
 
         switch (metricsExporter)
         {
