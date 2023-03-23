@@ -36,9 +36,6 @@ namespace OpenTelemetry
 
         internal readonly int MaxExportBatchSize;
 
-        private const string BatchExportProcessorTypeKey = "batchprocessor.type";
-        private const string BatchExporterNameKey = "batchprocessor.exporter.name";
-
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -46,7 +43,9 @@ namespace OpenTelemetry
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
         private readonly ManualResetEvent shutdownTrigger = new(false);
-        private TagList tags = default;
+        private readonly string exporterName;
+        private readonly string processorType;
+        private KeyValuePair<string, object?>[]? droppedCountTags;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
@@ -84,8 +83,8 @@ namespace OpenTelemetry
             };
             this.exporterThread.Start();
 
-            this.tags.Add(BatchExportProcessorTypeKey, typeof(T).Name);
-            this.tags.Add(BatchExporterNameKey, exporter.GetType().Name);
+            this.exporterName = exporter.GetType().Name;
+            this.processorType = typeof(T).Name;
         }
 
         /// <summary>
@@ -103,8 +102,16 @@ namespace OpenTelemetry
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
+        /// <summary>
+        /// Gets the SdkHealthReporter object to report health metrics.
+        /// </summary>
         // TODO: Add Noop reporter for null case.
         private SdkHealthReporter? HealthReporter => this.sdkHealthReporter ??= this.ParentProvider?.GetSdkHealthReporter();
+
+        /// <summary>
+        /// Gets the tags to be reported on dotnet.sdk.batchprocessor.dropped_count metric.
+        /// </summary>
+        private KeyValuePair<string, object?>[] DroppedCountTags => this.droppedCountTags ??= this.InitializeDroppedCountTags();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExport(T data)
@@ -125,7 +132,7 @@ namespace OpenTelemetry
                 return true; // enqueue succeeded
             }
 
-            this.HealthReporter?.ReportBatchProcessorDroppedCount(1, ref this.tags);
+            this.HealthReporter?.ReportBatchProcessorDroppedCount(1, this.DroppedCountTags);
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
@@ -267,6 +274,25 @@ namespace OpenTelemetry
             }
 
             base.Dispose(disposing);
+        }
+
+        private KeyValuePair<string, object?>[] InitializeDroppedCountTags()
+        {
+            // TODO: change this noop check
+            if (this.HealthReporter == null)
+            {
+                return Array.Empty<KeyValuePair<string, object?>>();
+            }
+            else
+            {
+                return new KeyValuePair<string, object?>[]
+                {
+                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderIdKey, this.HealthReporter.ProviderId),
+                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderNameKey, this.HealthReporter.ProviderName),
+                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExporterNameKey, this.exporterName),
+                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorTypeKey, this.processorType),
+                };
+            }
         }
 
         private void ExporterProc()

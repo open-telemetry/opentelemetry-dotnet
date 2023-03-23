@@ -14,35 +14,30 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
+#nullable enable
+
 using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Internal
 {
     internal class SdkHealthReporter
     {
-        private const string ProviderIdKey = "provider.id";
-
-        private const string ProviderNameKey = "provider.name";
-
-        private readonly string providerId;
-
-        private readonly string providerName;
-
         internal SdkHealthReporter(string providerId, string providerName)
         {
-            this.providerId = providerId;
-            this.providerName = providerName;
+            this.ProviderId = providerId;
+            this.ProviderName = providerName;
         }
+
+        internal string ProviderId { get; }
+
+        internal string ProviderName { get; }
 
         private static Meter InternalMeter { get; } = new Meter("OpenTelemetry.Sdk");
 
         private static Counter<long> BatchExportProcessorDroppedCount { get; } = InternalMeter.CreateCounter<long>("dotnet.sdk.batchprocessor.dropped_count");
 
-        internal void ReportBatchProcessorDroppedCount(long droppedCount, ref TagList droppedCountTags)
+        internal void ReportBatchProcessorDroppedCount(long droppedCount, params KeyValuePair<string, object?>[] droppedCountTags)
         {
-            droppedCountTags.Add(ProviderIdKey, this.providerId);
-            droppedCountTags.Add(ProviderNameKey, this.providerName);
             BatchExportProcessorDroppedCount.Add(droppedCount, droppedCountTags);
         }
     }
