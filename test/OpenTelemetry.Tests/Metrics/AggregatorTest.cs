@@ -193,13 +193,12 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultiThreadedHistogramUpdateAndSnapShotTest()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             var argsToThread = new UpdateThreadArguments
             {
                 MreToBlockUpdateThread = new ManualResetEvent(false),
                 MreToEnsureAllThreadsStart = new ManualResetEvent(false),
-                HistogramPoint = histogramPoint,
+                HistogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets),
             };
 
             var numberOfThreads = 10;
@@ -218,18 +217,20 @@ namespace OpenTelemetry.Metrics.Tests
                 t[i].Join();
             }
 
+            var histogramPoint = argsToThread.HistogramPoint;
             histogramPoint.TakeSnapshot(true);
 
             var sum = histogramPoint.GetHistogramSum();
-            Assert.Equal(4000, sum);
+            Assert.Equal(400, sum);
 
-            // var count = histogramPoint.GetHistogramCount();
-            // Assert.Equal(70, count);
+            var count = histogramPoint.GetHistogramCount();
+            Assert.Equal(70, count);
 
-            // Reset Updatethread arguments
+            // Reset UpdateThreadArguments arguments
             argsToThread.MreToEnsureAllThreadsStart.Reset();
             argsToThread.MreToBlockUpdateThread.Reset();
             argsToThread.ThreadStartedCount = 0;
+            argsToThread.HistogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             Thread[] t2 = new Thread[numberOfThreads];
             for (int i = 0; i < numberOfThreads; i++)
@@ -246,17 +247,14 @@ namespace OpenTelemetry.Metrics.Tests
                 t2[i].Join();
             }
 
-            histogramPoint.TakeSnapshot(true);
+            var histogramPoint2 = argsToThread.HistogramPoint;
+            histogramPoint2.TakeSnapshot(true);
 
-            var sum2 = histogramPoint.GetHistogramSum();
-            Assert.Equal(4000, sum2);
+            var sum2 = histogramPoint2.GetHistogramSum();
+            Assert.Equal(400, sum2);
 
-            // var count2 = histogramPoint.GetHistogramCount();
-            // Assert.Equal(70, count2);
-
-            // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
-            var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
-            Assert.False(enumerator.MoveNext());
+            var count2 = histogramPoint2.GetHistogramCount();
+            Assert.Equal(70, count2);
         }
 
         internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
@@ -410,17 +408,13 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             args.MreToBlockUpdateThread.WaitOne();
-
-            for (int i = 0; i < args.NumberOfThreads; ++i)
-            {
-                args.HistogramPoint.Update(-10);
-                args.HistogramPoint.Update(0);
-                args.HistogramPoint.Update(1);
-                args.HistogramPoint.Update(9);
-                args.HistogramPoint.Update(10);
-                args.HistogramPoint.Update(11);
-                args.HistogramPoint.Update(19);
-            }
+            args.HistogramPoint.Update(-10);
+            args.HistogramPoint.Update(0);
+            args.HistogramPoint.Update(1);
+            args.HistogramPoint.Update(9);
+            args.HistogramPoint.Update(10);
+            args.HistogramPoint.Update(11);
+            args.HistogramPoint.Update(19);
         }
 
         private class UpdateThreadArguments
