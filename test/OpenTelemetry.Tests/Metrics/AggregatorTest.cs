@@ -230,7 +230,6 @@ namespace OpenTelemetry.Metrics.Tests
             argsToThread.MreToEnsureAllThreadsStart.Reset();
             argsToThread.MreToBlockUpdateThread.Reset();
             argsToThread.ThreadStartedCount = 0;
-            argsToThread.HistogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
 
             Thread[] t2 = new Thread[numberOfThreads];
             for (int i = 0; i < numberOfThreads; i++)
@@ -254,7 +253,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(400, sum2);
 
             var count2 = histogramPoint2.GetHistogramCount();
-            Assert.Equal(70, count2);
+            Assert.Equal(70, count2 - count);
         }
 
         internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
