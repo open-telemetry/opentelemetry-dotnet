@@ -486,10 +486,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 {
                     metricReaderOptions.TemporalityPreference = aggregationTemporality;
                 })
-                 .AddView(instrument =>
-                 {
-                     return new Base2ExponentialBucketHistogramConfiguration();
-                 })
+                .AddView(instrument =>
+                {
+                    return new Base2ExponentialBucketHistogramConfiguration();
+                })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();
