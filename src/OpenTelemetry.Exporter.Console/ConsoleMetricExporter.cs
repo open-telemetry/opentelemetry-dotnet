@@ -147,8 +147,6 @@ namespace OpenTelemetry.Exporter
                         else
                         {
                             // TODO: Consider how/if to display buckets for exponential histograms.
-                            // If I recall, the collector's console exporter does not currently display buckets in any way.
-                            // Java I think does display buckets, but also Java writes to the console in OTLP/JSON format.
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
