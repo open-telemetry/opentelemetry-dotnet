@@ -16,12 +16,15 @@
 
 using System.Data;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using DotNet.Testcontainers.Containers;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Testcontainers.MsSql;
+using Testcontainers.SqlEdge;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Tests
@@ -40,9 +43,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
 
-        // Please note this image is not compatible with macOS running on Apple silicon.
-        // Maybe we should replace it with mcr.microsoft.com/azure-sql-edge (the SqlEdge module).
-        private readonly MsSqlContainer mssqlContainer = new MsSqlBuilder().Build();
+        // The Microsoft SQL Server Docker image is not compatible with ARM devices, such as Macs with Apple Silicon.
+        private readonly IContainer databaseContainer = Architecture.Arm64.Equals(RuntimeInformation.ProcessArchitecture) ? new SqlEdgeBuilder().Build() : new MsSqlBuilder().Build();
 
         public SqlClientTests()
         {
@@ -51,18 +53,31 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
         public Task InitializeAsync()
         {
-            return this.mssqlContainer.StartAsync();
+            return this.databaseContainer.StartAsync();
         }
 
         public Task DisposeAsync()
         {
-            return this.mssqlContainer.DisposeAsync().AsTask();
+            return this.databaseContainer.DisposeAsync().AsTask();
         }
 
         public void Dispose()
         {
             this.fakeSqlClientDiagnosticSource.Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        public string GetConnectionString()
+        {
+            switch (this.databaseContainer)
+            {
+                case SqlEdgeContainer container:
+                    return container.GetConnectionString();
+                case MsSqlContainer container:
+                    return container.GetConnectionString();
+                default:
+                    throw new InvalidOperationException($"Container type ${this.databaseContainer.GetType().Name} not supported.");
+            }
         }
 
         [Fact]
@@ -94,7 +109,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Trait("CategoryName", "SqlIntegrationTests")]
-        [SkipOnWindowsRunnerTheory]
+        [EnabledOnDockerPlatformTheory(EnabledOnDockerPlatformTheoryAttribute.DockerPlatform.Linux)]
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/1", false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
@@ -138,7 +153,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 })
                 .Build();
 
-            using SqlConnection sqlConnection = new SqlConnection(this.mssqlContainer.GetConnectionString());
+            using SqlConnection sqlConnection = new SqlConnection(this.GetConnectionString());
 
             sqlConnection.Open();
 
