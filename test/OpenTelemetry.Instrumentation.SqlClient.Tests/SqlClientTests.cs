@@ -16,20 +16,16 @@
 
 using System.Data;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using DotNet.Testcontainers.Containers;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Testcontainers.MsSql;
-using Testcontainers.SqlEdge;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 {
-    public class SqlClientTests : IAsyncLifetime, IDisposable
+    public class SqlClientTests : IDisposable
     {
         /*
             To run the integration tests, set the OTEL_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
@@ -43,41 +39,15 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
 
-        // The Microsoft SQL Server Docker image is not compatible with ARM devices, such as Macs with Apple Silicon.
-        private readonly IContainer databaseContainer = Architecture.Arm64.Equals(RuntimeInformation.ProcessArchitecture) ? new SqlEdgeBuilder().Build() : new MsSqlBuilder().Build();
-
         public SqlClientTests()
         {
             this.fakeSqlClientDiagnosticSource = new FakeSqlClientDiagnosticSource();
-        }
-
-        public Task InitializeAsync()
-        {
-            return this.databaseContainer.StartAsync();
-        }
-
-        public Task DisposeAsync()
-        {
-            return this.databaseContainer.DisposeAsync().AsTask();
         }
 
         public void Dispose()
         {
             this.fakeSqlClientDiagnosticSource.Dispose();
             GC.SuppressFinalize(this);
-        }
-
-        public string GetConnectionString()
-        {
-            switch (this.databaseContainer)
-            {
-                case SqlEdgeContainer container:
-                    return container.GetConnectionString();
-                case MsSqlContainer container:
-                    return container.GetConnectionString();
-                default:
-                    throw new InvalidOperationException($"Container type ${this.databaseContainer.GetType().Name} not supported.");
-            }
         }
 
         [Fact]
@@ -106,79 +76,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
             Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
-        }
-
-        [Trait("CategoryName", "SqlIntegrationTests")]
-        [EnabledOnDockerPlatformTheory(EnabledOnDockerPlatformTheoryAttribute.DockerPlatform.Linux)]
-        [InlineData(CommandType.Text, "select 1/1", false)]
-        [InlineData(CommandType.Text, "select 1/1", false, true)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true, false, false)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
-        [InlineData(CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public void SuccessfulCommandTest(
-            CommandType commandType,
-            string commandText,
-            bool captureStoredProcedureCommandName,
-            bool captureTextCommandContent = false,
-            bool isFailure = false,
-            bool recordException = false,
-            bool shouldEnrich = true)
-        {
-#if NETFRAMEWORK
-            // Disable things not available on netfx
-            recordException = false;
-            shouldEnrich = false;
-#endif
-
-            var sampler = new TestSampler();
-            var activities = new List<Activity>();
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .SetSampler(sampler)
-                .AddInMemoryExporter(activities)
-                .AddSqlClientInstrumentation(options =>
-                {
-#if !NETFRAMEWORK
-                    options.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
-                    options.SetDbStatementForText = captureTextCommandContent;
-#else
-                    options.SetDbStatementForText = captureStoredProcedureCommandName || captureTextCommandContent;
-#endif
-                    options.RecordException = recordException;
-                    if (shouldEnrich)
-                    {
-                        options.Enrich = ActivityEnrichment;
-                    }
-                })
-                .Build();
-
-            using SqlConnection sqlConnection = new SqlConnection(this.GetConnectionString());
-
-            sqlConnection.Open();
-
-            string dataSource = sqlConnection.DataSource;
-
-            sqlConnection.ChangeDatabase("master");
-
-            using SqlCommand sqlCommand = new SqlCommand(commandText, sqlConnection)
-            {
-                CommandType = commandType,
-            };
-
-            try
-            {
-                sqlCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-            }
-
-            Assert.Single(activities);
-            var activity = activities[0];
-
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, shouldEnrich, dataSource, activity);
-            VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
         // DiagnosticListener-based instrumentation is only available on .NET Core
@@ -411,7 +308,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 #endif
 
-        private static void VerifyActivityData(
+        internal static void VerifyActivityData(
             CommandType commandType,
             string commandText,
             bool captureStoredProcedureCommandName,
@@ -491,7 +388,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(dataSource, activity.GetTagValue(SemanticConventions.AttributePeerService));
         }
 
-        private static void VerifySamplingParameters(SamplingParameters samplingParameters)
+        internal static void VerifySamplingParameters(SamplingParameters samplingParameters)
         {
             Assert.NotNull(samplingParameters.Tags);
             Assert.Contains(
@@ -500,7 +397,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                        && (string)kvp.Value == SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
         }
 
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        internal static void ActivityEnrichment(Activity activity, string method, object obj)
         {
             activity.SetTag("enriched", "yes");
 
