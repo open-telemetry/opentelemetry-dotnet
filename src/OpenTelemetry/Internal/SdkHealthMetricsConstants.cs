@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Internal
 {
-    internal class SdkHealthMetricsConstants
+    internal sealed class SdkHealthMetricsConstants
     {
         internal const string BatchExportProcessorTypeKey = "batchprocessor.type";
         internal const string BatchExporterNameKey = "batchprocessor.exporter.name";

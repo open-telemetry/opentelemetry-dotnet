@@ -20,7 +20,7 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Internal
 {
-    internal class SdkHealthReporter
+    internal sealed class SdkHealthReporter
     {
         internal SdkHealthReporter(string providerId, string providerName)
         {
