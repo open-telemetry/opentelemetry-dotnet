@@ -36,6 +36,7 @@ namespace OpenTelemetry.Metrics
             this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
             this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
             this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
+            this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
             this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Metrics
             hashCode.Add(this.ViewId);
             hashCode.Add(this.TagKeys, StringArrayComparer);
             hashCode.Add(this.ExponentialHistogramMaxSize);
+            hashCode.Add(this.ExponentialHistogramMaxScale);
             if (this.HistogramBucketBounds != null)
             {
                 for (var i = 0; i < this.HistogramBucketBounds.Length; ++i)
@@ -69,6 +71,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
                 hash = (hash * 31) + this.ExponentialHistogramMaxSize.GetHashCode();
+                hash = (hash * 31) + this.ExponentialHistogramMaxScale.GetHashCode();
                 hash = (hash * 31) + (this.Unit?.GetHashCode() ?? 0);
                 hash = (hash * 31) + (this.Description?.GetHashCode() ?? 0);
                 hash = (hash * 31) + (this.ViewId ?? 0);
@@ -109,6 +112,8 @@ namespace OpenTelemetry.Metrics
 
         public int ExponentialHistogramMaxSize { get; }
 
+        public int ExponentialHistogramMaxScale { get; }
+
         public bool HistogramRecordMinMax { get; }
 
         public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
@@ -131,6 +136,7 @@ namespace OpenTelemetry.Metrics
                 && this.ViewId == other.ViewId
                 && this.HistogramRecordMinMax == other.HistogramRecordMinMax
                 && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
+                && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
                 && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
                 && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
         }
