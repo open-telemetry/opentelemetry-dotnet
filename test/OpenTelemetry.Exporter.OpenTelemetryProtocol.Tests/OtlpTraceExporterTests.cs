@@ -573,7 +573,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
             else
             {
-                Assert.True(string.IsNullOrEmpty(otlpSpan.TraceState));
+                Assert.Equal(string.Empty, otlpSpan.TraceState);
             }
         }
 
