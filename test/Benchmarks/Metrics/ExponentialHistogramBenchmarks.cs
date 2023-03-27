@@ -53,7 +53,6 @@ namespace Benchmarks.Metrics
         private Meter meter;
         private Base2ExponentialBucketHistogram exponentialHistogram;
 
-        // Note: Values related to `HistogramBuckets.DefaultHistogramCountForBinarySearch`
         [Params(-11, 0, 5, 20)]
         public int Scale { get; set; }
 
