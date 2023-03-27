@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Trace;
 
@@ -26,7 +28,7 @@ namespace OpenTelemetry.Internal
         public const string ErrorStatusCodeTagValue = "ERROR";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string GetTagValueForStatusCode(StatusCode statusCode)
+        public static string? GetTagValueForStatusCode(StatusCode statusCode)
         {
             return statusCode switch
             {
@@ -43,7 +45,7 @@ namespace OpenTelemetry.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static StatusCode? GetStatusCodeForTagValue(string statusCodeTagValue)
+        public static StatusCode? GetStatusCodeForTagValue(string? statusCodeTagValue)
         {
             return statusCodeTagValue switch
             {
@@ -52,15 +54,15 @@ namespace OpenTelemetry.Internal
                  * first because assumption is most spans will be
                  * Unset, then Error. Ok is not set by the SDK.
                  */
-                string _ when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
-                string _ when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
-                string _ when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
+                not null when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
+                not null when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
+                not null when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
                 _ => null,
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetStatusCodeForTagValue(string statusCodeTagValue, out StatusCode statusCode)
+        public static bool TryGetStatusCodeForTagValue(string? statusCodeTagValue, out StatusCode statusCode)
         {
             StatusCode? tempStatusCode = GetStatusCodeForTagValue(statusCodeTagValue);
 
