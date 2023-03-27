@@ -48,7 +48,8 @@ namespace OpenTelemetry.Metrics
             AggregationType aggType,
             KeyValuePair<string, object>[] tagKeysAndValues,
             double[] histogramExplicitBounds,
-            int exponentialHistogramMaxSize)
+            int exponentialHistogramMaxSize,
+            int exponentialHistogramMaxScale)
         {
             Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
             Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
@@ -81,7 +82,7 @@ namespace OpenTelemetry.Metrics
                 this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 this.mpComponents = new MetricPointOptionalComponents();
-                this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize);
+                this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
             }
             else
             {
