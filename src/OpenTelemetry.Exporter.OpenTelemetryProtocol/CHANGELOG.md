@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add support for exporting histograms aggregated using the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation).
+  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07
