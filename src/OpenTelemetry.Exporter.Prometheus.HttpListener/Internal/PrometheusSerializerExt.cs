@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             cursor = WriteUnitMetadata(buffer, cursor, metric.Name, metric.Unit);
             cursor = WriteHelpMetadata(buffer, cursor, metric.Name, metric.Unit, metric.Description);
 
-            if (!metric.MetricType.IsHistogram())
+            if (metric.MetricType != MetricType.Histogram && metric.MetricType != MetricType.ExponentialHistogram)
             {
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
