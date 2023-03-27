@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Added support to set `TraceState` when converting the
+  System.Diagnostics.Activity object to its corresponding
+  OpenTelemetry.Proto.Trace.V1.Span object.
+  ([#4331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4331))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07
