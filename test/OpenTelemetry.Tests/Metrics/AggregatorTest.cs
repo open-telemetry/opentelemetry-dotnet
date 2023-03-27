@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
         {
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
             histogramPoint.Update(-1);
             histogramPoint.Update(0);
             histogramPoint.Update(2);
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramDistributeToAllBucketsCustom()
         {
             var boundaries = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Metrics.Tests
                 boundaries[i] = i;
             }
 
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
             // Act
             histogramPoint.Update(-1);
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramWithOnlySumCount()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);
@@ -330,6 +330,47 @@ namespace OpenTelemetry.Metrics.Tests
                     Assert.False(hasMinMax);
                 }
             }
+        }
+
+        [Theory]
+        [InlineData(-5)]
+        [InlineData(0)]
+        [InlineData(5)]
+        [InlineData(null)]
+        internal void ExponentialMaxScaleConfigWorks(int? maxScale)
+        {
+            var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
+            if (maxScale.HasValue)
+            {
+                streamConfiguration.MaxScale = maxScale.Value;
+            }
+
+            var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
+            var aggregatorStore = new AggregatorStore(
+                metricStreamIdentity,
+                AggregationType.Base2ExponentialHistogram,
+                AggregationTemporality.Cumulative,
+                maxMetricPoints: 1024);
+
+            aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
+
+            aggregatorStore.Snapshot();
+
+            var metricPoints = new List<MetricPoint>();
+
+            foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+
+            // After a single measurement there will not have been a scale down.
+            // Scale will equal MaxScale.
+            var expectedScale = maxScale.HasValue ? maxScale : Metric.DefaultExponentialHistogramMaxScale;
+            Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
         }
     }
 }
