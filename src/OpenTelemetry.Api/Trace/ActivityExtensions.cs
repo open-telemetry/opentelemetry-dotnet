@@ -38,6 +38,7 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="status">Activity execution status.</param>
+        [Obsolete("Use https://learn.microsoft.com//dotnet/api/system.diagnostics.activity.setstatus?view=net-7.0")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetStatus(this Activity activity, Status status)
         {
@@ -45,6 +46,9 @@ namespace OpenTelemetry.Trace
 
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+
+            // For processors\exporters that do not look up tags
+            SetActivityStatusProperty(activity, status);
         }
 
         /// <summary>
@@ -107,6 +111,20 @@ namespace OpenTelemetry.Trace
             }
 
             activity.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SetActivityStatusProperty(Activity activity, Status status)
+        {
+            switch (status.StatusCode)
+            {
+                case StatusCode.Ok:
+                    activity.SetStatus(ActivityStatusCode.Ok);
+                    break;
+                case StatusCode.Error:
+                    activity.SetStatus(ActivityStatusCode.Error, status.Description);
+                    break;
+            }
         }
     }
 }
