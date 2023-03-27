@@ -36,12 +36,19 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
+            if (metric.MetricType == MetricType.ExponentialHistogram)
+            {
+                // Exponential histograms are not yet support by Prometheus.
+                // They are ignored for now.
+                return cursor;
+            }
+
             int metricType = (int)metric.MetricType >> 4;
             cursor = WriteTypeMetadata(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
             cursor = WriteUnitMetadata(buffer, cursor, metric.Name, metric.Unit);
             cursor = WriteHelpMetadata(buffer, cursor, metric.Name, metric.Unit, metric.Description);
 
-            if (metric.MetricType != MetricType.Histogram && metric.MetricType != MetricType.ExponentialHistogram)
+            if (!metric.MetricType.IsHistogram())
             {
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
@@ -99,7 +106,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
             }
-            else if (metric.MetricType == MetricType.Histogram)
+            else
             {
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
@@ -193,10 +200,6 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
-            }
-            else
-            {
-                // TODO: Support exponential histogram.
             }
 
             buffer[cursor++] = ASCII_LINEFEED;
