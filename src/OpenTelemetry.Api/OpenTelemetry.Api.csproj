@@ -16,4 +16,8 @@
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\NullableAttributes.cs" Link="Includes\NullableAttributes.cs" />
+  </ItemGroup>
+
 </Project>
