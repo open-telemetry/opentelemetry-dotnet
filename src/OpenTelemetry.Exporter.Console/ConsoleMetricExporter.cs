@@ -147,6 +147,7 @@ namespace OpenTelemetry.Exporter
                         else
                         {
                             // TODO: Consider how/if to display buckets for exponential histograms.
+                            bucketsBuilder.AppendLine("Buckets are not displayed for exponential histograms.");
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
