@@ -49,12 +49,10 @@ internal sealed class Base2ExponentialBucketHistogram
     /// <param name="maxBuckets">
     /// The maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket. The default value is 160.
     /// </param>
-    public Base2ExponentialBucketHistogram(int maxBuckets = 160)
-        : this(maxBuckets, 20)
-    {
-    }
-
-    internal Base2ExponentialBucketHistogram(int maxBuckets, int scale)
+    /// <param name="scale">
+    /// Maximum scale factor. The default value is 20.
+    /// </param>
+    public Base2ExponentialBucketHistogram(int maxBuckets = 160, int scale = 20)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:

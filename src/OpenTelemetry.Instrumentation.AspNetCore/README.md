@@ -37,17 +37,21 @@ dotnet add package --prerelease OpenTelemetry.Instrumentation.AspNetCore
 ### Step 2: Enable ASP.NET Core Instrumentation at application startup
 
 ASP.NET Core instrumentation must be enabled at application startup. This is
-typically done in the `ConfigureServices` of your `Startup` class. The example
-below enables this instrumentation by using an extension method on
-`IServiceCollection`. This extension method requires adding the package
+typically done in the `ConfigureServices` of your `Startup` class. Both examples
+below enables OpenTelemetry by calling `AddOpenTelemetry()` on `IServiceCollection`.
+ This extension method requires adding the package
 [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md)
-to the application. This ensures the instrumentation is disposed when the host
+to the application. This ensures instrumentations are disposed when the host
 is shutdown.
 
-Additionally, this examples sets up the OpenTelemetry Jaeger exporter, which
-requires adding the package
-[`OpenTelemetry.Exporter.Jaeger`](../OpenTelemetry.Exporter.Jaeger/README.md) to
-the application.
+#### Traces
+
+The following example demonstrates adding ASP.NET Core instrumentation with the
+extension method `WithTracing()` on `OpenTelemetryBuilder`.
+then extension method `AddAspNetCoreInstrumentation()` on `TracerProviderBuilder`
+to the application. This example also sets up the Console Exporter,
+which requires adding the package [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
+to the application.
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -58,9 +62,41 @@ public void ConfigureServices(IServiceCollection services)
     services.AddOpenTelemetry()
         .WithTracing(builder => builder
             .AddAspNetCoreInstrumentation()
-            .AddJaegerExporter());
+            .AddConsoleExporter());
 }
 ```
+
+#### Metrics
+
+The following example demonstrates adding ASP.NET Core instrumentation with the
+extension method `WithMetrics()` on `OpenTelemetryBuilder`
+then extension method `AddAspNetCoreInstrumentation()` on `MeterProviderBuilder`
+to the application. This example also sets up the Console Exporter,
+which requires adding the package [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
+to the application.
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Metrics;
+
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddOpenTelemetry()
+        .WithMetrics(builder => builder
+            .AddAspNetCoreInstrumentation()
+            .AddConsoleExporter());
+}
+```
+
+#### List of metrics produced
+
+The instrumentation is implemented based on [metrics semantic
+conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpserverduration).
+Currently, the instrumentation supports the following metric.
+
+| Name  | Instrument Type | Unit | Description |
+|-------|-----------------|------|-------------|
+| `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
 
 ## Advanced configuration
 
@@ -87,7 +123,7 @@ services.Configure<AspNetCoreInstrumentationOptions>(options =>
 services.AddOpenTelemetry()
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddJaegerExporter());
+        .AddConsoleExporter());
 ```
 
 ### Filter
@@ -110,7 +146,7 @@ services.AddOpenTelemetry()
             // only collect telemetry about HTTP GET requests
             return httpContext.Request.Method.Equals("GET");
         })
-        .AddJaegerExporter());
+        .AddConsoleExporter());
 ```
 
 It is important to note that this `Filter` option is specific to this
