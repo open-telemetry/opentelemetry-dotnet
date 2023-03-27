@@ -208,12 +208,23 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(-1)]
         [InlineData(0)]
         [InlineData(1)]
-        public void AddViewWithInvalidExponentialHistogramConfigThrowsArgumentException(int maxSize)
+        public void AddViewWithInvalidExponentialHistogramMaxSizeConfigThrowsArgumentException(int maxSize)
         {
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                 .AddView("name1", new Base2ExponentialBucketHistogramConfiguration { MaxSize = maxSize }));
 
             Assert.Contains("Histogram max size is invalid", ex.Message);
+        }
+
+        [Theory]
+        [InlineData(-12)]
+        [InlineData(21)]
+        public void AddViewWithInvalidExponentialHistogramMaxScaleConfigThrowsArgumentException(int maxScale)
+        {
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddView("name1", new Base2ExponentialBucketHistogramConfiguration { MaxScale = maxScale }));
+
+            Assert.Contains("Histogram max scale is invalid", ex.Message);
         }
 
         [Theory]
