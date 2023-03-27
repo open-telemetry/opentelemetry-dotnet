@@ -38,7 +38,6 @@ namespace OpenTelemetry.Trace.Tests
             activity?.Stop();
 
             Assert.Equal(Status.Ok, activity.GetStatus());
-            Assert.Equal(ActivityStatusCode.Ok, activity.Status);
         }
 
         [Fact]
@@ -57,9 +56,6 @@ namespace OpenTelemetry.Trace.Tests
             var status = activity.GetStatus();
             Assert.Equal(StatusCode.Error, status.StatusCode);
             Assert.Equal("Not Found", status.Description);
-
-            Assert.Equal(ActivityStatusCode.Error, activity.Status);
-            Assert.Equal("Not Found", activity.StatusDescription);
         }
 
         [Fact]
@@ -97,9 +93,6 @@ namespace OpenTelemetry.Trace.Tests
             var status = activity.GetStatus();
             Assert.Equal(StatusCode.Ok, status.StatusCode);
             Assert.Null(status.Description);
-
-            Assert.Equal(ActivityStatusCode.Ok, activity.Status);
-            Assert.Null(activity.StatusDescription);
         }
 
         [Fact]
@@ -116,7 +109,6 @@ namespace OpenTelemetry.Trace.Tests
             activity?.Stop();
 
             Assert.True(activity.GetStatus().StatusCode.Equals(Status.Error.StatusCode));
-            Assert.Equal(ActivityStatusCode.Error, activity.Status);
         }
 
         [Fact]
@@ -132,7 +124,6 @@ namespace OpenTelemetry.Trace.Tests
             activity?.Stop();
 
             Assert.Equal(Status.Unset, activity.GetStatus());
-            Assert.Equal(ActivityStatusCode.Unset, activity.Status);
         }
 
         [Fact]
@@ -150,7 +141,6 @@ namespace OpenTelemetry.Trace.Tests
             activity?.Stop();
 
             Assert.Equal(Status.Ok, activity.GetStatus());
-            Assert.Equal(ActivityStatusCode.Ok, activity.Status);
         }
 
         [Fact]
