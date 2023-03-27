@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
             }
-            else if (metric.MetricType.IsHistogram())
+            else if (metric.MetricType == MetricType.Histogram)
             {
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
