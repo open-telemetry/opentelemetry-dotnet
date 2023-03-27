@@ -56,6 +56,7 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Error, activity.GetStatus().StatusCode);
+            Assert.Equal(ActivityStatusCode.Error, activity.Status);
         }
 
         [Fact]
@@ -84,6 +85,7 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
+            Assert.Equal(ActivityStatusCode.Unset, activity.Status);
         }
 
         [Fact]
