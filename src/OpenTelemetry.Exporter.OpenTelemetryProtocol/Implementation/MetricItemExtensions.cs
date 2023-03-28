@@ -307,6 +307,57 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         otlpMetric.Histogram = histogram;
                         break;
                     }
+
+                case MetricType.ExponentialHistogram:
+                    {
+                        var histogram = new OtlpMetrics.ExponentialHistogram
+                        {
+                            AggregationTemporality = temporality,
+                        };
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.ExponentialHistogramDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
+
+                            if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                            {
+                                dataPoint.Min = min;
+                                dataPoint.Max = max;
+                            }
+
+                            var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+                            dataPoint.Scale = exponentialHistogramData.Scale;
+
+                            dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            dataPoint.Positive.Offset = exponentialHistogramData.PositiveBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
+                            {
+                                dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
+                            }
+
+                            dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            dataPoint.Negative.Offset = exponentialHistogramData.NegativeBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.NegativeBuckets)
+                            {
+                                dataPoint.Negative.BucketCounts.Add((ulong)bucketCount);
+                            }
+
+                            // TODO: exemplars.
+
+                            histogram.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.ExponentialHistogram = histogram;
+                        break;
+                    }
             }
 
             return otlpMetric;
