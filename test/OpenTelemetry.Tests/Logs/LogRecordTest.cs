@@ -470,17 +470,19 @@ namespace OpenTelemetry.Logs.Tests
 
             logger.Log(LogLevel.Information, default, "Hello World!", null, null);
             var logRecord = exportedItems[0];
-            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal("Hello World!", logRecord.FormattedMessage);
+            Assert.Equal("Hello World!", logRecord.Body);
 
-            // Pass null as formatter function
-            logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+            logger.Log(LogLevel.Information, default, new CustomState(), null, null);
             logRecord = exportedItems[1];
-            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal(CustomState.ToStringValue, logRecord.FormattedMessage);
+            Assert.Equal(CustomState.ToStringValue, logRecord.Body);
 
             var expectedFormattedMessage = "formatted message";
             logger.Log(LogLevel.Information, default, "Hello World!", null, (state, ex) => expectedFormattedMessage);
             logRecord = exportedItems[2];
             Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+            Assert.Equal(expectedFormattedMessage, logRecord.Body);
         }
 
         [Fact]
@@ -596,10 +598,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Same(expectedScope3, scopes[2]);
         }
 
-        [Fact]
-        public void VerifyParseStateValues_False_UsingStandardExtensions()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void VerifyParseStateValues_UsingStandardExtensions(bool parseStateValues)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = false);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = parseStateValues);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests state parsing with standard extensions.
@@ -607,22 +611,15 @@ namespace OpenTelemetry.Logs.Tests
             logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
             var logRecord = exportedItems[0];
 
-            Assert.NotNull(logRecord.State);
-            Assert.Null(logRecord.StateValues);
-        }
+            if (parseStateValues)
+            {
+                Assert.Null(logRecord.State);
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+            }
 
-        [Fact]
-        public void VerifyParseStateValues_True_UsingStandardExtensions()
-        {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
-            var logger = loggerFactory.CreateLogger<LogRecordTest>();
-
-            // Tests state parsing with standard extensions.
-
-            logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
-            var logRecord = exportedItems[0];
-
-            Assert.Null(logRecord.State);
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(3, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
@@ -634,7 +631,15 @@ namespace OpenTelemetry.Logs.Tests
             logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
             logRecord = exportedItems[1];
 
-            Assert.Null(logRecord.State);
+            if (parseStateValues)
+            {
+                Assert.Null(logRecord.State);
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+            }
+
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(4, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
@@ -739,8 +744,8 @@ namespace OpenTelemetry.Logs.Tests
 
             KeyValuePair<string, object> actualState = logRecord.StateValues[0];
 
-            Assert.Equal(string.Empty, actualState.Key);
-            Assert.Same(state, actualState.Value);
+            Assert.Equal("Property", actualState.Key);
+            Assert.Equal("Value", actualState.Value);
         }
 
         [Fact]
@@ -946,7 +951,12 @@ namespace OpenTelemetry.Logs.Tests
 
         private class CustomState
         {
+            public const string ToStringValue = "CustomState.ToString";
+
             public string Property { get; set; }
+
+            public override string ToString()
+                => ToStringValue;
         }
 
         private class ScopeProcessor : BaseProcessor<LogRecord>

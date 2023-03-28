@@ -18,6 +18,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -67,6 +68,7 @@ namespace OpenTelemetry.Logs
                 iloggerData.EventId = eventId;
                 iloggerData.LogLevel = logLevel;
                 iloggerData.Exception = exception;
+                iloggerData.State = !provider.ParseStateValues ? state : null;
                 iloggerData.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
                 iloggerData.BufferedScopes = null;
 
@@ -80,28 +82,16 @@ namespace OpenTelemetry.Logs
                     ? ProcessState(record, state, provider.ParseStateValues)
                     : null;
 
-                if (attributes != null && attributes.Count > 0)
+                if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
                 {
-                    iloggerData.State = null;
+                    var formattedMessage = formatter?.Invoke(state, exception) ?? state?.ToString();
 
-                    var lastAttribute = attributes[attributes.Count - 1];
-                    data.Body = lastAttribute.Key == "{OriginalFormat}"
-                        ? lastAttribute.Value as string
-                        : null;
+                    data.Body = formattedMessage;
+                    iloggerData.FormattedMessage = formattedMessage;
                 }
                 else
                 {
-                    iloggerData.State = !provider.ParseStateValues ? state : null;
-
-                    data.Body = null;
-                }
-
-                if (data.Body == null)
-                {
-                    iloggerData.FormattedMessage = data.Body = formatter?.Invoke(state, exception) ?? state?.ToString();
-                }
-                else
-                {
+                    data.Body = originalFormat;
                     iloggerData.FormattedMessage = provider.IncludeFormattedMessage
                         ? formatter?.Invoke(state, exception) ?? state?.ToString()
                         : null;
@@ -189,6 +179,23 @@ namespace OpenTelemetry.Logs
                     return Array.Empty<KeyValuePair<string, object?>>();
                 }
             }
+        }
+
+        private static bool TryGetOriginalFormatFromAttributes(IReadOnlyList<KeyValuePair<string, object?>>? attributes, [NotNullWhen(true)] out string? originalFormat)
+        {
+            if (attributes != null && attributes.Count > 0)
+            {
+                var lastAttribute = attributes[attributes.Count - 1];
+                if (lastAttribute.Key == "{OriginalFormat}"
+                    && lastAttribute.Value is string tempOriginalFormat)
+                {
+                    originalFormat = tempOriginalFormat;
+                    return true;
+                }
+            }
+
+            originalFormat = null;
+            return false;
         }
 
         private sealed class NullScope : IDisposable
