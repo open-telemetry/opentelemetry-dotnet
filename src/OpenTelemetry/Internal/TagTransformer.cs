@@ -25,13 +25,14 @@ internal abstract class TagTransformer<T>
 {
     public bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out T? result, int? maxLength = null)
     {
-        if (tag.Value == null)
+        var tagValue = tag.Value;
+        if (tagValue == null)
         {
             result = default;
             return false;
         }
 
-        switch (tag.Value)
+        switch (tagValue)
         {
             case char c:
                 result = this.TransformStringTag(tag.Key, TruncateString(c.ToString(), maxLength));
@@ -49,11 +50,11 @@ internal abstract class TagTransformer<T>
             case int:
             case uint:
             case long:
-                result = this.TransformIntegralTag(tag.Key, Convert.ToInt64(tag.Value));
+                result = this.TransformIntegralTag(tag.Key, Convert.ToInt64(tagValue));
                 break;
             case float:
             case double:
-                result = this.TransformFloatingPointTag(tag.Key, Convert.ToDouble(tag.Value));
+                result = this.TransformFloatingPointTag(tag.Key, Convert.ToDouble(tagValue));
                 break;
             case Array array:
                 try
@@ -65,7 +66,7 @@ internal abstract class TagTransformer<T>
                     // If an exception is thrown when calling ToString
                     // on any element of the array, then the entire array value
                     // is ignored.
-                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tagValue.GetType().ToString(), tag.Key);
                     result = default;
                     return false;
                 }
@@ -81,7 +82,7 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    var value = tag.Value.ToString();
+                    var value = tagValue.ToString();
 
                     if (value == null)
                     {
@@ -94,7 +95,7 @@ internal abstract class TagTransformer<T>
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tagValue.GetType().ToString(), tag.Key);
                     result = default;
                     return false;
                 }
