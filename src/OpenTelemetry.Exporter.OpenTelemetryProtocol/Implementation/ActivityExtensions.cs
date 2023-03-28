@@ -143,6 +143,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
                 SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
                 ParentSpanId = parentSpanIdString,
+                TraceState = activity.TraceStateString ?? string.Empty,
 
                 StartTimeUnixNano = (ulong)startTimeUnixNano,
                 EndTimeUnixNano = (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()),
