@@ -19,7 +19,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Stores configuration for a histogram metric stream with base-2 exponential bucket boundaries.
 /// </summary>
-internal sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConfiguration
+public sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConfiguration
 {
     private int maxSize = Metric.DefaultExponentialHistogramMaxBuckets;
     private int maxScale = Metric.DefaultExponentialHistogramMaxScale;
