@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#nullable disable
+#nullable disable // TODO: Remove and resolve issues. See also #4338
 
 using OpenTelemetry.Context;
 using OpenTelemetry.Internal;
