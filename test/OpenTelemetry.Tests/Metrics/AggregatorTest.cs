@@ -424,7 +424,10 @@ namespace OpenTelemetry.Metrics.Tests
 
             // ensure the last snapshot will be called
             Thread.Sleep(1000);
-            args.HistogramPoint.TakeSnapshot(outputDelta: false);
+            for (int i = 0; i < 10; ++i)
+            {
+                args.HistogramPoint.TakeSnapshot(outputDelta: false);
+            }
         }
 
         private static void HistogramUpdateThread(object obj)
