@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add support for exporting histograms aggregated using the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation).
+  ([#4337](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4337))
+
 * Added support to set `TraceState` when converting the
   System.Diagnostics.Activity object to its corresponding
   OpenTelemetry.Proto.Trace.V1.Span object.
