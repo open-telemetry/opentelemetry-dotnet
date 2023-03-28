@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable disable
+
 #if NETFRAMEWORK
 using System.Collections;
 using System.Reflection;

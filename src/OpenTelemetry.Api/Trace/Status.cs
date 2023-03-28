@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable disable
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>

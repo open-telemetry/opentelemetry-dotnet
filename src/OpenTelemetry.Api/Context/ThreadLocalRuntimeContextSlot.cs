@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable disable
+
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Context
