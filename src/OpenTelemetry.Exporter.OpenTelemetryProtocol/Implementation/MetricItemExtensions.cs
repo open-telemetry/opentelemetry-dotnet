@@ -333,19 +333,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 dataPoint.Max = max;
                             }
 
-                            var buckets = metricPoint.GetExponentialHistogramData();
-                            dataPoint.Scale = buckets.Scale;
+                            var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+                            dataPoint.Scale = exponentialHistogramData.Scale;
 
                             dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
-                            dataPoint.Positive.Offset = buckets.PositiveBuckets.Offset;
-                            foreach (var bucketCount in buckets.PositiveBuckets)
+                            dataPoint.Positive.Offset = exponentialHistogramData.PositiveBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
                             {
                                 dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
                             }
 
                             dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
-                            dataPoint.Negative.Offset = buckets.NegativeBuckets.Offset;
-                            foreach (var bucketCount in buckets.NegativeBuckets)
+                            dataPoint.Negative.Offset = exponentialHistogramData.NegativeBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.NegativeBuckets)
                             {
                                 dataPoint.Negative.BucketCounts.Add((ulong)bucketCount);
                             }
