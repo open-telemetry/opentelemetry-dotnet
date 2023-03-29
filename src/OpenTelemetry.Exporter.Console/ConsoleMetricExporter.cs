@@ -171,7 +171,7 @@ namespace OpenTelemetry.Exporter
 
                             if (exponentialHistogramData.ZeroCount != 0)
                             {
-                                bucketsBuilder.AppendLine($"Bucket [0, 0], Count: {exponentialHistogramData.ZeroCount}");
+                                bucketsBuilder.AppendLine($"Zero Bucket, Count: {exponentialHistogramData.ZeroCount}");
                             }
 
                             offset = exponentialHistogramData.PositiveBuckets.Offset;
