@@ -146,8 +146,41 @@ namespace OpenTelemetry.Exporter
                         }
                         else
                         {
-                            // TODO: Consider how/if to display buckets for exponential histograms.
-                            bucketsBuilder.AppendLine("Buckets are not displayed for exponential histograms.");
+                            var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+                            var scale = exponentialHistogramData.Scale;
+                            var factor = Math.Log(2) * Math.Pow(2, -scale);
+
+                            var offset = exponentialHistogramData.NegativeBuckets.Offset;
+                            List<string> negativeBucketCounts = null;
+                            foreach (var bucketCount in exponentialHistogramData.NegativeBuckets)
+                            {
+                                if (negativeBucketCounts == null)
+                                {
+                                    negativeBucketCounts = new List<string>();
+                                }
+
+                                var lowerBound = Math.Exp(offset * factor).ToString("F6", CultureInfo.InvariantCulture);
+                                var upperBound = Math.Exp(++offset * factor).ToString("F6", CultureInfo.InvariantCulture);
+                                negativeBucketCounts.Add($"Bucket [-{lowerBound}, -{upperBound}), Count: {bucketCount}");
+                            }
+
+                            for (var i = 0; i < negativeBucketCounts.Count; ++i)
+                            {
+                                bucketsBuilder.AppendLine(negativeBucketCounts[negativeBucketCounts.Count - i - 1]);
+                            }
+
+                            if (exponentialHistogramData.ZeroCount != 0)
+                            {
+                                bucketsBuilder.AppendLine($"Bucket [0, 0], Count: {exponentialHistogramData.ZeroCount}");
+                            }
+
+                            offset = exponentialHistogramData.PositiveBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
+                            {
+                                var lowerBound = Math.Exp(offset * factor).ToString("F6", CultureInfo.InvariantCulture);
+                                var upperBound = Math.Exp(++offset * factor).ToString("F6", CultureInfo.InvariantCulture);
+                                bucketsBuilder.AppendLine($"Bucket ({lowerBound}, {upperBound}], Count: {bucketCount}");
+                            }
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
