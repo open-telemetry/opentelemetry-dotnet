@@ -335,6 +335,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
                             dataPoint.Scale = exponentialHistogramData.Scale;
+                            dataPoint.ZeroCount = (ulong)exponentialHistogramData.ZeroCount;
 
                             dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
                             dataPoint.Positive.Offset = exponentialHistogramData.PositiveBuckets.Offset;
