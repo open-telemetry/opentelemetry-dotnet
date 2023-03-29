@@ -551,6 +551,32 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(StatusDescriptionOnError, otlpSpan.Status.Message);
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ToOtlpSpanTraceStateTest(bool traceStateWasSet)
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activity = activitySource.StartActivity("Name");
+            string tracestate = "a=b;c=d";
+            if (traceStateWasSet)
+            {
+                activity.TraceStateString = tracestate;
+            }
+
+            var otlpSpan = activity.ToOtlpSpan(DefaultSdkLimitOptions);
+
+            if (traceStateWasSet)
+            {
+                Assert.NotNull(otlpSpan.TraceState);
+                Assert.Equal(tracestate, otlpSpan.TraceState);
+            }
+            else
+            {
+                Assert.Equal(string.Empty, otlpSpan.TraceState);
+            }
+        }
+
         [Fact]
         public void ToOtlpSpanPeerServiceTest()
         {
