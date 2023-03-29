@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed issue where the `MetricSnapshot` of a histogram did not capture the min
+  and max values.
+  ([#4306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4306))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07
