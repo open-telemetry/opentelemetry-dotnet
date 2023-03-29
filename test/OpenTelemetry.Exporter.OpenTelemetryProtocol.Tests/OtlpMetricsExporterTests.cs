@@ -383,6 +383,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
         [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
@@ -472,6 +474,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
         [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
@@ -497,11 +501,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 var histogram = meter.CreateHistogram<long>(name, unit, description);
                 histogram.Record(longValue.Value, attributes);
+                histogram.Record(0, attributes);
             }
             else
             {
                 var histogram = meter.CreateHistogram<double>(name, unit, description);
                 histogram.Record(doubleValue.Value, attributes);
+                histogram.Record(0, attributes);
             }
 
             provider.ForceFlush();
@@ -537,22 +543,48 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.True(dataPoint.StartTimeUnixNano > 0);
             Assert.True(dataPoint.TimeUnixNano > 0);
 
-            Assert.Equal(1UL, dataPoint.Count);
+            Assert.Equal(20, dataPoint.Scale);
+            Assert.Equal(2UL, dataPoint.Count);
+            Assert.Equal(1UL, dataPoint.ZeroCount);
 
             if (longValue.HasValue)
             {
+                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
                 Assert.Equal((double)longValue, dataPoint.Sum);
+                if (longValue > 0)
+                {
+                    Assert.True(dataPoint.Positive.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                    Assert.True(dataPoint.Negative.Offset == 0);
+                    Assert.Empty(dataPoint.Negative.BucketCounts);
+                }
+                else
+                {
+                    Assert.True(dataPoint.Negative.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Negative.BucketCounts[0]);
+                    Assert.True(dataPoint.Positive.Offset == 0);
+                    Assert.Empty(dataPoint.Positive.BucketCounts);
+                }
             }
             else
             {
+                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
                 Assert.Equal(doubleValue, dataPoint.Sum);
+                if (doubleValue > 0)
+                {
+                    Assert.True(dataPoint.Positive.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                    Assert.True(dataPoint.Negative.Offset == 0);
+                    Assert.Empty(dataPoint.Negative.BucketCounts);
+                }
+                else
+                {
+                    Assert.True(dataPoint.Negative.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Negative.BucketCounts[0]);
+                    Assert.True(dataPoint.Positive.Offset == 0);
+                    Assert.Empty(dataPoint.Positive.BucketCounts);
+                }
             }
-
-            Assert.Equal(0UL, dataPoint.ZeroCount);
-            Assert.Equal(20, dataPoint.Scale);
-            Assert.True(dataPoint.Positive.Offset > 0);
-            Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
-            Assert.True(dataPoint.Negative.Offset <= 0);
 
             if (attributes.Length > 0)
             {
@@ -569,6 +601,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
         [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
@@ -632,6 +666,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(1UL, dataPoint.Count);
 
+            // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
             if (longValue.HasValue)
             {
                 Assert.Equal((double)longValue, dataPoint.Sum);
