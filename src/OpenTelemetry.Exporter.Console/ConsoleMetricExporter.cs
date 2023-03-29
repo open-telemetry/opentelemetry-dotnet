@@ -159,8 +159,8 @@ namespace OpenTelemetry.Exporter
                                     negativeBucketCounts = new List<string>();
                                 }
 
-                                var lowerBound = Math.Exp(offset * factor).ToString("F6", CultureInfo.InvariantCulture);
-                                var upperBound = Math.Exp(++offset * factor).ToString("F6", CultureInfo.InvariantCulture);
+                                var lowerBound = Math.Exp(++offset * factor).ToString("F6", CultureInfo.InvariantCulture);
+                                var upperBound = Math.Exp(offset * factor).ToString("F6", CultureInfo.InvariantCulture);
                                 negativeBucketCounts.Add($"Bucket [-{lowerBound}, -{upperBound}), Count: {bucketCount}");
                             }
 
