@@ -13,10 +13,10 @@ likelihood of having complete traces across linked traces.
 
 ## How does this sampling example work?
 
-We use a composite sampler that has:
+We use a composite sampler that makes use of two samplers:
 
-1. A parent based sampler (this is a probabilistic / unbiased sampler).
-2. A links based sampler (this is a non-probabilistic/biased sampler).
+1. A parent based sampler.
+2. A links based sampler.
 
 This composite sampler first delegates to the parent based sampler. If the
 parent based sampler decides to sample, then the composite sampler decides
@@ -25,12 +25,15 @@ sampler delegates to the links based sampler. The links based sampler decides
 to sample if the activity has any linked activities and if at least ONE of those
 linked activities is sampled.
 
+The links based sampler is not a probabilistic sampler. It is a biased sampler
+that decides to sample an activity if any of the linked contexts are sampled.
+
 ## When should you consider such an option?  What are the tradeoffs?
 
 This may be a good option to consider if you want to get more complete traces
 across linked traces. However, there are a few tradeoffs to consider:
 
-- **Not guaranted to give consistent sampling in all situations**: This
+- **Not guaranteed to give consistent sampling in all situations**: This
 approach doesn't guarantee that you will get complete traces across linked
 traces in all situations.
 
@@ -52,6 +55,14 @@ Now, let's say that the consuming activity S2 in trace T2 is sampled, based
 on the decision of a parent based sampler. In this case, we can see that
 activity S2 in trace T2 is sampled even though activity S1 in trace T1 is not
 sampled. This is an example of a situation where this approach is not helpful.
+
+Another example of a situation where you would get a partial trace is if the
+consuming activity S2 in trace T2 is not the root activity in trace T2. In this
+case, let's say there's a different activity S3 in trace T2 that is the root
+activity. Let's say that the sampling decision was activity S3 was to drop it.
+Now, since S2 in trace T2 links to S1 in trace T1, with this approach S2 will
+be sampled (based on the linked context). Hence, the produced trace T2 will be
+a partial trace.
 
 - **Can lead to higher volume of data**: Since this approach will sample in
 activities even if one of the linked activities is sampled, it can lead to higher

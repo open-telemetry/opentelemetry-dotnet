@@ -20,8 +20,8 @@ namespace LinksAndParentBasedSamplerExample;
 
 /// <summary>
 ///  An example of a composite sampler that has:
-///  1. A probabilistic sampler (ParentBased Sampler)
-///  2. A non-probabilistic sampler (LinksBased Sampler).
+///  1. A parent based sampler.
+///  2. A links based sampler.
 ///  The composite sampler first delegates to the parent based sampler and then to the
 ///  links based sampler. If either of these samplers decide to sample,
 ///  this composite sampler decides to sample.
