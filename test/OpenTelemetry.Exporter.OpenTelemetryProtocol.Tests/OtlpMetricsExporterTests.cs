@@ -666,7 +666,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(1UL, dataPoint.Count);
 
-
             // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
             if (longValue.HasValue)
             {
