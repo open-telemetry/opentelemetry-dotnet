@@ -1,11 +1,15 @@
 # Links Based Sampling: An Example
 
-The parent based sampler mechanism provides complete traces. However, certain
-scenarios such as a producer-consumer scenario can be modelled using linked
-activities across multiple traces. When an activity (span) links to one or more
-activities in other traces, the sampling decision for such linked activities would
-have been taken independently. This example shows how can we achieve more
-complete traces across linked traces.
+Certain scenarios such as a producer consumer scenario can be modelled using
+"span links" to express causality between activities. An activity (span) in a trace
+can link to any number of activities in other traces. When using a Parent Based
+sampler, the sampling decision is made at the level of a single trace. This implies
+that the sampling decision across such linked traces is taken independently without
+any consideration to the links. This can result in incomplete information to reason
+about a system. Ideally, it would be desirable to sample all linked traces together.
+
+As one possible way to address this, this example shows how we can increase the
+likelihood of having complete traces across linked traces.
 
 ## How does this sampling example work?
 
@@ -15,11 +19,11 @@ We use a composite sampler that has:
 2. A links based sampler (this is a non-probabilistic/biased sampler).
 
 This composite sampler first delegates to the parent based sampler. If the
-parent based sampler decides to sample, then it decides to sample. However,
-if the parent based sampler decides to drop, the composite sampler delegates
-to the links based sampler. The links based sampler decides to sample if the
-activity has any linked activities and if at least ONE of those linked activities
-is sampled.
+parent based sampler decides to sample, then the composite sampler decides
+to sample. However, if the parent based sampler decides to drop, the composite
+sampler delegates to the links based sampler. The links based sampler decides
+to sample if the activity has any linked activities and if at least ONE of those
+linked activities is sampled.
 
 ## When should you consider such an option?  What are the tradeoffs?
 
@@ -28,33 +32,33 @@ across linked traces. However, there are a few tradeoffs to consider:
 
 - **Not guaranted to give consistent sampling in all situations**: This
 approach doesn't guarantee that you will get complete traces across linked
-traces in all situations. Let's look at a couple of cases using the same
-producer-consumer example scenario:
+traces in all situations.
 
-Let's say we have a producer that produces a message and a consumer that
-consumes the message. The producer and consumer are in different traces,
-say with trace ids T1 and T2 respectively. An activity in the producer
-(say with ID S1 in T1) produces a message. An activity in the consumer
-(say with ID S2 in T2)  consumes the message.
+Let's look at a couple of cases using the same producer-consumer example
+scenario. Let's say we have a producer activity (say with ID S1 in Trace T1) that
+produces a message and a consumer activity (say with ID S2 in Trace T2)  that
+consumes the message.
 
-If trace T1 is sampled, say using a parent based sampler, then the producing
-activity (S1 in T1) will be sampled as well. Now, let's say trace T2 is not sampled,
-say using the decision of a parent based sampler. However, since it is linked to
-the producing activity (S1 in T1) which IS sampled, the consuming activity
-(S2 in T2) will still be sampled using this mechanism.
+Now, let's say that the producing activity S1 in trace T1 is sampled, say using the
+decision of a parent based sampler. Now, let's say that the activity S2 in trace
+T2 is not sampled based on the parent based sampler decision for T2. However,
+since this activity S2 in T2 is linked to the producing activity (S1 in T1) that
+is sampled, this mechanism ensures that the consuming activity (S2 in T2) will
+also get sampled.
 
-Instead, if trace T1 is NOT sampled, say because of the decision of a parent
-based sampler, then the producing activity (S1 in T1) will NOT be sampled.
-Now, let's say trace T2 IS sampled, say using the decision of a parent based
-sampler. In this case, we can see that trace T2 is sampled but not trace T1.
-This is an example of a situation where this approach is not helpful.
+Alternatively, let's consider what happens if the producing activity S1 in
+trace T1 is not sampled, say using the decision of a parent based sampler.
+Now, let's say that the consuming activity S2 in trace T2 is sampled, based
+on the decision of a parent based sampler. In this case, we can see that
+activity S2 in trace T2 is sampled even though activity S1 in trace T1 is not
+sampled. This is an example of a situation where this approach is not helpful.
 
 - **Can lead to higher volume of data**: Since this approach will sample in
-activities even if ONE of the linked activities is sampled, it can lead to higher
+activities even if one of the linked activities is sampled, it can lead to higher
 volumes of data, as compared to regular head based sampling. This is because
-we are making use a non-probabilistic sampling decision here based on the sampling
+we are making a non-probabilistic sampling decision here based on the sampling
 decisions of linked activities. For example, if there are 20 linked activities and
-only ONE of them is sampled, then the linking activity will be sampled.
+even if only one of them is sampled, then the linking activity will be sampled.
 
 ## Sample Output
 
