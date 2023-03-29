@@ -48,7 +48,8 @@ namespace OpenTelemetry.Metrics
             AggregationType aggType,
             KeyValuePair<string, object>[] tagKeysAndValues,
             double[] histogramExplicitBounds,
-            int exponentialHistogramMaxSize)
+            int exponentialHistogramMaxSize,
+            int exponentialHistogramMaxScale)
         {
             Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
             Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
@@ -81,7 +82,7 @@ namespace OpenTelemetry.Metrics
                 this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 this.mpComponents = new MetricPointOptionalComponents();
-                this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize);
+                this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
             }
             else
             {
@@ -1368,6 +1369,76 @@ namespace OpenTelemetry.Metrics
 
                                 // Release lock
                                 Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.Base2ExponentialHistogram:
+                    {
+                        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                histogram.SnapshotSum = histogram.RunningSum;
+                                histogram.Snapshot();
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    histogram.RunningSum = 0;
+                                    histogram.Reset();
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
+                                break;
+                            }
+
+                            sw.SpinOnce();
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.Base2ExponentialHistogramWithMinMax:
+                    {
+                        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                        var sw = default(SpinWait);
+                        while (true)
+                        {
+                            if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                histogram.SnapshotSum = histogram.RunningSum;
+                                histogram.Snapshot();
+                                histogram.SnapshotMin = histogram.RunningMin;
+                                histogram.SnapshotMax = histogram.RunningMax;
+
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    histogram.RunningSum = 0;
+                                    histogram.Reset();
+                                    histogram.RunningMin = double.PositiveInfinity;
+                                    histogram.RunningMax = double.NegativeInfinity;
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 

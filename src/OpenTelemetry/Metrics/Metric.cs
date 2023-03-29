@@ -25,6 +25,8 @@ namespace OpenTelemetry.Metrics
     {
         internal const int DefaultExponentialHistogramMaxBuckets = 160;
 
+        internal const int DefaultExponentialHistogramMaxScale = 20;
+
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
 
         private readonly AggregatorStore aggStore;
