@@ -93,10 +93,18 @@ To make use of it add it to the dependency injection and they you can use the
 ```csharp
 public class MyResourceDetector : IResourceDetector
 {
+    private readonly IWebHostEnvironment webHostEnvironment;
+
+    public MyResourceDetector(IWebHostEnvironment webHostEnvironment)
+    {
+        this.webHostEnvironment = webHostEnvironment;
+    }
+
     public Resource Detect()
     {
         return ResourceBuilder.CreateEmpty()
-            .AddService("your service name")
+            .AddService(serviceName: this.webHostEnvironment.ApplicationName)
+            .AddAttributes(new Dictionary<string, object> { ["host.environment"] = this.webHostEnvironment.EnvironmentName })
             .Build();
     }
 }
