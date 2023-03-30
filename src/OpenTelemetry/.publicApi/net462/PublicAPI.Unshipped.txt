@@ -2,6 +2,12 @@ OpenTelemetry.Metrics.AlwaysOffExemplarFilter
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter.AlwaysOffExemplarFilter() -> void
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter.AlwaysOnExemplarFilter() -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.Base2ExponentialBucketHistogramConfiguration() -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.get -> int
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.set -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.get -> int
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.set -> void
 OpenTelemetry.Metrics.Exemplar
 OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
