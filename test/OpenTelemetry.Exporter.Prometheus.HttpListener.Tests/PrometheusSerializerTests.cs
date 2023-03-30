@@ -462,5 +462,30 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
+
+        [Fact]
+        public void ExponentialHistogramIsIgnoredForNow()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView(instrument => new Base2ExponentialBucketHistogramConfiguration())
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("test_histogram");
+            histogram.Record(18);
+            histogram.Record(100);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                "^$",
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
     }
 }
