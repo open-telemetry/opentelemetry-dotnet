@@ -25,9 +25,9 @@ namespace OpenTelemetry.Metrics
             0x20: Gauge
             0x30: Summary (reserved)
             0x40: Histogram
-            0x50: HistogramWithMinMax (reserved)
-            0x60: ExponentialHistogram (reserved)
-            0x70: ExponentialHistogramWithMinMax (reserved)
+            0x50: ExponentialHistogram
+            0x60: (unused)
+            0x70: (unused)
             0x80: SumNonMonotonic
 
         Point kind:
@@ -67,6 +67,11 @@ namespace OpenTelemetry.Metrics
         /// Histogram.
         /// </summary>
         Histogram = 0x40,
+
+        /// <summary>
+        /// Exponential Histogram.
+        /// </summary>
+        ExponentialHistogram = 0x50,
 
         /// <summary>
         /// Non-monotonic Sum of Long type.

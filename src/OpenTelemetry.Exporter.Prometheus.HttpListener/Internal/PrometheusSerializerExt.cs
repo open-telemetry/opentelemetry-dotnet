@@ -36,6 +36,13 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
+            if (metric.MetricType == MetricType.ExponentialHistogram)
+            {
+                // Exponential histograms are not yet support by Prometheus.
+                // They are ignored for now.
+                return cursor;
+            }
+
             int metricType = (int)metric.MetricType >> 4;
             cursor = WriteTypeMetadata(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
             cursor = WriteUnitMetadata(buffer, cursor, metric.Name, metric.Unit);
