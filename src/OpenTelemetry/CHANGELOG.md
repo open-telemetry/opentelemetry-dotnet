@@ -8,6 +8,12 @@ This will be done in addition to current behavior of setting `otel.status_code`
 tag on activity.
 ([#4336](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4336))
 
+* Add support for configuring the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation)
+  using the `AddView` API. This aggregation is supported by OTLP but not yet by
+  Prometheus.
+  ([#4337](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4337))
+
 * Implementation of `SuppressInstrumentationScope` changed to improve
   performance.
   ([#4304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4304))
