@@ -71,92 +71,148 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(logLevel, logLevelRecorded);
         }
 
-        [Fact]
-        public void CheckStateForUnstructuredLog()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForUnstructuredLog(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             const string message = "Hello, World!";
             logger.LogInformation(message);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, state.Count);
+            Assert.Equal(1, attributes.Count);
 
-            Assert.Equal(message, state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(message, exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         [SuppressMessage("CA2254", "CA2254", Justification = "While you shouldn't use interpolation in a log message, this test verifies things work with it anyway.")]
-        public void CheckStateForUnstructuredLogWithStringInterpolation()
+        public void CheckStateForUnstructuredLogWithStringInterpolation(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var message = $"Hello from potato {0.99}.";
             logger.LogInformation(message);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, state.Count);
+            Assert.Equal(1, attributes.Count);
 
-            Assert.Equal(message, state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(message, exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithTemplate()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithTemplate(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             const string message = "Hello from {name} {price}.";
             logger.LogInformation(message, "tomato", 2.99);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state has name, price and {OriginalFormat}
-            Assert.Equal(3, state.Count);
+            Assert.Equal(3, attributes.Count);
 
             // Check if state has name
-            Assert.Contains(state, item => item.Key == "name");
-            Assert.Equal("tomato", state.First(item => item.Key == "name").Value);
+            Assert.Contains(attributes, item => item.Key == "name");
+            Assert.Equal("tomato", attributes.First(item => item.Key == "name").Value);
 
             // Check if state has price
-            Assert.Contains(state, item => item.Key == "price");
-            Assert.Equal(2.99, state.First(item => item.Key == "price").Value);
+            Assert.Contains(attributes, item => item.Key == "price");
+            Assert.Equal(2.99, attributes.First(item => item.Key == "price").Value);
 
             // Check if state has OriginalFormat
-            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
-            Assert.Equal(message, state.First(item => item.Key == "{OriginalFormat}").Value);
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal(message, attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal($"Hello from tomato 2.99.", state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal("Hello from tomato 2.99.", exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithStrongType()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithStrongType(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var food = new Food { Name = "artichoke", Price = 3.99 };
             logger.LogInformation("{food}", food);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state has food and {OriginalFormat}
-            Assert.Equal(2, state.Count);
+            Assert.Equal(2, attributes.Count);
 
             // Check if state has food
-            Assert.Contains(state, item => item.Key == "food");
+            Assert.Contains(attributes, item => item.Key == "food");
 
-            var foodParameter = (Food)state.First(item => item.Key == "food").Value;
+            var foodParameter = (Food)attributes.First(item => item.Key == "food").Value;
             Assert.Equal(food.Name, foodParameter.Name);
             Assert.Equal(food.Price, foodParameter.Price);
 
             // Check if state has OriginalFormat
-            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
-            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal(food.ToString(), state.ToString());
+            Assert.Equal("{food}", exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(food.ToString(), exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
         [Theory]
@@ -642,14 +698,8 @@ namespace OpenTelemetry.Logs.Tests
             logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
             var logRecord = exportedItems[0];
 
-            if (parseStateValues)
-            {
-                Assert.Null(logRecord.State);
-            }
-            else
-            {
-                Assert.NotNull(logRecord.State);
-            }
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Null(logRecord.State);
 
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(3, logRecord.StateValues.Count);
@@ -662,14 +712,8 @@ namespace OpenTelemetry.Logs.Tests
             logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
             logRecord = exportedItems[1];
 
-            if (parseStateValues)
-            {
-                Assert.Null(logRecord.State);
-            }
-            else
-            {
-                Assert.NotNull(logRecord.State);
-            }
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Null(logRecord.State);
 
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(4, logRecord.StateValues.Count);
