@@ -68,7 +68,6 @@ namespace OpenTelemetry.Logs
                 iloggerData.EventId = eventId;
                 iloggerData.LogLevel = logLevel;
                 iloggerData.Exception = exception;
-                iloggerData.State = !provider.ParseStateValues ? state : null;
                 iloggerData.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
                 iloggerData.BufferedScopes = null;
 
@@ -79,7 +78,7 @@ namespace OpenTelemetry.Logs
                 LogRecordData.SetActivityContext(ref data, activity);
 
                 var attributes = record.Attributes = provider.IncludeState
-                    ? ProcessState(record, state, provider.ParseStateValues)
+                    ? ProcessState(record, ref iloggerData, state, provider.ParseStateValues)
                     : null;
 
                 if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
@@ -115,8 +114,14 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(LogRecord logRecord, TState state, bool parseStateValues)
+        private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(
+            LogRecord logRecord,
+            ref LogRecord.LogRecordILoggerData iLoggerData,
+            TState state,
+            bool parseStateValues)
         {
+            iLoggerData.State = null;
+
             /* TODO: Enable this if/when LogRecordAttributeList becomes public.
             if (state is LogRecordAttributeList logRecordAttributes)
             {
@@ -141,13 +146,15 @@ namespace OpenTelemetry.Logs
                     return attributeStorage;
                 }
             }
+            else if (!parseStateValues || state is null)
+            {
+                // Note: This is to preserve legacy behavior where State is
+                // exposed if we didn't parse state.
+                iLoggerData.State = state;
+                return null;
+            }
             else
             {
-                if (!parseStateValues || state is null)
-                {
-                    return null;
-                }
-
                 try
                 {
                     PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state);
