@@ -205,7 +205,7 @@ namespace OpenTelemetry.Logs
         /// Note: Set to <see langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </remarks>
-        [Obsolete("State cannot be accessed safely outside of an ILogger.Log call stack. It will be removed in a future version.")]
+        [Obsolete("State cannot be accessed safely outside of an ILogger.Log call stack. Use Attributes instead to safely access the data attached to a LogRecord. State will be removed in a future version.")]
         public object? State
         {
             get => this.ILoggerData.State;
