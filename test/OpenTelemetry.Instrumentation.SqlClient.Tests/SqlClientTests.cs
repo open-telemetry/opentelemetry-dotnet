@@ -27,18 +27,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 {
     public class SqlClientTests : IDisposable
     {
-        /*
-            To run the integration tests, set the OTEL_SQLCONNECTIONSTRING machine-level environment variable to a valid Sql Server connection string.
-
-            To use Docker...
-             1) Run: docker run -d --name sql2019 -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Pass@word" -p 5433:1433 mcr.microsoft.com/mssql/server:2019-latest
-             2) Set OTEL_SQLCONNECTIONSTRING as: Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word
-         */
-
-        private const string SqlConnectionStringEnvVarName = "OTEL_SQLCONNECTIONSTRING";
         private const string TestConnectionString = "Data Source=(localdb)\\MSSQLLocalDB;Database=master";
-
-        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
 
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
 
@@ -79,79 +68,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
             Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
-        }
-
-        [Trait("CategoryName", "SqlIntegrationTests")]
-        [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
-        [InlineData(CommandType.Text, "select 1/1", false)]
-        [InlineData(CommandType.Text, "select 1/1", false, true)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true, false, false)]
-        [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
-        [InlineData(CommandType.StoredProcedure, "sp_who", false)]
-        [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public void SuccessfulCommandTest(
-            CommandType commandType,
-            string commandText,
-            bool captureStoredProcedureCommandName,
-            bool captureTextCommandContent = false,
-            bool isFailure = false,
-            bool recordException = false,
-            bool shouldEnrich = true)
-        {
-#if NETFRAMEWORK
-            // Disable things not available on netfx
-            recordException = false;
-            shouldEnrich = false;
-#endif
-
-            var sampler = new TestSampler();
-            var activities = new List<Activity>();
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .SetSampler(sampler)
-                .AddInMemoryExporter(activities)
-                .AddSqlClientInstrumentation(options =>
-                {
-#if !NETFRAMEWORK
-                    options.SetDbStatementForStoredProcedure = captureStoredProcedureCommandName;
-                    options.SetDbStatementForText = captureTextCommandContent;
-#else
-                    options.SetDbStatementForText = captureStoredProcedureCommandName || captureTextCommandContent;
-#endif
-                    options.RecordException = recordException;
-                    if (shouldEnrich)
-                    {
-                        options.Enrich = ActivityEnrichment;
-                    }
-                })
-                .Build();
-
-            using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
-
-            sqlConnection.Open();
-
-            string dataSource = sqlConnection.DataSource;
-
-            sqlConnection.ChangeDatabase("master");
-
-            using SqlCommand sqlCommand = new SqlCommand(commandText, sqlConnection)
-            {
-                CommandType = commandType,
-            };
-
-            try
-            {
-                sqlCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-            }
-
-            Assert.Single(activities);
-            var activity = activities[0];
-
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, shouldEnrich, dataSource, activity);
-            VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
         // DiagnosticListener-based instrumentation is only available on .NET Core
@@ -384,7 +300,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 #endif
 
-        private static void VerifyActivityData(
+        internal static void VerifyActivityData(
             CommandType commandType,
             string commandText,
             bool captureStoredProcedureCommandName,
@@ -464,7 +380,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(dataSource, activity.GetTagValue(SemanticConventions.AttributePeerService));
         }
 
-        private static void VerifySamplingParameters(SamplingParameters samplingParameters)
+        internal static void VerifySamplingParameters(SamplingParameters samplingParameters)
         {
             Assert.NotNull(samplingParameters.Tags);
             Assert.Contains(
@@ -473,7 +389,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                        && (string)kvp.Value == SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
         }
 
-        private static void ActivityEnrichment(Activity activity, string method, object obj)
+        internal static void ActivityEnrichment(Activity activity, string method, object obj)
         {
             activity.SetTag("enriched", "yes");
 
