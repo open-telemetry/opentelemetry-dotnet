@@ -211,6 +211,12 @@ Writing an instrumentation library typically involves 3 steps.
          > Changing the name of the source should be considered a
          breaking change.
 
+4. The fourth step is an optional step, and involves making any member required
+   to enable the instrumentation public. This allows [OpenTelemetry .NET Automatic
+   Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation)
+   support for the instrumentation library to depend on public API,
+   instead of internal implementation details, making the support more reliable.
+
 ### Special case : Instrumentation for libraries producing legacy Activity
 
 There is a special case for libraries which are already instrumented to produce
