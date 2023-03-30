@@ -123,12 +123,13 @@ namespace OpenTelemetry.Logs
             iLoggerData.State = null;
 
             /* TODO: Enable this if/when LogRecordAttributeList becomes public.
-            if (state is LogRecordAttributeList logRecordAttributes)
+            if (typeof(TState) == typeof(LogRecordAttributeList))
             {
-                logRecordAttributes.ApplyToLogRecord(logRecord);
+                // Note: This cast looks strange, but it is meant for the JIT to optimize/remove.
+                ((LogRecordAttributeList)(object)state!).ApplyToLogRecord(logRecord);
                 return logRecord.AttributeStorage!;
             }
-            else*/
+            else */
             if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
