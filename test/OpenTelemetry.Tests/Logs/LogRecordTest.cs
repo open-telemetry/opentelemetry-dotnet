@@ -467,10 +467,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(default, logRecord.TraceFlags);
         }
 
-        [Fact]
-        public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly(bool includeTraceState)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeTraceState = includeTraceState);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var sampler = new RecordOnlySampler();
@@ -484,6 +486,7 @@ namespace OpenTelemetry.Logs.Tests
                 .Build();
 
             using var activity = activitySource.StartActivity("Activity");
+            activity.TraceStateString = "key1=value1";
 
             logger.LogInformation("Log within activity marked as RecordOnly");
             var logRecord = exportedItems[0];
@@ -493,6 +496,15 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
             Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
+
+            if (includeTraceState)
+            {
+                Assert.Equal(currentActivity.TraceStateString, logRecord.TraceState);
+            }
+            else
+            {
+                Assert.Null(logRecord.TraceState);
+            }
         }
 
         [Fact]
@@ -882,6 +894,26 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(2, processor.Scopes.Count);
             Assert.Equal("scope1", processor.Scopes[0]);
             Assert.Equal("scope2", processor.Scopes[1]);
+        }
+
+        [Fact]
+        public void IncludeStateTest()
+        {
+            using var loggerFactory = InitializeLoggerFactory(
+                out List<LogRecord> exportedItems, configure: options =>
+                {
+                    options.IncludeState = false;
+                });
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("Hello {world}", "earth");
+
+            var logRecord = exportedItems[0];
+
+            Assert.Null(logRecord.State);
+            Assert.Null(logRecord.Attributes);
+
+            Assert.Equal("Hello earth", logRecord.Body);
         }
 
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
