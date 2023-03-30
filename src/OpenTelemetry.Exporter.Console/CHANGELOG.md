@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Updated `LogRecord` console output: `Body` is now shown (if set),
+  `StateValues` are now written as `Attributes`, and `State` is no longer
+  processed.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07

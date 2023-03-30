@@ -6,6 +6,10 @@
   performance.
   ([#4304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4304))
 
+* Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues` flag
+  and obsoleted `LogRecord.State` and `LogRecord.StateValues`.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07
