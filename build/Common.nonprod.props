@@ -42,6 +42,7 @@
     <MicrosoftExtensionsLoggingAbstractionsPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingAbstractionsPkgVer>
     <MicrosoftNETTestSdkPkgVer>[17.4.1]</MicrosoftNETTestSdkPkgVer>
     <MoqPkgVer>[4.18.3,5.0)</MoqPkgVer>
+    <TestcontainersPkgVer>3.0.0</TestcontainersPkgVer>
     <RabbitMQClientPkgVer>[6.4.0,7.0)</RabbitMQClientPkgVer>
     <RuntimeInstrumentationPkgVer>[1.0.0,2.0)</RuntimeInstrumentationPkgVer>
     <SwashbuckleAspNetCorePkgVer>[6.4.0]</SwashbuckleAspNetCorePkgVer>
