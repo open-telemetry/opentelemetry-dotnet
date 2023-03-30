@@ -78,7 +78,7 @@ namespace OpenTelemetry.Logs
                 LogRecordData.SetActivityContext(ref data, activity);
 
                 var attributes = record.Attributes = provider.IncludeState
-                    ? ProcessState(record, ref iloggerData, state, provider.ParseStateValues)
+                    ? ProcessState(record, ref iloggerData, in state, provider.ParseStateValues)
                     : null;
 
                 if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Logs
         private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(
             LogRecord logRecord,
             ref LogRecord.LogRecordILoggerData iLoggerData,
-            TState state,
+            in TState state,
             bool parseStateValues)
         {
             iLoggerData.State = null;
@@ -188,7 +188,9 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        private static bool TryGetOriginalFormatFromAttributes(IReadOnlyList<KeyValuePair<string, object?>>? attributes, [NotNullWhen(true)] out string? originalFormat)
+        private static bool TryGetOriginalFormatFromAttributes(
+            IReadOnlyList<KeyValuePair<string, object?>>? attributes,
+            [NotNullWhen(true)] out string? originalFormat)
         {
             if (attributes != null && attributes.Count > 0)
             {
