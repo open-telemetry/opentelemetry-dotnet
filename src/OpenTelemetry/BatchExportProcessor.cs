@@ -44,7 +44,7 @@ namespace OpenTelemetry
         private readonly ManualResetEvent dataExportedNotification = new(false);
         private readonly ManualResetEvent shutdownTrigger = new(false);
         private readonly string exporterName;
-        private readonly string processorType;
+        private readonly string exportedDataType;
         private KeyValuePair<string, object?>[]? droppedCountTags;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
@@ -84,7 +84,7 @@ namespace OpenTelemetry
             this.exporterThread.Start();
 
             this.exporterName = exporter.GetType().Name;
-            this.processorType = typeof(T).Name;
+            this.exportedDataType = typeof(T).Name;
         }
 
         /// <summary>
@@ -290,7 +290,7 @@ namespace OpenTelemetry
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderIdKey, this.HealthReporter.ProviderId),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderNameKey, this.HealthReporter.ProviderName),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExporterNameKey, this.exporterName),
-                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorTypeKey, this.processorType),
+                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorTypeKey, this.exportedDataType),
                 };
             }
         }
