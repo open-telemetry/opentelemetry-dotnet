@@ -143,7 +143,7 @@ namespace Thrift.Protocol
 
         public virtual void WriteString(string s)
         {
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
             if (s.Length <= 128)
             {
                 Span<byte> buffer = stackalloc byte[256];
@@ -165,7 +165,7 @@ namespace Thrift.Protocol
             }
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
         public abstract void WriteBinary(ReadOnlySpan<byte> bytes);
 #endif
 

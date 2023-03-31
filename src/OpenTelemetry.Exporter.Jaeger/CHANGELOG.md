@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Enabled performance optimizations for .NET 6.0+ runtimes.
+  ([#4349](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4349))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07
