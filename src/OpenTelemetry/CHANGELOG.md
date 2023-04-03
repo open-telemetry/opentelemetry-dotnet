@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
 * Enabling `SetErrorStatusOnException` on TracerProvider will now set the
 `Status` property on Activity to `ActivityStatusCode.Error` in case of an error.
 This will be done in addition to current behavior of setting `otel.status_code`
