@@ -20,7 +20,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
 internal static class TelemetryHelper
 {
-    private static readonly object[] BoxedStatusCodes;
+    public static readonly object[] BoxedStatusCodes;
 
     static TelemetryHelper()
     {
