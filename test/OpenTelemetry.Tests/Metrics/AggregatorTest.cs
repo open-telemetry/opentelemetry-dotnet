@@ -208,7 +208,6 @@ namespace OpenTelemetry.Metrics.Tests
                 updateThreads[i].Start(argsToThread);
             }
 
-            argsToThread.MreToEnsureAllThreadsStart.WaitOne();
             snapshotThread.Start(argsToThread);
 
             for (int i = 0; i < numberOfThreads; ++i)
@@ -218,8 +217,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             snapshotThread.Join();
 
+            // last snapshot
+            histogramPoint.TakeSnapshot(false);
+
             var sum = histogramPoint.GetHistogramSum();
-            Assert.Equal(400, sum);
+            Assert.Equal(10000, sum);
         }
 
         internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
@@ -415,18 +417,21 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
-            mreToEnsureAllThreadsStart.WaitOne();
 
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
+            {
+                mreToEnsureAllThreadsStart.Set();
+            }
+
+            double prevSnapshotSum = 0;
+            double curSnapshotSum = 0;
             while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 10)
             {
                 args.HistogramPoint.TakeSnapshot(outputDelta: false);
-            }
-
-            // ensure the last snapshot will be called
-            Thread.Sleep(1000);
-            for (int i = 0; i < 10; ++i)
-            {
-                args.HistogramPoint.TakeSnapshot(outputDelta: false);
+                curSnapshotSum = args.HistogramPoint.GetHistogramSum();
+                Assert.True(curSnapshotSum >= prevSnapshotSum);
+                Assert.True(curSnapshotSum <= 10000);
+                prevSnapshotSum = curSnapshotSum;
             }
         }
 
@@ -439,21 +444,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
-            if (Interlocked.Increment(ref args.ThreadStartedCount) == 10)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
 
-            args.HistogramPoint.Update(-10);
-            args.HistogramPoint.Update(0);
-            args.HistogramPoint.Update(1);
-            args.HistogramPoint.Update(9);
+            mreToEnsureAllThreadsStart.WaitOne();
 
-            Thread.Sleep(1000);
-
-            args.HistogramPoint.Update(10);
-            args.HistogramPoint.Update(11);
-            args.HistogramPoint.Update(19);
+            for (int i = 0; i < 100; ++i)
+            {
+                args.HistogramPoint.Update(10);
+            }
 
             Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
         }
