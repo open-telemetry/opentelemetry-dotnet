@@ -75,7 +75,11 @@ namespace OpenTelemetry.Trace
 
             if (snapshot != pointers)
             {
+                // TODO: Remove this when SetStatus is deprecated
                 activity.SetStatus(Status.Error);
+
+                // For processors/exporters checking `Status` property.
+                activity.SetStatus(ActivityStatusCode.Error);
             }
         }
     }
