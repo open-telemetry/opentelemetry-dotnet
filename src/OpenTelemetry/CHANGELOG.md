@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed an issue with `HashCode` computations throwing exceptions on .NET
+  Standard 2.1 targets.
+  ([#4362](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4362))
+
 ## 1.5.0-alpha.2
 
 Released 2023-Mar-31
