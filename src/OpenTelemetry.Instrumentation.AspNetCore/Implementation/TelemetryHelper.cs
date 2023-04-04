@@ -18,6 +18,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 internal static class TelemetryHelper
 {
+#pragma warning disable SA1509 // Opening braces should not be preceded by blank line
     // Status Codes listed at http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
     private static readonly Dictionary<int, object> BoxedStatusCodes = new()
     {
@@ -89,6 +90,7 @@ internal static class TelemetryHelper
         { 510, 510 },
         { 511, 511 },
     };
+#pragma warning restore SA1509 // Opening braces should not be preceded by blank line
 
     public static object GetBoxedStatusCode(int statusCode)
     {
