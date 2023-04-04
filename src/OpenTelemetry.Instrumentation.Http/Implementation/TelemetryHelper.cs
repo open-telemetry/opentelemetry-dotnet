@@ -40,18 +40,18 @@ internal static class TelemetryHelper
         { 226, 226 },*/
 
         { HttpStatusCode.MultipleChoices, 300 },
-        { HttpStatusCode.Ambiguous, 300 },
+        /* { HttpStatusCode.Ambiguous, 300 }, */
         { HttpStatusCode.MovedPermanently, 301 },
-        { HttpStatusCode.Moved, 301 },
+        /* { HttpStatusCode.Moved, 301 }, */
         { HttpStatusCode.Found, 302 },
-        { HttpStatusCode.Redirect, 302 },
+        /* { HttpStatusCode.Redirect, 302 }, */
         { HttpStatusCode.SeeOther, 303 },
-        { HttpStatusCode.RedirectMethod, 303 },
+        /* { HttpStatusCode.RedirectMethod, 303 }, */
         { HttpStatusCode.NotModified, 304 },
         { HttpStatusCode.UseProxy, 305 },
         { HttpStatusCode.Unused, 306 },
         { HttpStatusCode.TemporaryRedirect, 307 },
-        { HttpStatusCode.RedirectKeepVerb, 307 },
+        /* { HttpStatusCode.RedirectKeepVerb, 307 }, */
         /*{ 308, 308 },*/
 
         { HttpStatusCode.BadRequest, 400 },
