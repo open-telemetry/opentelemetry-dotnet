@@ -218,10 +218,10 @@ namespace OpenTelemetry.Metrics.Tests
             snapshotThread.Join();
 
             // last snapshot
-            histogramPoint.TakeSnapshot(false);
+            histogramPoint.TakeSnapshot(outputDelta: true);
 
-            var sum = histogramPoint.GetHistogramSum();
-            Assert.Equal(10000, sum);
+            var lastDelta = histogramPoint.GetHistogramSum();
+            Assert.Equal(10000, argsToThread.SumOfDelta + lastDelta);
         }
 
         internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
@@ -423,15 +423,12 @@ namespace OpenTelemetry.Metrics.Tests
                 mreToEnsureAllThreadsStart.Set();
             }
 
-            double prevSnapshotSum = 0;
-            double curSnapshotSum = 0;
+            double curSnapshotDelta;
             while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 10)
             {
-                args.HistogramPoint.TakeSnapshot(outputDelta: false);
-                curSnapshotSum = args.HistogramPoint.GetHistogramSum();
-                Assert.True(curSnapshotSum >= prevSnapshotSum);
-                Assert.True(curSnapshotSum <= 10000);
-                prevSnapshotSum = curSnapshotSum;
+                args.HistogramPoint.TakeSnapshot(outputDelta: true);
+                curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
+                args.SumOfDelta += curSnapshotDelta;
             }
         }
 
@@ -465,6 +462,7 @@ namespace OpenTelemetry.Metrics.Tests
             public ManualResetEvent MreToEnsureAllThreadsStart;
             public int ThreadStartedCount;
             public long ThreadsFinishedAllUpdatesCount;
+            public double SumOfDelta;
         }
     }
 }
