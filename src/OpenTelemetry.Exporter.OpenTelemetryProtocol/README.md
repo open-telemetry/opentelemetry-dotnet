@@ -67,7 +67,16 @@ and environment variables.
 The `OtlpExporterOptions` type setters take precedence over the environment variables.
 
 This can be achieved by providing an `Action<OtlpExporterOptions>` delegate to the
-`AddOtlpExporter()` method.
+`AddOtlpExporter()` method or using `AddOptions<OtlpExporterOptions>()`.
+
+If additional services from the dependency injection are required, they can be
+configured like this:
+
+```csharp
+services.AddOptions<OtlpExporterOptions>().Configure<Service>((opts, svc) => {
+    // ...
+});
+```
 
 TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
