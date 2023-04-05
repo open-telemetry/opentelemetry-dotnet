@@ -602,7 +602,7 @@ namespace OpenTelemetry.Resources.Tests
             ValidateAttributes(resource.Attributes);
         }
 
-        private static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+        internal static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
             Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
@@ -610,7 +610,7 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Single(versionAttribute);
         }
 
-        private static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+        internal static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
             Assert.Single(serviceName);
