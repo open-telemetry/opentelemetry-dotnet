@@ -15,10 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Api.Tests.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class TracerTest : IDisposable
     {

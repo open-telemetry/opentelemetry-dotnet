@@ -14,10 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Api.Tests.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class SpanAttributesTest
     {

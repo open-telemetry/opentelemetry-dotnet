@@ -15,10 +15,9 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
-using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Api.Tests.Internal
+namespace OpenTelemetry.Internal.Tests
 {
     public class GuardTest
     {

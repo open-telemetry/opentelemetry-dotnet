@@ -15,9 +15,8 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Api.Tests.Trace.Propagation
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class TestPropagator : TextMapPropagator
     {

@@ -16,7 +16,7 @@
 
 using Xunit;
 
-namespace OpenTelemetry.Api.Tests
+namespace OpenTelemetry.Tests
 {
     public class BaggageTests
     {
