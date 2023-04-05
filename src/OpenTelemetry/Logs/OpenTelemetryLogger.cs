@@ -77,7 +77,7 @@ namespace OpenTelemetry.Logs
 
                 LogRecordData.SetActivityContext(ref data, activity);
 
-                var attributes = record.Attributes = provider.IncludeState
+                var attributes = record.Attributes = provider.IncludeAttributes
                     ? ProcessState(record, ref iloggerData, in state, provider.ParseStateValues)
                     : null;
 

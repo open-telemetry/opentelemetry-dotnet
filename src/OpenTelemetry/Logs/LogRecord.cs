@@ -175,9 +175,10 @@ namespace OpenTelemetry.Logs
         /// Gets or sets the log formatted message.
         /// </summary>
         /// <remarks>
-        /// Note: Only set if <see
+        /// Note: Set if <see
         /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is
-        /// enabled.
+        /// enabled or <c>{OriginalFormat}</c> attribute (message template) is
+        /// not found.
         /// </remarks>
         public string? FormattedMessage
         {
@@ -227,9 +228,11 @@ namespace OpenTelemetry.Logs
         /// Gets or sets the attributes attached to the log.
         /// </summary>
         /// <remarks>
-        /// Set when log record state implements <see cref="IReadOnlyList{T}"/>
-        /// of <see cref="KeyValuePair{TKey, TValue}"/>s (where TKey is
-        /// <c>string</c> and TValue is <c>object</c>) or <see
+        /// Note: Set when <see
+        /// cref="OpenTelemetryLoggerOptions.IncludeAttributes"/> is enabled and
+        /// log record state implements <see cref="IReadOnlyList{T}"/> or <see
+        /// cref="IEnumerable{T}"/> of <see cref="KeyValuePair{TKey, TValue}"/>s
+        /// (where TKey is <c>string</c> and TValue is <c>object</c>) or <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </remarks>
