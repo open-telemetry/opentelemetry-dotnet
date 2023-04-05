@@ -15,6 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Internal;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Api.Tests
