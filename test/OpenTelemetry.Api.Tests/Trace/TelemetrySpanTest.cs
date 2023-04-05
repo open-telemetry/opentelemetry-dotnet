@@ -43,8 +43,8 @@ namespace OpenTelemetry.Trace.Tests
             string message = "message";
             string stack = "stack";
 
-            using var activity = new Activity("exception-test");
-            using var telemetrySpan = new TelemetrySpan(activity);
+            using Activity activity = new Activity("exception-test");
+            using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(type, message, stack);
             Assert.Single(activity.Events);
 
