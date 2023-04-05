@@ -7,6 +7,10 @@
   processed.
   ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
 
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07

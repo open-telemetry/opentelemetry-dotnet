@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+* Fixed an issue with `HashCode` computations throwing exceptions on .NET
+  Standard 2.1 targets.
+  ([#4362](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4362))
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+* Enabling `SetErrorStatusOnException` on TracerProvider will now set the
+`Status` property on Activity to `ActivityStatusCode.Error` in case of an error.
+This will be done in addition to current behavior of setting `otel.status_code`
+tag on activity.
+([#4336](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4336))
+
 * Add support for configuring the
   [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation)
   using the `AddView` API. This aggregation is supported by OTLP but not yet by
