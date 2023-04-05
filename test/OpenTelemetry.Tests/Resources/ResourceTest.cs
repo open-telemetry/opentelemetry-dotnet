@@ -570,6 +570,21 @@ namespace OpenTelemetry.Resources.Tests
             Assert.True(validTestRun);
         }
 
+        internal static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+        {
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
+            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+            var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
+            Assert.Single(versionAttribute);
+        }
+
+        internal static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+        {
+            var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
+            Assert.Single(serviceName);
+            Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
+        }
+
         private static void ClearEnvVars()
         {
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
@@ -600,21 +615,6 @@ namespace OpenTelemetry.Resources.Tests
             Assert.NotNull(resource.Attributes);
             Assert.Equal(attributeCount, resource.Attributes.Count());
             ValidateAttributes(resource.Attributes);
-        }
-
-        internal static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
-        {
-            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
-            Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
-            var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version"));
-            Assert.Single(versionAttribute);
-        }
-
-        internal static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
-        {
-            var serviceName = attributes.Where(pair => pair.Key.Equals("service.name"));
-            Assert.Single(serviceName);
-            Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
         }
 
         private static Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
