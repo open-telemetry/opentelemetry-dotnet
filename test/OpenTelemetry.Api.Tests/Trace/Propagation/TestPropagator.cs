@@ -41,7 +41,7 @@ namespace OpenTelemetry.Api.Tests.Trace.Propagation
                 return context;
             }
 
-            var id = getter(carrier, this.idHeaderName);
+            IEnumerable<string> id = getter(carrier, this.idHeaderName);
             if (!id.Any())
             {
                 return context;
@@ -53,8 +53,8 @@ namespace OpenTelemetry.Api.Tests.Trace.Propagation
                 return context;
             }
 
-            var tracestate = string.Empty;
-            var tracestateCollection = getter(carrier, this.stateHeaderName);
+            string tracestate = string.Empty;
+            IEnumerable<string> tracestateCollection = getter(carrier, this.stateHeaderName);
             if (tracestateCollection?.Any() ?? false)
             {
                 TraceContextPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
@@ -67,14 +67,14 @@ namespace OpenTelemetry.Api.Tests.Trace.Propagation
 
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
-            var headerNumber = this.stateHeaderName.Split('-').Last();
+            string headerNumber = this.stateHeaderName.Split('-').Last();
 
             var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
             traceparent = string.Concat(traceparent, "-", headerNumber);
 
             setter(carrier, this.idHeaderName, traceparent);
 
-            var tracestateStr = context.ActivityContext.TraceState;
+            string tracestateStr = context.ActivityContext.TraceState;
             if (tracestateStr?.Length > 0)
             {
                 setter(carrier, this.stateHeaderName, tracestateStr);

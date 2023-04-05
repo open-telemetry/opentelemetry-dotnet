@@ -60,7 +60,7 @@ namespace OpenTelemetry.Api.Tests.Trace.Propagation
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
-            var propagationContext = new PropagationContext(activityContext, default);
+            PropagationContext propagationContext = new PropagationContext(activityContext, default);
             var carrier = new Dictionary<string, string>();
             using var activity = new Activity("test");
 
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Api.Tests.Trace.Propagation
             });
 
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null);
-            var propagationContext = new PropagationContext(activityContext, default);
+            PropagationContext propagationContext = new PropagationContext(activityContext, default);
 
             var carrier = new Dictionary<string, string>();
 
@@ -113,13 +113,13 @@ namespace OpenTelemetry.Api.Tests.Trace.Propagation
             var activityContext = new ActivityContext(this.traceId, this.spanId, ActivityTraceFlags.Recorded, traceState: null, isRemote: true);
             var baggage = new Dictionary<string, string> { ["key1"] = "value1" };
 
-            var propagationContextActivityOnly = new PropagationContext(activityContext, default);
-            var propagationContextBaggageOnly = new PropagationContext(default, new Baggage(baggage));
-            var propagationContextBoth = new PropagationContext(activityContext, new Baggage(baggage));
+            PropagationContext propagationContextActivityOnly = new PropagationContext(activityContext, default);
+            PropagationContext propagationContextBaggageOnly = new PropagationContext(default, new Baggage(baggage));
+            PropagationContext propagationContextBoth = new PropagationContext(activityContext, new Baggage(baggage));
 
             var carrier = new Dictionary<string, string>();
             compositePropagator.Inject(propagationContextActivityOnly, carrier, Setter);
-            var extractedContext = compositePropagator.Extract(default, carrier, Getter);
+            PropagationContext extractedContext = compositePropagator.Extract(default, carrier, Getter);
             Assert.Equal(propagationContextActivityOnly, extractedContext);
 
             carrier = new Dictionary<string, string>();

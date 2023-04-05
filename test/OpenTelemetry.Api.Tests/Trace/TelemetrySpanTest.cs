@@ -25,10 +25,10 @@ namespace OpenTelemetry.Api.Tests.Trace
         [Fact]
         public void CheckRecordExceptionData()
         {
-            var message = "message";
+            string message = "message";
 
-            using var activity = new Activity("exception-test");
-            using var telemetrySpan = new TelemetrySpan(activity);
+            using Activity activity = new Activity("exception-test");
+            using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
             Assert.Single(activity.Events);
 
@@ -40,9 +40,9 @@ namespace OpenTelemetry.Api.Tests.Trace
         [Fact]
         public void CheckRecordExceptionData2()
         {
-            var type = "ArgumentNullException";
-            var message = "message";
-            var stack = "stack";
+            string type = "ArgumentNullException";
+            string message = "message";
+            string stack = "stack";
 
             using var activity = new Activity("exception-test");
             using var telemetrySpan = new TelemetrySpan(activity);
@@ -58,8 +58,8 @@ namespace OpenTelemetry.Api.Tests.Trace
         [Fact]
         public void CheckRecordExceptionEmpty()
         {
-            using var activity = new Activity("exception-test");
-            using var telemetrySpan = new TelemetrySpan(activity);
+            using Activity activity = new Activity("exception-test");
+            using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(string.Empty, string.Empty, string.Empty);
             Assert.Empty(activity.Events);
 
