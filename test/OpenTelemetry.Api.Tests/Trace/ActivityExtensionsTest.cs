@@ -16,9 +16,10 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Tests;
+using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Api.Tests.Trace
 {
     public class ActivityExtensionsTest
     {

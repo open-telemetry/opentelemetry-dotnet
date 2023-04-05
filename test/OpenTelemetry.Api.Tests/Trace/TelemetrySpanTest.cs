@@ -15,19 +15,20 @@
 // </copyright>
 
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Api.Tests.Trace
 {
     public class TelemetrySpanTest
     {
         [Fact]
         public void CheckRecordExceptionData()
         {
-            string message = "message";
+            var message = "message";
 
-            using Activity activity = new Activity("exception-test");
-            using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
+            using var activity = new Activity("exception-test");
+            using var telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(new ArgumentNullException(message, new Exception("new-exception")));
             Assert.Single(activity.Events);
 
@@ -39,12 +40,12 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckRecordExceptionData2()
         {
-            string type = "ArgumentNullException";
-            string message = "message";
-            string stack = "stack";
+            var type = "ArgumentNullException";
+            var message = "message";
+            var stack = "stack";
 
-            using Activity activity = new Activity("exception-test");
-            using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
+            using var activity = new Activity("exception-test");
+            using var telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(type, message, stack);
             Assert.Single(activity.Events);
 
@@ -57,8 +58,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckRecordExceptionEmpty()
         {
-            using Activity activity = new Activity("exception-test");
-            using TelemetrySpan telemetrySpan = new TelemetrySpan(activity);
+            using var activity = new Activity("exception-test");
+            using var telemetrySpan = new TelemetrySpan(activity);
             telemetrySpan.RecordException(string.Empty, string.Empty, string.Empty);
             Assert.Empty(activity.Events);
 

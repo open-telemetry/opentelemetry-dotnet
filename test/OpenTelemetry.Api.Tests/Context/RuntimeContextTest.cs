@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Context;
 using Xunit;
 
-namespace OpenTelemetry.Context.Tests
+namespace OpenTelemetry.Api.Tests.Context
 {
     public class RuntimeContextTest : IDisposable
     {

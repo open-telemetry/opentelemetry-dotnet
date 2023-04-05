@@ -15,9 +15,10 @@
 // </copyright>
 
 using System.Net;
+using OpenTelemetry.Context.Propagation;
 using Xunit;
 
-namespace OpenTelemetry.Context.Propagation.Tests
+namespace OpenTelemetry.Api.Tests.Trace.Propagation
 {
     public class BaggagePropagatorTest
     {

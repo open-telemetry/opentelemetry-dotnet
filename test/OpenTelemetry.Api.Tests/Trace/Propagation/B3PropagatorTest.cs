@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Context.Propagation.Tests
+namespace OpenTelemetry.Api.Tests.Trace.Propagation
 {
     public class B3PropagatorTest
     {

@@ -14,9 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Api.Tests.Trace
 {
     public class StatusTest
     {
