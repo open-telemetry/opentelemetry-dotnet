@@ -7,7 +7,8 @@
   ([#4098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4098))
 
 * Improve perf by avoiding boxing of common status codes values.
-  ([#4361](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4361))
+  ([#4361](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4361),
+  [#4363](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4363))
 
 ## 1.0.0-rc9.14
 
