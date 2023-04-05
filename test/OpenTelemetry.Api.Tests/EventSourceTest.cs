@@ -17,7 +17,7 @@
 using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Api.Tests
 {
     public class EventSourceTest
     {
