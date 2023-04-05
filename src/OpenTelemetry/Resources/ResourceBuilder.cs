@@ -70,7 +70,10 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddResource(DefaultResource).AddEnvironmentVariableDetector();
+            => new ResourceBuilder()
+                .AddResource(DefaultResource)
+                .AddTelemetrySdk()
+                .AddEnvironmentVariableDetector();
 
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.
