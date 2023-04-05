@@ -902,7 +902,7 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(
                 out List<LogRecord> exportedItems, configure: options =>
                 {
-                    options.IncludeState = false;
+                    options.IncludeAttributes = false;
                 });
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
