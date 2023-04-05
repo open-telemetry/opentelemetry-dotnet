@@ -23,6 +23,9 @@ internal class MyRedactionProcessor : BaseProcessor<LogRecord>
 {
     public override void OnEnd(LogRecord logRecord)
     {
-        logRecord.Attributes ??= new MyClassWithRedactionEnumerator(logRecord.Attributes);
+        if (logRecord.Attributes != null)
+        {
+            logRecord.Attributes = new MyClassWithRedactionEnumerator(logRecord.Attributes);
+        }
     }
 }
