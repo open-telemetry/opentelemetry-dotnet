@@ -214,7 +214,7 @@ Writing an instrumentation library typically involves 3 steps.
 
 4. The fourth step is an optional step, and involves making any member required
    to enable the instrumentation public. If instrumentation is enabled on e.g connection
-   basis, consider adding extension method on an object used to create it (see [OpenTelemetry.Instrumentation.Cassandra](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/a50e1cdbbe869ab2204d100610067e9325a338b7/src/OpenTelemetry.Instrumentation.Cassandra#step-2-enable-cassandra-instrumentation-at-application-startup)).
+   basis, consider adding extension method on an object used to create it.
    This allows [OpenTelemetry .NET Automatic Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation)
    support for the instrumentation library to depend on public API,
    instead of internal implementation details, making the support more reliable.
