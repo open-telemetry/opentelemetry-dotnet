@@ -209,7 +209,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
                     if (currentStatusCode == ActivityStatusCode.Unset)
                     {
