@@ -9,7 +9,7 @@
 * Fixed an issue with `HashCode` computations throwing exceptions on .NET
   Standard 2.1 targets.
   ([#4362](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4362))
-* Update value of the resource attribute Telemetry SDK version to show the tag
+* Update value of the resource attribute `telemetry.sdk.version` to show the tag
   name which resembles the package version of the SDK.
   ([#4375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4375))
 
