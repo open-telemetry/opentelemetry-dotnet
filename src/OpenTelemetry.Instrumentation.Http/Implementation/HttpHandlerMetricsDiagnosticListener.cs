@@ -27,49 +27,83 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     {
         internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
+
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<HttpRequestMessage> stopRequestFetcher = new("Request");
+        private readonly HttpClientMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpClientDuration;
 
-        public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
+        public HttpHandlerMetricsDiagnosticListener(string name, Meter meter, HttpClientMetricsInstrumentationOptions options)
             : base(name)
         {
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+            this.options = options;
         }
 
         public override void OnEventWritten(string name, object payload)
         {
-            if (name == OnStopEvent)
+            switch (name)
             {
-                if (Sdk.SuppressInstrumentation)
+                case OnStopEvent when Sdk.SuppressInstrumentation:
+                    return;
+                case OnStopEvent:
                 {
+                    this.OnStopActivity(Activity.Current, payload);
+                    break;
+                }
+            }
+        }
+
+        private void OnStopActivity(Activity activity, object payload)
+        {
+            if (this.stopRequestFetcher.TryFetch(payload, out HttpRequestMessage request) && request != null)
+            {
+                try
+                {
+                    if (this.options.EventFilterHttpRequestMessage(activity.OperationName, request) == false)
+                    {
+                        HttpInstrumentationEventSource.Log.RequestIsFilteredOut(activity.OperationName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.RequestFilterException(ex);
                     return;
                 }
 
-                var activity = Activity.Current;
-                if (this.stopRequestFetcher.TryFetch(payload, out HttpRequestMessage request) && request != null)
+                TagList tags = default;
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
+
+                if (!request.RequestUri.IsDefaultPort)
                 {
-                    TagList tags = default;
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
-
-                    if (!request.RequestUri.IsDefaultPort)
-                    {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
-                    }
-
-                    if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
-                    {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
-                    }
-
-                    // We are relying here on HttpClient library to set duration before writing the stop event.
-                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
-                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-                    this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                 }
+
+                if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                {
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
+
+                    if (this.options.Enrich != null)
+                    {
+                        try
+                        {
+                            this.options.Enrich(response, ref tags);
+                        }
+                        catch (Exception ex)
+                        {
+                            HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                        }
+                    }
+                }
+
+                // We are relying here on HttpClient library to set duration before writing the stop event.
+                // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+                this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
             }
         }
     }

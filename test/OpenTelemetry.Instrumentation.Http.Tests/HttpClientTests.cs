@@ -32,6 +32,98 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         [Theory]
         [MemberData(nameof(TestData))]
+        public async Task HttpOutCallsMetricsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
+        {
+            using var serverLifeTime = TestHttpServer.RunServer(
+                (ctx) =>
+                {
+                    ctx.Response.StatusCode = tc.ResponseCode == 0 ? 200 : tc.ResponseCode;
+                    ctx.Response.OutputStream.Close();
+                },
+                out var host,
+                out var port);
+
+            tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
+
+            bool enrichWithHttpResponseMessageCalled = false;
+            bool filterHttpRequestMessageCalled = false;
+
+            var metrics = new List<Metric>();
+
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddHttpClientInstrumentation(options =>
+                {
+                    options.FilterHttpRequestMessage = message =>
+                    {
+                        filterHttpRequestMessageCalled = true;
+                        return true;
+                    };
+                    options.Enrich = (HttpResponseMessage response, ref TagList tags) =>
+                    {
+                        enrichWithHttpResponseMessageCalled = true;
+
+                        tags.Add(SemanticConventions.AttributeHttpRoute, "/{path}");
+                    };
+                })
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+
+            try
+            {
+                using var c = new HttpClient();
+                using var request = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(tc.Url),
+                    Method = new HttpMethod(tc.Method),
+                    Version = new Version(2, 0),
+                };
+
+                if (tc.Headers != null)
+                {
+                    foreach (var header in tc.Headers)
+                    {
+                        request.Headers.Add(header.Key, header.Value);
+                    }
+                }
+
+                await c.SendAsync(request).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                // test case can intentionally send request that will result in exception
+            }
+
+            meterProvider.Dispose();
+
+            var metric = metrics
+                .SingleOrDefault(metric => metric.Name == "http.client.duration");
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (var p in metric.GetMetricPoints())
+            {
+                metricPoints.Add(p);
+            }
+
+            var metricPoint = metricPoints[0];
+
+            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            int i = 0;
+            foreach (var tag in metricPoint.Tags)
+            {
+                attributes[i++] = tag;
+            }
+
+
+            if (tc.ResponseExpected)
+            {
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
+        }
+
+
+        [Theory]
+        [MemberData(nameof(TestData))]
         public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
         {
             bool enrichWithHttpWebRequestCalled = false;
