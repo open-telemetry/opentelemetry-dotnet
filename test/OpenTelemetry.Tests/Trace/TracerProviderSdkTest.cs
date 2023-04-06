@@ -17,6 +17,7 @@
 using System.Diagnostics;
 using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Resources.Tests;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -1077,9 +1078,11 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.NotNull(resource);
             Assert.NotEqual(Resource.Empty, resource);
-            Assert.Single(resource.Attributes);
-            Assert.Equal(ResourceSemanticConventions.AttributeServiceName, resource.Attributes.FirstOrDefault().Key);
-            Assert.Contains("unknown_service", (string)resource.Attributes.FirstOrDefault().Value);
+
+            var attributes = resource.Attributes;
+            Assert.Equal(4, attributes.Count());
+            ResourceTest.ValidateDefaultAttributes(attributes);
+            ResourceTest.ValidateTelemetrySdkAttributes(attributes);
         }
 
         [Theory]
