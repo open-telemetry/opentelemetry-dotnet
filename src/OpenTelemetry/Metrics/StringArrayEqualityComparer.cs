@@ -50,7 +50,7 @@ namespace OpenTelemetry.Metrics
 
         public int GetHashCode(string[] strings)
         {
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             HashCode hashCode = default;
             for (int i = 0; i < strings.Length; i++)
             {
