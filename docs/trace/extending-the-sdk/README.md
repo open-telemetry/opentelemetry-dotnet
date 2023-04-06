@@ -215,7 +215,7 @@ Writing an instrumentation library typically involves 3 steps.
 4. The fourth step is an optional step, and involves making any member required
    to enable the instrumentation public. If instrumentation is enabled on e.g connection
    basis, consider adding an API that allows to start tracking new connections after
-   the SDK is initialized.
+   the tracer is initialized.
    This allows [OpenTelemetry .NET Automatic Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation)
    support for the instrumentation library to depend on public API,
    instead of internal implementation details, making the support more reliable.
