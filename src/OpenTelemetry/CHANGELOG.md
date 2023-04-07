@@ -2,13 +2,16 @@
 
 ## Unreleased
 
-* The default resource provided by `ResourceBuilder.CreateDefault()` now
-  adds the `telemetry.sdk.*` attributes defined in the
+* The default resource provided by `ResourceBuilder.CreateDefault()` now adds
+  the `telemetry.sdk.*` attributes defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).
   ([#4369](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4369))
 * Fixed an issue with `HashCode` computations throwing exceptions on .NET
   Standard 2.1 targets.
   ([#4362](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4362))
+* Update value of the resource attribute `telemetry.sdk.version` to show the tag
+  name which resembles the package version of the SDK.
+  ([#4375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4375))
 
 ## 1.5.0-alpha.2
 
