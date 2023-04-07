@@ -174,7 +174,8 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultiThreadedHistogramUpdateAndSnapShotTest()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramSumCount, null, null, boundaries);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries);
+
             var argsToThread = new ThreadArguments
             {
                 HistogramPoint = histogramPoint,
@@ -190,7 +191,6 @@ namespace OpenTelemetry.Metrics.Tests
                 updateThreads[i].Start(argsToThread);
             }
 
-            argsToThread.MreToEnsureAllThreadsStart.WaitOne();
             snapshotThread.Start(argsToThread);
 
             for (int i = 0; i < numberOfThreads; ++i)
@@ -200,8 +200,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             snapshotThread.Join();
 
-            var sum = histogramPoint.GetHistogramSum();
-            Assert.Equal(400, sum);
+            // last snapshot
+            histogramPoint.TakeSnapshot(outputDelta: true);
+
+            var lastDelta = histogramPoint.GetHistogramSum();
+            Assert.Equal(10000, argsToThread.SumOfDelta + lastDelta);
         }
 
         private static void HistogramSnapshotThread(object obj)
@@ -212,18 +215,18 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
-            mreToEnsureAllThreadsStart.WaitOne();
 
-            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 10)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
             {
-                args.HistogramPoint.TakeSnapshot(outputDelta: false);
+                mreToEnsureAllThreadsStart.Set();
             }
 
-            // ensure the last snapshot will be called
-            Thread.Sleep(1000);
-            for (int i = 0; i < 10; ++i)
+            double curSnapshotDelta;
+            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 10)
             {
-                args.HistogramPoint.TakeSnapshot(outputDelta: false);
+                args.HistogramPoint.TakeSnapshot(outputDelta: true);
+                curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
+                args.SumOfDelta += curSnapshotDelta;
             }
         }
 
@@ -236,21 +239,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
-            if (Interlocked.Increment(ref args.ThreadStartedCount) == 10)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
 
-            args.HistogramPoint.Update(-10);
-            args.HistogramPoint.Update(0);
-            args.HistogramPoint.Update(1);
-            args.HistogramPoint.Update(9);
+            mreToEnsureAllThreadsStart.WaitOne();
 
-            Thread.Sleep(1000);
-
-            args.HistogramPoint.Update(10);
-            args.HistogramPoint.Update(11);
-            args.HistogramPoint.Update(19);
+            for (int i = 0; i < 100; ++i)
+            {
+                args.HistogramPoint.Update(10);
+            }
 
             Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
         }
@@ -261,6 +260,7 @@ namespace OpenTelemetry.Metrics.Tests
             public ManualResetEvent MreToEnsureAllThreadsStart;
             public int ThreadStartedCount;
             public long ThreadsFinishedAllUpdatesCount;
+            public double SumOfDelta;
         }
     }
 }
