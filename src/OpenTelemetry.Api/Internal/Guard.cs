@@ -42,7 +42,7 @@ namespace System.Runtime.CompilerServices
 }
 #endif
 
-#if !NETCOREAPP3_0_OR_GREATER && !NETSTANDARD2_1_OR_GREATER
+#if !NET6_0_OR_GREATER && !NETSTANDARD2_1_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
     /// <summary>Specifies that an output is not <see langword="null"/> even if
