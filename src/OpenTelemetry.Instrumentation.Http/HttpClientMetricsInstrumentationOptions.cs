@@ -11,6 +11,11 @@ namespace OpenTelemetry.Instrumentation.Http;
 /// </summary>
 public class HttpClientMetricsInstrumentationOptions
 {
+    /// <summary>
+    /// Delegate for enrichment of recorded metric with additional tags.
+    /// </summary>
+    /// <param name="response"><see cref="HttpResponseMessage"/>: the HttpResponseMessage object.</param>
+    /// <param name="tags"><see cref="TagList"/>: List of current tags. You can add additional tags to this list. </param>
     public delegate void HttpClientMetricEnrichmentFunc(HttpResponseMessage response, ref TagList tags);
 
     /// <summary>
@@ -38,12 +43,6 @@ public class HttpClientMetricsInstrumentationOptions
     /// <summary>
     /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="HttpResponseMessage"/>.
     /// </summary>
-    /// <remarks>
-    /// <para><b>EnrichWithHttpResponseMessage is only executed on .NET and .NET
-    /// Core runtimes. <see cref="HttpClient"/> and <see
-    /// cref="HttpWebRequest"/> on .NET and .NET Core are both implemented
-    /// using <see cref="HttpRequestMessage"/>.</b></para>
-    /// </remarks>
     public HttpClientMetricEnrichmentFunc Enrich { get; set; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

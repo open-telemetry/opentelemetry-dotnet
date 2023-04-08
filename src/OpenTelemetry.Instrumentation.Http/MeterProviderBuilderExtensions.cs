@@ -37,11 +37,24 @@ namespace OpenTelemetry.Metrics
             return AddHttpClientInstrumentation(builder, name: null, configureHttpClientMetricsInstrumentationOptions: null);
         }
 
+        /// <summary>
+        /// Enables HttpClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+        /// <param name="configureHttpClientMetricsInstrumentationOptions">Callback action for configuring <see cref="HttpClientMetricsInstrumentationOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddHttpClientInstrumentation(this MeterProviderBuilder builder, Action<HttpClientMetricsInstrumentationOptions> configureHttpClientMetricsInstrumentationOptions)
         {
             return AddHttpClientInstrumentation(builder, name: null, configureHttpClientMetricsInstrumentationOptions);
         }
 
+        /// <summary>
+        /// Enables HttpClient instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+        /// <param name="name">Name which is used when retrieving options.</param>
+        /// <param name="configureHttpClientMetricsInstrumentationOptions">Callback action for configuring <see cref="HttpClientMetricsInstrumentationOptions"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddHttpClientInstrumentation(this MeterProviderBuilder builder, string name, Action<HttpClientMetricsInstrumentationOptions> configureHttpClientMetricsInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
@@ -60,8 +73,6 @@ namespace OpenTelemetry.Metrics
 
             // TODO: Handle HttpClientInstrumentationOptions
             //   SetHttpFlavor - seems like this would be handled by views
-            //   Filter - makes sense for metric instrumentation
-            //   Enrich - do we want a similar kind of functionality for metrics?
             //   RecordException - probably doesn't make sense for metric instrumentation
 
             builder.AddMeter(HttpClientMetrics.InstrumentationName);
