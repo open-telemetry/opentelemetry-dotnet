@@ -41,10 +41,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnEventWritten(string name, object payload)
         {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
             switch (name)
             {
-                case OnStopEvent when Sdk.SuppressInstrumentation:
-                    return;
                 case OnStopEvent:
                 {
                     this.OnStopActivity(Activity.Current, payload);

@@ -16,7 +16,9 @@
 
 using System.Diagnostics;
 using System.Net;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
@@ -57,7 +59,7 @@ public class HttpClientMetricsInstrumentationOptions
     public Func<HttpRequestMessage, bool> FilterHttpRequestMessage { get; set; }
 
     /// <summary>
-    /// Gets or sets an action to enrich an <see cref="Activity"/> with <see cref="HttpResponseMessage"/>.
+    /// Gets or sets an function to enrich a recorded metric with additional custom tags.
     /// </summary>
     public HttpClientMetricEnrichmentFunc Enrich { get; set; }
 

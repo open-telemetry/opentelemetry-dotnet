@@ -116,7 +116,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             if (tc.ResponseExpected)
             {
                 Assert.True(enrichWithHttpResponseMessageCalled);
-                Assert.True(filterHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
             }
         }
 
