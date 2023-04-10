@@ -49,10 +49,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             switch (name)
             {
                 case OnStopEvent:
-                {
-                    this.OnStopActivity(Activity.Current, payload);
-                    break;
-                }
+                    {
+                        this.OnStopActivity(Activity.Current, payload);
+                        break;
+                    }
             }
         }
 
