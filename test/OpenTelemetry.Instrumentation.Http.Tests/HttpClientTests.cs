@@ -68,7 +68,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .AddInMemoryExporter(metrics)
                 .Build();
 
-
             try
             {
                 using var c = new HttpClient();
@@ -114,13 +113,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 attributes[i++] = tag;
             }
 
-
             if (tc.ResponseExpected)
             {
                 Assert.True(enrichWithHttpResponseMessageCalled);
+                Assert.True(filterHttpRequestMessageCalled);
             }
         }
-
 
         [Theory]
         [MemberData(nameof(TestData))]

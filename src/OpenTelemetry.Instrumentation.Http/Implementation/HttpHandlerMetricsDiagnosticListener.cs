@@ -27,7 +27,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     {
         internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
-
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<HttpRequestMessage> stopRequestFetcher = new("Request");
         private readonly HttpClientMetricsInstrumentationOptions options;
