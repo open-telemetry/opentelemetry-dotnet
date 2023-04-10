@@ -99,10 +99,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             meterProvider.Dispose();
 
-
-
 #if NETFRAMEWORK
             Assert.Empty(metrics);
+            if (tc.ResponseExpected)
+            {
+                Assert.False(enrichWithHttpResponseMessageCalled);
+                Assert.False(filterHttpRequestMessageCalled);
+            }
 #else
 
             var metric = metrics
