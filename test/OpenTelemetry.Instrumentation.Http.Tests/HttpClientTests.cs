@@ -75,7 +75,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 {
                     RequestUri = new Uri(tc.Url),
                     Method = new HttpMethod(tc.Method),
+#if NETFRAMEWORK
+                    Version = new Version(1, 1),
+#else
                     Version = new Version(2, 0),
+#endif
                 };
 
                 if (tc.Headers != null)
@@ -95,8 +99,16 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             meterProvider.Dispose();
 
+
+
+#if NETFRAMEWORK
+            Assert.Empty(metrics);
+#else
+
             var metric = metrics
                 .SingleOrDefault(metric => metric.Name == "http.client.duration");
+
+            Assert.NotNull(metric);
 
             var metricPoints = new List<MetricPoint>();
             foreach (var p in metric.GetMetricPoints())
@@ -106,18 +118,19 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var metricPoint = metricPoints[0];
 
-            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
-            int i = 0;
+            var attributes = new Dictionary<string, object>();
             foreach (var tag in metricPoint.Tags)
             {
-                attributes[i++] = tag;
+                attributes.Add(tag.Key, tag.Value);
             }
 
             if (tc.ResponseExpected)
             {
                 Assert.True(enrichWithHttpResponseMessageCalled);
                 Assert.True(filterHttpRequestMessageCalled);
+                Assert.True(attributes.ContainsKey(SemanticConventions.AttributeHttpRoute));
             }
+#endif
         }
 
         [Theory]
