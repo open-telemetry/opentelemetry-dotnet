@@ -13,7 +13,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\GrpcTagHelper.cs" Link="Includes\GrpcTagHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Shared\Internals\*" Link="Includes\%(Filename)%(Extension)" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Shared\Internals\*.cs" Link="Includes\%(Filename).cs" />
   </ItemGroup>
 
   <ItemGroup>

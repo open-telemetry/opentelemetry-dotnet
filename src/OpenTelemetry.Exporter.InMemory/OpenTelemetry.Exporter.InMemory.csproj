@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Shared\Internals\*" Link="Includes\%(Filename)%(Extension)" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Shared\Internals\*.cs" Link="Includes\%(Filename).cs" />
   </ItemGroup>
 
 </Project>
