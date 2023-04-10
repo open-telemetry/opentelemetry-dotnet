@@ -255,6 +255,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "stratified-sampling-example
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-sampler", "docs\trace\links-based-sampler\links-sampler.csproj", "{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Api.Tests", "test\OpenTelemetry.Api.Tests\OpenTelemetry.Api.Tests.csproj", "{FD8433F4-EDCF-475C-9B4A-625D3DE11671}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -541,6 +543,10 @@ Global
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,6 +17,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -59,6 +60,9 @@ namespace OpenTelemetry.Metrics
             Action<AspNetCoreMetricsInstrumentationOptions> configureAspNetCoreInstrumentationOptions)
         {
             Guard.ThrowIfNull(builder);
+
+            // Note: Warm-up the status code mapping.
+            _ = TelemetryHelper.BoxedStatusCodes;
 
             name ??= Options.DefaultName;
 

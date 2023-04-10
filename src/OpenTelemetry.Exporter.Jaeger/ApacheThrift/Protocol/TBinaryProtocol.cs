@@ -192,7 +192,7 @@ namespace Thrift.Protocol
             WriteI64(BitConverter.DoubleToInt64Bits(d));
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
         public override void WriteBinary(ReadOnlySpan<byte> bytes)
         {
             WriteI32(bytes.Length);

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Improve perf by avoiding boxing of common status codes values.
+  ([#4360](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4360),
+  [#4363](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4363))
+
 ## 1.0.0-rc9.14
 
 Released 2023-Feb-24
