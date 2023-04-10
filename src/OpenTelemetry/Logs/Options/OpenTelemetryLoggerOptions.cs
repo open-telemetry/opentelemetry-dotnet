@@ -31,13 +31,6 @@ namespace OpenTelemetry.Logs
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not attributes specified
-        /// via log state should be included on generated <see
-        /// cref="LogRecord"/>s. Default value: <see langword="true"/>.
-        /// </summary>
-        public bool IncludeAttributes { get; set; } = true;
-
-        /// <summary>
         /// Gets or sets a value indicating whether or not formatted log message
         /// should be included on generated <see cref="LogRecord"/>s. Default
         /// value: <see langword="false"/>.
@@ -58,14 +51,6 @@ namespace OpenTelemetry.Logs
         public bool IncludeScopes { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not the <see
-        /// cref="Activity.TraceStateString"/> for the current <see
-        /// cref="Activity"/> should be included on generated <see
-        /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
-        /// </summary>
-        public bool IncludeTraceState { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether or not log state should be
         /// parsed into <see cref="LogRecord.Attributes"/> on generated <see
         /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
@@ -83,6 +68,21 @@ namespace OpenTelemetry.Logs
         /// </list>
         /// </remarks>
         public bool ParseStateValues { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not attributes specified
+        /// via log state should be included on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="true"/>.
+        /// </summary>
+        internal bool IncludeAttributes { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see
+        /// cref="Activity.TraceStateString"/> for the current <see
+        /// cref="Activity"/> should be included on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
+        /// </summary>
+        internal bool IncludeTraceState { get; set; }
 
         /// <summary>
         /// Adds processor to the options.

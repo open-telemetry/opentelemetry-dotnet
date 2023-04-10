@@ -53,7 +53,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 builder.Services.Configure<OpenTelemetryLoggerOptions>(o =>
                 {
                     optionsValidated = true;
-                    Assert.True(o.IncludeAttributes);
                     Assert.False(o.ParseStateValues);
                 });
             });

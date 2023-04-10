@@ -2,10 +2,6 @@ OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadO
 OpenTelemetry.Logs.LogRecord.Attributes.set -> void
 OpenTelemetry.Logs.LogRecord.Body.get -> string?
 OpenTelemetry.Logs.LogRecord.Body.set -> void
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeAttributes.get -> bool
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeAttributes.set -> void
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeTraceState.get -> bool
-OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeTraceState.set -> void
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter.AlwaysOffExemplarFilter() -> void
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter
