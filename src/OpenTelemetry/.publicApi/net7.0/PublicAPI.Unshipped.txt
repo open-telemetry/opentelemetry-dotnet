@@ -1,3 +1,4 @@
+#nullable enable
 abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
 abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T data) -> void
 abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
