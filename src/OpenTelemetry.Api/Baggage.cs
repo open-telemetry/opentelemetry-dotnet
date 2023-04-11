@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Context;
 using OpenTelemetry.Internal;
 
@@ -25,6 +26,7 @@ namespace OpenTelemetry
     /// <remarks>
     /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md">Baggage API</a>.
     /// </remarks>
+    [SuppressMessage("RS0026", "RS0026", Justification = "Multiple API violates the backcompt requirement - add multiple overloads with optional paramters.")]
     public readonly struct Baggage : IEquatable<Baggage>
     {
         private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
