@@ -117,7 +117,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             HashCode hashCode = default;
             hashCode.Add(this.Decision);
             hashCode.Add(this.Attributes);
