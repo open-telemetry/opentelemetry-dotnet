@@ -24,7 +24,7 @@ namespace OpenTelemetry.Trace
     /// Tracer is the class responsible for creating <see cref="TelemetrySpan"/>.
     /// </summary>
     /// <remarks>Tracer is a wrapper around <see cref="ActivitySource"/> class.</remarks>
-    [SuppressMessage("RS0026", "RS0026", Justification = "Multiple API violates the backcompt requirement - add multiple overloads with optional paramters.")]
+    [SuppressMessage("RS0026", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters.")]
     public class Tracer
     {
         internal readonly ActivitySource ActivitySource;
