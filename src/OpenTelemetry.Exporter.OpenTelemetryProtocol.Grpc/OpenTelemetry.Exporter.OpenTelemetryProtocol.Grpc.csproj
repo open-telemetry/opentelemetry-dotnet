@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net7.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry protocol exporter over gRPC for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP;gRPC</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
