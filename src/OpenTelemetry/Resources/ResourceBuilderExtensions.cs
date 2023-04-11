@@ -32,7 +32,7 @@ namespace OpenTelemetry.Resources
         {
             [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
             [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
-            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = GetFileVersion(),
+            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = GetAssemblyInformationalVersion(),
         });
 
         /// <summary>
@@ -126,11 +126,24 @@ namespace OpenTelemetry.Resources
                 .AddDetectorInternal(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
         }
 
-        private static string GetFileVersion()
+        private static string GetAssemblyInformationalVersion()
         {
             try
             {
-                return typeof(Resource).Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? string.Empty;
+                var informationalVersion = typeof(Resource).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+                if (informationalVersion == null)
+                {
+                    return string.Empty;
+                }
+
+                // informationalVersion could be in the following format:
+                // {majorVersion}.{minorVersion}.{patchVersion}.{pre-release label}.{pre-release version}.{gitHeight}.{Git SHA of current commit}
+                // The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
+                // for example: 1.5.0-alpha.1.40+807f703e1b4d9874a92bd86d9f2d4ebe5b5d52e4
+
+                var indexOfPlusSign = informationalVersion.IndexOf('+');
+                return indexOfPlusSign > 0 ? informationalVersion.Substring(0, indexOfPlusSign) : informationalVersion;
             }
             catch (Exception)
             {
