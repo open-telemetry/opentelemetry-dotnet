@@ -28,5 +28,4 @@ else
 {
     Write-Host "Extracting package $package@$version from '$workDir\$package.$version.zip' to '$workDir\$package\$version' for compatibility check"
     Expand-Archive -LiteralPath "$workDir\$package.$version.zip" -DestinationPath "$workDir\$package\$version" -Force
-    
 }
