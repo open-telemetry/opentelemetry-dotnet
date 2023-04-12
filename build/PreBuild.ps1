@@ -17,7 +17,15 @@ if (Test-Path -Path "$workDir\$package.$version.zip")
 else
 {
     Write-Host "Retrieving package $package@$version for compatibility check"
-    Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/$package/$version -Outfile "$workDir\$package.$version.zip"
+    try
+    {
+        $Response = Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/$package/$version -Outfile "$workDir\$package.$version.zip"
+    }
+    catch
+    {
+        $StatusCode = $_.Exception.Response.StatusCode.value__
+        throw "Error downloading the package $package@$version. Status code of the received response: $StatusCode"
+    }
 }
 
 if (Test-Path -Path "$workDir\$package\$version\lib")
@@ -27,5 +35,12 @@ if (Test-Path -Path "$workDir\$package\$version\lib")
 else
 {
     Write-Host "Extracting package $package@$version from '$workDir\$package.$version.zip' to '$workDir\$package\$version' for compatibility check"
-    Expand-Archive -LiteralPath "$workDir\$package.$version.zip" -DestinationPath "$workDir\$package\$version" -Force
+    try
+    {
+        Expand-Archive -LiteralPath "$workDir\$package.$version.zip" -DestinationPath "$workDir\$package\$version" -Force
+    }
+    catch
+    {
+        throw "Error extracting $package@$version.zip"
+    }
 }
