@@ -6,7 +6,6 @@
     <Description>ASP.NET Core middleware for hosting OpenTelemetry .NET Prometheus Exporter</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-    <LastVersionBinaryApiCompatCheck>false</LastVersionBinaryApiCompatCheck>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
 
     <!-- this is temporary. will remove in future PR. -->
