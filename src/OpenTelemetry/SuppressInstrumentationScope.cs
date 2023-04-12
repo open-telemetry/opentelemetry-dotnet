@@ -24,21 +24,24 @@ namespace OpenTelemetry
     public sealed class SuppressInstrumentationScope : IDisposable
     {
         // An integer value which controls whether instrumentation should be suppressed (disabled).
-        // * 0: instrumentation is not suppressed
-        // * [int.MinValue, -1]: instrumentation is always suppressed
-        // * [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
-        private static readonly RuntimeContextSlot<int> Slot = RuntimeContext.RegisterSlot<int>("otel.suppress_instrumentation");
+        // * null: instrumentation is not suppressed
+        // * Depth = [int.MinValue, -1]: instrumentation is always suppressed
+        // * Depth = [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
+        private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation");
 
-        private readonly int previousValue;
+        private readonly SuppressInstrumentationScope? previousScope;
         private bool disposed;
 
         internal SuppressInstrumentationScope(bool value = true)
         {
-            this.previousValue = Slot.Get();
-            Slot.Set(value ? -1 : 0);
+            this.previousScope = Slot.Get();
+            this.Depth = value ? -1 : 0;
+            Slot.Set(this);
         }
 
-        internal static bool IsSuppressed => Slot.Get() != 0;
+        internal static bool IsSuppressed => (Slot.Get()?.Depth ?? 0) != 0;
+
+        internal int Depth { get; private set; }
 
         /// <summary>
         /// Begins a new scope in which instrumentation is suppressed (disabled).
@@ -69,22 +72,35 @@ namespace OpenTelemetry
 
         /// <summary>
         /// Enters suppression mode.
-        /// If suppression mode is enabled (slot is a negative integer), do nothing.
-        /// If suppression mode is not enabled (slot is zero), enter reference-counting suppression mode.
-        /// If suppression mode is enabled (slot is a positive integer), increment the ref count.
+        /// If suppression mode is enabled (slot.Depth is a negative integer), do nothing.
+        /// If suppression mode is not enabled (slot is null), enter reference-counting suppression mode.
+        /// If suppression mode is enabled (slot.Depth is a positive integer), increment the ref count.
         /// </summary>
         /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Enter()
         {
-            var value = Slot.Get();
+            var currentScope = Slot.Get();
 
-            if (value >= 0)
+            if (currentScope == null)
             {
-                Slot.Set(++value);
+                Slot.Set(
+                    new SuppressInstrumentationScope(true)
+                    {
+                        Depth = 1,
+                    });
+
+                return 1;
             }
 
-            return value;
+            var currentDepth = currentScope.Depth;
+
+            if (currentDepth >= 0)
+            {
+                currentScope.Depth = ++currentDepth;
+            }
+
+            return currentDepth;
         }
 
         /// <inheritdoc/>
@@ -92,7 +108,7 @@ namespace OpenTelemetry
         {
             if (!this.disposed)
             {
-                Slot.Set(this.previousValue);
+                Slot.Set(this.previousScope);
                 this.disposed = true;
             }
         }
@@ -100,27 +116,48 @@ namespace OpenTelemetry
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int IncrementIfTriggered()
         {
-            var value = Slot.Get();
+            var currentScope = Slot.Get();
 
-            if (value > 0)
+            if (currentScope == null)
             {
-                Slot.Set(++value);
+                return 0;
             }
 
-            return value;
+            var currentDepth = currentScope.Depth;
+
+            if (currentScope.Depth > 0)
+            {
+                currentScope.Depth = ++currentDepth;
+            }
+
+            return currentDepth;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int DecrementIfTriggered()
         {
-            var value = Slot.Get();
+            var currentScope = Slot.Get();
 
-            if (value > 0)
+            if (currentScope == null)
             {
-                Slot.Set(--value);
+                return 0;
             }
 
-            return value;
+            var currentDepth = currentScope.Depth;
+
+            if (currentScope.Depth > 0)
+            {
+                if (--currentDepth == 0)
+                {
+                    Slot.Set(currentScope.previousScope);
+                }
+                else
+                {
+                    currentScope.Depth = currentDepth;
+                }
+            }
+
+            return currentDepth;
         }
     }
 }

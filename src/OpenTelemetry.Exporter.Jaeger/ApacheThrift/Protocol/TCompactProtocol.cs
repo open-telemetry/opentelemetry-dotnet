@@ -356,7 +356,7 @@ namespace Thrift.Protocol
             Transport.Write(PreAllocatedBuffer, 0, 8);
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
         public override void WriteBinary(ReadOnlySpan<byte> bytes)
         {
             Int32ToVarInt((uint)bytes.Length, ref PreAllocatedVarInt);

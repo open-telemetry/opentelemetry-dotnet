@@ -59,8 +59,8 @@ namespace OpenTelemetry.Resources
         internal IServiceProvider? ServiceProvider { get; set; }
 
         /// <summary>
-        /// Creates a <see cref="ResourceBuilder"/> instance with Default
-        /// service.name added. See <a
+        /// Creates a <see cref="ResourceBuilder"/> instance with default attributes
+        /// added. See <a
         /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value">resource
         /// semantic conventions</a> for details.
         /// Additionally it adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME environment variables
@@ -70,7 +70,10 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddResource(DefaultResource).AddEnvironmentVariableDetector();
+            => new ResourceBuilder()
+                .AddResource(DefaultResource)
+                .AddTelemetrySdk()
+                .AddEnvironmentVariableDetector();
 
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.

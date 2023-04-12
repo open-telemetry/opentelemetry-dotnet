@@ -38,10 +38,7 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal int IsCriticalSectionOccupied = 0;
 
-    internal int SnapshotScale;
-    internal long SnapshotZeroCount;
-    internal CircularBufferBuckets SnapshotPositiveBuckets;
-    internal CircularBufferBuckets SnapshotNegativeBuckets;
+    internal ExponentialHistogramData SnapshotExponentialHistogramData = new ExponentialHistogramData();
 
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
@@ -52,12 +49,10 @@ internal sealed class Base2ExponentialBucketHistogram
     /// <param name="maxBuckets">
     /// The maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket. The default value is 160.
     /// </param>
-    public Base2ExponentialBucketHistogram(int maxBuckets = 160)
-        : this(maxBuckets, 20)
-    {
-    }
-
-    internal Base2ExponentialBucketHistogram(int maxBuckets, int scale)
+    /// <param name="scale">
+    /// Maximum scale factor. The default value is 20.
+    /// </param>
+    public Base2ExponentialBucketHistogram(int maxBuckets = 160, int scale = 20)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
@@ -134,9 +129,6 @@ internal sealed class Base2ExponentialBucketHistogram
     internal long ZeroCount { get; private set; }
 
     internal CircularBufferBuckets NegativeBuckets { get; }
-
-    internal ExponentialBucketSnapshot ExponentialBucketSnapshot =>
-        new ExponentialBucketSnapshot(this.SnapshotScale, this.SnapshotZeroCount, this.SnapshotPositiveBuckets, this.SnapshotNegativeBuckets);
 
     /// <summary>
     /// Maps a finite positive IEEE 754 double-precision floating-point
@@ -231,9 +223,25 @@ internal sealed class Base2ExponentialBucketHistogram
 
     internal void Snapshot()
     {
-        this.SnapshotScale = this.Scale;
-        this.SnapshotZeroCount = this.ZeroCount;
-        this.SnapshotPositiveBuckets = this.PositiveBuckets.Copy();
-        this.SnapshotNegativeBuckets = this.NegativeBuckets.Copy();
+        this.SnapshotExponentialHistogramData.Scale = this.Scale;
+        this.SnapshotExponentialHistogramData.ZeroCount = this.ZeroCount;
+        this.SnapshotExponentialHistogramData.PositiveBuckets.SnapshotBuckets(this.PositiveBuckets);
+        this.SnapshotExponentialHistogramData.NegativeBuckets.SnapshotBuckets(this.NegativeBuckets);
+    }
+
+    internal ExponentialHistogramData GetExponentialHistogramData()
+    {
+        return this.SnapshotExponentialHistogramData;
+    }
+
+    internal Base2ExponentialBucketHistogram Copy()
+    {
+        Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
+        var copy = new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale);
+        copy.SnapshotSum = this.SnapshotSum;
+        copy.SnapshotMin = this.SnapshotMin;
+        copy.SnapshotMax = this.SnapshotMax;
+        copy.SnapshotExponentialHistogramData = this.SnapshotExponentialHistogramData.Copy();
+        return copy;
     }
 }

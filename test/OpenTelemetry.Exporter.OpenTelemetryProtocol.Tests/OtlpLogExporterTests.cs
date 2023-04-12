@@ -18,12 +18,15 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
@@ -498,6 +501,69 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
             Assert.Null(exceptionStackTraceAtt);
+        }
+
+        [Fact]
+        public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
+        {
+            // Arrange.
+            var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+            var emptyLogRecords = Array.Empty<LogRecord>();
+            var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
+            var sut = new OtlpLogExporter(
+                            new OtlpExporterOptions(),
+                            new SdkLimitOptions(),
+                            fakeExportClient.Object);
+
+            // Act.
+            var result = sut.Export(emptyBatch);
+
+            // Assert.
+            fakeExportClient.Verify(x => x.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default), Times.Once());
+        }
+
+        [Fact]
+        public void Export_WhenExportClientThrowsException_ReturnsExportResultFailure()
+        {
+            // Arrange.
+            var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+            var emptyLogRecords = Array.Empty<LogRecord>();
+            var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
+            fakeExportClient
+                .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
+                .Throws(new Exception("Test Exception"));
+            var sut = new OtlpLogExporter(
+                            new OtlpExporterOptions(),
+                            new SdkLimitOptions(),
+                            fakeExportClient.Object);
+
+            // Act.
+            var result = sut.Export(emptyBatch);
+
+            // Assert.
+            Assert.Equal(ExportResult.Failure, result);
+        }
+
+        [Fact]
+        public void Export_WhenExportIsSuccessful_ReturnsExportResultSuccess()
+        {
+            // Arrange.
+            var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+            var emptyLogRecords = Array.Empty<LogRecord>();
+            var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
+            fakeExportClient
+                .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
+                .Returns(true);
+            var sut = new OtlpLogExporter(
+                            new OtlpExporterOptions(),
+                            new SdkLimitOptions(),
+                            fakeExportClient.Object);
+
+            // Act.
+            var result = sut.Export(emptyBatch);
+
+            // Assert.
+            Assert.Equal(ExportResult.Success, result);
         }
 
         private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)

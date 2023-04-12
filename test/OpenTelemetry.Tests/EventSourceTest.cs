@@ -29,12 +29,6 @@ namespace OpenTelemetry.Tests
         }
 
         [Fact]
-        public void EventSourceTest_OpenTelemetryApiEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetryApiEventSource.Log);
-        }
-
-        [Fact]
         public void EventSourceTest_OpenTelemetrySdkEventSource()
         {
             EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetrySdkEventSource.Log);

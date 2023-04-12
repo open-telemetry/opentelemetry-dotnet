@@ -383,6 +383,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
         [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
@@ -472,6 +474,135 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+        [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
+        public void TestExponentialHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
+        {
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
+                })
+                .AddView(instrument =>
+                {
+                    return new Base2ExponentialBucketHistogramConfiguration();
+                })
+                .Build();
+
+            var attributes = ToAttributes(keysValues).ToArray();
+            if (longValue.HasValue)
+            {
+                var histogram = meter.CreateHistogram<long>(name, unit, description);
+                histogram.Record(longValue.Value, attributes);
+                histogram.Record(0, attributes);
+            }
+            else
+            {
+                var histogram = meter.CreateHistogram<double>(name, unit, description);
+                histogram.Record(doubleValue.Value, attributes);
+                histogram.Record(0, attributes);
+            }
+
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+
+            var resourceMetric = request.ResourceMetrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
+
+            Assert.Equal(name, actual.Name);
+            Assert.Equal(description ?? string.Empty, actual.Description);
+            Assert.Equal(unit ?? string.Empty, actual.Unit);
+
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.ExponentialHistogram, actual.DataCase);
+
+            Assert.Null(actual.Gauge);
+            Assert.Null(actual.Sum);
+            Assert.Null(actual.Histogram);
+            Assert.NotNull(actual.ExponentialHistogram);
+            Assert.Null(actual.Summary);
+
+            var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
+                ? OtlpMetrics.AggregationTemporality.Cumulative
+                : OtlpMetrics.AggregationTemporality.Delta;
+            Assert.Equal(otlpAggregationTemporality, actual.ExponentialHistogram.AggregationTemporality);
+
+            Assert.Single(actual.ExponentialHistogram.DataPoints);
+            var dataPoint = actual.ExponentialHistogram.DataPoints.First();
+            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            Assert.Equal(20, dataPoint.Scale);
+            Assert.Equal(2UL, dataPoint.Count);
+            Assert.Equal(1UL, dataPoint.ZeroCount);
+
+            if (longValue.HasValue)
+            {
+                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
+                Assert.Equal((double)longValue, dataPoint.Sum);
+                if (longValue > 0)
+                {
+                    Assert.True(dataPoint.Positive.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                    Assert.True(dataPoint.Negative.Offset == 0);
+                    Assert.Empty(dataPoint.Negative.BucketCounts);
+                }
+                else
+                {
+                    Assert.True(dataPoint.Negative.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Negative.BucketCounts[0]);
+                    Assert.True(dataPoint.Positive.Offset == 0);
+                    Assert.Empty(dataPoint.Positive.BucketCounts);
+                }
+            }
+            else
+            {
+                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
+                Assert.Equal(doubleValue, dataPoint.Sum);
+                if (doubleValue > 0)
+                {
+                    Assert.True(dataPoint.Positive.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
+                    Assert.True(dataPoint.Negative.Offset == 0);
+                    Assert.Empty(dataPoint.Negative.BucketCounts);
+                }
+                else
+                {
+                    Assert.True(dataPoint.Negative.Offset > 0);
+                    Assert.Equal(1UL, dataPoint.Negative.BucketCounts[0]);
+                    Assert.True(dataPoint.Positive.Offset == 0);
+                    Assert.Empty(dataPoint.Positive.BucketCounts);
+                }
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            Assert.Empty(dataPoint.Exemplars);
+        }
+
+        [Theory]
+        [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, -123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, null, -123.45, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
         [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
@@ -535,6 +666,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(1UL, dataPoint.Count);
 
+            // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
             if (longValue.HasValue)
             {
                 Assert.Equal((double)longValue, dataPoint.Sum);

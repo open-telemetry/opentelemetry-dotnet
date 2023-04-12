@@ -11,18 +11,6 @@ on:
     - '**.md'
 
 jobs:
-  sql-test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [net6.0,net7.0]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run sql docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
-
   w3c-trace-context-test:
     runs-on: ubuntu-latest
     strategy:

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Text;
 using Xunit;
@@ -43,7 +45,7 @@ namespace OpenTelemetry.Internal.Tests
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
                 // Emitting event of EventLevel.Warning
-                OpenTelemetrySdkEventSource.Log.ExporterErrorResult(ExportResult.Success);
+                OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("exception");
 
                 int bufferSize = 512;
                 byte[] actualBytes = ReadFile(bufferSize);
@@ -97,12 +99,12 @@ namespace OpenTelemetry.Internal.Tests
 
         private static byte[] ReadFile(int byteCount)
         {
-            var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + "."
+            var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
                     + Process.GetCurrentProcess().Id + ".log";
             var outputFilePath = Path.Combine(".", outputFileName);
             using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             byte[] actualBytes = new byte[byteCount];
-            file.Read(actualBytes, 0, byteCount);
+            _ = file.Read(actualBytes, 0, byteCount);
             return actualBytes;
         }
 
@@ -126,6 +128,7 @@ namespace OpenTelemetry.Internal.Tests
             }
             catch
             {
+                // ignore any exceptions while removing files
             }
         }
     }

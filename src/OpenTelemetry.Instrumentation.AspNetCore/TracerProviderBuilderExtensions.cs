@@ -63,6 +63,9 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
+            // Note: Warm-up the status code mapping.
+            _ = TelemetryHelper.BoxedStatusCodes;
+
             name ??= Options.DefaultName;
 
             if (configureAspNetCoreInstrumentationOptions != null)

@@ -21,12 +21,16 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
-        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
+        private static readonly Meter Meter = new("testMeter");
+        private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
+        private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
+        private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
+        private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
         {
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
             histogramPoint.Update(-1);
             histogramPoint.Update(0);
             histogramPoint.Update(2);
@@ -77,7 +81,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramDistributeToAllBucketsCustom()
         {
             var boundaries = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -125,7 +129,7 @@ namespace OpenTelemetry.Metrics.Tests
                 boundaries[i] = i;
             }
 
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
             // Act
             histogramPoint.Update(-1);
@@ -158,7 +162,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramWithOnlySumCount()
         {
             var boundaries = Array.Empty<double>();
-            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets);
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);
@@ -184,45 +188,93 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.False(enumerator.MoveNext());
         }
 
+        internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
+        {
+            Assert.Equal(expectedHistogram.Scale, data.Scale);
+            Assert.Equal(expectedHistogram.ZeroCount, data.ZeroCount);
+            Assert.Equal(expectedHistogram.PositiveBuckets.Offset, data.PositiveBuckets.Offset);
+            Assert.Equal(expectedHistogram.NegativeBuckets.Offset, data.NegativeBuckets.Offset);
+
+            expectedHistogram.Snapshot();
+            var expectedData = expectedHistogram.GetExponentialHistogramData();
+
+            var actual = new List<long>();
+            foreach (var bucketCount in data.PositiveBuckets)
+            {
+                actual.Add(bucketCount);
+            }
+
+            var expected = new List<long>();
+            foreach (var bucketCount in expectedData.PositiveBuckets)
+            {
+                expected.Add(bucketCount);
+            }
+
+            Assert.Equal(expected, actual);
+
+            actual = new List<long>();
+            foreach (var bucketCount in data.NegativeBuckets)
+            {
+                actual.Add(bucketCount);
+            }
+
+            expected = new List<long>();
+            foreach (var bucketCount in expectedData.NegativeBuckets)
+            {
+                expected.Add(bucketCount);
+            }
+
+            Assert.Equal(expected, actual);
+        }
+
         [Theory]
-        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative)]
-        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta)]
-        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative)]
-        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta)]
-        internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality)
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta, true)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative, false)]
+        [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta, false)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative, false)]
+        [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta, false)]
+        internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality, bool exemplarsEnabled)
         {
             var valuesToRecord = new[] { -10, 0, 1, 9, 10, 11, 19 };
 
+            var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
+            var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
             var aggregatorStore = new AggregatorStore(
-                $"{nameof(this.ExponentialHistogramTests)}",
+                metricStreamIdentity,
                 aggregationType,
                 aggregationTemporality,
                 maxMetricPoints: 1024,
-                Metric.DefaultHistogramBounds,
-                Metric.DefaultExponentialHistogramMaxBuckets);
-
-            var metricPoint = new MetricPoint(
-                aggregatorStore,
-                aggregationType, // TODO: Why is this here? AggregationType is already declared when AggregatorStore was instantiated.
-                tagKeysAndValues: null,
-                Metric.DefaultHistogramBounds,
-                Metric.DefaultExponentialHistogramMaxBuckets);
+                exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
             var expectedHistogram = new Base2ExponentialBucketHistogram();
 
             foreach (var value in valuesToRecord)
             {
-                metricPoint.Update(value);
+                aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object>>());
                 expectedHistogram.Record(value);
             }
 
-            metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta); // TODO: Why outputDelta param? The aggregation temporality was declared when instantiateing the AggregatorStore.
+            aggregatorStore.Snapshot();
+
+            var metricPoints = new List<MetricPoint>();
+
+            foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
 
             var count = metricPoint.GetHistogramCount();
             var sum = metricPoint.GetHistogramSum();
             var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
 
-            AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialBucketSnapshot());
+            AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
             Assert.Equal(40, sum);
             Assert.Equal(7, count);
 
@@ -245,7 +297,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             if (aggregationTemporality == AggregationTemporality.Cumulative)
             {
-                AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialBucketSnapshot());
+                AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
                 Assert.Equal(40, sum);
                 Assert.Equal(7, count);
 
@@ -263,7 +315,7 @@ namespace OpenTelemetry.Metrics.Tests
             else
             {
                 expectedHistogram.Reset();
-                AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialBucketSnapshot());
+                AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
                 Assert.Equal(0, sum);
                 Assert.Equal(0, count);
 
@@ -280,24 +332,45 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
-        private static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialBucketSnapshot buckets)
+        [Theory]
+        [InlineData(-5)]
+        [InlineData(0)]
+        [InlineData(5)]
+        [InlineData(null)]
+        internal void ExponentialMaxScaleConfigWorks(int? maxScale)
         {
-            Assert.Equal(expectedHistogram.Scale, buckets.Scale);
-            Assert.Equal(expectedHistogram.ZeroCount, buckets.ZeroCount);
-            Assert.Equal(expectedHistogram.PositiveBuckets.Offset, buckets.PositiveOffset);
-            Assert.Equal(expectedHistogram.NegativeBuckets.Offset, buckets.NegativeOffset);
-
-            var index = expectedHistogram.PositiveBuckets.Offset;
-            foreach (var bucketCount in buckets.PositiveBuckets)
+            var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
+            if (maxScale.HasValue)
             {
-                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
+                streamConfiguration.MaxScale = maxScale.Value;
             }
 
-            index = expectedHistogram.NegativeBuckets.Offset;
-            foreach (var bucketCount in buckets.NegativeBuckets)
+            var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
+            var aggregatorStore = new AggregatorStore(
+                metricStreamIdentity,
+                AggregationType.Base2ExponentialHistogram,
+                AggregationTemporality.Cumulative,
+                maxMetricPoints: 1024);
+
+            aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
+
+            aggregatorStore.Snapshot();
+
+            var metricPoints = new List<MetricPoint>();
+
+            foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
             {
-                Assert.Equal(expectedHistogram.PositiveBuckets[index++], bucketCount);
+                metricPoints.Add(mp);
             }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+
+            // After a single measurement there will not have been a scale down.
+            // Scale will equal MaxScale.
+            var expectedScale = maxScale.HasValue ? maxScale : Metric.DefaultExponentialHistogramMaxScale;
+            Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
         }
     }
 }

@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
-#if NETCOREAPP3_0_OR_GREATER
+#if NET6_0_OR_GREATER
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
@@ -86,7 +86,7 @@ internal static class MathHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LeadingZero64(long value)
     {
-#if NETCOREAPP3_0_OR_GREATER
+#if NET6_0_OR_GREATER
         return BitOperations.LeadingZeroCount((ulong)value);
 #else
         unchecked

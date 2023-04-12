@@ -1,4 +1,4 @@
-// <copyright file="ExponentialBuckets.cs" company="OpenTelemetry Authors">
+// <copyright file="ExponentialHistogramBuckets.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,44 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
-internal class ExponentialBuckets
+public sealed class ExponentialHistogramBuckets
 {
-    private readonly CircularBufferBuckets buckets;
+    private long[] buckets = Array.Empty<long>();
+    private int size;
 
-    internal ExponentialBuckets(CircularBufferBuckets buckets)
+    internal ExponentialHistogramBuckets()
     {
-        this.buckets = buckets;
     }
 
-    public Enumerator GetEnumerator() => new(this.buckets);
+    public int Offset { get; private set; }
+
+    public Enumerator GetEnumerator() => new(this.buckets, this.size);
+
+    internal void SnapshotBuckets(CircularBufferBuckets buckets)
+    {
+        if (this.buckets.Length != buckets.Capacity)
+        {
+            this.buckets = new long[buckets.Capacity];
+        }
+
+        this.size = buckets.Size;
+        this.Offset = buckets.Offset;
+        buckets.Copy(this.buckets);
+    }
+
+    internal ExponentialHistogramBuckets Copy()
+    {
+        var copy = new ExponentialHistogramBuckets();
+        copy.size = this.size;
+        copy.Offset = this.Offset;
+        copy.buckets = new long[this.buckets.Length];
+        Array.Copy(this.buckets, copy.buckets, this.buckets.Length);
+        return copy;
+    }
 
     /// <summary>
     /// Enumerates the bucket counts of an exponential histogram.
@@ -33,16 +59,16 @@ internal class ExponentialBuckets
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
     public struct Enumerator
     {
-        private readonly int lastIndex;
-        private readonly CircularBufferBuckets buckets;
+        private readonly long[] buckets;
+        private readonly int size;
         private int index;
 
-        internal Enumerator(CircularBufferBuckets buckets)
+        internal Enumerator(long[] buckets, int size)
         {
+            this.index = 0;
+            this.size = size;
             this.buckets = buckets;
-            this.index = buckets.Offset;
             this.Current = default;
-            this.lastIndex = buckets.Size - 1;
         }
 
         /// <summary>
@@ -60,7 +86,7 @@ internal class ExponentialBuckets
         /// collection.</returns>
         public bool MoveNext()
         {
-            if (this.index < this.buckets.Size)
+            if (this.index < this.size)
             {
                 this.Current = this.buckets[this.index++];
                 return true;
