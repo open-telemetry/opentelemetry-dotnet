@@ -12,7 +12,7 @@ if (-Not (Test-Path $workDir))
 
 if (Test-Path -Path "$workDir\$package.$version.zip")
 {
-    Write-Debug "Previous package $package@$version already downloaded for compatibility check"
+    Write-Host "Previous package $package@$version already downloaded for compatibility check"
 }
 else
 {
@@ -30,7 +30,7 @@ else
 
 if (Test-Path -Path "$workDir\$package\$version\lib")
 {
-    Write-Debug "Previous package $package@$version already extracted to '$workDir\$package\$version\lib'"
+    Write-Host "Previous package $package@$version already extracted to '$workDir\$package\$version\lib'"
 }
 else
 {
