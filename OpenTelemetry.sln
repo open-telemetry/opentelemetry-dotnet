@@ -193,7 +193,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "learning-more-instruments", "docs\metrics\learning-more-instruments\learning-more-instruments.csproj", "{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\metrics\getting-started\getting-started.csproj", "{EA60B549-F712-4ABE-8E44-FCA83B78C06E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-console", "docs\metrics\getting-started-console\getting-started-console.csproj", "{EA60B549-F712-4ABE-8E44-FCA83B78C06E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\metrics\extending-the-sdk\extending-the-sdk.csproj", "{1F9D7748-D099-4E25-97F5-9C969D6FF969}"
 EndProject
