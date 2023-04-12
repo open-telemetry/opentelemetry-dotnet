@@ -30,8 +30,7 @@ appBuilder.Services.AddOpenTelemetry()
         {
             metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
         })
-        .AddPrometheusExporter()
-    );
+        .AddPrometheusExporter());
 
 var app = appBuilder.Build();
 
