@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Microsoft.Coyote;
+using Microsoft.Coyote.Logging;
 using Microsoft.Coyote.SystematicTesting;
 using Xunit;
 
@@ -142,7 +143,12 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedLongHistogramTest_Coyote()
         {
-            var config = Configuration.Create();
+            var config = Configuration.Create()
+                        .WithTestingIterations(100)
+                        .WithVerbosityEnabled(VerbosityLevel.Debug)
+                        .WithConsoleLoggingEnabled()
+                        .WithPartiallyControlledConcurrencyAllowed(false);
+
             var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
 
             test.Run();
@@ -182,7 +188,7 @@ namespace OpenTelemetry.Metrics.Tests
                 MreToEnsureAllThreadsStart = new ManualResetEvent(false),
             };
 
-            var numberOfThreads = 10;
+            var numberOfThreads = 2;
             var snapshotThread = new Thread(HistogramSnapshotThread);
             Thread[] updateThreads = new Thread[numberOfThreads];
             for (int i = 0; i < numberOfThreads; ++i)
@@ -204,7 +210,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.TakeSnapshot(outputDelta: true);
 
             var lastDelta = histogramPoint.GetHistogramSum();
-            Assert.Equal(10000, argsToThread.SumOfDelta + lastDelta);
+            Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
         }
 
         private static void HistogramSnapshotThread(object obj)
@@ -216,19 +222,23 @@ namespace OpenTelemetry.Metrics.Tests
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
-            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
 
             double curSnapshotDelta;
-            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 10)
+            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 2)
             {
                 args.HistogramPoint.TakeSnapshot(outputDelta: true);
                 curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
                 args.SumOfDelta += curSnapshotDelta;
             }
         }
+
+        // notes: decrease the number of threads and iterations for coyote to hit the error call path easier
+        // 2 readers, 1 writer (5~10 iterations)
+        // does it interleave at the right place
 
         private static void HistogramUpdateThread(object obj)
         {
@@ -239,14 +249,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
-            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
 
             mreToEnsureAllThreadsStart.WaitOne();
 
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 10; ++i)
             {
                 args.HistogramPoint.Update(10);
             }
