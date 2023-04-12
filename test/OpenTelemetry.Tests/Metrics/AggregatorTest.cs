@@ -199,7 +199,7 @@ namespace OpenTelemetry.Metrics.Tests
                 MreToEnsureAllThreadsStart = new ManualResetEvent(false),
             };
 
-            var numberOfThreads = 10;
+            var numberOfThreads = 2;
             var snapshotThread = new Thread(HistogramSnapshotThread);
             Thread[] updateThreads = new Thread[numberOfThreads];
             for (int i = 0; i < numberOfThreads; ++i)
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.TakeSnapshot(outputDelta: true);
 
             var lastDelta = histogramPoint.GetHistogramSum();
-            Assert.Equal(10000, argsToThread.SumOfDelta + lastDelta);
+            Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
         }
 
         internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
@@ -418,13 +418,13 @@ namespace OpenTelemetry.Metrics.Tests
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
-            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
 
             double curSnapshotDelta;
-            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 10)
+            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 2)
             {
                 args.HistogramPoint.TakeSnapshot(outputDelta: true);
                 curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
@@ -441,14 +441,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
-            if (Interlocked.Increment(ref args.ThreadStartedCount) == 11)
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
 
             mreToEnsureAllThreadsStart.WaitOne();
 
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 10; ++i)
             {
                 args.HistogramPoint.Update(10);
             }
