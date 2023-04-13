@@ -40,7 +40,8 @@ repo.
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](./docs/metrics/getting-started/README.md)
+* metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
+  [Console](./docs/metrics/getting-started-console/README.md)
 * traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
   [Console](./docs/trace/getting-started-console/README.md)
 
