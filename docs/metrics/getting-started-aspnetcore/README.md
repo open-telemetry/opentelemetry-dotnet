@@ -68,11 +68,10 @@ The program uses the
 package to automatically create metrics for incoming ASP.NET Core requests, uses
 the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
-package to write metrics to the console every 1000 milliseconds, and uses the
-[OpenTelemetry.Exporter.Prometheus.AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
-package to expose the Prometheus metrics. This is done by configuring an
-OpenTelemetry [MeterProvider](../customizing-the-sdk/README.MD#meterprovider)
-using extension methods and setting it to auto-start when the host is started:
+package to write metrics to the console every 1000 milliseconds. This is done by
+configuring an OpenTelemetry
+[MeterProvider](../customizing-the-sdk/README.MD#meterprovider) using extension
+methods and setting it to auto-start when the host is started:
 
 ```csharp
 appBuilder.Services.AddOpenTelemetry()
@@ -84,7 +83,6 @@ appBuilder.Services.AddOpenTelemetry()
         {
             metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
         })
-        .AddPrometheusExporter()
     );
 ```
 

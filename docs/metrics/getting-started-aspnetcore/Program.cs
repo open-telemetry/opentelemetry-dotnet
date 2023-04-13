@@ -29,12 +29,9 @@ appBuilder.Services.AddOpenTelemetry()
         .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
         {
             metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-        })
-        .AddPrometheusExporter());
+        }));
 
 var app = appBuilder.Build();
-
-app.UseOpenTelemetryPrometheusScrapingEndpoint(context => context.Request.Path == "/internal/metrics");
 
 app.MapGet("/", () => $"Hello from OpenTelemetry Metrics!");
 
