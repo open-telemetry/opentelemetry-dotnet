@@ -1,4 +1,4 @@
-// <copyright file="EventSourceTest.cs" company="OpenTelemetry Authors">
+// <copyright file="TelemetryHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,28 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Instrumentation;
-using OpenTelemetry.Internal;
-using Xunit;
+namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
-namespace OpenTelemetry.Tests
+internal static class TelemetryHelper
 {
-    public class EventSourceTest
+    public static readonly object[] BoxedStatusCodes;
+
+    static TelemetryHelper()
     {
-        [Fact]
-        public void EventSourceTest_InstrumentationEventSource()
+        BoxedStatusCodes = new object[500];
+        for (int i = 0, c = 100; i < BoxedStatusCodes.Length; i++, c++)
         {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(InstrumentationEventSource.Log);
+            BoxedStatusCodes[i] = c;
+        }
+    }
+
+    public static object GetBoxedStatusCode(int statusCode)
+    {
+        if (statusCode >= 100 && statusCode < 600)
+        {
+            return BoxedStatusCodes[statusCode - 100];
         }
 
-        [Fact]
-        public void EventSourceTest_OpenTelemetrySdkEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetrySdkEventSource.Log);
-        }
+        return statusCode;
     }
 }

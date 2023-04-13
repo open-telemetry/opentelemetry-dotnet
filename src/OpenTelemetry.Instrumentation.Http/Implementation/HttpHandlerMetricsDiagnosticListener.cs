@@ -62,7 +62,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                     if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
 
                     // We are relying here on HttpClient library to set duration before writing the stop event.
