@@ -12,7 +12,6 @@ cd aspnetcoreapp
 
 Install the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md),
-[OpenTelemetry.Exporter.Prometheus.AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md),
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md),
 and
 [OpenTelemetry.Instrumentation.AspNetCore](../../../src/OpenTelemetry.Exporter.Console/README.md)
@@ -20,7 +19,6 @@ packages:
 
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console --prerelease
-dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore --prerelease
 dotnet add package OpenTelemetry.Extensions.Hosting --prerelease
 dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 ```
