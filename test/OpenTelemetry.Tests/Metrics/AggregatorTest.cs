@@ -411,17 +411,15 @@ namespace OpenTelemetry.Metrics.Tests
 
         private static void HistogramSnapshotThread(object obj)
         {
-            if (obj is not ThreadArguments args)
-            {
-                throw new Exception("invalid args");
-            }
-
+            var args = obj as ThreadArguments;
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
             if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
+
+            mreToEnsureAllThreadsStart.WaitOne();
 
             double curSnapshotDelta;
             while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 2)
@@ -434,11 +432,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         private static void HistogramUpdateThread(object obj)
         {
-            if (obj is not ThreadArguments args)
-            {
-                throw new Exception("invalid args");
-            }
-
+            var args = obj as ThreadArguments;
             var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
 
             if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
