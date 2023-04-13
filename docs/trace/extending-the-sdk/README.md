@@ -212,13 +212,13 @@ Writing an instrumentation library typically involves 3 steps.
          > Changing the name of the source should be considered a
          breaking change.
 
-4. The fourth step is an optional step, and involves making any member required
-   to enable the instrumentation public. If instrumentation is enabled on e.g connection
-   basis, consider adding an API that allows to start tracking new connections after
-   the tracer is initialized.
-   This allows [OpenTelemetry .NET Automatic Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation)
-   support for the instrumentation library to depend on public API,
-   instead of internal implementation details, making the support more reliable.
+    > **Warning**
+    > If enabling the instrumentation requires references to objects
+    from the targeted library, your instrumentation library should
+    offer public APIs to receive them instead of relying on the
+    extension methods, as objects might not be available yet at
+    the time the tracer is being built (for example, connections established
+    later in the app lifetime).
 
 ### Special case : Instrumentation for libraries producing legacy Activity
 
