@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter
                     });
             }
 
-            foreach (var header in OtlpExporterOptions.StandardHeaders)
+            foreach (var header in BaseOtlpExporterOptions.StandardHeaders)
             {
                 addHeader(headers, header.Key, header.Value);
             }
