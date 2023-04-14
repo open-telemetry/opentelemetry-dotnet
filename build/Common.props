@@ -49,7 +49,7 @@
     <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
     <SystemDiagnosticSourcePkgVer>7.0.0</SystemDiagnosticSourcePkgVer>
-    <SystemTextJsonPkgVer>4.7.2</SystemTextJsonPkgVer>
+    <SystemTextJsonPkgVer>5.0.2</SystemTextJsonPkgVer>
     <SystemThreadingTasksExtensionsPkgVer>4.5.4</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
