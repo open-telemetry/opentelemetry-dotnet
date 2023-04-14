@@ -46,7 +46,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// The syntax of a .proto file
     /// </summary>
-    public enum Syntax
+    internal enum Syntax
     {
         /// <summary>
         /// Proto2 syntax
@@ -67,7 +67,7 @@ namespace Google.Protobuf.Reflection
     /// IDescriptor is implemented such that the File property returns this descriptor,
     /// and the FullName is the same as the Name.
     /// </summary>
-    public sealed class FileDescriptor : IDescriptor
+    internal sealed class FileDescriptor : IDescriptor
     {
         // Prevent linker failures when using IL2CPP with the well-known types.
         static FileDescriptor()

@@ -41,7 +41,7 @@ namespace Google.Protobuf
     /// Interface for a Protocol Buffers message, supporting
     /// basic operations required for serialization.
     /// </summary>
-    public interface IMessage
+    internal interface IMessage
     {
         /// <summary>
         /// Merges the data from the specified coded input stream with the current message.
@@ -77,7 +77,7 @@ namespace Google.Protobuf
     /// the implementation class.
     /// </summary>
     /// <typeparam name="T">The message type.</typeparam>
-    public interface IMessage<T> : IMessage, IEquatable<T>, IDeepCloneable<T> where T : IMessage<T>
+    internal interface IMessage<T> : IMessage, IEquatable<T>, IDeepCloneable<T> where T : IMessage<T>
     {
         /// <summary>
         /// Merges the given message into this one.

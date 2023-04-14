@@ -59,7 +59,7 @@ namespace Google.Protobuf
     /// (This code is generally not heavily optimized.)
     /// </para>
     /// </remarks>
-    public sealed class JsonFormatter
+    internal sealed class JsonFormatter
     {
         internal const string AnyTypeUrlField = "@type";
         internal const string AnyDiagnosticValueField = "@value";

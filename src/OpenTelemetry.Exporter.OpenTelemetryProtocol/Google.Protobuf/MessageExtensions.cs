@@ -45,7 +45,7 @@ namespace Google.Protobuf
     /// <summary>
     /// Extension methods on <see cref="IMessage"/> and <see cref="IMessage{T}"/>.
     /// </summary>
-    public static class MessageExtensions
+    internal static class MessageExtensions
     {
         /// <summary>
         /// Merges data from the given byte array into an existing message.

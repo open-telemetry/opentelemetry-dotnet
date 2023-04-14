@@ -41,7 +41,7 @@ namespace Google.Protobuf
     /// Thrown when a protocol message being parsed is invalid in some way,
     /// e.g. it contains a malformed varint or a negative byte length.
     /// </summary>
-    public sealed class InvalidProtocolBufferException : IOException
+    internal sealed class InvalidProtocolBufferException : IOException
     {
         internal InvalidProtocolBufferException(string message)
             : base(message)

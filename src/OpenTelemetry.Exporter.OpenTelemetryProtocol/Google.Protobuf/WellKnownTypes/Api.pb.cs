@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/api.proto</summary>
-  public static partial class ApiReflection {
+  internal static partial class ApiReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/api.proto</summary>
@@ -64,7 +64,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// this message itself. See https://cloud.google.com/apis/design/glossary for
   /// detailed terminology.
   /// </summary>
-  public sealed partial class Api : pb::IMessage<Api>
+  internal sealed partial class Api : pb::IMessage<Api>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -495,7 +495,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// Method represents a method of an API interface.
   /// </summary>
-  public sealed partial class Method : pb::IMessage<Method>
+  internal sealed partial class Method : pb::IMessage<Method>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -996,7 +996,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///       ...
   ///     }
   /// </summary>
-  public sealed partial class Mixin : pb::IMessage<Mixin>
+  internal sealed partial class Mixin : pb::IMessage<Mixin>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

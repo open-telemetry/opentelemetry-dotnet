@@ -34,7 +34,7 @@
 
 namespace Google.Protobuf.WellKnownTypes
 {
-    public partial class Value
+    internal partial class Value
     {
         /// <summary>
         /// Convenience method to create a Value message with a string value.

@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.Compiler {
 
   /// <summary>Holder for reflection information generated from google/protobuf/compiler/plugin.proto</summary>
-  public static partial class PluginReflection {
+  internal static partial class PluginReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/compiler/plugin.proto</summary>
@@ -57,7 +57,7 @@ namespace Google.Protobuf.Compiler {
   /// <summary>
   /// The version number of protocol compiler.
   /// </summary>
-  public sealed partial class Version : pb::IMessage<Version>
+  internal sealed partial class Version : pb::IMessage<Version>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -425,7 +425,7 @@ namespace Google.Protobuf.Compiler {
   /// <summary>
   /// An encoded CodeGeneratorRequest is written to the plugin's stdin.
   /// </summary>
-  public sealed partial class CodeGeneratorRequest : pb::IMessage<CodeGeneratorRequest>
+  internal sealed partial class CodeGeneratorRequest : pb::IMessage<CodeGeneratorRequest>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -756,7 +756,7 @@ namespace Google.Protobuf.Compiler {
   /// <summary>
   /// The plugin writes an encoded CodeGeneratorResponse to stdout.
   /// </summary>
-  public sealed partial class CodeGeneratorResponse : pb::IMessage<CodeGeneratorResponse>
+  internal sealed partial class CodeGeneratorResponse : pb::IMessage<CodeGeneratorResponse>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

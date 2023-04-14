@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/struct.proto</summary>
-  public static partial class StructReflection {
+  internal static partial class StructReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/struct.proto</summary>
@@ -57,7 +57,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   ///  The JSON representation for `NullValue` is JSON `null`.
   /// </summary>
-  public enum NullValue {
+  internal enum NullValue {
     /// <summary>
     /// Null value.
     /// </summary>
@@ -77,7 +77,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `Struct` is JSON object.
   /// </summary>
-  public sealed partial class Struct : pb::IMessage<Struct>
+  internal sealed partial class Struct : pb::IMessage<Struct>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -266,7 +266,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `Value` is JSON value.
   /// </summary>
-  public sealed partial class Value : pb::IMessage<Value>
+  internal sealed partial class Value : pb::IMessage<Value>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -736,7 +736,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `ListValue` is JSON array.
   /// </summary>
-  public sealed partial class ListValue : pb::IMessage<ListValue>
+  internal sealed partial class ListValue : pb::IMessage<ListValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

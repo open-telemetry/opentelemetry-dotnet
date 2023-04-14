@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/duration.proto</summary>
-  public static partial class DurationReflection {
+  internal static partial class DurationReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/duration.proto</summary>
@@ -100,7 +100,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// be expressed in JSON format as "3.000000001s", and 3 seconds and 1
   /// microsecond should be expressed in JSON format as "3.000001s".
   /// </summary>
-  public sealed partial class Duration : pb::IMessage<Duration>
+  internal sealed partial class Duration : pb::IMessage<Duration>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

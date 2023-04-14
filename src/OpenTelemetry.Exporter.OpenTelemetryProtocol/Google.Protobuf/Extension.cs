@@ -39,7 +39,7 @@ namespace Google.Protobuf
     /// <summary>
     /// Represents a non-generic extension definition. This API is experimental and subject to change.
     /// </summary>
-    public abstract class Extension
+    internal abstract class Extension
     {
         internal abstract Type TargetType { get; }
 
@@ -67,7 +67,7 @@ namespace Google.Protobuf
     /// </summary>
     /// <typeparam name="TTarget">The message type this field applies to</typeparam>
     /// <typeparam name="TValue">The field value type of this extension</typeparam>
-    public sealed class Extension<TTarget, TValue> : Extension where TTarget : IExtendableMessage<TTarget>
+    internal sealed class Extension<TTarget, TValue> : Extension where TTarget : IExtendableMessage<TTarget>
     {
         private readonly FieldCodec<TValue> codec;
 
@@ -97,7 +97,7 @@ namespace Google.Protobuf
     /// </summary>
     /// <typeparam name="TTarget">The message type this field applies to</typeparam>
     /// <typeparam name="TValue">The repeated field value type of this extension</typeparam>
-    public sealed class RepeatedExtension<TTarget, TValue> : Extension where TTarget : IExtendableMessage<TTarget>
+    internal sealed class RepeatedExtension<TTarget, TValue> : Extension where TTarget : IExtendableMessage<TTarget>
     {
         private readonly FieldCodec<TValue> codec;
 

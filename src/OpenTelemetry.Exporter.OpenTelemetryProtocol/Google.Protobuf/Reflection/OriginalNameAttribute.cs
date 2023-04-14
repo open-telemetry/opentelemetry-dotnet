@@ -41,7 +41,7 @@ namespace Google.Protobuf.Reflection
     /// such as an enum value.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
-    public class OriginalNameAttribute : Attribute
+    internal class OriginalNameAttribute : Attribute
     {
         /// <summary>
         /// The name of the element in the .proto file.

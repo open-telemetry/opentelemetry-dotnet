@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/source_context.proto</summary>
-  public static partial class SourceContextReflection {
+  internal static partial class SourceContextReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/source_context.proto</summary>
@@ -44,7 +44,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// `SourceContext` represents information about the source of a
   /// protobuf element, like the file in which it is defined.
   /// </summary>
-  public sealed partial class SourceContext : pb::IMessage<SourceContext>
+  internal sealed partial class SourceContext : pb::IMessage<SourceContext>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/empty.proto</summary>
-  public static partial class EmptyReflection {
+  internal static partial class EmptyReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/empty.proto</summary>
@@ -48,7 +48,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///       rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);
   ///     }
   /// </summary>
-  public sealed partial class Empty : pb::IMessage<Empty>
+  internal sealed partial class Empty : pb::IMessage<Empty>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

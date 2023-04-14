@@ -47,7 +47,7 @@ namespace Google.Protobuf
     ///
     /// Most users will never need to use this class directly.
     /// </summary>
-    public sealed partial class UnknownFieldSet
+    internal sealed partial class UnknownFieldSet
     {
         private readonly IDictionary<int, UnknownField> fields = new Dictionary<int, UnknownField>();
 

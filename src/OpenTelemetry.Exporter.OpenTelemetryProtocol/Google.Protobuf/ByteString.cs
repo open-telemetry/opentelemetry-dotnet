@@ -48,7 +48,7 @@ namespace Google.Protobuf
     /// Immutable array of bytes.
     /// </summary>
     [SecuritySafeCritical]
-    public sealed class ByteString : IEnumerable<byte>, IEquatable<ByteString>
+    internal sealed class ByteString : IEnumerable<byte>, IEquatable<ByteString>
     {
         private static readonly ByteString empty = new ByteString(new byte[0]);
 

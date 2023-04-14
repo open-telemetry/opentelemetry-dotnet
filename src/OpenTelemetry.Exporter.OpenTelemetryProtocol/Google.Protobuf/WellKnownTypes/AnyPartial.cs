@@ -36,7 +36,7 @@ using Google.Protobuf.Reflection;
 
 namespace Google.Protobuf.WellKnownTypes
 {
-    public partial class Any
+    internal partial class Any
     {
         private const string DefaultPrefix = "type.googleapis.com";
 

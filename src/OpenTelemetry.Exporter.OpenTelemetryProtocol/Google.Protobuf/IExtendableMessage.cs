@@ -40,7 +40,7 @@ namespace Google.Protobuf
     /// Generic interface for a Protocol Buffers message containing one or more extensions, where the type parameter is expected to be the same type as the implementation class.
     /// This interface is experiemental and is subject to change.
     /// </summary>
-    public interface IExtendableMessage<T> : IMessage<T> where T : IExtendableMessage<T>
+    internal interface IExtendableMessage<T> : IMessage<T> where T : IExtendableMessage<T>
     {
         /// <summary>
         /// Gets the value of the specified extension

@@ -44,7 +44,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Describes a message type.
     /// </summary>
-    public sealed class MessageDescriptor : DescriptorBase
+    internal sealed class MessageDescriptor : DescriptorBase
     {
         private static readonly HashSet<string> WellKnownTypeNames = new HashSet<string>
         {

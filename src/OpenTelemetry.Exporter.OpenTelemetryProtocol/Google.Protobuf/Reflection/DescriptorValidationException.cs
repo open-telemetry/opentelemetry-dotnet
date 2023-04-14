@@ -40,7 +40,7 @@ namespace Google.Protobuf.Reflection
     /// Thrown when building descriptors fails because the source DescriptorProtos
     /// are not valid.
     /// </summary>
-    public sealed class DescriptorValidationException : Exception
+    internal sealed class DescriptorValidationException : Exception
     {
         /// <value>
         /// The full name of the descriptor where the error occurred.

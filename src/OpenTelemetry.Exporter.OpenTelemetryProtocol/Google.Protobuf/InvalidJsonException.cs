@@ -45,7 +45,7 @@ namespace Google.Protobuf
     /// is thrown when the JSON may be valid in and of itself, but cannot be parsed as a protocol buffer
     /// message.
     /// </summary>
-    public sealed class InvalidJsonException : IOException
+    internal sealed class InvalidJsonException : IOException
     {
         internal InvalidJsonException(string message)
             : base(message)

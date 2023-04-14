@@ -43,7 +43,7 @@ using Google.Protobuf.Reflection;
 namespace Google.Protobuf.WellKnownTypes
 {
     // Manually-written partial class for the FieldMask well-known type.
-    public partial class FieldMask : ICustomDiagnosticMessage
+    internal partial class FieldMask : ICustomDiagnosticMessage
     {
         private const char FIELD_PATH_SEPARATOR = ',';
         private const char FIELD_SEPARATOR_REGEX = '.';

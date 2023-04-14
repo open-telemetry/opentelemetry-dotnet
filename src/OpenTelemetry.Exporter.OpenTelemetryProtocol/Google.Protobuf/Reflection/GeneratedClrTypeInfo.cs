@@ -42,7 +42,7 @@ namespace Google.Protobuf.Reflection
     /// These are constructed as required, and are not long-lived. Hand-written code should
     /// never need to use this type.
     /// </summary>
-    public sealed class GeneratedClrTypeInfo
+    internal sealed class GeneratedClrTypeInfo
     {
         private static readonly string[] EmptyNames = new string[0];
         private static readonly GeneratedClrTypeInfo[] EmptyCodeInfo = new GeneratedClrTypeInfo[0];

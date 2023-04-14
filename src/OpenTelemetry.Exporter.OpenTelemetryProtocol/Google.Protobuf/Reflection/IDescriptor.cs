@@ -37,7 +37,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Interface implemented by all descriptor types.
     /// </summary>
-    public interface IDescriptor
+    internal interface IDescriptor
     {
         /// <summary>
         /// Returns the name of the entity (message, field etc) being described.

@@ -40,7 +40,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// An immutable registry of types which can be looked up by their full name.
     /// </summary>
-    public sealed class TypeRegistry
+    internal sealed class TypeRegistry
     {
         /// <summary>
         /// An empty type registry, containing no types.

@@ -43,7 +43,7 @@ namespace Google.Protobuf.Reflection
     /// Provides additional information about the declaration of a descriptor,
     /// such as source location and comments.
     /// </summary>
-    public sealed class DescriptorDeclaration
+    internal sealed class DescriptorDeclaration
     {
         /// <summary>
         /// The descriptor this declaration relates to.

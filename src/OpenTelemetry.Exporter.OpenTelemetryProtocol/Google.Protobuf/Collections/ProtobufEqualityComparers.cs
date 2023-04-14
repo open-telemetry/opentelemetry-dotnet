@@ -40,7 +40,7 @@ namespace Google.Protobuf.Collections
     /// <summary>
     /// Provides a central place to implement equality comparisons, primarily for bitwise float/double equality.
     /// </summary>
-    public static class ProtobufEqualityComparers
+    internal static class ProtobufEqualityComparers
     {
         /// <summary>
         /// Returns an equality comparer for <typeparamref name="T"/> suitable for Protobuf equality comparisons.

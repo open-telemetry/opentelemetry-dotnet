@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/timestamp.proto</summary>
-  public static partial class TimestampReflection {
+  internal static partial class TimestampReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/timestamp.proto</summary>
@@ -131,7 +131,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime%2D%2D
   /// ) to obtain a formatter capable of generating timestamps in this format.
   /// </summary>
-  public sealed partial class Timestamp : pb::IMessage<Timestamp>
+  internal sealed partial class Timestamp : pb::IMessage<Timestamp>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

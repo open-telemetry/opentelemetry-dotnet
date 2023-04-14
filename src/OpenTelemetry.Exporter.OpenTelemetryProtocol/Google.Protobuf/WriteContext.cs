@@ -46,7 +46,7 @@ namespace Google.Protobuf
     /// users should never invoke them directly.
     /// </summary>
     [SecuritySafeCritical]
-    public ref struct WriteContext
+    internal ref struct WriteContext
     {
         internal Span<byte> buffer;
         internal WriterInternalState state;

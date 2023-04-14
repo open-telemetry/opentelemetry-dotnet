@@ -41,7 +41,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Descriptor for an enum type in a .proto file.
     /// </summary>
-    public sealed class EnumDescriptor : DescriptorBase
+    internal sealed class EnumDescriptor : DescriptorBase
     {
         internal EnumDescriptor(EnumDescriptorProto proto, FileDescriptor file, MessageDescriptor parent, int index, Type clrType)
             : base(file, file.ComputeFullName(parent, proto.Name), index)

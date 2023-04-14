@@ -40,7 +40,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Describes a single method in a service.
     /// </summary>
-    public sealed class MethodDescriptor : DescriptorBase
+    internal sealed class MethodDescriptor : DescriptorBase
     {
 
         /// <value>

@@ -39,7 +39,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Base class for nearly all descriptors, providing common functionality.
     /// </summary>
-    public abstract class DescriptorBase : IDescriptor
+    internal abstract class DescriptorBase : IDescriptor
     {
         internal DescriptorBase(FileDescriptor file, string fullName, int index)
         {

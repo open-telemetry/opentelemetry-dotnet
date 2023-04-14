@@ -41,7 +41,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Describes a service type.
     /// </summary>
-    public sealed class ServiceDescriptor : DescriptorBase
+    internal sealed class ServiceDescriptor : DescriptorBase
     {
         internal ServiceDescriptor(ServiceDescriptorProto proto, FileDescriptor file, int index)
             : base(file, file.ComputeFullName(null, proto.Name), index)

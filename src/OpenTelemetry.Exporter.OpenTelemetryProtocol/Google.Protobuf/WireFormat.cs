@@ -43,7 +43,7 @@ namespace Google.Protobuf
     /// the Protocol Buffer wire format.
     /// </para>
     /// </summary>
-    public static class WireFormat
+    internal static class WireFormat
     {
         /// <summary>
         /// Wire types within protobuf encoding.

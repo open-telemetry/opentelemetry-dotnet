@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/any.proto</summary>
-  public static partial class AnyReflection {
+  internal static partial class AnyReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/any.proto</summary>
@@ -126,7 +126,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///       "value": "1.212s"
   ///     }
   /// </summary>
-  public sealed partial class Any : pb::IMessage<Any>
+  internal sealed partial class Any : pb::IMessage<Any>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

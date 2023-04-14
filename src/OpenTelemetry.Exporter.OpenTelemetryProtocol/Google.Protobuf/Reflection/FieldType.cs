@@ -37,7 +37,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Enumeration of all the possible field types.
     /// </summary>
-    public enum FieldType
+    internal enum FieldType
     {
         /// <summary>
         /// The <c>double</c> field type.

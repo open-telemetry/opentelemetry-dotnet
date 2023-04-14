@@ -38,7 +38,7 @@ using System.Text;
 
 namespace Google.Protobuf.WellKnownTypes
 {
-    public partial class Timestamp : ICustomDiagnosticMessage, IComparable<Timestamp>
+    internal partial class Timestamp : ICustomDiagnosticMessage, IComparable<Timestamp>
     {
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         // Constants determined programmatically, but then hard-coded so they can be constant expressions.

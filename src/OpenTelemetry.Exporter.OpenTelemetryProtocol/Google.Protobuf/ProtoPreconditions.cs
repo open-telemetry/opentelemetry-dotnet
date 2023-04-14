@@ -44,7 +44,7 @@ namespace Google.Protobuf
     /// expected to be used from application code, although nothing prevents it
     /// from being used that way.
     /// </remarks>
-    public static class ProtoPreconditions
+    internal static class ProtoPreconditions
     {
         /// <summary>
         /// Throws an ArgumentNullException if the given value is null, otherwise

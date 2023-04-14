@@ -46,7 +46,7 @@ namespace Google.Protobuf
     /// 
     /// Most users will not use this class directly and its API is experimental and subject to change.
     /// </summary>
-    public static class ExtensionSet
+    internal static class ExtensionSet
     {
         private static bool TryGetValue<TTarget>(ref ExtensionSet<TTarget> set, Extension extension, out IExtensionValue value) where TTarget : IExtendableMessage<TTarget>
         {
@@ -326,7 +326,7 @@ namespace Google.Protobuf
     /// Most users will not need to use this class directly
     /// </summary>
     /// <typeparam name="TTarget">The message type that extensions in this set target</typeparam>
-    public sealed class ExtensionSet<TTarget> where TTarget : IExtendableMessage<TTarget>
+    internal sealed class ExtensionSet<TTarget> where TTarget : IExtendableMessage<TTarget>
     {
         internal Dictionary<int, IExtensionValue> ValuesByNumber { get; } = new Dictionary<int, IExtensionValue>();
 

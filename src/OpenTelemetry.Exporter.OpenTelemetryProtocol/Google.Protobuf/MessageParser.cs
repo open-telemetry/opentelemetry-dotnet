@@ -43,7 +43,7 @@ namespace Google.Protobuf
     /// A general message parser, typically used by reflection-based code as all the methods
     /// return simple <see cref="IMessage"/>.
     /// </summary>
-    public class MessageParser
+    internal class MessageParser
     {
         private readonly Func<IMessage> factory;
         private protected bool DiscardUnknownFields { get; }
@@ -242,7 +242,7 @@ namespace Google.Protobuf
     /// </p>
     /// </remarks>
     /// <typeparam name="T">The type of message to be parsed.</typeparam>
-    public sealed class MessageParser<T> : MessageParser where T : IMessage<T>
+    internal sealed class MessageParser<T> : MessageParser where T : IMessage<T>
     {
         // Implementation note: all the methods here *could* just delegate up to the base class and cast the result.
         // The current implementation avoids a virtual method call and a cast, which *may* be significant in some cases.

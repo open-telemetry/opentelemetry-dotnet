@@ -63,7 +63,7 @@ namespace Google.Protobuf.Reflection
     /// all the set values are merged together.
     /// </para>
     /// </remarks>
-    public sealed class CustomOptions
+    internal sealed class CustomOptions
     {
         private const string UnreferencedCodeMessage = "CustomOptions is incompatible with trimming.";
 

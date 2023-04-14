@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/type.proto</summary>
-  public static partial class TypeReflection {
+  internal static partial class TypeReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/type.proto</summary>
@@ -77,7 +77,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// The syntax in which a protocol buffer element is defined.
   /// </summary>
-  public enum Syntax {
+  internal enum Syntax {
     /// <summary>
     /// Syntax `proto2`.
     /// </summary>
@@ -94,7 +94,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// A protocol buffer message type.
   /// </summary>
-  public sealed partial class Type : pb::IMessage<Type>
+  internal sealed partial class Type : pb::IMessage<Type>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -465,7 +465,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// A single field of a message type.
   /// </summary>
-  public sealed partial class Field : pb::IMessage<Field>
+  internal sealed partial class Field : pb::IMessage<Field>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1123,7 +1123,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// Enum type definition.
   /// </summary>
-  public sealed partial class Enum : pb::IMessage<Enum>
+  internal sealed partial class Enum : pb::IMessage<Enum>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1465,7 +1465,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// Enum value definition.
   /// </summary>
-  public sealed partial class EnumValue : pb::IMessage<EnumValue>
+  internal sealed partial class EnumValue : pb::IMessage<EnumValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1730,7 +1730,7 @@ namespace Google.Protobuf.WellKnownTypes {
   /// A protocol buffer option, which can be attached to a message, field,
   /// enumeration, etc.
   /// </summary>
-  public sealed partial class Option : pb::IMessage<Option>
+  internal sealed partial class Option : pb::IMessage<Option>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

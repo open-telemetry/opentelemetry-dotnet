@@ -40,7 +40,7 @@ namespace Google.Protobuf.Collections
     /// Utility to compare if two Lists are the same, and the hash code
     /// of a List.
     /// </summary>
-    public static class Lists
+    internal static class Lists
     {
         /// <summary>
         /// Checks if two lists are equal.

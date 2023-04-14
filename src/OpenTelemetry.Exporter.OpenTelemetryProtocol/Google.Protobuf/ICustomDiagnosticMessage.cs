@@ -54,7 +54,7 @@ namespace Google.Protobuf
     /// <para>This interface extends <see cref="IMessage"/> to avoid it accidentally being implemented
     /// on types other than messages, where it would not be used by anything in the framework.</para>
     /// </remarks>
-    public interface ICustomDiagnosticMessage : IMessage
+    internal interface ICustomDiagnosticMessage : IMessage
     {
         /// <summary>
         /// Returns a string representation of this object, for diagnostic purposes.

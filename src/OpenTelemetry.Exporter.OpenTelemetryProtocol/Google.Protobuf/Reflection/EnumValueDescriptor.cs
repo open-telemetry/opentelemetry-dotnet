@@ -40,7 +40,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Descriptor for a single enum value within an enum in a .proto file.
     /// </summary>
-    public sealed class EnumValueDescriptor : DescriptorBase
+    internal sealed class EnumValueDescriptor : DescriptorBase
     {
         internal EnumValueDescriptor(EnumValueDescriptorProto proto, FileDescriptor file,
                                      EnumDescriptor parent, int index)

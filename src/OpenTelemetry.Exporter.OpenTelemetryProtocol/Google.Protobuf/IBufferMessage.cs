@@ -38,7 +38,7 @@ namespace Google.Protobuf
     /// Interface for a Protocol Buffers message, supporting
     /// parsing from <see cref="ParseContext"/> and writing to <see cref="WriteContext"/>.
     /// </summary>
-    public interface IBufferMessage : IMessage
+    internal interface IBufferMessage : IMessage
     {
         /// <summary>
         /// Internal implementation of merging data from given parse context into this message.

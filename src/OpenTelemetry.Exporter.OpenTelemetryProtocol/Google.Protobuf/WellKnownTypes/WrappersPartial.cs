@@ -34,7 +34,7 @@
 
 namespace Google.Protobuf.WellKnownTypes
 {
-    public static partial class WrappersReflection
+    internal static partial class WrappersReflection
     {
         /// <summary>
         /// Field number for the single "value" field in all wrapper types.

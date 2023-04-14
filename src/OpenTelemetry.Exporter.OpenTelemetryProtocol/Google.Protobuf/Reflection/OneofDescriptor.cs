@@ -45,7 +45,7 @@ namespace Google.Protobuf.Reflection
     /// Describes a "oneof" field collection in a message type: a set of
     /// fields of which at most one can be set in any particular message.
     /// </summary>
-    public sealed class OneofDescriptor : DescriptorBase
+    internal sealed class OneofDescriptor : DescriptorBase
     {
         private MessageDescriptor containingType;
         private IList<FieldDescriptor> fields;

@@ -40,7 +40,7 @@ namespace Google.Protobuf.WellKnownTypes
 {
     // Manually-written partial class for the Duration well-known type,
     // providing a conversion to TimeSpan and convenience operators.
-    public partial class Duration : ICustomDiagnosticMessage, IComparable<Duration>
+    internal partial class Duration : ICustomDiagnosticMessage, IComparable<Duration>
     {
         /// <summary>
         /// The number of nanoseconds in a second.

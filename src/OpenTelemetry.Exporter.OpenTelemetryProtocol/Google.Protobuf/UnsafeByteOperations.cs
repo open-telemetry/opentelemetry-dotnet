@@ -68,7 +68,7 @@ namespace Google.Protobuf
     /// </list>
     /// </remarks>
     [SecuritySafeCritical]
-    public static class UnsafeByteOperations
+    internal static class UnsafeByteOperations
     {
         /// <summary>
         /// Constructs a new <see cref="ByteString" /> from the given bytes. The bytes are not copied,

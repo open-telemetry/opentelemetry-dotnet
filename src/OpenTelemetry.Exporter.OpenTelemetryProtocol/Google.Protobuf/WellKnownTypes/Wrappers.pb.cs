@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>Holder for reflection information generated from google/protobuf/wrappers.proto</summary>
-  public static partial class WrappersReflection {
+  internal static partial class WrappersReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/wrappers.proto</summary>
@@ -58,7 +58,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `DoubleValue` is JSON number.
   /// </summary>
-  public sealed partial class DoubleValue : pb::IMessage<DoubleValue>
+  internal sealed partial class DoubleValue : pb::IMessage<DoubleValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -255,7 +255,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `FloatValue` is JSON number.
   /// </summary>
-  public sealed partial class FloatValue : pb::IMessage<FloatValue>
+  internal sealed partial class FloatValue : pb::IMessage<FloatValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -452,7 +452,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `Int64Value` is JSON string.
   /// </summary>
-  public sealed partial class Int64Value : pb::IMessage<Int64Value>
+  internal sealed partial class Int64Value : pb::IMessage<Int64Value>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -649,7 +649,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `UInt64Value` is JSON string.
   /// </summary>
-  public sealed partial class UInt64Value : pb::IMessage<UInt64Value>
+  internal sealed partial class UInt64Value : pb::IMessage<UInt64Value>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -846,7 +846,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `Int32Value` is JSON number.
   /// </summary>
-  public sealed partial class Int32Value : pb::IMessage<Int32Value>
+  internal sealed partial class Int32Value : pb::IMessage<Int32Value>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1043,7 +1043,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `UInt32Value` is JSON number.
   /// </summary>
-  public sealed partial class UInt32Value : pb::IMessage<UInt32Value>
+  internal sealed partial class UInt32Value : pb::IMessage<UInt32Value>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1240,7 +1240,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `BoolValue` is JSON `true` and `false`.
   /// </summary>
-  public sealed partial class BoolValue : pb::IMessage<BoolValue>
+  internal sealed partial class BoolValue : pb::IMessage<BoolValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1437,7 +1437,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `StringValue` is JSON string.
   /// </summary>
-  public sealed partial class StringValue : pb::IMessage<StringValue>
+  internal sealed partial class StringValue : pb::IMessage<StringValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1634,7 +1634,7 @@ namespace Google.Protobuf.WellKnownTypes {
   ///
   /// The JSON representation for `BytesValue` is JSON string.
   /// </summary>
-  public sealed partial class BytesValue : pb::IMessage<BytesValue>
+  internal sealed partial class BytesValue : pb::IMessage<BytesValue>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

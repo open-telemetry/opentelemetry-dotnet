@@ -40,7 +40,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Allows fields to be reflectively accessed.
     /// </summary>
-    public interface IFieldAccessor
+    internal interface IFieldAccessor
     {
         /// <summary>
         /// Returns the descriptor associated with this field.

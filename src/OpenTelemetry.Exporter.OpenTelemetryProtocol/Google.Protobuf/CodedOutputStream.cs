@@ -57,7 +57,7 @@ namespace Google.Protobuf
     /// </para>
     /// </remarks>
     [SecuritySafeCritical]
-    public sealed partial class CodedOutputStream : IDisposable
+    internal sealed partial class CodedOutputStream : IDisposable
     {
         /// <summary>
         /// The buffer size used by CreateInstance(Stream).

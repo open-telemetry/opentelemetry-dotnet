@@ -41,7 +41,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Reflection access for a oneof, allowing clear and "get case" actions.
     /// </summary>
-    public sealed class OneofAccessor
+    internal sealed class OneofAccessor
     {
         private readonly Func<IMessage, int> caseDelegate;
         private readonly Action<IMessage> clearDelegate;

@@ -12,7 +12,7 @@ using scg = global::System.Collections.Generic;
 namespace Google.Protobuf.Reflection {
 
   /// <summary>Holder for reflection information generated from google/protobuf/descriptor.proto</summary>
-  public static partial class DescriptorReflection {
+  internal static partial class DescriptorReflection {
 
     #region Descriptor
     /// <summary>File descriptor for google/protobuf/descriptor.proto</summary>
@@ -211,7 +211,7 @@ namespace Google.Protobuf.Reflection {
   /// The protocol compiler can output a FileDescriptorSet containing the .proto
   /// files it parses.
   /// </summary>
-  public sealed partial class FileDescriptorSet : pb::IMessage<FileDescriptorSet>
+  internal sealed partial class FileDescriptorSet : pb::IMessage<FileDescriptorSet>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -392,7 +392,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a complete .proto file.
   /// </summary>
-  public sealed partial class FileDescriptorProto : pb::IMessage<FileDescriptorProto>
+  internal sealed partial class FileDescriptorProto : pb::IMessage<FileDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -1063,7 +1063,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a message type.
   /// </summary>
-  public sealed partial class DescriptorProto : pb::IMessage<DescriptorProto>
+  internal sealed partial class DescriptorProto : pb::IMessage<DescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -2111,7 +2111,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class ExtensionRangeOptions : pb::IExtendableMessage<ExtensionRangeOptions>
+  internal sealed partial class ExtensionRangeOptions : pb::IExtendableMessage<ExtensionRangeOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -2340,7 +2340,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a field within a message.
   /// </summary>
-  public sealed partial class FieldDescriptorProto : pb::IMessage<FieldDescriptorProto>
+  internal sealed partial class FieldDescriptorProto : pb::IMessage<FieldDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -3180,7 +3180,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a oneof.
   /// </summary>
-  public sealed partial class OneofDescriptorProto : pb::IMessage<OneofDescriptorProto>
+  internal sealed partial class OneofDescriptorProto : pb::IMessage<OneofDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -3432,7 +3432,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes an enum type.
   /// </summary>
-  public sealed partial class EnumDescriptorProto : pb::IMessage<EnumDescriptorProto>
+  internal sealed partial class EnumDescriptorProto : pb::IMessage<EnumDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -4051,7 +4051,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a value within an enum.
   /// </summary>
-  public sealed partial class EnumValueDescriptorProto : pb::IMessage<EnumValueDescriptorProto>
+  internal sealed partial class EnumValueDescriptorProto : pb::IMessage<EnumValueDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -4357,7 +4357,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a service.
   /// </summary>
-  public sealed partial class ServiceDescriptorProto : pb::IMessage<ServiceDescriptorProto>
+  internal sealed partial class ServiceDescriptorProto : pb::IMessage<ServiceDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -4635,7 +4635,7 @@ namespace Google.Protobuf.Reflection {
   /// <summary>
   /// Describes a method of a service.
   /// </summary>
-  public sealed partial class MethodDescriptorProto : pb::IMessage<MethodDescriptorProto>
+  internal sealed partial class MethodDescriptorProto : pb::IMessage<MethodDescriptorProto>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -5102,7 +5102,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class FileOptions : pb::IExtendableMessage<FileOptions>
+  internal sealed partial class FileOptions : pb::IExtendableMessage<FileOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -6483,7 +6483,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class MessageOptions : pb::IExtendableMessage<MessageOptions>
+  internal sealed partial class MessageOptions : pb::IExtendableMessage<MessageOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -7040,7 +7040,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class FieldOptions : pb::IExtendableMessage<FieldOptions>
+  internal sealed partial class FieldOptions : pb::IExtendableMessage<FieldOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -7926,7 +7926,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class OneofOptions : pb::IExtendableMessage<OneofOptions>
+  internal sealed partial class OneofOptions : pb::IExtendableMessage<OneofOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -8152,7 +8152,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class EnumOptions : pb::IExtendableMessage<EnumOptions>
+  internal sealed partial class EnumOptions : pb::IExtendableMessage<EnumOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -8557,7 +8557,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class EnumValueOptions : pb::IExtendableMessage<EnumValueOptions>
+  internal sealed partial class EnumValueOptions : pb::IExtendableMessage<EnumValueOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -8843,7 +8843,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class ServiceOptions : pb::IExtendableMessage<ServiceOptions>
+  internal sealed partial class ServiceOptions : pb::IExtendableMessage<ServiceOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -9129,7 +9129,7 @@ namespace Google.Protobuf.Reflection {
 
   }
 
-  public sealed partial class MethodOptions : pb::IExtendableMessage<MethodOptions>
+  internal sealed partial class MethodOptions : pb::IExtendableMessage<MethodOptions>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -9500,7 +9500,7 @@ namespace Google.Protobuf.Reflection {
   /// or produced by Descriptor::CopyTo()) will never have UninterpretedOptions
   /// in them.
   /// </summary>
-  public sealed partial class UninterpretedOption : pb::IMessage<UninterpretedOption>
+  internal sealed partial class UninterpretedOption : pb::IMessage<UninterpretedOption>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -10269,7 +10269,7 @@ namespace Google.Protobuf.Reflection {
   /// Encapsulates information about the original source file from which a
   /// FileDescriptorProto was generated.
   /// </summary>
-  public sealed partial class SourceCodeInfo : pb::IMessage<SourceCodeInfo>
+  internal sealed partial class SourceCodeInfo : pb::IMessage<SourceCodeInfo>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
@@ -10922,7 +10922,7 @@ namespace Google.Protobuf.Reflection {
   /// file. A GeneratedCodeInfo message is associated with only one generated
   /// source file, but may contain references to different source .proto files.
   /// </summary>
-  public sealed partial class GeneratedCodeInfo : pb::IMessage<GeneratedCodeInfo>
+  internal sealed partial class GeneratedCodeInfo : pb::IMessage<GeneratedCodeInfo>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif

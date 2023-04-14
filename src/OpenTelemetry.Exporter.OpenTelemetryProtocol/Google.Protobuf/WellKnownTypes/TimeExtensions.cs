@@ -39,7 +39,7 @@ namespace Google.Protobuf.WellKnownTypes
     /// <summary>
     /// Extension methods on BCL time-related types, converting to protobuf types.
     /// </summary>
-    public static class TimeExtensions
+    internal static class TimeExtensions
     {
         /// <summary>
         /// Converts the given <see cref="DateTime"/> to a <see cref="Timestamp"/>.

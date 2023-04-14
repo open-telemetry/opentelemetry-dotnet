@@ -54,7 +54,7 @@ namespace Google.Protobuf
     /// </para>
     /// </remarks>
     [SecuritySafeCritical]
-    public sealed class CodedInputStream : IDisposable
+    internal sealed class CodedInputStream : IDisposable
     {
         /// <summary>
         /// Whether to leave the underlying stream open when disposing of this stream.

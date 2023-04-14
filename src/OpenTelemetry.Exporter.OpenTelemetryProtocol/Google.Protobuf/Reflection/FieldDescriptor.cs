@@ -41,7 +41,7 @@ namespace Google.Protobuf.Reflection
     /// <summary>
     /// Descriptor for a field or extension within a message in a .proto file.
     /// </summary>
-    public sealed class FieldDescriptor : DescriptorBase, IComparable<FieldDescriptor>
+    internal sealed class FieldDescriptor : DescriptorBase, IComparable<FieldDescriptor>
     {
         private EnumDescriptor enumType;
         private MessageDescriptor extendeeType;

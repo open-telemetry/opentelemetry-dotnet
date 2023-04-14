@@ -58,7 +58,7 @@ namespace Google.Protobuf
     /// (This code is generally not heavily optimized.)
     /// </para>
     /// </remarks>
-    public sealed class JsonParser
+    internal sealed class JsonParser
     {
         // Note: using 0-9 instead of \d to ensure no non-ASCII digits.
         // This regex isn't a complete validator, but will remove *most* invalid input. We rely on parsing to do the rest.

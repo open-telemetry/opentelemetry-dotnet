@@ -43,7 +43,7 @@ namespace Google.Protobuf
     /// <summary>
     /// Factory methods for <see cref="FieldCodec{T}"/>.
     /// </summary>
-    public static class FieldCodec
+    internal static class FieldCodec
     {
         // TODO: Avoid the "dual hit" of lambda expressions: create open delegates instead. (At least test...)
 
@@ -600,7 +600,7 @@ namespace Google.Protobuf
     /// This never writes default values to the stream, and does not address "packedness"
     /// in repeated fields itself, other than to know whether or not the field *should* be packed.
     /// </remarks>
-    public sealed class FieldCodec<T>
+    internal sealed class FieldCodec<T>
     {
         private static readonly EqualityComparer<T> EqualityComparer = ProtobufEqualityComparers.GetEqualityComparer<T>();
         private static readonly T DefaultDefault;
