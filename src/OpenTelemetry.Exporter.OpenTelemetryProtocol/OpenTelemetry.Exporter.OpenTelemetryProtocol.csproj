@@ -6,6 +6,9 @@
     <PackageTags>$(PackageTags);OTLP</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
 
+    <!-- The internalized Google.Protobuf code requires AllowUnsafeBlocks -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
   </PropertyGroup>
@@ -17,7 +20,6 @@
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0'" />
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
-    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
   </ItemGroup>
 
