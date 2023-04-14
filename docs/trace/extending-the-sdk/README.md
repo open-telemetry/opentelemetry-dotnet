@@ -215,8 +215,8 @@ Writing an instrumentation library typically involves 3 steps.
     > **Warning**
     > If enabling the instrumentation requires references to objects
     from the targeted library, your instrumentation library should
-    offer public APIs to receive them instead of relying on the
-    extension methods, as objects might not be available yet at
+    offer public APIs to receive them instead of relying on the extension methods
+    on `TracerProviderBuilder` and/or `IServiceCollection`, as the objects might not be available yet at
     the time the tracer is being built (for example, connections established
     later in the app lifetime).
 
