@@ -18,8 +18,8 @@ and
 packages:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console --prerelease
-dotnet add package OpenTelemetry.Extensions.Hosting --prerelease
+dotnet add package OpenTelemetry.Exporter.Console
+dotnet add package OpenTelemetry.Extensions.Hosting
 dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 ```
 

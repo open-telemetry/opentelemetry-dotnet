@@ -27,7 +27,7 @@ Add a reference to [Prometheus
 Exporter Http Listener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md):
 
 ```sh
-dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.HttpListener
+dotnet add package OpenTelemetry.Exporter.Prometheus.HttpListener --prerelease
 ```
 
 Now, we are going to make some small tweaks to the example in the
