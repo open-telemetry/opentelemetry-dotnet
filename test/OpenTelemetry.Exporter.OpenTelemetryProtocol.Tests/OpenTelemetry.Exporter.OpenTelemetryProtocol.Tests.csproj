@@ -22,16 +22,14 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore.Server" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Grpc.AspNetCore.Server" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" VersionOverride="6.0.0" />
+    <PackageReference Include="Grpc.AspNetCore.Server" />
   </ItemGroup>
 
   <ItemGroup>
