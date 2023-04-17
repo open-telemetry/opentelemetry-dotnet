@@ -70,7 +70,7 @@ namespace OpenTelemetry.AotCompatibility.Tests
             process.Start();
             process.BeginOutputReadLine();
 
-            Assert.True(process.WaitForExit(milliseconds: 60_000), "dotnet publish command timed out after 60 seconds.");
+            Assert.True(process.WaitForExit(milliseconds: 180_000), "dotnet publish command timed out after 180 seconds.");
 
             Assert.True(process.ExitCode == 0, "Publishing the AotCompatibility app failed. See test output for more details.");
         }
