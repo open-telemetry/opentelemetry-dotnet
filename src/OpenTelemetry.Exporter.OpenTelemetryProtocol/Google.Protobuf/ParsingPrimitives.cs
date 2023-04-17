@@ -66,7 +66,7 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Parses the next tag.
-        /// If the end of logical stream was reached, an invalid tag of 0 is returned. 
+        /// If the end of logical stream was reached, an invalid tag of 0 is returned.
         /// </summary>
         public static uint ParseTag(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
@@ -403,7 +403,7 @@ namespace Google.Protobuf
             // ReadUnaligned uses processor architecture for endianness.
             float result = Unsafe.ReadUnaligned<float>(ref MemoryMarshal.GetReference(buffer.Slice(state.bufferPos, length)));
             state.bufferPos += length;
-            return result;  
+            return result;
         }
 
         private static unsafe float ParseFloatSlow(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
@@ -737,7 +737,7 @@ namespace Google.Protobuf
         /// </summary>
         /// <remarks>
         /// ZigZag encodes signed integers into values that can be efficiently
-        /// encoded with varint.  (Otherwise, negative values must be 
+        /// encoded with varint.  (Otherwise, negative values must be
         /// sign-extended to 32 bits to be varint encoded, thus always taking
         /// 5 bytes on the wire.)
         /// </remarks>
@@ -751,7 +751,7 @@ namespace Google.Protobuf
         /// </summary>
         /// <remarks>
         /// ZigZag encodes signed integers into values that can be efficiently
-        /// encoded with varint.  (Otherwise, negative values must be 
+        /// encoded with varint.  (Otherwise, negative values must be
         /// sign-extended to 64 bits to be varint encoded, thus always taking
         /// 10 bytes on the wire.)
         /// </remarks>

@@ -487,7 +487,7 @@ namespace Google.Protobuf
         #endregion
 
         #region Underlying writing primitives
-        
+
         /// <summary>
         /// Writes a 32 bit value as a varint. The fast route is taken when
         /// there's enough buffer space left to whizz through without checking

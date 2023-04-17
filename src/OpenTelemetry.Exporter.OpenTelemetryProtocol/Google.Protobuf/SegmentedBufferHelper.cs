@@ -89,7 +89,7 @@ namespace Google.Protobuf
                 firstSpan = instance.readOnlySequenceEnumerator.Current.Span;
             }
         }
-        
+
         public bool RefillBuffer(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, bool mustSucceed)
         {
             if (codedInputStream != null)

@@ -43,7 +43,7 @@ namespace Google.Protobuf
 {
     /// <summary>
     /// Methods for managing <see cref="ExtensionSet{TTarget}"/>s with null checking.
-    /// 
+    ///
     /// Most users will not use this class directly and its API is experimental and subject to change.
     /// </summary>
     internal static class ExtensionSet
@@ -184,7 +184,7 @@ namespace Google.Protobuf
                     set.ValuesByNumber.Add(extension.FieldNumber, extensionValue);
                 }
             }
-            
+
             ((ExtensionValue<TValue>)extensionValue).SetValue(value);
         }
 
@@ -320,9 +320,9 @@ namespace Google.Protobuf
     }
 
     /// <summary>
-    /// Used for keeping track of extensions in messages. 
+    /// Used for keeping track of extensions in messages.
     /// <see cref="IExtendableMessage{T}"/> methods route to this set.
-    /// 
+    ///
     /// Most users will not need to use this class directly
     /// </summary>
     /// <typeparam name="TTarget">The message type that extensions in this set target</typeparam>
@@ -391,7 +391,7 @@ namespace Google.Protobuf
         /// </summary>
         public void WriteTo(CodedOutputStream stream)
         {
-            
+
             WriteContext.Initialize(stream, out WriteContext ctx);
             try
             {

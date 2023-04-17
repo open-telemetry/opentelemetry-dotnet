@@ -143,4 +143,3 @@ namespace Google.Protobuf.Reflection
         }
     }
 }
- 

@@ -42,7 +42,7 @@ namespace Google.Protobuf
     internal sealed partial class CodedOutputStream
     {
         private const int LittleEndian64Size = 8;
-        private const int LittleEndian32Size = 4;        
+        private const int LittleEndian32Size = 4;
 
         internal const int DoubleSize = LittleEndian64Size;
         internal const int FloatSize = LittleEndian32Size;

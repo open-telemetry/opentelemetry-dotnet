@@ -424,7 +424,7 @@ namespace Google.Protobuf.Reflection
         {
             ExtensionRegistry registry = new ExtensionRegistry();
             registry.AddRange(GetAllExtensions(dependencies, generatedCodeInfo));
-    
+
             FileDescriptorProto proto;
             try
             {

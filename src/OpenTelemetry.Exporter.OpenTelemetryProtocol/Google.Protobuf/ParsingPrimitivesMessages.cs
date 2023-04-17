@@ -204,7 +204,7 @@ namespace Google.Protobuf
                 throw InvalidProtocolBufferException.RecursionLimitExceeded();
             }
             ++ctx.state.recursionDepth;
-            
+
             uint tag = ctx.state.lastTag;
             int fieldNumber = WireFormat.GetTagFieldNumber(tag);
             ReadRawMessage(ref ctx, message);
@@ -231,7 +231,7 @@ namespace Google.Protobuf
         {
             if (message is IBufferMessage bufferMessage)
             {
-                bufferMessage.InternalMergeFrom(ref ctx);   
+                bufferMessage.InternalMergeFrom(ref ctx);
             }
             else
             {
@@ -272,7 +272,7 @@ namespace Google.Protobuf
         /// Verifies that the last call to ReadTag() returned tag 0 - in other words,
         /// we've reached the end of the stream when we expected to.
         /// </summary>
-        /// <exception cref="InvalidProtocolBufferException">The 
+        /// <exception cref="InvalidProtocolBufferException">The
         /// tag read was not the one specified</exception>
         public static void CheckReadEndOfStreamTag(ref ParserInternalState state)
         {

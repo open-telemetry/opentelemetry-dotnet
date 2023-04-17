@@ -191,7 +191,7 @@ namespace Google.Protobuf
             fields[number] = field;
             return this;
         }
-        
+
         /// <summary>
         /// Parse a single field from <paramref name="ctx"/> and merge it
         /// into this set.
