@@ -36,49 +36,52 @@ in the console for your application (ex `http://localhost:5154`). You should see
 the trace output from the console.
 
 ```text
-Activity.TraceId:            c1572aa14ee9c0ac037dbdc3e91e5dd7
-Activity.SpanId:             45406137f33cc279
-Activity.TraceFlags:         Recorded
-Activity.ActivitySourceName: OpenTelemetry.Instrumentation.AspNetCore
-Activity.DisplayName:        /
-Activity.Kind:               Server
-Activity.StartTime:          2023-01-13T19:38:11.5417593Z
-Activity.Duration:           00:00:00.0167407
-Activity.Tags:
-    net.host.name: localhost
-    net.host.port: 5154
-    http.method: GET
-    http.scheme: http
-    http.target: /
-    http.url: http://localhost:5154/
-    http.flavor: 1.1
-    http.user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.76
-    http.status_code: 200
-Resource associated with Activity:
-    service.name: OTel.NET Getting Started
-    service.instance.id: af85d327-d673-41c8-b529-b7eecf3c90f6
+Export http.server.duration, Measures the duration of inbound HTTP requests., Unit: ms, Meter: OpenTelemetry.Instrumentation.AspNetCore/1.0.0.0
+(2023-04-11T21:49:43.6915232Z, 2023-04-11T21:50:50.6564690Z] http.flavor: 1.1 http.method: GET http.route: / http.scheme: http http.status_code: 200 net.host.name: localhost net.host.port: 5000 Histogram
+Value: Sum: 3.5967 Count: 11 Min: 0.073 Max: 2.5539
+(-Infinity,0]:0
+(0,5]:11
+(5,10]:0
+(10,25]:0
+(25,50]:0
+(50,75]:0
+(75,100]:0
+(100,250]:0
+(250,500]:0
+(500,750]:0
+(750,1000]:0
+(1000,2500]:0
+(2500,5000]:0
+(5000,7500]:0
+(7500,10000]:0
+(10000,+Infinity]:0
 ```
 
-Congratulations! You are now collecting traces using OpenTelemetry.
+Congratulations! You are now collecting metrics using OpenTelemetry.
 
 What does the above program do?
 
 The program uses the
 [OpenTelemetry.Instrumentation.AspNetCore](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-package to automatically create traces for incoming ASP.NET Core requests and
-uses the
+package to automatically create metrics for incoming ASP.NET Core requests, uses
+the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
-package to write traces to the console. This is done by configuring an
-OpenTelemetry [TracerProvider](../customizing-the-sdk/README.MD#tracerprovider)
-using extension methods and setting it to auto-start when the host is started:
+package to write metrics to the console every 1000 milliseconds. This is done by
+configuring an OpenTelemetry
+[MeterProvider](../customizing-the-sdk/README.MD#meterprovider) using extension
+methods and setting it to auto-start when the host is started:
 
 ```csharp
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(builder => builder
         .AddService(serviceName: "OTel.NET Getting Started"))
-    .WithTracing(builder => builder
+    .WithMetrics(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter());
+        .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
+        {
+            metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+        })
+    );
 ```
 
 > **Note**
@@ -86,23 +89,14 @@ appBuilder.Services.AddOpenTelemetry()
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
 
-The index route ("/") is set up to write out the OpenTelemetry trace information
-on the response:
+The index route ("/") is set up to write out a greeting message on the response:
 
 ```csharp
-app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}");
+app.MapGet("/", () => $"Hello from OpenTelemetry Metrics!");
 ```
-
-In OpenTelemetry .NET the [Activity
-class](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity?view=net-7.0)
-represents the OpenTelemetry Specification
-[Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
-For more details about how the OpenTelemetry Specification is implemented in
-.NET see: [Introduction to OpenTelemetry .NET Tracing
-API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#introduction-to-opentelemetry-net-tracing-api).
 
 ## Learn more
 
-* [Getting Started with Jaeger](../getting-started-jaeger/README.md)
+* [Getting Started with Prometheus and Grafana](../getting-started-prometheus-grafana/README.md)
 * [Customizing OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
 * [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)
