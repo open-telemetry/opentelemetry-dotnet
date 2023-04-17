@@ -13,6 +13,15 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <!-- The following constants are used in the Google.Protobuf code.  -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);GOOGLE_PROTOBUF_SUPPORT_FAST_STRING</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+    <DefineConstants>$(DefineConstants);GOOGLE_PROTOBUF_SIMD</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
