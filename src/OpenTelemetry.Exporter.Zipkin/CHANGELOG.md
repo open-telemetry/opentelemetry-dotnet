@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Added direct reference to `System.Text.Encodings.Web` with minimum version of `4.7.2` in response
-to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+* Added direct reference to `System.Text.Encodings.Web` with minimum version of
+`4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
 
 ## 1.5.0-alpha.2
 
