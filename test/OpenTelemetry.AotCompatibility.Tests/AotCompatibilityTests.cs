@@ -45,7 +45,7 @@ namespace OpenTelemetry.AotCompatibility.Tests
         [Fact]
         public void EnsureAotCompatibility()
         {
-            string testAppPath = @"..\OpenTelemetry.AotCompatibility.TestApp";
+            string testAppPath = @"..\..\..\..\OpenTelemetry.AotCompatibility.TestApp";
             string testAppProject = "OpenTelemetry.AotCompatibility.TestApp.csproj";
 
             // ensure we run a clean publish every time
