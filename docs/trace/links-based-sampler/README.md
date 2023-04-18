@@ -59,10 +59,10 @@ sampled. This is an example of a situation where this approach is not helpful.
 Another example of a situation where you would get a partial trace is if the
 consuming activity S2 in trace T2 is not the root activity in trace T2. In this
 case, let's say there's a different activity S3 in trace T2 that is the root
-activity. Let's say that the sampling decision was activity S3 was to drop it.
+activity. Let's say that the sampling decision for activity S3 was to drop it.
 Now, since S2 in trace T2 links to S1 in trace T1, with this approach S2 will
 be sampled (based on the linked context). Hence, the produced trace T2 will be
-a partial trace.
+a partial trace as it will not include activity S3 but will include activity S2.
 
 - **Can lead to higher volume of data**: Since this approach will sample in
 activities even if one of the linked activities is sampled, it can lead to higher
@@ -76,98 +76,122 @@ even if only one of them is sampled, then the linking activity will be sampled.
 You should see output such as the below when you run this example.
 
 ```text
-b712cde6aa4eaa9927f6106e17861d3c: ParentBasedSampler decision: Drop
-b712cde6aa4eaa9927f6106e17861d3c: No linked span is sampled.
-LinksBasedSampler decision: Drop.
+af448bc1cb3e5be4e4b56a8b6650785c: ParentBasedSampler decision: Drop
+af448bc1cb3e5be4e4b56a8b6650785c: No linked span is sampled. Hence,
+LinksBasedSampler decision is Drop.
 
-72b00993686449357a94c2bfd536b2ed: ParentBasedSampler decision: Drop
-72b00993686449357a94c2bfd536b2ed: No linked span is sampled.
-LinksBasedSampler decision: Drop.
+1b08120fa35c3f4a37e0b6326dc7688c: ParentBasedSampler decision: Drop
+1b08120fa35c3f4a37e0b6326dc7688c: No linked span is sampled. Hence,
+LinksBasedSampler decision is Drop.
 
-5773bf1e0e9b6c4f5f9f561f01e8f394: ParentBasedSampler decision: Drop
-5773bf1e0e9b6c4f5f9f561f01e8f394: No linked span is sampled.
-LinksBasedSampler decision: Drop.
-
-41b7c1da65927a82e237607748537760: ParentBasedSampler decision: Drop
-41b7c1da65927a82e237607748537760: No linked span is sampled.
-LinksBasedSampler decision: Drop.
-
-0920a3042929efb8685afa50ef5cd5c3: ParentBasedSampler decision: RecordAndSample
-Activity.TraceId:            0920a3042929efb8685afa50ef5cd5c3
-Activity.SpanId:             71c413f0cf2a600b
+ff710bd70baf2e8e843e7b38d1fc4cc1: ParentBasedSampler decision: RecordAndSample
+Activity.TraceId:            ff710bd70baf2e8e843e7b38d1fc4cc1
+Activity.SpanId:             620d9b218afbf926
 Activity.TraceFlags:         Recorded
 Activity.ActivitySourceName: LinksAndParentBasedSampler.Example
 Activity.DisplayName:        Main
 Activity.Kind:               Internal
-Activity.StartTime:          2023-03-29T16:54:25.3783462Z
-Activity.Duration:           00:00:00.0026831
+Activity.StartTime:          2023-04-18T16:52:16.0373932Z
+Activity.Duration:           00:00:00.0022481
 Activity.Tags:
     foo: bar
 Activity.Links:
-    7a15435bce073e8d0645789cd0198586 f132ac6be68a13fa
-    89f9d15ae85c8b5a511d499c8d024074 b2e73501bf4c9e22
-    9694ca9bf89078eb5a0b7a3909107bf3 42626464ce8f3d62
-    f9ec03f16e7157c88e7e2369129fcd7b 3b2e89fd24d37c56
-    665ab563e79df56914eefaa31465a61b d608bef51d5cecc0
+    f7464f714b23713c9008f8fc884fc391 7d1c96a6f2c95556
+    6660db8951e10644f63cd385e7b9549e 526e615b7a70121a
+    4c94df8e520b32ff25fc44e0c8063c81 8080d0aaafa641af
+    70d8ba08181b5ec073ec8b5db778c41f 99ea6162257046ab
+    d96954e9e76835f442f62eece3066be4 ae9332547b80f50f
 Resource associated with Activity:
     service.name: unknown_service:links-sampler
 
 
-9b42320a559005ed3358203e507fbf73: ParentBasedSampler decision: Drop
-9b42320a559005ed3358203e507fbf73: At least one linked activity is sampled.
-LinksBasedSampler decision: RecordAndSample
-Activity.TraceId:            9b42320a559005ed3358203e507fbf73
-Activity.SpanId:             41a7afd45e589e21
+68121534d69b2248c4816c0c5281f908: ParentBasedSampler decision: Drop
+68121534d69b2248c4816c0c5281f908: No linked span is sampled. Hence,
+LinksBasedSampler decision is Drop.
+
+5042f2c52a08143f5f42be3818eb41fa: ParentBasedSampler decision: Drop
+5042f2c52a08143f5f42be3818eb41fa: At least one linked activity
+(TraceID: 5c1185c94f56ebe3c2ccb4b9880afb17, SpanID: 1f77abf0bded4ab9 is sampled.
+Hence, LinksBasedSampler decision is RecordAndSample
+
+Activity.TraceId:            5042f2c52a08143f5f42be3818eb41fa
+Activity.SpanId:             0f8a9bfa9d7770e6
 Activity.TraceFlags:         Recorded
 Activity.ActivitySourceName: LinksAndParentBasedSampler.Example
 Activity.DisplayName:        Main
 Activity.Kind:               Internal
-Activity.StartTime:          2023-03-29T16:54:25.5890651Z
-Activity.Duration:           00:00:00.0023307
+Activity.StartTime:          2023-04-18T16:52:16.0806081Z
+Activity.Duration:           00:00:00.0018874
 Activity.Tags:
     foo: bar
 Activity.Links:
-    294922daedd20f74a65eeae8e86e64ca 835e800d0e0cb9ed
-    e65e146c15d4e65c0a2958d537b5ee2d 7217651b841464c6
-    d56f7cbee9d9e85142e2395cd3410a65 248bc3bf50c42d37
-    438ffb7a2fbfcbd0f2c0c548734b3377 707b0ed41f815013
-    f36092671286f42d5ef422df5003a3b4 4df103c2567c4153
+    ed77487f4a646399aea5effc818d8bfa fcdde951f29a13e0
+    f79860fdfb949f2c1f1698d1ed8036b9 e422cb771057bf7c
+    6326338d0c0cf3afe7c5946d648b94dc affc7a6c013ea273
+    c0750a9fa146062083b55227ac965ad4 b09d59ed3129779d
+    5c1185c94f56ebe3c2ccb4b9880afb17 1f77abf0bded4ab9
 Resource associated with Activity:
     service.name: unknown_service:links-sampler
 
 
-8d8a37097bc698eddbf0f74f87c2bb68: ParentBasedSampler decision: Drop
-8d8a37097bc698eddbf0f74f87c2bb68: No linked span is sampled.
-LinksBasedSampler decision: Drop.
+568a2b9489c58e7a5a769d264a9ddf28: ParentBasedSampler decision: Drop
+568a2b9489c58e7a5a769d264a9ddf28: No linked span is sampled. Hence,
+LinksBasedSampler decision is Drop.
 
-b640159ee5b28da8e1022d65c46ccf97: ParentBasedSampler decision: Drop
-b640159ee5b28da8e1022d65c46ccf97: No linked span is sampled.
-LinksBasedSampler decision: Drop.
+4f8d972b0d7727821ce4a307a7be8e8f: ParentBasedSampler decision: Drop
+4f8d972b0d7727821ce4a307a7be8e8f: No linked span is sampled. Hence,
+LinksBasedSampler decision is Drop.
 
-2240cb1d683a5467d7bb3f41e8d96fa0: ParentBasedSampler decision: Drop
-2240cb1d683a5467d7bb3f41e8d96fa0: At least one linked activity is sampled.
-LinksBasedSampler decision: RecordAndSample
-Activity.TraceId:            2240cb1d683a5467d7bb3f41e8d96fa0
-Activity.SpanId:             99946d9145fbe367
+ce940241ed33e1a030da3e9d201101d3: ParentBasedSampler decision: Drop
+ce940241ed33e1a030da3e9d201101d3: At least one linked activity
+(TraceID: ba0d91887309399029719e2a71a12f62, SpanID: 61aafe295913080f is sampled.
+Hence, LinksBasedSampler decision is RecordAndSample
+
+Activity.TraceId:            ce940241ed33e1a030da3e9d201101d3
+Activity.SpanId:             5cf3d63926ce4fd5
 Activity.TraceFlags:         Recorded
 Activity.ActivitySourceName: LinksAndParentBasedSampler.Example
 Activity.DisplayName:        Main
 Activity.Kind:               Internal
-Activity.StartTime:          2023-03-29T16:54:25.6265057Z
-Activity.Duration:           00:00:00.0029163
+Activity.StartTime:          2023-04-18T16:52:16.1127688Z
+Activity.Duration:           00:00:00.0021072
 Activity.Tags:
     foo: bar
 Activity.Links:
-    e97146f1bdf3fa7fd0e85c292ab28514 0946c50c4b3fe52e
-    aa7b20ff019e19f38627b5bb659f7fc4 720e2a83df885796
-    c952dd79e1199ea9b1dcb5dedd33a92c 05e38253e40c452f
-    636c5e3ca771ed1766ebbd0a675b773d baf119ff34903b24
-    d38a81cb579cb4e91091045818941b5d 9686feedc52b6fe2
+    5223cff39311c741ef50aca58e4270c3 e401b6840acebf43
+    398b43fee8a75b068cdd11018ef528b0 24cfa4d5fb310b9d
+    34351a0f492d65ef92ca0db3238f5146 5c0a56a16291d765
+    ba0d91887309399029719e2a71a12f62 61aafe295913080f
+    de18a8af2d20972cd4f9439fcd51e909 4c40bc6037e58bf9
 Resource associated with Activity:
     service.name: unknown_service:links-sampler
 
 
-37ac3dc5296c6ab155b71c3cb457b286: ParentBasedSampler decision: Drop
-37ac3dc5296c6ab155b71c3cb457b286: No linked span is sampled.
-LinksBasedSampler decision: Drop.
+ac46618da4495897bacd7d399e6fc6d8: ParentBasedSampler decision: Drop
+ac46618da4495897bacd7d399e6fc6d8: No linked span is sampled. Hence,
+LinksBasedSampler decision is Drop.
+
+68a3a05e0348d2a2c1c3db34bc3fd2f5: ParentBasedSampler decision: Drop
+68a3a05e0348d2a2c1c3db34bc3fd2f5: At least one linked activity
+(TraceID: 87773d89fba942b0109d6ce0876bb67e, SpanID: 2aaac98d4e48c261 is sampled.
+Hence, LinksBasedSampler decision is RecordAndSample
+
+Activity.TraceId:            68a3a05e0348d2a2c1c3db34bc3fd2f5
+Activity.SpanId:             3d0222f56b0e1e5d
+Activity.TraceFlags:         Recorded
+Activity.ActivitySourceName: LinksAndParentBasedSampler.Example
+Activity.DisplayName:        Main
+Activity.Kind:               Internal
+Activity.StartTime:          2023-04-18T16:52:16.1553354Z
+Activity.Duration:           00:00:00.0049821
+Activity.Tags:
+    foo: bar
+Activity.Links:
+    7175fbd18da2783dc594d1e8f3260c74 13019d9a06a5505b
+    59c9bdd52eb5cf23eae9001006743fcf 25573e0f1b290b8d
+    87773d89fba942b0109d6ce0876bb67e 2aaac98d4e48c261
+    0a1f65c47f556336b4028b515d363810 0816a2a2b7d4ea0b
+    7602375d3eae7e849a9dc27e858dc1c2 b918787b895b1374
+Resource associated with Activity:
+    service.name: unknown_service:links-sampler
 ```
