@@ -35,7 +35,7 @@ internal class LinksBasedSampler : Sampler
                       ActivityTraceFlags.Recorded) != 0)
                 {
                     // If any linked activity is sampled, we will include this activity as well.
-                    Console.WriteLine($"{samplingParameters.TraceId}: At least one linked activity (TraceID: {activityLink.Context.TraceId}, SpanID: {activityLink.Context.SpanId} is sampled. Hence, LinksBasedSampler decision is RecordAndSample");
+                    Console.WriteLine($"{samplingParameters.TraceId}: At least one linked activity (TraceID: {activityLink.Context.TraceId}, SpanID: {activityLink.Context.SpanId}) is sampled. Hence, LinksBasedSampler decision is RecordAndSample");
                     return new SamplingResult(SamplingDecision.RecordAndSample);
                 }
             }
