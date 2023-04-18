@@ -43,6 +43,7 @@ namespace OpenTelemetry.AotCompatibility.Tests
         /// error IL2091: 'T' generic argument does not satisfy 'DynamicallyAccessedMemberTypes.PublicConstructors'.
         /// </summary>
         [Fact]
+        [Trait("Platform", "Windows")]
         public void EnsureAotCompatibility()
         {
             string testAppPath = @"..\..\..\..\OpenTelemetry.AotCompatibility.TestApp";
