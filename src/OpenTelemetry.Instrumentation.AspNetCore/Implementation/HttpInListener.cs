@@ -240,7 +240,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))

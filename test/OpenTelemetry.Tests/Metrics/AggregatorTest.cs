@@ -188,6 +188,42 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.False(enumerator.MoveNext());
         }
 
+        [Fact]
+        public void MultiThreadedHistogramUpdateAndSnapShotTest()
+        {
+            var boundaries = Array.Empty<double>();
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+            var argsToThread = new ThreadArguments
+            {
+                HistogramPoint = histogramPoint,
+                MreToEnsureAllThreadsStart = new ManualResetEvent(false),
+            };
+
+            var numberOfThreads = 2;
+            var snapshotThread = new Thread(HistogramSnapshotThread);
+            Thread[] updateThreads = new Thread[numberOfThreads];
+            for (int i = 0; i < numberOfThreads; ++i)
+            {
+                updateThreads[i] = new Thread(HistogramUpdateThread);
+                updateThreads[i].Start(argsToThread);
+            }
+
+            snapshotThread.Start(argsToThread);
+
+            for (int i = 0; i < numberOfThreads; ++i)
+            {
+                updateThreads[i].Join();
+            }
+
+            snapshotThread.Join();
+
+            // last snapshot
+            histogramPoint.TakeSnapshot(outputDelta: true);
+
+            var lastDelta = histogramPoint.GetHistogramSum();
+            Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
+        }
+
         internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
         {
             Assert.Equal(expectedHistogram.Scale, data.Scale);
@@ -371,6 +407,56 @@ namespace OpenTelemetry.Metrics.Tests
             // Scale will equal MaxScale.
             var expectedScale = maxScale.HasValue ? maxScale : Metric.DefaultExponentialHistogramMaxScale;
             Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
+        }
+
+        private static void HistogramSnapshotThread(object obj)
+        {
+            var args = obj as ThreadArguments;
+            var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
+
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
+            {
+                mreToEnsureAllThreadsStart.Set();
+            }
+
+            mreToEnsureAllThreadsStart.WaitOne();
+
+            double curSnapshotDelta;
+            while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 2)
+            {
+                args.HistogramPoint.TakeSnapshot(outputDelta: true);
+                curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
+                args.SumOfDelta += curSnapshotDelta;
+            }
+        }
+
+        private static void HistogramUpdateThread(object obj)
+        {
+            var args = obj as ThreadArguments;
+            var mreToEnsureAllThreadsStart = args.MreToEnsureAllThreadsStart;
+
+            if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
+            {
+                mreToEnsureAllThreadsStart.Set();
+            }
+
+            mreToEnsureAllThreadsStart.WaitOne();
+
+            for (int i = 0; i < 10; ++i)
+            {
+                args.HistogramPoint.Update(10);
+            }
+
+            Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
+        }
+
+        private class ThreadArguments
+        {
+            public MetricPoint HistogramPoint;
+            public ManualResetEvent MreToEnsureAllThreadsStart;
+            public int ThreadStartedCount;
+            public long ThreadsFinishedAllUpdatesCount;
+            public double SumOfDelta;
         }
     }
 }
