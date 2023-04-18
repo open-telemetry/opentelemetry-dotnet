@@ -12,22 +12,28 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
+  <PropertyGroup>
+    <RunApiCompat>true</RunApiCompat>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
     <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds;ValidateApiCompatForSrc" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
+  <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds;ValidateApiCompatForSrc" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
     <!-- Note: DispatchToInnerBuilds is called for projects with multiple
     targets defined to spawn a build process for each target framework being
     compiled. Executing BEFORE that step means this runs once for a project
     instead of in parallel for each target framework defined. If we ever have a
     project with only a single target, this will NOT run and an alternative
     solution will be needed. -->
+    <Message Text="ApiCompat: Running the powershell script to download the package for $(MSBuildProjectName)." Importance="High"/>
     <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot; -workDir &quot;$(RepoRoot)\build\LastMajorVersionBinaries&quot;" />
   </Target>
 
-  <Target Name="FindContractDependencyPaths" BeforeTargets="ValidateApiCompatForSrc" AfterTargets="ResolveAssemblyReferences" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
+  <Target Name="FindContractDependencyPaths" BeforeTargets="ValidateApiCompatForSrc" AfterTargets="ResolveAssemblyReferences" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
+    <Message Text="ApiCompat: Finding the contract dependency path for $(MSBuildProjectName)." Importance="High"/>
     <ItemGroup>
       <_ReferencePathDirectories Include="@(ReferencePath -> '%(RootDir)%(Directory)')" />
     </ItemGroup>

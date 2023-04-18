@@ -86,23 +86,23 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Error, activity1.GetStatus().StatusCode);
-            Assert.Null(activity1.GetTagValue("otel.exception_pointers"));
+            Assert.Null(GetTagValue(activity1, "otel.exception_pointers"));
             Assert.Equal(StatusCode.Error, activity2.GetStatus().StatusCode);
-            Assert.Null(activity2.GetTagValue("otel.exception_pointers"));
+            Assert.Null(GetTagValue(activity2, "otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity3.GetStatus().StatusCode);
-            Assert.Null(activity3.GetTagValue("otel.exception_pointers"));
+            Assert.Null(GetTagValue(activity3, "otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity4.GetStatus().StatusCode);
-            Assert.Null(activity4.GetTagValue("otel.exception_pointers"));
+            Assert.Null(GetTagValue(activity4, "otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity5.GetStatus().StatusCode);
 #if !NETFRAMEWORK
             if (Environment.Is64BitProcess)
             {
                 // In this rare case, the following Activity tag will not get cleaned up due to perf consideration.
-                Assert.NotNull(activity5.GetTagValue("otel.exception_pointers"));
+                Assert.NotNull(GetTagValue(activity5, "otel.exception_pointers"));
             }
             else
             {
-                Assert.Null(activity5.GetTagValue("otel.exception_pointers"));
+                Assert.Null(GetTagValue(activity5, "otel.exception_pointers"));
             }
 #endif
         }
@@ -131,6 +131,21 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
+        }
+
+        private static object GetTagValue(Activity activity, string tagName)
+        {
+            Debug.Assert(activity != null, "Activity should not be null");
+
+            foreach (ref readonly var tag in activity.EnumerateTagObjects())
+            {
+                if (tag.Key == tagName)
+                {
+                    return tag.Value;
+                }
+            }
+
+            return null;
         }
     }
 }
