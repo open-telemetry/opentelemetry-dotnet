@@ -111,7 +111,7 @@ LinksBasedSampler decision is Drop.
 
 5042f2c52a08143f5f42be3818eb41fa: ParentBasedSampler decision: Drop
 5042f2c52a08143f5f42be3818eb41fa: At least one linked activity
-(TraceID: 5c1185c94f56ebe3c2ccb4b9880afb17, SpanID: 1f77abf0bded4ab9 is sampled.
+(TraceID: 5c1185c94f56ebe3c2ccb4b9880afb17, SpanID: 1f77abf0bded4ab9) is sampled.
 Hence, LinksBasedSampler decision is RecordAndSample
 
 Activity.TraceId:            5042f2c52a08143f5f42be3818eb41fa
@@ -144,7 +144,7 @@ LinksBasedSampler decision is Drop.
 
 ce940241ed33e1a030da3e9d201101d3: ParentBasedSampler decision: Drop
 ce940241ed33e1a030da3e9d201101d3: At least one linked activity
-(TraceID: ba0d91887309399029719e2a71a12f62, SpanID: 61aafe295913080f is sampled.
+(TraceID: ba0d91887309399029719e2a71a12f62, SpanID: 61aafe295913080f) is sampled.
 Hence, LinksBasedSampler decision is RecordAndSample
 
 Activity.TraceId:            ce940241ed33e1a030da3e9d201101d3
@@ -173,7 +173,7 @@ LinksBasedSampler decision is Drop.
 
 68a3a05e0348d2a2c1c3db34bc3fd2f5: ParentBasedSampler decision: Drop
 68a3a05e0348d2a2c1c3db34bc3fd2f5: At least one linked activity
-(TraceID: 87773d89fba942b0109d6ce0876bb67e, SpanID: 2aaac98d4e48c261 is sampled.
+(TraceID: 87773d89fba942b0109d6ce0876bb67e, SpanID: 2aaac98d4e48c261) is sampled.
 Hence, LinksBasedSampler decision is RecordAndSample
 
 Activity.TraceId:            68a3a05e0348d2a2c1c3db34bc3fd2f5
