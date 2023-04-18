@@ -30,5 +30,5 @@
     <TrimmerRootAssembly Update="@(TrimmerRootAssembly)" Path="$(RepoRoot)\src\%(Identity)\%(Identity).csproj" />
     <ProjectReference Include="@(TrimmerRootAssembly->'%(Path)')" />
   </ItemGroup>
-  
+
 </Project>
