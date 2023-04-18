@@ -7,7 +7,7 @@
 This impacts target frameworks `netstandard2.0` and `netstandard2.1` which has a
 dependency on `Microsoft.AspNetCore.Http.Abstractions` which depends on
 `System.Text.Encodings.Web` >= 4.5.0.
-([#]())
+([#4399](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4399))
 
 * Improve perf by avoiding boxing of common status codes values.
   ([#4360](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4360),
