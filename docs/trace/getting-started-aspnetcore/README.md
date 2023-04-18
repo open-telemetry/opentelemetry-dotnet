@@ -1,4 +1,4 @@
-# Getting Started with OpenTelemetry .NET in 5 Minutes - ASP.NET Core Application
+# Getting Started with OpenTelemetry .NET Traces in 5 Minutes - ASP.NET Core Application
 
 First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
