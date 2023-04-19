@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebPkgVer)" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" />
   </ItemGroup>
 

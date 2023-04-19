@@ -2,7 +2,8 @@
 
 ## MeterProvider
 
-As shown in the [getting-started](../getting-started/README.md) doc, a valid
+As shown in the [getting-startedgetting started in 5 minutes - Console
+Application](../getting-started-console/README.md) doc, a valid
 [`MeterProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#meterprovider)
 must be configured and built to collect metrics with OpenTelemetry .NET Sdk.
 `MeterProvider` holds all the configuration for metrics like MetricReaders,
