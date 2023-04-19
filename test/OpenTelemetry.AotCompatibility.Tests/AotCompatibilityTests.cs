@@ -67,13 +67,22 @@ namespace OpenTelemetry.AotCompatibility.Tests
                     WorkingDirectory = testAppPath,
                 },
             };
-            process.OutputDataReceived += (sender, e) => this.testOutputHelper.WriteLine(e.Data);
+
+            var expectedOutput = new System.Text.StringBuilder();
+            process.OutputDataReceived += (sender, e) =>
+            {
+                this.testOutputHelper.WriteLine(e.Data);
+                expectedOutput.AppendLine(e.Data);
+            };
+
             process.Start();
             process.BeginOutputReadLine();
 
             Assert.True(process.WaitForExit(milliseconds: 180_000), "dotnet publish command timed out after 180 seconds.");
-
             Assert.True(process.ExitCode == 0, "Publishing the AotCompatibility app failed. See test output for more details.");
+
+            var warnings = expectedOutput.ToString().Split('\n', '\r').Where(line => line.Contains("warning IL"));
+            Assert.Equal(76, warnings.Count());
         }
     }
 }
