@@ -5,6 +5,11 @@
 * Added direct reference to `System.Text.Encodings.Web` with minimum version of
 `4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
 
+* Updated `LogRecord` console output: `Body` is now shown (if set),
+  `StateValues` are now written as `Attributes`, and `State` is no longer
+  processed.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
 ## 1.5.0-alpha.2
 
 Released 2023-Mar-31
