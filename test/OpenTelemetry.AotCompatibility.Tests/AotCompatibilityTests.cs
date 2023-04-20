@@ -71,8 +71,11 @@ namespace OpenTelemetry.AotCompatibility.Tests
             var expectedOutput = new System.Text.StringBuilder();
             process.OutputDataReceived += (sender, e) =>
             {
-                this.testOutputHelper.WriteLine(e.Data);
-                expectedOutput.AppendLine(e.Data);
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    this.testOutputHelper.WriteLine(e.Data);
+                    expectedOutput.AppendLine(e.Data);
+                }
             };
 
             process.Start();
