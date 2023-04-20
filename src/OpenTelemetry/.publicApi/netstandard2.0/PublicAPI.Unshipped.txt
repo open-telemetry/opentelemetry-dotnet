@@ -1,3 +1,5 @@
+OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
+OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions.BatchExportLogRecordProcessorOptions() -> void
 OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Logs.LogRecord.Attributes.set -> void
 OpenTelemetry.Logs.LogRecord.Body.get -> string?

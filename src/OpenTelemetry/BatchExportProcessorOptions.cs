@@ -28,6 +28,7 @@ namespace OpenTelemetry
 
         /// <summary>
         /// Gets or sets the delay interval (in milliseconds) between two consecutive exports. The default value is 5000.
+        /// TODO: This default differs between traces and logs.
         /// </summary>
         public int ScheduledDelayMilliseconds { get; set; } = BatchExportProcessor<T>.DefaultScheduledDelayMilliseconds;
 
