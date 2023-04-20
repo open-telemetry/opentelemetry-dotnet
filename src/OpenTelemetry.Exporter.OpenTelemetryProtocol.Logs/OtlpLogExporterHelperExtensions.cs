@@ -36,11 +36,6 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
         /// </summary>
-        /// <remarks>
-        /// Note: AddOtlpExporter automatically sets <see
-        /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> to <see
-        /// langword="true"/>.
-        /// </remarks>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
@@ -53,8 +48,6 @@ namespace OpenTelemetry.Logs
             OpenTelemetryLoggerOptions loggerOptions,
             Action<OtlpExporterOptions> configure)
         {
-            loggerOptions.ParseStateValues = true;
-
             var exporterOptions = new OtlpExporterOptions();
 
             // TODO: We are using span/activity batch environment variable keys
