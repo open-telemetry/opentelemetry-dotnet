@@ -21,7 +21,7 @@ using OpenTelemetry.Resources;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure OpenTelemetry with metrics and auto-start.
-appBuilder.Services.AddOpenTelemetry()
+builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: builder.Environment.ApplicationName))
     .WithMetrics(metrics => metrics
