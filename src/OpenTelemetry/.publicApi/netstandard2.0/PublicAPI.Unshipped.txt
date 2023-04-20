@@ -4,6 +4,10 @@ OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadO
 OpenTelemetry.Logs.LogRecord.Attributes.set -> void
 OpenTelemetry.Logs.LogRecord.Body.get -> string?
 OpenTelemetry.Logs.LogRecord.Body.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.LogRecordExportProcessorOptions() -> void
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter.AlwaysOffExemplarFilter() -> void
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter
@@ -40,6 +44,8 @@ OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> voi
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilter! exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
+~OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.set -> void
 ~OpenTelemetry.Metrics.Exemplar.FilteredTags.get -> System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Metrics.MetricPoint.GetExemplars() -> OpenTelemetry.Metrics.Exemplar[]!
 OpenTelemetry.Metrics.MetricPoint.GetExponentialHistogramData() -> OpenTelemetry.Metrics.ExponentialHistogramData!
