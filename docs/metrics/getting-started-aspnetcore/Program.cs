@@ -18,20 +18,20 @@ using System.Diagnostics;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
-var appBuilder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // Configure OpenTelemetry with metrics and auto-start.
 appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(builder => builder
-        .AddService(serviceName: "OTel.NET Getting Started"))
-    .WithMetrics(builder => builder
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Environment.ApplicationName))
+    .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
         {
             metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
         }));
 
-var app = appBuilder.Build();
+var app = builder.Build();
 
 app.MapGet("/", () => $"Hello from OpenTelemetry Metrics!");
 
