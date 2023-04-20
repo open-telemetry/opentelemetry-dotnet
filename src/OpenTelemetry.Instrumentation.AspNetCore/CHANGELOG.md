@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-* Baggage will not be reset during request stop event. This will allow
-processors to access it during OnEnd call.
+* Fix issue where baggage gets cleared when the ASP.NET Core Activity
+   is stopped. The instrumentation no longer clears baggage. One problem
+   this caused was that it prevented Activity processors from accessing baggage
+   during their `OnEnd` call.
 ([#4274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4274))
 
 * Improve perf by avoiding boxing of common status codes values.
