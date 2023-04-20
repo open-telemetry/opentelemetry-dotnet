@@ -16,8 +16,13 @@
   ([#4375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4375))
 
 * Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues`
-  flag, obsoleted `LogRecord.State` and `LogRecord.StateValues` properties, and
-  added `LogRecord.Body` and `LogRecord.Attributes` properties.
+  flag (attributes are now automatically included for most log messages by
+  default), obsoleted `LogRecord.State` and `LogRecord.StateValues` properties,
+  and added `LogRecord.Body` and `LogRecord.Attributes` properties.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+* If a template (`{OriginalFormat}` attribute) cannot be found on log messages a
+  formatted message will now automatically be generated.
   ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
 
 ## 1.5.0-alpha.2
