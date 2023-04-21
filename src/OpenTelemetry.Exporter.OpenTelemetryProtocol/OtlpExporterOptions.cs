@@ -150,11 +150,13 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
+        [Obsolete("Use ActivityExportProcessorOptions or LogRecordExportProcessorOptions.")]
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
+        [Obsolete("Use ActivityExportProcessorOptions or LogRecordExportProcessorOptions.")]
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
         /// <summary>

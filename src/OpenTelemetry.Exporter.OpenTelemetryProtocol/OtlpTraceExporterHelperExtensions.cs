@@ -122,6 +122,9 @@ namespace OpenTelemetry.Trace
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
+            // TODO: exporterOptions.ExportProcessorType and exporterOptions.BatchExportProcessorOptions are obsolete.
+            // This needs to be adapted to use honor the obsolete settings as well as the new
+            // ActivityExportProcessorOptions.
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return new SimpleActivityExportProcessor(otlpExporter);
