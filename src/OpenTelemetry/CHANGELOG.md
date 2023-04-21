@@ -15,14 +15,32 @@
   name which resembles the package version of the SDK.
   ([#4375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4375))
 
-* Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues`
-  flag (attributes are now automatically included for most log messages by
-  default), obsoleted `LogRecord.State` and `LogRecord.StateValues` properties,
-  and added `LogRecord.Body` and `LogRecord.Attributes` properties.
+* Obsoleted `State` and `StateValues` properties and added `Body` and
+  `Attributes` properties on `LogRecord`. Note: `LogRecord.Attributes` and
+  `LogRecord.StateValues` point to the same data. "Attributes" is what the
+  OpenTelemetry Specification defines so this was changed for clarity &
+  consistency with the specification.
   ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
 
+* Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues`
+  flag:
+ 
+  * `LogRecord.Attributes` (aka `LogRecord.StateValues`) are now automatically
+  included for all log messages with states implementing `IReadOnlyList` or
+  `IEnumerable`.
+
+  * `OpenTelemetryLoggerOptions.ParseStateValues` is now used to tell the SDK to
+  parse (using reflection) attributes for custom states which do not implement
+  `IReadOnlyList` or `IEnumerable`. Only top-level properties are included.
+
+  * `LogRecord.State` will only be set to the raw state object if no attributes
+  are found.
+
+  See [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334) for details.
+
 * If a template (`{OriginalFormat}` attribute) cannot be found on log messages a
-  formatted message will now automatically be generated.
+  formatted message will now automatically be generated (even if
+  `OpenTelemetryLoggerOptions.IncludeFormattedMessage` is set to `false`).
   ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
 
 ## 1.5.0-alpha.2
