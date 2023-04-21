@@ -126,7 +126,7 @@ namespace OpenTelemetry
             {
                 if (sw == null)
                 {
-                    result = cur.Value.Shutdown(Timeout.Infinite) && result;
+                    result = cur.Value.Shutdown() && result;
                 }
                 else
                 {
