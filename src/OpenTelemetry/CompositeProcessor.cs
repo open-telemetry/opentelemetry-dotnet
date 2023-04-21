@@ -151,7 +151,7 @@ namespace OpenTelemetry
                     {
                         try
                         {
-                            cur.Value?.Dispose();
+                            cur.Value.Dispose();
                         }
                         catch (Exception ex)
                         {
