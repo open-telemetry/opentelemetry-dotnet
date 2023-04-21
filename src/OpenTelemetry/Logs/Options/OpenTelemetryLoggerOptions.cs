@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -30,30 +31,58 @@ namespace OpenTelemetry.Logs
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
 
         /// <summary>
+        /// Gets or sets a value indicating whether or not formatted log message
+        /// should be included on generated <see cref="LogRecord"/>s. Default
+        /// value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: When set to <see langword="false"/> a formatted log message
+        /// will not be included if a message template can be found. If a
+        /// message template is not found, a formatted log message is always
+        /// included.
+        /// </remarks>
+        public bool IncludeFormattedMessage { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether or not log scopes should be
         /// included on generated <see cref="LogRecord"/>s. Default value:
-        /// False.
+        /// <see langword="false"/>.
         /// </summary>
         public bool IncludeScopes { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether or not formatted log message
-        /// should be included on generated <see cref="LogRecord"/>s. Default
-        /// value: False.
-        /// </summary>
-        public bool IncludeFormattedMessage { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether or not log state should be
-        /// parsed into <see cref="LogRecord.StateValues"/> on generated <see
-        /// cref="LogRecord"/>s. Default value: False.
+        /// parsed into <see cref="LogRecord.Attributes"/> on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// Note: When <see cref="ParseStateValues"/> is set to <see
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>Parsing is only executed when the state logged does NOT
+        /// implement <see cref="IReadOnlyList{T}"/> or <see
+        /// cref="IEnumerable{T}"/> where <c>T</c> is <c>KeyValuePair&lt;string,
+        /// object&gt;</c>.</item>
+        /// <item>When <see cref="ParseStateValues"/> is set to <see
         /// langword="true"/> <see cref="LogRecord.State"/> will always be <see
-        /// langword="null"/>.
+        /// langword="null"/>.</item>
+        /// </list>
         /// </remarks>
         public bool ParseStateValues { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not attributes specified
+        /// via log state should be included on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="true"/>.
+        /// </summary>
+        internal bool IncludeAttributes { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see
+        /// cref="Activity.TraceStateString"/> for the current <see
+        /// cref="Activity"/> should be included on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
+        /// </summary>
+        internal bool IncludeTraceState { get; set; }
 
         /// <summary>
         /// Adds processor to the options.
