@@ -1,4 +1,4 @@
-# Getting Started with OpenTelemetry .NET in 5 Minutes - ASP.NET Core Application
+# Getting Started with OpenTelemetry .NET Metrics in 5 Minutes - ASP.NET Core Application
 
 First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
@@ -33,7 +33,7 @@ Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and then browse to the url shown
 in the console for your application (ex `http://localhost:5154`). You should see
-the trace output from the console.
+the metrics output from the console.
 
 ```text
 Export http.server.duration, Measures the duration of inbound HTTP requests., Unit: ms, Meter: OpenTelemetry.Instrumentation.AspNetCore/1.0.0.0

@@ -71,125 +71,197 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(logLevel, logLevelRecorded);
         }
 
-        [Fact]
-        public void CheckStateForUnstructuredLog()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForUnstructuredLog(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             const string message = "Hello, World!";
             logger.LogInformation(message);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, state.Count);
+            Assert.Equal(1, attributes.Count);
 
-            Assert.Equal(message, state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(message, exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         [SuppressMessage("CA2254", "CA2254", Justification = "While you shouldn't use interpolation in a log message, this test verifies things work with it anyway.")]
-        public void CheckStateForUnstructuredLogWithStringInterpolation()
+        public void CheckStateForUnstructuredLogWithStringInterpolation(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var message = $"Hello from potato {0.99}.";
             logger.LogInformation(message);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, state.Count);
+            Assert.Equal(1, attributes.Count);
 
-            Assert.Equal(message, state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(message, exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithTemplate()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithTemplate(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             const string message = "Hello from {name} {price}.";
             logger.LogInformation(message, "tomato", 2.99);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state has name, price and {OriginalFormat}
-            Assert.Equal(3, state.Count);
+            Assert.Equal(3, attributes.Count);
 
             // Check if state has name
-            Assert.Contains(state, item => item.Key == "name");
-            Assert.Equal("tomato", state.First(item => item.Key == "name").Value);
+            Assert.Contains(attributes, item => item.Key == "name");
+            Assert.Equal("tomato", attributes.First(item => item.Key == "name").Value);
 
             // Check if state has price
-            Assert.Contains(state, item => item.Key == "price");
-            Assert.Equal(2.99, state.First(item => item.Key == "price").Value);
+            Assert.Contains(attributes, item => item.Key == "price");
+            Assert.Equal(2.99, attributes.First(item => item.Key == "price").Value);
 
             // Check if state has OriginalFormat
-            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
-            Assert.Equal(message, state.First(item => item.Key == "{OriginalFormat}").Value);
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal(message, attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal($"Hello from tomato 2.99.", state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal("Hello from tomato 2.99.", exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithStrongType()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithStrongType(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var food = new Food { Name = "artichoke", Price = 3.99 };
             logger.LogInformation("{food}", food);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state has food and {OriginalFormat}
-            Assert.Equal(2, state.Count);
+            Assert.Equal(2, attributes.Count);
 
             // Check if state has food
-            Assert.Contains(state, item => item.Key == "food");
+            Assert.Contains(attributes, item => item.Key == "food");
 
-            var foodParameter = (Food)state.First(item => item.Key == "food").Value;
+            var foodParameter = (Food)attributes.First(item => item.Key == "food").Value;
             Assert.Equal(food.Name, foodParameter.Name);
             Assert.Equal(food.Price, foodParameter.Price);
 
             // Check if state has OriginalFormat
-            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
-            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal(food.ToString(), state.ToString());
+            Assert.Equal("{food}", exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(food.ToString(), exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithAnonymousType()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithAnonymousType(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var anonymousType = new { Name = "pumpkin", Price = 5.99 };
             logger.LogInformation("{food}", anonymousType);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state has food and {OriginalFormat}
-            Assert.Equal(2, state.Count);
+            Assert.Equal(2, attributes.Count);
 
             // Check if state has food
-            Assert.Contains(state, item => item.Key == "food");
+            Assert.Contains(attributes, item => item.Key == "food");
 
-            var foodParameter = state.First(item => item.Key == "food").Value as dynamic;
+            var foodParameter = attributes.First(item => item.Key == "food").Value as dynamic;
             Assert.Equal(anonymousType.Name, foodParameter.Name);
             Assert.Equal(anonymousType.Price, foodParameter.Price);
 
             // Check if state has OriginalFormat
-            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
-            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-            Assert.Equal(anonymousType.ToString(), state.ToString());
+            Assert.Equal("{food}", exportedItems[0].Body);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(anonymousType.ToString(), exportedItems[0].FormattedMessage);
+            }
+            else
+            {
+                Assert.Null(exportedItems[0].FormattedMessage);
+            }
         }
 
-        [Fact]
-        public void CheckStateForStructuredLogWithGeneralType()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckStateForStructuredLogWithGeneralType(bool includeFormattedMessage)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var food = new Dictionary<string, object>
@@ -198,30 +270,42 @@ namespace OpenTelemetry.Logs.Tests
                 ["Price"] = 299.99,
             };
             logger.LogInformation("{food}", food);
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state only has food and {OriginalFormat}
-            Assert.Equal(2, state.Count);
+            Assert.Equal(2, attributes.Count);
 
             // Check if state has food
-            Assert.Contains(state, item => item.Key == "food");
+            Assert.Contains(attributes, item => item.Key == "food");
 
-            var foodParameter = state.First(item => item.Key == "food").Value as Dictionary<string, object>;
+            var foodParameter = attributes.First(item => item.Key == "food").Value as Dictionary<string, object>;
             Assert.True(food.Count == foodParameter.Count && !food.Except(foodParameter).Any());
 
             // Check if state has OriginalFormat
-            Assert.Contains(state, item => item.Key == "{OriginalFormat}");
-            Assert.Equal("{food}", state.First(item => item.Key == "{OriginalFormat}").Value);
+            Assert.Contains(attributes, item => item.Key == "{OriginalFormat}");
+            Assert.Equal("{food}", attributes.First(item => item.Key == "{OriginalFormat}").Value);
 
-            var prevCulture = CultureInfo.CurrentCulture;
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            try
+            Assert.Equal("{food}", exportedItems[0].Body);
+            if (includeFormattedMessage)
             {
-                Assert.Equal("[Name, truffle], [Price, 299.99]", state.ToString());
+                var prevCulture = CultureInfo.CurrentCulture;
+                CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+                try
+                {
+                    Assert.Equal("[Name, truffle], [Price, 299.99]", exportedItems[0].FormattedMessage);
+                }
+                finally
+                {
+                    CultureInfo.CurrentCulture = prevCulture;
+                }
             }
-            finally
+            else
             {
-                CultureInfo.CurrentCulture = prevCulture;
+                Assert.Null(exportedItems[0].FormattedMessage);
             }
         }
 
@@ -237,17 +321,20 @@ namespace OpenTelemetry.Logs.Tests
             const string message = "Exception Occurred";
             logger.LogInformation(exception, message);
 
-            var state = exportedItems[0].State;
-            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+            Assert.Null(exportedItems[0].State);
+
+            var attributes = exportedItems[0].Attributes;
+            Assert.NotNull(attributes);
 
             // state only has {OriginalFormat}
-            Assert.Equal(1, itemCount);
+            Assert.Equal(1, attributes.Count);
 
             var loggedException = exportedItems[0].Exception;
             Assert.NotNull(loggedException);
             Assert.Equal(exceptionMessage, loggedException.Message);
 
-            Assert.Equal(message, state.ToString());
+            Assert.Equal(message, exportedItems[0].Body);
+            Assert.Null(exportedItems[0].FormattedMessage);
         }
 
         [Fact]
@@ -380,10 +467,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(default, logRecord.TraceFlags);
         }
 
-        [Fact]
-        public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly(bool includeTraceState)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeTraceState = includeTraceState);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var sampler = new RecordOnlySampler();
@@ -397,6 +486,7 @@ namespace OpenTelemetry.Logs.Tests
                 .Build();
 
             using var activity = activitySource.StartActivity("Activity");
+            activity.TraceStateString = "key1=value1";
 
             logger.LogInformation("Log within activity marked as RecordOnly");
             var logRecord = exportedItems[0];
@@ -406,6 +496,15 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(currentActivity.TraceId, logRecord.TraceId);
             Assert.Equal(currentActivity.SpanId, logRecord.SpanId);
             Assert.Equal(currentActivity.ActivityTraceFlags, logRecord.TraceFlags);
+
+            if (includeTraceState)
+            {
+                Assert.Equal(currentActivity.TraceStateString, logRecord.TraceState);
+            }
+            else
+            {
+                Assert.Null(logRecord.TraceState);
+            }
         }
 
         [Fact]
@@ -470,17 +569,19 @@ namespace OpenTelemetry.Logs.Tests
 
             logger.Log(LogLevel.Information, default, "Hello World!", null, null);
             var logRecord = exportedItems[0];
-            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal("Hello World!", logRecord.FormattedMessage);
+            Assert.Equal("Hello World!", logRecord.Body);
 
-            // Pass null as formatter function
-            logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+            logger.Log(LogLevel.Information, default, new CustomState(), null, null);
             logRecord = exportedItems[1];
-            Assert.Null(logRecord.FormattedMessage);
+            Assert.Equal(CustomState.ToStringValue, logRecord.FormattedMessage);
+            Assert.Equal(CustomState.ToStringValue, logRecord.Body);
 
             var expectedFormattedMessage = "formatted message";
             logger.Log(LogLevel.Information, default, "Hello World!", null, (state, ex) => expectedFormattedMessage);
             logRecord = exportedItems[2];
             Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+            Assert.Equal(expectedFormattedMessage, logRecord.Body);
         }
 
         [Fact]
@@ -596,10 +697,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Same(expectedScope3, scopes[2]);
         }
 
-        [Fact]
-        public void VerifyParseStateValues_False_UsingStandardExtensions()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void VerifyParseStateValues_UsingStandardExtensions(bool parseStateValues)
         {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = false);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = parseStateValues);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests state parsing with standard extensions.
@@ -607,22 +710,9 @@ namespace OpenTelemetry.Logs.Tests
             logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
             var logRecord = exportedItems[0];
 
-            Assert.NotNull(logRecord.State);
-            Assert.Null(logRecord.StateValues);
-        }
-
-        [Fact]
-        public void VerifyParseStateValues_True_UsingStandardExtensions()
-        {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
-            var logger = loggerFactory.CreateLogger<LogRecordTest>();
-
-            // Tests state parsing with standard extensions.
-
-            logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
-            var logRecord = exportedItems[0];
-
+            Assert.NotNull(logRecord.StateValues);
             Assert.Null(logRecord.State);
+
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(3, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
@@ -634,7 +724,9 @@ namespace OpenTelemetry.Logs.Tests
             logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
             logRecord = exportedItems[1];
 
+            Assert.NotNull(logRecord.StateValues);
             Assert.Null(logRecord.State);
+
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(4, logRecord.StateValues.Count);
             Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
@@ -739,8 +831,8 @@ namespace OpenTelemetry.Logs.Tests
 
             KeyValuePair<string, object> actualState = logRecord.StateValues[0];
 
-            Assert.Equal(string.Empty, actualState.Key);
-            Assert.Same(state, actualState.Value);
+            Assert.Equal("Property", actualState.Key);
+            Assert.Equal("Value", actualState.Value);
         }
 
         [Fact]
@@ -802,6 +894,26 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(2, processor.Scopes.Count);
             Assert.Equal("scope1", processor.Scopes[0]);
             Assert.Equal("scope2", processor.Scopes[1]);
+        }
+
+        [Fact]
+        public void IncludeStateTest()
+        {
+            using var loggerFactory = InitializeLoggerFactory(
+                out List<LogRecord> exportedItems, configure: options =>
+                {
+                    options.IncludeAttributes = false;
+                });
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("Hello {world}", "earth");
+
+            var logRecord = exportedItems[0];
+
+            Assert.Null(logRecord.State);
+            Assert.Null(logRecord.Attributes);
+
+            Assert.Equal("Hello earth", logRecord.Body);
         }
 
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
@@ -946,7 +1058,12 @@ namespace OpenTelemetry.Logs.Tests
 
         private class CustomState
         {
+            public const string ToStringValue = "CustomState.ToString";
+
             public string Property { get; set; }
+
+            public override string ToString()
+                => ToStringValue;
         }
 
         private class ScopeProcessor : BaseProcessor<LogRecord>

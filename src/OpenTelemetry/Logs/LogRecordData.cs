@@ -17,7 +17,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
@@ -50,14 +49,12 @@ namespace OpenTelemetry.Logs
             {
                 this.TraceId = activity.TraceId;
                 this.SpanId = activity.SpanId;
-                this.TraceState = activity.TraceStateString;
                 this.TraceFlags = activity.ActivityTraceFlags;
             }
             else
             {
                 this.TraceId = default;
                 this.SpanId = default;
-                this.TraceState = null;
                 this.TraceFlags = ActivityTraceFlags.None;
             }
         }
@@ -91,35 +88,23 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public ActivityTraceFlags TraceFlags { get; set; }
 
+        /* TODO: Add these when log api/sdk spec is stable.
         /// <summary>
-        /// Gets or sets the log trace state.
+        /// Gets or sets the original string representation of the severity as it is
+        /// known at the source.
         /// </summary>
-        public string? TraceState { get; set; }
+        public string? SeverityText { get; set; } = null;
 
         /// <summary>
-        /// Gets or sets the log category name.
+        /// Gets or sets the log severity.
         /// </summary>
-        public string? CategoryName { get; set; } = null;
+        public LogRecordSeverity? Severity { get; set; } = null;
+        */
 
         /// <summary>
-        /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+        /// Gets or sets the log body.
         /// </summary>
-        public LogLevel LogLevel { get; set; } = LogLevel.Trace;
-
-        /// <summary>
-        /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
-        /// </summary>
-        public EventId EventId { get; set; } = default;
-
-        /// <summary>
-        /// Gets or sets the log message.
-        /// </summary>
-        public string? Message { get; set; } = null;
-
-        /// <summary>
-        /// Gets or sets the log <see cref="System.Exception"/>.
-        /// </summary>
-        public Exception? Exception { get; set; } = null;
+        public string? Body { get; set; } = null;
 
         internal static void SetActivityContext(ref LogRecordData data, Activity? activity = null)
         {
@@ -127,14 +112,12 @@ namespace OpenTelemetry.Logs
             {
                 data.TraceId = activity.TraceId;
                 data.SpanId = activity.SpanId;
-                data.TraceState = activity.TraceStateString;
                 data.TraceFlags = activity.ActivityTraceFlags;
             }
             else
             {
                 data.TraceId = default;
                 data.SpanId = default;
-                data.TraceState = null;
                 data.TraceFlags = ActivityTraceFlags.None;
             }
         }
