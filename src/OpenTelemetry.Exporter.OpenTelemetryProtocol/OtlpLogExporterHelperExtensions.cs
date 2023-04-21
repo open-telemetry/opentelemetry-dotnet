@@ -50,6 +50,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+        /// <param name="configureProcessorOptions">Callback action for configuring <see cref="LogRecordExportProcessorOptions"/>.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         [Obsolete("We will never ship this method as it is. We will ship one that returns LoggerProviderBuilder from main-logs branch instead of OpenTelemetryLoggerOptions.")]
         public static OpenTelemetryLoggerOptions AddOtlpExporter(
