@@ -100,7 +100,7 @@ namespace OpenTelemetry
             {
                 if (sw == null)
                 {
-                    result = cur.Value.ForceFlush(Timeout.Infinite) && result;
+                    result = cur.Value.ForceFlush() && result;
                 }
                 else
                 {
