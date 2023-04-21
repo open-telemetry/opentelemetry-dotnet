@@ -146,7 +146,11 @@ namespace OpenTelemetry
                     var circularBuffer = enumerator.circularBuffer;
 
                     var currentItem = enumerator.Current;
-                    LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
+
+                    if (currentItem != null)
+                    {
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
+                    }
 
                     if (circularBuffer!.RemovedCount < enumerator.targetCount)
                     {
