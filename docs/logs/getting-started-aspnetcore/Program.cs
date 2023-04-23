@@ -16,30 +16,23 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 
-namespace GettingStarted;
+var builder = WebApplication.CreateBuilder(args);
 
-public class Program
+builder.Logging.ClearProviders();
+
+builder.Logging.AddOpenTelemetry(logging => logging
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplicationName))
+    .AddConsoleExporter());
+
+var app = builder.Build();
+
+app.MapGet("/", () =>
 {
-    public static void Main()
-    {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddConsoleExporter();
-            });
-        });
+    app.Logger.LogWarning("Adding Routes!");
 
-        var logger = loggerFactory.CreateLogger<Program>();
+    return "Hello from OpenTelemetry Logs!";
+});
 
-        logger.LogInformation(eventId: 123, "Hello from {name} {price}.", "tomato", 2.99);
-
-        if (logger.IsEnabled(LogLevel.Debug))
-        {
-            // If logger.IsEnabled returned false, the code doesn't have to spend time evaluating the arguments.
-            // This can be especially helpful if the arguments are expensive to calculate.
-            logger.LogDebug(eventId: 501, "System.Environment.Version: {version}.", System.Environment.Version);
-        }
-    }
-}
+app.Run();
