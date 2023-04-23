@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added internal `InstrumentationScope`, `LoggerProvider`, `Logger`,
+  `LoggerProviderBuilder`, `LogRecordSeverity`, and
+  `IDeferredLoggerProviderBuilder` types and moved `LogRecordData` and
+  `LogRecordAttributeList` types from SDK.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.5.0-alpha.2
 
 Released 2023-Mar-31
