@@ -6,7 +6,7 @@
   `LoggerProviderBuilder`, `LogRecordSeverity`, and
   `IDeferredLoggerProviderBuilder` types and moved `LogRecordData` and
   `LogRecordAttributeList` types from SDK.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4422))
 
 ## 1.5.0-alpha.2
 
