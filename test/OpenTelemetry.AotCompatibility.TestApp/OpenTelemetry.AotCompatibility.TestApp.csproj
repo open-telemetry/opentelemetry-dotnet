@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Api" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Console" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.InMemory" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Jaeger" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.HttpListener" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Zipkin" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.ZPages" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Hosting" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Propagators" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.GrpcNetClient" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.Http" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.SqlClient" />
+    <TrimmerRootAssembly Include="OpenTelemetry.SemanticConventions" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Shims.OpenTracing" />
+    <TrimmerRootAssembly Include="OpenTelemetry" />
+
+    <TrimmerRootAssembly Update="@(TrimmerRootAssembly)" Path="$(RepoRoot)\src\%(Identity)\%(Identity).csproj" />
+    <ProjectReference Include="@(TrimmerRootAssembly->'%(Path)')" />
+  </ItemGroup>
+
+</Project>
