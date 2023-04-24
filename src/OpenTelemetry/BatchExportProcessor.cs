@@ -37,7 +37,6 @@ namespace OpenTelemetry
 
         internal readonly int MaxExportBatchSize;
 
-        private static int processorCount = 0;
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
