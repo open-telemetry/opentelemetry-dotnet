@@ -1,4 +1,4 @@
-// <copyright file="MyRedactionProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="Program.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,4 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry;
-using OpenTelemetry.Logs;
-
-namespace Redaction;
-
-internal class MyRedactionProcessor : BaseProcessor<LogRecord>
-{
-    public override void OnEnd(LogRecord logRecord)
-    {
-        if (logRecord.Attributes != null)
-        {
-            logRecord.Attributes = new MyClassWithRedactionEnumerator(logRecord.Attributes);
-        }
-    }
-}
+Console.WriteLine("Hello, World!");

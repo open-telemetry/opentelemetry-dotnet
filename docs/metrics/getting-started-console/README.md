@@ -1,4 +1,4 @@
-# Getting Started with OpenTelemetry .NET in 5 Minutes
+# Getting Started with OpenTelemetry .NET Metrics in 5 Minutes - Console Application
 
 First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
