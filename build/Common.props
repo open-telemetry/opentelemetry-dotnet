@@ -27,7 +27,6 @@
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
     <MinVerPkgVer>[4.2.0,5.0)</MinVerPkgVer>
-    <GoogleProtobufPkgVer>[3.22.0,4.0)</GoogleProtobufPkgVer>
     <GrpcPkgVer>[2.44.0,3.0)</GrpcPkgVer>
     <GrpcNetClientPkgVer>[2.43.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.44.0,3.0)</GrpcToolsPkgVer>
@@ -45,6 +44,8 @@
     <MicrosoftSourceLinkGitHubPkgVer>[1.1.1,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
     <OTelPreviousStableVer>1.4.0</OTelPreviousStableVer>
+    <ProtobufNetPkgVer>[3.2.16,4.0)</ProtobufNetPkgVer>
+    <ProtobufNetBuildToolsPkgVer>[3.2.12,4.0)</ProtobufNetBuildToolsPkgVer>
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
     <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>

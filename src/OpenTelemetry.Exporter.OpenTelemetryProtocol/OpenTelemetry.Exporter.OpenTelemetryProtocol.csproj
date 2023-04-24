@@ -17,8 +17,11 @@
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0'" />
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
-    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
-    <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
+    <PackageReference Include="protobuf-net.Core" Version="$(ProtobufNetPkgVer)" />
+    <PackageReference Include="protobuf-net.BuildTools" Version="$(ProtobufNetBuildToolsPkgVer)">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -38,9 +41,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="**/*.proto" Access="internal">
-      <ProtoRoot>Implementation</ProtoRoot>
-    </Protobuf>
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/collector/**/*.proto" ImportPaths="../../../../.." />
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/common/v1/common.proto" />
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/logs/v1/logs.proto" ImportPaths="../../../.." />
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/metrics/v1/metrics.proto" ImportPaths="../../../.." />
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/resource/v1/resource.proto" ImportPaths="../../../.." />
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/trace/v1/trace.proto" ImportPaths="../../../.." />
   </ItemGroup>
 
 </Project>
