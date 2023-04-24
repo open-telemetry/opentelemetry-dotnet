@@ -17,7 +17,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if !NETSTANDARD2_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
