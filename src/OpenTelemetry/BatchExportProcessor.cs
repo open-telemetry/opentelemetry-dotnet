@@ -47,7 +47,7 @@ namespace OpenTelemetry
         private readonly ManualResetEvent shutdownTrigger = new(false);
         private readonly string exporterName;
         private readonly string exportedDataType;
-        private readonly int processorId;
+        private readonly string processorId;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
@@ -80,7 +80,7 @@ namespace OpenTelemetry
 
             this.exporterName = exporter.GetType().Name;
             this.exportedDataType = typeof(T).Name;
-            this.processorId = Interlocked.Increment(ref processorCount);
+            this.processorId = Guid.NewGuid().ToString();
 
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
@@ -296,6 +296,7 @@ namespace OpenTelemetry
                 {
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderIdKey, sdkHealthReporter.ProviderId),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderNameKey, sdkHealthReporter.ProviderName),
+                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorId, this.processorId),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExporterNameKey, this.exporterName),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorTypeKey, this.exportedDataType),
                 };
