@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Stress;
 
@@ -22,14 +23,14 @@ public partial class Program
 {
     public static void Main()
     {
-        Stress(concurrency: 1, prometheusPort: 9464);
+        Stress(prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected static void Run()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-           .AddProcessor(new BatchActivityExportProcessor(new MyExporter()))
-           .Build();
+            .AddProcessor(new BatchActivityExportProcessor(new MyExporter()))
+            .Build();
     }
 }
