@@ -69,6 +69,39 @@ public sealed class LogRecordAttributeListTests
     [InlineData(8)]
     [InlineData(9)]
     [InlineData(64)]
+    public void ClearTest(int numberOfItems)
+    {
+        LogRecordAttributeList attributes = default;
+
+        for (int c = 0; c <= 1; c++)
+        {
+            for (int i = 0; i < numberOfItems; i++)
+            {
+                attributes.Add($"key{i}", i);
+            }
+
+            Assert.Equal(numberOfItems, attributes.Count);
+
+            for (int i = 0; i < numberOfItems; i++)
+            {
+                var item = attributes[i];
+
+                Assert.Equal($"key{i}", item.Key);
+                Assert.Equal(i, (int)item.Value);
+            }
+
+            attributes.Clear();
+
+            Assert.Empty(attributes);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(64)]
     public void ExportTest(int numberOfItems)
     {
         LogRecordAttributeList attributes = default;

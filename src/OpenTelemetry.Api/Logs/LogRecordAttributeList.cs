@@ -148,38 +148,37 @@ internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, obje
     /// <param name="attribute">Attribute.</param>
     public void Add(KeyValuePair<string, object?> attribute)
     {
-        if (this.OverflowAttributes is not null)
+        var count = this.count++;
+
+        if (count <= OverflowMaxCount)
         {
-            this.OverflowAttributes.Add(attribute);
-            this.count++;
-            return;
+            switch (count)
+            {
+                case 0: this.attribute1 = attribute; return;
+                case 1: this.attribute2 = attribute; return;
+                case 2: this.attribute3 = attribute; return;
+                case 3: this.attribute4 = attribute; return;
+                case 4: this.attribute5 = attribute; return;
+                case 5: this.attribute6 = attribute; return;
+                case 6: this.attribute7 = attribute; return;
+                case 7: this.attribute8 = attribute; return;
+                case 8:
+                    this.MoveAttributesToTheOverflowList();
+                    break;
+            }
         }
 
-        Debug.Assert(this.count <= 8, "Item added beyond struct capacity.");
+        Debug.Assert(this.OverflowAttributes is not null, "Overflow attributes creation failure.");
+        this.OverflowAttributes!.Add(attribute);
+    }
 
-        switch (this.count)
-        {
-            case 0: this.attribute1 = attribute; break;
-            case 1: this.attribute2 = attribute; break;
-            case 2: this.attribute3 = attribute; break;
-            case 3: this.attribute4 = attribute; break;
-            case 4: this.attribute5 = attribute; break;
-            case 5: this.attribute6 = attribute; break;
-            case 6: this.attribute7 = attribute; break;
-            case 7: this.attribute8 = attribute; break;
-            case 8:
-                Debug.Assert(this.OverflowAttributes is null, "Overflow attributes already created.");
-                this.MoveAttributesToTheOverflowList();
-                Debug.Assert(this.OverflowAttributes is not null, "Overflow attributes creation failure.");
-                this.OverflowAttributes!.Add(attribute);
-                break;
-            default:
-                // We shouldn't come here.
-                Debug.Assert(this.OverflowAttributes is null, "Unreachable code executed.");
-                return;
-        }
-
-        this.count++;
+    /// <summary>
+    /// Removes all elements from the <see cref="LogRecordAttributeList"/>.
+    /// </summary>
+    public void Clear()
+    {
+        this.count = 0;
+        this.OverflowAttributes?.Clear();
     }
 
     /// <summary>
@@ -280,19 +279,18 @@ internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, obje
 
     private void MoveAttributesToTheOverflowList()
     {
-        Debug.Assert(this.count == OverflowMaxCount, "count did not match OverflowMaxCount");
+        Debug.Assert(this.count - 1 == OverflowMaxCount, "count did not match OverflowMaxCount");
 
-        this.OverflowAttributes = new(OverflowAdditionalCapacity)
-        {
-            { this.attribute1 },
-            { this.attribute2 },
-            { this.attribute3 },
-            { this.attribute4 },
-            { this.attribute5 },
-            { this.attribute6 },
-            { this.attribute7 },
-            { this.attribute8 },
-        };
+        var attributes = this.OverflowAttributes ??= new(OverflowAdditionalCapacity);
+
+        attributes.Add(this.attribute1);
+        attributes.Add(this.attribute2);
+        attributes.Add(this.attribute3);
+        attributes.Add(this.attribute4);
+        attributes.Add(this.attribute5);
+        attributes.Add(this.attribute6);
+        attributes.Add(this.attribute7);
+        attributes.Add(this.attribute8);
     }
 
     /// <summary>
