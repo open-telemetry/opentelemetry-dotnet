@@ -16,8 +16,6 @@
 
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -128,11 +126,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpMetrics.AggregationTemporality temporality;
             if (metric.Temporality == AggregationTemporality.Delta)
             {
-                temporality = OtlpMetrics.AggregationTemporality.Delta;
+                temporality = OtlpMetrics.AggregationTemporality.AggregationTemporalityDelta;
             }
             else
             {
-                temporality = OtlpMetrics.AggregationTemporality.Cumulative;
+                temporality = OtlpMetrics.AggregationTemporality.AggregationTemporalityCumulative;
             }
 
             switch (metric.MetricType)
@@ -281,8 +279,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                     var otlpExemplar = new OtlpMetrics.Exemplar
                                     {
                                         TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
-                                        TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
-                                        SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
+                                        TraceId = traceIdBytes,
+                                        SpanId = spanIdBytes,
                                         AsDouble = examplar.DoubleValue,
                                     };
 
@@ -337,14 +335,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             dataPoint.Scale = exponentialHistogramData.Scale;
                             dataPoint.ZeroCount = (ulong)exponentialHistogramData.ZeroCount;
 
-                            dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Buckets();
                             dataPoint.Positive.Offset = exponentialHistogramData.PositiveBuckets.Offset;
                             foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
                             {
                                 dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
                             }
 
-                            dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Buckets();
                             dataPoint.Negative.Offset = exponentialHistogramData.NegativeBuckets.Offset;
                             foreach (var bucketCount in exponentialHistogramData.NegativeBuckets)
                             {
@@ -364,7 +362,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpMetric;
         }
 
-        private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
+        private static void AddAttributes(ReadOnlyTagCollection tags, List<OtlpCommon.KeyValue> attributes)
         {
             foreach (var tag in tags)
             {

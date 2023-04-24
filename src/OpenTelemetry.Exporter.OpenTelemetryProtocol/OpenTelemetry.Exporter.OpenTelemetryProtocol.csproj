@@ -44,7 +44,7 @@
     <AdditionalFiles Include="Implementation/opentelemetry/proto/collector/**/*.proto" ImportPaths="../../../../.." />
     <AdditionalFiles Include="Implementation/opentelemetry/proto/common/v1/common.proto" />
     <AdditionalFiles Include="Implementation/opentelemetry/proto/logs/v1/logs.proto" ImportPaths="../../../.." />
-    <AdditionalFiles Include="Implementation/opentelemetry/proto/metrics/v1/metrics.proto" ImportPaths="../../../.." />
+    <AdditionalFiles Include="Implementation/opentelemetry/proto/metrics/v1/metrics.proto" ImportPaths="../../../.." RepeatedAsList="true" />
     <AdditionalFiles Include="Implementation/opentelemetry/proto/resource/v1/resource.proto" ImportPaths="../../../.." />
     <AdditionalFiles Include="Implementation/opentelemetry/proto/trace/v1/trace.proto" ImportPaths="../../../.." />
   </ItemGroup>

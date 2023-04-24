@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -139,8 +138,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     logRecord.TraceId.CopyTo(traceIdBytes);
                     logRecord.SpanId.CopyTo(spanIdBytes);
 
-                    otlpLogRecord.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
-                    otlpLogRecord.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
+                    otlpLogRecord.TraceId = traceIdBytes;
+                    otlpLogRecord.SpanId = spanIdBytes;
                     otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
                 }
 
@@ -234,24 +233,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             switch (logLevel)
             {
                 case LogLevel.Trace:
-                    return OtlpLogs.SeverityNumber.Trace;
+                    return OtlpLogs.SeverityNumber.SeverityNumberTrace;
                 case LogLevel.Debug:
-                    return OtlpLogs.SeverityNumber.Debug;
+                    return OtlpLogs.SeverityNumber.SeverityNumberDebug;
                 case LogLevel.Information:
-                    return OtlpLogs.SeverityNumber.Info;
+                    return OtlpLogs.SeverityNumber.SeverityNumberInfo;
                 case LogLevel.Warning:
-                    return OtlpLogs.SeverityNumber.Warn;
+                    return OtlpLogs.SeverityNumber.SeverityNumberWarn;
                 case LogLevel.Error:
-                    return OtlpLogs.SeverityNumber.Error;
+                    return OtlpLogs.SeverityNumber.SeverityNumberError;
                 case LogLevel.Critical:
-                    return OtlpLogs.SeverityNumber.Fatal;
+                    return OtlpLogs.SeverityNumber.SeverityNumberFatal;
 
                 // TODO:
                 // we reach default only for LogLevel.None
                 // but that is filtered out anyway.
                 // should we throw here then?
                 default:
-                    return OtlpLogs.SeverityNumber.Debug;
+                    return OtlpLogs.SeverityNumber.SeverityNumberDebug;
             }
         }
     }

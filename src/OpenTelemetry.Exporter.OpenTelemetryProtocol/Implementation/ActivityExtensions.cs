@@ -17,7 +17,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Proto.Common.V1;
@@ -120,16 +119,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             byte[] traceIdBytes = new byte[16];
             byte[] spanIdBytes = new byte[8];
+            byte[] parentSpanIdBytes = null;
 
             activity.TraceId.CopyTo(traceIdBytes);
             activity.SpanId.CopyTo(spanIdBytes);
 
-            var parentSpanIdString = ByteString.Empty;
             if (activity.ParentSpanId != default)
             {
-                byte[] parentSpanIdBytes = new byte[8];
+                parentSpanIdBytes = new byte[8];
                 activity.ParentSpanId.CopyTo(parentSpanIdBytes);
-                parentSpanIdString = UnsafeByteOperations.UnsafeWrap(parentSpanIdBytes);
             }
 
             var startTimeUnixNano = activity.StartTimeUtc.ToUnixTimeNanoseconds();
@@ -138,11 +136,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 Name = activity.DisplayName,
 
                 // There is an offset of 1 on the OTLP enum.
-                Kind = (Span.Types.SpanKind)(activity.Kind + 1),
+                Kind = (Span.SpanKind)(activity.Kind + 1),
 
-                TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
-                SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
-                ParentSpanId = parentSpanIdString,
+                TraceId = traceIdBytes,
+                SpanId = spanIdBytes,
+                ParentSpanId = parentSpanIdBytes,
                 TraceState = activity.TraceStateString ?? string.Empty,
 
                 StartTimeUnixNano = (ulong)startTimeUnixNano,
@@ -199,12 +197,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return null;
             }
 
-            OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode = OtlpTrace.Status.Types.StatusCode.Unset;
+            var otlpActivityStatusCode = OtlpTrace.Status.StatusCode.StatusCodeUnset;
             string otlpStatusDescription = null;
             if (activity.Status != ActivityStatusCode.Unset)
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)activity.Status;
+                otlpActivityStatusCode = (OtlpTrace.Status.StatusCode)(int)activity.Status;
                 if (activity.Status == ActivityStatusCode.Error && !string.IsNullOrEmpty(activity.StatusDescription))
                 {
                     otlpStatusDescription = activity.StatusDescription;
@@ -215,7 +213,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 if (statusCodeForTagValue != StatusCode.Unset)
                 {
                     // The numerical values of the two enumerations match, a simple cast is enough.
-                    otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue;
+                    otlpActivityStatusCode = (OtlpTrace.Status.StatusCode)(int)statusCodeForTagValue;
                     if (statusCodeForTagValue == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
                     {
                         otlpStatusDescription = otlpTags.StatusDescription;
@@ -233,7 +231,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Span.Types.Link ToOtlpLink(in ActivityLink activityLink, SdkLimitOptions sdkLimitOptions)
+        private static Span.Link ToOtlpLink(in ActivityLink activityLink, SdkLimitOptions sdkLimitOptions)
         {
             byte[] traceIdBytes = new byte[16];
             byte[] spanIdBytes = new byte[8];
@@ -241,10 +239,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             activityLink.Context.TraceId.CopyTo(traceIdBytes);
             activityLink.Context.SpanId.CopyTo(spanIdBytes);
 
-            var otlpLink = new Span.Types.Link
+            var otlpLink = new Span.Link
             {
-                TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
-                SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
+                TraceId = traceIdBytes,
+                SpanId = spanIdBytes,
             };
 
             int maxTags = sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
@@ -267,9 +265,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Span.Types.Event ToOtlpEvent(in ActivityEvent activityEvent, SdkLimitOptions sdkLimitOptions)
+        private static Span.Event ToOtlpEvent(in ActivityEvent activityEvent, SdkLimitOptions sdkLimitOptions)
         {
-            var otlpEvent = new Span.Types.Event
+            var otlpEvent = new Span.Event
             {
                 Name = activityEvent.Name,
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
@@ -346,12 +344,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             this.Span.DroppedAttributesCount++;
                         }
 
-                        if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.StringValue)
+                        if (attribute.Value.ShouldSerializeStringValue())
                         {
                             // Note: tag.Value is used and not attribute.Value here because attribute.Value may be truncated
                             PeerServiceResolver.InspectTag(ref this, key, tag.Value as string);
                         }
-                        else if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.IntValue)
+                        else if (attribute.Value.ShouldSerializeIntValue())
                         {
                             PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
                         }

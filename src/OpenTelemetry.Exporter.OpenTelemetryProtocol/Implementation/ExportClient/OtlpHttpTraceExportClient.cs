@@ -20,7 +20,6 @@ using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
