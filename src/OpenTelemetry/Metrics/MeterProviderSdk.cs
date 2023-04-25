@@ -161,6 +161,8 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
+                    bool enabledMeasurements = false;
+
                     if (!shouldListenTo(instrument))
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
@@ -234,6 +236,7 @@ namespace OpenTelemetry.Metrics
                                 if (metrics.Count > 0)
                                 {
                                     listener.EnableMeasurementEvents(instrument, metrics);
+                                    enabledMeasurements = true;
                                 }
                             }
                             else
@@ -242,9 +245,13 @@ namespace OpenTelemetry.Metrics
                                 if (metricsSuperList.Any(metrics => metrics.Count > 0))
                                 {
                                     listener.EnableMeasurementEvents(instrument, metricsSuperList);
+                                    enabledMeasurements = true;
                                 }
                             }
+                        }
 
+                        if (enabledMeasurements)
+                        {
                             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Enabled measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                         }
                         else
@@ -274,6 +281,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
+                    bool enabledMeasurements = false;
                     if (!shouldListenTo(instrument))
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
@@ -303,6 +311,7 @@ namespace OpenTelemetry.Metrics
                                 if (metric != null)
                                 {
                                     listener.EnableMeasurementEvents(instrument, metric);
+                                    enabledMeasurements = true;
                                 }
                             }
                             else
@@ -311,9 +320,13 @@ namespace OpenTelemetry.Metrics
                                 if (metrics.Any(metric => metric != null))
                                 {
                                     listener.EnableMeasurementEvents(instrument, metrics);
+                                    enabledMeasurements = true;
                                 }
                             }
+                        }
 
+                        if (enabledMeasurements)
+                        {
                             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Enabled measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                         }
                         else
