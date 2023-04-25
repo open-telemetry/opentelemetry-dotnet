@@ -282,6 +282,7 @@ namespace OpenTelemetry.Metrics
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
                     bool enabledMeasurements = false;
+
                     if (!shouldListenTo(instrument))
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
