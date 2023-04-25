@@ -244,9 +244,13 @@ namespace OpenTelemetry.Metrics
                                     listener.EnableMeasurementEvents(instrument, metricsSuperList);
                                 }
                             }
-                        }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Enabled measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        }
+                        else
+                        {
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements not enabled for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        }
                     }
                     catch (Exception)
                     {
@@ -309,9 +313,13 @@ namespace OpenTelemetry.Metrics
                                     listener.EnableMeasurementEvents(instrument, metrics);
                                 }
                             }
-                        }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Enabled measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        }
+                        else
+                        {
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements not enabled for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        }
                     }
                     catch (Exception)
                     {
