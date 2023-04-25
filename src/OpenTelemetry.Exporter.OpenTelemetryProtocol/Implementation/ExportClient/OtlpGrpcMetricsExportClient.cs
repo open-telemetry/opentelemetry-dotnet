@@ -15,16 +15,17 @@
 // </copyright>
 
 using Grpc.Core;
-using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using OpenTelemetry.Proto.Collector.Metrics.V1;
+using ProtoBuf.Grpc.Client;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
     /// <summary>Class for sending OTLP metrics export request over gRPC.</summary>
-    internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportMetricsServiceRequest>
+    internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<ExportMetricsServiceRequest>
     {
-        private readonly OtlpCollector.MetricsService.MetricsServiceClient metricsClient;
+        private readonly IMetricsService metricsClient;
 
-        public OtlpGrpcMetricsExportClient(OtlpExporterOptions options, OtlpCollector.MetricsService.MetricsServiceClient metricsServiceClient = null)
+        public OtlpGrpcMetricsExportClient(OtlpExporterOptions options, IMetricsService metricsServiceClient = null)
             : base(options)
         {
             if (metricsServiceClient != null)
@@ -34,18 +35,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             else
             {
                 this.Channel = options.CreateChannel();
-                this.metricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(this.Channel);
+                this.metricsClient = this.Channel.CreateGrpcService<IMetricsService>();
             }
         }
 
         /// <inheritdoc/>
-        public override bool SendExportRequest(OtlpCollector.ExportMetricsServiceRequest request, CancellationToken cancellationToken = default)
+        public override bool SendExportRequest(ExportMetricsServiceRequest request, CancellationToken cancellationToken = default)
         {
             var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
             try
             {
-                this.metricsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
+                // TODO: Can protogen generate synchronous calls?
+                // If not, the exception handling probably needs to be adjusted to handle AggregateException.
+               this.metricsClient.ExportAsync(request, new ProtoBuf.Grpc.CallContext(new CallOptions(headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken)))
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
             }
             catch (RpcException ex)
             {

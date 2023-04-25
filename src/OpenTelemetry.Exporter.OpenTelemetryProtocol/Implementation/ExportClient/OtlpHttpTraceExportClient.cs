@@ -20,6 +20,7 @@ using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using ProtoBuf;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
@@ -75,7 +76,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void SerializeToStreamInternal(Stream stream)
             {
-                this.exportRequest.WriteTo(stream);
+                Serializer.Serialize(stream, this.exportRequest);
             }
         }
     }

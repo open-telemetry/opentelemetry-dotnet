@@ -46,6 +46,7 @@
     <OTelPreviousStableVer>1.4.0</OTelPreviousStableVer>
     <ProtobufNetPkgVer>[3.2.16,4.0)</ProtobufNetPkgVer>
     <ProtobufNetBuildToolsPkgVer>[3.2.12,4.0)</ProtobufNetBuildToolsPkgVer>
+    <ProtobufNetGrpcPkgVer>[1.1.1,2.0)</ProtobufNetGrpcPkgVer>
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
     <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
