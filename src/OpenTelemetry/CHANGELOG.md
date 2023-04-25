@@ -24,7 +24,7 @@
 
 * Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues`
   flag:
- 
+
   * `LogRecord.Attributes` (aka `LogRecord.StateValues`) are now automatically
   included for all log messages with states implementing `IReadOnlyList` or
   `IEnumerable`.
@@ -36,7 +36,8 @@
   * `LogRecord.State` will only be set to the raw state object if no attributes
   are found.
 
-  See [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334) for details.
+  See [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334)
+  for details.
 
 * If a template (`{OriginalFormat}` attribute) cannot be found on log messages a
   formatted message will now automatically be generated (even if
