@@ -252,11 +252,11 @@ namespace OpenTelemetry.Metrics
 
                         if (enabledMeasurements)
                         {
-                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Enabled measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" are enabled and would be processed and aggregated by the SDK.");
                         }
                         else
                         {
-                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements not enabled for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be not be processed and dropped by the SDK.");
                         }
                     }
                     catch (Exception)
@@ -328,11 +328,11 @@ namespace OpenTelemetry.Metrics
 
                         if (enabledMeasurements)
                         {
-                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Enabled measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" are enabled and would be processed and aggregated by the SDK.");
                         }
                         else
                         {
-                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements not enabled for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be not be processed and dropped by the SDK.");
                         }
                     }
                     catch (Exception)
