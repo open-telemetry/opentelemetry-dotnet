@@ -66,6 +66,8 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
+            if (idUpperBound == long.MinValue) return new SamplingResult(false);
+            if (idUpperBound == long.MaxValue) return new SamplingResult(true);
             // Always sample if we are within probability range. This is true even for child activities (that
             // may have had a different sampling decision made) to allow for different sampling policies,
             // and dynamic increases to sampling probabilities for debugging purposes.
