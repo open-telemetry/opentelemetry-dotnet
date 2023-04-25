@@ -295,8 +295,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.Null(Activity.Current);
-            Assert.True(otlpLogRecord.TraceId.IsEmpty);
-            Assert.True(otlpLogRecord.SpanId.IsEmpty);
+            Assert.Empty(otlpLogRecord.TraceId);
+            Assert.Empty(otlpLogRecord.SpanId);
             Assert.True(otlpLogRecord.Flags == 0);
         }
 
@@ -327,8 +327,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logRecord = logRecords[0];
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
-            Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId.ToByteArray()).ToString());
-            Assert.Equal(expectedSpanId.ToString(), ActivitySpanId.CreateFromBytes(otlpLogRecord.SpanId.ToByteArray()).ToString());
+            Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId).ToString());
+            Assert.Equal(expectedSpanId.ToString(), ActivitySpanId.CreateFromBytes(otlpLogRecord.SpanId).ToString());
             Assert.Equal((uint)logRecord.TraceFlags, otlpLogRecord.Flags);
         }
 
@@ -364,22 +364,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             switch (logLevel)
             {
                 case LogLevel.Trace:
-                    Assert.Equal(OtlpLogs.SeverityNumber.Trace, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.SeverityNumberTrace, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Debug:
-                    Assert.Equal(OtlpLogs.SeverityNumber.Debug, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.SeverityNumberDebug, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Information:
-                    Assert.Equal(OtlpLogs.SeverityNumber.Info, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.SeverityNumberInfo, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Warning:
-                    Assert.Equal(OtlpLogs.SeverityNumber.Warn, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.SeverityNumberWarn, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Error:
-                    Assert.Equal(OtlpLogs.SeverityNumber.Error, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.SeverityNumberError, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Critical:
-                    Assert.Equal(OtlpLogs.SeverityNumber.Fatal, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.SeverityNumberFatal, otlpLogRecord.SeverityNumber);
                     break;
             }
         }

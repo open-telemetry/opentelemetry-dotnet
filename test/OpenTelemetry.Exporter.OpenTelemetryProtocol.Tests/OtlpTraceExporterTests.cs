@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -298,7 +297,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
             Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
 
-            void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
+            void ArrayValueAsserts(List<OtlpCommon.AnyValue> values)
             {
                 var expectedStringArray = new string[] { "1234", "1234", string.Empty, null };
                 for (var i = 0; i < expectedStringArray.Length; ++i)
@@ -363,7 +362,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpSpan);
             Assert.Equal("root", otlpSpan.Name);
-            Assert.Equal(OtlpTrace.Span.Types.SpanKind.Producer, otlpSpan.Kind);
+            Assert.Equal(OtlpTrace.Span.SpanKind.SpanKindProducer, otlpSpan.Kind);
             Assert.Equal(traceId, otlpSpan.TraceId);
             Assert.Empty(otlpSpan.ParentSpanId);
             Assert.Null(otlpSpan.Status);
@@ -397,7 +396,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpSpan);
             Assert.Equal("child", otlpSpan.Name);
-            Assert.Equal(OtlpTrace.Span.Types.SpanKind.Client, otlpSpan.Kind);
+            Assert.Equal(OtlpTrace.Span.SpanKind.SpanKindClient, otlpSpan.Kind);
             Assert.Equal(traceId, otlpSpan.TraceId);
             Assert.Equal(parentId, otlpSpan.ParentSpanId);
 

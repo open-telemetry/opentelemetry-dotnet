@@ -29,6 +29,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
+using ProtoBuf.Grpc;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -127,7 +128,7 @@ public sealed class MockCollectorIntegrationTests
         }
     }
 
-    private class MockTraceService : TraceService.TraceServiceBase
+    private class MockTraceService : ITraceService
     {
         private readonly MockCollectorState state;
 
@@ -136,7 +137,7 @@ public sealed class MockCollectorIntegrationTests
             this.state = state;
         }
 
-        public override Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
+        public ValueTask<ExportTraceServiceResponse> ExportAsync(ExportTraceServiceRequest request, CallContext context)
         {
             var statusCode = this.state.NextStatus();
             if (statusCode != Grpc.Core.StatusCode.OK)
@@ -144,7 +145,7 @@ public sealed class MockCollectorIntegrationTests
                 throw new RpcException(new Grpc.Core.Status(statusCode, "Error."));
             }
 
-            return Task.FromResult(new ExportTraceServiceResponse());
+            return ValueTask.FromResult(new ExportTraceServiceResponse());
         }
     }
 }

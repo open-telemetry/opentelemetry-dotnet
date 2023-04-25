@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Google.Protobuf.Collections;
 using Xunit;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
@@ -24,7 +23,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     {
         public static void AssertOtlpAttributes(
             IEnumerable<KeyValuePair<string, object>> expected,
-            RepeatedField<OtlpCommon.KeyValue> actual)
+            List<OtlpCommon.KeyValue> actual)
         {
             var expectedAttributes = expected.ToList();
             int expectedSize = 0;

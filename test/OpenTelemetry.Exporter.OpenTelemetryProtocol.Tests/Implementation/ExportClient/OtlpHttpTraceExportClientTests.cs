@@ -25,6 +25,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using ProtoBuf;
 using Xunit;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
@@ -197,7 +198,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.IsType<OtlpHttpTraceExportClient.ExportRequestContent>(httpRequest.Content);
                 Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpTraceExportClient.MediaContentType);
 
-                var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(httpRequestContent);
+                var exportTraceRequest = (OtlpCollector.ExportTraceServiceRequest)Serializer.Deserialize(typeof(OtlpCollector.ExportTraceServiceRequest), new MemoryStream(httpRequestContent));
                 Assert.NotNull(exportTraceRequest);
                 Assert.Single(exportTraceRequest.ResourceSpans);
 

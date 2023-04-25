@@ -262,7 +262,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(description ?? string.Empty, actual.Description);
             Assert.Equal(unit ?? string.Empty, actual.Unit);
 
-            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Gauge, actual.DataCase);
+            Assert.True(actual.ShouldSerializeGauge());
 
             Assert.NotNull(actual.Gauge);
             Assert.Null(actual.Sum);
@@ -277,12 +277,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             if (longValue.HasValue)
             {
-                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                Assert.True(dataPoint.ShouldSerializeAsInt());
                 Assert.Equal(longValue, dataPoint.AsInt);
             }
             else
             {
-                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                Assert.True(dataPoint.ShouldSerializeAsDouble());
                 Assert.Equal(doubleValue, dataPoint.AsDouble);
             }
 
@@ -337,7 +337,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(description ?? string.Empty, actual.Description);
             Assert.Equal(unit ?? string.Empty, actual.Unit);
 
-            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Sum, actual.DataCase);
+            Assert.True(actual.ShouldSerializeSum());
 
             Assert.Null(actual.Gauge);
             Assert.NotNull(actual.Sum);
@@ -348,8 +348,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.True(actual.Sum.IsMonotonic);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
-                ? OtlpMetrics.AggregationTemporality.Cumulative
-                : OtlpMetrics.AggregationTemporality.Delta;
+                ? OtlpMetrics.AggregationTemporality.AggregationTemporalityCumulative
+                : OtlpMetrics.AggregationTemporality.AggregationTemporalityDelta;
             Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
             Assert.Single(actual.Sum.DataPoints);
@@ -359,12 +359,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             if (longValue.HasValue)
             {
-                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                Assert.True(dataPoint.ShouldSerializeAsInt());
                 Assert.Equal(longValue, dataPoint.AsInt);
             }
             else
             {
-                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                Assert.True(dataPoint.ShouldSerializeAsDouble());
                 Assert.Equal(doubleValue, dataPoint.AsDouble);
             }
 
@@ -428,7 +428,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(description ?? string.Empty, actual.Description);
             Assert.Equal(unit ?? string.Empty, actual.Unit);
 
-            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Sum, actual.DataCase);
+            Assert.True(actual.ShouldSerializeSum());
 
             Assert.Null(actual.Gauge);
             Assert.NotNull(actual.Sum);
@@ -439,8 +439,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.False(actual.Sum.IsMonotonic);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
-                ? OtlpMetrics.AggregationTemporality.Cumulative
-                : OtlpMetrics.AggregationTemporality.Cumulative;
+                ? OtlpMetrics.AggregationTemporality.AggregationTemporalityCumulative
+                : OtlpMetrics.AggregationTemporality.AggregationTemporalityCumulative;
             Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
             Assert.Single(actual.Sum.DataPoints);
@@ -450,12 +450,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             if (longValue.HasValue)
             {
-                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                Assert.True(dataPoint.ShouldSerializeAsInt());
                 Assert.Equal(longValue, dataPoint.AsInt);
             }
             else
             {
-                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                Assert.True(dataPoint.ShouldSerializeAsDouble());
                 Assert.Equal(doubleValue, dataPoint.AsDouble);
             }
 
@@ -525,7 +525,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(description ?? string.Empty, actual.Description);
             Assert.Equal(unit ?? string.Empty, actual.Unit);
 
-            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.ExponentialHistogram, actual.DataCase);
+            Assert.True(actual.ShouldSerializeExponentialHistogram());
 
             Assert.Null(actual.Gauge);
             Assert.Null(actual.Sum);
@@ -534,8 +534,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(actual.Summary);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
-                ? OtlpMetrics.AggregationTemporality.Cumulative
-                : OtlpMetrics.AggregationTemporality.Delta;
+                ? OtlpMetrics.AggregationTemporality.AggregationTemporalityCumulative
+                : OtlpMetrics.AggregationTemporality.AggregationTemporalityDelta;
             Assert.Equal(otlpAggregationTemporality, actual.ExponentialHistogram.AggregationTemporality);
 
             Assert.Single(actual.ExponentialHistogram.DataPoints);
@@ -646,7 +646,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(description ?? string.Empty, actual.Description);
             Assert.Equal(unit ?? string.Empty, actual.Unit);
 
-            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Histogram, actual.DataCase);
+            Assert.True(actual.ShouldSerializeHistogram());
 
             Assert.Null(actual.Gauge);
             Assert.Null(actual.Sum);
@@ -655,8 +655,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(actual.Summary);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
-                ? OtlpMetrics.AggregationTemporality.Cumulative
-                : OtlpMetrics.AggregationTemporality.Delta;
+                ? OtlpMetrics.AggregationTemporality.AggregationTemporalityCumulative
+                : OtlpMetrics.AggregationTemporality.AggregationTemporalityDelta;
             Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
 
             Assert.Single(actual.Histogram.DataPoints);

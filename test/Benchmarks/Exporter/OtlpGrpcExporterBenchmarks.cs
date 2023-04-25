@@ -26,6 +26,7 @@ using OpenTelemetry.Internal;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using ProtoBuf.Grpc;
 using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter
@@ -45,13 +46,11 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
-            var mockClient = new Mock<OtlpCollector.TraceService.TraceServiceClient>();
+            var mockClient = new Mock<OtlpCollector.ITraceService>();
             mockClient
-                .Setup(m => m.Export(
+                .Setup(m => m.ExportAsync(
                     It.IsAny<OtlpCollector.ExportTraceServiceRequest>(),
-                    It.IsAny<Metadata>(),
-                    It.IsAny<DateTime?>(),
-                    It.IsAny<CancellationToken>()))
+                    It.IsAny<CallContext>()).Result)
                 .Returns(new OtlpCollector.ExportTraceServiceResponse());
 
             var options = new OtlpExporterOptions();
