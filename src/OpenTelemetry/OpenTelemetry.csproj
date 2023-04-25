@@ -21,4 +21,8 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase="Common" />
+  </ItemGroup>
+
 </Project>

@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-
-namespace OpenTelemetry.Internal
+namespace System.Diagnostics.CodeAnalysis
 {
     /// <summary>
     /// Suppresses reporting of a specific rule violation, allowing multiple suppressions on a
@@ -37,7 +34,9 @@ namespace OpenTelemetry.Internal
         /// </summary>
         /// <param name="category">The category for the attribute.</param>
         /// <param name="checkId">The identifier of the analysis rule the attribute applies to.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public UnconditionalSuppressMessageAttribute(string category, string checkId)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             this.Category = category;
             this.CheckId = checkId;
