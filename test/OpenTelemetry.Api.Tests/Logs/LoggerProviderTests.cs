@@ -27,19 +27,13 @@ public sealed class LoggerProviderTests
     {
         using var provider = new LoggerProvider();
 
-        var attributes = new Dictionary<string, object>()
-        {
-            ["key1"] = "value1",
-        };
-
-        var logger = provider.GetLogger(name: "TestLogger", version: "Version", attributes);
+        var logger = provider.GetLogger(name: "TestLogger", version: "Version");
 
         Assert.NotNull(logger);
         Assert.Equal(typeof(NoopLogger), logger.GetType());
 
         Assert.Equal(string.Empty, logger.Name);
         Assert.Null(logger.Version);
-        Assert.Null(logger.Attributes);
     }
 
     [Fact]
@@ -47,28 +41,13 @@ public sealed class LoggerProviderTests
     {
         using var provider = new TestLoggerProvider();
 
-        var attributes = new Dictionary<string, object>()
-        {
-            ["key1"] = "value1",
-        };
-
-        var logger = provider.GetLogger(name: "TestLogger", version: "Version", attributes);
+        var logger = provider.GetLogger(name: "TestLogger", version: "Version");
 
         Assert.NotNull(logger);
         Assert.Equal(typeof(TestLogger), logger.GetType());
 
         Assert.Equal("TestLogger", logger.Name);
         Assert.Equal("Version", logger.Version);
-        Assert.Equal(attributes, logger.Attributes);
-
-        logger = provider.GetLogger(name: "TestLogger", version: "Version");
-
-        Assert.NotNull(logger);
-        Assert.Equal(typeof(TestLogger), logger.GetType());
-
-        Assert.Equal("TestLogger", logger.Name);
-        Assert.Equal("Version", logger.Version);
-        Assert.Null(logger.Attributes);
 
         logger = provider.GetLogger(name: "TestLogger");
 
@@ -77,7 +56,6 @@ public sealed class LoggerProviderTests
 
         Assert.Equal("TestLogger", logger.Name);
         Assert.Null(logger.Version);
-        Assert.Null(logger.Attributes);
 
         logger = provider.GetLogger();
 
@@ -86,7 +64,6 @@ public sealed class LoggerProviderTests
 
         Assert.Equal(string.Empty, logger.Name);
         Assert.Null(logger.Version);
-        Assert.Null(logger.Attributes);
     }
 
     private sealed class TestLoggerProvider : LoggerProvider

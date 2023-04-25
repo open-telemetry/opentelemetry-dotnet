@@ -45,12 +45,6 @@ internal abstract class Logger
     public string? Version { get; private set; }
 
     /// <summary>
-    /// Gets the attributes which should be associated with log records created
-    /// by the instrumentation library.
-    /// </summary>
-    public IReadOnlyDictionary<string, object>? Attributes { get; private set; }
-
-    /// <summary>
     /// Emit a log.
     /// </summary>
     /// <param name="data"><see cref="LogRecordData"/>.</param>
@@ -60,10 +54,8 @@ internal abstract class Logger
         in LogRecordAttributeList attributes = default);
 
     internal void SetInstrumentationScope(
-        string? version,
-        IReadOnlyDictionary<string, object>? attributes)
+        string? version)
     {
         this.Version = version;
-        this.Attributes = attributes;
     }
 }

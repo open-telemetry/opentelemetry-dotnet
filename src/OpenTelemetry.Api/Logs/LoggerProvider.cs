@@ -34,7 +34,7 @@ internal class LoggerProvider : BaseProvider
     /// </summary>
     /// <returns><see cref="Logger"/> instance.</returns>
     public Logger GetLogger()
-        => this.GetLogger(name: null, version: null, attributes: null);
+        => this.GetLogger(name: null, version: null);
 
     /// <summary>
     /// Gets a logger with the given name.
@@ -42,7 +42,7 @@ internal class LoggerProvider : BaseProvider
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
     public Logger GetLogger(string? name)
-        => this.GetLogger(name, version: null, attributes: null);
+        => this.GetLogger(name, version: null);
 
     /// <summary>
     /// Gets a logger with the given name and version.
@@ -51,31 +51,13 @@ internal class LoggerProvider : BaseProvider
     /// <param name="version">Optional version of the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
     public Logger GetLogger(string? name, string? version)
-        => this.GetLogger(name, version, attributes: null);
-
-    /// <summary>
-    /// Gets a logger with the given name, version, and attributes.
-    /// </summary>
-    /// <param name="name">Optional name identifying the instrumentation
-    /// library.</param>
-    /// <param name="version">Optional version of the instrumentation
-    /// library.</param>
-    /// <param name="attributes">Optional attributes which should be associated
-    /// with log records created by the instrumentation library.</param>
-    /// <returns><see cref="Logger"/> instance.</returns>
-    public Logger GetLogger(
-        string? name,
-        string? version,
-        IReadOnlyDictionary<string, object>? attributes)
     {
         if (!this.TryCreateLogger(name, out var logger))
         {
             return NoopLogger;
         }
 
-        logger!.SetInstrumentationScope(
-            version,
-            attributes);
+        logger!.SetInstrumentationScope(version);
 
         return logger;
     }
