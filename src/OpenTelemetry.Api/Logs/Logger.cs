@@ -16,8 +16,6 @@
 
 #nullable enable
 
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry.Logs;
 
 /// <summary>
@@ -28,20 +26,29 @@ internal abstract class Logger
     /// <summary>
     /// Initializes a new instance of the <see cref="Logger"/> class.
     /// </summary>
-    /// <param name="instrumentationScope"><see
-    /// cref="OpenTelemetry.InstrumentationScope"/>.</param>
-    protected Logger(InstrumentationScope instrumentationScope)
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    protected Logger(string? name)
     {
-        Guard.ThrowIfNull(instrumentationScope);
-
-        this.InstrumentationScope = instrumentationScope;
+        this.Name = string.IsNullOrWhiteSpace(name)
+            ? string.Empty
+            : name!;
     }
 
     /// <summary>
-    /// Gets the <see cref="OpenTelemetry.InstrumentationScope"/> associated
-    /// with the logger.
+    /// Gets the name identifying the instrumentation library.
     /// </summary>
-    public InstrumentationScope InstrumentationScope { get; }
+    public string Name { get; }
+
+    /// <summary>
+    /// Gets the version of the instrumentation library.
+    /// </summary>
+    public string? Version { get; private set; }
+
+    /// <summary>
+    /// Gets the attributes which should be associated with log records created
+    /// by the instrumentation library.
+    /// </summary>
+    public IReadOnlyDictionary<string, object>? Attributes { get; private set; }
 
     /// <summary>
     /// Emit a log.
@@ -51,4 +58,12 @@ internal abstract class Logger
     public abstract void EmitLog(
         in LogRecordData data,
         in LogRecordAttributeList attributes = default);
+
+    internal void SetInstrumentationScope(
+        string? version,
+        IReadOnlyDictionary<string, object>? attributes)
+    {
+        this.Version = version;
+        this.Attributes = attributes;
+    }
 }

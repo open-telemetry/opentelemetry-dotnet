@@ -16,6 +16,10 @@
 
 #nullable enable
 
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 /// <summary>
@@ -37,21 +41,66 @@ internal class LoggerProvider : BaseProvider
     /// </summary>
     /// <returns><see cref="Logger"/> instance.</returns>
     public Logger GetLogger()
-        => this.GetLogger(new InstrumentationScope());
+        => this.GetLogger(name: null, version: null, attributes: null);
 
     /// <summary>
     /// Gets a logger with the given name.
     /// </summary>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    public Logger GetLogger(string name)
-        => this.GetLogger(new InstrumentationScope(name));
+    public Logger GetLogger(string? name)
+        => this.GetLogger(name, version: null, attributes: null);
 
     /// <summary>
-    /// Gets a logger with given instrumentation scope.
+    /// Gets a logger with the given name and version.
     /// </summary>
-    /// <param name="instrumentationScope"><see cref="InstrumentationScope"/>.</param>
-    /// <returns><see cref="Logger"/>.</returns>
-    public virtual Logger GetLogger(InstrumentationScope instrumentationScope)
-        => NoopLogger;
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    /// <param name="version">Optional version of the instrumentation library.</param>
+    /// <returns><see cref="Logger"/> instance.</returns>
+    public Logger GetLogger(string? name, string? version)
+        => this.GetLogger(name, version, attributes: null);
+
+    /// <summary>
+    /// Gets a logger with the given name, version, and attributes.
+    /// </summary>
+    /// <param name="name">Optional name identifying the instrumentation
+    /// library.</param>
+    /// <param name="version">Optional version of the instrumentation
+    /// library.</param>
+    /// <param name="attributes">Optional attributes which should be associated
+    /// with log records created by the instrumentation library.</param>
+    /// <returns><see cref="Logger"/> instance.</returns>
+    public Logger GetLogger(
+        string? name,
+        string? version,
+        IReadOnlyDictionary<string, object>? attributes)
+    {
+        if (!this.TryCreateLogger(name, out var logger))
+        {
+            return NoopLogger;
+        }
+
+        logger!.SetInstrumentationScope(
+            version,
+            attributes);
+
+        return logger;
+    }
+
+    /// <summary>
+    /// Try to create a logger with the given name.
+    /// </summary>
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    /// <param name="logger"><see cref="Logger"/>.</param>
+    /// <returns><see langword="true"/> if the logger was created.</returns>
+    protected virtual bool TryCreateLogger(
+        string? name,
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+        [NotNullWhen(true)]
+#endif
+        out Logger? logger)
+    {
+        logger = null;
+        return false;
+    }
 }
