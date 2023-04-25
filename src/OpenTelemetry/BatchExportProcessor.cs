@@ -294,9 +294,6 @@ namespace OpenTelemetry
             {
                 return new KeyValuePair<string, object?>[]
                 {
-                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderIdKey, sdkHealthReporter.ProviderId),
-                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.ProviderNameKey, sdkHealthReporter.ProviderName),
-                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorId, this.processorId),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExporterNameKey, this.exporterName),
                     new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorTypeKey, this.exportedDataType),
                 };

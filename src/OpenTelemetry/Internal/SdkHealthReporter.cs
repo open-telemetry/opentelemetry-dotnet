@@ -28,16 +28,6 @@ namespace OpenTelemetry.Internal
 
         private static readonly ObservableCounter<long> BatchExportProcessorDroppedCountObs = InternalMeter.CreateObservableCounter("otel.dotnet.sdk.batchprocessor.dropped_count", GetBatchExportProcessorDroppedCounts);
 
-        internal SdkHealthReporter(string providerId, string providerName)
-        {
-            this.ProviderId = providerId;
-            this.ProviderName = providerName;
-        }
-
-        internal string ProviderId { get; }
-
-        internal string ProviderName { get; }
-
         internal static void AddBatchExportProcessorDroppedCountCallback(int batchExportProcessorId, Func<Measurement<long>> droppedCountCallBack)
         {
             lock (BatchExportProcessorDroppedCountCallbacks)
