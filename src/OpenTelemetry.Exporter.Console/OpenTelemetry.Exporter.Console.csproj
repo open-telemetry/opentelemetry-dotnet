@@ -16,8 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase ="Common"
-             Condition ="'$(TargetFrameworks)' != 'netstandard2.0'" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase ="Common" Condition ="'$(TargetFrameworks)' != 'netstandard2.0'" />
   </ItemGroup>
 
   <ItemGroup>
