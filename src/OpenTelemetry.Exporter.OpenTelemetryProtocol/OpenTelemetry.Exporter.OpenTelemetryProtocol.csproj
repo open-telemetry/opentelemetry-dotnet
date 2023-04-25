@@ -38,6 +38,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase ="Common" Condition="$(TargetFramework) != 'netstandard2.0' or $(TargetFramework) != 'netstandard2.1' or $(TargetFramework) != 'net462'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Protobuf Include="**/*.proto" Access="internal">
       <ProtoRoot>Implementation</ProtoRoot>
     </Protobuf>
