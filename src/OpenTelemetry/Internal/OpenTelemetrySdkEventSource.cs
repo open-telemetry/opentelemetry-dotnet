@@ -15,9 +15,7 @@
 // </copyright>
 
 #nullable enable
-#pragma warning disable CS0436 // Type conflicts with imported type
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
@@ -350,4 +348,3 @@ namespace OpenTelemetry.Internal
 #endif
     }
 }
-#pragma warning restore CS0436 // Type conflicts with imported type

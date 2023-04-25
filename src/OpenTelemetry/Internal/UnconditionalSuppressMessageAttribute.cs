@@ -14,7 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-namespace System.Diagnostics.CodeAnalysis
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
+namespace OpenTelemetry.Internal
 {
     /// <summary>
     /// Suppresses reporting of a specific rule violation, allowing multiple suppressions on a
