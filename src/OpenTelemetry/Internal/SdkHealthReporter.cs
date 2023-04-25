@@ -22,7 +22,7 @@ namespace OpenTelemetry.Internal
 {
     internal sealed class SdkHealthReporter
     {
-        private static readonly Dictionary<string, Func<Measurement<long>>> BatchExportProcessorDroppedCountCallbacks = new();
+        private static readonly Dictionary<int, Func<Measurement<long>>> BatchExportProcessorDroppedCountCallbacks = new();
 
         private static readonly Meter InternalMeter = new Meter("OpenTelemetry.Sdk");
 
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Internal
 
         internal string ProviderName { get; }
 
-        internal static void AddBatchExportProcessorDroppedCountCallback(string batchExportProcessorId, Func<Measurement<long>> droppedCountCallBack)
+        internal static void AddBatchExportProcessorDroppedCountCallback(int batchExportProcessorId, Func<Measurement<long>> droppedCountCallBack)
         {
             lock (BatchExportProcessorDroppedCountCallbacks)
             {
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        internal static void RemoveBatchExportProcessorDroppedCountCallback(string batchExportProcessorId)
+        internal static void RemoveBatchExportProcessorDroppedCountCallback(int batchExportProcessorId)
         {
             lock (BatchExportProcessorDroppedCountCallbacks)
             {

@@ -37,6 +37,7 @@ namespace OpenTelemetry
 
         internal readonly int MaxExportBatchSize;
 
+        private static int processorCount = 0;
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -46,7 +47,7 @@ namespace OpenTelemetry
         private readonly ManualResetEvent shutdownTrigger = new(false);
         private readonly string exporterName;
         private readonly string exportedDataType;
-        private readonly string processorId;
+        private readonly int processorId;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
@@ -79,7 +80,7 @@ namespace OpenTelemetry
 
             this.exporterName = exporter.GetType().Name;
             this.exportedDataType = typeof(T).Name;
-            this.processorId = Guid.NewGuid().ToString();
+            this.processorId = Interlocked.Increment(ref processorCount);
 
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
