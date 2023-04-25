@@ -40,7 +40,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase ="Common" Condition="$(TargetFramework) != 'netstandard2.0' or $(TargetFramework) != 'netstandard2.1' or $(TargetFramework) != 'net462'" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
