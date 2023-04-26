@@ -35,8 +35,7 @@ namespace OpenTelemetry.Internal
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                 MeasurementDroppedCountCallbacks.TryAdd(instrumentName, droppedCountCallBack);
 #else
-                MeasurementDroppedCountCallbacks.TryGetValue(instrumentName, out var addedCallBack);
-                if (addedCallBack == null)
+                if (!MeasurementDroppedCountCallbacks.TryGetValue(instrumentName, out _))
                 {
                     MeasurementDroppedCountCallbacks.Add(instrumentName, droppedCountCallBack);
                 }
