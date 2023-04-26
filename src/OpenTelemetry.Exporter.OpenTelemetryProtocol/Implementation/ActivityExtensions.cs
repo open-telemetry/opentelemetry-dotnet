@@ -16,8 +16,11 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
+using Google.Protobuf.Collections;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Proto.Common.V1;
@@ -31,6 +34,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class ActivityExtensions
     {
         private static readonly ConcurrentBag<ScopeSpans> SpanListPool = new();
+        private static readonly Action<RepeatedField<Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
             this ExportTraceServiceRequest request,
@@ -80,7 +84,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var scope in resourceSpans.ScopeSpans)
             {
-                scope.Spans.Clear();
+                RepeatedFieldOfSpanSetCountAction(scope.Spans, 0);
                 SpanListPool.Add(scope);
             }
         }
@@ -292,6 +296,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             return otlpEvent;
+        }
+
+        private static Action<RepeatedField<Span>, int> CreateRepeatedFieldOfSpanSetCountAction()
+        {
+            FieldInfo repeatedFieldOfSpanCountField = typeof(RepeatedField<Span>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            DynamicMethod dynamicMethod = new DynamicMethod(
+                "CreateSetCountAction",
+                null,
+                new[] { typeof(RepeatedField<Span>), typeof(int) },
+                typeof(ActivityExtensions).Module,
+                skipVisibility: true);
+
+            var generator = dynamicMethod.GetILGenerator();
+
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Stfld, repeatedFieldOfSpanCountField);
+            generator.Emit(OpCodes.Ret);
+
+            return (Action<RepeatedField<Span>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<Span>, int>));
         }
 
         private struct TagEnumerationState : PeerServiceResolver.IPeerServiceState

@@ -28,6 +28,17 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 internal static class ProviderBuilderServiceCollectionExtensions
 {
+    public static IServiceCollection AddOpenTelemetryLoggerProviderBuilderServices(this IServiceCollection services)
+    {
+        Debug.Assert(services != null, "services was null");
+
+        // TODO:
+        // services!.TryAddSingleton<LoggerProviderBuilderSdk>();
+        // services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
+
+        return services!;
+    }
+
     public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
     {
         Debug.Assert(services != null, "services was null");

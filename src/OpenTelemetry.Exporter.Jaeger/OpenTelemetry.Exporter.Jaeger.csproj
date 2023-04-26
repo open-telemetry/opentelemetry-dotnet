@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Threading.Tasks.Extensions" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
+    <PackageReference Include="System.Text.Encodings.Web" Condition="'$(TargetFramework)' != 'net6.0'" />
     <PackageReference Include="System.Text.Json" Condition="'$(TargetFramework)' != 'net6.0'" />
   </ItemGroup>
 
