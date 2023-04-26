@@ -184,12 +184,12 @@ namespace OpenTelemetry.Metrics
             return this.aggStore.Snapshot();
         }
 
-        internal void AddAggStoreCallbacks()
+        internal void AddAggStoreCallback()
         {
             this.aggStore.AddMeasurementDroppedCallbacks();
         }
 
-        internal void RemoveAggStoreCallbacks()
+        internal void RemoveAggStoreCallback()
         {
             this.aggStore.RemoveMeasurementDroppedCallbacks();
         }

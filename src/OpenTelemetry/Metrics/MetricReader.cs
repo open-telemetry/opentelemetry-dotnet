@@ -233,7 +233,7 @@ namespace OpenTelemetry.Metrics
                     break;
                 }
 
-                metric.RemoveAggStoreCallbacks();
+                metric.RemoveAggStoreCallback();
             }
 
             this.Dispose(true);
