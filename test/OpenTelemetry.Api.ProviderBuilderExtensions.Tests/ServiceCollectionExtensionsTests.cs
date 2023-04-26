@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -69,6 +70,34 @@ public class ServiceCollectionExtensionsTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var registrations = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
+
+        foreach (var registration in registrations)
+        {
+            registration.ConfigureBuilder(serviceProvider, null!);
+        }
+
+        Assert.Equal(invocations, registrations.Count());
+        Assert.Equal(numberOfCalls, registrations.Count());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(3)]
+    public void ConfigureOpenTelemetryLoggerProvider(int numberOfCalls)
+    {
+        var invocations = 0;
+
+        var services = new ServiceCollection();
+
+        for (int i = 0; i < numberOfCalls; i++)
+        {
+            services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => invocations++);
+        }
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var registrations = serviceProvider.GetServices<IConfigureLoggerProviderBuilder>();
 
         foreach (var registration in registrations)
         {
