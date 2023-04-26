@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
