@@ -5,7 +5,7 @@
 
   <!-- prod packages -->
   <ItemGroup>
-    <PackageVersion Include="Google.Protobuf" Version="[3.22.0,4.0)" />
+    <PackageVersion Include="Google.Protobuf" Version="[3.19.4,4.0)" />
     <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Grpc.Net.Client" Version="[2.43.0,3.0)" />
     <PackageVersion Include="Grpc.Tools" Version="[2.44.0,3.0)" />
@@ -25,6 +25,8 @@
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
     <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="7.0.0" />
+    <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
     <PackageVersion Include="System.Text.Json" Version="4.7.2" />
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
