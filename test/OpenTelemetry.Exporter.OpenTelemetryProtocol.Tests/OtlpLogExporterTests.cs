@@ -278,6 +278,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void CheckToOtlpLogRecordTimestamps()
+        {
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Log message");
+            var logRecord = logRecords[0];
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+
+            Assert.True(otlpLogRecord.TimeUnixNano > 0);
+            Assert.True(otlpLogRecord.ObservedTimeUnixNano > 0);
+        }
+
+        [Fact]
         public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithNoActivity()
         {
             var logRecords = new List<LogRecord>();
