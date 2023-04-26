@@ -35,6 +35,7 @@ namespace OpenTelemetry
         internal const int DefaultMaxExportBatchSize = 512;
 
         internal readonly int MaxExportBatchSize;
+
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
