@@ -72,6 +72,10 @@ namespace OpenTelemetry.Metrics
                     try
                     {
                         metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
+                        if (this.parentProvider?.GetSdkHealthReporter() != null)
+                        {
+                            metric.AddAggStoreCallbacks();
+                        }
                     }
                     catch (NotSupportedException nse)
                     {
@@ -157,6 +161,10 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.exemplarFilter);
+                        if (this.parentProvider?.GetSdkHealthReporter() != null)
+                        {
+                            metric.AddAggStoreCallbacks();
+                        }
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;

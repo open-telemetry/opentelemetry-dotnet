@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -46,6 +47,7 @@ namespace OpenTelemetry.Metrics
         private readonly ExemplarFilter exemplarFilter;
         private int metricPointIndex = 0;
         private int batchSize = 0;
+        private long droppedCount;
         private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
 
@@ -86,6 +88,11 @@ namespace OpenTelemetry.Metrics
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
         private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+
+        /// <summary>
+        /// Gets the number of measurements dropped by the store.
+        /// </summary>
+        internal long DroppedCount => Volatile.Read(ref this.droppedCount);
 
         internal DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -180,6 +187,21 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointsAccessor GetMetricPoints()
             => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+
+        internal void AddMeasurementDroppedCallbacks()
+        {
+            SdkHealthReporter.AddMeasurementDroppedCountCallback(this.name, this.GetMeasurementDroppedCount);
+        }
+
+        internal void RemoveMeasurementDroppedCallbacks()
+        {
+            SdkHealthReporter.RemoveMeasurementDroppedCountCallback(this.name);
+        }
+
+        internal Measurement<long> GetMeasurementDroppedCount()
+        {
+            return new Measurement<long>(this.DroppedCount, new KeyValuePair<string, object>(SdkHealthMetricsConstants.InstrumentName, this.name));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()
@@ -329,6 +351,7 @@ namespace OpenTelemetry.Metrics
                 var index = this.FindMetricAggregatorsDefault(tags);
                 if (index < 0)
                 {
+                    Interlocked.Increment(ref this.droppedCount);
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
                         OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);

@@ -94,9 +94,9 @@ namespace OpenTelemetry
 
         internal static SdkHealthReporter? GetSdkHealthReporter(this BaseProvider baseProvider)
         {
-            if (baseProvider is TracerProviderSdk tracerProviderSdk)
+            if (baseProvider is MeterProviderSdk meterProviderSdk)
             {
-                return tracerProviderSdk.SdkHealthReporter;
+                return meterProviderSdk.SdkHealthReporter;
             }
 
             return null;

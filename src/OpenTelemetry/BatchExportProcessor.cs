@@ -36,8 +36,6 @@ namespace OpenTelemetry
         internal const int DefaultMaxExportBatchSize = 512;
 
         internal readonly int MaxExportBatchSize;
-
-        private static int processorCount = 0;
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
@@ -45,9 +43,6 @@ namespace OpenTelemetry
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
         private readonly ManualResetEvent shutdownTrigger = new(false);
-        private readonly string exporterName;
-        private readonly string exportedDataType;
-        private readonly int processorId;
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
@@ -77,10 +72,6 @@ namespace OpenTelemetry
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
-
-            this.exporterName = exporter.GetType().Name;
-            this.exportedDataType = typeof(T).Name;
-            this.processorId = Interlocked.Increment(ref processorCount);
 
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
@@ -133,17 +124,6 @@ namespace OpenTelemetry
             Interlocked.Increment(ref this.droppedCount);
 
             return false;
-        }
-
-        internal void RegisterDroppedCountCallback()
-        {
-            this.DroppedCountTags = this.InitializeDroppedCountTags();
-            SdkHealthReporter.AddBatchExportProcessorDroppedCountCallback(this.processorId, this.GetDroppedCount);
-        }
-
-        internal Measurement<long> GetDroppedCount()
-        {
-            return new Measurement<long>(this.DroppedCount, this.DroppedCountTags);
         }
 
         /// <inheritdoc/>
@@ -274,30 +254,12 @@ namespace OpenTelemetry
                     this.exportTrigger.Dispose();
                     this.dataExportedNotification.Dispose();
                     this.shutdownTrigger.Dispose();
-                    SdkHealthReporter.RemoveBatchExportProcessorDroppedCountCallback(this.processorId);
                 }
 
                 this.disposed = true;
             }
 
             base.Dispose(disposing);
-        }
-
-        private KeyValuePair<string, object?>[] InitializeDroppedCountTags()
-        {
-            var sdkHealthReporter = this.ParentProvider?.GetSdkHealthReporter();
-            if (sdkHealthReporter == null)
-            {
-                return Array.Empty<KeyValuePair<string, object?>>();
-            }
-            else
-            {
-                return new KeyValuePair<string, object?>[]
-                {
-                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExporterNameKey, this.exporterName),
-                    new KeyValuePair<string, object?>(SdkHealthMetricsConstants.BatchExportProcessorTypeKey, this.exportedDataType),
-                };
-            }
         }
 
         private void ExporterProc()

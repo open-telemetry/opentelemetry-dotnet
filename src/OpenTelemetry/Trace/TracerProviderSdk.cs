@@ -32,7 +32,6 @@ namespace OpenTelemetry.Trace
         internal int ShutdownCount;
         internal bool Disposed;
 
-        private static int providerCount = 0;
         private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
@@ -70,7 +69,6 @@ namespace OpenTelemetry.Trace
 
             state.AddExceptionProcessorIfEnabled();
 
-            this.SdkHealthReporter = new SdkHealthReporter();
 
             var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
             resourceBuilder.ServiceProvider = serviceProvider;
@@ -94,10 +92,6 @@ namespace OpenTelemetry.Trace
             foreach (var processor in state.Processors)
             {
                 this.AddProcessor(processor);
-                if (processor is BatchExportProcessor<Activity> activityProcessor)
-                {
-                    activityProcessor.RegisterDroppedCountCallback();
-                }
 
                 processorsAdded.Append(processor.GetType());
                 processorsAdded.Append(';');

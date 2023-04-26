@@ -22,33 +22,33 @@ namespace OpenTelemetry.Internal
 {
     internal sealed class SdkHealthReporter
     {
-        private static readonly Dictionary<int, Func<Measurement<long>>> BatchExportProcessorDroppedCountCallbacks = new();
+        private static readonly Dictionary<string, Func<Measurement<long>>> MeasurementDroppedCountCallbacks = new();
 
         private static readonly Meter InternalMeter = new Meter("OpenTelemetry.Sdk");
 
-        private static readonly ObservableCounter<long> BatchExportProcessorDroppedCountObs = InternalMeter.CreateObservableCounter("otel.dotnet.sdk.batchprocessor.dropped_count", GetBatchExportProcessorDroppedCounts);
+        private static readonly ObservableCounter<long> MeasurementDroppedCountObs = InternalMeter.CreateObservableCounter("otel.dotnet.sdk.measurement.dropped_count", GetMeasurementDroppedCounts);
 
-        internal static void AddBatchExportProcessorDroppedCountCallback(int batchExportProcessorId, Func<Measurement<long>> droppedCountCallBack)
+        internal static void AddMeasurementDroppedCountCallback(string instrumentName, Func<Measurement<long>> droppedCountCallBack)
         {
-            lock (BatchExportProcessorDroppedCountCallbacks)
+            lock (MeasurementDroppedCountCallbacks)
             {
-                BatchExportProcessorDroppedCountCallbacks.Add(batchExportProcessorId, droppedCountCallBack);
+                MeasurementDroppedCountCallbacks.Add(instrumentName, droppedCountCallBack);
             }
         }
 
-        internal static void RemoveBatchExportProcessorDroppedCountCallback(int batchExportProcessorId)
+        internal static void RemoveMeasurementDroppedCountCallback(string instrumentName)
         {
-            lock (BatchExportProcessorDroppedCountCallbacks)
+            lock (MeasurementDroppedCountCallbacks)
             {
-                BatchExportProcessorDroppedCountCallbacks.Remove(batchExportProcessorId);
+                MeasurementDroppedCountCallbacks.Remove(instrumentName);
             }
         }
 
-        internal static IEnumerable<Measurement<long>> GetBatchExportProcessorDroppedCounts()
+        internal static IEnumerable<Measurement<long>> GetMeasurementDroppedCounts()
         {
-            lock (BatchExportProcessorDroppedCountObs)
+            lock (MeasurementDroppedCountCallbacks)
             {
-                foreach (var kvp in BatchExportProcessorDroppedCountCallbacks)
+                foreach (var kvp in MeasurementDroppedCountCallbacks)
                 {
                     yield return kvp.Value.Invoke();
                 }

@@ -73,6 +73,8 @@ namespace OpenTelemetry.Metrics
 
             this.viewConfigs = state.ViewConfigs;
 
+            this.SdkHealthReporter = new SdkHealthReporter();
+
             foreach (var reader in state.Readers)
             {
                 Guard.ThrowIfNull(reader);
@@ -336,6 +338,8 @@ namespace OpenTelemetry.Metrics
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
         }
+
+        internal SdkHealthReporter SdkHealthReporter { get; }
 
         internal Resource Resource { get; }
 
