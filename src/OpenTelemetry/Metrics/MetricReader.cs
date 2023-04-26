@@ -226,14 +226,17 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         public void Dispose()
         {
-            foreach (var metric in this.metrics)
+            if (this.metrics != null)
             {
-                if (metric == null)
+                foreach (var metric in this.metrics)
                 {
-                    break;
-                }
+                    if (metric == null)
+                    {
+                        break;
+                    }
 
-                metric.RemoveAggStoreCallback();
+                    metric.RemoveAggStoreCallback();
+                }
             }
 
             this.Dispose(true);
