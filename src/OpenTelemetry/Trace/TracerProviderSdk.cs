@@ -295,7 +295,6 @@ namespace OpenTelemetry.Trace
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
 
-
         internal Resource Resource { get; }
 
         internal List<object> Instrumentations => this.instrumentations;
