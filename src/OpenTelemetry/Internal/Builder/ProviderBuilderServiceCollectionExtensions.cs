@@ -33,8 +33,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
     {
         Debug.Assert(services != null, "services was null");
 
-        // TODO:
-        // services!.TryAddSingleton<LoggerProviderBuilderSdk>();
+        services!.TryAddSingleton<LoggerProviderBuilderSdk>();
         services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
 
         return services!;
