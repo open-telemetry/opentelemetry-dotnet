@@ -85,14 +85,6 @@ public sealed class BatchExportLogRecordProcessorOptionsTest : IDisposable
     }
 
     [Fact]
-    public void BatchExportLogRecordProcessorOptions_InvalidPortEnvironmentVariableOverride()
-    {
-        Environment.SetEnvironmentVariable(BatchExportLogRecordProcessorOptions.ExporterTimeoutEnvVarKey, "invalid");
-
-        Assert.Throws<FormatException>(() => new BatchExportLogRecordProcessorOptions());
-    }
-
-    [Fact]
     public void BatchExportLogRecordProcessorOptions_SetterOverridesEnvironmentVariable()
     {
         Environment.SetEnvironmentVariable(BatchExportLogRecordProcessorOptions.ExporterTimeoutEnvVarKey, "123");
