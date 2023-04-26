@@ -21,6 +21,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -28,6 +29,17 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 internal static class ProviderBuilderServiceCollectionExtensions
 {
+    public static IServiceCollection AddOpenTelemetryLoggerProviderBuilderServices(this IServiceCollection services)
+    {
+        Debug.Assert(services != null, "services was null");
+
+        // TODO:
+        // services!.TryAddSingleton<LoggerProviderBuilderSdk>();
+        services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
+
+        return services!;
+    }
+
     public static IServiceCollection AddOpenTelemetryMeterProviderBuilderServices(this IServiceCollection services)
     {
         Debug.Assert(services != null, "services was null");

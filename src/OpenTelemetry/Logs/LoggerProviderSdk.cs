@@ -1,4 +1,4 @@
-// <copyright file="NoopLogger.cs" company="OpenTelemetry Authors">
+// <copyright file="LoggerProviderSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,12 @@
 
 namespace OpenTelemetry.Logs;
 
-internal sealed class NoopLogger : Logger
+internal sealed class LoggerProviderSdk : LoggerProvider
 {
-    public NoopLogger()
-        : base(name: null)
+    public LoggerProviderSdk(
+        IServiceProvider serviceProvider,
+        bool ownsServiceProvider)
     {
-    }
-
-    public override void EmitLog(
-        in LogRecordData data,
-        in LogRecordAttributeList attributes = default)
-    {
+        throw new NotImplementedException();
     }
 }

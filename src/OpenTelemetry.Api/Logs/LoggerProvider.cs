@@ -16,6 +16,10 @@
 
 #nullable enable
 
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 /// <summary>
@@ -26,32 +30,52 @@ internal class LoggerProvider : BaseProvider
     private static readonly NoopLogger NoopLogger = new();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="LoggerProvider"/> class.
-    /// </summary>
-    protected LoggerProvider()
-    {
-    }
-
-    /// <summary>
     /// Gets a logger.
     /// </summary>
     /// <returns><see cref="Logger"/> instance.</returns>
     public Logger GetLogger()
-        => this.GetLogger(new InstrumentationScope());
+        => this.GetLogger(name: null, version: null);
 
     /// <summary>
     /// Gets a logger with the given name.
     /// </summary>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    public Logger GetLogger(string name)
-        => this.GetLogger(new InstrumentationScope(name));
+    public Logger GetLogger(string? name)
+        => this.GetLogger(name, version: null);
 
     /// <summary>
-    /// Gets a logger with given instrumentation scope.
+    /// Gets a logger with the given name and version.
     /// </summary>
-    /// <param name="instrumentationScope"><see cref="InstrumentationScope"/>.</param>
-    /// <returns><see cref="Logger"/>.</returns>
-    public virtual Logger GetLogger(InstrumentationScope instrumentationScope)
-        => NoopLogger;
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    /// <param name="version">Optional version of the instrumentation library.</param>
+    /// <returns><see cref="Logger"/> instance.</returns>
+    public Logger GetLogger(string? name, string? version)
+    {
+        if (!this.TryCreateLogger(name, out var logger))
+        {
+            return NoopLogger;
+        }
+
+        logger!.SetInstrumentationScope(version);
+
+        return logger;
+    }
+
+    /// <summary>
+    /// Try to create a logger with the given name.
+    /// </summary>
+    /// <param name="name">Optional name identifying the instrumentation library.</param>
+    /// <param name="logger"><see cref="Logger"/>.</param>
+    /// <returns><see langword="true"/> if the logger was created.</returns>
+    protected virtual bool TryCreateLogger(
+        string? name,
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+        [NotNullWhen(true)]
+#endif
+        out Logger? logger)
+    {
+        logger = null;
+        return false;
+    }
 }
