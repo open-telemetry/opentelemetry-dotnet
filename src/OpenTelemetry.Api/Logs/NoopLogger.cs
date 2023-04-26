@@ -21,7 +21,7 @@ namespace OpenTelemetry.Logs;
 internal sealed class NoopLogger : Logger
 {
     public NoopLogger()
-        : base(instrumentationScope: new())
+        : base(name: null)
     {
     }
 
