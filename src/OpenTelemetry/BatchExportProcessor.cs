@@ -17,7 +17,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
