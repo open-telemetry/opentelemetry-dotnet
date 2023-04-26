@@ -72,7 +72,6 @@ namespace OpenTelemetry
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
-
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
                 IsBackground = true,
@@ -95,11 +94,6 @@ namespace OpenTelemetry
         /// Gets the number of telemetry objects processed by the underlying exporter.
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
-
-        /// <summary>
-        /// Gets or sets the tags to be reported on dotnet.sdk.batchprocessor.dropped_count metric.
-        /// </summary>
-        private KeyValuePair<string, object?>[]? DroppedCountTags { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExport(T data)
