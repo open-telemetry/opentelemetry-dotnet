@@ -21,6 +21,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -34,7 +35,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
 
         // TODO:
         // services!.TryAddSingleton<LoggerProviderBuilderSdk>();
-        // services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
+        services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
 
         return services!;
     }
