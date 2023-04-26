@@ -32,7 +32,6 @@ namespace OpenTelemetry.Trace
         internal int ShutdownCount;
         internal bool Disposed;
 
-        private static int providerCount = 0;
         private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
