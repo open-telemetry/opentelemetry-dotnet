@@ -21,7 +21,5 @@ namespace OpenTelemetry.Internal
         internal const string BatchExportProcessorId = "batchprocessor.id";
         internal const string BatchExportProcessorTypeKey = "batchprocessor.data.type";
         internal const string BatchExporterNameKey = "batchprocessor.exporter.name";
-        internal const string ProviderIdKey = "provider.id";
-        internal const string ProviderNameKey = "provider.name";
     }
 }

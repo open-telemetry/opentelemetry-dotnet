@@ -26,7 +26,7 @@ namespace OpenTelemetry.Internal
 
         private static readonly Meter InternalMeter = new Meter("OpenTelemetry.Sdk");
 
-        private static readonly ObservableCounter<long> BatchExportProcessorDroppedCountObs = InternalMeter.CreateObservableCounter("otel.dotnet.sdk.batchprocessor.dropped_count", GetBatchExportProcessorDroppedCounts);
+        private static readonly ObservableCounter<long> BatchExportProcessorDroppedCount = InternalMeter.CreateObservableCounter("otel.dotnet.sdk.batchprocessor.dropped_count", GetBatchExportProcessorDroppedCounts);
 
         internal static void AddBatchExportProcessorDroppedCountCallback(int batchExportProcessorId, Func<Measurement<long>> droppedCountCallBack)
         {
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Internal
 
         internal static IEnumerable<Measurement<long>> GetBatchExportProcessorDroppedCounts()
         {
-            lock (BatchExportProcessorDroppedCountObs)
+            lock (BatchExportProcessorDroppedCountCallbacks)
             {
                 foreach (var kvp in BatchExportProcessorDroppedCountCallbacks)
                 {
