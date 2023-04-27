@@ -349,4 +349,3 @@ namespace OpenTelemetry.Internal
 #endif
     }
 }
-#pragma warning restore CS0436 // Type conflicts with imported type
