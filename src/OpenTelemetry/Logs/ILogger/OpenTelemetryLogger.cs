@@ -125,9 +125,14 @@ namespace OpenTelemetry.Logs
             /* TODO: Enable this if/when LogRecordAttributeList becomes public.
             if (typeof(TState) == typeof(LogRecordAttributeList))
             {
-                // Note: This cast looks strange, but it is meant for the JIT to optimize/remove.
-                ((LogRecordAttributeList)(object)state!).ApplyToLogRecord(logRecord);
-                return logRecord.AttributeStorage!;
+                // Note: This block is written to be elided by the JIT when
+                // TState is not LogRecordAttributeList or optimized when it is.
+                // For users that pass LogRecordAttributeList as TState to
+                // ILogger.Log this will avoid boxing the struct.
+
+                var logRecordAttributes = (LogRecordAttributeList)(object)state!;
+
+                return logRecordAttributes.Export(ref logRecord.AttributeStorage);
             }
             else */
             if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
