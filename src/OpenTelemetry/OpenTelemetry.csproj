@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase="Common" />
+    <Compile Remove="Internal\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
   </ItemGroup>
 
 </Project>

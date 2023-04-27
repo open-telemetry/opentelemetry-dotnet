@@ -15,7 +15,6 @@
 // </copyright>
 
 #nullable enable
-#pragma warning disable CS0436 // Type conflicts with imported type
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
