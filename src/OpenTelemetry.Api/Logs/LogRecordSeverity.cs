@@ -23,21 +23,96 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 internal enum LogRecordSeverity
 {
-    /// <summary>Trace severity.</summary>
-    Trace,
+    /// <summary>Unknown severity (0).</summary>
+    Unknown = 0,
 
-    /// <summary>Debug severity.</summary>
-    Debug,
+    /// <summary>Trace severity (1).</summary>
+    Trace = 1,
 
-    /// <summary>Information severity.</summary>
-    Information,
+    /// <summary>Trace1 severity (1).</summary>
+    Trace1 = Trace,
 
-    /// <summary>Warning severity.</summary>
-    Warning,
+    /// <summary>Trace1 severity (2).</summary>
+    Trace2 = Trace1 + 1,
 
-    /// <summary>Error severity.</summary>
-    Error,
+    /// <summary>Trace3 severity (3).</summary>
+    Trace3 = Trace2 + 1,
 
-    /// <summary>Fatal severity.</summary>
-    Fatal,
+    /// <summary>Trace4 severity (4).</summary>
+    Trace4 = Trace3 + 1,
+
+    /// <summary>Debug severity (5).</summary>
+    Debug = 5,
+
+    /// <summary>Debug1 severity (5).</summary>
+    Debug1 = Debug,
+
+    /// <summary>Debug2 severity (6).</summary>
+    Debug2 = Debug1 + 1,
+
+    /// <summary>Debug3 severity (7).</summary>
+    Debug3 = Debug2 + 1,
+
+    /// <summary>Debug4 severity (8).</summary>
+    Debug4 = Debug3 + 1,
+
+    /// <summary>Information severity (9).</summary>
+    Information = 9,
+
+    /// <summary>Information1 severity (10).</summary>
+    Information1 = Information,
+
+    /// <summary>Information2 severity (11).</summary>
+    Information2 = Information1 + 1,
+
+    /// <summary>Information3 severity (12).</summary>
+    Information3 = Information2 + 1,
+
+    /// <summary>Information4 severity (13).</summary>
+    Information4 = Information3 + 1,
+
+    /// <summary>Warning severity (13).</summary>
+    Warning = 13,
+
+    /// <summary>Warning1 severity (13).</summary>
+    Warning1 = Warning,
+
+    /// <summary>Warning2 severity (14).</summary>
+    Warning2 = Warning1 + 1,
+
+    /// <summary>Warning3 severity (15).</summary>
+    Warning3 = Warning2 + 1,
+
+    /// <summary>Warning4 severity (16).</summary>
+    Warning4 = Warning3 + 1,
+
+    /// <summary>Error severity (17).</summary>
+    Error = 17,
+
+    /// <summary>Error1 severity (17).</summary>
+    Error1 = Error,
+
+    /// <summary>Error2 severity (18).</summary>
+    Error2 = Error1 + 1,
+
+    /// <summary>Error3 severity (19).</summary>
+    Error3 = Error2 + 1,
+
+    /// <summary>Error4 severity (20).</summary>
+    Error4 = Error3 + 1,
+
+    /// <summary>Fatal severity (21).</summary>
+    Fatal = 21,
+
+    /// <summary>Fatal1 severity (21).</summary>
+    Fatal1 = Fatal,
+
+    /// <summary>Fatal2 severity (22).</summary>
+    Fatal2 = Fatal1 + 1,
+
+    /// <summary>Fatal3 severity (23).</summary>
+    Fatal3 = Fatal2 + 1,
+
+    /// <summary>Fatal4 severity (24).</summary>
+    Fatal4 = Fatal3 + 1,
 }
