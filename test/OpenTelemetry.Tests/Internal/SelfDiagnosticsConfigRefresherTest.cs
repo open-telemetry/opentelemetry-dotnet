@@ -18,6 +18,7 @@
 
 using System.Diagnostics;
 using System.Text;
+using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Internal.Tests
         {
             try
             {
-                string logDirectory = "Omit" + Path.GetRandomFileName();
+                string logDirectory = Utils.GetCurrentMethodName();
                 CreateConfigFile(logDirectory);
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
@@ -68,7 +69,7 @@ namespace OpenTelemetry.Internal.Tests
         {
             try
             {
-                string logDirectory = "Capture" + Path.GetRandomFileName();
+                string logDirectory = Utils.GetCurrentMethodName();
                 CreateConfigFile(logDirectory);
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
