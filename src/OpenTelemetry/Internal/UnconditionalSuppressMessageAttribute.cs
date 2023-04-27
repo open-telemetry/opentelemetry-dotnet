@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+#nullable enable
 
 namespace System.Diagnostics.CodeAnalysis
 {
@@ -36,10 +37,10 @@ namespace System.Diagnostics.CodeAnalysis
         /// <param name="checkId">The identifier of the analysis rule the attribute applies to.</param>
         public UnconditionalSuppressMessageAttribute(string category, string checkId)
         {
-            Category = category;
-            CheckId = checkId;
+            this.Category = category;
+            this.CheckId = checkId;
         }
- 
+
         /// <summary>
         /// Gets the category identifying the classification of the attribute.
         /// </summary>
@@ -48,7 +49,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// for which a message suppression attribute applies.
         /// </remarks>
         public string Category { get; }
- 
+
         /// <summary>
         /// Gets the identifier of the analysis tool rule to be suppressed.
         /// </summary>
@@ -57,7 +58,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// properties form a unique check identifier.
         /// </remarks>
         public string CheckId { get; }
- 
+
         /// <summary>
         /// Gets or sets the scope of the code that is relevant for the attribute.
         /// </summary>
@@ -66,7 +67,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// the attribute is relevant.
         /// </remarks>
         public string? Scope { get; set; }
- 
+
         /// <summary>
         /// Gets or sets a fully qualified path that represents the target of the attribute.
         /// </summary>
@@ -77,7 +78,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// The analysis tool user interface should be capable of automatically formatting the parameter.
         /// </remarks>
         public string? Target { get; set; }
- 
+
         /// <summary>
         /// Gets or sets an optional argument expanding on exclusion criteria.
         /// </summary>
@@ -89,7 +90,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// give a rule violation, but not against all statements in the method.
         /// </remarks>
         public string? MessageId { get; set; }
- 
+
         /// <summary>
         /// Gets or sets the justification for suppressing the code analysis message.
         /// </summary>
