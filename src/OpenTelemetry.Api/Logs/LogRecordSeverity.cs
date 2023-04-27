@@ -29,11 +29,8 @@ internal enum LogRecordSeverity
     /// <summary>Trace severity (1).</summary>
     Trace = 1,
 
-    /// <summary>Trace1 severity (1).</summary>
-    Trace1 = Trace,
-
     /// <summary>Trace1 severity (2).</summary>
-    Trace2 = Trace1 + 1,
+    Trace2 = Trace + 1,
 
     /// <summary>Trace3 severity (3).</summary>
     Trace3 = Trace2 + 1,
@@ -44,11 +41,8 @@ internal enum LogRecordSeverity
     /// <summary>Debug severity (5).</summary>
     Debug = 5,
 
-    /// <summary>Debug1 severity (5).</summary>
-    Debug1 = Debug,
-
     /// <summary>Debug2 severity (6).</summary>
-    Debug2 = Debug1 + 1,
+    Debug2 = Debug + 1,
 
     /// <summary>Debug3 severity (7).</summary>
     Debug3 = Debug2 + 1,
@@ -59,11 +53,8 @@ internal enum LogRecordSeverity
     /// <summary>Information severity (9).</summary>
     Information = 9,
 
-    /// <summary>Information1 severity (10).</summary>
-    Information1 = Information,
-
     /// <summary>Information2 severity (11).</summary>
-    Information2 = Information1 + 1,
+    Information2 = Information + 1,
 
     /// <summary>Information3 severity (12).</summary>
     Information3 = Information2 + 1,
@@ -74,11 +65,8 @@ internal enum LogRecordSeverity
     /// <summary>Warning severity (13).</summary>
     Warning = 13,
 
-    /// <summary>Warning1 severity (13).</summary>
-    Warning1 = Warning,
-
     /// <summary>Warning2 severity (14).</summary>
-    Warning2 = Warning1 + 1,
+    Warning2 = Warning + 1,
 
     /// <summary>Warning3 severity (15).</summary>
     Warning3 = Warning2 + 1,
@@ -89,11 +77,8 @@ internal enum LogRecordSeverity
     /// <summary>Error severity (17).</summary>
     Error = 17,
 
-    /// <summary>Error1 severity (17).</summary>
-    Error1 = Error,
-
     /// <summary>Error2 severity (18).</summary>
-    Error2 = Error1 + 1,
+    Error2 = Error + 1,
 
     /// <summary>Error3 severity (19).</summary>
     Error3 = Error2 + 1,
@@ -104,11 +89,8 @@ internal enum LogRecordSeverity
     /// <summary>Fatal severity (21).</summary>
     Fatal = 21,
 
-    /// <summary>Fatal1 severity (21).</summary>
-    Fatal1 = Fatal,
-
     /// <summary>Fatal2 severity (22).</summary>
-    Fatal2 = Fatal1 + 1,
+    Fatal2 = Fatal + 1,
 
     /// <summary>Fatal3 severity (23).</summary>
     Fatal3 = Fatal2 + 1,
