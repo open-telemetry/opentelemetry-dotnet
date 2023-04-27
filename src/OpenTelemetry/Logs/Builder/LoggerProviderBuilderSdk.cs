@@ -43,7 +43,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
 
     public LoggerProvider? Provider => this.loggerProvider;
 
-    public List<BaseProcessor<Activity>> Processors { get; } = new();
+    public List<BaseProcessor<LogRecord>> Processors { get; } = new();
 
     public void RegisterProvider(LoggerProviderSdk loggerProvider)
     {
@@ -91,7 +91,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
         return this;
     }
 
-    public LoggerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
+    public LoggerProviderBuilder AddProcessor(BaseProcessor<LogRecord> processor)
     {
         Debug.Assert(processor != null, "processor was null");
 
