@@ -23,8 +23,8 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 internal enum LogRecordSeverity
 {
-    /// <summary>Unknown severity (0).</summary>
-    Unknown = 0,
+    /// <summary>Unspecified severity (0).</summary>
+    Unspecified = 0,
 
     /// <summary>Trace severity (1).</summary>
     Trace = 1,
@@ -50,29 +50,29 @@ internal enum LogRecordSeverity
     /// <summary>Debug4 severity (8).</summary>
     Debug4 = Debug3 + 1,
 
-    /// <summary>Information severity (9).</summary>
-    Information = 9,
+    /// <summary>Info severity (9).</summary>
+    Info = 9,
 
-    /// <summary>Information2 severity (11).</summary>
-    Information2 = Information + 1,
+    /// <summary>Info2 severity (11).</summary>
+    Info2 = Info + 1,
 
-    /// <summary>Information3 severity (12).</summary>
-    Information3 = Information2 + 1,
+    /// <summary>Info3 severity (12).</summary>
+    Info3 = Info2 + 1,
 
-    /// <summary>Information4 severity (13).</summary>
-    Information4 = Information3 + 1,
+    /// <summary>Info4 severity (13).</summary>
+    Info4 = Info3 + 1,
 
-    /// <summary>Warning severity (13).</summary>
-    Warning = 13,
+    /// <summary>Warn severity (13).</summary>
+    Warn = 13,
 
-    /// <summary>Warning2 severity (14).</summary>
-    Warning2 = Warning + 1,
+    /// <summary>Warn2 severity (14).</summary>
+    Warn2 = Warn + 1,
 
-    /// <summary>Warning3 severity (15).</summary>
-    Warning3 = Warning2 + 1,
+    /// <summary>Warn3 severity (15).</summary>
+    Warn3 = Warn2 + 1,
 
-    /// <summary>Warning4 severity (16).</summary>
-    Warning4 = Warning3 + 1,
+    /// <summary>Warn severity (16).</summary>
+    Warn4 = Warn3 + 1,
 
     /// <summary>Error severity (17).</summary>
     Error = 17,

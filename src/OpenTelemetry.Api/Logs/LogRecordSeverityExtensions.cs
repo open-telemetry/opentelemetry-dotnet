@@ -25,7 +25,7 @@ internal static class LogRecordSeverityExtensions
 {
     private static readonly string[] LogRecordSeverityShortNames = new string[]
     {
-        "UNKNOWN",
+        "UNSPECIFIED",
 
         "TRACE",
         "TRACE2",
