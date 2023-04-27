@@ -13,10 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\UnconditionalSuppressMessageAttribute.cs" LinkBase ="Common" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
   </ItemGroup>
 </Project>
