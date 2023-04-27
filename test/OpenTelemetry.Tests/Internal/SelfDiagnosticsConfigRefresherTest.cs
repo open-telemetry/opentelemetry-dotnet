@@ -41,14 +41,15 @@ namespace OpenTelemetry.Internal.Tests
         {
             try
             {
-                CreateConfigFile();
+                string logDirectory = "Omit" + Path.GetRandomFileName();
+                CreateConfigFile(logDirectory);
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
                 // Emitting event of EventLevel.Warning
                 OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("exception");
 
                 int bufferSize = 512;
-                byte[] actualBytes = ReadFile(bufferSize);
+                byte[] actualBytes = ReadFile(logDirectory, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 this.output.WriteLine(logText);  // for debugging in case the test fails
                 Assert.StartsWith(MessageOnNewFileString, logText);
@@ -67,7 +68,8 @@ namespace OpenTelemetry.Internal.Tests
         {
             try
             {
-                CreateConfigFile();
+                string logDirectory = "Capture" + Path.GetRandomFileName();
+                CreateConfigFile(logDirectory);
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
                 // Emitting event of EventLevel.Error
@@ -75,7 +77,7 @@ namespace OpenTelemetry.Internal.Tests
                 string expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
 
                 int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
-                byte[] actualBytes = ReadFile(bufferSize);
+                byte[] actualBytes = ReadFile(logDirectory, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 Assert.StartsWith(MessageOnNewFileString, logText);
 
@@ -97,24 +99,24 @@ namespace OpenTelemetry.Internal.Tests
             return logLine.Substring(timestampPrefixLength);
         }
 
-        private static byte[] ReadFile(int byteCount)
+        private static byte[] ReadFile(string logDirectory, int byteCount)
         {
             var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
                     + Process.GetCurrentProcess().Id + ".log";
-            var outputFilePath = Path.Combine(".", outputFileName);
+            var outputFilePath = Path.Combine(logDirectory, outputFileName);
             using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             byte[] actualBytes = new byte[byteCount];
             _ = file.Read(actualBytes, 0, byteCount);
             return actualBytes;
         }
 
-        private static void CreateConfigFile()
+        private static void CreateConfigFile(string logDirectory)
         {
-            string configJson = @"{
-                    ""LogDirectory"": ""."",
+            string configJson = $@"{{
+                    ""LogDirectory"": ""{logDirectory}"",
                     ""FileSize"": 1024,
                     ""LogLevel"": ""Error""
-                    }";
+                    }}";
             using FileStream file = File.Open(ConfigFilePath, FileMode.Create, FileAccess.Write);
             byte[] configBytes = Encoding.UTF8.GetBytes(configJson);
             file.Write(configBytes, 0, configBytes.Length);
