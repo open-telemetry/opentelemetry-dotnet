@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -79,7 +78,7 @@ internal static class LoggerProviderBuilderExtensions
     /// Adds a processor to the provider.
     /// </summary>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
-    /// <param name="processor">Activity processor to add.</param>
+    /// <param name="processor">LogRecord processor to add.</param>
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder AddProcessor(this LoggerProviderBuilder loggerProviderBuilder, BaseProcessor<LogRecord> processor)
     {
@@ -130,7 +129,7 @@ internal static class LoggerProviderBuilderExtensions
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public static LoggerProviderBuilder AddProcessor(
         this LoggerProviderBuilder loggerProviderBuilder,
-        Func<IServiceProvider, BaseProcessor<Activity>> implementationFactory)
+        Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory)
     {
         Guard.ThrowIfNull(implementationFactory);
 
