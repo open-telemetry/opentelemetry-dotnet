@@ -77,7 +77,6 @@ With Metrics = 2.45 + (416 + 40 + 24) / 1024 = 2.45 + 0.47 = 2.92 KB
 Baseline = 2.45 KB
 With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
                         = 2.45 + (1162 + 64) / 1024 = 2.45 + 1.2 = 3.55 KB (~3.56 KB)
-
 */
 
 namespace Benchmarks.Instrumentation
