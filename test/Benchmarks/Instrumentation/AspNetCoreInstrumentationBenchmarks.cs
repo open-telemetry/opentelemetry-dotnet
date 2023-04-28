@@ -40,7 +40,7 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 Allocation details for .NET 7:
 
-## Traces
+// Traces
 * Activity creation + `Activity.Start()` = 416 B
 * Casting of the struct `Microsoft.Extensions.Primitives.StringValues` to `IEnumerable<string>` by `HttpRequestHeaderValuesGetter`
   - `TraceContextPropagator.Extract` = 24 B
@@ -64,7 +64,7 @@ Baseline = 2.45 KB
 With Traces = 2.45 + (1162 / 1024) = 2.45 + 1.14 = 3.59 KB
 
 
-## Metrics
+// Metrics
 * Activity creation + `Activity.Start()` = 416 B
 * Boxing of `Port` number when adding it as a tag = 24 B
 * String creation for `HttpRequest.HostString.Host` = 40 B
@@ -72,7 +72,7 @@ With Traces = 2.45 + (1162 / 1024) = 2.45 + 1.14 = 3.59 KB
 Baseline = 2.45 KB
 With Metrics = 2.45 + (416 + 40 + 24) / 1024 = 2.45 + 0.47 = 2.92 KB
 
-## With Traces and Metrics
+// With Traces and Metrics
 
 Baseline = 2.45 KB
 With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
