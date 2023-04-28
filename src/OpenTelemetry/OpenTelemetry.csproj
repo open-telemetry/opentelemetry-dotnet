@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Internal\Shim\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworks)' == 'net6.0' or '$(TargetFrameworks)' == 'net7.0'" />
+        <Compile Remove="Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
   </ItemGroup>
 
 </Project>
