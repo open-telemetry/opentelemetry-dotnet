@@ -235,7 +235,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
 
-                    metric.RemoveAggStoreCallback();
+                    metric.AggStore.RemoveMeasurementDroppedCallbacks();
                 }
             }
 

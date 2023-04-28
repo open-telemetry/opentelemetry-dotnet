@@ -25,6 +25,7 @@ namespace OpenTelemetry.Metrics
     {
         private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
         private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
+        private static int metricStreamCount = 0;
         private readonly object lockZeroTags = new();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Metrics
         private long droppedCount;
         private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
+        private int metricStreamId;
 
         internal AggregatorStore(
             MetricStreamIdentity metricStreamIdentity,
@@ -83,6 +85,8 @@ namespace OpenTelemetry.Metrics
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }
+
+            this.metricStreamId = Interlocked.Increment(ref metricStreamCount);
         }
 
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
@@ -190,12 +194,12 @@ namespace OpenTelemetry.Metrics
 
         internal void AddMeasurementDroppedCallbacks()
         {
-            SdkHealthReporter.AddMeasurementDroppedCountCallback(this.name, this.GetMeasurementDroppedCount);
+            SdkHealthReporter.AddMeasurementDroppedCountCallback(this.metricStreamId, this.GetMeasurementDroppedCount);
         }
 
         internal void RemoveMeasurementDroppedCallbacks()
         {
-            SdkHealthReporter.RemoveMeasurementDroppedCountCallback(this.name);
+            SdkHealthReporter.RemoveMeasurementDroppedCountCallback(this.metricStreamId);
         }
 
         internal Measurement<long> GetMeasurementDroppedCount()

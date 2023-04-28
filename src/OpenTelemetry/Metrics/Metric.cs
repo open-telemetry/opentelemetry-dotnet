@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
 
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
 
-        private readonly AggregatorStore aggStore;
+        internal readonly AggregatorStore AggStore;
 
         internal Metric(
             MetricStreamIdentity instrumentIdentity,
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Metrics
                 throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
             }
 
-            this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, exemplarFilter);
+            this.AggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, exemplarFilter);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }
@@ -166,32 +166,22 @@ namespace OpenTelemetry.Metrics
 
         public MetricPointsAccessor GetMetricPoints()
         {
-            return this.aggStore.GetMetricPoints();
+            return this.AggStore.GetMetricPoints();
         }
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.Update(value, tags);
+            this.AggStore.Update(value, tags);
         }
 
         internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.Update(value, tags);
+            this.AggStore.Update(value, tags);
         }
 
         internal int Snapshot()
         {
-            return this.aggStore.Snapshot();
-        }
-
-        internal void AddAggStoreCallback()
-        {
-            this.aggStore.AddMeasurementDroppedCallbacks();
-        }
-
-        internal void RemoveAggStoreCallback()
-        {
-            this.aggStore.RemoveMeasurementDroppedCallbacks();
+            return this.AggStore.Snapshot();
         }
     }
 }

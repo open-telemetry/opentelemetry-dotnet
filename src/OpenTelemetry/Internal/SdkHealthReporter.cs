@@ -22,32 +22,32 @@ namespace OpenTelemetry.Internal
 {
     internal sealed class SdkHealthReporter
     {
-        private static readonly Dictionary<string, Func<Measurement<long>>> MeasurementDroppedCountCallbacks = new();
+        private static readonly Dictionary<int, Func<Measurement<long>>> MeasurementDroppedCountCallbacks = new();
 
         private static readonly Meter InternalMeter = new Meter("OpenTelemetry.Sdk");
 
         private static readonly ObservableCounter<long> MeasurementDroppedCountObs = InternalMeter.CreateObservableCounter("otel.dotnet.sdk.measurement.dropped_count", GetMeasurementDroppedCounts);
 
-        internal static void AddMeasurementDroppedCountCallback(string instrumentName, Func<Measurement<long>> droppedCountCallBack)
+        internal static void AddMeasurementDroppedCountCallback(int metricStreamId, Func<Measurement<long>> droppedCountCallBack)
         {
             lock (MeasurementDroppedCountCallbacks)
             {
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                MeasurementDroppedCountCallbacks.TryAdd(instrumentName, droppedCountCallBack);
+                MeasurementDroppedCountCallbacks.TryAdd(metricStreamId, droppedCountCallBack);
 #else
-                if (!MeasurementDroppedCountCallbacks.TryGetValue(instrumentName, out _))
+                if (!MeasurementDroppedCountCallbacks.TryGetValue(metricStreamId, out _))
                 {
-                    MeasurementDroppedCountCallbacks.Add(instrumentName, droppedCountCallBack);
+                    MeasurementDroppedCountCallbacks.Add(metricStreamId, droppedCountCallBack);
                 }
 #endif
             }
         }
 
-        internal static void RemoveMeasurementDroppedCountCallback(string instrumentName)
+        internal static void RemoveMeasurementDroppedCountCallback(int metricStreamId)
         {
             lock (MeasurementDroppedCountCallbacks)
             {
-                MeasurementDroppedCountCallbacks.Remove(instrumentName);
+                MeasurementDroppedCountCallbacks.Remove(metricStreamId);
             }
         }
 
