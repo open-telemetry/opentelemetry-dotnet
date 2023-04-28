@@ -59,7 +59,7 @@ namespace OpenTelemetry
         {
             Guard.ThrowIfNull(exporter);
 
-            this.friendlyTypeName = $"{this.GetType().Name}<{exporter.GetType().Name}>";
+            this.friendlyTypeName = $"{this.GetType().Name}{{{exporter.GetType().Name}}}";
             this.exporter = exporter;
         }
 
