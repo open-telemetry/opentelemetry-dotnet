@@ -23,39 +23,71 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 internal static class LogRecordSeverityExtensions
 {
+    internal const string UnspecifiedShortName = "UNSPECIFIED";
+
+    internal const string TraceShortName = "TRACE";
+    internal const string Trace2ShortName = TraceShortName + "2";
+    internal const string Trace3ShortName = TraceShortName + "3";
+    internal const string Trace4ShortName = TraceShortName + "4";
+
+    internal const string DebugShortName = "DEBUG";
+    internal const string Debug2ShortName = DebugShortName + "2";
+    internal const string Debug3ShortName = DebugShortName + "3";
+    internal const string Debug4ShortName = DebugShortName + "4";
+
+    internal const string InfoShortName = "INFO";
+    internal const string Info2ShortName = InfoShortName + "2";
+    internal const string Info3ShortName = InfoShortName + "3";
+    internal const string Info4ShortName = InfoShortName + "4";
+
+    internal const string WarnShortName = "WARN";
+    internal const string Warn2ShortName = WarnShortName + "2";
+    internal const string Warn3ShortName = WarnShortName + "3";
+    internal const string Warn4ShortName = WarnShortName + "4";
+
+    internal const string ErrorShortName = "ERROR";
+    internal const string Error2ShortName = ErrorShortName + "2";
+    internal const string Error3ShortName = ErrorShortName + "3";
+    internal const string Error4ShortName = ErrorShortName + "4";
+
+    internal const string FatalShortName = "FATAL";
+    internal const string Fatal2ShortName = FatalShortName + "2";
+    internal const string Fatal3ShortName = FatalShortName + "3";
+    internal const string Fatal4ShortName = FatalShortName + "4";
+
     private static readonly string[] LogRecordSeverityShortNames = new string[]
     {
-        "UNSPECIFIED",
+        UnspecifiedShortName,
 
-        "TRACE",
-        "TRACE2",
-        "TRACE3",
-        "TRACE4",
+        TraceShortName,
+        Trace2ShortName,
+        Trace3ShortName,
+        Trace4ShortName,
 
-        "DEBUG",
-        "DEBUG2",
-        "DEBUG3",
-        "DEBUG4",
+        DebugShortName,
+        Debug2ShortName,
+        Debug3ShortName,
+        Debug4ShortName,
 
-        "INFO",
-        "INFO2",
-        "INFO3",
-        "INFO4",
+        InfoShortName,
+        Info2ShortName,
+        Info3ShortName,
+        Info4ShortName,
 
-        "WARN",
-        "WARN2",
-        "WARN3",
-        "WARN4",
+        WarnShortName,
+        Warn2ShortName,
+        Warn3ShortName,
+        Warn4ShortName,
 
-        "ERROR",
-        "ERROR2",
-        "ERROR3",
-        "ERROR4",
+        ErrorShortName,
+        Error2ShortName,
+        Error3ShortName,
+        Error4ShortName,
 
-        "FATAL",
-        "FATAL2",
-        "FATAL3",
-        "FATAL4",
+        FatalShortName,
+        Fatal2ShortName,
+        Fatal3ShortName,
+        Fatal4ShortName,
     };
 
     /// <summary>
