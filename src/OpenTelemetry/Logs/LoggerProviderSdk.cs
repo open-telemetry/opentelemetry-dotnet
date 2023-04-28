@@ -202,8 +202,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     /// <inheritdoc />
     protected override bool TryCreateLogger(string? name, out Logger? logger)
     {
-        // TODO: return new LoggerSdk(this, name);
-        throw new NotImplementedException();
+        logger = new LoggerSdk(this, name);
+        return true;
     }
 
     /// <inheritdoc/>
