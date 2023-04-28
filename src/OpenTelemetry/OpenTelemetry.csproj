@@ -21,4 +21,8 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Internal\Shim\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworks)' == 'net6.0' or '$(TargetFrameworks)' == 'net7.0'" />
+  </ItemGroup>
+
 </Project>
