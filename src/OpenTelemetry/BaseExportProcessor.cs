@@ -48,6 +48,7 @@ namespace OpenTelemetry
         where T : class
     {
         protected readonly BaseExporter<T> exporter;
+        private readonly string friendlyTypeName;
         private bool disposed;
 
         /// <summary>
@@ -58,10 +59,15 @@ namespace OpenTelemetry
         {
             Guard.ThrowIfNull(exporter);
 
+            this.friendlyTypeName = $"{this.GetType().Name}<{exporter.GetType().Name}>";
             this.exporter = exporter;
         }
 
         internal BaseExporter<T> Exporter => this.exporter;
+
+        /// <inheritdoc />
+        public override string ToString()
+            => this.friendlyTypeName;
 
         /// <inheritdoc />
         public sealed override void OnStart(T data)

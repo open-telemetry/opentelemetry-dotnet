@@ -61,9 +61,6 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
         }
 
-        StringBuilder processorsAdded = new StringBuilder();
-        StringBuilder instrumentationFactoriesAdded = new StringBuilder();
-
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
@@ -71,21 +68,15 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         foreach (var processor in state.Processors)
         {
             this.AddProcessor(processor);
-            processorsAdded.Append(processor.GetType());
-            processorsAdded.Append(';');
         }
+
+        StringBuilder instrumentationFactoriesAdded = new StringBuilder();
 
         foreach (var instrumentation in state.Instrumentation)
         {
             this.instrumentations.Add(instrumentation.Instance);
             instrumentationFactoriesAdded.Append(instrumentation.Name);
             instrumentationFactoriesAdded.Append(';');
-        }
-
-        if (processorsAdded.Length != 0)
-        {
-            processorsAdded.Remove(processorsAdded.Length - 1, 1);
-            OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent($"Processors added = \"{processorsAdded}\".");
         }
 
         if (instrumentationFactoriesAdded.Length != 0)
@@ -107,13 +98,9 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
     public void AddProcessor(BaseProcessor<LogRecord> processor)
     {
-        OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Started adding processor.");
-
         Guard.ThrowIfNull(processor);
 
         processor.SetParentProvider(this);
-
-        StringBuilder processorAdded = new StringBuilder();
 
         if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
         {
@@ -122,27 +109,29 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             this.threadStaticPool = null;
         }
 
+        StringBuilder processorAdded = new StringBuilder();
+
         if (this.Processor == null)
         {
-            processorAdded.Append("Setting processor to ");
+            processorAdded.Append("Setting processor to '");
             processorAdded.Append(processor);
+            processorAdded.Append('\'');
 
             this.Processor = processor;
         }
         else if (this.Processor is CompositeProcessor<LogRecord> compositeProcessor)
         {
-            processorAdded.Append("Adding processor ");
+            processorAdded.Append("Adding processor '");
             processorAdded.Append(processor);
-            processorAdded.Append(" to composite processor");
+            processorAdded.Append("' to composite processor");
 
             compositeProcessor.AddProcessor(processor);
         }
         else
         {
-            processorAdded.Append("Creating new composite processor with processor ");
-            processorAdded.Append(this.Processor);
-            processorAdded.Append(" and adding new processor ");
+            processorAdded.Append("Creating new composite processor and adding new processor '");
             processorAdded.Append(processor);
+            processorAdded.Append('\'');
 
             var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
             {
