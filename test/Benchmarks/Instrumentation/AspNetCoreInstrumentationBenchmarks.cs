@@ -37,6 +37,46 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 | GetRequestForAspNetCoreApp |                Traces | 235.2 us | 4.44 us | 4.15 us | 0.4883 |   3.59 KB |
 | GetRequestForAspNetCoreApp |               Metrics | 229.1 us | 4.44 us | 4.36 us |      - |   2.92 KB |
 | GetRequestForAspNetCoreApp |       Traces, Metrics | 230.6 us | 4.54 us | 5.23 us | 0.4883 |   3.66 KB |
+
+Allocation details for .NET 7:
+
+// Traces
+* Activity creation + `Activity.Start()` = 416 B
+* Casting of the struct `Microsoft.Extensions.Primitives.StringValues` to `IEnumerable<string>` by `HttpRequestHeaderValuesGetter`
+  - `TraceContextPropagator.Extract` = 24 B
+  - `BaggageContextPropagator.Extract` = 24 B
+  - `request.Headers["User-Agent"].FirstOrDefault()` = 24 B
+* String creation for `HttpRequest.HostString.Host` = 40 B
+* `Activity.TagsLinkedList` (this is allocated on the first Activity.SetTag call) = 40 B
+* Boxing of `Port` number when adding it as a tag = 24 B
+* String creation in `GetUri` method for adding the http url tag = 66 B
+* Setting `Baggage` (Setting AsyncLocal values causes allocation)
+  - `BaggageHolder` creation = 24 B
+  - `System.Threading.AsyncLocalValueMap.TwoElementAsyncLocalValueMap` = 48 B
+  - `System.Threading.ExecutionContext` = 40 B
+* `DiagNode<KeyValuePair<System.String, System.Object>>`
+  - This is allocated eight times for the eight tags that are added = 8 * 40 = 320 B
+* `Activity.Stop()` trying to set `Activity.Current` (This happens because of setting another AsyncLocal variable which is `Baggage`
+  - System.Threading.AsyncLocalValueMap.OneElementAsyncLocalValueMap = 32 B
+  - System.Threading.ExecutionContext = 40 B
+
+Baseline = 2.45 KB
+With Traces = 2.45 + (1162 / 1024) = 2.45 + 1.14 = 3.59 KB
+
+
+// Metrics
+* Activity creation + `Activity.Start()` = 416 B
+* Boxing of `Port` number when adding it as a tag = 24 B
+* String creation for `HttpRequest.HostString.Host` = 40 B
+
+Baseline = 2.45 KB
+With Metrics = 2.45 + (416 + 40 + 24) / 1024 = 2.45 + 0.47 = 2.92 KB
+
+// With Traces and Metrics
+
+Baseline = 2.45 KB
+With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
+                        = 2.45 + (1162 + 64) / 1024 = 2.45 + 1.2 = 3.55 KB (~3.56 KB)
 */
 
 namespace Benchmarks.Instrumentation
