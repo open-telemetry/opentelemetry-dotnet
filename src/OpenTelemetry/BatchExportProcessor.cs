@@ -38,6 +38,7 @@ namespace OpenTelemetry
 
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
+        private readonly int exporterTimeoutMilliseconds;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
@@ -69,6 +70,7 @@ namespace OpenTelemetry
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
+            this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
             this.exporterThread = new Thread(this.ExporterProc)
             {
