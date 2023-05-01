@@ -1022,8 +1022,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
 
-            // After fix this should be /custom/{name:alpha}
-            Assert.Equal("/custom/abc", activity.DisplayName);
+            Assert.Equal("/custom/{name:alpha}", activity.DisplayName);
 
             await app.DisposeAsync().ConfigureAwait(false);
         }
