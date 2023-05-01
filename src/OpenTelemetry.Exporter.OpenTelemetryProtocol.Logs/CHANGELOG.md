@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+* The `OpenTelemetryLoggerOptions.AddOtlpExporter` extension no longer
+  automatically sets `OpenTelemetryLoggerOptions.ParseStateValues` to `true`.
+  The OpenTelemetry SDK now automatically sets `Attributes` (aka `StateValues`)
+  for the common cases where `ParseStateValues` was previously required.
+  `ParseStateValues` can be set to `true` manually by users to enable parsing of
+  custom states which do not implement `IReadOnlyList` / `IEnumerable`
+  interfaces.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+* Updated to use the new `LogRecord.Attributes` field as `LogRecord.StateValues`
+  is now marked obsolete. There is no impact to transmitted data (`StateValues`
+  and `Attributes` are equivalent).
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+## 1.5.0-alpha.1
+
+Released 2023-Mar-07
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09

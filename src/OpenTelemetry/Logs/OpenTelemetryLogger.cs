@@ -16,7 +16,9 @@
 
 #nullable enable
 
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -51,29 +53,52 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
+                var activity = Activity.Current;
+
                 var pool = provider.LogRecordPool;
 
                 var record = pool.Rent();
 
-                record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
-                record.State = provider.ParseStateValues ? null : state;
-                record.StateValues = provider.ParseStateValues ? ParseState(record, state) : null;
-                record.BufferedScopes = null;
+                ref LogRecord.LogRecordILoggerData iloggerData = ref record.ILoggerData;
+
+                iloggerData.TraceState = provider.IncludeTraceState && activity != null
+                    ? activity.TraceStateString
+                    : null;
+                iloggerData.CategoryName = this.categoryName;
+                iloggerData.EventId = eventId;
+                iloggerData.LogLevel = logLevel;
+                iloggerData.Exception = exception;
+                iloggerData.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
+                iloggerData.BufferedScopes = null;
 
                 ref LogRecordData data = ref record.Data;
 
                 data.TimestampBacking = DateTime.UtcNow;
-                data.CategoryName = this.categoryName;
-                data.LogLevel = logLevel;
-                data.EventId = eventId;
-                data.Message = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
-                data.Exception = exception;
 
-                LogRecordData.SetActivityContext(ref data, Activity.Current);
+                LogRecordData.SetActivityContext(ref data, activity);
+
+                var attributes = record.Attributes = provider.IncludeAttributes
+                    ? ProcessState(record, ref iloggerData, in state, provider.ParseStateValues)
+                    : null;
+
+                if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
+                {
+                    var formattedMessage = formatter?.Invoke(state, exception) ?? state?.ToString();
+
+                    data.Body = formattedMessage;
+                    iloggerData.FormattedMessage = formattedMessage;
+                }
+                else
+                {
+                    data.Body = originalFormat;
+                    iloggerData.FormattedMessage = provider.IncludeFormattedMessage
+                        ? formatter?.Invoke(state, exception) ?? state?.ToString()
+                        : null;
+                }
 
                 processor.OnEnd(record);
 
-                record.ScopeProvider = null;
+                iloggerData.ScopeProvider = null;
 
                 // Attempt to return the LogRecord to the pool. This will no-op
                 // if a batch exporter has added a reference.
@@ -89,15 +114,27 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private static IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
+        private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(
+            LogRecord logRecord,
+            ref LogRecord.LogRecordILoggerData iLoggerData,
+            in TState state,
+            bool parseStateValues)
         {
+            iLoggerData.State = null;
+
             /* TODO: Enable this if/when LogRecordAttributeList becomes public.
-            if (state is LogRecordAttributeList logRecordAttributes)
+            if (typeof(TState) == typeof(LogRecordAttributeList))
             {
-                logRecordAttributes.ApplyToLogRecord(logRecord);
-                return logRecord.AttributeStorage!;
+                // Note: This block is written to be elided by the JIT when
+                // TState is not LogRecordAttributeList or optimized when it is.
+                // For users that pass LogRecordAttributeList as TState to
+                // ILogger.Log this will avoid boxing the struct.
+
+                var logRecordAttributes = (LogRecordAttributeList)(object)state!;
+
+                return logRecordAttributes.Export(ref logRecord.AttributeStorage);
             }
-            else*/
+            else */
             if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
@@ -115,12 +152,65 @@ namespace OpenTelemetry.Logs
                     return attributeStorage;
                 }
             }
+            else if (!parseStateValues || state is null)
+            {
+                // Note: This is to preserve legacy behavior where State is
+                // exposed if we didn't parse state.
+                iLoggerData.State = state;
+                return null;
+            }
             else
             {
-                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(LogRecordPoolHelper.DefaultMaxNumberOfAttributes);
-                attributeStorage.Add(new KeyValuePair<string, object?>(string.Empty, state));
-                return attributeStorage;
+                try
+                {
+                    PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state);
+
+                    var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(itemProperties.Count);
+
+                    foreach (PropertyDescriptor? itemProperty in itemProperties)
+                    {
+                        if (itemProperty == null)
+                        {
+                            continue;
+                        }
+
+                        object? value = itemProperty.GetValue(state);
+                        if (value == null)
+                        {
+                            continue;
+                        }
+
+                        attributeStorage.Add(new KeyValuePair<string, object?>(itemProperty.Name, value));
+                    }
+
+                    return attributeStorage;
+                }
+                catch (Exception parseException)
+                {
+                    OpenTelemetrySdkEventSource.Log.LoggerParseStateException<TState>(parseException);
+
+                    return Array.Empty<KeyValuePair<string, object?>>();
+                }
             }
+        }
+
+        private static bool TryGetOriginalFormatFromAttributes(
+            IReadOnlyList<KeyValuePair<string, object?>>? attributes,
+            [NotNullWhen(true)] out string? originalFormat)
+        {
+            if (attributes != null && attributes.Count > 0)
+            {
+                var lastAttribute = attributes[attributes.Count - 1];
+                if (lastAttribute.Key == "{OriginalFormat}"
+                    && lastAttribute.Value is string tempOriginalFormat)
+                {
+                    originalFormat = tempOriginalFormat;
+                    return true;
+                }
+            }
+
+            originalFormat = null;
+            return false;
         }
 
         private sealed class NullScope : IDisposable

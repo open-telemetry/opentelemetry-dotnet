@@ -38,32 +38,37 @@ namespace OpenTelemetry.Metrics
         private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
+        private readonly int exponentialHistogramMaxSize;
+        private readonly int exponentialHistogramMaxScale;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
+        private readonly ExemplarFilter exemplarFilter;
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
 
         internal AggregatorStore(
-            string name,
+            MetricStreamIdentity metricStreamIdentity,
             AggregationType aggType,
             AggregationTemporality temporality,
             int maxMetricPoints,
-            double[] histogramBounds,
-            string[] tagKeysInteresting = null)
+            ExemplarFilter exemplarFilter = null)
         {
-            this.name = name;
+            this.name = metricStreamIdentity.InstrumentName;
             this.maxMetricPoints = maxMetricPoints;
             this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
             this.metricPoints = new MetricPoint[maxMetricPoints];
             this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
             this.outputDelta = temporality == AggregationTemporality.Delta;
-            this.histogramBounds = histogramBounds;
+            this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? Metric.DefaultHistogramBounds;
+            this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
+            this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
             this.StartTimeExclusive = DateTimeOffset.UtcNow;
-            if (tagKeysInteresting == null)
+            this.exemplarFilter = exemplarFilter ?? new AlwaysOffExemplarFilter();
+            if (metricStreamIdentity.TagKeys == null)
             {
                 this.updateLongCallback = this.UpdateLong;
                 this.updateDoubleCallback = this.UpdateDouble;
@@ -72,7 +77,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.updateLongCallback = this.UpdateLongCustomTags;
                 this.updateDoubleCallback = this.UpdateDoubleCustomTags;
-                var hs = new HashSet<string>(tagKeysInteresting, StringComparer.Ordinal);
+                var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }
@@ -85,6 +90,13 @@ namespace OpenTelemetry.Metrics
         internal DateTimeOffset StartTimeExclusive { get; private set; }
 
         internal DateTimeOffset EndTimeInclusive { get; private set; }
+
+        internal bool IsExemplarEnabled()
+        {
+            // Using this filter to indicate On/Off
+            // instead of another separate flag.
+            return this.exemplarFilter is not AlwaysOffExemplarFilter;
+        }
 
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
@@ -123,7 +135,15 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(outputDelta: true);
+                if (this.IsExemplarEnabled())
+                {
+                    metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
+                }
+                else
+                {
+                    metricPoint.TakeSnapshot(outputDelta: true);
+                }
+
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -144,7 +164,15 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(outputDelta: false);
+                if (this.IsExemplarEnabled())
+                {
+                    metricPoint.TakeSnapshotWithExemplar(outputDelta: false);
+                }
+                else
+                {
+                    metricPoint.TakeSnapshot(outputDelta: false);
+                }
+
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -162,7 +190,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!this.zeroTagMetricPointInitialized)
                     {
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -229,7 +257,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramBounds);
+                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
                                 // Add to dictionary *after* initializing MetricPoint
                                 // as other threads can start writing to the
@@ -278,7 +306,7 @@ namespace OpenTelemetry.Metrics
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramBounds);
+                            metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
@@ -309,7 +337,16 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.IsExemplarEnabled())
+                {
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -332,7 +369,16 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.IsExemplarEnabled())
+                {
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -355,7 +401,16 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.IsExemplarEnabled())
+                {
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {
@@ -378,7 +433,16 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metricPoints[index].Update(value);
+                // TODO: can special case built-in filters to be bit faster.
+                if (this.IsExemplarEnabled())
+                {
+                    var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
+                    this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
+                }
+                else
+                {
+                    this.metricPoints[index].Update(value);
+                }
             }
             catch (Exception)
             {

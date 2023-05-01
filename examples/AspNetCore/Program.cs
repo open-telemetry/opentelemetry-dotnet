@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System.Reflection;
-using OpenTelemetry;
+using System.Diagnostics.Metrics;
+using Examples.AspNetCore;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
@@ -34,21 +34,30 @@ var metricsExporter = appBuilder.Configuration.GetValue<string>("UseMetricsExpor
 // Note: Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
 var logExporter = appBuilder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
 
+// Note: Switch between Explicit/Exponential by setting HistogramAggregation in appsettings.json
+var histogramAggregation = appBuilder.Configuration.GetValue<string>("HistogramAggregation").ToLowerInvariant();
+
 // Build a resource configuration action to set service information.
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: appBuilder.Configuration.GetValue<string>("ServiceName"),
-    serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
+    serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown",
     serviceInstanceId: Environment.MachineName);
 
+// Create a service to expose ActivitySource, and Metric Instruments
+// for manual instrumentation
+appBuilder.Services.AddSingleton<Instrumentation>();
+
 // Configure OpenTelemetry tracing & metrics with auto-start using the
-// StartWithHost extension from OpenTelemetry.Extensions.Hosting.
+// AddOpenTelemetry extension from OpenTelemetry.Extensions.Hosting.
 appBuilder.Services.AddOpenTelemetry()
     .ConfigureResource(configureResource)
     .WithTracing(builder =>
     {
         // Tracing
 
+        // Ensure the TracerProvider subscribes to any custom ActivitySources.
         builder
+            .AddSource(Instrumentation.ActivitySourceName)
             .SetSampler(new AlwaysOnSampler())
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
@@ -98,10 +107,29 @@ appBuilder.Services.AddOpenTelemetry()
     {
         // Metrics
 
+        // Ensure the MeterProvider subscribes to any custom Meters.
         builder
+            .AddMeter(Instrumentation.MeterName)
+            .SetExemplarFilter(new TraceBasedExemplarFilter())
             .AddRuntimeInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
+
+        switch (histogramAggregation)
+        {
+            case "exponential":
+                builder.AddView(instrument =>
+                {
+                    return instrument.GetType().GetGenericTypeDefinition() == typeof(Histogram<>)
+                        ? new Base2ExponentialBucketHistogramConfiguration()
+                        : null;
+                });
+                break;
+            default:
+                // Explicit bounds histogram is the default.
+                // No additional configuration necessary.
+                break;
+        }
 
         switch (metricsExporter)
         {
@@ -119,8 +147,7 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddConsoleExporter();
                 break;
         }
-    })
-    .StartWithHost();
+    });
 
 // Clear default logging providers used by WebApplication host.
 appBuilder.Logging.ClearProviders();

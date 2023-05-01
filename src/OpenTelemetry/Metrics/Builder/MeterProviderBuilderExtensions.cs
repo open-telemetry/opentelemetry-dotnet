@@ -78,6 +78,29 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Adds a reader to the provider.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="implementationFactory">The factory that creates the service.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder AddReader(
+            this MeterProviderBuilder meterProviderBuilder,
+            Func<IServiceProvider, MetricReader> implementationFactory)
+        {
+            Guard.ThrowIfNull(implementationFactory);
+
+            meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+                {
+                    meterProviderBuilderSdk.AddReader(implementationFactory(sp));
+                }
+            });
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Add metric view, which can be used to customize the Metrics outputted
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>
@@ -274,6 +297,28 @@ namespace OpenTelemetry.Metrics
                 if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
                 {
                     meterProviderBuilderSdk.ConfigureResource(configure);
+                }
+            });
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
+        /// This is applied to all the metrics from this provider.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
+        /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+        {
+            Guard.ThrowIfNull(exemplarFilter);
+
+            meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+            {
+                if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+                {
+                    meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
                 }
             });
 

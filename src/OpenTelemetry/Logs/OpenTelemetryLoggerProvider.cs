@@ -32,8 +32,10 @@ namespace OpenTelemetry.Logs
     [ProviderAlias("OpenTelemetry")]
     public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
-        internal readonly bool IncludeScopes;
+        internal readonly bool IncludeAttributes;
         internal readonly bool IncludeFormattedMessage;
+        internal readonly bool IncludeScopes;
+        internal readonly bool IncludeTraceState;
         internal readonly bool ParseStateValues;
         internal BaseProcessor<LogRecord>? Processor;
         internal Resource Resource;
@@ -80,8 +82,12 @@ namespace OpenTelemetry.Logs
 
             Guard.ThrowIfNull(options);
 
-            this.IncludeScopes = options.IncludeScopes;
+            this.ServiceProvider = serviceProvider;
+
+            this.IncludeAttributes = options.IncludeAttributes;
             this.IncludeFormattedMessage = options.IncludeFormattedMessage;
+            this.IncludeScopes = options.IncludeScopes;
+            this.IncludeTraceState = options.IncludeTraceState;
             this.ParseStateValues = options.ParseStateValues;
 
             var resourceBuilder = options.ResourceBuilder;
@@ -95,6 +101,8 @@ namespace OpenTelemetry.Logs
 
             OpenTelemetrySdkEventSource.Log.OpenTelemetryLoggerProviderEvent("OpenTelemetryLoggerProvider built successfully.");
         }
+
+        internal IServiceProvider? ServiceProvider { get; }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
 

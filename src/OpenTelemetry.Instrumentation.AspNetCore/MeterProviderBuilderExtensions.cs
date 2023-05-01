@@ -17,6 +17,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -60,6 +61,9 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfNull(builder);
 
+            // Note: Warm-up the status code mapping.
+            _ = TelemetryHelper.BoxedStatusCodes;
+
             name ??= Options.DefaultName;
 
             if (configureAspNetCoreInstrumentationOptions != null)
@@ -67,7 +71,9 @@ namespace OpenTelemetry.Metrics
                 builder.ConfigureServices(services => services.Configure(name, configureAspNetCoreInstrumentationOptions));
             }
 
-            builder.ConfigureBuilder((sp, builder) =>
+            builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
+
+            builder.AddInstrumentation(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreMetricsInstrumentationOptions>>().Get(name);
 
@@ -75,9 +81,7 @@ namespace OpenTelemetry.Metrics
                 //   RecordException - probably doesn't make sense for metric instrumentation
                 //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
 
-                var instrumentation = new AspNetCoreMetrics(options);
-                builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
-                builder.AddInstrumentation(() => instrumentation);
+                return new AspNetCoreMetrics(options);
             });
 
             return builder;

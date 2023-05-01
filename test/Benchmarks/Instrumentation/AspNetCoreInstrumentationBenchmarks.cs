@@ -15,94 +15,146 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Net.Http;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
-// * Summary *
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK=7.0.203
+  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.521)
-Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
-.NET SDK=7.0.100-preview.6.22275.1
-  [Host] : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT AVX2
 
-Job=InProcess  Toolchain=InProcessEmitToolchain
-
-|                                      Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
-|-------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                 UninstrumentedAspNetCoreApp | 172.3 us | 2.35 us | 2.09 us | 0.9766 |   4.73 KB |
-| InstrumentedAspNetCoreAppWithDefaultOptions | 175.2 us | 2.52 us | 2.10 us | 0.9766 |   4.86 KB |
+|                     Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
+|--------------------------- |---------------------- |---------:|--------:|--------:|-------:|----------:|
+| GetRequestForAspNetCoreApp |                  None | 226.8 us | 4.00 us | 3.74 us |      - |   2.45 KB |
+| GetRequestForAspNetCoreApp |                Traces | 235.2 us | 4.44 us | 4.15 us | 0.4883 |   3.59 KB |
+| GetRequestForAspNetCoreApp |               Metrics | 229.1 us | 4.44 us | 4.36 us |      - |   2.92 KB |
+| GetRequestForAspNetCoreApp |       Traces, Metrics | 230.6 us | 4.54 us | 5.23 us | 0.4883 |   3.66 KB |
 */
 
 namespace Benchmarks.Instrumentation
 {
-    [InProcess]
     public class AspNetCoreInstrumentationBenchmarks
     {
         private HttpClient httpClient;
         private WebApplication app;
         private TracerProvider tracerProvider;
+        private MeterProvider meterProvider;
 
-        [GlobalSetup(Target = nameof(UninstrumentedAspNetCoreApp))]
-        public void UninstrumentedAspNetCoreAppGlobalSetup()
+        [Flags]
+        public enum EnableInstrumentationOption
         {
-            this.StartWebApplication();
-            this.httpClient = new HttpClient();
+            /// <summary>
+            /// Instrumentation is not enabled for any signal.
+            /// </summary>
+            None = 0,
+
+            /// <summary>
+            /// Instrumentation is enbled only for Traces.
+            /// </summary>
+            Traces = 1,
+
+            /// <summary>
+            /// Instrumentation is enbled only for Metrics.
+            /// </summary>
+            Metrics = 2,
         }
 
-        [GlobalSetup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
-        public void InstrumentedAspNetCoreAppWithDefaultOptionsGlobalSetup()
-        {
-            this.StartWebApplication();
-            this.httpClient = new HttpClient();
+        [Params(0, 1, 2, 3)]
+        public EnableInstrumentationOption EnableInstrumentation { get; set; }
 
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation()
-                .Build();
+        [GlobalSetup(Target = nameof(GetRequestForAspNetCoreApp))]
+        public void GetRequestForAspNetCoreAppGlobalSetup()
+        {
+            if (this.EnableInstrumentation == EnableInstrumentationOption.None)
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
+
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .Build();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
+
+                this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .Build();
+            }
+            else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
+                this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
+
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .Build();
+
+                this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .Build();
+            }
         }
 
-        [GlobalCleanup(Target = nameof(UninstrumentedAspNetCoreApp))]
-        public async Task GlobalCleanupUninstrumentedAspNetCoreAppAsync()
+        [GlobalCleanup(Target = nameof(GetRequestForAspNetCoreApp))]
+        public void GetRequestForAspNetCoreAppGlobalCleanup()
         {
-            this.httpClient.Dispose();
-            await this.app.DisposeAsync().ConfigureAwait(false);
-        }
-
-        [GlobalCleanup(Target = nameof(InstrumentedAspNetCoreAppWithDefaultOptions))]
-        public async Task GlobalCleanupInstrumentedAspNetCoreAppWithDefaultOptionsAsync()
-        {
-            this.httpClient.Dispose();
-            await this.app.DisposeAsync().ConfigureAwait(false);
-            this.tracerProvider.Dispose();
+            if (this.EnableInstrumentation == EnableInstrumentationOption.None)
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+                this.tracerProvider.Dispose();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+                this.meterProvider.Dispose();
+            }
+            else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
+                this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+                this.tracerProvider.Dispose();
+                this.meterProvider.Dispose();
+            }
         }
 
         [Benchmark]
-        public async Task UninstrumentedAspNetCoreApp()
+        public async Task GetRequestForAspNetCoreApp()
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values").ConfigureAwait(false);
-            httpResponse.EnsureSuccessStatusCode();
-        }
-
-        [Benchmark]
-        public async Task InstrumentedAspNetCoreAppWithDefaultOptions()
-        {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000/api/values").ConfigureAwait(false);
+            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
 
         private void StartWebApplication()
         {
             var builder = WebApplication.CreateBuilder();
-            builder.Services.AddControllers();
             builder.Logging.ClearProviders();
             var app = builder.Build();
-            app.MapControllers();
+            app.MapGet("/", async context => await context.Response.WriteAsync($"Hello World!"));
             app.RunAsync();
 
             this.app = app;

@@ -267,6 +267,30 @@ internal sealed class CircularBufferBuckets
         }
     }
 
+    internal void Reset()
+    {
+        if (this.trait != null)
+        {
+            for (var i = 0; i < this.trait.Length; ++i)
+            {
+                this.trait[i] = 0;
+            }
+        }
+    }
+
+    internal void Copy(long[] dst)
+    {
+        Debug.Assert(dst.Length == this.Capacity, "The length of the destination array must equal the capacity.");
+
+        if (this.trait != null)
+        {
+            for (var i = 0; i < this.Size; ++i)
+            {
+                dst[i] = this[this.Offset + i];
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ModuloIndex(int value)
     {

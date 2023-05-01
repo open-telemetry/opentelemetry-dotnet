@@ -1,4 +1,4 @@
-# Getting Started with OpenTelemetry .NET in 5 Minutes - ASP.NET Core Application
+# Getting Started with OpenTelemetry .NET Traces in 5 Minutes - ASP.NET Core Application
 
 First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
@@ -18,8 +18,8 @@ and
 packages:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console --prerelease
-dotnet add package OpenTelemetry.Extensions.Hosting --prerelease
+dotnet add package OpenTelemetry.Exporter.Console
+dotnet add package OpenTelemetry.Extensions.Hosting
 dotnet add package OpenTelemetry.Instrumentation.AspNetCore --prerelease
 ```
 
@@ -78,12 +78,11 @@ appBuilder.Services.AddOpenTelemetry()
         .AddService(serviceName: "OTel.NET Getting Started"))
     .WithTracing(builder => builder
         .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter())
-    .StartWithHost();
+        .AddConsoleExporter());
 ```
 
 > **Note**
-> The `StartWithHost` extension is part of the
+> The `AddOpenTelemetry` extension is part of the
 [OpenTelemetry.Extensions.Hosting](../../../src/OpenTelemetry.Extensions.Hosting/README.md)
 package.
 

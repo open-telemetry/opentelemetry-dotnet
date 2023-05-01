@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 internal static class PeriodicExportingMetricReaderHelper
@@ -28,10 +30,10 @@ internal static class PeriodicExportingMetricReaderHelper
         int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
     {
         var exportInterval =
-            options.PeriodicExportingMetricReaderOptions?.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
+            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
 
         var exportTimeout =
-            options.PeriodicExportingMetricReaderOptions?.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
+            options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
         var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
         {

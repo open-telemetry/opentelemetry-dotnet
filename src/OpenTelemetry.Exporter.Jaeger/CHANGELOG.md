@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+* Added direct reference to `System.Text.Encodings.Web` with minimum version of
+`4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+* Enabled performance optimizations for .NET 6.0+ runtimes.
+  ([#4349](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4349))
+
+## 1.5.0-alpha.1
+
+Released 2023-Mar-07
+
+## 1.4.0
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09

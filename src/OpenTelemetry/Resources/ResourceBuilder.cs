@@ -59,8 +59,8 @@ namespace OpenTelemetry.Resources
         internal IServiceProvider? ServiceProvider { get; set; }
 
         /// <summary>
-        /// Creates a <see cref="ResourceBuilder"/> instance with Default
-        /// service.name added. See <a
+        /// Creates a <see cref="ResourceBuilder"/> instance with default attributes
+        /// added. See <a
         /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value">resource
         /// semantic conventions</a> for details.
         /// Additionally it adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME environment variables
@@ -70,7 +70,10 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateDefault()
-            => new ResourceBuilder().AddResource(DefaultResource).AddEnvironmentVariableDetector();
+            => new ResourceBuilder()
+                .AddResource(DefaultResource)
+                .AddTelemetrySdk()
+                .AddEnvironmentVariableDetector();
 
         /// <summary>
         /// Creates an empty <see cref="ResourceBuilder"/> instance.
@@ -132,18 +135,24 @@ namespace OpenTelemetry.Resources
         /// <summary>
         /// Add a <see cref="IResourceDetector"/> to the builder which will be resolved using the application <see cref="IServiceProvider"/>.
         /// </summary>
-        /// <remarks>
-        /// Note: The supplied <paramref name="resourceDetectorFactory"/> may be
-        /// called with a <see langword="null"/> <see cref="IServiceProvider"/>
-        /// for detached <see cref="ResourceBuilder"/> instances. Factories
-        /// should either throw if a <see langword="null"/> cannot be handled,
-        /// or return a default <see cref="IResourceDetector"/> when <see
-        /// cref="IServiceProvider"/> is not available.
-        /// </remarks>
         /// <param name="resourceDetectorFactory">Resource detector factory.</param>
         /// <returns>Supplied <see cref="ResourceBuilder"/> for call chaining.</returns>
-        // Note: This API may be made public if there is a need for it.
-        internal ResourceBuilder AddDetector(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
+        public ResourceBuilder AddDetector(Func<IServiceProvider, IResourceDetector> resourceDetectorFactory)
+        {
+            Guard.ThrowIfNull(resourceDetectorFactory);
+
+            return this.AddDetectorInternal(sp =>
+            {
+                if (sp == null)
+                {
+                    throw new NotSupportedException("IResourceDetector factory pattern is not supported when calling ResourceBuilder.Build() directly.");
+                }
+
+                return resourceDetectorFactory(sp);
+            });
+        }
+
+        internal ResourceBuilder AddDetectorInternal(Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory)
         {
             Guard.ThrowIfNull(resourceDetectorFactory);
 

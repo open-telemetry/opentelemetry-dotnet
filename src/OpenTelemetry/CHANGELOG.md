@@ -2,6 +2,98 @@
 
 ## Unreleased
 
+* The default resource provided by `ResourceBuilder.CreateDefault()` now adds
+  the `telemetry.sdk.*` attributes defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).
+  ([#4369](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4369))
+
+* Fixed an issue with `HashCode` computations throwing exceptions on .NET
+  Standard 2.1 targets.
+  ([#4362](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4362))
+
+* Update value of the resource attribute `telemetry.sdk.version` to show the tag
+  name which resembles the package version of the SDK.
+  ([#4375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4375))
+
+* Obsoleted `State` and `StateValues` properties and added `Body` and
+  `Attributes` properties on `LogRecord`. Note: `LogRecord.Attributes` and
+  `LogRecord.StateValues` point to the same data. "Attributes" is what the
+  OpenTelemetry Specification defines so this was changed for clarity &
+  consistency with the specification.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+* Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues`
+  flag:
+
+  * `LogRecord.Attributes` (aka `LogRecord.StateValues`) are now automatically
+  included for all log messages with states implementing `IReadOnlyList` or
+  `IEnumerable`.
+
+  * `OpenTelemetryLoggerOptions.ParseStateValues` is now used to tell the SDK to
+  parse (using reflection) attributes for custom states which do not implement
+  `IReadOnlyList` or `IEnumerable`. Only top-level properties are included.
+
+  * `LogRecord.State` will only be set to the raw state object if no attributes
+  are found.
+
+  See [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334)
+  for details.
+
+* If a template (`{OriginalFormat}` attribute) cannot be found on log messages a
+  formatted message will now automatically be generated (even if
+  `OpenTelemetryLoggerOptions.IncludeFormattedMessage` is set to `false`).
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+* Enabling `SetErrorStatusOnException` on TracerProvider will now set the
+`Status` property on Activity to `ActivityStatusCode.Error` in case of an error.
+This will be done in addition to current behavior of setting `otel.status_code`
+tag on activity.
+([#4336](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4336))
+
+* Add support for configuring the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation)
+  using the `AddView` API. This aggregation is supported by OTLP but not yet by
+  Prometheus.
+  ([#4337](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4337))
+
+* Implementation of `SuppressInstrumentationScope` changed to improve
+  performance.
+  ([#4304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4304))
+
+## 1.5.0-alpha.1
+
+Released 2023-Mar-07
+
+* Added Exemplar support. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+
+* Added `AddDetector` factory overload on `ResourceBuilder`.
+  ([#4261](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4261))
+
+## 1.4.0
+
+Released 2023-Feb-24
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+* Removed the dependency on System.Reflection.Emit.Lightweight
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
+* Moved the `AddOpenTelemetry` extension into the
+  `OpenTelemetry.Extensions.Hosting` package so that the `StartWithHost` API
+  could be removed.
+  ([#4174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4174))
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
 * Removed the dependency on
   Microsoft.Extensions.Configuration.EnvironmentVariables
   ([#4092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4092))
@@ -9,6 +101,9 @@
 * Removed the explicit reference to Microsoft.Extensions.Options version 5.0 and
   reverted back to the transitive reference of version 3.1
   ([#4093](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4093))
+
+* Added `SetSampler`, `AddProcessor`, & `AddReader` factory extensions.
+  ([#4103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4103))
 
 ## 1.4.0-rc.2
 
@@ -142,6 +237,10 @@ Released 2022-Aug-02
   ([#3378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3378))
 * Handle possible exception when initializing the default service name.
   ([#3405](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3405))
+* Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
+  in most cases and has greater flexibility (applies to TracerProviderBuilder,
+  MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 * `LogRecord` instances are now reused to reduce memory pressure
   ([#3385](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3385))
 * Fix exact match of activity source name when `wildcard` is used.
@@ -163,10 +262,6 @@ Released 2022-June-1
 * Swallow `ObjectDisposedException` in `BatchExportProcessor` and
   `PeriodicExportingMetricReader`.
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
-* Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
-  in most cases and has greater flexibility (applies to TracerProviderBuilder,
-  MeterProviderBuilder, OpenTelemetryLoggingOptions).
-  ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0-beta.2
 

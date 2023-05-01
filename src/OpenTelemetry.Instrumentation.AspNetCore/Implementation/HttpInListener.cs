@@ -234,7 +234,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
 #if NET6_0_OR_GREATER
                 var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;

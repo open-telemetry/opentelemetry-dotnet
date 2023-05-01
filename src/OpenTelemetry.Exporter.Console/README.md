@@ -6,7 +6,8 @@
 The console exporter prints data to the Console window.
 ConsoleExporter supports exporting logs, metrics and traces.
 
-**Note:** this exporter is intended to be used during learning how telemetry
+> **Note**
+> This exporter is intended to be used during learning how telemetry
 data are created and exported. It is not recommended for any production
 environment.
 
@@ -20,7 +21,8 @@ See the individual "getting started" examples depending on the signal being
 used:
 
 * [Logs](../../docs/logs/getting-started/Program.cs)
-* [Metrics](../../docs/metrics/getting-started/Program.cs)
+* Metrics: [ASP.NET Core](../../docs/metrics/getting-started-aspnetcore/README.md)
+  | [Console](../../docs/metrics/getting-started-console/README.md)
 * Traces: [ASP.NET Core](../../docs/trace/getting-started-aspnetcore/README.md)
   | [Console](../../docs/trace/getting-started-console/README.md)
 

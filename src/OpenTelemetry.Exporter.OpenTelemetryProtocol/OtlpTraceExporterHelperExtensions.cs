@@ -74,18 +74,27 @@ namespace OpenTelemetry.Trace
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
             });
 
-            return builder.ConfigureBuilder((sp, builder) =>
+            return builder.AddProcessor(sp =>
             {
-                var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+                OtlpExporterOptions exporterOptions;
 
-                if (name == null && configure != null)
+                if (name == null)
                 {
-                    // If we are NOT using named options, we execute the
-                    // configuration delegate inline. The reason for this is
+                    // If we are NOT using named options we create a new
+                    // instance always. The reason for this is
                     // OtlpExporterOptions is shared by all signals. Without a
                     // name, delegates for all signals will mix together. See:
                     // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
-                    configure(exporterOptions);
+                    exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+
+                    // Configuration delegate is executed inline on the fresh instance.
+                    configure?.Invoke(exporterOptions);
+                }
+                else
+                {
+                    // When using named options we can properly utilize Options
+                    // API to create or reuse an instance.
+                    exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
                 }
 
                 // Note: Not using finalOptionsName here for SdkLimitOptions.
@@ -94,12 +103,11 @@ namespace OpenTelemetry.Trace
                 // instance.
                 var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
 
-                AddOtlpExporter(builder, exporterOptions, sdkOptionsManager, sp);
+                return BuildOtlpExporterProcessor(exporterOptions, sdkOptionsManager, sp);
             });
         }
 
-        internal static TracerProviderBuilder AddOtlpExporter(
-            TracerProviderBuilder builder,
+        internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
             OtlpExporterOptions exporterOptions,
             SdkLimitOptions sdkLimitOptions,
             IServiceProvider serviceProvider,
@@ -116,18 +124,18 @@ namespace OpenTelemetry.Trace
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
+                return new SimpleActivityExportProcessor(otlpExporter);
             }
             else
             {
                 var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions();
 
-                return builder.AddProcessor(new BatchActivityExportProcessor(
+                return new BatchActivityExportProcessor(
                     otlpExporter,
                     batchOptions.MaxQueueSize,
                     batchOptions.ScheduledDelayMilliseconds,
                     batchOptions.ExporterTimeoutMilliseconds,
-                    batchOptions.MaxExportBatchSize));
+                    batchOptions.MaxExportBatchSize);
             }
         }
     }

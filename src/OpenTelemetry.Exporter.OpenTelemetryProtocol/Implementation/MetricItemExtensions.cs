@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -269,10 +270,96 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 }
                             }
 
+                            var exemplars = metricPoint.GetExemplars();
+                            foreach (var examplar in exemplars)
+                            {
+                                if (examplar.Timestamp != default)
+                                {
+                                    byte[] traceIdBytes = new byte[16];
+                                    examplar.TraceId?.CopyTo(traceIdBytes);
+
+                                    byte[] spanIdBytes = new byte[8];
+                                    examplar.SpanId?.CopyTo(spanIdBytes);
+
+                                    var otlpExemplar = new OtlpMetrics.Exemplar
+                                    {
+                                        TimeUnixNano = (ulong)examplar.Timestamp.ToUnixTimeNanoseconds(),
+                                        TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
+                                        SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
+                                        AsDouble = examplar.DoubleValue,
+                                    };
+
+                                    if (examplar.FilteredTags != null)
+                                    {
+                                        foreach (var tag in examplar.FilteredTags)
+                                        {
+                                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+                                            {
+                                                otlpExemplar.FilteredAttributes.Add(result);
+                                            }
+                                        }
+                                    }
+
+                                    dataPoint.Exemplars.Add(otlpExemplar);
+                                }
+                            }
+
                             histogram.DataPoints.Add(dataPoint);
                         }
 
                         otlpMetric.Histogram = histogram;
+                        break;
+                    }
+
+                case MetricType.ExponentialHistogram:
+                    {
+                        var histogram = new OtlpMetrics.ExponentialHistogram
+                        {
+                            AggregationTemporality = temporality,
+                        };
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.ExponentialHistogramDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
+
+                            if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                            {
+                                dataPoint.Min = min;
+                                dataPoint.Max = max;
+                            }
+
+                            var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+                            dataPoint.Scale = exponentialHistogramData.Scale;
+                            dataPoint.ZeroCount = (ulong)exponentialHistogramData.ZeroCount;
+
+                            dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            dataPoint.Positive.Offset = exponentialHistogramData.PositiveBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
+                            {
+                                dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
+                            }
+
+                            dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                            dataPoint.Negative.Offset = exponentialHistogramData.NegativeBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.NegativeBuckets)
+                            {
+                                dataPoint.Negative.BucketCounts.Add((ulong)bucketCount);
+                            }
+
+                            // TODO: exemplars.
+
+                            histogram.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.ExponentialHistogram = histogram;
                         break;
                     }
             }

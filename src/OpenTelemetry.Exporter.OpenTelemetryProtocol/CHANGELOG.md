@@ -2,6 +2,62 @@
 
 ## Unreleased
 
+* Revert version of `Google.Protobuf` to `3.19.4` (see
+  [#4201](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4201)).
+  This also reintroduces the `System.Reflection.Emit.Lightweight` dependency.
+  ([#4407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4407))
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+* Add support for exporting histograms aggregated using the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation).
+  ([#4337](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4337))
+
+* Added support to set `TraceState` when converting the
+  System.Diagnostics.Activity object to its corresponding
+  OpenTelemetry.Proto.Trace.V1.Span object.
+  ([#4331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4331))
+
+## 1.5.0-alpha.1
+
+Released 2023-Mar-07
+
+* Bumped the version of `Google.Protobuf` used by the project to `3.22.0` so
+  that a new performance feature can be used instead of reflection. Removed the
+  dependency on `System.Reflection.Emit.Lightweight`.
+  ([#4201](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4201))
+
+* Added Exemplar support. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+
+## 1.4.0
+
+Released 2023-Feb-24
+
+* Updated OTel SDK dependency to 1.4.0
+
+* `AddOtlpExporter` extension methods will now always create a new options
+  instance when named options are NOT used.
+  ([#4200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4200))
+
+## 1.4.0-rc.4
+
+Released 2023-Feb-10
+
+* Added a direct dependency on System.Reflection.Emit.Lightweight which
+  previously came transitively through the OpenTelemetry SDK.
+  ([#4140](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4140))
+
+## 1.4.0-rc.3
+
+Released 2023-Feb-01
+
+* Include User-Agent header
+  [per the specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#user-agent).
+  ([#4120](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4120))
+
 ## 1.4.0-rc.2
 
 Released 2023-Jan-09
