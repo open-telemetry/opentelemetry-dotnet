@@ -66,9 +66,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             try
             {
+                var timestamp = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds();
                 otlpLogRecord = new OtlpLogs.LogRecord
                 {
-                    TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
+                    TimeUnixNano = timestamp,
+                    ObservedTimeUnixNano = timestamp,
                     SeverityNumber = GetSeverityNumber(logRecord.LogLevel),
                     SeverityText = LogLevels[(int)logRecord.LogLevel],
                 };
