@@ -149,6 +149,15 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void LoggerProviderException(string methodName, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.LoggerProviderException(methodName, ex.ToInvariantString());
+            }
+        }
+
         [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
         public void SpanProcessorException(string evnt, string ex)
         {
@@ -297,6 +306,18 @@ namespace OpenTelemetry.Internal
         public void LoggerParseStateException(string type, string error)
         {
             this.WriteEvent(48, type, error);
+        }
+
+        [Event(49, Message = "LoggerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void LoggerProviderSdkEvent(string message)
+        {
+            this.WriteEvent(49, message);
+        }
+
+        [Event(50, Message = "Unknown error in LoggerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+        public void LoggerProviderException(string methodName, string ex)
+        {
+            this.WriteEvent(50, methodName, ex);
         }
 
 #if DEBUG
