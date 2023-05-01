@@ -72,9 +72,9 @@ namespace OpenTelemetry.Metrics
                     try
                     {
                         metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
-                        if (this.parentProvider?.GetSdkHealthReporter() != null)
+                        if (this is BaseExportingMetricReader reader)
                         {
-                            metric.AggStore.AddMeasurementDroppedCallbacks();
+                            metric.AggStore.AddMeasurementDroppedCallback(reader.Exporter.GetType().Name);
                         }
                     }
                     catch (NotSupportedException nse)
@@ -163,7 +163,10 @@ namespace OpenTelemetry.Metrics
                         Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.exemplarFilter);
                         if (this.parentProvider?.GetSdkHealthReporter() != null)
                         {
-                            metric.AggStore.AddMeasurementDroppedCallbacks();
+                            if (this is BaseExportingMetricReader reader)
+                            {
+                                metric.AggStore.AddMeasurementDroppedCallback(reader.Exporter.GetType().Name);
+                            }
                         }
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
@@ -215,6 +218,7 @@ namespace OpenTelemetry.Metrics
 
         internal void CompleteSingleStreamMeasurement(Metric metric)
         {
+            metric.AggStore.RemoveMeasurementDroppedCallback();
             metric.InstrumentDisposed = true;
         }
 
@@ -222,6 +226,7 @@ namespace OpenTelemetry.Metrics
         {
             foreach (var metric in metrics)
             {
+                metric.AggStore.RemoveMeasurementDroppedCallback();
                 metric.InstrumentDisposed = true;
             }
         }

@@ -18,6 +18,7 @@ namespace OpenTelemetry.Internal
 {
     internal sealed class SdkHealthMetricsConstants
     {
-        internal const string InstrumentName = "instrument.name";
+        internal const string InstrumentNameKey = "instrument.name";
+        internal const string MetricReaderNameKey = "metric.reader.exporter.name";
     }
 }

@@ -102,6 +102,11 @@ namespace OpenTelemetry.Metrics
 
         internal DateTimeOffset EndTimeInclusive { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the tags to be reported on otel.dotnet.sdk.measurement.dropped_count metric.
+        /// </summary>
+        private KeyValuePair<string, object>[] DroppedCountTags { get; set; }
+
         internal bool IsExemplarEnabled()
         {
             // Using this filter to indicate On/Off
@@ -192,19 +197,29 @@ namespace OpenTelemetry.Metrics
         internal MetricPointsAccessor GetMetricPoints()
             => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
 
-        internal void AddMeasurementDroppedCallbacks()
+        internal void AddMeasurementDroppedCallback(string readerName)
         {
+            this.DroppedCountTags = this.InitializeMeasureDroppedCountTags(readerName);
             SdkHealthReporter.AddMeasurementDroppedCountCallback(this.metricStreamId, this.GetMeasurementDroppedCount);
         }
 
-        internal void RemoveMeasurementDroppedCallbacks()
+        internal void RemoveMeasurementDroppedCallback()
         {
             SdkHealthReporter.RemoveMeasurementDroppedCountCallback(this.metricStreamId);
         }
 
         internal Measurement<long> GetMeasurementDroppedCount()
         {
-            return new Measurement<long>(this.DroppedCount, new KeyValuePair<string, object>(SdkHealthMetricsConstants.InstrumentName, this.name));
+            return new Measurement<long>(this.DroppedCount, this.DroppedCountTags);
+        }
+
+        private KeyValuePair<string, object>[] InitializeMeasureDroppedCountTags(string readerName)
+        {
+            return new KeyValuePair<string, object>[]
+            {
+                new KeyValuePair<string, object>(SdkHealthMetricsConstants.InstrumentNameKey, this.name),
+                new KeyValuePair<string, object>(SdkHealthMetricsConstants.MetricReaderNameKey, readerName),
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
