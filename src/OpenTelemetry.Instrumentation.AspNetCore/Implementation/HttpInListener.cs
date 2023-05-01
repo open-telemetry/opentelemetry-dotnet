@@ -87,6 +87,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
 
                     break;
+#if !NET6_0_OR_GREATER
+                case OnMvcBeforeActionEvent:
+                    {
+                        this.OnMvcBeforeAction(Activity.Current, payload);
+                    }
+
+                    break;
+#endif
                 case OnUnhandledHostingExceptionEvent:
                 case OnUnHandledDiagnosticsExceptionEvent:
                     {
@@ -296,6 +304,55 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 Baggage.Current = default;
             }
         }
+
+#if !NET6_0_OR_GREATER
+        public void OnMvcBeforeAction(Activity activity, object payload)
+        {
+            // We cannot rely on Activity.Current here
+            // There could be activities started by middleware
+            // after activity started by framework resulting in different Activity.Current.
+            // so, we need to first find the activity started by Asp.Net Core.
+            // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
+            // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+            // activity = httpActivityFeature.Activity;
+            // However, this will not work as in case of custom propagator
+            // we start a new activity during onStart event which is a sibling to the activity created by framework
+            // So, in that case we need to get the activity created by us here.
+            // we can do so only by looping through activity.Parent chain.
+            while (activity != null)
+            {
+                if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
+                {
+                    break;
+                }
+
+                activity = activity.Parent;
+            }
+
+            if (activity == null)
+            {
+                return;
+            }
+
+            if (activity.IsAllDataRequested)
+            {
+                _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
+                _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
+                _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
+
+                if (!string.IsNullOrEmpty(template))
+                {
+                    // override the span name that was previously set to the path part of URL.
+                    activity.DisplayName = template;
+                    activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
+                }
+
+                // TODO: Should we get values from RouteData?
+                // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
+                // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
+            }
+        }
+#endif
 
         public void OnException(Activity activity, object payload)
         {
