@@ -65,11 +65,12 @@ namespace OpenTelemetry.Logs
                 Body = formattedMessage,
             };
 
+            OpenTelemetryLogger.SetLogRecordSeverityFields(ref this.Data, logLevel);
+
             this.ILoggerData = new()
             {
                 TraceState = activity?.TraceStateString,
                 CategoryName = categoryName,
-                LogLevel = logLevel,
                 FormattedMessage = formattedMessage,
                 EventId = eventId,
                 Exception = exception,
@@ -156,10 +157,24 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
         /// </summary>
+        // todo: [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
         public LogLevel LogLevel
         {
-            get => this.ILoggerData.LogLevel;
-            set => this.ILoggerData.LogLevel = value;
+            get
+            {
+                if (!this.Data.Severity.HasValue)
+                {
+                    return LogLevel.Trace;
+                }
+
+                uint severity = (uint)this.Data.Severity.Value;
+                return (LogLevel)((severity - 1) / 4);
+            }
+
+            set
+            {
+                OpenTelemetryLogger.SetLogRecordSeverityFields(ref this.Data, value);
+            }
         }
 
         /// <summary>
@@ -246,6 +261,30 @@ namespace OpenTelemetry.Logs
             get => this.ILoggerData.Exception;
             set => this.ILoggerData.Exception = value;
         }
+
+        /// <summary>
+        /// Gets or sets the original string representation of the severity as it is
+        /// known at the source.
+        /// </summary>
+        internal string? SeverityText
+        {
+            get => this.Data.SeverityText;
+            set => this.Data.SeverityText = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the log <see cref="LogRecordSeverity"/>.
+        /// </summary>
+        internal LogRecordSeverity? Severity
+        {
+            get => this.Data.Severity;
+            set => this.Data.Severity = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
+        /// </summary>
+        internal Logger? Logger { get; /*todo: internal*/ set; }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
@@ -378,7 +417,6 @@ namespace OpenTelemetry.Logs
             public string? TraceState;
             public string? CategoryName;
             public EventId EventId;
-            public LogLevel LogLevel;
             public string? FormattedMessage;
             public Exception? Exception;
             public object? State;
@@ -392,7 +430,6 @@ namespace OpenTelemetry.Logs
                     TraceState = this.TraceState,
                     CategoryName = this.CategoryName,
                     EventId = this.EventId,
-                    LogLevel = this.LogLevel,
                     FormattedMessage = this.FormattedMessage,
                     Exception = this.Exception,
                     State = this.State,

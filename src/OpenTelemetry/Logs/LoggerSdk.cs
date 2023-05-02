@@ -51,7 +51,7 @@ internal sealed class LoggerSdk : Logger
             logRecord.Data = data;
             logRecord.ILoggerData = default;
 
-            // TODO: logRecord.Logger = this;
+            logRecord.Logger = this;
 
             logRecord.Attributes = attributes.Export(ref logRecord.AttributeStorage);
 
