@@ -144,10 +144,12 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedLongHistogramTest_Coyote()
         {
             var config = Configuration.Create()
-                        .WithTestingIterations(100)
-                        .WithVerbosityEnabled(VerbosityLevel.Debug)
-                        .WithConsoleLoggingEnabled()
-                        .WithPartiallyControlledConcurrencyAllowed(false);
+                .WithTestingIterations(100)
+                .WithMemoryAccessRaceCheckingEnabled(true);
+
+            // .WithVerbosityEnabled(VerbosityLevel.Debug)
+            // .WithConsoleLoggingEnabled();
+            // .WithPartiallyControlledConcurrencyAllowed(false);
 
             var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
 
