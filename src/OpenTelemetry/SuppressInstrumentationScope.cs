@@ -85,7 +85,7 @@ namespace OpenTelemetry
             if (currentScope == null)
             {
                 Slot.Set(
-                    new SuppressInstrumentationScope(true)
+                    new SuppressInstrumentationScope()
                     {
                         Depth = 1,
                     });
