@@ -40,6 +40,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             this.HttpClient = httpClient;
         }
 
+        protected BaseOtlpHttpExportClient(OtlpTraceExporterOptions options, HttpClient httpClient, string signalPath)
+        {
+            Guard.ThrowIfNull(options);
+            Guard.ThrowIfNull(httpClient);
+            Guard.ThrowIfNull(signalPath);
+            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
+
+            Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
+                ? options.Endpoint.AppendPathIfNotPresent(signalPath)
+                : options.Endpoint;
+            this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
+            this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+            this.HttpClient = httpClient;
+        }
+
         internal HttpClient HttpClient { get; }
 
         internal Uri Endpoint { get; set; }

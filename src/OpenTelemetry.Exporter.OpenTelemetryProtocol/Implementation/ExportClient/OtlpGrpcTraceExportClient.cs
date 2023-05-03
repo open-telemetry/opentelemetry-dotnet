@@ -38,6 +38,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
         }
 
+        public OtlpGrpcTraceExportClient(OtlpTraceExporterOptions options, OtlpCollector.TraceService.TraceServiceClient traceServiceClient = null)
+            : base(options)
+        {
+            if (traceServiceClient != null)
+            {
+                this.traceClient = traceServiceClient;
+            }
+            else
+            {
+                this.Channel = options.CreateChannel();
+                this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.Channel);
+            }
+        }
+
         /// <inheritdoc/>
         public override bool SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, CancellationToken cancellationToken = default)
         {

@@ -15,9 +15,11 @@
 // </copyright>
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 
@@ -137,6 +139,22 @@ namespace OpenTelemetry.Trace
                     batchOptions.ExporterTimeoutMilliseconds,
                     batchOptions.MaxExportBatchSize);
             }
+        }
+
+        internal static TracerProviderBuilder AddOtlpTraceExporter(
+            this TracerProviderBuilder builder,
+            string name,
+            IConfiguration configuration,
+            Action<OtlpTraceExportProcessorBuilder> configure)
+        {
+            var exportProcessorBuilder = new OtlpTraceExportProcessorBuilder(
+                builder,
+                name ?? Options.DefaultName,
+                configuration);
+
+            configure?.Invoke(exportProcessorBuilder);
+
+            return builder.AddProcessor(sp => exportProcessorBuilder.BuildProcessor(sp));
         }
     }
 }

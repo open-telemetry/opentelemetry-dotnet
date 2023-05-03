@@ -38,6 +38,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             this.TimeoutMilliseconds = options.TimeoutMilliseconds;
         }
 
+        protected BaseOtlpGrpcExportClient(BaseOtlpExporterOptions options)
+        {
+            Guard.ThrowIfNull(options);
+            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
+
+            ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
+
+            this.Endpoint = new UriBuilder(options.Endpoint).Uri;
+            this.Headers = options.GetMetadataFromHeaders();
+            this.TimeoutMilliseconds = options.TimeoutMilliseconds;
+        }
+
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
         internal GrpcChannel Channel { get; set; }
 #else

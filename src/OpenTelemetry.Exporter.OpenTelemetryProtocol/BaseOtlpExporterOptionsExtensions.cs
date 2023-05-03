@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterOptionsExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseOtlpExporterOptionsExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,22 +19,21 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using Grpc.Core;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
-using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
-using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter
 {
-    internal static class OtlpExporterOptionsExtensions
+    internal static class BaseOtlpExporterOptionsExtensions
     {
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
+        public static GrpcChannel CreateChannel(this BaseOtlpExporterOptions options)
 #else
-        public static Channel CreateChannel(this OtlpExporterOptions options)
+        public static Channel CreateChannel(this BaseOtlpExporterOptions options)
 #endif
         {
             if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
@@ -59,12 +58,12 @@ namespace OpenTelemetry.Exporter
 #endif
         }
 
-        public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
+        public static Metadata GetMetadataFromHeaders(this BaseOtlpExporterOptions options)
         {
             return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
         }
 
-        public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+        public static THeaders GetHeaders<THeaders>(this BaseOtlpExporterOptions options, Action<THeaders, string, string> addHeader)
             where THeaders : new()
         {
             var optionHeaders = options.Headers;
@@ -89,7 +88,7 @@ namespace OpenTelemetry.Exporter
                     });
             }
 
-            foreach (var header in OtlpExporterOptions.StandardHeaders)
+            foreach (var header in BaseOtlpExporterOptions.StandardHeaders)
             {
                 addHeader(headers, header.Key, header.Value);
             }
@@ -97,37 +96,17 @@ namespace OpenTelemetry.Exporter
             return headers;
         }
 
-        public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
+        public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpTraceExporterOptions options) =>
             options.Protocol switch
             {
                 OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
                 OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
                     options,
-                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("BaseOtlpExporterOptions was missing HttpClientFactory or it returned null.")),
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };
 
-        public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
-            options.Protocol switch
-            {
-                OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
-                    options,
-                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-            };
-
-        public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
-            options.Protocol switch
-            {
-                OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
-                    options,
-                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-            };
-
-        public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
+        public static void TryEnableIHttpClientFactoryIntegration(this BaseOtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
         {
             if (serviceProvider != null
                 && options.Protocol == OtlpExportProtocol.HttpProtobuf
@@ -161,6 +140,33 @@ namespace OpenTelemetry.Exporter
                     return options.DefaultHttpClientFactory();
                 };
             }
+        }
+
+        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
+        {
+            var absoluteUri = uri.AbsoluteUri;
+            var separator = string.Empty;
+
+            if (absoluteUri.EndsWith("/"))
+            {
+                // Endpoint already ends with 'path/'
+                if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
+                {
+                    return uri;
+                }
+            }
+            else
+            {
+                // Endpoint already ends with 'path'
+                if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
+                {
+                    return uri;
+                }
+
+                separator = "/";
+            }
+
+            return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
         }
     }
 }
