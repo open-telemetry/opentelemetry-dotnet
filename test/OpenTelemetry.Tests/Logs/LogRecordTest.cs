@@ -916,6 +916,53 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal("Hello earth", logRecord.Body);
         }
 
+        [Theory]
+        [InlineData((int)LogRecordSeverity.Unspecified, LogLevel.Trace)]
+        [InlineData(int.MaxValue, LogLevel.Trace)]
+        [InlineData((int)LogRecordSeverity.Trace, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
+        [InlineData((int)LogRecordSeverity.Trace2, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
+        [InlineData((int)LogRecordSeverity.Trace3, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
+        [InlineData((int)LogRecordSeverity.Trace4, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
+        [InlineData((int)LogRecordSeverity.Debug, LogLevel.Debug, (int)LogRecordSeverity.Debug)]
+        [InlineData((int)LogRecordSeverity.Debug2, LogLevel.Debug, (int)LogRecordSeverity.Debug)]
+        [InlineData((int)LogRecordSeverity.Debug3, LogLevel.Debug, (int)LogRecordSeverity.Debug)]
+        [InlineData((int)LogRecordSeverity.Debug4, LogLevel.Debug, (int)LogRecordSeverity.Debug)]
+        [InlineData((int)LogRecordSeverity.Info, LogLevel.Information, (int)LogRecordSeverity.Info)]
+        [InlineData((int)LogRecordSeverity.Info2, LogLevel.Information, (int)LogRecordSeverity.Info)]
+        [InlineData((int)LogRecordSeverity.Info3, LogLevel.Information, (int)LogRecordSeverity.Info)]
+        [InlineData((int)LogRecordSeverity.Info4, LogLevel.Information, (int)LogRecordSeverity.Info)]
+        [InlineData((int)LogRecordSeverity.Warn, LogLevel.Warning, (int)LogRecordSeverity.Warn)]
+        [InlineData((int)LogRecordSeverity.Warn2, LogLevel.Warning, (int)LogRecordSeverity.Warn)]
+        [InlineData((int)LogRecordSeverity.Warn3, LogLevel.Warning, (int)LogRecordSeverity.Warn)]
+        [InlineData((int)LogRecordSeverity.Warn4, LogLevel.Warning, (int)LogRecordSeverity.Warn)]
+        [InlineData((int)LogRecordSeverity.Error, LogLevel.Error, (int)LogRecordSeverity.Error)]
+        [InlineData((int)LogRecordSeverity.Error2, LogLevel.Error, (int)LogRecordSeverity.Error)]
+        [InlineData((int)LogRecordSeverity.Error3, LogLevel.Error, (int)LogRecordSeverity.Error)]
+        [InlineData((int)LogRecordSeverity.Error4, LogLevel.Error, (int)LogRecordSeverity.Error)]
+        [InlineData((int)LogRecordSeverity.Fatal, LogLevel.Critical, (int)LogRecordSeverity.Fatal)]
+        [InlineData((int)LogRecordSeverity.Fatal2, LogLevel.Critical, (int)LogRecordSeverity.Fatal)]
+        [InlineData((int)LogRecordSeverity.Fatal3, LogLevel.Critical, (int)LogRecordSeverity.Fatal)]
+        [InlineData((int)LogRecordSeverity.Fatal4, LogLevel.Critical, (int)LogRecordSeverity.Fatal)]
+        public void SeverityLogLevelTest(int logSeverity, LogLevel logLevel, int? transformedLogSeverity = null)
+        {
+            var severity = (LogRecordSeverity)logSeverity;
+
+            var logRecord = new LogRecord
+            {
+                Severity = severity,
+            };
+
+            Assert.Equal(logLevel, logRecord.LogLevel);
+
+            if (transformedLogSeverity.HasValue)
+            {
+                logRecord.LogLevel = logLevel;
+
+                Assert.Equal((LogRecordSeverity)transformedLogSeverity.Value, logRecord.Severity);
+                Assert.Equal(logLevel.ToString(), logRecord.SeverityText);
+            }
+        }
+
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
             var items = exportedItems = new List<LogRecord>();
