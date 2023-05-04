@@ -30,7 +30,8 @@ namespace OpenTelemetry.Internal
 #else
                 var inverseFactor = ScaleB(Ln2, -scale);
 #endif
-                return Math.Exp(index * inverseFactor);
+                var lowerBound = Math.Exp(index * inverseFactor);
+                return lowerBound == 0 ? double.Epsilon : lowerBound;
             }
             else
             {

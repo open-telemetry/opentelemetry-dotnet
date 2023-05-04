@@ -110,14 +110,8 @@ public class Base2ExponentialHistogramTest
         for (var index = -indexesPerPowerOf2; index > minIndex; index -= indexesPerPowerOf2)
         {
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
-
-            // Not necessary on M1 Mac
-            //if (lowerBound == 0)
-            //{
-            //    lowerBound = double.Epsilon;
-            //}
-
             var roundTrip = histogram.MapToIndex(lowerBound);
+
             if (index == roundTrip)
             {
                 var lowerBoundDelta = lowerBound;
@@ -148,7 +142,7 @@ public class Base2ExponentialHistogramTest
                     ++diff;
                 }
 
-                // It is possible for an index to be skipped, so we do not do an equal check.
+                // It is possible for an index to be unused, so we do not do an equal check.
                 // Assert.Equal(index, newRoundTrip);
                 Assert.True(index <= newRoundTrip);
                 maxDiff = Math.Max(maxDiff, lowerBoundDelta - lowerBound);
