@@ -35,6 +35,7 @@ OpenTelemetry.Metrics.ExponentialHistogramData.ZeroCount.get -> long
 OpenTelemetry.Metrics.MetricType.ExponentialHistogram = 80 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
+OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> void
 override OpenTelemetry.BaseExportProcessor<T>.ToString() -> string!
 override OpenTelemetry.BaseProcessor<T>.ToString() -> string!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilter! exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!

@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        internal BatchExportActivityProcessorOptions(IConfiguration configuration)
+        public BatchExportActivityProcessorOptions(IConfiguration configuration)
         {
             if (configuration.TryGetIntValue(ExporterTimeoutEnvVarKey, out int value))
             {

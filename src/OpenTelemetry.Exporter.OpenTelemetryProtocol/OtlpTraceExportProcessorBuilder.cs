@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                 this.tracerProviderBuilder.ConfigureServices(services =>
                 {
                     services.AddOptions<OtlpTraceExporterOptions>(name).Bind(configuration);
-                    services.AddOptions<ExportProcessorOptions>(name).Bind(configuration.GetSection("ProcessorOptions"));
+                    services.AddOptions<ExportActivityProcessorOptions>(name).Bind(configuration.GetSection("ActivityProcessorOptions"));
                 });
             }
         }
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             return this.ConfigureServices(services => services.Configure(this.name, configure));
         }
 
-        public OtlpTraceExportProcessorBuilder ConfigureProcessorOptions(Action<ExportProcessorOptions> configure)
+        public OtlpTraceExportProcessorBuilder ConfigureProcessorOptions(Action<ExportActivityProcessorOptions> configure)
         {
             Guard.ThrowIfNull(configure);
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         internal BaseProcessor<Activity> BuildProcessor(IServiceProvider serviceProvider)
         {
             var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpTraceExporterOptions>>().Get(this.name);
-            var processorOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ExportProcessorOptions>>().Get(this.name);
+            var processorOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(this.name);
 
             // Note: Not using this.name here for SdkLimitOptions.
             // There should only be one provider for a given service
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
             var exporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
 
-            if (processorOptions.ProcessorType == ExportProcessorType.Simple)
+            if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return new SimpleActivityExportProcessor(exporter);
             }
@@ -97,10 +97,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
             {
                 return new BatchActivityExportProcessor(
                     exporter,
-                    processorOptions.BatchOptions.MaxQueueSize,
-                    processorOptions.BatchOptions.ScheduledDelayMilliseconds,
-                    processorOptions.BatchOptions.ExporterTimeoutMilliseconds,
-                    processorOptions.BatchOptions.MaxExportBatchSize);
+                    processorOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
             }
         }
     }
