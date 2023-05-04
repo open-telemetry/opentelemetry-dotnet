@@ -112,10 +112,10 @@ public class Base2ExponentialHistogramTest
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
 
             // Not necessary on M1 Mac
-            if (lowerBound == 0)
-            {
-                lowerBound = double.Epsilon;
-            }
+            //if (lowerBound == 0)
+            //{
+            //    lowerBound = double.Epsilon;
+            //}
 
             var roundTrip = histogram.MapToIndex(lowerBound);
             if (index == roundTrip)

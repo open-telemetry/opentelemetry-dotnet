@@ -34,7 +34,7 @@ namespace OpenTelemetry.Internal
             }
             else
             {
-                if (scale == -1 && index == -537 || scale == 0 && index == -1074)
+                if ((scale == -1 && index == -537) || (scale == 0 && index == -1074))
                 {
                     return EpsilonTimes2;
                 }
