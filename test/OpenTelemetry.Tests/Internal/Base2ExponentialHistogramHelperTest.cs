@@ -17,19 +17,11 @@
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Internal;
 
 public class Base2ExponentialHistogramHelperTest
 {
-    private readonly ITestOutputHelper output;
-
-    public Base2ExponentialHistogramHelperTest(ITestOutputHelper output)
-    {
-        this.output = output;
-    }
-
     public static IEnumerable<object[]> GetNonPositiveScales()
     {
         for (var i = -11; i <= 0; ++i)
@@ -101,11 +93,7 @@ public class Base2ExponentialHistogramHelperTest
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
         var minIndex = histogram.MapToIndex(double.Epsilon);
         var maxIndex = histogram.MapToIndex(double.MaxValue);
-
         var indexesPerPowerOf2 = 1 << scale;
-
-        double maxDiff = 0;
-        double maxOps = 0;
 
         for (var index = -indexesPerPowerOf2; index > minIndex; index -= indexesPerPowerOf2)
         {
@@ -116,17 +104,13 @@ public class Base2ExponentialHistogramHelperTest
             {
                 var lowerBoundDelta = lowerBound;
                 var newRoundTrip = roundTrip;
-                var diff = 0;
                 while (newRoundTrip != index - 1)
                 {
                     lowerBoundDelta = BitDecrement(lowerBoundDelta);
                     newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                    ++diff;
                 }
 
                 Assert.Equal(index - 1, newRoundTrip);
-                maxDiff = Math.Max(maxDiff, lowerBound - lowerBoundDelta);
-                maxOps = Math.Max(maxOps, diff);
             }
             else
             {
@@ -134,19 +118,15 @@ public class Base2ExponentialHistogramHelperTest
 
                 var lowerBoundDelta = lowerBound;
                 var newRoundTrip = roundTrip;
-                var diff = 0;
                 while (newRoundTrip < index)
                 {
                     lowerBoundDelta = BitIncrement(lowerBoundDelta);
                     newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                    ++diff;
                 }
 
                 // It is possible for an index to be unused, so we do not do an equal check.
                 // Assert.Equal(index, newRoundTrip);
                 Assert.True(index <= newRoundTrip);
-                maxDiff = Math.Max(maxDiff, lowerBoundDelta - lowerBound);
-                maxOps = Math.Max(maxOps, diff);
             }
         }
 
@@ -159,20 +139,14 @@ public class Base2ExponentialHistogramHelperTest
 
             var lowerBoundDelta = lowerBound;
             var newRoundTrip = roundTrip;
-            var diff = 0;
             while (newRoundTrip < index)
             {
                 lowerBoundDelta = BitIncrement(lowerBoundDelta);
                 newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                ++diff;
             }
 
             Assert.Equal(index, newRoundTrip);
-            maxDiff = Math.Max(maxDiff, lowerBoundDelta - lowerBound);
-            maxOps = Math.Max(maxOps, diff);
         }
-
-        this.output.WriteLine($"maxDiff = {maxDiff}, maxOps = {maxOps}");
     }
 
     [Theory]
