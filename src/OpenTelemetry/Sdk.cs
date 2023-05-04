@@ -87,7 +87,7 @@ namespace OpenTelemetry
 
         /// <summary>
         /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
-        /// an <see cref="LoggerProvider"/>. In a typical application, a single
+        /// a <see cref="LoggerProvider"/>. In a typical application, a single
         /// <see cref="LoggerProvider"/> is created at application startup and
         /// disposed at application shutdown. It is important to ensure that the
         /// provider is not disposed too early.
