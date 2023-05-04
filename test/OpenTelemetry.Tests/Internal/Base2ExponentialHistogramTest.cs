@@ -14,10 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
-using System;
-using System.Runtime.InteropServices;
-#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using Xunit;
@@ -33,42 +29,6 @@ public class Base2ExponentialHistogramTest
     {
         this.output = output;
     }
-
-    public static IEnumerable<object[]> TestScales => new List<object[]>
-    {
-        new object[] { -11 },
-        new object[] { -10 },
-        new object[] { -9 },
-        new object[] { -8 },
-        new object[] { -7 },
-        new object[] { -6 },
-        new object[] { -5 },
-        new object[] { -4 },
-        new object[] { -3 },
-        new object[] { -2 },
-        new object[] { -1 },
-        new object[] { 0 },
-        new object[] { 1 },
-        new object[] { 2 },
-        new object[] { 3 },
-        new object[] { 4 },
-        new object[] { 5 },
-        new object[] { 6 },
-        new object[] { 7 },
-        new object[] { 8 },
-        new object[] { 9 },
-        new object[] { 10 },
-        new object[] { 11 },
-        new object[] { 12 },
-        new object[] { 13 },
-        new object[] { 14 },
-        new object[] { 15 },
-        new object[] { 16 },
-        new object[] { 17 },
-        new object[] { 18 },
-        new object[] { 19 },
-        new object[] { 20 },
-    };
 
     public static IEnumerable<object[]> GetNonPositiveScales()
     {
@@ -190,187 +150,29 @@ public class Base2ExponentialHistogramTest
             }
         }
 
+        for (var index = indexesPerPowerOf2; index < maxIndex; index += indexesPerPowerOf2)
+        {
+            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
+            var roundTrip = histogram.MapToIndex(lowerBound);
+
+            Assert.Equal(index - 1, roundTrip);
+
+            var lowerBoundDelta = lowerBound;
+            var newRoundTrip = roundTrip;
+            var diff = 0;
+            while (newRoundTrip < index)
+            {
+                lowerBoundDelta = BitIncrement(lowerBoundDelta);
+                newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
+                ++diff;
+            }
+
+            Assert.Equal(index, newRoundTrip);
+            maxDiff = Math.Max(maxDiff, lowerBoundDelta - lowerBound);
+            maxOps = Math.Max(maxOps, diff);
+        }
+
         this.output.WriteLine($"maxDiff = {maxDiff}, maxOps = {maxOps}");
-
-        return;
-
-        for (var index = indexesPerPowerOf2; index > maxIndex; index += indexesPerPowerOf2)
-        {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
-            var roundTrip = histogram.MapToIndex(lowerBound);
-            Assert.Equal(index, roundTrip);
-        }
-
-        for (var index = minIndex; index <= maxIndex; index += indexesPerPowerOf2)
-        {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
-
-            if (index >= 0)
-            {
-                var roundTrip = histogram.MapToIndex(lowerBound);
-                Assert.Equal(index, roundTrip + 1);
-            }
-            else
-            {
-                var isX64 = true;
-#if NET6_0_OR_GREATER
-                isX64 = RuntimeInformation.ProcessArchitecture == Architecture.X64;
-#endif
-
-                // TODO: This is not required on M1 Mac (ARM64)
-                if ((index == minIndex && lowerBound == 0 && isX64)
-                    || (scale == 1 && index <= minIndex + 2 && lowerBound == 0 && isX64))
-                {
-                    lowerBound = double.Epsilon;
-                }
-
-                var roundTrip = histogram.MapToIndex(lowerBound);
-
-                if (index != roundTrip)
-                {
-                    int offset = 1;
-                    for (var i = 0; offset <= 512; offset = 1 << ++i)
-                    {
-                        var lowerBoundDelta = lowerBound;
-                        for (var j = 1; j <= offset; ++j)
-                        {
-                            lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                        }
-
-                        var newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-
-                        // Check offset + 1
-                        if (index != newRoundTrip)
-                        {
-                            // offset++;
-                            lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                            newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                        }
-
-                        if (index == newRoundTrip)
-                        {
-                            // var delta = lowerBoundDelta - lowerBound;
-                            // output.WriteLine($"Scale={scale}, Ops={offset}, Index={index}, Delta={delta}");
-                            roundTrip = newRoundTrip;
-                            break;
-                        }
-                    }
-                }
-
-                Assert.Equal(index, roundTrip);
-            }
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(TestScales))]
-    public void LowerBoundaryPowersOfTwoRoundTripTest(int scale)
-    {
-        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
-        var indexesPerPowerOf2 = scale > 0 ? 1 << scale : 1;
-        var minIndex = histogram.MapToIndex(double.Epsilon);
-        var maxIndex = histogram.MapToIndex(double.MaxValue);
-
-        // Check indexes >= 0
-        for (var index = 0; index <= maxIndex; index += indexesPerPowerOf2)
-        {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
-            var roundTrip = histogram.MapToIndex(lowerBound);
-            Assert.Equal(index, roundTrip + 1);
-
-            var match = false;
-            for (var offset = 1; offset <= 1127; ++offset)
-            {
-                var lowerBoundDelta = lowerBound;
-                for (var j = 0; j <= offset; ++j)
-                {
-                    lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                }
-
-                roundTrip = histogram.MapToIndex(lowerBoundDelta);
-                if (index == roundTrip)
-                {
-                    // var delta = lowerBoundDelta - lowerBound;
-                    // output.WriteLine($"Scale={scale}, Ops={offset}, Index={index}, Delta={delta}");
-                    match = true;
-                    break;
-                }
-            }
-
-            Assert.True(match);
-        }
-
-        // Check indexes < 0
-        for (var index = minIndex; index < 0; index += indexesPerPowerOf2)
-        {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
-
-            if (scale <= 0)
-            {
-                // TODO: For scales <= 0, LowerBoundary returns 0 instead of double.Epsilon for the minimum bucket index.
-                // Should LowerBoundary just return double.Epsilon in this case?
-                lowerBound = index == minIndex && lowerBound == 0
-                    ? double.Epsilon
-
-                    // TODO: All negative scales except -11 require this adjustment. Why?
-                    : (scale != -11 ? BitIncrement(lowerBound) : lowerBound);
-            }
-
-            var isX64 = true;
-#if NET6_0_OR_GREATER
-            isX64 = RuntimeInformation.ProcessArchitecture == Architecture.X64;
-#endif
-
-            // TODO: This is not required on M1 Mac (ARM64)
-            if ((scale > 0 && index == minIndex && lowerBound == 0 && isX64)
-                || (scale == 1 && index <= minIndex + 2 && lowerBound == 0 && isX64))
-            {
-                lowerBound = double.Epsilon;
-            }
-
-            if (lowerBound == 0)
-            {
-                this.output.WriteLine($"{index}");
-            }
-
-            var roundTrip = histogram.MapToIndex(lowerBound);
-
-            if (scale > 0)
-            {
-                if (index != roundTrip)
-                {
-                    int offset = 1;
-                    for (var i = 0; offset <= 512; offset = 1 << ++i)
-                    {
-                        var lowerBoundDelta = lowerBound;
-                        for (var j = 1; j <= offset; ++j)
-                        {
-                            lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                        }
-
-                        var newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-
-                        // Check offset + 1
-                        if (index != newRoundTrip)
-                        {
-                            // offset++;
-                            lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                            newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                        }
-
-                        if (index == newRoundTrip)
-                        {
-                            // var delta = lowerBoundDelta - lowerBound;
-                            // output.WriteLine($"Scale={scale}, Ops={offset}, Index={index}, Delta={delta}");
-                            roundTrip = newRoundTrip;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            Assert.Equal(index, roundTrip);
-        }
     }
 
     // Math.BitIncrement was introduced in .NET Core 3.0.
