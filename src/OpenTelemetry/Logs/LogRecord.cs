@@ -162,13 +162,16 @@ namespace OpenTelemetry.Logs
         {
             get
             {
-                if (!this.Data.Severity.HasValue)
+                if (this.Data.Severity.HasValue)
                 {
-                    return LogLevel.Trace;
+                    uint severity = (uint)this.Data.Severity.Value;
+                    if (severity >= 1 && severity <= 24)
+                    {
+                        return (LogLevel)((severity - 1) / 4);
+                    }
                 }
 
-                uint severity = (uint)this.Data.Severity.Value;
-                return (LogLevel)((severity - 1) / 4);
+                return LogLevel.Trace;
             }
 
             set
