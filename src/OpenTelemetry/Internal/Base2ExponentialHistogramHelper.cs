@@ -18,6 +18,7 @@ namespace OpenTelemetry.Internal
 {
     internal static class Base2ExponentialHistogramHelper
     {
+        private const double EpsilonTimes2 = double.Epsilon * 2;
         private static readonly double Ln2 = Math.Log(2);
 
         public static double LowerBoundary(int index, int scale)
@@ -33,6 +34,11 @@ namespace OpenTelemetry.Internal
             }
             else
             {
+                if (scale == -1 && index == -537 || scale == 0 && index == -1074)
+                {
+                    return EpsilonTimes2;
+                }
+
                 var n = index << -scale;
 
                 // LowerBoundary should not return zero.

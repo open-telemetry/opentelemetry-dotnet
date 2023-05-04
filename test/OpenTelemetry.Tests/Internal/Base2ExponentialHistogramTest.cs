@@ -57,29 +57,39 @@ public class Base2ExponentialHistogramTest
         for (var index = minIndex; index <= maxIndex; ++index)
         {
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
-
-            if (scale != 11 && index > minIndex && index < 0)
-            {
-                // TODO: All negative scales except -11 require this adjustment. Why?
-                lowerBound = BitIncrement(lowerBound);
-            }
-
             var roundTrip = histogram.MapToIndex(lowerBound);
 
-            if (index >= 0)
+            if (lowerBound == double.Epsilon)
             {
-                Assert.Equal(index - 1, roundTrip);
-                roundTrip = histogram.MapToIndex(BitIncrement(lowerBound));
+                // The minimum index is inclusive of double.Epsilon.
+                Assert.Equal(index, roundTrip);
+            }
+            else if ((scale == 0 && index == -1074) || (scale == -1 && index == -537))
+            {
+                /*
+                These are unique cases in that these buckets near the
+                minimum index have a lower inclusive bound:
+
+                Scale 0:
+                    bucket[-1075]: [double.Epsilon, double.Epsilon]
+                    bucket[-1074]: [double.Epsilon * 2, double.Epsilon * 2]
+                    ...
+
+                Scale -1:
+                    bucket[-538]: [double.Epsilon, double.Epsilon]
+                    bucket[-537]: [double.Epsilon * 2, double.Epsilon * 4]
+                    ...
+                */
                 Assert.Equal(index, roundTrip);
             }
             else
             {
+                // In the most common situation, the lower boundary of a bucket
+                // is exclusive. That is:
+                //     MapToIndex(LowerBoundary(index)) == index - 1
+                Assert.Equal(index - 1, roundTrip);
+                roundTrip = histogram.MapToIndex(BitIncrement(lowerBound));
                 Assert.Equal(index, roundTrip);
-                if (lowerBound != double.Epsilon)
-                {
-                    roundTrip = histogram.MapToIndex(BitDecrement(lowerBound));
-                    Assert.Equal(index - 1, roundTrip);
-                }
             }
         }
     }
