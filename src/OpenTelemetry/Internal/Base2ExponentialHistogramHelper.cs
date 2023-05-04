@@ -35,7 +35,10 @@ namespace OpenTelemetry.Internal
             {
                 var n = index << -scale;
 
-                // double.Epsilon = 2 ^ -1074
+                // LowerBoundary should not return zero.
+                // It should return values >= double.Epsilon (2 ^ -1074).
+                // n < -1074 occurs at the minimum index of a scale.
+                // e.g., At scale -1, minimum index is -538. -538 << 1 = -1075
                 if (n < -1074)
                 {
                     return double.Epsilon;
