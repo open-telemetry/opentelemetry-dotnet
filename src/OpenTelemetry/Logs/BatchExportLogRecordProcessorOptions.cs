@@ -27,18 +27,6 @@ namespace OpenTelemetry.Logs;
 /// OTEL_BLRP_SCHEDULE_DELAY environment variables are parsed during object
 /// construction.
 /// </summary>
-/// <remarks>
-/// Notes:
-/// <list type="bullet">
-/// <item>The constructor throws <see cref="FormatException"/> if it fails to
-/// parse any of the supported environment variables.</item>
-/// <item>The environment variable keys are currently experimental and subject
-/// to change. See: <see
-/// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor">OpenTelemetry
-/// Environment Variable Specification - Batch LogRecord Processor</see>.
-/// </item>
-/// </list>
-/// </remarks>
 internal class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<LogRecord>
 {
     internal const string MaxQueueSizeEnvVarKey = "OTEL_BLRP_MAX_QUEUE_SIZE";
