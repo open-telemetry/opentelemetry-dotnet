@@ -1,4 +1,4 @@
-// <copyright file="Base2ExponentialHistogramTest.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialHistogramHelperTest.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,11 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Internal;
 
-public class Base2ExponentialHistogramTest
+public class Base2ExponentialHistogramHelperTest
 {
     private readonly ITestOutputHelper output;
 
-    public Base2ExponentialHistogramTest(ITestOutputHelper output)
+    public Base2ExponentialHistogramHelperTest(ITestOutputHelper output)
     {
         this.output = output;
     }
