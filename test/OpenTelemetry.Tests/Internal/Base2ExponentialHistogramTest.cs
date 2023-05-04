@@ -175,6 +175,30 @@ public class Base2ExponentialHistogramTest
         this.output.WriteLine($"maxDiff = {maxDiff}, maxOps = {maxOps}");
     }
 
+    [Theory]
+    [MemberData(nameof(GetPositiveScales))]
+    public void TestPositiveScalesLowerBoundaryMaxIndex(int scale)
+    {
+        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
+        var maxIndex = histogram.MapToIndex(double.MaxValue);
+
+        var lowerBoundary = Base2ExponentialHistogramHelper.LowerBoundary(maxIndex, scale);
+        var roundTrip = histogram.MapToIndex(lowerBoundary);
+        Assert.Equal(maxIndex - 1, roundTrip);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetPositiveScales))]
+    public void TestPositiveScalesLowerBoundaryMinIndex(int scale)
+    {
+        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
+        var minIndex = histogram.MapToIndex(double.Epsilon);
+
+        var lowerBoundary = Base2ExponentialHistogramHelper.LowerBoundary(minIndex, scale);
+        var roundTrip = histogram.MapToIndex(lowerBoundary);
+        Assert.Equal(minIndex, roundTrip);
+    }
+
     // Math.BitIncrement was introduced in .NET Core 3.0.
     // This is the implementation from:
     // https://github.com/dotnet/runtime/blob/v7.0.0/src/libraries/System.Private.CoreLib/src/System/Math.cs#L259
