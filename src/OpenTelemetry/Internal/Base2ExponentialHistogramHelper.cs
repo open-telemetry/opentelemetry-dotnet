@@ -33,10 +33,18 @@ namespace OpenTelemetry.Internal
             }
             else
             {
+                var n = index << -scale;
+
+                // double.Epsilon = 2 ^ -1074
+                if (n < -1074)
+                {
+                    return double.Epsilon;
+                }
+
 #if NET6_0_OR_GREATER
-                return Math.ScaleB(1, index << -scale);
+                return Math.ScaleB(1, n);
 #else
-                return ScaleB(1, index << -scale);
+                return ScaleB(1, n);
 #endif
             }
         }

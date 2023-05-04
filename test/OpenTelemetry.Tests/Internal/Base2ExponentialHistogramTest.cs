@@ -58,15 +58,10 @@ public class Base2ExponentialHistogramTest
         {
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
 
-            if (index < 0)
+            if (scale != 11 && index > minIndex && index < 0)
             {
-                // TODO: For index < 0, LowerBoundary returns 0 instead of double.Epsilon for the minimum bucket index.
-                // Should LowerBoundary just return double.Epsilon in this case?
-                lowerBound = index == minIndex && lowerBound == 0
-                    ? double.Epsilon
-
-                    // TODO: All negative scales except -11 require this adjustment. Why?
-                    : (scale != -11 ? BitIncrement(lowerBound) : lowerBound);
+                // TODO: All negative scales except -11 require this adjustment. Why?
+                lowerBound = BitIncrement(lowerBound);
             }
 
             var roundTrip = histogram.MapToIndex(lowerBound);
@@ -106,6 +101,7 @@ public class Base2ExponentialHistogramTest
         {
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
 
+            // Not necessary on M1 Mac
             if (lowerBound == 0)
             {
                 lowerBound = double.Epsilon;
