@@ -40,8 +40,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         {
             Debug.Assert(configuration != null, "configuration was null");
 
-            // Spec does not mention which env var should take precedence
-            // Giving signal specific one priority
             if (configuration.TryGetUriValue(TraceEndpointEnvVarName, out var traceEndpoint))
             {
                 this.endpoint = traceEndpoint;
