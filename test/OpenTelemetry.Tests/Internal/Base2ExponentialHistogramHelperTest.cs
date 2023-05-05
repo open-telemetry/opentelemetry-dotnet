@@ -17,11 +17,19 @@
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Internal;
 
 public class Base2ExponentialHistogramHelperTest
 {
+    private readonly ITestOutputHelper output;
+
+    public Base2ExponentialHistogramHelperTest(ITestOutputHelper output)
+    {
+        this.output = output;
+    }
+
     public static IEnumerable<object[]> GetNonPositiveScales()
     {
         for (var i = -11; i <= 0; ++i)
@@ -90,6 +98,22 @@ public class Base2ExponentialHistogramHelperTest
     [MemberData(nameof(GetPositiveScales))]
     public void TestPositiveScalesLowerBoundaryRoundTripPowersOfTwo(int scale)
     {
+        /*
+        MapToIndex and LowerBoundary methods can be imprecise at positive
+        scales. This test provides an analysis for where MapToIndex is
+        off by one relative to LowerBoundary by performing a "round trip".
+
+        The expectation is that:
+            MapToIndex(LowerBoundary(index)) = index - 1;
+
+        However, in some circumstances it will incorrectly be:
+            MapToIndex(LowerBoundary(index)) = index;
+        */
+
+        // Set this variable to true to generate output for analysis.
+        var displayDebugInfo = false;
+        this.DisplayHeader(displayDebugInfo);
+
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
         var minIndex = histogram.MapToIndex(double.Epsilon);
         var maxIndex = histogram.MapToIndex(double.MaxValue);
@@ -100,33 +124,23 @@ public class Base2ExponentialHistogramHelperTest
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
+            // The round trip is off by one.
             if (index == roundTrip)
             {
-                var lowerBoundDelta = lowerBound;
-                var newRoundTrip = roundTrip;
-                while (newRoundTrip != index - 1)
-                {
-                    lowerBoundDelta = BitDecrement(lowerBoundDelta);
-                    newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                }
-
-                Assert.Equal(index - 1, newRoundTrip);
+                this.DisplayMarginOfError(displayDebugInfo, scale, index);
             }
+
+            // The round trip is correct.
+            else if (index - 1 == roundTrip)
+            {
+                // However, the lower bound computed may not be the precise lower bound.
+                this.DisplayMarginOfError(displayDebugInfo, scale, index);
+            }
+
+            // Something is very wrong.
             else
             {
-                Assert.Equal(index - 1, roundTrip);
-
-                var lowerBoundDelta = lowerBound;
-                var newRoundTrip = roundTrip;
-                while (newRoundTrip < index)
-                {
-                    lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                    newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-                }
-
-                // It is possible for an index to be unused, so we do not do an equal check.
-                // Assert.Equal(index, newRoundTrip);
-                Assert.True(index <= newRoundTrip);
+                Assert.Fail($"{index} - 1 != {roundTrip} && {index} != {roundTrip}");
             }
         }
 
@@ -135,17 +149,11 @@ public class Base2ExponentialHistogramHelperTest
             var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
+            // The round trip is never off by one for positive indexes near powers of two.
             Assert.Equal(index - 1, roundTrip);
 
-            var lowerBoundDelta = lowerBound;
-            var newRoundTrip = roundTrip;
-            while (newRoundTrip < index)
-            {
-                lowerBoundDelta = BitIncrement(lowerBoundDelta);
-                newRoundTrip = histogram.MapToIndex(lowerBoundDelta);
-            }
-
-            Assert.Equal(index, newRoundTrip);
+            // However, the lower bound computed may not be the precise lower bound.
+            this.DisplayMarginOfError(displayDebugInfo, scale, index);
         }
     }
 
@@ -173,9 +181,67 @@ public class Base2ExponentialHistogramHelperTest
         Assert.Equal(minIndex, roundTrip);
     }
 
+    private void DisplayHeader(bool displayDebugInfo)
+    {
+        if (!displayDebugInfo)
+        {
+            return;
+        }
+
+        this.output.WriteLine("scale,index,unusedIndex,LowerBound(index),MapToIndex(LowerBound(index)),preciseLowerBound,lowerBoundDelta,marginOfError,ops");
+    }
+
+    private void DisplayMarginOfError(bool displayDebugInfo, int scale, int index)
+    {
+        if (!displayDebugInfo)
+        {
+            return;
+        }
+
+        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
+        var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
+        var roundTrip = histogram.MapToIndex(lowerBound);
+
+        Assert.True((index == roundTrip) || (index - 1 == roundTrip));
+
+        var preciseLowerBound = lowerBound;
+        var newRoundTrip = roundTrip;
+        var i = 0;
+        var unusedIndex = false;
+
+        if (index == roundTrip)
+        {
+            for (i = 0; newRoundTrip != index - 1; ++i)
+            {
+                preciseLowerBound = BitDecrement(preciseLowerBound);
+                newRoundTrip = histogram.MapToIndex(preciseLowerBound);
+            }
+        }
+        else
+        {
+            for (i = 0; newRoundTrip < index; ++i)
+            {
+                preciseLowerBound = BitIncrement(preciseLowerBound);
+                newRoundTrip = histogram.MapToIndex(preciseLowerBound);
+            }
+
+            // This represents an index that MapToIndex will never map to.
+            // This occurs for negative indexes very near the minimum index.
+            if (newRoundTrip != index)
+            {
+                unusedIndex = true;
+            }
+        }
+
+        var lowerBoundDelta = preciseLowerBound - lowerBound;
+        var marginOfError = lowerBoundDelta / lowerBound;
+        this.output.WriteLine($"{scale},{index},{unusedIndex},{lowerBound},{roundTrip},{preciseLowerBound},{lowerBoundDelta},{marginOfError},{i}");
+    }
+
     // Math.BitIncrement was introduced in .NET Core 3.0.
     // This is the implementation from:
     // https://github.com/dotnet/runtime/blob/v7.0.0/src/libraries/System.Private.CoreLib/src/System/Math.cs#L259
+#pragma warning disable SA1204 // Static members should appear before non-static members
 #pragma warning disable SA1119 // Statement should not use unnecessary parenthesis
     private static double BitIncrement(double x)
     {
@@ -236,4 +302,5 @@ public class Base2ExponentialHistogramHelperTest
 #endif
     }
 #pragma warning restore SA1119 // Statement should not use unnecessary parenthesis
+#pragma warning restore SA1204 // Static members should appear before non-static members
 }
