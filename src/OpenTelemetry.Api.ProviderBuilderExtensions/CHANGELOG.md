@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Fixed the `TracerProviderBuilder.AddInstrumentation` factory extension.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4468](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4468))
 
 ## 1.5.0-alpha.2
 
