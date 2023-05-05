@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fixed the `TracerProviderBuilder.AddInstrumentation` factory extension.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.5.0-alpha.2
 
 Released 2023-Mar-31
