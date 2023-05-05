@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
@@ -32,13 +33,18 @@ internal class ExportActivityProcessorOptions
     /// Initializes a new instance of the <see cref="ExportActivityProcessorOptions"/> class.
     /// </summary>
     public ExportActivityProcessorOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
     {
     }
 
-    internal ExportActivityProcessorOptions(IConfiguration configuration)
+    internal ExportActivityProcessorOptions(
+        IConfiguration configuration,
+        BatchExportActivityProcessorOptions defaultBatchOptions)
     {
-        this.batchExportProcessorOptions = new BatchExportActivityProcessorOptions(configuration);
+        Debug.Assert(configuration != null, "configuration was null");
+        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
+        this.batchExportProcessorOptions = defaultBatchOptions!;
     }
 
     /// <summary>

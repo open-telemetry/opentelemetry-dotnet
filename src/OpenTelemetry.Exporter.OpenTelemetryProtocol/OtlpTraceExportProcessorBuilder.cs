@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,86 +24,88 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol;
+
+internal class OtlpTraceExportProcessorBuilder
 {
-    internal class OtlpTraceExportProcessorBuilder
+    private readonly TracerProviderBuilder tracerProviderBuilder;
+    private readonly string name;
+
+    internal OtlpTraceExportProcessorBuilder(
+        TracerProviderBuilder tracerProviderBuilder,
+        string name,
+        IConfiguration? configuration)
     {
-        private readonly TracerProviderBuilder tracerProviderBuilder;
-        private readonly string name;
+        Debug.Assert(tracerProviderBuilder != null, "tracerProviderBuilder was null");
+        Debug.Assert(name != null, "name was null");
 
-        internal OtlpTraceExportProcessorBuilder(
-            TracerProviderBuilder tracerProviderBuilder,
-            string name,
-            IConfiguration configuration)
+        this.tracerProviderBuilder = tracerProviderBuilder!;
+        this.name = name!;
+
+        if (configuration != null)
         {
-            this.tracerProviderBuilder = tracerProviderBuilder;
-            this.name = name;
-
-            if (configuration != null)
+            this.tracerProviderBuilder.ConfigureServices(services =>
             {
-                this.tracerProviderBuilder.ConfigureServices(services =>
-                {
-                    services.AddOptions<OtlpTraceExporterOptions>(name).Bind(configuration);
-                    services.AddOptions<ExportActivityProcessorOptions>(name).Bind(configuration.GetSection("ActivityProcessorOptions"));
-                });
-            }
+                services.AddOptions<OtlpTraceExporterOptions>(name).Bind(configuration);
+                services.AddOptions<ExportActivityProcessorOptions>(name).Bind(configuration.GetSection("ActivityProcessorOptions"));
+            });
         }
+    }
 
-        public OtlpTraceExportProcessorBuilder ConfigureExporterOptions(Action<OtlpTraceExporterOptions> configure)
+    public OtlpTraceExportProcessorBuilder ConfigureExporterOptions(Action<OtlpTraceExporterOptions> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        return this.ConfigureServices(services => services.Configure(this.name, configure));
+    }
+
+    public OtlpTraceExportProcessorBuilder ConfigureProcessorOptions(Action<ExportActivityProcessorOptions> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        return this.ConfigureServices(services => services.Configure(this.name, configure));
+    }
+
+    public OtlpTraceExportProcessorBuilder ConfigureSdkLimitOptions(Action<SdkLimitOptions> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        // Note: We don't use this.name here, SdkLimitOptions are global.
+        return this.ConfigureServices(services => services.Configure(configure));
+    }
+
+    internal OtlpTraceExportProcessorBuilder ConfigureServices(Action<IServiceCollection> configure)
+    {
+        this.tracerProviderBuilder.ConfigureServices(configure);
+
+        return this;
+    }
+
+    internal BaseProcessor<Activity> BuildProcessor(IServiceProvider serviceProvider)
+    {
+        var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpTraceExporterOptions>>().Get(this.name);
+        var processorOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(this.name);
+
+        // Note: Not using this.name here for SdkLimitOptions.
+        // There should only be one provider for a given service
+        // collection so SdkLimitOptions is treated as a single default
+        // instance.
+        var sdkLimitOptions = serviceProvider.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+        var exporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
+
+        if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
         {
-            Guard.ThrowIfNull(configure);
-
-            return this.ConfigureServices(services => services.Configure(this.name, configure));
+            return new SimpleActivityExportProcessor(exporter);
         }
-
-        public OtlpTraceExportProcessorBuilder ConfigureProcessorOptions(Action<ExportActivityProcessorOptions> configure)
+        else
         {
-            Guard.ThrowIfNull(configure);
-
-            return this.ConfigureServices(services => services.Configure(this.name, configure));
-        }
-
-        public OtlpTraceExportProcessorBuilder ConfigureSdkLimitOptions(Action<SdkLimitOptions> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            // Note: We don't use this.name here, SdkLimitOptions are global.
-            return this.ConfigureServices(services => services.Configure(configure));
-        }
-
-        internal OtlpTraceExportProcessorBuilder ConfigureServices(Action<IServiceCollection> configure)
-        {
-            this.tracerProviderBuilder.ConfigureServices(configure);
-
-            return this;
-        }
-
-        internal BaseProcessor<Activity> BuildProcessor(IServiceProvider serviceProvider)
-        {
-            var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpTraceExporterOptions>>().Get(this.name);
-            var processorOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ExportActivityProcessorOptions>>().Get(this.name);
-
-            // Note: Not using this.name here for SdkLimitOptions.
-            // There should only be one provider for a given service
-            // collection so SdkLimitOptions is treated as a single default
-            // instance.
-            var sdkLimitOptions = serviceProvider.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
-
-            var exporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
-
-            if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
-            {
-                return new SimpleActivityExportProcessor(exporter);
-            }
-            else
-            {
-                return new BatchActivityExportProcessor(
-                    exporter,
-                    processorOptions.BatchExportProcessorOptions.MaxQueueSize,
-                    processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
-            }
+            return new BatchActivityExportProcessor(
+                exporter,
+                processorOptions.BatchExportProcessorOptions.MaxQueueSize,
+                processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
         }
     }
 }

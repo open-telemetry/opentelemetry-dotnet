@@ -17,10 +17,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Diagnostics;
 using System.Reflection;
-using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -53,8 +50,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseOtlpExporterOptions"/> class.
         /// </summary>
-        /// <param name="configuration">IConfiguration object.</param>
-        protected BaseOtlpExporterOptions(IConfiguration configuration)
+        protected BaseOtlpExporterOptions()
         {
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
             {

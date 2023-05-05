@@ -36,7 +36,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         }
 
         public OtlpTraceExporterOptions(IConfiguration configuration)
-            : base(configuration)
         {
             Debug.Assert(configuration != null, "configuration was null");
 
