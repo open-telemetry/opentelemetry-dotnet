@@ -40,7 +40,7 @@ docker-compose up -d
 ```
 
 If the above step succeeds, all dependencies would be spun up and ready now. To
-test, navigate to Grafana running at: `http://localhost:3000/`.
+test, navigate to Grafana running at: "http://localhost:3000/".
 
 ## Run test app
 
