@@ -15,8 +15,8 @@
 // </copyright>
 
 #nullable enable
-
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal
@@ -206,12 +206,14 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(31, exportProcessorName, exporterName);
         }
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
         [Event(32, Message = "'{0}' exporting to '{1}' dropped '{2}' item(s) due to buffer full.", Level = EventLevel.Warning)]
         public void ExistsDroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
         {
             this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
         }
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
         [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
         public void MetricInstrumentIgnored(string instrumentName, string meterName, string reason, string fix)
         {
@@ -242,6 +244,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(37, providerName);
         }
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
         [Event(38, Message = "Duplicate Instrument '{0}', Meter '{1}' encountered. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
         public void DuplicateMetricInstrument(string instrumentName, string meterName, string reason, string fix)
         {
@@ -260,6 +263,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(40, message);
         }
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
         [Event(41, Message = "View Configuration ignored for Instrument '{0}', Meter '{1}'. Reason: '{2}'. Measurements from the instrument will use default configuration for Aggregation. Suggested action: '{3}'", Level = EventLevel.Warning)]
         public void MetricViewIgnored(string instrumentName, string meterName, string reason, string fix)
         {
@@ -272,6 +276,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(42, type.ToString(), key);
         }
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
         [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
         public void ProcessorForceFlushInvoked(string processorType, bool result)
         {
