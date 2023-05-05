@@ -474,7 +474,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task BaggageClearedWhenActivityStopped()
+        public async Task BaggageIsNotClearedWhenActivityStopped()
         {
             int? baggageCountAfterStart = null;
             int? baggageCountAfterStop = null;
@@ -532,7 +532,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.NotNull(baggageCountAfterStart);
             Assert.Equal(2, baggageCountAfterStart);
             Assert.NotNull(baggageCountAfterStop);
-            Assert.Equal(0, baggageCountAfterStop);
+            Assert.Equal(2, baggageCountAfterStop);
         }
 
         [Theory]

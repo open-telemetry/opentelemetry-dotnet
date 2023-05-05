@@ -5,6 +5,12 @@
 * Fixed an issue of missing `http.route` tag outside of MVC requests.
 ([#4104](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4104))
 
+* Fix issue where baggage gets cleared when the ASP.NET Core Activity
+   is stopped. The instrumentation no longer clears baggage. One problem
+   this caused was that it prevented Activity processors from accessing baggage
+   during their `OnEnd` call.
+([#4274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4274))
+
 * Added direct reference to `System.Text.Encodings.Web` with minimum version of
 `4.7.2` due to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
 This impacts target frameworks `netstandard2.0` and `netstandard2.1` which has a
