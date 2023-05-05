@@ -72,7 +72,7 @@ namespace OpenTelemetry
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
             this.MaxExportBatchSize = maxExportBatchSize;
-            this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
+            this.exporterThread = new Thread(this.ExporterProc)
             {
                 IsBackground = true,
                 Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",

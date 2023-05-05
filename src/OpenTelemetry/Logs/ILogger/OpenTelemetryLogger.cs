@@ -27,6 +27,17 @@ namespace OpenTelemetry.Logs
 {
     internal sealed class OpenTelemetryLogger : ILogger
     {
+        private static readonly string[] LogLevels = new string[]
+        {
+            nameof(LogLevel.Trace),
+            nameof(LogLevel.Debug),
+            nameof(LogLevel.Information),
+            nameof(LogLevel.Warning),
+            nameof(LogLevel.Error),
+            nameof(LogLevel.Critical),
+            nameof(LogLevel.None),
+        };
+
         private readonly string categoryName;
         private readonly OpenTelemetryLoggerProvider provider;
 
@@ -66,7 +77,6 @@ namespace OpenTelemetry.Logs
                     : null;
                 iloggerData.CategoryName = this.categoryName;
                 iloggerData.EventId = eventId;
-                iloggerData.LogLevel = logLevel;
                 iloggerData.Exception = exception;
                 iloggerData.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
                 iloggerData.BufferedScopes = null;
@@ -74,6 +84,8 @@ namespace OpenTelemetry.Logs
                 ref LogRecordData data = ref record.Data;
 
                 data.TimestampBacking = DateTime.UtcNow;
+
+                SetLogRecordSeverityFields(ref data, logLevel);
 
                 LogRecordData.SetActivityContext(ref data, activity);
 
@@ -96,6 +108,9 @@ namespace OpenTelemetry.Logs
                         : null;
                 }
 
+                // TODO: Set this to a real instance.
+                record.Logger = null;
+
                 processor.OnEnd(record);
 
                 iloggerData.ScopeProvider = null;
@@ -113,6 +128,21 @@ namespace OpenTelemetry.Logs
         }
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
+
+        internal static void SetLogRecordSeverityFields(ref LogRecordData logRecordData, LogLevel logLevel)
+        {
+            uint intLogLevel = (uint)logLevel;
+            if (intLogLevel < 6)
+            {
+                logRecordData.Severity = (LogRecordSeverity)((intLogLevel * 4) + 1);
+                logRecordData.SeverityText = LogLevels[intLogLevel];
+            }
+            else
+            {
+                logRecordData.Severity = null;
+                logRecordData.SeverityText = null;
+            }
+        }
 
         private static IReadOnlyList<KeyValuePair<string, object?>>? ProcessState<TState>(
             LogRecord logRecord,
