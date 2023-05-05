@@ -346,10 +346,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity.DisplayName = template;
                     activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
                 }
-
-                // TODO: Should we get values from RouteData?
-                // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-                // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
             }
         }
 #endif

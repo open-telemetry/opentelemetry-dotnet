@@ -22,26 +22,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     internal sealed class AspNetCoreInstrumentation : IDisposable
     {
-#if NET6_0_OR_GREATER
         private static readonly HashSet<string> DiagnosticSourceEvents = new()
         {
             "Microsoft.AspNetCore.Hosting.HttpRequestIn",
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
             "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
-            "Microsoft.AspNetCore.Diagnostics.UnhandledException",
-            "Microsoft.AspNetCore.Hosting.UnhandledException",
-        };
-#else
-        private static readonly HashSet<string> DiagnosticSourceEvents = new()
-        {
-            "Microsoft.AspNetCore.Hosting.HttpRequestIn",
-            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
-            "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
+#if !NET6_0_OR_GREATER
             "Microsoft.AspNetCore.Mvc.BeforeAction",
+#endif
             "Microsoft.AspNetCore.Diagnostics.UnhandledException",
             "Microsoft.AspNetCore.Hosting.UnhandledException",
         };
-#endif
 
         private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
             => DiagnosticSourceEvents.Contains(eventName);
