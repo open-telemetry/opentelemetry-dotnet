@@ -21,4 +21,8 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+  </ItemGroup>
+
 </Project>

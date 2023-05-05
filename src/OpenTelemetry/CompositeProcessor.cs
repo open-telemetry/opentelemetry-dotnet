@@ -100,7 +100,7 @@ namespace OpenTelemetry
             {
                 if (sw == null)
                 {
-                    result = cur.Value.ForceFlush(Timeout.Infinite) && result;
+                    result = cur.Value.ForceFlush() && result;
                 }
                 else
                 {
@@ -126,7 +126,7 @@ namespace OpenTelemetry
             {
                 if (sw == null)
                 {
-                    result = cur.Value.Shutdown(Timeout.Infinite) && result;
+                    result = cur.Value.Shutdown() && result;
                 }
                 else
                 {
@@ -151,7 +151,7 @@ namespace OpenTelemetry
                     {
                         try
                         {
-                            cur.Value?.Dispose();
+                            cur.Value.Dispose();
                         }
                         catch (Exception ex)
                         {
