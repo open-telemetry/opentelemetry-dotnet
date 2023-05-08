@@ -219,24 +219,27 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void MeterProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
         {
-            bool innerTestExecuted = false;
+            bool innerConfigureBuilderTestExecuted = false;
+            bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .ConfigureServices(services =>
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryMeterProvider((sp, builder) => { });
+                        services.ConfigureOpenTelemetryMeterProvider(
+                            (sp, builder) => innerConfigureOpenTelemetryLoggerProviderTestExecuted = true);
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
                 {
-                    innerTestExecuted = true;
+                    innerConfigureBuilderTestExecuted = true;
                     Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
                 })
                 .Build();
 
-            Assert.True(innerTestExecuted);
+            Assert.True(innerConfigureBuilderTestExecuted);
+            Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
 
             Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<MeterProvider>());
         }

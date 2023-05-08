@@ -61,24 +61,27 @@ public sealed class LoggerProviderBuilderExtensionsTests
     [InlineData(false)]
     public void LoggerProviderBuilderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
     {
-        bool innerTestExecuted = false;
+        bool innerConfigureBuilderTestExecuted = false;
+        bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
 
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureServices(services =>
             {
                 if (callNestedConfigure)
                 {
-                    services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => { });
+                    services.ConfigureOpenTelemetryLoggerProvider(
+                        (sp, builder) => innerConfigureOpenTelemetryLoggerProviderTestExecuted = true);
                 }
             })
             .ConfigureBuilder((sp, builder) =>
             {
-                innerTestExecuted = true;
+                innerConfigureBuilderTestExecuted = true;
                 Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
             })
             .Build();
 
-        Assert.True(innerTestExecuted);
+        Assert.True(innerConfigureBuilderTestExecuted);
+        Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
 
         Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<LoggerProvider>());
     }

@@ -309,24 +309,27 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(false)]
         public void TracerProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
         {
-            bool innerTestExecuted = false;
+            bool innerConfigureBuilderTestExecuted = false;
+            bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
 
             using var provider = Sdk.CreateTracerProviderBuilder()
                 .ConfigureServices(services =>
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => { });
+                        services.ConfigureOpenTelemetryTracerProvider(
+                            (sp, builder) => innerConfigureOpenTelemetryLoggerProviderTestExecuted = true);
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
                 {
-                    innerTestExecuted = true;
+                    innerConfigureBuilderTestExecuted = true;
                     Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
                 })
                 .Build();
 
-            Assert.True(innerTestExecuted);
+            Assert.True(innerConfigureBuilderTestExecuted);
+            Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
 
             Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<TracerProvider>());
         }
