@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-* Fixed the `TracerProviderBuilder.AddInstrumentation` factory extension.
+* Fixed a bug which prevented the
+  `TracerProviderBuilder.AddInstrumentation(IServiceProvider, TracerProvider)`
+  factory extension from being called during construction of the SDK
+  `TracerProvider`.
   ([#4468](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4468))
 
 ## 1.5.0-alpha.2
