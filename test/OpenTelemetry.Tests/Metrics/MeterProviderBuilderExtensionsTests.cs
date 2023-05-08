@@ -83,6 +83,39 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void AddInstrumentationTest()
+        {
+            List<object> instrumentation = null;
+
+            using (var provider = Sdk.CreateMeterProviderBuilder()
+                .AddInstrumentation<MyInstrumentation>()
+                .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
+                .AddInstrumentation(new MyInstrumentation())
+                .Build() as MeterProviderSdk)
+            {
+                Assert.NotNull(provider);
+
+                Assert.Equal(3, provider.Instrumentations.Count);
+
+                Assert.Null(((MyInstrumentation)provider.Instrumentations[0]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[0]).Disposed);
+
+                Assert.NotNull(((MyInstrumentation)provider.Instrumentations[1]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[1]).Disposed);
+
+                Assert.Null(((MyInstrumentation)provider.Instrumentations[2]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[2]).Disposed);
+
+                instrumentation = new List<object>(provider.Instrumentations);
+            }
+
+            Assert.NotNull(instrumentation);
+            Assert.True(((MyInstrumentation)instrumentation[0]).Disposed);
+            Assert.True(((MyInstrumentation)instrumentation[1]).Disposed);
+            Assert.True(((MyInstrumentation)instrumentation[2]).Disposed);
+        }
+
+        [Fact]
         public void SetAndConfigureResourceTest()
         {
             var builder = Sdk.CreateMeterProviderBuilder();
@@ -303,6 +336,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         private sealed class MyInstrumentation : IDisposable
         {
+            internal MeterProvider Provider;
             internal bool Disposed;
 
             public void Dispose()
