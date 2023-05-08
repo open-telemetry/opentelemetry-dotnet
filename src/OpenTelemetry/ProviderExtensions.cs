@@ -73,6 +73,10 @@ namespace OpenTelemetry
             {
                 return meterProviderSdk.ServiceProvider;
             }
+            else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
+            {
+                return loggerProviderSdk.ServiceProvider;
+            }
             else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
             {
                 return openTelemetryLoggerProvider.ServiceProvider;
