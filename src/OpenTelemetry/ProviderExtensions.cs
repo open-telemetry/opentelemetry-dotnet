@@ -21,81 +21,82 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry;
-
-/// <summary>
-/// Contains provider extension methods.
-/// </summary>
-public static class ProviderExtensions
+namespace OpenTelemetry
 {
     /// <summary>
-    /// Gets the <see cref="Resource"/> associated with the <see cref="BaseProvider"/>.
+    /// Contains provider extension methods.
     /// </summary>
-    /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
-    /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
-    public static Resource GetResource(this BaseProvider baseProvider)
+    public static class ProviderExtensions
     {
-        if (baseProvider is TracerProviderSdk tracerProviderSdk)
+        /// <summary>
+        /// Gets the <see cref="Resource"/> associated with the <see cref="BaseProvider"/>.
+        /// </summary>
+        /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
+        /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
+        public static Resource GetResource(this BaseProvider baseProvider)
         {
-            return tracerProviderSdk.Resource;
-        }
-        else if (baseProvider is MeterProviderSdk meterProviderSdk)
-        {
-            return meterProviderSdk.Resource;
-        }
-        else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
-        {
-            return loggerProviderSdk.Resource;
-        }
-        else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
-        {
-            return openTelemetryLoggerProvider.Provider.GetResource();
+            if (baseProvider is TracerProviderSdk tracerProviderSdk)
+            {
+                return tracerProviderSdk.Resource;
+            }
+            else if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.Resource;
+            }
+            else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
+            {
+                return loggerProviderSdk.Resource;
+            }
+            else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+            {
+                return openTelemetryLoggerProvider.Provider.GetResource();
+            }
+
+            return Resource.Empty;
         }
 
-        return Resource.Empty;
-    }
-
-    /// <summary>
-    /// Gets the <see cref="Resource"/> associated with the <see cref="BaseProvider"/>.
-    /// </summary>
-    /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
-    /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
-    public static Resource GetDefaultResource(this BaseProvider baseProvider)
-    {
-        var builder = ResourceBuilder.CreateDefault();
-        builder.ServiceProvider = GetServiceProvider(baseProvider);
-        return builder.Build();
-    }
-
-    internal static IServiceProvider? GetServiceProvider(this BaseProvider baseProvider)
-    {
-        if (baseProvider is TracerProviderSdk tracerProviderSdk)
+        /// <summary>
+        /// Gets the <see cref="Resource"/> associated with the <see cref="BaseProvider"/>.
+        /// </summary>
+        /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
+        /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
+        public static Resource GetDefaultResource(this BaseProvider baseProvider)
         {
-            return tracerProviderSdk.ServiceProvider;
-        }
-        else if (baseProvider is MeterProviderSdk meterProviderSdk)
-        {
-            return meterProviderSdk.ServiceProvider;
-        }
-        else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
-        {
-            return loggerProviderSdk.ServiceProvider;
-        }
-        else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
-        {
-            return openTelemetryLoggerProvider.Provider.GetServiceProvider();
+            var builder = ResourceBuilder.CreateDefault();
+            builder.ServiceProvider = GetServiceProvider(baseProvider);
+            return builder.Build();
         }
 
-        return null;
-    }
-
-    internal static Action? GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
-    {
-        if (baseProvider is MeterProviderSdk meterProviderSdk)
+        internal static IServiceProvider? GetServiceProvider(this BaseProvider baseProvider)
         {
-            return meterProviderSdk.CollectObservableInstruments;
+            if (baseProvider is TracerProviderSdk tracerProviderSdk)
+            {
+                return tracerProviderSdk.ServiceProvider;
+            }
+            else if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.ServiceProvider;
+            }
+            else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
+            {
+                return loggerProviderSdk.ServiceProvider;
+            }
+            else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+            {
+                return openTelemetryLoggerProvider.Provider.GetServiceProvider();
+            }
+
+            return null;
         }
 
-        return null;
+        internal static Action? GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
+        {
+            if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.CollectObservableInstruments;
+            }
+
+            return null;
+        }
     }
 }

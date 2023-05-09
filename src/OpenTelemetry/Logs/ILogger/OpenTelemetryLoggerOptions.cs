@@ -20,107 +20,108 @@ using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Logs;
-
-/// <summary>
-/// Contains OpenTelemetry logging options.
-/// </summary>
-public class OpenTelemetryLoggerOptions
+namespace OpenTelemetry.Logs
 {
-    internal readonly List<BaseProcessor<LogRecord>> Processors = new();
-    internal ResourceBuilder? ResourceBuilder;
-
     /// <summary>
-    /// Gets or sets a value indicating whether or not formatted log message
-    /// should be included on generated <see cref="LogRecord"/>s. Default
-    /// value: <see langword="false"/>.
+    /// Contains OpenTelemetry logging options.
     /// </summary>
-    /// <remarks>
-    /// Note: When set to <see langword="false"/> a formatted log message
-    /// will not be included if a message template can be found. If a
-    /// message template is not found, a formatted log message is always
-    /// included.
-    /// </remarks>
-    public bool IncludeFormattedMessage { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether or not log scopes should be
-    /// included on generated <see cref="LogRecord"/>s. Default value:
-    /// <see langword="false"/>.
-    /// </summary>
-    public bool IncludeScopes { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether or not log state should be
-    /// parsed into <see cref="LogRecord.Attributes"/> on generated <see
-    /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
-    /// </summary>
-    /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>Parsing is only executed when the state logged does NOT
-    /// implement <see cref="IReadOnlyList{T}"/> or <see
-    /// cref="IEnumerable{T}"/> where <c>T</c> is <c>KeyValuePair&lt;string,
-    /// object&gt;</c>.</item>
-    /// <item>When <see cref="ParseStateValues"/> is set to <see
-    /// langword="true"/> <see cref="LogRecord.State"/> will always be <see
-    /// langword="null"/>.</item>
-    /// </list>
-    /// </remarks>
-    public bool ParseStateValues { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether or not attributes specified
-    /// via log state should be included on generated <see
-    /// cref="LogRecord"/>s. Default value: <see langword="true"/>.
-    /// </summary>
-    internal bool IncludeAttributes { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether or not the <see
-    /// cref="Activity.TraceStateString"/> for the current <see
-    /// cref="Activity"/> should be included on generated <see
-    /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
-    /// </summary>
-    internal bool IncludeTraceState { get; set; }
-
-    /// <summary>
-    /// Adds processor to the options.
-    /// </summary>
-    /// <param name="processor">Log processor to add.</param>
-    /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-    public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
+    public class OpenTelemetryLoggerOptions
     {
-        Guard.ThrowIfNull(processor);
+        internal readonly List<BaseProcessor<LogRecord>> Processors = new();
+        internal ResourceBuilder? ResourceBuilder;
 
-        this.Processors.Add(processor);
+        /// <summary>
+        /// Gets or sets a value indicating whether or not formatted log message
+        /// should be included on generated <see cref="LogRecord"/>s. Default
+        /// value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: When set to <see langword="false"/> a formatted log message
+        /// will not be included if a message template can be found. If a
+        /// message template is not found, a formatted log message is always
+        /// included.
+        /// </remarks>
+        public bool IncludeFormattedMessage { get; set; }
 
-        return this;
-    }
+        /// <summary>
+        /// Gets or sets a value indicating whether or not log scopes should be
+        /// included on generated <see cref="LogRecord"/>s. Default value:
+        /// <see langword="false"/>.
+        /// </summary>
+        public bool IncludeScopes { get; set; }
 
-    /// <summary>
-    /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
-    /// this provider is built from. Overwrites currently set ResourceBuilder.
-    /// </summary>
-    /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
-    /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-    public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
-    {
-        Guard.ThrowIfNull(resourceBuilder);
+        /// <summary>
+        /// Gets or sets a value indicating whether or not log state should be
+        /// parsed into <see cref="LogRecord.Attributes"/> on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>Parsing is only executed when the state logged does NOT
+        /// implement <see cref="IReadOnlyList{T}"/> or <see
+        /// cref="IEnumerable{T}"/> where <c>T</c> is <c>KeyValuePair&lt;string,
+        /// object&gt;</c>.</item>
+        /// <item>When <see cref="ParseStateValues"/> is set to <see
+        /// langword="true"/> <see cref="LogRecord.State"/> will always be <see
+        /// langword="null"/>.</item>
+        /// </list>
+        /// </remarks>
+        public bool ParseStateValues { get; set; }
 
-        this.ResourceBuilder = resourceBuilder;
-        return this;
-    }
+        /// <summary>
+        /// Gets or sets a value indicating whether or not attributes specified
+        /// via log state should be included on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="true"/>.
+        /// </summary>
+        internal bool IncludeAttributes { get; set; } = true;
 
-    internal OpenTelemetryLoggerOptions Copy()
-    {
-        return new()
+        /// <summary>
+        /// Gets or sets a value indicating whether or not the <see
+        /// cref="Activity.TraceStateString"/> for the current <see
+        /// cref="Activity"/> should be included on generated <see
+        /// cref="LogRecord"/>s. Default value: <see langword="false"/>.
+        /// </summary>
+        internal bool IncludeTraceState { get; set; }
+
+        /// <summary>
+        /// Adds processor to the options.
+        /// </summary>
+        /// <param name="processor">Log processor to add.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            IncludeFormattedMessage = this.IncludeFormattedMessage,
-            IncludeScopes = this.IncludeScopes,
-            ParseStateValues = this.ParseStateValues,
-            IncludeAttributes = this.IncludeAttributes,
-            IncludeTraceState = this.IncludeTraceState,
-        };
+            Guard.ThrowIfNull(processor);
+
+            this.Processors.Add(processor);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// </summary>
+        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
+        {
+            Guard.ThrowIfNull(resourceBuilder);
+
+            this.ResourceBuilder = resourceBuilder;
+            return this;
+        }
+
+        internal OpenTelemetryLoggerOptions Copy()
+        {
+            return new()
+            {
+                IncludeFormattedMessage = this.IncludeFormattedMessage,
+                IncludeScopes = this.IncludeScopes,
+                ParseStateValues = this.ParseStateValues,
+                IncludeAttributes = this.IncludeAttributes,
+                IncludeTraceState = this.IncludeTraceState,
+            };
+        }
     }
 }
