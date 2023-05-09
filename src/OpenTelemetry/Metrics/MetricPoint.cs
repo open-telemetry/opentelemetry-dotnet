@@ -26,6 +26,17 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public struct MetricPoint
     {
+        // Represents the number of update threads using this MetricPoint at any given point of time.
+        // If the value is equal to int.MinValue which is -2147483648, it means that this MetricPoint is available for reuse.
+        // We never increment the ReferenceCount for MetricPoint with no tags (index == 0) but we always decrement it (in the Update methods).
+        // This should be fine. ReferenceCount doesn't matter for MetricPoint with no tags as it is never reclaimed.
+        internal int ReferenceCount;
+
+        // When the AggregatorStore is reclaiming MetricPoints, this serves the purpose of validating the a given thread is using the right
+        // MetricPoint for update by checking it against what as added in the Dictionary. Also, when a thread finds out that the MetricPoint
+        // that its using is already reclaimed, this helps avoid sorting of the tags for adding a new Dictionary entry.
+        internal LookupData? LookupData;
+
         // TODO: Ask spec to define a default value for this.
         private const int DefaultSimpleReservoirPoolSize = 10;
 
@@ -49,10 +60,16 @@ namespace OpenTelemetry.Metrics
             KeyValuePair<string, object>[] tagKeysAndValues,
             double[] histogramExplicitBounds,
             int exponentialHistogramMaxSize,
-            int exponentialHistogramMaxScale)
+            int exponentialHistogramMaxScale,
+            LookupData? lookupData = null)
         {
             Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
             Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
+
+            if (aggregatorStore!.OutputDelta)
+            {
+                Debug.Assert(lookupData != null, "LookupData was null.");
+            }
 
             this.aggType = aggType;
             this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
@@ -60,6 +77,8 @@ namespace OpenTelemetry.Metrics
             this.snapshotValue = default;
             this.deltaLastValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+            this.ReferenceCount = 0;
+            this.LookupData = lookupData;
 
             ExemplarReservoir? reservoir = null;
             if (this.aggType == AggregationType.HistogramWithBuckets ||
@@ -420,6 +439,11 @@ namespace OpenTelemetry.Metrics
             // TODO: For Delta, this can be mitigated
             // by ignoring Zero points
             this.MetricPointStatus = MetricPointStatus.CollectPending;
+
+            if (this.aggregatorStore.OutputDelta)
+            {
+                Interlocked.Decrement(ref this.ReferenceCount);
+            }
         }
 
         internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags, bool isSampled)
@@ -548,6 +572,11 @@ namespace OpenTelemetry.Metrics
             // TODO: For Delta, this can be mitigated
             // by ignoring Zero points
             this.MetricPointStatus = MetricPointStatus.CollectPending;
+
+            if (this.aggregatorStore.OutputDelta)
+            {
+                Interlocked.Decrement(ref this.ReferenceCount);
+            }
         }
 
         internal void Update(double number)
@@ -639,6 +668,11 @@ namespace OpenTelemetry.Metrics
             // TODO: For Delta, this can be mitigated
             // by ignoring Zero points
             this.MetricPointStatus = MetricPointStatus.CollectPending;
+
+            if (this.aggregatorStore.OutputDelta)
+            {
+                Interlocked.Decrement(ref this.ReferenceCount);
+            }
         }
 
         internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags, bool isSampled)
@@ -775,6 +809,11 @@ namespace OpenTelemetry.Metrics
             // TODO: For Delta, this can be mitigated
             // by ignoring Zero points
             this.MetricPointStatus = MetricPointStatus.CollectPending;
+
+            if (this.aggregatorStore.OutputDelta)
+            {
+                Interlocked.Decrement(ref this.ReferenceCount);
+            }
         }
 
         internal void TakeSnapshot(bool outputDelta)
