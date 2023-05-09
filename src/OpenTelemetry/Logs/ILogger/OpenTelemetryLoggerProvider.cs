@@ -47,7 +47,7 @@ namespace OpenTelemetry.Logs
         /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
         /// </summary>
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
-        [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead this ctor will be removed in a future version.")]
+        // todo: [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead this ctor will be removed in a future version.")]
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
         {
             Guard.ThrowIfNull(options);
