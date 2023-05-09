@@ -149,5 +149,72 @@ namespace Benchmarks.Metrics
             };
             this.counter.Add(100, tags);
         }
+
+        [Benchmark]
+        public void CounterWith1LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith3LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 10)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 10)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith5LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith6LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith7LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+            };
+            this.counter?.Add(100, tags);
+        }
     }
 }
