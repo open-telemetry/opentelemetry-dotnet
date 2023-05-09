@@ -22,35 +22,35 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.3, OS=Windows 11 (10.0.22621.963)
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.101
-  [Host]     : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
+.NET SDK=7.0.203
+  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
-|                      Method | BoundCount |      Mean |     Error |    StdDev | Allocated |
-|---------------------------- |----------- |----------:|----------:|----------:|----------:|
-|            HistogramHotPath |         10 |  47.80 ns |  0.111 ns |  0.098 ns |         - |
-|  HistogramWith1LabelHotPath |         10 |  99.18 ns |  0.448 ns |  0.419 ns |         - |
-| HistogramWith3LabelsHotPath |         10 | 189.60 ns |  0.872 ns |  0.815 ns |         - |
-| HistogramWith5LabelsHotPath |         10 | 263.10 ns |  2.813 ns |  2.494 ns |         - |
-| HistogramWith7LabelsHotPath |         10 | 309.09 ns |  1.603 ns |  1.421 ns |         - |
-|            HistogramHotPath |         49 |  61.80 ns |  0.282 ns |  0.235 ns |         - |
-|  HistogramWith1LabelHotPath |         49 | 111.22 ns |  0.347 ns |  0.290 ns |         - |
-| HistogramWith3LabelsHotPath |         49 | 203.53 ns |  2.263 ns |  2.006 ns |         - |
-| HistogramWith5LabelsHotPath |         49 | 278.45 ns |  2.401 ns |  2.005 ns |         - |
-| HistogramWith7LabelsHotPath |         49 | 331.96 ns |  4.160 ns |  3.892 ns |         - |
-|            HistogramHotPath |         50 |  62.30 ns |  0.385 ns |  0.342 ns |         - |
-|  HistogramWith1LabelHotPath |         50 | 108.47 ns |  0.132 ns |  0.111 ns |         - |
-| HistogramWith3LabelsHotPath |         50 | 237.33 ns |  3.291 ns |  3.079 ns |         - |
-| HistogramWith5LabelsHotPath |         50 | 316.26 ns |  1.989 ns |  1.763 ns |         - |
-| HistogramWith7LabelsHotPath |         50 | 359.67 ns |  2.359 ns |  2.091 ns |         - |
-|            HistogramHotPath |       1000 |  82.72 ns |  0.366 ns |  0.286 ns |         - |
-|  HistogramWith1LabelHotPath |       1000 | 134.84 ns |  1.502 ns |  1.331 ns |         - |
-| HistogramWith3LabelsHotPath |       1000 | 555.89 ns |  3.501 ns |  2.923 ns |         - |
-| HistogramWith5LabelsHotPath |       1000 | 645.98 ns | 11.965 ns |  9.991 ns |         - |
-| HistogramWith7LabelsHotPath |       1000 | 700.72 ns | 13.467 ns | 12.597 ns |         - |
+|                      Method | BoundCount |      Mean |     Error |    StdDev |    Median | Allocated |
+|---------------------------- |----------- |----------:|----------:|----------:|----------:|----------:|
+|            HistogramHotPath |         10 |  50.11 ns |  0.219 ns |  0.204 ns |  50.06 ns |         - |
+|  HistogramWith1LabelHotPath |         10 | 108.52 ns |  0.559 ns |  0.523 ns | 108.44 ns |         - |
+| HistogramWith3LabelsHotPath |         10 | 212.31 ns |  1.873 ns |  1.661 ns | 212.32 ns |         - |
+| HistogramWith5LabelsHotPath |         10 | 299.97 ns |  5.162 ns |  5.737 ns | 298.60 ns |         - |
+| HistogramWith7LabelsHotPath |         10 | 349.53 ns |  2.115 ns |  1.875 ns | 349.62 ns |         - |
+|            HistogramHotPath |         49 |  61.34 ns |  0.171 ns |  0.160 ns |  61.35 ns |         - |
+|  HistogramWith1LabelHotPath |         49 | 118.64 ns |  1.539 ns |  1.285 ns | 118.09 ns |         - |
+| HistogramWith3LabelsHotPath |         49 | 226.70 ns |  1.653 ns |  1.465 ns | 226.62 ns |         - |
+| HistogramWith5LabelsHotPath |         49 | 314.40 ns |  5.185 ns |  4.850 ns | 313.96 ns |         - |
+| HistogramWith7LabelsHotPath |         49 | 375.37 ns |  5.796 ns |  5.138 ns | 373.76 ns |         - |
+|            HistogramHotPath |         50 |  60.08 ns |  0.062 ns |  0.049 ns |  60.08 ns |         - |
+|  HistogramWith1LabelHotPath |         50 | 118.16 ns |  0.640 ns |  0.568 ns | 118.03 ns |         - |
+| HistogramWith3LabelsHotPath |         50 | 258.96 ns |  3.710 ns |  3.098 ns | 259.70 ns |         - |
+| HistogramWith5LabelsHotPath |         50 | 353.81 ns |  5.646 ns |  5.281 ns | 351.81 ns |         - |
+| HistogramWith7LabelsHotPath |         50 | 406.75 ns |  6.491 ns |  6.072 ns | 406.01 ns |         - |
+|            HistogramHotPath |       1000 |  86.82 ns |  0.543 ns |  0.481 ns |  86.68 ns |         - |
+|  HistogramWith1LabelHotPath |       1000 | 147.04 ns |  0.535 ns |  0.447 ns | 146.88 ns |         - |
+| HistogramWith3LabelsHotPath |       1000 | 619.11 ns | 10.943 ns | 14.608 ns | 617.10 ns |         - |
+| HistogramWith5LabelsHotPath |       1000 | 759.64 ns | 22.509 ns | 63.855 ns | 737.58 ns |         - |
+| HistogramWith7LabelsHotPath |       1000 | 760.85 ns |  6.220 ns |  5.514 ns | 761.68 ns |         - |
 */
 
 namespace Benchmarks.Metrics
