@@ -173,6 +173,39 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void AddInstrumentationTest()
+        {
+            List<object> instrumentation = null;
+
+            using (var provider = Sdk.CreateTracerProviderBuilder()
+                .AddInstrumentation<MyInstrumentation>()
+                .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
+                .AddInstrumentation(new MyInstrumentation())
+                .Build() as TracerProviderSdk)
+            {
+                Assert.NotNull(provider);
+
+                Assert.Equal(3, provider.Instrumentations.Count);
+
+                Assert.Null(((MyInstrumentation)provider.Instrumentations[0]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[0]).Disposed);
+
+                Assert.NotNull(((MyInstrumentation)provider.Instrumentations[1]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[1]).Disposed);
+
+                Assert.Null(((MyInstrumentation)provider.Instrumentations[2]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[2]).Disposed);
+
+                instrumentation = new List<object>(provider.Instrumentations);
+            }
+
+            Assert.NotNull(instrumentation);
+            Assert.True(((MyInstrumentation)instrumentation[0]).Disposed);
+            Assert.True(((MyInstrumentation)instrumentation[1]).Disposed);
+            Assert.True(((MyInstrumentation)instrumentation[2]).Disposed);
+        }
+
+        [Fact]
         public void SetAndConfigureResourceTest()
         {
             var builder = Sdk.CreateTracerProviderBuilder();
@@ -276,24 +309,27 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(false)]
         public void TracerProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
         {
-            bool innerTestExecuted = false;
+            bool innerConfigureBuilderTestExecuted = false;
+            bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
 
             using var provider = Sdk.CreateTracerProviderBuilder()
                 .ConfigureServices(services =>
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => { });
+                        services.ConfigureOpenTelemetryTracerProvider(
+                            (sp, builder) => innerConfigureOpenTelemetryLoggerProviderTestExecuted = true);
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
                 {
-                    innerTestExecuted = true;
+                    innerConfigureBuilderTestExecuted = true;
                     Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
                 })
                 .Build();
 
-            Assert.True(innerTestExecuted);
+            Assert.True(innerConfigureBuilderTestExecuted);
+            Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
 
             Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<TracerProvider>());
         }
@@ -431,6 +467,7 @@ namespace OpenTelemetry.Trace.Tests
 
         private sealed class MyInstrumentation : IDisposable
         {
+            internal TracerProvider Provider;
             internal bool Disposed;
 
             public void Dispose()
