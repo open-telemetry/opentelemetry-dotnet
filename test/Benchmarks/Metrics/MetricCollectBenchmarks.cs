@@ -21,17 +21,17 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
-Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
-.NET Core SDK=5.0.400
-  [Host]     : .NET Core 3.1.18 (CoreCLR 4.700.21.35901, CoreFX 4.700.21.36305), X64 RyuJIT
-  DefaultJob : .NET Core 3.1.18 (CoreCLR 4.700.21.35901, CoreFX 4.700.21.36305), X64 RyuJIT
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK=7.0.203
+  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
-|  Method | UseWithRef |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
-| Collect |      False | 51.38 us | 1.027 us | 1.261 us |     - |     - |     - |     136 B |
-| Collect |       True | 33.86 us | 0.716 us | 2.088 us |     - |     - |     - |     136 B |
+|  Method | UseWithRef |     Mean |    Error |   StdDev |   Gen0 | Allocated |
+|-------- |----------- |---------:|---------:|---------:|-------:|----------:|
+| Collect |      False | 16.24 us | 0.233 us | 0.621 us | 0.0153 |     160 B |
+| Collect |       True | 12.94 us | 0.092 us | 0.081 us | 0.0153 |     160 B |
 */
 
 namespace Benchmarks.Metrics

@@ -27,10 +27,52 @@ namespace OpenTelemetry.Context
     {
         private static readonly ConcurrentDictionary<string, object> Slots = new();
 
+        private static Type contextSlotType;
+
+        private static RuntimeContextSlotFactory runtimeContextSlotFactory;
+
+        static RuntimeContext()
+        {
+            ContextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
+        }
+
         /// <summary>
         /// Gets or sets the actual context carrier implementation.
         /// </summary>
-        public static Type ContextSlotType { get; set; } = typeof(AsyncLocalRuntimeContextSlot<>);
+        public static Type ContextSlotType
+        {
+            get => contextSlotType;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(value));
+
+                if (!value.IsGenericType || !value.IsGenericTypeDefinition || value.GetGenericArguments().Length != 1)
+                {
+                    throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument");
+                }
+
+                if (value == typeof(AsyncLocalRuntimeContextSlot<>))
+                {
+                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.AsyncLocalRuntimeContextSlotFactory();
+                }
+                else if (value == typeof(ThreadLocalRuntimeContextSlot<>))
+                {
+                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.ThreadLocalRuntimeContextSlotFactory();
+                }
+#if NETFRAMEWORK
+                else if (value == typeof(RemotingRuntimeContextSlot<>))
+                {
+                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.RemotingRuntimeContextSlotFactory();
+                }
+#endif
+                else
+                {
+                    throw new NotSupportedException("${value} is not supported.");
+                }
+
+                contextSlotType = value;
+            }
+        }
 
         /// <summary>
         /// Register a named context slot.
@@ -49,9 +91,8 @@ namespace OpenTelemetry.Context
                     throw new InvalidOperationException($"Context slot already registered: '{slotName}'");
                 }
 
-                var type = ContextSlotType.MakeGenericType(typeof(T));
-                var ctor = type.GetConstructor(new Type[] { typeof(string) });
-                var slot = (RuntimeContextSlot<T>)ctor.Invoke(new object[] { slotName });
+                var slot = runtimeContextSlotFactory.Create<T>(slotName);
+
                 Slots[slotName] = slot;
                 return slot;
             }
