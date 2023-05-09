@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="$(SwashbuckleAspNetCorePkgVer)" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(RuntimeInstrumentationPkgVer)" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
   </ItemGroup>
 
   <ItemGroup>

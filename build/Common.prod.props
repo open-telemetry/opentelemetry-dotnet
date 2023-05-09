@@ -2,12 +2,12 @@
   <Import Project=".\Common.props" />
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="$(MinVerPkgVer)" Condition="'$(IntegrationBuild)' != 'true'">
+    <PackageReference Include="MinVer" Condition="'$(IntegrationBuild)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition=" $(OS) == 'Windows_NT'">
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Condition=" $(OS) == 'Windows_NT'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
-    <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.DotNet.ApiCompat" PrivateAssets="All" />
     <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
   </ItemGroup>
 

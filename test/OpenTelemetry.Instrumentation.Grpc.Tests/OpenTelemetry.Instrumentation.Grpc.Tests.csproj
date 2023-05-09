@@ -15,19 +15,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
-    <PackageReference Include="Moq" Version="$(MoqPkgVer)" />
-    <PackageReference Include="xunit" Version="$(XUnitPkgVer)" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVisualStudioPkgVer)">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
+    <DotNetCliToolReference Include="dotnet-xunit" />
 
-    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
-    <PackageReference Include="Grpc.AspNetCore.Server" Version="$(GrpcAspNetCoreServerPkgVer)" Condition="'$(TargetFramework)' != 'net462'" />
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
-    <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="All" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFramework)' != 'net462'" />
+    <PackageReference Include="Grpc.Net.Client"  />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
