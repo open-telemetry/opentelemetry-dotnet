@@ -28,7 +28,7 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerOptions
     {
         internal readonly List<BaseProcessor<LogRecord>> Processors = new();
-        internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
+        internal ResourceBuilder? ResourceBuilder;
 
         /// <summary>
         /// Gets or sets a value indicating whether or not formatted log message
@@ -110,6 +110,18 @@ namespace OpenTelemetry.Logs
 
             this.ResourceBuilder = resourceBuilder;
             return this;
+        }
+
+        internal OpenTelemetryLoggerOptions Copy()
+        {
+            return new()
+            {
+                IncludeFormattedMessage = this.IncludeFormattedMessage,
+                IncludeScopes = this.IncludeScopes,
+                ParseStateValues = this.ParseStateValues,
+                IncludeAttributes = this.IncludeAttributes,
+                IncludeTraceState = this.IncludeTraceState,
+            };
         }
     }
 }

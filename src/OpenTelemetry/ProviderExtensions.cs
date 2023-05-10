@@ -39,13 +39,17 @@ namespace OpenTelemetry
             {
                 return tracerProviderSdk.Resource;
             }
-            else if (baseProvider is OpenTelemetryLoggerProvider otelLoggerProvider)
-            {
-                return otelLoggerProvider.Resource;
-            }
             else if (baseProvider is MeterProviderSdk meterProviderSdk)
             {
                 return meterProviderSdk.Resource;
+            }
+            else if (baseProvider is LoggerProviderSdk loggerProviderSdk)
+            {
+                return loggerProviderSdk.Resource;
+            }
+            else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+            {
+                return openTelemetryLoggerProvider.Provider.GetResource();
             }
 
             return Resource.Empty;
@@ -79,7 +83,7 @@ namespace OpenTelemetry
             }
             else if (baseProvider is OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
             {
-                return openTelemetryLoggerProvider.ServiceProvider;
+                return openTelemetryLoggerProvider.Provider.GetServiceProvider();
             }
 
             return null;
