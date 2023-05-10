@@ -15,11 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0'" />
-    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
-    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
-    <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" Condition="'$(TargetFramework)' != 'net6.0'" />
+    <PackageReference Include="Grpc.Net.Client" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0'" />
+    <PackageReference Include="Grpc" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Condition="'$(TargetFramework)' != 'net6.0'" />
   </ItemGroup>
 
   <ItemGroup>
