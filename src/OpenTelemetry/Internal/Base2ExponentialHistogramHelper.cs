@@ -61,7 +61,7 @@ internal static class Base2ExponentialHistogramHelper
 
 #if !NET6_0_OR_GREATER
     // Math.ScaleB was introduced in .NET Core 3.0.
-    // This is the implementation of from:
+    // This implementation is from:
     // https://github.com/dotnet/runtime/blob/v7.0.0/src/libraries/System.Private.CoreLib/src/System/Math.cs#L1494
 #pragma warning disable SA1201 // Elements should appear in the correct order
 #pragma warning disable SA1203 // Constants should appear before fields
