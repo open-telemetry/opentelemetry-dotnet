@@ -16,12 +16,11 @@
 
 #nullable enable
 
-namespace OpenTelemetry.Logs
-{
-    internal interface ILogRecordPool
-    {
-        LogRecord Rent();
+namespace OpenTelemetry.Logs;
 
-        void Return(LogRecord logRecord);
-    }
+internal interface ILogRecordPool
+{
+    LogRecord Rent();
+
+    void Return(LogRecord logRecord);
 }
