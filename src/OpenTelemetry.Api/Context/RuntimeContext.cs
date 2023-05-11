@@ -67,7 +67,8 @@ namespace OpenTelemetry.Context
 #endif
                 else
                 {
-                    throw new NotSupportedException("${value} is not supported.");
+                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.ReflectionContextSlotFactory(contextSlotType);
+                    //throw new NotSupportedException("${value} is not supported.");
                 }
 
                 contextSlotType = value;

@@ -16,6 +16,8 @@
 
 #nullable enable
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace OpenTelemetry.Context
 {
     internal abstract class RuntimeContextSlotFactory
@@ -40,6 +42,24 @@ namespace OpenTelemetry.Context
         {
             public override RuntimeContextSlot<T> Create<T>(string name)
                 => new ThreadLocalRuntimeContextSlot<T>(name);
+        }
+
+        public sealed class ReflectionContextSlotFactory : RuntimeContextSlotFactory
+        {
+            private readonly Type runtimeContextSlotType;
+
+            [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
+            public ReflectionContextSlotFactory(Type runtimeContextSlotType)
+            {
+                this.runtimeContextSlotType = runtimeContextSlotType;
+            }
+
+            public override RuntimeContextSlot<T> Create<T>(string name)
+            {
+                var type = this.runtimeContextSlotType.MakeGenericType(typeof(T));
+                var ctor = type.GetConstructor(new Type[] { typeof(string) });
+                return (RuntimeContextSlot<T>)ctor.Invoke(new object[] { name });
+            }
         }
     }
 }

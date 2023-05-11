@@ -15,4 +15,8 @@
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticSourcePkgVer)" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\RequiresDynamicCodeAttribute.cs" Link ="Includes\RequiresDynamicCodeAttribute.cs" />
+  </ItemGroup>
 </Project>
