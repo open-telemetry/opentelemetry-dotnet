@@ -23,140 +23,139 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Logs
+namespace OpenTelemetry.Logs;
+
+/// <summary>
+/// An <see cref="ILoggerProvider"/> implementation for exporting logs using OpenTelemetry.
+/// </summary>
+[ProviderAlias("OpenTelemetry")]
+public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
 {
-    /// <summary>
-    /// An <see cref="ILoggerProvider"/> implementation for exporting logs using OpenTelemetry.
-    /// </summary>
-    [ProviderAlias("OpenTelemetry")]
-    public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
+    internal readonly LoggerProvider Provider;
+    private readonly bool ownsProvider;
+    private readonly Hashtable loggers = new();
+    private bool disposed;
+
+    static OpenTelemetryLoggerProvider()
     {
-        internal readonly LoggerProvider Provider;
-        private readonly bool ownsProvider;
-        private readonly Hashtable loggers = new();
-        private bool disposed;
+        // Accessing Sdk class is just to trigger its static ctor,
+        // which sets default Propagators and default Activity Id format
+        _ = Sdk.SuppressInstrumentation;
+    }
 
-        static OpenTelemetryLoggerProvider()
-        {
-            // Accessing Sdk class is just to trigger its static ctor,
-            // which sets default Propagators and default Activity Id format
-            _ = Sdk.SuppressInstrumentation;
-        }
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+    /// </summary>
+    /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
+    // todo: [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead this ctor will be removed in a future version.")]
+    public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
+    {
+        Guard.ThrowIfNull(options);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
-        /// </summary>
-        /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
-        // todo: [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead this ctor will be removed in a future version.")]
-        public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
-        {
-            Guard.ThrowIfNull(options);
+        var optionsInstance = options.CurrentValue;
 
-            var optionsInstance = options.CurrentValue;
-
-            this.Provider = Sdk
-                .CreateLoggerProviderBuilder()
-                .ConfigureBuilder((sp, builder) =>
+        this.Provider = Sdk
+            .CreateLoggerProviderBuilder()
+            .ConfigureBuilder((sp, builder) =>
+            {
+                if (optionsInstance.ResourceBuilder != null)
                 {
-                    if (optionsInstance.ResourceBuilder != null)
-                    {
-                        builder.SetResourceBuilder(optionsInstance.ResourceBuilder);
-                    }
+                    builder.SetResourceBuilder(optionsInstance.ResourceBuilder);
+                }
 
-                    foreach (var processor in optionsInstance.Processors)
-                    {
-                        builder.AddProcessor(processor);
-                    }
-                })
-                .Build();
+                foreach (var processor in optionsInstance.Processors)
+                {
+                    builder.AddProcessor(processor);
+                }
+            })
+            .Build();
 
-            this.Options = optionsInstance.Copy();
-            this.ownsProvider = true;
-        }
+        this.Options = optionsInstance.Copy();
+        this.ownsProvider = true;
+    }
 
-        internal OpenTelemetryLoggerProvider(
-            LoggerProvider loggerProvider,
-            OpenTelemetryLoggerOptions options,
-            bool disposeProvider)
+    internal OpenTelemetryLoggerProvider(
+        LoggerProvider loggerProvider,
+        OpenTelemetryLoggerOptions options,
+        bool disposeProvider)
+    {
+        Debug.Assert(loggerProvider != null, "loggerProvider was null");
+        Debug.Assert(options != null, "options was null");
+
+        this.Provider = loggerProvider!;
+        this.Options = options!.Copy();
+        this.ownsProvider = disposeProvider;
+    }
+
+    internal OpenTelemetryLoggerOptions Options { get; }
+
+    internal IExternalScopeProvider? ScopeProvider { get; private set; }
+
+    /// <inheritdoc/>
+    void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
+    {
+        this.ScopeProvider = scopeProvider;
+
+        lock (this.loggers)
         {
-            Debug.Assert(loggerProvider != null, "loggerProvider was null");
-            Debug.Assert(options != null, "options was null");
-
-            this.Provider = loggerProvider!;
-            this.Options = options!.Copy();
-            this.ownsProvider = disposeProvider;
+            foreach (DictionaryEntry entry in this.loggers)
+            {
+                if (entry.Value is OpenTelemetryLogger logger)
+                {
+                    logger.ScopeProvider = scopeProvider;
+                }
+            }
         }
+    }
 
-        internal OpenTelemetryLoggerOptions Options { get; }
-
-        internal IExternalScopeProvider? ScopeProvider { get; private set; }
-
-        /// <inheritdoc/>
-        void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
+    /// <inheritdoc/>
+    public ILogger CreateLogger(string categoryName)
+    {
+        if (this.loggers[categoryName] is not ILogger logger)
         {
-            this.ScopeProvider = scopeProvider;
-
             lock (this.loggers)
             {
-                foreach (DictionaryEntry entry in this.loggers)
+                logger = (this.loggers[categoryName] as ILogger)!;
+                if (logger == null)
                 {
-                    if (entry.Value is OpenTelemetryLogger logger)
+                    var loggerProviderSdk = this.Provider as LoggerProviderSdk;
+                    if (loggerProviderSdk == null)
                     {
-                        logger.ScopeProvider = scopeProvider;
+                        logger = NullLogger.Instance;
                     }
-                }
-            }
-        }
-
-        /// <inheritdoc/>
-        public ILogger CreateLogger(string categoryName)
-        {
-            if (this.loggers[categoryName] is not ILogger logger)
-            {
-                lock (this.loggers)
-                {
-                    logger = (this.loggers[categoryName] as ILogger)!;
-                    if (logger == null)
+                    else
                     {
-                        var loggerProviderSdk = this.Provider as LoggerProviderSdk;
-                        if (loggerProviderSdk == null)
+                        logger = new OpenTelemetryLogger(loggerProviderSdk, this.Options, categoryName)
                         {
-                            logger = NullLogger.Instance;
-                        }
-                        else
-                        {
-                            logger = new OpenTelemetryLogger(loggerProviderSdk, this.Options, categoryName)
-                            {
-                                ScopeProvider = this.ScopeProvider,
-                            };
-                        }
-
-                        this.loggers[categoryName] = logger;
+                            ScopeProvider = this.ScopeProvider,
+                        };
                     }
+
+                    this.loggers[categoryName] = logger;
                 }
             }
-
-            return logger;
         }
 
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
+        return logger;
+    }
+
+    /// <inheritdoc/>
+    protected override void Dispose(bool disposing)
+    {
+        if (!this.disposed)
         {
-            if (!this.disposed)
+            if (disposing)
             {
-                if (disposing)
+                if (this.ownsProvider)
                 {
-                    if (this.ownsProvider)
-                    {
-                        this.Provider.Dispose();
-                    }
+                    this.Provider.Dispose();
                 }
-
-                this.disposed = true;
-                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(OpenTelemetryLoggerProvider));
             }
 
-            base.Dispose(disposing);
+            this.disposed = true;
+            OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(OpenTelemetryLoggerProvider));
         }
+
+        base.Dispose(disposing);
     }
 }
