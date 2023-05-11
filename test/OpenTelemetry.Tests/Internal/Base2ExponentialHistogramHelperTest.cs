@@ -188,6 +188,7 @@ public class Base2ExponentialHistogramHelperTest
             return;
         }
 
+        this.output.WriteLine(string.Empty);
         this.output.WriteLine("scale,index,unusedIndex,LowerBound(index),MapToIndex(LowerBound(index)),preciseLowerBound,lowerBoundDelta,marginOfError,ops");
     }
 
@@ -206,23 +207,30 @@ public class Base2ExponentialHistogramHelperTest
 
         var preciseLowerBound = lowerBound;
         var newRoundTrip = roundTrip;
-        var i = 0;
+        var increments = 0;
         var unusedIndex = false;
 
         if (index == roundTrip)
         {
-            for (i = 0; newRoundTrip != index - 1; ++i)
+            for (; newRoundTrip != index - 1;)
             {
                 preciseLowerBound = BitDecrement(preciseLowerBound);
                 newRoundTrip = histogram.MapToIndex(preciseLowerBound);
+                ++increments;
             }
         }
         else
         {
-            for (i = 0; newRoundTrip < index; ++i)
+            for (; newRoundTrip < index;)
             {
-                preciseLowerBound = BitIncrement(preciseLowerBound);
-                newRoundTrip = histogram.MapToIndex(preciseLowerBound);
+                var newLowerBound = BitIncrement(preciseLowerBound);
+                newRoundTrip = histogram.MapToIndex(newLowerBound);
+
+                if (newRoundTrip < index)
+                {
+                    preciseLowerBound = newLowerBound;
+                    ++increments;
+                }
             }
 
             // This represents an index that MapToIndex will never map to.
@@ -235,7 +243,7 @@ public class Base2ExponentialHistogramHelperTest
 
         var lowerBoundDelta = preciseLowerBound - lowerBound;
         var marginOfError = lowerBoundDelta / lowerBound;
-        this.output.WriteLine($"{scale},{index},{unusedIndex},{lowerBound},{roundTrip},{preciseLowerBound},{lowerBoundDelta},{marginOfError},{i}");
+        this.output.WriteLine($"{scale},{index},{unusedIndex},{lowerBound},{roundTrip},{preciseLowerBound},{lowerBoundDelta},{marginOfError},{increments}");
     }
 
     // Math.BitIncrement was introduced in .NET Core 3.0.
