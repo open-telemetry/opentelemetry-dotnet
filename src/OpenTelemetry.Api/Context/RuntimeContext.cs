@@ -47,7 +47,12 @@ namespace OpenTelemetry.Context
 
                 if (!value.IsGenericType || !value.IsGenericTypeDefinition || value.GetGenericArguments().Length != 1)
                 {
-                    throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument");
+                    throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument.");
+                }
+
+                if (!typeof(RuntimeContextSlot<>).IsAssignableFrom(value.GetType()))
+                {
+                    throw new NotSupportedException($"Type '{value}' does not implement RuntimeContextSlot<>.");
                 }
 
                 if (value == typeof(AsyncLocalRuntimeContextSlot<>))
@@ -66,8 +71,16 @@ namespace OpenTelemetry.Context
 #endif
                 else
                 {
+#if NETSTANDARD2_1_OR_GREATER || NET6_OR_GREATER
+                    if (!RuntimeFeature.IsDynamicCodeSupported)
+                    {
+                        throw new NotSupportedException($"Custom RuntimeContextSlot type '{value}' cannot be used because dynamic code is not supported");
+                    }
+#endif
+
+                    // todo: Validate the custom type has a ctor accepting string parameter
+
                     runtimeContextSlotFactory = new RuntimeContextSlotFactory.ReflectionContextSlotFactory(contextSlotType);
-                    //throw new NotSupportedException("${value} is not supported.");
                 }
 
                 contextSlotType = value;

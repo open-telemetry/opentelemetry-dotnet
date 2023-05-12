@@ -40,7 +40,7 @@ namespace OpenTelemetry.Context
 
         public sealed class ThreadLocalRuntimeContextSlotFactory : RuntimeContextSlotFactory
         {
-            public override RuntimeContextSlot<T> Create<T>(string name)
+                public override RuntimeContextSlot<T> Create<T>(string name)
                 => new ThreadLocalRuntimeContextSlot<T>(name);
         }
 
