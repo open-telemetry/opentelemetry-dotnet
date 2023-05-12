@@ -46,7 +46,7 @@ public sealed class OpenTelemetryBuilder
 
     /// <summary>
     /// Registers an action to configure the <see cref="ResourceBuilder"/>s used
-    /// by tracing and metrics.
+    /// by tracing, metrics, and logging.
     /// </summary>
     /// <remarks>
     /// Note: This is safe to be called multiple times and by library authors.
@@ -65,6 +65,9 @@ public sealed class OpenTelemetryBuilder
             (sp, builder) => builder.ConfigureResource(configure));
 
         this.Services.ConfigureOpenTelemetryTracerProvider(
+            (sp, builder) => builder.ConfigureResource(configure));
+
+        this.Services.ConfigureOpenTelemetryLoggerProvider(
             (sp, builder) => builder.ConfigureResource(configure));
 
         return this;
