@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -42,6 +43,8 @@ namespace OpenTelemetry.Context
         public static Type ContextSlotType
         {
             get => contextSlotType;
+
+            [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
             set
             {
                 Guard.ThrowIfNull(value, nameof(value));

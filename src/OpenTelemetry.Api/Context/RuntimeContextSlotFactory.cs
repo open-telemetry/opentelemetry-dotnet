@@ -44,16 +44,17 @@ namespace OpenTelemetry.Context
                 => new ThreadLocalRuntimeContextSlot<T>(name);
         }
 
+        [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
         public sealed class ReflectionContextSlotFactory : RuntimeContextSlotFactory
         {
             private readonly Type runtimeContextSlotType;
 
-            [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
             public ReflectionContextSlotFactory(Type runtimeContextSlotType)
             {
                 this.runtimeContextSlotType = runtimeContextSlotType;
             }
 
+            //[RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
             public override RuntimeContextSlot<T> Create<T>(string name)
             {
                 var type = this.runtimeContextSlotType.MakeGenericType(typeof(T));
