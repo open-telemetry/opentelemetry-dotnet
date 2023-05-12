@@ -277,8 +277,8 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            var collectObservableInstruments = this.parentProvider.GetObservableInstrumentCollectCallback();
-            collectObservableInstruments?.Invoke();
+            var meterProviderSdk = this.parentProvider as MeterProviderSdk;
+            meterProviderSdk?.CollectObservableInstruments();
 
             OpenTelemetrySdkEventSource.Log.MetricReaderEvent("Observable instruments collected.");
 

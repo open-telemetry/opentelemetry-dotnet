@@ -88,14 +88,4 @@ public static class ProviderExtensions
 
         return null;
     }
-
-    internal static Action? GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
-    {
-        if (baseProvider is MeterProviderSdk meterProviderSdk)
-        {
-            return meterProviderSdk.CollectObservableInstruments;
-        }
-
-        return null;
-    }
 }
