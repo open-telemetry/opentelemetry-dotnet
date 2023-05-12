@@ -50,7 +50,7 @@ namespace OpenTelemetry.Context
                     throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument.");
                 }
 
-                if (!typeof(RuntimeContextSlot<>).IsAssignableFrom(value.GetType()))
+                if (!typeof(RuntimeContextSlot<>).IsAssignableFrom(value))
                 {
                     throw new NotSupportedException($"Type '{value}' does not implement RuntimeContextSlot<>.");
                 }
