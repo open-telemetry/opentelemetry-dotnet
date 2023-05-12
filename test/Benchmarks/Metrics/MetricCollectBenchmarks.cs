@@ -28,10 +28,10 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
   DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
-|  Method | UseWithRef |     Mean |    Error |   StdDev |   Gen0 | Allocated |
-|-------- |----------- |---------:|---------:|---------:|-------:|----------:|
-| Collect |      False | 16.24 us | 0.233 us | 0.621 us | 0.0153 |     160 B |
-| Collect |       True | 12.94 us | 0.092 us | 0.081 us | 0.0153 |     160 B |
+|  Method | UseWithRef |     Mean |    Error |   StdDev | Allocated |
+|-------- |----------- |---------:|---------:|---------:|----------:|
+| Collect |      False | 18.45 us | 0.161 us | 0.151 us |      96 B |
+| Collect |       True | 17.71 us | 0.347 us | 0.644 us |      96 B |
 */
 
 namespace Benchmarks.Metrics
