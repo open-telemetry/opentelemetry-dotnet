@@ -340,9 +340,9 @@ public class OpenTelemetryServicesExtensionsTests
 
         Assert.NotNull(serviceProvider);
 
-        var tracerProviders = serviceProvider.GetServices<LoggerProvider>();
+        var loggerProviders = serviceProvider.GetServices<LoggerProvider>();
 
-        Assert.Single(tracerProviders);
+        Assert.Single(loggerProviders);
     }
 
     [Fact]
