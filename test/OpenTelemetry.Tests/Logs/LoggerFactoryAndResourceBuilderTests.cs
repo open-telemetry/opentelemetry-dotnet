@@ -64,11 +64,12 @@ namespace OpenTelemetry.Logs.Tests
                     options.AddProcessor(new SimpleLogRecordExportProcessor(exporter));
                 });
             });
+
             var logger = loggerFactory.CreateLogger<LoggerFactoryAndResourceBuilderTests>();
 
-            var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
-            Assert.NotNull(provider);
-            var resource = provider.GetResource();
+            Assert.NotNull(exporter.ParentProvider);
+
+            var resource = exporter.ParentProvider.GetResource();
             Assert.NotNull(resource);
 
             // Verify
