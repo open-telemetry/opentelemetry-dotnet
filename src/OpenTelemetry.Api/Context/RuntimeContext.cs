@@ -32,19 +32,15 @@ namespace OpenTelemetry.Context
 
         private static RuntimeContextSlotFactory runtimeContextSlotFactory;
 
-        static RuntimeContext()
-        {
-            ContextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
-        }
-
         /// <summary>
         /// Gets or sets the actual context carrier implementation.
         /// </summary>
         public static Type ContextSlotType
         {
-            get => contextSlotType;
+            get => contextSlotType ?? typeof(AsyncLocalRuntimeContextSlot<>);
 
             [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
+            [RequiresUnreferencedCode("Message")]
             set
             {
                 Guard.ThrowIfNull(value, nameof(value));
