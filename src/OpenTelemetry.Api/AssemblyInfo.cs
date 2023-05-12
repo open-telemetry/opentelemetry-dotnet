@@ -20,6 +20,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OpenTelemetry.Api.ProviderBuilderExtensions" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Api.ProviderBuilderExtensions.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Api.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Shims.OpenTracing.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
