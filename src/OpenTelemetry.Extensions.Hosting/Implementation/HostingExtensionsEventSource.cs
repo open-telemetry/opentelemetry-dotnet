@@ -37,5 +37,11 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
         {
             this.WriteEvent(2);
         }
+
+        [Event(3, Message = "OpenTelemetry LoggerProvider was not found in application services. Logging will remain disabled.", Level = EventLevel.Warning)]
+        public void LoggerProviderNotRegistered()
+        {
+            this.WriteEvent(3);
+        }
     }
 }

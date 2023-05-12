@@ -17,6 +17,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -323,6 +324,129 @@ public class OpenTelemetryServicesExtensionsTests
 
         using var serviceProvider = services.BuildServiceProvider();
         var resolvedProvider = serviceProvider.GetRequiredService<MeterProvider>();
+        Assert.True(innerTestExecuted);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithLogging_SingleProviderForServiceCollectionTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry().WithLogging(builder => { });
+
+        services.AddOpenTelemetry().WithLogging(builder => { });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.NotNull(serviceProvider);
+
+        var tracerProviders = serviceProvider.GetServices<LoggerProvider>();
+
+        Assert.Single(tracerProviders);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithLogging_DisposalTest()
+    {
+        var services = new ServiceCollection();
+
+        bool testRun = false;
+
+        services.AddOpenTelemetry().WithLogging(builder =>
+        {
+            testRun = true;
+
+            // Note: Build can't be called directly on builder tied to external services
+            Assert.Throws<NotSupportedException>(() => builder.Build());
+        });
+
+        Assert.True(testRun);
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        var provider = serviceProvider.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        Assert.NotNull(provider);
+        Assert.Null(provider.OwnedServiceProvider);
+
+        Assert.NotNull(serviceProvider);
+        Assert.NotNull(provider);
+
+        Assert.False(provider.Disposed);
+
+        serviceProvider.Dispose();
+
+        Assert.True(provider.Disposed);
+    }
+
+    [Fact]
+    public async Task AddOpenTelemetry_WithLogging_HostConfigurationHonoredTest()
+    {
+        bool configureBuilderCalled = false;
+
+        var builder = new HostBuilder()
+            .ConfigureAppConfiguration(builder =>
+            {
+                builder.AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["TEST_KEY"] = "TEST_KEY_VALUE",
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddOpenTelemetry()
+                    .WithLogging(builder =>
+                    {
+                        if (builder is IDeferredLoggerProviderBuilder deferredLoggerProviderBuilder)
+                        {
+                            deferredLoggerProviderBuilder.Configure((sp, builder) =>
+                            {
+                                configureBuilderCalled = true;
+
+                                var configuration = sp.GetRequiredService<IConfiguration>();
+
+                                var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
+                                Assert.Equal("TEST_KEY_VALUE", testKeyValue);
+                            });
+                        }
+                    });
+            });
+
+        var host = builder.Build();
+
+        Assert.False(configureBuilderCalled);
+
+        await host.StartAsync().ConfigureAwait(false);
+
+        Assert.True(configureBuilderCalled);
+
+        await host.StopAsync().ConfigureAwait(false);
+
+        host.Dispose();
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithLogging_NestedResolutionUsingConfigureTest()
+    {
+        bool innerTestExecuted = false;
+
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry().WithLogging(builder =>
+        {
+            if (builder is IDeferredLoggerProviderBuilder deferredLoggerProviderBuilder)
+            {
+                deferredLoggerProviderBuilder.Configure((sp, builder) =>
+                {
+                    innerTestExecuted = true;
+                    Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
+                });
+            }
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var resolvedProvider = serviceProvider.GetRequiredService<LoggerProvider>();
         Assert.True(innerTestExecuted);
     }
 

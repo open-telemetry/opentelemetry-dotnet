@@ -15,7 +15,9 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -126,6 +128,47 @@ public sealed class OpenTelemetryBuilder
         Guard.ThrowIfNull(configure);
 
         var builder = new TracerProviderBuilderBase(this.Services);
+
+        configure(builder);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="LoggerProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.</item>
+    /// <item>This operation enables <see cref="ILogger"/> integration
+    /// automatically by calling <see
+    /// cref="OpenTelemetryLoggingExtensions.AddOpenTelemetry(ILoggingBuilder)"/>.</item>
+    /// </list>
+    /// </remarks>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    internal OpenTelemetryBuilder WithLogging()
+        => this.WithLogging(b => { });
+
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="LoggerProviderBuilder"/>
+    /// configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    internal OpenTelemetryBuilder WithLogging(Action<LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        // Note: This enables ILogger integration
+        this.Services.AddLogging().AddOpenTelemetry();
+
+        var builder = new LoggerProviderServiceCollectionBuilder(this.Services);
 
         configure(builder);
 
