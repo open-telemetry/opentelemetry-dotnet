@@ -1,4 +1,4 @@
-// <copyright file="Base2ExponentialHistogramHelperTest.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialBucketHistogram.LowerBoundary.Test.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Tests.Internal;
+namespace OpenTelemetry.Metrics.Tests;
 
-public class Base2ExponentialHistogramHelperTest
+public partial class Base2ExponentialBucketHistogramTest
 {
     private readonly ITestOutputHelper output;
 
-    public Base2ExponentialHistogramHelperTest(ITestOutputHelper output)
+    public Base2ExponentialBucketHistogramTest(ITestOutputHelper output)
     {
         this.output = output;
     }
@@ -56,7 +54,7 @@ public class Base2ExponentialHistogramHelperTest
 
         for (var index = minIndex; index <= maxIndex; ++index)
         {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
+            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
             if (lowerBound == double.Epsilon)
@@ -121,7 +119,7 @@ public class Base2ExponentialHistogramHelperTest
 
         for (var index = -indexesPerPowerOf2; index > minIndex; index -= indexesPerPowerOf2)
         {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
+            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
             // The round trip is off by one.
@@ -146,7 +144,7 @@ public class Base2ExponentialHistogramHelperTest
 
         for (var index = indexesPerPowerOf2; index < maxIndex; index += indexesPerPowerOf2)
         {
-            var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
+            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
             // The round trip is never off by one for positive indexes near powers of two.
@@ -164,7 +162,7 @@ public class Base2ExponentialHistogramHelperTest
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
         var maxIndex = histogram.MapToIndex(double.MaxValue);
 
-        var lowerBoundary = Base2ExponentialHistogramHelper.LowerBoundary(maxIndex, scale);
+        var lowerBoundary = Base2ExponentialBucketHistogram.LowerBoundary(maxIndex, scale);
         var roundTrip = histogram.MapToIndex(lowerBoundary);
         Assert.Equal(maxIndex - 1, roundTrip);
     }
@@ -176,7 +174,7 @@ public class Base2ExponentialHistogramHelperTest
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
         var minIndex = histogram.MapToIndex(double.Epsilon);
 
-        var lowerBoundary = Base2ExponentialHistogramHelper.LowerBoundary(minIndex, scale);
+        var lowerBoundary = Base2ExponentialBucketHistogram.LowerBoundary(minIndex, scale);
         var roundTrip = histogram.MapToIndex(lowerBoundary);
         Assert.Equal(minIndex, roundTrip);
     }
@@ -200,7 +198,7 @@ public class Base2ExponentialHistogramHelperTest
         }
 
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
-        var lowerBound = Base2ExponentialHistogramHelper.LowerBoundary(index, scale);
+        var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
         var roundTrip = histogram.MapToIndex(lowerBound);
 
         Assert.True((index == roundTrip) || (index - 1 == roundTrip));

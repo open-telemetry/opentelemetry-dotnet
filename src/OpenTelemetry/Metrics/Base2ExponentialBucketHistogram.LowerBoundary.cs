@@ -1,4 +1,4 @@
-// <copyright file="Base2ExponentialHistogramHelper.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialBucketHistogram.LowerBoundary.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Internal;
+namespace OpenTelemetry.Metrics;
 
-internal static class Base2ExponentialHistogramHelper
+internal sealed partial class Base2ExponentialBucketHistogram
 {
     private const double EpsilonTimes2 = double.Epsilon * 2;
     private static readonly double Ln2 = Math.Log(2);
@@ -71,7 +71,7 @@ internal static class Base2ExponentialHistogramHelper
     private const double SCALEB_C2 = 2.2250738585072014E-308; // 0x1p-1022
     private const double SCALEB_C3 = 9007199254740992; // 0x1p53
 
-    public static double ScaleB(double x, int n)
+    private static double ScaleB(double x, int n)
     {
         // Implementation based on https://git.musl-libc.org/cgit/musl/tree/src/math/scalbln.c
         //
