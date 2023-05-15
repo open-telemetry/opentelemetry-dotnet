@@ -30,11 +30,12 @@ namespace OpenTelemetry.Logs;
 internal sealed class LoggerProviderSdk : LoggerProvider
 {
     internal readonly IServiceProvider ServiceProvider;
-    private readonly IDisposable? ownedServiceProvider;
+    internal readonly IDisposable? OwnedServiceProvider;
+    internal bool Disposed;
+    internal int ShutdownCount;
+
     private readonly List<object> instrumentations = new();
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
-    private int shutdownCount;
-    private bool disposed;
 
     public LoggerProviderSdk(
         IServiceProvider serviceProvider,
@@ -49,8 +50,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
         if (ownsServiceProvider)
         {
-            this.ownedServiceProvider = serviceProvider as IDisposable;
-            Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
+            this.OwnedServiceProvider = serviceProvider as IDisposable;
+            Debug.Assert(this.OwnedServiceProvider != null, "ownedServiceProvider was null");
         }
 
         OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building TracerProvider.");
@@ -160,7 +161,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
     public bool Shutdown(int timeoutMilliseconds)
     {
-        if (Interlocked.Increment(ref this.shutdownCount) > 1)
+        if (Interlocked.Increment(ref this.ShutdownCount) > 1)
         {
             return false; // shutdown already called
         }
@@ -209,7 +210,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
-        if (!this.disposed)
+        if (!this.Disposed)
         {
             if (disposing)
             {
@@ -227,10 +228,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
                 this.Processor?.Shutdown(5000);
                 this.Processor?.Dispose();
 
-                this.ownedServiceProvider?.Dispose();
+                this.OwnedServiceProvider?.Dispose();
             }
 
-            this.disposed = true;
+            this.Disposed = true;
             OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(LoggerProviderSdk));
         }
 
