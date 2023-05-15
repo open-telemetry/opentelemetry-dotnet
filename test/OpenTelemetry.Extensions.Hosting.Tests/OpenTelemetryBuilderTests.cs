@@ -32,10 +32,14 @@ public class OpenTelemetryBuilderTests
 
         services
             .AddOpenTelemetry()
-            .ConfigureResource(r => r.AddResource(new Resource(new Dictionary<string, object> { ["key1"] = "value1" })))
-            .WithLogging()
-            .WithMetrics()
-            .WithTracing();
+            .ConfigureResource(r => r.Clear().AddResource(
+                new Resource(new Dictionary<string, object> { ["key1"] = "value1" })))
+            .WithLogging(logging => logging.ConfigureResource(r => r.AddResource(
+                new Resource(new Dictionary<string, object> { ["l_key1"] = "l_value1" }))))
+            .WithMetrics(metrics => metrics.ConfigureResource(r => r.AddResource(
+                new Resource(new Dictionary<string, object> { ["m_key1"] = "m_value1" }))))
+            .WithTracing(tracing => tracing.ConfigureResource(r => r.AddResource(
+                new Resource(new Dictionary<string, object> { ["t_key1"] = "t_value1" }))));
 
         using var sp = services.BuildServiceProvider();
 
@@ -47,8 +51,28 @@ public class OpenTelemetryBuilderTests
         Assert.NotNull(meterProvider);
         Assert.NotNull(loggerProvider);
 
-        Assert.Contains(tracerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
-        Assert.Contains(meterProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
-        Assert.Contains(loggerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Equal(2, tracerProvider.Resource.Attributes.Count());
+        Assert.Contains(
+            tracerProvider.Resource.Attributes,
+            kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Contains(
+            tracerProvider.Resource.Attributes,
+            kvp => kvp.Key == "t_key1" && (string)kvp.Value == "t_value1");
+
+        Assert.Equal(2, meterProvider.Resource.Attributes.Count());
+        Assert.Contains(
+            meterProvider.Resource.Attributes,
+            kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Contains(
+            meterProvider.Resource.Attributes,
+            kvp => kvp.Key == "m_key1" && (string)kvp.Value == "m_value1");
+
+        Assert.Equal(2, loggerProvider.Resource.Attributes.Count());
+        Assert.Contains(
+            loggerProvider.Resource.Attributes,
+            kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Contains(
+            loggerProvider.Resource.Attributes,
+            kvp => kvp.Key == "l_key1" && (string)kvp.Value == "l_value1");
     }
 }
