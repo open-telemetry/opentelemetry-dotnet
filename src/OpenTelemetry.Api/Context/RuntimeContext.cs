@@ -32,27 +32,29 @@ namespace OpenTelemetry.Context
 
         private static RuntimeContextSlotFactory runtimeContextSlotFactory;
 
+        static RuntimeContext()
+        {
+            ContextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
+        }
+
         /// <summary>
         /// Gets or sets the actual context carrier implementation.
         /// </summary>
         public static Type ContextSlotType
         {
-            get => contextSlotType ?? typeof(AsyncLocalRuntimeContextSlot<>);
+            get
+            {
+                return contextSlotType;
+            }
 
             [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
             [RequiresUnreferencedCode("Message")]
             set
             {
                 Guard.ThrowIfNull(value, nameof(value));
-
                 if (!value.IsGenericType || !value.IsGenericTypeDefinition || value.GetGenericArguments().Length != 1)
                 {
                     throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument.");
-                }
-
-                if (!typeof(RuntimeContextSlot<>).IsAssignableFrom(value))
-                {
-                    throw new NotSupportedException($"Type '{value}' does not implement RuntimeContextSlot<>.");
                 }
 
                 if (value == typeof(AsyncLocalRuntimeContextSlot<>))
