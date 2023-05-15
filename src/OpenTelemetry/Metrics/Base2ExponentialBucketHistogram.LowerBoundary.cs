@@ -16,6 +16,15 @@
 
 namespace OpenTelemetry.Metrics;
 
+/// <content>
+/// This file contains an implementation for LowerBoundary.
+/// LowerBoundary returns the lower boundary of a bucket for
+/// a Base2ExponentialBucketHistogram.
+///
+/// The LowerBoundary implementation is intentionally placed
+/// in its own file so that components like the Console exporter
+/// can include it.
+/// </content>
 internal sealed partial class Base2ExponentialBucketHistogram
 {
     private const double EpsilonTimes2 = double.Epsilon * 2;
