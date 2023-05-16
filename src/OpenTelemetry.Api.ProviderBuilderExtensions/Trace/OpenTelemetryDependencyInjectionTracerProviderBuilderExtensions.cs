@@ -106,7 +106,7 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
 
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (tracerProviderBuilder is ITracerProviderBuilder iTracerProviderBuilder
+            if (builder is ITracerProviderBuilder iTracerProviderBuilder
                 && iTracerProviderBuilder.Provider != null)
             {
                 builder.AddInstrumentation(() => instrumentationFactory(sp, iTracerProviderBuilder.Provider));

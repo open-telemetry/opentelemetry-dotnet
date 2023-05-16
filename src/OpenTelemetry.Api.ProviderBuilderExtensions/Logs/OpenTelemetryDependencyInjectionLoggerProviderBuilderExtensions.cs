@@ -106,7 +106,7 @@ internal static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExten
 
         loggerProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
-            if (loggerProviderBuilder is ILoggerProviderBuilder iLoggerProviderBuilder
+            if (builder is ILoggerProviderBuilder iLoggerProviderBuilder
                 && iLoggerProviderBuilder.Provider != null)
             {
                 builder.AddInstrumentation(() => instrumentationFactory(sp, iLoggerProviderBuilder.Provider));
