@@ -17,6 +17,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -63,6 +64,12 @@ internal sealed class TelemetryHostedService : IHostedService
         if (tracerProvider == null)
         {
             HostingExtensionsEventSource.Log.TracerProviderNotRegistered();
+        }
+
+        var loggerProvider = serviceProvider!.GetService<LoggerProvider>();
+        if (loggerProvider == null)
+        {
+            HostingExtensionsEventSource.Log.LoggerProviderNotRegistered();
         }
     }
 }

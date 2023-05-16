@@ -28,7 +28,6 @@ OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.ExponentialHistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator
 OpenTelemetry.Metrics.ExponentialHistogramBuckets.Offset.get -> int
 OpenTelemetry.Metrics.ExponentialHistogramData
-OpenTelemetry.Metrics.ExponentialHistogramData.NegativeBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
 OpenTelemetry.Metrics.ExponentialHistogramData.PositiveBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
 OpenTelemetry.Metrics.ExponentialHistogramData.Scale.get -> int
 OpenTelemetry.Metrics.ExponentialHistogramData.ZeroCount.get -> long
