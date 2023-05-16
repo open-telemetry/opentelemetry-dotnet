@@ -291,7 +291,11 @@ namespace OpenTelemetry.Metrics.Tests
             foreach (var value in valuesToRecord)
             {
                 aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object>>());
-                expectedHistogram.Record(value);
+
+                if (value >= 0)
+                {
+                    expectedHistogram.Record(value);
+                }
             }
 
             aggregatorStore.Snapshot();
@@ -311,13 +315,13 @@ namespace OpenTelemetry.Metrics.Tests
             var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
 
             AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
-            Assert.Equal(40, sum);
-            Assert.Equal(7, count);
+            Assert.Equal(50, sum);
+            Assert.Equal(6, count);
 
             if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 Assert.True(hasMinMax);
-                Assert.Equal(-10, min);
+                Assert.Equal(0, min);
                 Assert.Equal(19, max);
             }
             else
@@ -334,13 +338,13 @@ namespace OpenTelemetry.Metrics.Tests
             if (aggregationTemporality == AggregationTemporality.Cumulative)
             {
                 AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
-                Assert.Equal(40, sum);
-                Assert.Equal(7, count);
+                Assert.Equal(50, sum);
+                Assert.Equal(6, count);
 
                 if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
                 {
                     Assert.True(hasMinMax);
-                    Assert.Equal(-10, min);
+                    Assert.Equal(0, min);
                     Assert.Equal(19, max);
                 }
                 else
