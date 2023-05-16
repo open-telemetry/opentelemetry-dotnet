@@ -32,7 +32,7 @@ public sealed class ExponentialHistogramData
 
     public ExponentialHistogramBuckets PositiveBuckets { get; private set; }
 
-    public ExponentialHistogramBuckets NegativeBuckets { get; private set; }
+    internal ExponentialHistogramBuckets NegativeBuckets { get; private set; }
 
     internal ExponentialHistogramData Copy()
     {
