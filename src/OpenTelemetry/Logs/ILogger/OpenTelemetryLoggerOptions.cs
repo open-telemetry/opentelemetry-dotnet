@@ -89,6 +89,7 @@ public class OpenTelemetryLoggerOptions
     /// </summary>
     /// <param name="processor">Log processor to add.</param>
     /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    // todo: [Obsolete("Call ConfigureOpenTelemetry to configure the LoggerProvider and manage processors. The AddProcessor method on OpenTelemetryLoggerOptions will be removed in a future version.")]
     public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
     {
         Guard.ThrowIfNull(processor);
@@ -104,6 +105,7 @@ public class OpenTelemetryLoggerOptions
     /// </summary>
     /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
     /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    // todo: [Obsolete("Call ConfigureOpenTelemetry to configure the LoggerProvider and manage resources. The SetResourceBuilder method on OpenTelemetryLoggerOptions will be removed in a future version.")]
     public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
         Guard.ThrowIfNull(resourceBuilder);

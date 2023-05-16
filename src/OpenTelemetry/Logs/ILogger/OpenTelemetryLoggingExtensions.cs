@@ -99,4 +99,28 @@ public static class OpenTelemetryLoggingExtensions
 
         return AddOpenTelemetry(builder);
     }
+
+    /// <summary>
+    /// Configures the <see cref="LoggerProviderBuilder" /> which will be used
+    /// by the OpenTelemetry logger named 'OpenTelemetry' added to the <see
+    /// cref="ILoggerFactory"/>.
+    /// </summary>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="OpenTelemetryLoggerProvider"/> and <see
+    /// cref="LoggerProvider"/> will be created for a given <see
+    /// cref="IServiceCollection"/>.
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure">Configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    internal static ILoggingBuilder ConfigureOpenTelemetry(
+        this ILoggingBuilder builder,
+        Action<LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(builder);
+        Guard.ThrowIfNull(configure);
+
+        configure(new LoggerProviderServiceCollectionBuilder(builder.Services));
+
+        return builder;
+    }
 }
