@@ -32,6 +32,8 @@ namespace OpenTelemetry.Context
 
         private static RuntimeContextSlotFactory runtimeContextSlotFactory;
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "User-defined RuntimeContextSlotFactory that relies on Reflection is not timmer safe.")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050:RequiresDynamicCode", Justification = "User-defined RuntimeContextSlotFactory that relies on Reflection is not AoT safe.")]
         static RuntimeContext()
         {
             ContextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
@@ -47,8 +49,8 @@ namespace OpenTelemetry.Context
                 return contextSlotType;
             }
 
-            [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
-            [RequiresUnreferencedCode("Message")]
+            [RequiresUnreferencedCode("ReflectionRuntimeContextSlotFactory is trimmer unsafe.")]
+            [RequiresDynamicCode("ReflectionRuntimeContextSlotFactory requires the ability to generate new code at runtime.")]
             set
             {
                 Guard.ThrowIfNull(value, nameof(value));
@@ -80,9 +82,7 @@ namespace OpenTelemetry.Context
                     }
 #endif
 
-                    // todo: Validate the custom type has a ctor accepting string parameter
-
-                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.ReflectionContextSlotFactory(contextSlotType);
+                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.ReflectionRuntimeContextSlotFactory(contextSlotType);
                 }
 
                 contextSlotType = value;

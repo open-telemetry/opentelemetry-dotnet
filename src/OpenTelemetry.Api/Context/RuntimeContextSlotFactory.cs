@@ -44,13 +44,13 @@ namespace OpenTelemetry.Context
                 => new ThreadLocalRuntimeContextSlot<T>(name);
         }
 
-        [RequiresDynamicCode("Use 'MethodFriendlyToAot' instead")]
-        [RequiresUnreferencedCode("Message")]
-        public sealed class ReflectionContextSlotFactory : RuntimeContextSlotFactory
+        [RequiresUnreferencedCode("ReflectionRuntimeContextSlotFactory is trimmer unsafe.")]
+        [RequiresDynamicCode("ReflectionRuntimeContextSlotFactory requires the ability to generate new code at runtime.")]
+        public sealed class ReflectionRuntimeContextSlotFactory : RuntimeContextSlotFactory
         {
             private readonly Type runtimeContextSlotType;
 
-            public ReflectionContextSlotFactory(Type runtimeContextSlotType)
+            public ReflectionRuntimeContextSlotFactory(Type runtimeContextSlotType)
             {
                 this.runtimeContextSlotType = runtimeContextSlotType;
             }
