@@ -47,12 +47,15 @@ namespace OpenTelemetry.Exporter
 
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
+        /// <summary>
+        /// Otlp endpoint uri.
+        /// </summary>
+        protected Uri endpoint;
+
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
         private const string DefaultHttpEndpoint = "http://localhost:4318";
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
         private const string UserAgentProduct = "OTel-OTLP-Exporter-Dotnet";
-
-        private Uri endpoint;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.

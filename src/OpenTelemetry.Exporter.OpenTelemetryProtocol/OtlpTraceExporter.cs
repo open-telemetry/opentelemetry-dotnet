@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
@@ -51,41 +50,6 @@ namespace OpenTelemetry.Exporter
         /// <param name="exportClient">Client used for sending export request.</param>
         internal OtlpTraceExporter(
             OtlpExporterOptions exporterOptions,
-            SdkLimitOptions sdkLimitOptions,
-            IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
-        {
-            Debug.Assert(exporterOptions != null, "exporterOptions was null");
-            Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-
-            this.sdkLimitOptions = sdkLimitOptions;
-
-            if (exportClient != null)
-            {
-                this.exportClient = exportClient;
-            }
-            else
-            {
-                this.exportClient = exporterOptions.GetTraceExportClient();
-            }
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
-        /// </summary>
-        /// <param name="options">Configuration options for the export.</param>
-        internal OtlpTraceExporter(OtlpTraceExporterOptions options)
-            : this(options, new(), null)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
-        /// </summary>
-        /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
-        /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
-        /// <param name="exportClient">Client used for sending export request.</param>
-        internal OtlpTraceExporter(
-            OtlpTraceExporterOptions exporterOptions,
             SdkLimitOptions sdkLimitOptions,
             IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
         {

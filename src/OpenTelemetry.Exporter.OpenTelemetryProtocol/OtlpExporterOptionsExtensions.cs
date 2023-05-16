@@ -162,5 +162,32 @@ namespace OpenTelemetry.Exporter
                 };
             }
         }
+
+        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
+        {
+            var absoluteUri = uri.AbsoluteUri;
+            var separator = string.Empty;
+
+            if (absoluteUri.EndsWith("/"))
+            {
+                // Endpoint already ends with 'path/'
+                if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
+                {
+                    return uri;
+                }
+            }
+            else
+            {
+                // Endpoint already ends with 'path'
+                if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
+                {
+                    return uri;
+                }
+
+                separator = "/";
+            }
+
+            return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
+        }
     }
 }

@@ -20,7 +20,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 {
-    internal class OtlpTraceExporterOptions : BaseOtlpExporterOptions
+    internal class OtlpTraceExporterOptions : OtlpExporterOptions
     {
         internal const string TraceEndpointEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT";
         internal const string TraceHeadersEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_HEADERS";
