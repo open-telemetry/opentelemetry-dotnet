@@ -86,9 +86,7 @@ namespace OpenTelemetry.Metrics
             this.tagsToMetricPointIndexDictionaryDelta =
                 new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (maxMetricPoints - 1) * 2);
 
-            this.metricPointReclamationThreshold = 1;
-
-            // this.metricPointReclamationThreshold = maxMetricPoints * 3 / 4;
+            this.metricPointReclamationThreshold = maxMetricPoints * 3 / 4;
             this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
             this.metricPoints = new MetricPoint[maxMetricPoints];
             this.currentMetricPointBatch = new int[maxMetricPoints];
