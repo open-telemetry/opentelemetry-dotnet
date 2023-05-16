@@ -15,6 +15,7 @@
 // </copyright>
 #nullable enable
 
+#if !NET7_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
     /// <summary>
@@ -97,3 +98,4 @@ namespace System.Diagnostics.CodeAnalysis
         public string? Justification { get; set; }
     }
 }
+#endif
