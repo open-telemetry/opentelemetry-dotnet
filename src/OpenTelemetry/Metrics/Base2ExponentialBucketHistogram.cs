@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal sealed class Base2ExponentialBucketHistogram
+internal sealed partial class Base2ExponentialBucketHistogram
 {
     internal double RunningSum;
     internal double SnapshotSum;
