@@ -18,8 +18,8 @@ corresponding `Activity`.
 
 The good news is that, in OpenTelemetry .NET SDK, there is no user action
 required to enable correlation. i.e the SDK automatically enables logs to
-`Activity` correlation, by populating the fields `TraceId`, `SpanId` and
-`TraceFlags` from the active activity (i.e `Activity.Current`), if
+`Activity` correlation, by populating the fields `TraceId`, `SpanId`,
+`TraceFlags`, `TraceState` from the active activity (i.e `Activity.Current`), if
 any.
 
 The example [Program.cs](./Program.cs) shows how to emit logs within the context
