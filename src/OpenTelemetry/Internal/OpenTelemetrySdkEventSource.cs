@@ -275,7 +275,7 @@ namespace OpenTelemetry.Internal
         {
             this.WriteEvent(42, type.ToString(), key);
         }
-         
+
         [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
         [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
         public void ProcessorForceFlushInvoked(string processorType, bool result)

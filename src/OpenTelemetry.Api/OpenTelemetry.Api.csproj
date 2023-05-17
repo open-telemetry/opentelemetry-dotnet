@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\RequiresDynamicCodeAttribute.cs" Link ="Includes\RequiresDynamicCodeAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'"/>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\RequiresDynamicCodeAttribute.cs" Link ="Includes\RequiresDynamicCodeAttribute.cs" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))"/>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\RequiresUnreferencedCodeAttribute.cs" Link="Includes\RequiresUnreferencedCodeAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'"/>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
