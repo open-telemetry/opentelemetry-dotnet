@@ -18,6 +18,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -28,6 +29,24 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 internal static class LoggerProviderBuilderExtensions
 {
+    /// <summary>
+    /// Registers a configuration action for the <see
+    /// cref="OpenTelemetryLoggerOptions"/> used by <see cref="ILogger"/>
+    /// integration (<see cref="OpenTelemetryLoggerProvider"/>).
+    /// </summary>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="configure">Configuration action.</param>
+    /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
+    public static LoggerProviderBuilder ConfigureLoggerOptions(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        Action<OpenTelemetryLoggerOptions> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        return loggerProviderBuilder.ConfigureServices(
+            services => services.Configure(configure));
+    }
+
     /// <summary>
     /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
     /// this provider is built from. Overwrites currently set ResourceBuilder.

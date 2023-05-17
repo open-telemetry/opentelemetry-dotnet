@@ -40,8 +40,8 @@ public static class OpenTelemetryLoggingExtensions
     /// will be created for a given <see cref="IServiceCollection"/>.
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-    public static ILoggingBuilder AddOpenTelemetry(
+    /// <returns><see cref="OpenTelemetryLoggingBuilder"/>.</returns>
+    public static OpenTelemetryLoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder)
     {
         Guard.ThrowIfNull(builder);
@@ -51,6 +51,7 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
 
+        // Note: This is to support legacy AddProcessor & SetResourceBuilder APIs on OpenTelemetryLoggerOptions
         new LoggerProviderServiceCollectionBuilder(builder.Services).ConfigureBuilder(
             (sp, logging) =>
             {
@@ -78,7 +79,7 @@ public static class OpenTelemetryLoggingExtensions
                     sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
                     disposeProvider: false)));
 
-        return builder;
+        return new OpenTelemetryLoggingBuilder(builder.Services);
     }
 
     /// <summary>
@@ -87,8 +88,8 @@ public static class OpenTelemetryLoggingExtensions
     /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <param name="configure">Optional configuration action.</param>
-    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-    public static ILoggingBuilder AddOpenTelemetry(
+    /// <returns><see cref="OpenTelemetryLoggingBuilder"/>.</returns>
+    public static OpenTelemetryLoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder,
         Action<OpenTelemetryLoggerOptions>? configure)
     {
