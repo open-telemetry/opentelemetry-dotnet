@@ -51,6 +51,7 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
 
+        // Note: This code is to support legacy AddProcessor & SetResourceBuilder APIs on OpenTelemetryLoggerOptions.
         new LoggerProviderServiceCollectionBuilder(builder.Services).ConfigureBuilder(
             (sp, logging) =>
             {
@@ -70,6 +71,8 @@ public static class OpenTelemetryLoggingExtensions
 
                 options.Processors.Clear();
             });
+
+        builder.Services.AddOpenTelemetrySharedProviderBuilderServices();
 
         builder.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
