@@ -41,42 +41,29 @@ public static class OpenTelemetryLoggingExtensions
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    // todo: [Obsolete("Call AddOpenTelemetryLogging instead the AddOpenTelemetry method will be removed in a future version.")]
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder)
+        => AddOpenTelemetryLogging(builder);
+
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure">Optional configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    // todo: [Obsolete("Call AddOpenTelemetryLogging and use LoggerProviderBuilder.ConfigureLoggerOptions instead. The AddOpenTelemetry method will be removed in a future version.")]
+    public static ILoggingBuilder AddOpenTelemetry(
+        this ILoggingBuilder builder,
+        Action<OpenTelemetryLoggerOptions>? configure)
     {
-        Guard.ThrowIfNull(builder);
+        AddOpenTelemetryLogging(builder);
 
-        builder.AddConfiguration();
-
-        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
-
-        new LoggerProviderServiceCollectionBuilder(builder.Services).ConfigureBuilder(
-            (sp, logging) =>
-            {
-                var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
-
-                if (options.ResourceBuilder != null)
-                {
-                    logging.SetResourceBuilder(options.ResourceBuilder);
-
-                    options.ResourceBuilder = null;
-                }
-
-                foreach (var processor in options.Processors)
-                {
-                    logging.AddProcessor(processor);
-                }
-
-                options.Processors.Clear();
-            });
-
-        builder.Services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
-                sp => new OpenTelemetryLoggerProvider(
-                    sp.GetRequiredService<LoggerProvider>(),
-                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
-                    disposeProvider: false)));
+        if (configure != null)
+        {
+            builder.Services.Configure(configure);
+        }
 
         return builder;
     }
@@ -86,17 +73,67 @@ public static class OpenTelemetryLoggingExtensions
     /// </summary>
     /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-    /// <param name="configure">Optional configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-    public static ILoggingBuilder AddOpenTelemetry(
-        this ILoggingBuilder builder,
-        Action<OpenTelemetryLoggerOptions>? configure)
-    {
-        if (configure != null)
-        {
-            builder.Services.Configure(configure);
-        }
+    internal static ILoggingBuilder AddOpenTelemetryLogging(
+        this ILoggingBuilder builder)
+        => AddOpenTelemetryLogging(builder, b => { });
 
-        return AddOpenTelemetry(builder);
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure">Configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    internal static ILoggingBuilder AddOpenTelemetryLogging(
+        this ILoggingBuilder builder,
+        Action<LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        AddOpenTelemetryLoggerIntegration(builder);
+
+        var loggerBuilder = new LoggerProviderServiceCollectionBuilder(builder.Services);
+
+        // Note: This code is to support legacy AddProcessor & SetResourceBuilder APIs on OpenTelemetryLoggerOptions.
+        loggerBuilder.ConfigureBuilder((sp, sdkLoggerBuilder) =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+            if (options.ResourceBuilder != null)
+            {
+                sdkLoggerBuilder.SetResourceBuilder(options.ResourceBuilder);
+
+                options.ResourceBuilder = null;
+            }
+
+            foreach (var processor in options.Processors)
+            {
+                sdkLoggerBuilder.AddProcessor(processor);
+            }
+
+            options.Processors.Clear();
+        });
+
+        configure(loggerBuilder);
+
+        return builder;
+    }
+
+    private static void AddOpenTelemetryLoggerIntegration(ILoggingBuilder builder)
+    {
+        Guard.ThrowIfNull(builder);
+
+        builder.AddConfiguration();
+
+        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
+        LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
+
+        builder.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
+                sp => new OpenTelemetryLoggerProvider(
+                    sp.GetRequiredService<LoggerProvider>(),
+                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
+                    disposeProvider: false)));
     }
 }
