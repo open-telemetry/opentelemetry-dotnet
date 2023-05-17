@@ -54,22 +54,7 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
 
         var optionsInstance = options.CurrentValue;
 
-        this.Provider = Sdk
-            .CreateLoggerProviderBuilder()
-            .ConfigureBuilder((sp, builder) =>
-            {
-                if (optionsInstance.ResourceBuilder != null)
-                {
-                    builder.SetResourceBuilder(optionsInstance.ResourceBuilder);
-                }
-
-                foreach (var processor in optionsInstance.Processors)
-                {
-                    builder.AddProcessor(processor);
-                }
-            })
-            .Build();
-
+        this.Provider = optionsInstance.Build();
         this.Options = optionsInstance.Copy();
         this.ownsProvider = true;
     }

@@ -43,43 +43,7 @@ public static class OpenTelemetryLoggingExtensions
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder)
-    {
-        Guard.ThrowIfNull(builder);
-
-        builder.AddConfiguration();
-
-        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
-
-        new LoggerProviderServiceCollectionBuilder(builder.Services).ConfigureBuilder(
-            (sp, logging) =>
-            {
-                var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
-
-                if (options.ResourceBuilder != null)
-                {
-                    logging.SetResourceBuilder(options.ResourceBuilder);
-
-                    options.ResourceBuilder = null;
-                }
-
-                foreach (var processor in options.Processors)
-                {
-                    logging.AddProcessor(processor);
-                }
-
-                options.Processors.Clear();
-            });
-
-        builder.Services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
-                sp => new OpenTelemetryLoggerProvider(
-                    sp.GetRequiredService<LoggerProvider>(),
-                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
-                    disposeProvider: false)));
-
-        return builder;
-    }
+        => AddOpenTelemetry(builder, configure: null);
 
     /// <summary>
     /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
@@ -92,11 +56,27 @@ public static class OpenTelemetryLoggingExtensions
         this ILoggingBuilder builder,
         Action<OpenTelemetryLoggerOptions>? configure)
     {
-        if (configure != null)
-        {
-            builder.Services.Configure(configure);
-        }
+        Guard.ThrowIfNull(builder);
 
-        return AddOpenTelemetry(builder);
+        builder.AddConfiguration();
+
+        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
+        LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
+
+        builder.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
+                sp => new OpenTelemetryLoggerProvider(
+                    sp.GetRequiredService<LoggerProvider>(),
+                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
+                    disposeProvider: false)));
+
+        builder.Services.AddOpenTelemetrySharedProviderBuilderServices();
+
+        var options = new OpenTelemetryLoggerOptions(
+            new LoggerProviderServiceCollectionBuilder(builder.Services));
+
+        configure?.Invoke(options);
+
+        return builder;
     }
 }

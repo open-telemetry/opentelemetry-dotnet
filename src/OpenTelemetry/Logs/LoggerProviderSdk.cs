@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -61,6 +62,11 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         {
             configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
         }
+
+        // Note: Accessing options here allows the final instance to apply
+        // ConfigureOpenTelemetry actions against the LoggerProviderBuilderSdk
+        // instance
+        _ = serviceProvider!.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
 
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
         resourceBuilder.ServiceProvider = serviceProvider;

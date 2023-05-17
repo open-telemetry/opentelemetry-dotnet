@@ -35,6 +35,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
 
         services!.TryAddSingleton<LoggerProviderBuilderSdk>();
         services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
+        services!.RegisterOptionsFactory((sp, configuration, name) => new OpenTelemetryLoggerOptions(sp.GetRequiredService<LoggerProviderBuilderSdk>()));
 
         return services!;
     }
