@@ -19,6 +19,6 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\RequiresDynamicCodeAttribute.cs" Link ="Includes\RequiresDynamicCodeAttribute.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\RequiresUnreferencedCodeAttribute.cs" Link="Includes\RequiresUnreferencedCodeAttribute.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs"/>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
 </Project>
