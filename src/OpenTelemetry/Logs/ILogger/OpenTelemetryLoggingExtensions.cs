@@ -129,6 +129,8 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
 
+        builder.Services.AddOpenTelemetrySharedProviderBuilderServices();
+
         builder.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
                 sp => new OpenTelemetryLoggerProvider(
