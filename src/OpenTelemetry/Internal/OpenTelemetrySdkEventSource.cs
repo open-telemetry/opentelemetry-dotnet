@@ -15,7 +15,6 @@
 // </copyright>
 
 #nullable enable
-#pragma warning disable 0436
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
@@ -371,4 +370,3 @@ namespace OpenTelemetry.Internal
 #endif
     }
 }
-#pragma warning restore 0436
