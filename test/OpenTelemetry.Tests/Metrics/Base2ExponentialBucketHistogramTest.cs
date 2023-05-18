@@ -508,7 +508,7 @@ public partial class Base2ExponentialBucketHistogramTest
                 // This is a scenario where the assertion above would have passed.
                 ++successes;
             }
-            if (index != histogram.MapToIndex(incremented))
+            else
             {
                 // This is a scenario where the assertion above would have failed.
                 ++failures;
