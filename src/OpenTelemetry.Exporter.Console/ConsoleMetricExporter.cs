@@ -146,8 +146,21 @@ namespace OpenTelemetry.Exporter
                         }
                         else
                         {
-                            // TODO: Consider how/if to display buckets for exponential histograms.
-                            bucketsBuilder.AppendLine("Buckets are not displayed for exponential histograms.");
+                            var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+                            var scale = exponentialHistogramData.Scale;
+
+                            if (exponentialHistogramData.ZeroCount != 0)
+                            {
+                                bucketsBuilder.AppendLine($"Zero Bucket, Count: {exponentialHistogramData.ZeroCount}");
+                            }
+
+                            var offset = exponentialHistogramData.PositiveBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
+                            {
+                                var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(offset, scale).ToString(CultureInfo.InvariantCulture);
+                                var upperBound = Base2ExponentialBucketHistogram.LowerBoundary(++offset, scale).ToString(CultureInfo.InvariantCulture);
+                                bucketsBuilder.AppendLine($"Bucket ({lowerBound}, {upperBound}], Count: {bucketCount}");
+                            }
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
