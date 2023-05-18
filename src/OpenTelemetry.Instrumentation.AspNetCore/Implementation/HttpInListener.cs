@@ -29,6 +29,7 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -62,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly HttpSemanticConventionHelper.HttpSemanticConvention httpSemanticConvention;
+        private readonly HttpSemanticConvention httpSemanticConvention;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -71,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             this.options = options;
 
-            this.httpSemanticConvention = HttpSemanticConventionHelper.GetSemConvOptIn();
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)

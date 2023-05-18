@@ -48,7 +48,7 @@ namespace OpenTelemetry.Internal
             Dupe = Old | New,
         }
 
-        public static HttpSemanticConvention GetSemConvOptIn()
+        public static HttpSemanticConvention GetSemanticConventionOptIn()
         {
             var envVarValue = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
             return EvaluateValue(envVarValue);
