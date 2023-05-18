@@ -58,7 +58,7 @@ namespace OpenTelemetry.Context
             public override RuntimeContextSlot<T> Create<T>(string name)
             {
                 var type = this.runtimeContextSlotType.MakeGenericType(typeof(T));
-                var ctor = type.GetConstructor(new Type[] { typeof(string) });
+                var ctor = type.GetConstructor(new Type[] { typeof(string) })!;
                 return (RuntimeContextSlot<T>)ctor.Invoke(new object[] { name })!;
             }
         }

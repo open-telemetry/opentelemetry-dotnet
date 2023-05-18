@@ -1,4 +1,4 @@
-// <copyright file="RequiresDynamicCodeAttribute.cs" company="OpenTelemetry Authors">
+// <copyright file="RequiresUnreferencedCodeAttribute.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,45 +15,42 @@
 // </copyright>
 
 #nullable enable
-
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
     /// <summary>
-    /// Indicates that the specified method requires the ability to generate new code at runtime,
-    /// for example through <see cref="Reflection"/>.
+    /// Indicates that the specified method requires dynamic access to code that is not referenced
+    /// statically, for example through <see cref="Reflection"/>.
     /// </summary>
     /// <remarks>
-    /// This allows tools to understand which methods are unsafe to call when compiling ahead of time.
+    /// This allows tools to understand which methods are unsafe to call when removing unreferenced
+    /// code from an application.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor | AttributeTargets.Class, Inherited = false)]
-#if SYSTEM_PRIVATE_CORELIB
-    public
-#else
-    internal
-#endif
-    sealed class RequiresDynamicCodeAttribute : Attribute
+    internal sealed class RequiresUnreferencedCodeAttribute : Attribute
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RequiresDynamicCodeAttribute"/> class
+        /// Initializes a new instance of the <see cref="RequiresUnreferencedCodeAttribute"/> class
         /// with the specified message.
         /// </summary>
         /// <param name="message">
-        /// A message that contains information about the usage of dynamic code.
+        /// A message that contains information about the usage of unreferenced code.
         /// </param>
-        public RequiresDynamicCodeAttribute(string message)
+        public RequiresUnreferencedCodeAttribute(string message)
         {
             this.Message = message;
         }
 
         /// <summary>
-        /// Gets a message that contains information about the usage of dynamic code.
+        /// Gets a message that contains information about the usage of unreferenced code.
         /// </summary>
         public string Message { get; }
 
         /// <summary>
         /// Gets or sets an optional URL that contains more information about the method,
-        /// why it requires dynamic code, and what options a consumer has to deal with it.
+        /// why it requires unreferenced code, and what options a consumer has to deal with it.
         /// </summary>
         public string? Url { get; set; }
     }
 }
+#endif
