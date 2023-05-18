@@ -151,7 +151,7 @@ namespace OpenTelemetry.Exporter
 
                             if (exponentialHistogramData.ZeroCount != 0)
                             {
-                                bucketsBuilder.AppendLine($"Zero Bucket, Count: {exponentialHistogramData.ZeroCount}");
+                                bucketsBuilder.AppendLine($"Zero Bucket:{exponentialHistogramData.ZeroCount}");
                             }
 
                             var offset = exponentialHistogramData.PositiveBuckets.Offset;
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Exporter
                             {
                                 var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(offset, scale).ToString(CultureInfo.InvariantCulture);
                                 var upperBound = Base2ExponentialBucketHistogram.LowerBoundary(++offset, scale).ToString(CultureInfo.InvariantCulture);
-                                bucketsBuilder.AppendLine($"Bucket ({lowerBound}, {upperBound}], Count: {bucketCount}");
+                                bucketsBuilder.AppendLine($"({lowerBound}, {upperBound}]:{bucketCount}");
                             }
                         }
 
