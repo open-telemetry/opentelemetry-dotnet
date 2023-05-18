@@ -466,4 +466,72 @@ public partial class Base2ExponentialBucketHistogramTest
 
         Assert.Equal(2, histogram.ZeroCount);
     }
+
+    [Fact]
+    public void ScaleOneIndexesWithPowerOfTwoLowerBound()
+    {
+        var scale = 1;
+        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
+
+        var indexesPerPowerOf2 = 1 << scale;
+
+        // These are used to capture stats for an analysis for where MapToIndex is off by one.
+        var successes = 0;
+        var failures = 0;
+        var diffs = new List<double>();
+        var numValuesOffByOne = new List<int>();
+
+        var index = -50;
+        var exp = -25;
+        var lowerBound = Math.Pow(2, exp);
+        for (; index <= 50; index += indexesPerPowerOf2, lowerBound = Math.Pow(2, ++exp))
+        {
+            // Buckets are lower bound exclusive, therefore
+            // MapToIndex(LowerBoundOfBucketN) = IndexOfBucketN - 1.
+            Assert.Equal(index - 1, histogram.MapToIndex(lowerBound));
+
+            // If MapToIndex was mathematically precise, the following assertion would pass.
+            // BitIncrement(lowerBound) increments lowerBound by the smallest increment possible.
+            // MapToIndex(BitIncrement(LowerBoundOfBucketN)) should equal IndexOfBucketN.
+            // However, because MapToIndex at positive scales is imprecise, the assertion can fail
+            // for values very close to a bucket boundary.
+
+            // Assert.Equal(index, histogram.MapToIndex(BitIncrement(lowerBound)));
+
+            // Knowing that MapToIndex is imprecise near bucket boundaries,
+            // the following produces an analysis of the magnitude of imprecision.
+
+            var incremented = Math.BitIncrement(lowerBound);
+
+            if (index == histogram.MapToIndex(incremented))
+            {
+                // This is a scenario where the assertion above would have passed.
+                ++successes;
+            }
+            if (index != histogram.MapToIndex(incremented))
+            {
+                // This is a scenario where the assertion above would have failed.
+                ++failures;
+
+                // Count the number of values near the bucket boundary
+                // for which MapToIndex produces a result that is off by one.
+                var increments = 1;
+                while (index != histogram.MapToIndex(incremented))
+                {
+                    incremented = Math.BitIncrement(incremented);
+                    increments++;
+                }
+
+                // Capture stats for this bucket index.
+                numValuesOffByOne.Add(increments - 1);
+                diffs.Add(incremented - lowerBound);
+            }
+        }
+
+        output.WriteLine("");
+        output.WriteLine($"Successes: {successes}");
+        output.WriteLine($"Failures: {failures}");
+        output.WriteLine($"Average number of values near a bucket boundary that are off by one: {numValuesOffByOne.Average()}");
+        output.WriteLine($"Average range of values near a bucket boundary that are off by one: {diffs.Average()}");
+    }
 }
