@@ -8,6 +8,12 @@
   `TracerProvider`.
   ([#4468](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4468))
 
+* Added an `IServiceCollection.ConfigureOpenTelemetryTracerProvider` overload
+  which may be used to configure `TracerProviderBuilder`s while the
+  `IServiceCollection` is modifiable (before the `IServiceProvider` has been
+  created).
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.5.0-alpha.2
 
 Released 2023-Mar-31
