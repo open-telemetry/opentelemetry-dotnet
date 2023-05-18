@@ -528,7 +528,7 @@ public partial class Base2ExponentialBucketHistogramTest
             }
         }
 
-        this.output.WriteLine("");
+        this.output.WriteLine(string.Empty);
         this.output.WriteLine($"Successes: {successes}");
         this.output.WriteLine($"Failures: {failures}");
         this.output.WriteLine($"Average number of values near a bucket boundary that are off by one: {numValuesOffByOne.Average()}");
