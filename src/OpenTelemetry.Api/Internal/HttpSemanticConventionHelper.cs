@@ -50,7 +50,7 @@ namespace OpenTelemetry.Internal
 
         public static HttpSemanticConvention GetSemConvOptIn()
         {
-            var envVarValue = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN ");
+            var envVarValue = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
             return EvaluateValue(envVarValue);
         }
 
