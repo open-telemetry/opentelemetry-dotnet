@@ -19,7 +19,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace;
 
-internal class TracerProviderServiceCollectionBuilder : TracerProviderBuilder, ITracerProviderBuilder
+internal sealed class TracerProviderServiceCollectionBuilder : TracerProviderBuilder, ITracerProviderBuilder
 {
     public TracerProviderServiceCollectionBuilder(IServiceCollection services)
     {
