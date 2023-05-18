@@ -17,6 +17,7 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -201,7 +202,12 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     }
 
     /// <inheritdoc />
-    protected override bool TryCreateLogger(string? name, out Logger? logger)
+    protected override bool TryCreateLogger(
+        string? name,
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+        [NotNullWhen(true)]
+#endif
+        out Logger? logger)
     {
         logger = new LoggerSdk(this, name);
         return true;
