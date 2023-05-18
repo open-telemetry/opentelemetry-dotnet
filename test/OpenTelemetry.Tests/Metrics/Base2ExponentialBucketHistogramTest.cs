@@ -501,7 +501,7 @@ public partial class Base2ExponentialBucketHistogramTest
             // Knowing that MapToIndex is imprecise near bucket boundaries,
             // the following produces an analysis of the magnitude of imprecision.
 
-            var incremented = Math.BitIncrement(lowerBound);
+            var incremented = BitIncrement(lowerBound);
 
             if (index == histogram.MapToIndex(incremented))
             {
@@ -518,7 +518,7 @@ public partial class Base2ExponentialBucketHistogramTest
                 var increments = 1;
                 while (index != histogram.MapToIndex(incremented))
                 {
-                    incremented = Math.BitIncrement(incremented);
+                    incremented = BitIncrement(incremented);
                     increments++;
                 }
 
@@ -528,10 +528,10 @@ public partial class Base2ExponentialBucketHistogramTest
             }
         }
 
-        output.WriteLine("");
-        output.WriteLine($"Successes: {successes}");
-        output.WriteLine($"Failures: {failures}");
-        output.WriteLine($"Average number of values near a bucket boundary that are off by one: {numValuesOffByOne.Average()}");
-        output.WriteLine($"Average range of values near a bucket boundary that are off by one: {diffs.Average()}");
+        this.output.WriteLine("");
+        this.output.WriteLine($"Successes: {successes}");
+        this.output.WriteLine($"Failures: {failures}");
+        this.output.WriteLine($"Average number of values near a bucket boundary that are off by one: {numValuesOffByOne.Average()}");
+        this.output.WriteLine($"Average range of values near a bucket boundary that are off by one: {diffs.Average()}");
     }
 }
