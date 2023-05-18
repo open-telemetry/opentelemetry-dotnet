@@ -29,7 +29,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>

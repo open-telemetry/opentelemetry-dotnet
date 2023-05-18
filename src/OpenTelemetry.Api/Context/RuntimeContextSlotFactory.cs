@@ -59,7 +59,7 @@ namespace OpenTelemetry.Context
             {
                 var type = this.runtimeContextSlotType.MakeGenericType(typeof(T));
                 var ctor = type.GetConstructor(new Type[] { typeof(string) });
-                return (RuntimeContextSlot<T>)ctor.Invoke(new object[] { name });
+                return (RuntimeContextSlot<T>)ctor.Invoke(new object[] { name })!;
             }
         }
     }
