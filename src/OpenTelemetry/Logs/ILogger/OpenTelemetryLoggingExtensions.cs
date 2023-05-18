@@ -51,27 +51,6 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
 
-        // Note: This is to support legacy AddProcessor & SetResourceBuilder APIs on OpenTelemetryLoggerOptions
-        new LoggerProviderServiceCollectionBuilder(builder.Services).ConfigureBuilder(
-            (sp, logging) =>
-            {
-                var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
-
-                if (options.ResourceBuilder != null)
-                {
-                    logging.SetResourceBuilder(options.ResourceBuilder);
-
-                    options.ResourceBuilder = null;
-                }
-
-                foreach (var processor in options.Processors)
-                {
-                    logging.AddProcessor(processor);
-                }
-
-                options.Processors.Clear();
-            });
-
         builder.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
                 sp => new OpenTelemetryLoggerProvider(
@@ -79,7 +58,29 @@ public static class OpenTelemetryLoggingExtensions
                     sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
                     disposeProvider: false)));
 
-        return new OpenTelemetryLoggingBuilder(builder.Services);
+        var otelBuilder = new OpenTelemetryLoggingBuilder(builder.Services);
+
+        // Note: This is to support legacy AddProcessor & SetResourceBuilder APIs on OpenTelemetryLoggerOptions
+        otelBuilder.ConfigureBuilder((sp, logging) =>
+        {
+            var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+            if (options.ResourceBuilder != null)
+            {
+                logging.SetResourceBuilder(options.ResourceBuilder);
+
+                options.ResourceBuilder = null;
+            }
+
+            foreach (var processor in options.Processors)
+            {
+                logging.AddProcessor(processor);
+            }
+
+            options.Processors.Clear();
+        });
+
+        return otelBuilder;
     }
 
     /// <summary>
