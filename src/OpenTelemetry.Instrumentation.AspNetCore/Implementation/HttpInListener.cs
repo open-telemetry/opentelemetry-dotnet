@@ -62,6 +62,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly HttpSemanticConventionHelper.HttpSemanticConvention httpSemanticConvention;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -69,6 +70,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             Guard.ThrowIfNull(options);
 
             this.options = options;
+
+            this.httpSemanticConvention = HttpSemanticConventionHelper.GetSemConvOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)
