@@ -347,13 +347,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 dataPoint.Positive.BucketCounts.Add((ulong)bucketCount);
                             }
 
-                            dataPoint.Negative = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
-                            dataPoint.Negative.Offset = exponentialHistogramData.NegativeBuckets.Offset;
-                            foreach (var bucketCount in exponentialHistogramData.NegativeBuckets)
-                            {
-                                dataPoint.Negative.BucketCounts.Add((ulong)bucketCount);
-                            }
-
                             // TODO: exemplars.
 
                             histogram.DataPoints.Add(dataPoint);
