@@ -32,8 +32,8 @@ namespace OpenTelemetry.Context
 
         private static RuntimeContextSlotFactory runtimeContextSlotFactory;
 
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "User-defined RuntimeContextSlotFactory that relies on Reflection is not timmer safe.")]
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050:RequiresDynamicCode", Justification = "User-defined RuntimeContextSlotFactory that relies on Reflection is not AoT safe.")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "The AsyncLocalRuntimeContextSlot type is handled without using Reflection.")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050:RequiresDynamicCode", Justification = "The AsyncLocalRuntimeContextSlot type is handled without using Reflection.")]
         static RuntimeContext()
         {
             ContextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
@@ -49,8 +49,8 @@ namespace OpenTelemetry.Context
                 return contextSlotType;
             }
 
-            [RequiresUnreferencedCode("ReflectionRuntimeContextSlotFactory is trimmer unsafe.")]
-            [RequiresDynamicCode("ReflectionRuntimeContextSlotFactory requires the ability to generate new code at runtime.")]
+            [RequiresUnreferencedCode("Setting a custom ContextSlotType requires using Reflection to initialize the context slot.")]
+            [RequiresDynamicCode("Setting a custom ContextSlotType requires using MakeGenericType to initialize the context slot. The native code for the generic type might not be available at runtime.")]
             set
             {
                 Guard.ThrowIfNull(value, nameof(value));

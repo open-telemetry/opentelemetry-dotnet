@@ -29,9 +29,8 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link ="Includes\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="System.Threading.Tasks.Extensions" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
     <PackageReference Include="System.Text.Encodings.Web" Condition="'$(TargetFramework)' != 'net6.0'" />

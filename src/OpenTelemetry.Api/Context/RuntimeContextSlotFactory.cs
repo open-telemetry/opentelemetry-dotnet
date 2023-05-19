@@ -41,7 +41,7 @@ namespace OpenTelemetry.Context
         public sealed class ThreadLocalRuntimeContextSlotFactory : RuntimeContextSlotFactory
         {
             public override RuntimeContextSlot<T> Create<T>(string name)
-            => new ThreadLocalRuntimeContextSlot<T>(name);
+                => new ThreadLocalRuntimeContextSlot<T>(name);
         }
 
         [RequiresUnreferencedCode("ReflectionRuntimeContextSlotFactory is trimmer unsafe.")]
