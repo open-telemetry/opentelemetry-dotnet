@@ -12,7 +12,7 @@
   which may be used to configure `TracerProviderBuilder`s while the
   `IServiceCollection` is modifiable (before the `IServiceProvider` has been
   created).
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508))
 
 ## 1.5.0-alpha.2
 
