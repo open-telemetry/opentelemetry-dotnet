@@ -74,7 +74,7 @@ public sealed class LoggerProviderTests
         protected override bool TryCreateLogger(
             string? name,
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
-[NotNullWhen(true)]
+            [NotNullWhen(true)]
 #endif
             out Logger? logger)
         {
