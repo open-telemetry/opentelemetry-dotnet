@@ -38,7 +38,7 @@ public class JaegerPropagator : TextMapPropagator
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JaegerPropagator"/> class.
-    /// Uses the default header value uber-trace-id.
+    /// Uses the default header uber-trace-id.
     /// </summary>
     public JaegerPropagator()
         : this("uber-trace-id")
