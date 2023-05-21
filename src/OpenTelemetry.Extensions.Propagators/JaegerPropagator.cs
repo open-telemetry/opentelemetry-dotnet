@@ -25,7 +25,6 @@ namespace OpenTelemetry.Extensions.Propagators;
 /// </summary>
 public class JaegerPropagator : TextMapPropagator
 {
-    internal const string JaegerHeader = "uber-trace-id";
     internal const string JaegerDelimiter = ":";
     internal const string JaegerDelimiterEncoded = "%3A"; // while the spec defines the delimiter as a ':', some clients will url encode headers.
     internal const string SampledValue = "1";
@@ -35,8 +34,28 @@ public class JaegerPropagator : TextMapPropagator
     private static readonly int TraceId128BitLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int SpanIdLength = "00f067aa0ba902b7".Length;
 
+    private readonly string jaegerHeader;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JaegerPropagator"/> class.
+    /// Uses the default header value uber-trace-id.
+    /// </summary>
+    public JaegerPropagator()
+        : this("uber-trace-id")
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JaegerPropagator"/> class.
+    /// </summary>
+    /// <param name="jaegerHeader">Customization of the jeager header.</param>
+    public JaegerPropagator(string jaegerHeader)
+    {
+        this.jaegerHeader = jaegerHeader;
+    }
+
     /// <inheritdoc/>
-    public override ISet<string> Fields => new HashSet<string> { JaegerHeader };
+    public override ISet<string> Fields => new HashSet<string> { this.jaegerHeader };
 
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
@@ -61,7 +80,7 @@ public class JaegerPropagator : TextMapPropagator
 
         try
         {
-            var jaegerHeaderCollection = getter(carrier, JaegerHeader);
+            var jaegerHeaderCollection = getter(carrier, this.jaegerHeader);
             var jaegerHeader = jaegerHeaderCollection?.First();
 
             if (string.IsNullOrWhiteSpace(jaegerHeader))
@@ -123,7 +142,7 @@ public class JaegerPropagator : TextMapPropagator
             defaultParentSpanId,
             flags);
 
-        setter(carrier, JaegerHeader, jaegerTrace);
+        setter(carrier, this.jaegerHeader, jaegerTrace);
     }
 
     internal static bool TryExtractTraceContext(string jaegerHeader, out ActivityTraceId traceId, out ActivitySpanId spanId, out ActivityTraceFlags traceOptions)

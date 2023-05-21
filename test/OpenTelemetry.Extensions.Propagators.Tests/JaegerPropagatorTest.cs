@@ -21,7 +21,7 @@ namespace OpenTelemetry.Extensions.Propagators.Tests
 {
     public class JaegerPropagatorTest
     {
-        private const string JaegerHeader = "uber-trace-id";
+        private const string DefaultJaegerHeader = "uber-trace-id";
         private const string JaegerDelimiter = ":";
         private const string JaegerDelimiterEncoded = "%3A";
 
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Extensions.Propagators.Tests
                 parentSpanId,
                 flags);
 
-            var headers = new Dictionary<string, string[]> { { JaegerHeader, new[] { formattedHeader } } };
+            var headers = new Dictionary<string, string[]> { { DefaultJaegerHeader, new[] { formattedHeader } } };
 
             // act
             var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
@@ -140,10 +140,37 @@ namespace OpenTelemetry.Extensions.Propagators.Tests
                 parentSpanId,
                 flags);
 
-            var headers = new Dictionary<string, string[]> { { JaegerHeader, new[] { formattedHeader } } };
+            var headers = new Dictionary<string, string[]> { { DefaultJaegerHeader, new[] { formattedHeader } } };
 
             // act
             var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
+
+            // assert
+            Assert.Equal(traceId.PadLeft(TraceId.Length, '0'), result.ActivityContext.TraceId.ToString());
+            Assert.Equal(spanId.PadLeft(SpanId.Length, '0'), result.ActivityContext.SpanId.ToString());
+            Assert.Equal(flags == "1" ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None, result.ActivityContext.TraceFlags);
+        }
+
+        [Theory]
+        [InlineData(TraceId, SpanId, ParentSpanId, FlagSampled, JaegerDelimiter)]
+        [InlineData(TraceIdShort, SpanIdShort, ParentSpanId, FlagNotSampled, JaegerDelimiterEncoded)]
+        public void ExtractReturnsNewContextIfCustomHeaderIsValid(string traceId, string spanId, string parentSpanId, string flags, string delimiter)
+        {
+            // arrange
+            var jaegerHeader = "jaeger-trace-id";
+            var propagationContext = default(PropagationContext);
+
+            var formattedHeader = string.Join(
+                delimiter,
+                traceId,
+                spanId,
+                parentSpanId,
+                flags);
+
+            var headers = new Dictionary<string, string[]> { { jaegerHeader, new[] { formattedHeader } } };
+
+            // act
+            var result = new JaegerPropagator(jaegerHeader).Extract(propagationContext, headers, Getter);
 
             // assert
             Assert.Equal(traceId.PadLeft(TraceId.Length, '0'), result.ActivityContext.TraceId.ToString());
@@ -227,7 +254,7 @@ namespace OpenTelemetry.Extensions.Propagators.Tests
 
             // assert
             Assert.Single(headers);
-            Assert.Equal(expectedValue, headers[JaegerHeader]);
+            Assert.Equal(expectedValue, headers[DefaultJaegerHeader]);
         }
     }
 }
