@@ -63,7 +63,7 @@ namespace OpenTelemetry.Internal
 
         internal static HttpSemanticConvention EvaluateValue(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "http" => HttpSemanticConvention.New,
                 "http/dup" => HttpSemanticConvention.Dupe,

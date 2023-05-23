@@ -44,9 +44,11 @@ namespace OpenTelemetry.Api.Tests.Internal
             Assert.Equal(HttpSemanticConvention.Old, EvaluateValue(string.Empty));
             Assert.Equal(HttpSemanticConvention.Old, EvaluateValue("junk"));
             Assert.Equal(HttpSemanticConvention.Old, EvaluateValue("none"));
+            Assert.Equal(HttpSemanticConvention.Old, EvaluateValue("NONE"));
             Assert.Equal(HttpSemanticConvention.New, EvaluateValue("http"));
             Assert.Equal(HttpSemanticConvention.New, EvaluateValue("HTTP"));
             Assert.Equal(HttpSemanticConvention.Dupe, EvaluateValue("http/dup"));
+            Assert.Equal(HttpSemanticConvention.Dupe, EvaluateValue("HTTP/DUP"));
         }
     }
 }
