@@ -53,22 +53,17 @@ namespace OpenTelemetry.Internal
             try
             {
                 var envVarValue = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
-                return EvaluateValue(envVarValue);
+                return envVarValue?.ToLowerInvariant() switch
+                {
+                    "http" => HttpSemanticConvention.New,
+                    "http/dup" => HttpSemanticConvention.Dupe,
+                    _ => HttpSemanticConvention.Old,
+                };
             }
             catch
             {
                 return HttpSemanticConvention.Old;
             }
-        }
-
-        internal static HttpSemanticConvention EvaluateValue(string value)
-        {
-            return value?.ToLowerInvariant() switch
-            {
-                "http" => HttpSemanticConvention.New,
-                "http/dup" => HttpSemanticConvention.Dupe,
-                _ => HttpSemanticConvention.Old,
-            };
         }
     }
 }

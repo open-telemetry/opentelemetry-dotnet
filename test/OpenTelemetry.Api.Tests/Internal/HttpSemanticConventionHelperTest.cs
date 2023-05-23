@@ -38,17 +38,31 @@ namespace OpenTelemetry.Api.Tests.Internal
         }
 
         [Fact]
-        public void VerifyEvaluate()
+        public void VerifyGetSemanticConventionOptIn()
         {
-            Assert.Equal(HttpSemanticConvention.Old, EvaluateValue(null));
-            Assert.Equal(HttpSemanticConvention.Old, EvaluateValue(string.Empty));
-            Assert.Equal(HttpSemanticConvention.Old, EvaluateValue("junk"));
-            Assert.Equal(HttpSemanticConvention.Old, EvaluateValue("none"));
-            Assert.Equal(HttpSemanticConvention.Old, EvaluateValue("NONE"));
-            Assert.Equal(HttpSemanticConvention.New, EvaluateValue("http"));
-            Assert.Equal(HttpSemanticConvention.New, EvaluateValue("HTTP"));
-            Assert.Equal(HttpSemanticConvention.Dupe, EvaluateValue("http/dup"));
-            Assert.Equal(HttpSemanticConvention.Dupe, EvaluateValue("HTTP/DUP"));
+            this.RunTestWithEnvironmentVariable(null, HttpSemanticConvention.Old);
+            this.RunTestWithEnvironmentVariable(string.Empty, HttpSemanticConvention.Old);
+            this.RunTestWithEnvironmentVariable("junk", HttpSemanticConvention.Old);
+            this.RunTestWithEnvironmentVariable("none", HttpSemanticConvention.Old);
+            this.RunTestWithEnvironmentVariable("NONE", HttpSemanticConvention.Old);
+            this.RunTestWithEnvironmentVariable("http", HttpSemanticConvention.New);
+            this.RunTestWithEnvironmentVariable("HTTP", HttpSemanticConvention.New);
+            this.RunTestWithEnvironmentVariable("http/dup", HttpSemanticConvention.Dupe);
+            this.RunTestWithEnvironmentVariable("HTTP/DUP", HttpSemanticConvention.Dupe);
+        }
+
+        private void RunTestWithEnvironmentVariable(string value, HttpSemanticConvention expected)
+        {
+            try
+            {
+                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", value);
+
+                Assert.Equal(expected, GetSemanticConventionOptIn());
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", null);
+            }
         }
     }
 }
