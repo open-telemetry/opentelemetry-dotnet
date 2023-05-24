@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
 #pragma warning restore IDE0005
 
 namespace OpenTelemetry.Instrumentation
@@ -29,7 +30,8 @@ namespace OpenTelemetry.Instrumentation
         {
             ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
             ParameterExpression propertyValue = Expression.Parameter(typeof(ActivitySource), "propertyValue");
-            var body = Expression.Assign(Expression.Property(instance, "Source"), propertyValue);
+            PropertyInfo sourcePropertyInfo = typeof(Activity).GetProperty("Source");
+            var body = Expression.Assign(Expression.Property(instance, sourcePropertyInfo), propertyValue);
             return Expression.Lambda<Action<Activity, ActivitySource>>(body, instance, propertyValue).Compile();
         }
 
@@ -37,7 +39,8 @@ namespace OpenTelemetry.Instrumentation
         {
             ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
             ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
-            var body = Expression.Assign(Expression.Property(instance, "Kind"), propertyValue);
+            PropertyInfo kindPropertyInfo = typeof(Activity).GetProperty("Kind");
+            var body = Expression.Assign(Expression.Property(instance, kindPropertyInfo), propertyValue);
             return Expression.Lambda<Action<Activity, ActivityKind>>(body, instance, propertyValue).Compile();
         }
     }
