@@ -16,8 +16,6 @@
 
 namespace OpenTelemetry.Internal
 {
-    using System;
-
     /// <summary>
     /// Helper class for Http Semantic Conventions.
     /// </summary>
