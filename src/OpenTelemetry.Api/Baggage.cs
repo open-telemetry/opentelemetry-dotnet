@@ -17,6 +17,8 @@
 using OpenTelemetry.Context;
 using OpenTelemetry.Internal;
 
+#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
+
 namespace OpenTelemetry
 {
     /// <summary>
@@ -376,3 +378,5 @@ namespace OpenTelemetry
         }
     }
 }
+
+#pragma warning restore RS0026 // Do not add multiple overloads with optional parameters.

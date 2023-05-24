@@ -17,6 +17,8 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
+#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
+
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -188,3 +190,5 @@ namespace OpenTelemetry.Trace
         }
     }
 }
+
+#pragma warning restore RS0026 // Do not add multiple overloads with optional parameters.
