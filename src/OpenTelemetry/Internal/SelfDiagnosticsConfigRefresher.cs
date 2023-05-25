@@ -202,8 +202,15 @@ namespace OpenTelemetry.Internal
             try
             {
                 Directory.CreateDirectory(newLogDirectory);
-                var fileName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + "."
-                    + Process.GetCurrentProcess().Id + ".log";
+
+                var currentProcess = Process.GetCurrentProcess();
+
+                var fileName = DateTime.UtcNow.ToString("yyyyMMdd'.'HHmmss")
+                    + '.' + Environment.MachineName
+                    + '.' + Path.GetFileName(currentProcess.MainModule.FileName)
+                    + '.' + currentProcess.Id
+                    + ".log";
+
                 var filePath = Path.Combine(newLogDirectory, fileName);
 
                 // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on
