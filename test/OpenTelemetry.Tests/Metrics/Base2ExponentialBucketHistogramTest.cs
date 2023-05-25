@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class Base2ExponentialBucketHistogramTest
+public partial class Base2ExponentialBucketHistogramTest
 {
     [Fact]
     public void ScalingFactorCalculation()

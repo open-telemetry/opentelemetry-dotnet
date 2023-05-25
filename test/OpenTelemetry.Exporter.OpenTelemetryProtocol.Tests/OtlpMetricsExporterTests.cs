@@ -544,43 +544,46 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.True(dataPoint.TimeUnixNano > 0);
 
             Assert.Equal(20, dataPoint.Scale);
-            Assert.Equal(2UL, dataPoint.Count);
             Assert.Equal(1UL, dataPoint.ZeroCount);
+            if (longValue > 0 || doubleValue > 0)
+            {
+                Assert.Equal(2UL, dataPoint.Count);
+            }
+            else
+            {
+                Assert.Equal(1UL, dataPoint.Count);
+            }
 
             if (longValue.HasValue)
             {
-                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
-                Assert.Equal((double)longValue, dataPoint.Sum);
                 if (longValue > 0)
                 {
+                    Assert.Equal((double)longValue, dataPoint.Sum);
+                    Assert.Null(dataPoint.Negative);
                     Assert.True(dataPoint.Positive.Offset > 0);
                     Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
-                    Assert.True(dataPoint.Negative.Offset == 0);
-                    Assert.Empty(dataPoint.Negative.BucketCounts);
                 }
                 else
                 {
-                    Assert.True(dataPoint.Negative.Offset > 0);
-                    Assert.Equal(1UL, dataPoint.Negative.BucketCounts[0]);
+                    Assert.Equal(0, dataPoint.Sum);
+                    Assert.Null(dataPoint.Negative);
                     Assert.True(dataPoint.Positive.Offset == 0);
                     Assert.Empty(dataPoint.Positive.BucketCounts);
                 }
             }
             else
             {
-                // Known issue: Negative measurements affect the Sum. Per the spec, they should not.
-                Assert.Equal(doubleValue, dataPoint.Sum);
                 if (doubleValue > 0)
                 {
+                    Assert.Equal(doubleValue, dataPoint.Sum);
+                    Assert.Null(dataPoint.Negative);
                     Assert.True(dataPoint.Positive.Offset > 0);
                     Assert.Equal(1UL, dataPoint.Positive.BucketCounts[0]);
-                    Assert.True(dataPoint.Negative.Offset == 0);
-                    Assert.Empty(dataPoint.Negative.BucketCounts);
                 }
                 else
                 {
-                    Assert.True(dataPoint.Negative.Offset > 0);
-                    Assert.Equal(1UL, dataPoint.Negative.BucketCounts[0]);
+                    Assert.Equal(0, dataPoint.Sum);
+                    Assert.Null(dataPoint.Negative);
                     Assert.True(dataPoint.Positive.Offset == 0);
                     Assert.Empty(dataPoint.Positive.BucketCounts);
                 }
