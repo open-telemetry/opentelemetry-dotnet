@@ -32,6 +32,8 @@ namespace OpenTelemetry.Internal
     {
         public static readonly byte[] MessageOnNewFile = Encoding.UTF8.GetBytes("If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.\n");
 
+        internal string FileName;
+
         private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -205,13 +207,13 @@ namespace OpenTelemetry.Internal
 
                 var currentProcess = Process.GetCurrentProcess();
 
-                var fileName = DateTime.UtcNow.ToString("yyyyMMdd'.'HHmmss")
+                this.FileName = DateTime.UtcNow.ToString("yyyyMMdd'.'HHmmss")
                     + '.' + Environment.MachineName
                     + '.' + Path.GetFileName(currentProcess.MainModule.FileName)
                     + '.' + currentProcess.Id
                     + ".log";
 
-                var filePath = Path.Combine(newLogDirectory, fileName);
+                var filePath = Path.Combine(newLogDirectory, this.FileName);
 
                 // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on
                 // .NET Framework and .NET Core, here I am using the [FileStream version][2] of it.

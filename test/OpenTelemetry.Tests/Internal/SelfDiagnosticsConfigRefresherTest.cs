@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System.Diagnostics;
 using System.Text;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -50,7 +49,7 @@ namespace OpenTelemetry.Internal.Tests
                 OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("exception");
 
                 int bufferSize = 512;
-                byte[] actualBytes = ReadFile(logDirectory, bufferSize);
+                byte[] actualBytes = ReadFile(logDirectory, configRefresher.FileName, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 this.output.WriteLine(logText);  // for debugging in case the test fails
                 Assert.StartsWith(MessageOnNewFileString, logText);
@@ -78,7 +77,7 @@ namespace OpenTelemetry.Internal.Tests
                 string expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
 
                 int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
-                byte[] actualBytes = ReadFile(logDirectory, bufferSize);
+                byte[] actualBytes = ReadFile(logDirectory, configRefresher.FileName, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 Assert.StartsWith(MessageOnNewFileString, logText);
 
@@ -100,11 +99,9 @@ namespace OpenTelemetry.Internal.Tests
             return logLine.Substring(timestampPrefixLength);
         }
 
-        private static byte[] ReadFile(string logDirectory, int byteCount)
+        private static byte[] ReadFile(string logDirectory, string fileName, int byteCount)
         {
-            var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
-                    + Process.GetCurrentProcess().Id + ".log";
-            var outputFilePath = Path.Combine(logDirectory, outputFileName);
+            var outputFilePath = Path.Combine(logDirectory, fileName);
             using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             byte[] actualBytes = new byte[byteCount];
             _ = file.Read(actualBytes, 0, byteCount);
