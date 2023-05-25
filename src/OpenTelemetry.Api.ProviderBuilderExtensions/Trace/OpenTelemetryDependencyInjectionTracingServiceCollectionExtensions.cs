@@ -35,13 +35,12 @@ public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExte
     /// Each registered configuration action will be applied
     /// sequentially.</item>
     /// <item>A <see cref="TracerProvider"/> will NOT be created automatically
-    /// using this method. To begin collecting metrics use the
+    /// using this method. To begin collecting traces use the
     /// <c>IServiceCollection.AddOpenTelemetry</c> extension in the
     /// <c>OpenTelemetry.Extensions.Hosting</c> package.</item>
     /// </list>
     /// </remarks>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add
-    /// services to.</param>
+    /// <param name="services"><see cref="IServiceCollection" />.</param>
     /// <param name="configure">Callback action to configure the <see
     /// cref="TracerProviderBuilder"/>.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls
@@ -70,7 +69,7 @@ public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExte
     /// Each registered configuration action will be applied
     /// sequentially.</item>
     /// <item>A <see cref="TracerProvider"/> will NOT be created automatically
-    /// using this method. To begin collecting metrics use the
+    /// using this method. To begin collecting traces use the
     /// <c>IServiceCollection.AddOpenTelemetry</c> extension in the
     /// <c>OpenTelemetry.Extensions.Hosting</c> package.</item>
     /// <item>The supplied configuration delegate is called once the <see
@@ -81,8 +80,7 @@ public static class OpenTelemetryDependencyInjectionTracingServiceCollectionExte
     /// delegate.</item>
     /// </list>
     /// </remarks>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add
-    /// services to.</param>
+    /// <param name="services"><see cref="IServiceCollection" />.</param>
     /// <param name="configure">Callback action to configure the <see
     /// cref="TracerProviderBuilder"/>.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls
