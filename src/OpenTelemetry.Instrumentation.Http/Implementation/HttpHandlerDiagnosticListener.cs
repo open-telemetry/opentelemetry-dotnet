@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
@@ -45,6 +46,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly HttpClientInstrumentationOptions options;
 
+        private readonly HttpSemanticConvention httpSemanticConvention;
+
         static HttpHandlerDiagnosticListener()
         {
             try
@@ -61,6 +64,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             : base("HttpHandlerDiagnosticListener")
         {
             this.options = options;
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)

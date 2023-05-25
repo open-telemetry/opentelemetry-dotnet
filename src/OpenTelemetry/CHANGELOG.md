@@ -4,7 +4,11 @@
 
 * Update file name of self-diagnostic log file to include the utc timestamp
   and server name.
-  {[]())
+  ([#4520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4520))
+  
+## 1.5.0-rc.1
+
+Released 2023-May-25
 
 * The default resource provided by `ResourceBuilder.CreateDefault()` now adds
   the `telemetry.sdk.*` attributes defined in the
