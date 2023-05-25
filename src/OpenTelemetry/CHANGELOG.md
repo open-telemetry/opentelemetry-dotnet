@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Update file name of self-diagnostic log file to include the utc timestamp
+  and server name.
+  {[]())
+
 * The default resource provided by `ResourceBuilder.CreateDefault()` now adds
   the `telemetry.sdk.*` attributes defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).
