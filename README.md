@@ -27,7 +27,7 @@ files.
 
 *While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
  stable, the [OTLP Exporter for
- Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
+ Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#enable-log-exporter)
  is still non-stable.
 
 See [Spec Compliance
