@@ -13,6 +13,8 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+    <PackageReference Include="Microsoft.Coyote" />
+    <PackageReference Include="Microsoft.Coyote.Test" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,3 +32,4 @@
     <DotNetCliToolReference Include="dotnet-xunit" />
   </ItemGroup>
 </Project>
+ 
