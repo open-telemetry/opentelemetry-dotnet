@@ -311,6 +311,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             bool innerConfigureBuilderTestExecuted = false;
             bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
+            bool innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
 
             using var provider = Sdk.CreateTracerProviderBuilder()
                 .ConfigureServices(services =>
@@ -318,7 +319,17 @@ namespace OpenTelemetry.Trace.Tests
                     if (callNestedConfigure)
                     {
                         services.ConfigureOpenTelemetryTracerProvider(
-                            (sp, builder) => innerConfigureOpenTelemetryLoggerProviderTestExecuted = true);
+                            builder =>
+                            {
+                                innerConfigureOpenTelemetryLoggerProviderTestExecuted = true;
+                                builder.AddInstrumentation<MyInstrumentation>();
+                            });
+                        services.ConfigureOpenTelemetryTracerProvider(
+                            (sp, builder) =>
+                            {
+                                innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = true;
+                                Assert.Throws<NotSupportedException>(() => builder.AddInstrumentation<MyInstrumentation>());
+                            });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
@@ -326,10 +337,22 @@ namespace OpenTelemetry.Trace.Tests
                     innerConfigureBuilderTestExecuted = true;
                     Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
                 })
-                .Build();
+                .Build() as TracerProviderSdk;
+
+            Assert.NotNull(provider);
 
             Assert.True(innerConfigureBuilderTestExecuted);
             Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
+            Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted);
+
+            if (callNestedConfigure)
+            {
+                Assert.Single(provider.Instrumentations);
+            }
+            else
+            {
+                Assert.Empty(provider.Instrumentations);
+            }
 
             Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<TracerProvider>());
         }
