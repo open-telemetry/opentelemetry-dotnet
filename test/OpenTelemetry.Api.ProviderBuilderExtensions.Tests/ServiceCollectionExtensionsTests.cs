@@ -121,8 +121,4 @@ public class ServiceCollectionExtensionsTests
         Assert.Equal(invocations, registrations.Count());
         Assert.Equal(numberOfCalls, registrations.Count());
     }
-
-    private sealed class CustomType
-    {
-    }
 }
