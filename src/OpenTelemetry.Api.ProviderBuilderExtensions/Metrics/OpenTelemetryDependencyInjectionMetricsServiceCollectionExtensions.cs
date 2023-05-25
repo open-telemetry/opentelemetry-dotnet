@@ -34,7 +34,7 @@ public static class OpenTelemetryDependencyInjectionMetricsServiceCollectionExte
     /// <item>This is safe to be called multiple times and by library authors.
     /// Each registered configuration action will be applied
     /// sequentially.</item>
-    /// <item>A <see cref="MeterProviderBuilder"/> will NOT be created automatically
+    /// <item>A <see cref="MeterProvider"/> will NOT be created automatically
     /// using this method. To begin collecting metrics use the
     /// <c>IServiceCollection.AddOpenTelemetry</c> extension in the
     /// <c>OpenTelemetry.Extensions.Hosting</c> package.</item>
