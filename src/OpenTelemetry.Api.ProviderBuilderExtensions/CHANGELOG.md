@@ -18,7 +18,7 @@
   which may be used to configure `MeterProviderBuilder`s while the
   `IServiceCollection` is modifiable (before the `IServiceProvider` has been
   created).
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4517](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4517))
 
 ## 1.5.0-alpha.2
 
