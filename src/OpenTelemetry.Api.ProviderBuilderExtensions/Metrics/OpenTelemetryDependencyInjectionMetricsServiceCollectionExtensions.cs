@@ -77,7 +77,10 @@ public static class OpenTelemetryDependencyInjectionMetricsServiceCollectionExte
     /// <see cref="MeterProviderBuilder"/> once the <see
     /// cref="IServiceProvider"/> has been created. Many helper extensions
     /// register services and may throw if invoked inside the configuration
-    /// delegate.</item>
+    /// delegate. If you don't need access to the <see cref="IServiceProvider"/>
+    /// call <see cref="ConfigureOpenTelemetryMeterProvider(IServiceCollection,
+    /// Action{MeterProviderBuilder})"/> instead which is safe to be used with
+    /// helper extensions.</item>
     /// </list>
     /// </remarks>
     /// <param name="services"><see cref="IServiceCollection" />.</param>
