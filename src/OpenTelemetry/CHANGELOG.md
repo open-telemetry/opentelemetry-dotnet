@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Update file name of self-diagnostic log file to include the utc timestamp
-  and server name.
+* Update file name of self-diagnostic log file to include UTC Timestamp
+  and machine name.
   ([#4520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4520))
 
 ## 1.5.0-rc.1
