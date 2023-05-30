@@ -6,8 +6,12 @@
 
 Released 2023-May-25
 
+* Add display of bucket boundaries when using exponential histograms.
+  ([#4507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4507))
+
 * Added direct reference to `System.Text.Encodings.Web` with minimum version of
 `4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+  ([#4390](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4390))
 
 * Updated `LogRecord` console output: `Body` is now shown (if set),
   `StateValues` are now written as `Attributes`, and `State` is no longer
