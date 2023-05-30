@@ -262,7 +262,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-
         private void Dispose(bool disposing)
         {
             if (!this.disposedValue)
