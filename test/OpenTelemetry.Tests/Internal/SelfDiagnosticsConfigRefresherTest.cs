@@ -148,18 +148,21 @@ namespace OpenTelemetry.Internal.Tests
 
         private void PurgeAnyLogFiles(string logDirectory)
         {
-            string[] logFiles = Directory.GetFiles(logDirectory, "*.log");
-
-            foreach (string file in logFiles)
+            if (Directory.Exists(logDirectory))
             {
-                try
+                string[] logFiles = Directory.GetFiles(logDirectory, "*.log");
+
+                foreach (string file in logFiles)
                 {
-                    File.Delete(file);
-                    this.output.WriteLine($"Deleted file: {file}");
-                }
-                catch (Exception ex)
-                {
-                    this.output.WriteLine($"Error deleting file {file}: {ex.Message}");
+                    try
+                    {
+                        File.Delete(file);
+                        this.output.WriteLine($"Deleted file: {file}");
+                    }
+                    catch (Exception ex)
+                    {
+                        this.output.WriteLine($"Error deleting file {file}: {ex.Message}");
+                    }
                 }
             }
         }
