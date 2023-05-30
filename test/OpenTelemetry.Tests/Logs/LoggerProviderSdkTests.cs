@@ -16,6 +16,8 @@
 
 #nullable enable
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
 using Xunit;
 
@@ -23,6 +25,22 @@ namespace OpenTelemetry.Logs.Tests;
 
 public sealed class LoggerProviderSdkTests
 {
+    [Fact]
+    public void ResourceDetectionUsingIConfigurationTest()
+    {
+        using var provider = Sdk.CreateLoggerProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(
+                    new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_SERVICE_NAME"] = "TestServiceName" }).Build());
+            })
+            .Build() as LoggerProviderSdk;
+
+        Assert.NotNull(provider);
+
+        Assert.Contains(provider.Resource.Attributes, kvp => kvp.Key == "service.name" && (string)kvp.Value == "TestServiceName");
+    }
+
     [Fact]
     public void ForceFlushTest()
     {

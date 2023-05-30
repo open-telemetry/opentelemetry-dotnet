@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * Revert version of `Google.Protobuf` to `3.19.4` (see
   [#4201](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4201)).
   This also reintroduces the `System.Reflection.Emit.Lightweight` dependency.
