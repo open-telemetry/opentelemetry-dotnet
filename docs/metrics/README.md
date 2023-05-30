@@ -59,4 +59,3 @@ counter.Add(100, readOnlySpanOfTags); // <--- DON'T DO THIS
   instance is kept active for metrics to be collected. In a typical application,
   a single MeterProvider is built at application startup, and is disposed of at
   application shutdown.
-  
