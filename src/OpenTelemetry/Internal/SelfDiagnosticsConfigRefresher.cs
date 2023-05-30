@@ -205,8 +205,19 @@ namespace OpenTelemetry.Internal
 
                 var currentProcess = Process.GetCurrentProcess();
 
-                var fileName = DateTime.UtcNow.ToString("yyyyMMdd'.'HHmmss")
-                    + '.' + Environment.MachineName
+                string machineName;
+
+                try
+                {
+                    machineName = Environment.MachineName;
+                }
+                catch
+                {
+                    machineName = "UnknownMachineName";
+                }
+
+                var fileName = DateTime.UtcNow.ToString("yyyyMMdd'T'HHmmss'Z'")
+                    + '.' + machineName
                     + '.' + Path.GetFileName(currentProcess.MainModule.FileName)
                     + '.' + currentProcess.Id
                     + ".log";
@@ -250,6 +261,7 @@ namespace OpenTelemetry.Internal
                 OpenTelemetrySdkEventSource.Log.SelfDiagnosticsFileCreateException(newLogDirectory, ex);
             }
         }
+
 
         private void Dispose(bool disposing)
         {
