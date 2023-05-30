@@ -18,20 +18,19 @@
 
 using OpenTelemetry.Logs;
 
-namespace OpenTelemetry
+namespace OpenTelemetry;
+
+/// <summary>
+/// Implements a simple log record export processor.
+/// </summary>
+public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
 {
     /// <summary>
-    /// Implements a simple log record export processor.
+    /// Initializes a new instance of the <see cref="SimpleLogRecordExportProcessor"/> class.
     /// </summary>
-    public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
+    /// <param name="exporter">Log record exporter.</param>
+    public SimpleLogRecordExportProcessor(BaseExporter<LogRecord> exporter)
+        : base(exporter)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleLogRecordExportProcessor"/> class.
-        /// </summary>
-        /// <param name="exporter">Log record exporter.</param>
-        public SimpleLogRecordExportProcessor(BaseExporter<LogRecord> exporter)
-            : base(exporter)
-        {
-        }
     }
 }

@@ -27,7 +27,7 @@ files.
 
 *While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
  stable, the [OTLP Exporter for
- Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
+ Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#enable-log-exporter)
  is still non-stable.
 
 See [Spec Compliance
@@ -40,7 +40,8 @@ repo.
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](./docs/metrics/getting-started/README.md)
+* metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
+  [Console](./docs/metrics/getting-started-console/README.md)
 * traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
   [Console](./docs/trace/getting-started-console/README.md)
 
@@ -71,8 +72,8 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
 * [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
+* [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) and

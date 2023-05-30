@@ -53,9 +53,11 @@ OpenTelemetry logging.
 
 If you are new to
 [metrics](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md),
-it is first recommended to follow the [getting started in 5
-minutes](../../docs/metrics/getting-started/README.md) guide to get up and
-running.
+it is recommended to first follow the [getting started in 5 minutes - ASP.NET
+Core Application](../../docs/metrics/getting-started-aspnetcore/README.md) guide
+or the [getting started in 5 minutes - Console
+Application](../../docs/metrics/getting-started-console/README.md) guide to get up
+and running.
 
 For a more detailed explanation of SDK metric features see [Customizing
 OpenTelemetry .NET SDK for
@@ -111,8 +113,8 @@ the following content:
 ```json
 {
     "LogDirectory": ".",
-    "FileSize": 1024,
-    "LogLevel": "Error"
+    "FileSize": 32768,
+    "LogLevel": "Warning"
 }
 ```
 
@@ -133,10 +135,10 @@ You can also find the exact directory by calling these methods from your code.
    can be an absolute path or a relative path to the current directory.
 
 2. `FileSize` is a positive integer, which specifies the log file size in
-   [KiB](https://en.wikipedia.org/wiki/Kibibyte). This value must be between 1 MiB
-   and 128 MiB (inclusive), or it will be rounded to the closest upper or lower
-   limit. The log file will never exceed this configured size, and will be
-   overwritten in a circular way.
+   [KiB](https://en.wikipedia.org/wiki/Kibibyte). This value must be within
+   range `[1024, 131072]` (1 MiB \<= size \<= 128 MiB), or it will be rounded to
+   the closest upper or lower limit. The log file will never exceed this
+   configured size, and will be overwritten in a circular way.
 
 3. `LogLevel` is the lowest level of the events to be captured. It has to be one
    of the

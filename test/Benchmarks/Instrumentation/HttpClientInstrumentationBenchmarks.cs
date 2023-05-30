@@ -17,31 +17,30 @@
 #if !NETFRAMEWORK
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
-// * Summary *
-
-BenchmarkDotNet=v0.13.3, OS=Windows 10 (10.0.19045.2604)
-Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
-.NET SDK=7.0.103
-  [Host] : .NET 7.0.3 (7.0.323.6910), X64 RyuJIT AVX2
-
-Job=InProcess  Toolchain=InProcessEmitToolchain
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK=7.0.203
+  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
-|                   Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
-|------------------------- |---------:|--------:|--------:|-------:|----------:|
-| UninstrumentedHttpClient | 153.3 us | 2.95 us | 3.83 us | 0.4883 |   2.54 KB |
-|   InstrumentedHttpClient | 170.4 us | 3.37 us | 4.14 us | 0.9766 |   4.51 KB |
+|            Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
+|------------------ |---------------------- |---------:|--------:|--------:|-------:|----------:|
+| HttpClientRequest |                  None | 222.7 us | 4.28 us | 4.75 us |      - |   2.45 KB |
+| HttpClientRequest |                Traces | 233.0 us | 4.08 us | 3.81 us | 0.4883 |   4.36 KB |
+| HttpClientRequest |               Metrics | 208.9 us | 4.17 us | 7.53 us | 0.4883 |   3.76 KB |
+| HttpClientRequest |       Traces, Metrics | 230.9 us | 3.29 us | 2.92 us | 0.4883 |   4.38 KB |
 */
 
 namespace Benchmarks.Instrumentation
 {
-    [InProcess]
     public class HttpClientInstrumentationBenchmarks
     {
         private HttpClient httpClient;
@@ -49,55 +48,102 @@ namespace Benchmarks.Instrumentation
         private TracerProvider tracerProvider;
         private MeterProvider meterProvider;
 
-        [GlobalSetup(Target = nameof(UninstrumentedHttpClient))]
-        public void UninstrumentedSetup()
+        [Flags]
+        public enum EnableInstrumentationOption
         {
-            this.StartWebApplication();
-            this.httpClient = new HttpClient();
+            /// <summary>
+            /// Instrumentation is not enabled for any signal.
+            /// </summary>
+            None = 0,
+
+            /// <summary>
+            /// Instrumentation is enbled only for Traces.
+            /// </summary>
+            Traces = 1,
+
+            /// <summary>
+            /// Instrumentation is enbled only for Metrics.
+            /// </summary>
+            Metrics = 2,
         }
 
-        [GlobalSetup(Target = nameof(InstrumentedHttpClient))]
-        public void InstrumentedSetup()
+        [Params(0, 1, 2, 3)]
+        public EnableInstrumentationOption EnableInstrumentation { get; set; }
+
+        [GlobalSetup(Target = nameof(HttpClientRequest))]
+        public void HttpClientRequestGlobalSetup()
         {
-            this.StartWebApplication();
-            this.httpClient = new HttpClient();
+            if (this.EnableInstrumentation == EnableInstrumentationOption.None)
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
 
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddHttpClientInstrumentation()
-                .Build();
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddHttpClientInstrumentation()
+                    .Build();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
 
-            var exportedItems = new List<Metric>();
-            this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddHttpClientInstrumentation()
-                .AddInMemoryExporter(exportedItems)
-                .Build();
+                this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddHttpClientInstrumentation()
+                    .Build();
+            }
+            else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
+                this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+            {
+                this.StartWebApplication();
+                this.httpClient = new HttpClient();
+
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddHttpClientInstrumentation()
+                    .Build();
+
+                this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddHttpClientInstrumentation()
+                    .Build();
+            }
         }
 
-        [GlobalCleanup(Target = nameof(UninstrumentedHttpClient))]
-        public async Task UninstrumentedCleanupAsync()
+        [GlobalCleanup(Target = nameof(HttpClientRequest))]
+        public void HttpClientRequestGlobalCleanup()
         {
-            this.httpClient.Dispose();
-            await this.app.DisposeAsync().ConfigureAwait(false);
-        }
-
-        [GlobalCleanup(Target = nameof(InstrumentedHttpClient))]
-        public async Task InstrumentedCleanupAsync()
-        {
-            this.httpClient.Dispose();
-            await this.app.DisposeAsync().ConfigureAwait(false);
-            this.tracerProvider.Dispose();
-            this.meterProvider.Dispose();
+            if (this.EnableInstrumentation == EnableInstrumentationOption.None)
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+                this.tracerProvider.Dispose();
+            }
+            else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+                this.meterProvider.Dispose();
+            }
+            else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
+                this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+            {
+                this.httpClient.Dispose();
+                this.app.DisposeAsync().GetAwaiter().GetResult();
+                this.tracerProvider.Dispose();
+                this.meterProvider.Dispose();
+            }
         }
 
         [Benchmark]
-        public async Task UninstrumentedHttpClient()
-        {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
-            httpResponse.EnsureSuccessStatusCode();
-        }
-
-        [Benchmark]
-        public async Task InstrumentedHttpClient()
+        public async Task HttpClientRequest()
         {
             var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
@@ -108,7 +154,7 @@ namespace Benchmarks.Instrumentation
             var builder = WebApplication.CreateBuilder();
             builder.Logging.ClearProviders();
             var app = builder.Build();
-            app.MapGet("/", () => $"Hello World!");
+            app.MapGet("/", async context => await context.Response.WriteAsync($"Hello World!"));
             app.RunAsync();
 
             this.app = app;

@@ -16,38 +16,37 @@
 
 #nullable enable
 
-namespace OpenTelemetry.Logs
+namespace OpenTelemetry.Logs;
+
+internal sealed class LogRecordThreadStaticPool : ILogRecordPool
 {
-    internal sealed class LogRecordThreadStaticPool : ILogRecordPool
+    [ThreadStatic]
+    public static LogRecord? Storage;
+
+    private LogRecordThreadStaticPool()
     {
-        [ThreadStatic]
-        public static LogRecord? Storage;
+    }
 
-        private LogRecordThreadStaticPool()
+    public static LogRecordThreadStaticPool Instance { get; } = new();
+
+    public LogRecord Rent()
+    {
+        var logRecord = Storage;
+        if (logRecord != null)
         {
+            Storage = null;
+            return logRecord;
         }
 
-        public static LogRecordThreadStaticPool Instance { get; } = new();
+        return new();
+    }
 
-        public LogRecord Rent()
+    public void Return(LogRecord logRecord)
+    {
+        if (Storage == null)
         {
-            var logRecord = Storage;
-            if (logRecord != null)
-            {
-                Storage = null;
-                return logRecord;
-            }
-
-            return new();
-        }
-
-        public void Return(LogRecord logRecord)
-        {
-            if (Storage == null)
-            {
-                LogRecordPoolHelper.Clear(logRecord);
-                Storage = logRecord;
-            }
+            LogRecordPoolHelper.Clear(logRecord);
+            Storage = logRecord;
         }
     }
 }

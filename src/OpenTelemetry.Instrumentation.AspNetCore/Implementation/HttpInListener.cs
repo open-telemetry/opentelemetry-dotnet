@@ -29,6 +29,7 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -62,6 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly HttpSemanticConvention httpSemanticConvention;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -69,6 +71,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             Guard.ThrowIfNull(options);
 
             this.options = options;
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -240,7 +244,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
@@ -285,12 +289,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // If yes, then we need to store the asp.net core activity inside
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
-            }
-
-            var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (textMapPropagator is not TraceContextPropagator)
-            {
-                Baggage.Current = default;
             }
         }
 

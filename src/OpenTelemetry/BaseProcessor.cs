@@ -153,6 +153,10 @@ namespace OpenTelemetry
             GC.SuppressFinalize(this);
         }
 
+        /// <inheritdoc/>
+        public override string ToString()
+            => this.typeName;
+
         internal virtual void SetParentProvider(BaseProvider parentProvider)
         {
             this.ParentProvider = parentProvider;

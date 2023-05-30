@@ -92,7 +92,7 @@ namespace OpenTelemetry.Exporter
 
                     var metricType = metric.MetricType;
 
-                    if (metricType.IsHistogram())
+                    if (metricType == MetricType.Histogram || metricType == MetricType.ExponentialHistogram)
                     {
                         var bucketsBuilder = new StringBuilder();
                         var sum = metricPoint.GetHistogramSum();
@@ -105,41 +105,62 @@ namespace OpenTelemetry.Exporter
 
                         bucketsBuilder.AppendLine();
 
-                        bool isFirstIteration = true;
-                        double previousExplicitBound = default;
-                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                        if (metricType == MetricType.Histogram)
                         {
-                            if (isFirstIteration)
+                            bool isFirstIteration = true;
+                            double previousExplicitBound = default;
+                            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
-                                bucketsBuilder.Append("(-Infinity,");
-                                bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
-                                bucketsBuilder.Append(']');
-                                bucketsBuilder.Append(':');
-                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
-                                previousExplicitBound = histogramMeasurement.ExplicitBound;
-                                isFirstIteration = false;
-                            }
-                            else
-                            {
-                                bucketsBuilder.Append('(');
-                                bucketsBuilder.Append(previousExplicitBound);
-                                bucketsBuilder.Append(',');
-                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                                if (isFirstIteration)
                                 {
+                                    bucketsBuilder.Append("(-Infinity,");
                                     bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(histogramMeasurement.BucketCount);
                                     previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                    isFirstIteration = false;
                                 }
                                 else
                                 {
-                                    bucketsBuilder.Append("+Infinity");
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(previousExplicitBound);
+                                    bucketsBuilder.Append(',');
+                                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                                    {
+                                        bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                        previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                    }
+                                    else
+                                    {
+                                        bucketsBuilder.Append("+Infinity");
+                                    }
+
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(histogramMeasurement.BucketCount);
                                 }
 
-                                bucketsBuilder.Append(']');
-                                bucketsBuilder.Append(':');
-                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
+                                bucketsBuilder.AppendLine();
+                            }
+                        }
+                        else
+                        {
+                            var exponentialHistogramData = metricPoint.GetExponentialHistogramData();
+                            var scale = exponentialHistogramData.Scale;
+
+                            if (exponentialHistogramData.ZeroCount != 0)
+                            {
+                                bucketsBuilder.AppendLine($"Zero Bucket:{exponentialHistogramData.ZeroCount}");
                             }
 
-                            bucketsBuilder.AppendLine();
+                            var offset = exponentialHistogramData.PositiveBuckets.Offset;
+                            foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
+                            {
+                                var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(offset, scale).ToString(CultureInfo.InvariantCulture);
+                                var upperBound = Base2ExponentialBucketHistogram.LowerBoundary(++offset, scale).ToString(CultureInfo.InvariantCulture);
+                                bucketsBuilder.AppendLine($"({lowerBound}, {upperBound}]:{bucketCount}");
+                            }
                         }
 
                         valueDisplay = bucketsBuilder.ToString();

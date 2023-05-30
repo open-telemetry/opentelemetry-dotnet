@@ -2,6 +2,68 @@
 
 ## Unreleased
 
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
+* The default resource provided by `ResourceBuilder.CreateDefault()` now adds
+  the `telemetry.sdk.*` attributes defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).
+  ([#4369](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4369))
+
+* Fixed an issue with `HashCode` computations throwing exceptions on .NET
+  Standard 2.1 targets.
+  ([#4362](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4362))
+
+* Update value of the resource attribute `telemetry.sdk.version` to show the tag
+  name which resembles the package version of the SDK.
+  ([#4375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4375))
+
+* Obsoleted `State` and `StateValues` properties and added `Body` and
+  `Attributes` properties on `LogRecord`. Note: `LogRecord.Attributes` and
+  `LogRecord.StateValues` point to the same data. "Attributes" is what the
+  OpenTelemetry Specification defines so this was changed for clarity &
+  consistency with the specification.
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+* Tweaked the behavior of the `OpenTelemetryLoggerOptions.ParseStateValues`
+  flag:
+
+  * `LogRecord.Attributes` (aka `LogRecord.StateValues`) are now automatically
+  included for all log messages with states implementing `IReadOnlyList` or
+  `IEnumerable`.
+
+  * `OpenTelemetryLoggerOptions.ParseStateValues` is now used to tell the SDK to
+  parse (using reflection) attributes for custom states which do not implement
+  `IReadOnlyList` or `IEnumerable`. Only top-level properties are included.
+
+  * `LogRecord.State` will only be set to the raw state object if no attributes
+  are found.
+
+  See [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334)
+  for details.
+
+* If a template (`{OriginalFormat}` attribute) cannot be found on log messages a
+  formatted message will now automatically be generated (even if
+  `OpenTelemetryLoggerOptions.IncludeFormattedMessage` is set to `false`).
+  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+* Enabling `SetErrorStatusOnException` on TracerProvider will now set the
+`Status` property on Activity to `ActivityStatusCode.Error` in case of an error.
+This will be done in addition to current behavior of setting `otel.status_code`
+tag on activity.
+([#4336](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4336))
+
+* Add support for configuring the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation)
+  using the `AddView` API. This aggregation is supported by OTLP but not yet by
+  Prometheus.
+  ([#4337](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4337))
+
 * Implementation of `SuppressInstrumentationScope` changed to improve
   performance.
   ([#4304](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4304))

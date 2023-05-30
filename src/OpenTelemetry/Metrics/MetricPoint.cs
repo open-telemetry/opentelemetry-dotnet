@@ -1579,6 +1579,11 @@ namespace OpenTelemetry.Metrics
         private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
+            if (number < 0)
+            {
+                return;
+            }
+
             var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
             var sw = default(SpinWait);
@@ -1607,6 +1612,11 @@ namespace OpenTelemetry.Metrics
         private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
+            if (number < 0)
+            {
+                return;
+            }
+
             var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
             var sw = default(SpinWait);

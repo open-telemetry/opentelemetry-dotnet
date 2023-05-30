@@ -22,20 +22,20 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2130/21H2/November2021Update)
-Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
-.NET SDK=7.0.100-preview.7.22377.5
-  [Host]     : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
-  DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK=7.0.203
+  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
-|         Method |   ViewConfig |     Mean |   Error |   StdDev |   Median | Allocated |
-|--------------- |------------- |---------:|--------:|---------:|---------:|----------:|
-| CounterHotPath |       NoView | 289.3 ns | 5.80 ns |  9.20 ns | 285.0 ns |         - |
-| CounterHotPath |       ViewNA | 295.7 ns | 5.91 ns | 11.38 ns | 289.6 ns |         - |
-| CounterHotPath |  ViewApplied | 298.7 ns | 2.54 ns |  2.12 ns | 298.6 ns |         - |
-| CounterHotPath | ViewToRename | 294.7 ns | 2.15 ns |  1.80 ns | 294.5 ns |         - |
-| CounterHotPath |  ViewZeroTag | 112.4 ns | 1.83 ns |  1.96 ns | 111.5 ns |         - |
+|         Method |   ViewConfig |     Mean |   Error |  StdDev | Allocated |
+|--------------- |------------- |---------:|--------:|--------:|----------:|
+| CounterHotPath |       NoView | 254.6 ns | 1.62 ns | 1.27 ns |         - |
+| CounterHotPath |       ViewNA | 257.9 ns | 3.00 ns | 2.80 ns |         - |
+| CounterHotPath |  ViewApplied | 282.7 ns | 5.60 ns | 6.45 ns |         - |
+| CounterHotPath | ViewToRename | 256.8 ns | 0.83 ns | 0.70 ns |         - |
+| CounterHotPath |  ViewZeroTag | 112.1 ns | 1.87 ns | 1.75 ns |         - |
 */
 
 namespace Benchmarks.Metrics

@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTracing" Version="$(OpenTracingPkgVer)" />
+    <PackageReference Include="OpenTracing" />
   </ItemGroup>
 
   <ItemGroup>

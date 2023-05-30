@@ -25,7 +25,7 @@ jobs:
         fetch-depth: 0 # fetching all
 
     - name: Setup .NET 7.0
-      uses: actions/setup-dotnet@v3.0.3
+      uses: actions/setup-dotnet@v3.1.0
       with:
         dotnet-version: '7.0.x'
 
@@ -51,7 +51,7 @@ jobs:
     - name: Merging test results
       run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -assemblyFilters:"-microsoft.data.sqlclient*;-grpc.core*;-opentracing*"
 
-    - uses: codecov/codecov-action@v3.1.1
+    - uses: codecov/codecov-action@v3.1.4
       with:
         file: TestResults/Cobertura.xml
         env_vars: OS

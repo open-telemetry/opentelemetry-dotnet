@@ -2,7 +2,8 @@
 
 ## MeterProvider
 
-As shown in the [getting-started](../getting-started/README.md) doc, a valid
+As shown in the [getting-startedgetting started in 5 minutes - Console
+Application](../getting-started-console/README.md) doc, a valid
 [`MeterProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#meterprovider)
 must be configured and built to collect metrics with OpenTelemetry .NET Sdk.
 `MeterProvider` holds all the configuration for metrics like MetricReaders,
@@ -233,7 +234,19 @@ with the metric are of interest to you.
     })
 ```
 
-#### Specify custom boundaries for Histogram
+#### Configuring the aggregation of a Histogram
+
+There are two types of
+[Histogram aggregations](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#histogram-aggregations):
+the
+[Explicit bucket histogram aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation)
+and the
+[Base2 exponential bucket histogram aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation).
+Views can be used to select which aggregation is used and to configure the
+parameters of the aggregation. By default, the explicit bucket aggregation is
+used.
+
+##### Explicit bucket histogram aggregation
 
 By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75,
 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.14.0/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
@@ -274,6 +287,37 @@ default boundaries. This requires the use of
         }
 
         return null;
+    })
+```
+
+##### Base2 exponential bucket histogram aggregation
+
+By default, a Histogram is configured to use the
+`ExplicitBucketHistogramConfiguration`. Views are used to switch a Histogram to
+use the `Base2ExponentialBucketHistogramConfiguration`.
+
+The bucket boundaries for a Base2 Exponential Bucket Histogram Aggregation
+are determined dynamically based on the configured `MaxSize` and `MaxScale`
+parameters. The parameters are used to adjust the resolution of the Histogram
+buckets. Larger values of `MaxScale` enables higher resolution, however the
+scale may be adjusted down such that the full range of recorded values fit
+within the maximum number of buckets defined by `MaxSize`. The default
+`MaxSize` is 160 buckets and the default `MaxScale` is 20.
+
+```csharp
+    // Change the maximum number of buckets
+    .AddView(
+        instrumentName: "MyHistogram",
+        new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40 })
+```
+
+```csharp
+    // Configure all histogram instruments to use the Base2 Exponential Histogram aggregation
+    .AddView((instrument) =>
+    {
+        return instrument.GetType().GetGenericTypeDefinition() == typeof(Histogram<>)
+            ? new Base2ExponentialBucketHistogramConfiguration()
+            : null;
     })
 ```
 

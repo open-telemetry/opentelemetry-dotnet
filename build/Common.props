@@ -26,31 +26,10 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
-    <MinVerPkgVer>[4.2.0,5.0)</MinVerPkgVer>
-    <GoogleProtobufPkgVer>[3.22.0,4.0)</GoogleProtobufPkgVer>
-    <GrpcPkgVer>[2.44.0,3.0)</GrpcPkgVer>
-    <GrpcNetClientPkgVer>[2.43.0,3.0)</GrpcNetClientPkgVer>
-    <GrpcToolsPkgVer>[2.44.0,3.0)</GrpcToolsPkgVer>
-    <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
-    <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
-    <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.3]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[17.4.1]</MicrosoftCodeCoveragePkgVer>
-    <MicrosoftExtensionsDependencyInjectionPkgVer>[3.1.0,)</MicrosoftExtensionsDependencyInjectionPkgVer>
-    <MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>$(MicrosoftExtensionsDependencyInjectionPkgVer)</MicrosoftExtensionsDependencyInjectionAbstractionsPkgVer>
-    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
-    <MicrosoftExtensionsLoggingPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingPkgVer>
-    <MicrosoftExtensionsLoggingConfigurationPkgVer>$(MicrosoftExtensionsLoggingPkgVer)</MicrosoftExtensionsLoggingConfigurationPkgVer>
-    <MicrosoftExtensionsOptionsPkgVer>[3.1.0,)</MicrosoftExtensionsOptionsPkgVer>
-    <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.3,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
-    <MicrosoftSourceLinkGitHubPkgVer>[1.1.1,2.0)</MicrosoftSourceLinkGitHubPkgVer>
-    <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
     <OTelPreviousStableVer>1.4.0</OTelPreviousStableVer>
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
-    <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>7.0.0</SystemDiagnosticSourcePkgVer>
-    <SystemTextJsonPkgVer>4.7.2</SystemTextJsonPkgVer>
-    <SystemThreadingTasksExtensionsPkgVer>4.5.4</SystemThreadingTasksExtensionsPkgVer>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,12 +37,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesPkgVer)" PrivateAssets="All" />
-    <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" PrivateAssets="All" Condition="'$(Configuration)'=='Release'" />
-    <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
+    <PackageReference Include="Microsoft.CodeCoverage" PrivateAssets="All" Condition="'$(Configuration)'=='Release'" />
+    <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>-->
   </ItemGroup>

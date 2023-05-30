@@ -1,7 +1,17 @@
+OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
+OpenTelemetry.Logs.LogRecord.Attributes.set -> void
+OpenTelemetry.Logs.LogRecord.Body.get -> string?
+OpenTelemetry.Logs.LogRecord.Body.set -> void
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter.AlwaysOffExemplarFilter() -> void
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter.AlwaysOnExemplarFilter() -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.Base2ExponentialBucketHistogramConfiguration() -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.get -> int
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.set -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.get -> int
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.set -> void
 OpenTelemetry.Metrics.Exemplar
 OpenTelemetry.Metrics.Exemplar.DoubleValue.get -> double
 OpenTelemetry.Metrics.Exemplar.Exemplar() -> void
@@ -18,13 +28,14 @@ OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.ExponentialHistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator
 OpenTelemetry.Metrics.ExponentialHistogramBuckets.Offset.get -> int
 OpenTelemetry.Metrics.ExponentialHistogramData
-OpenTelemetry.Metrics.ExponentialHistogramData.NegativeBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
 OpenTelemetry.Metrics.ExponentialHistogramData.PositiveBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
 OpenTelemetry.Metrics.ExponentialHistogramData.Scale.get -> int
 OpenTelemetry.Metrics.ExponentialHistogramData.ZeroCount.get -> long
 OpenTelemetry.Metrics.MetricType.ExponentialHistogram = 80 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.TraceBasedExemplarFilter
 OpenTelemetry.Metrics.TraceBasedExemplarFilter.TraceBasedExemplarFilter() -> void
+override OpenTelemetry.BaseExportProcessor<T>.ToString() -> string!
+override OpenTelemetry.BaseProcessor<T>.ToString() -> string!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, OpenTelemetry.Metrics.ExemplarFilter! exemplarFilter) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool

@@ -56,6 +56,7 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Error, activity.GetStatus().StatusCode);
+            Assert.Equal(ActivityStatusCode.Error, activity.Status);
         }
 
         [Fact]
@@ -84,6 +85,7 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
+            Assert.Equal(ActivityStatusCode.Unset, activity.Status);
         }
 
         [Fact]
@@ -168,6 +170,39 @@ namespace OpenTelemetry.Trace.Tests
             // Note: Two "Add" calls due yield two processors added to provider, even though they are the same
             Assert.True(processor.Head.Value is MyProcessor);
             Assert.True(processor.Head.Next?.Value is MyProcessor);
+        }
+
+        [Fact]
+        public void AddInstrumentationTest()
+        {
+            List<object> instrumentation = null;
+
+            using (var provider = Sdk.CreateTracerProviderBuilder()
+                .AddInstrumentation<MyInstrumentation>()
+                .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
+                .AddInstrumentation(new MyInstrumentation())
+                .Build() as TracerProviderSdk)
+            {
+                Assert.NotNull(provider);
+
+                Assert.Equal(3, provider.Instrumentations.Count);
+
+                Assert.Null(((MyInstrumentation)provider.Instrumentations[0]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[0]).Disposed);
+
+                Assert.NotNull(((MyInstrumentation)provider.Instrumentations[1]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[1]).Disposed);
+
+                Assert.Null(((MyInstrumentation)provider.Instrumentations[2]).Provider);
+                Assert.False(((MyInstrumentation)provider.Instrumentations[2]).Disposed);
+
+                instrumentation = new List<object>(provider.Instrumentations);
+            }
+
+            Assert.NotNull(instrumentation);
+            Assert.True(((MyInstrumentation)instrumentation[0]).Disposed);
+            Assert.True(((MyInstrumentation)instrumentation[1]).Disposed);
+            Assert.True(((MyInstrumentation)instrumentation[2]).Disposed);
         }
 
         [Fact]
@@ -274,24 +309,50 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(false)]
         public void TracerProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
         {
-            bool innerTestExecuted = false;
+            bool innerConfigureBuilderTestExecuted = false;
+            bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
+            bool innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
 
             using var provider = Sdk.CreateTracerProviderBuilder()
                 .ConfigureServices(services =>
                 {
                     if (callNestedConfigure)
                     {
-                        services.ConfigureOpenTelemetryTracerProvider((sp, builder) => { });
+                        services.ConfigureOpenTelemetryTracerProvider(
+                            builder =>
+                            {
+                                innerConfigureOpenTelemetryLoggerProviderTestExecuted = true;
+                                builder.AddInstrumentation<MyInstrumentation>();
+                            });
+                        services.ConfigureOpenTelemetryTracerProvider(
+                            (sp, builder) =>
+                            {
+                                innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = true;
+                                Assert.Throws<NotSupportedException>(() => builder.AddInstrumentation<MyInstrumentation>());
+                            });
                     }
                 })
                 .ConfigureBuilder((sp, builder) =>
                 {
-                    innerTestExecuted = true;
+                    innerConfigureBuilderTestExecuted = true;
                     Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
                 })
-                .Build();
+                .Build() as TracerProviderSdk;
 
-            Assert.True(innerTestExecuted);
+            Assert.NotNull(provider);
+
+            Assert.True(innerConfigureBuilderTestExecuted);
+            Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
+            Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted);
+
+            if (callNestedConfigure)
+            {
+                Assert.Single(provider.Instrumentations);
+            }
+            else
+            {
+                Assert.Empty(provider.Instrumentations);
+            }
 
             Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<TracerProvider>());
         }
@@ -429,6 +490,7 @@ namespace OpenTelemetry.Trace.Tests
 
         private sealed class MyInstrumentation : IDisposable
         {
+            internal TracerProvider Provider;
             internal bool Disposed;
 
             public void Dispose()

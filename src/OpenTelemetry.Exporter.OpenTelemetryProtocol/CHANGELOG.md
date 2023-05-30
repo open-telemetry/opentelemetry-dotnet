@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
+* Revert version of `Google.Protobuf` to `3.19.4` (see
+  [#4201](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4201)).
+  This also reintroduces the `System.Reflection.Emit.Lightweight` dependency.
+  ([#4407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4407))
+
+## 1.5.0-alpha.2
+
+Released 2023-Mar-31
+
+* Add support for exporting histograms aggregated using the
+  [Base2 Exponential Bucket Histogram Aggregation](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#base2-exponential-bucket-histogram-aggregation).
+  ([#4337](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4337))
+
+* Added support to set `TraceState` when converting the
+  System.Diagnostics.Activity object to its corresponding
+  OpenTelemetry.Proto.Trace.V1.Span object.
+  ([#4331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4331))
+
 ## 1.5.0-alpha.1
 
 Released 2023-Mar-07

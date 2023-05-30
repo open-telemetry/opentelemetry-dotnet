@@ -20,6 +20,7 @@ using System.Diagnostics.Metrics;
 using System.Net.Http;
 #endif
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
@@ -31,10 +32,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<HttpRequestMessage> stopRequestFetcher = new("Request");
         private readonly Histogram<double> httpClientDuration;
 
+        private readonly HttpSemanticConvention httpSemanticConvention;
+
         public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
             : base(name)
         {
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -62,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                     if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
 
                     // We are relying here on HttpClient library to set duration before writing the stop event.
