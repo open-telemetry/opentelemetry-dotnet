@@ -1,4 +1,4 @@
-// <copyright file="ExponentialHistogramBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="ExponentialHistogramMapToIndexBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Tests;
 
 /*
 BenchmarkDotNet=v0.13.3, OS=macOS 13.2.1 (22D68) [Darwin 22.3.0]
@@ -30,19 +27,17 @@ Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
 
 |           Method | Scale |     Mean |    Error |   StdDev | Allocated |
 |----------------- |------ |---------:|---------:|---------:|----------:|
-| HistogramHotPath |   -11 | 29.66 ns | 0.181 ns | 0.151 ns |         - |
-| HistogramHotPath |    20 | 31.79 ns | 0.091 ns | 0.080 ns |         - |
+|       MapToIndex |   -11 | 11.59 ns | 0.069 ns | 0.065 ns |         - |
+|       MapToIndex |    20 | 14.50 ns | 0.037 ns | 0.033 ns |         - |
 */
 
 namespace Benchmarks.Metrics
 {
-    public class ExponentialHistogramBenchmarks
+    public class ExponentialHistogramMapToIndexBenchmarks
     {
         private const int MaxValue = 10000;
         private readonly Random random = new();
-        private Histogram<long> histogram;
-        private MeterProvider provider;
-        private Meter meter;
+        private Base2ExponentialBucketHistogram exponentialHistogram;
 
         [Params(-11, 20)]
         public int Scale { get; set; }
@@ -50,32 +45,13 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
-            this.meter = new Meter(Utils.GetCurrentMethodName());
-            this.histogram = this.meter.CreateHistogram<long>("histogram");
-
-            var exportedItems = new List<Metric>();
-
-            this.provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(this.meter.Name)
-                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
-                {
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-                })
-                .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration() { MaxScale = this.Scale })
-                .Build();
-        }
-
-        [GlobalCleanup]
-        public void Cleanup()
-        {
-            this.meter?.Dispose();
-            this.provider?.Dispose();
+            this.exponentialHistogram = new Base2ExponentialBucketHistogram(scale: this.Scale);
         }
 
         [Benchmark]
-        public void HistogramHotPath()
+        public void MapToIndex()
         {
-            this.histogram.Record(this.random.Next(MaxValue));
+            this.exponentialHistogram.MapToIndex(this.random.Next(MaxValue));
         }
     }
 }
