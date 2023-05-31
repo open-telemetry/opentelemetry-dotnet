@@ -12,16 +12,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
 		CONTRIBUTING.md = CONTRIBUTING.md
+		Directory.Packages.props = Directory.Packages.props
+		test\Directory.Packages.props = test\Directory.Packages.props
+		examples\Directory.Packages.props = examples\Directory.Packages.props
+		docs\Directory.Packages.props = docs\Directory.Packages.props
 		global.json = global.json
 		LICENSE = LICENSE
 		NuGet.config = NuGet.config
 		OpenTelemetry.proj = OpenTelemetry.proj
 		README.md = README.md
 		VERSIONING.md = VERSIONING.md
-		Directory.Packages.props = Directory.Packages.props
-		test\Directory.Packages.props = test\Directory.Packages.props
-		examples\Directory.Packages.props = examples\Directory.Packages.props
-		docs\Directory.Packages.props = docs\Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
@@ -153,6 +153,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
+	ProjectSection(SolutionItems) = preProject
+		docs\metrics\README.md = docs\metrics\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E2C5-418E-AFDC-DB281FB5C705}"
 	ProjectSection(SolutionItems) = preProject
@@ -553,10 +556,6 @@ Global
 		{9C99621C-343E-479C-A943-332DB6129B71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Release|Any CPU.Build.0 = Release|Any CPU
-		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -569,6 +568,10 @@ Global
 		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
