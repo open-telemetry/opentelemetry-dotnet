@@ -79,11 +79,19 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
 
     /// <inheritdoc />
     MeterProviderBuilder IMeterProviderBuilder.ConfigureServices(Action<IServiceCollection> configure)
-        => this.innerBuilder.ConfigureServices(configure);
+    {
+        this.innerBuilder.ConfigureServices(configure);
+
+        return this;
+    }
 
     /// <inheritdoc />
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
-        => this.innerBuilder.ConfigureBuilder(configure);
+    {
+        this.innerBuilder.ConfigureBuilder(configure);
+
+        return this;
+    }
 
     internal MeterProvider InvokeBuild()
         => this.Build();
@@ -99,12 +107,8 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
             throw new NotSupportedException("A MeterProviderBuilder bound to external service cannot be built directly. Access the MeterProvider using the application IServiceProvider instead.");
         }
 
-        var services = this.innerBuilder.Services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("MeterProviderBuilder build method cannot be called multiple times.");
-        }
+        var services = this.innerBuilder.Services
+            ?? throw new NotSupportedException("MeterProviderBuilder build method cannot be called multiple times.");
 
         this.innerBuilder.Services = null;
 
