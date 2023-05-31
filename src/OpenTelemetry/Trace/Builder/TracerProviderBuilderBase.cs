@@ -90,11 +90,19 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
 
     /// <inheritdoc />
     TracerProviderBuilder ITracerProviderBuilder.ConfigureServices(Action<IServiceCollection> configure)
-        => this.innerBuilder.ConfigureServices(configure);
+    {
+        this.innerBuilder.ConfigureServices(configure);
+
+        return this;
+    }
 
     /// <inheritdoc />
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
-        => this.innerBuilder.ConfigureBuilder(configure);
+    {
+        this.innerBuilder.ConfigureBuilder(configure);
+
+        return this;
+    }
 
     internal TracerProvider InvokeBuild()
         => this.Build();
@@ -115,7 +123,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         Guard.ThrowIfNullOrWhitespace(instrumentationVersion);
         Guard.ThrowIfNull(instrumentationFactory);
 
-        return this.innerBuilder.ConfigureBuilder((sp, builder) =>
+        this.innerBuilder.ConfigureBuilder((sp, builder) =>
         {
             if (builder is TracerProviderBuilderSdk tracerProviderBuilderState)
             {
@@ -125,6 +133,8 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
                     instrumentationFactory);
             }
         });
+
+        return this;
     }
 
     /// <summary>
@@ -138,12 +148,8 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
             throw new NotSupportedException("A TracerProviderBuilder bound to external service cannot be built directly. Access the TracerProvider using the application IServiceProvider instead.");
         }
 
-        var services = this.innerBuilder.Services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("TracerProviderBuilder build method cannot be called multiple times.");
-        }
+        var services = this.innerBuilder.Services
+            ?? throw new NotSupportedException("TracerProviderBuilder build method cannot be called multiple times.");
 
         this.innerBuilder.Services = null;
 
