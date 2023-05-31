@@ -66,7 +66,7 @@ counter.Add(100, readOnlySpanOfTags); // <--- DON'T DO THIS
   [doc](../../docs/metrics/customizing-the-sdk/README.md#resource) for more
   information.
 
-## Common Issues that lead to missing metrics
+## Common issues that lead to missing metrics
 
 - The `Meter` used to create the instruments is not added to the
   `MeterProvider`. Use `AddMeter` method to enable the processing for the
