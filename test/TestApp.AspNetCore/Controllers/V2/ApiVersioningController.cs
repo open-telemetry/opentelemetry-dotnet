@@ -1,4 +1,4 @@
-// <copyright file="ErrorController.cs" company="OpenTelemetry Authors">
+// <copyright file="ValuesController.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +15,27 @@
 // </copyright>
 using Microsoft.AspNetCore.Mvc;
 
-namespace TestApp.AspNetCore.Controllers
+namespace TestApp.AspNetCore.Controllers.V2
 {
     [ApiController]
-    [ApiVersionNeutral]
-    [Route("api/[controller]")]
-    public class ErrorController : Controller
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("2.0")]
+    public class ApiVersioningController : Controller
     {
-        // GET api/error
+        // GET api/v2/apiVersion
         [HttpGet]
+        [MapToApiVersion("2.0")]
         public string Get()
         {
-            throw new Exception("something's wrong!");
+            return "version 2";
+        }
+
+        // GET api/v2/apiVersion/42
+        [HttpGet("{id}")]
+        [MapToApiVersion("2.0")]
+        public string Get(int id)
+        {
+            return $"version 2 (id = {id})";
         }
     }
 }

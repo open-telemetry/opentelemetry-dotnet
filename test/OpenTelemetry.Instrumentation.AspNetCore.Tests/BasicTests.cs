@@ -97,6 +97,57 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Theory]
+        [InlineData("v1")]
+        [InlineData("v2")]
+        public async Task StatusWithApiVersionIsUnsetOn200Response(string apiVersion)
+        {
+            var exportedItems = new List<Activity>();
+            var expectedTraceId = ActivityTraceId.CreateRandom();
+            var expectedSpanId = ActivitySpanId.CreateRandom();
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureTestServices(services =>
+                    {
+                        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .AddAspNetCoreInstrumentation()
+                        .AddInMemoryExporter(exportedItems)
+                        .Build();
+                    });
+
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                }))
+            {
+                using var client = testFactory.CreateClient();
+                var request = new HttpRequestMessage(HttpMethod.Get, $"/api/{apiVersion}/ApiVersioning/42");
+                request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedSpanId}-01");
+
+                // Act
+                var response = await client.SendAsync(request).ConfigureAwait(false);
+
+                // Assert
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForActivityExport(exportedItems, 1);
+            }
+
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+            Assert.Equal($"api/{apiVersion}/ApiVersioning/{{id}}", activity.DisplayName);
+
+            Assert.Equal(expectedTraceId, activity.Context.TraceId);
+            Assert.Equal(expectedSpanId, activity.ParentSpanId);
+
+            Assert.Equal($"api/{apiVersion}/ApiVersioning/{{id}}", activity.GetTagValue(SemanticConventions.AttributeHttpRoute));
+
+            ValidateAspNetCoreActivity(activity, $"/api/{apiVersion}/ApiVersioning/42");
+        }
+
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)

@@ -14,7 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using TestApp.AspNetCore;
+using TestApp.AspNetCore.Swagger;
 
 public class Program
 {
@@ -28,6 +32,26 @@ public class Program
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
+
+        builder.Services.AddApiVersioning(setup =>
+        {
+            setup.DefaultApiVersion = new ApiVersion(1, 0);
+            setup.AssumeDefaultVersionWhenUnspecified = true;
+            setup.ReportApiVersions = true;
+
+            setup.ApiVersionReader = ApiVersionReader.Combine(
+                new UrlSegmentApiVersionReader(),
+                new HeaderApiVersionReader("x-api-version"),
+                new MediaTypeApiVersionReader("x-api-version"));
+        });
+
+        builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+
+        builder.Services.AddVersionedApiExplorer(setup =>
+        {
+            setup.GroupNameFormat = "'v'VVV";
+            setup.SubstituteApiVersionInUrl = true;
+        });
 
         builder.Services.AddSwaggerGen();
 
@@ -46,8 +70,16 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
+            var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(options =>
+            {
+                foreach (var groupName in apiVersionDescriptionProvider.ApiVersionDescriptions.Select(desc => desc.GroupName))
+                {
+                    options.SwaggerEndpoint($"/swagger/{groupName}/swagger.json", groupName.ToUpperInvariant());
+                }
+            });
         }
 
         app.UseHttpsRedirection();

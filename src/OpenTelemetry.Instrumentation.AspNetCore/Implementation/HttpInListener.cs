@@ -333,6 +333,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 if (!string.IsNullOrEmpty(template))
                 {
                     // override the span name that was previously set to the path part of URL.
+
+                    template = GetApiVersioningEndpoint(template, activity);
+
                     activity.DisplayName = template;
                     activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
                 }
@@ -370,6 +373,37 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnException), activity.OperationName, ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// Returns the template with the real '{version:apiVersion}' version.
+        /// Example:
+        /// * template = 'api/v{version:apiVersion}/ApiVersioning/{id}'
+        /// * http.target = '/api/v1/ApiVersioning/{id}'
+        /// The result will be: 'api/v1/ApiVersioning/{id}'.
+        /// </summary>
+        /// <param name="template">The route template.</param>
+        /// <param name="activity">The activity instance.</param>
+        /// <returns>The template with the real '{version:apiVersion}' version.</returns>
+        private static string GetApiVersioningEndpoint(string template, Activity activity)
+        {
+            var endpoint = template;
+
+            const string apiVersionSegment = "{version:apiVersion}";
+
+            if (template.Contains(apiVersionSegment))
+            {
+                var templateParts = template.Split('/');
+                var httpTargetParts = (activity.GetTagValue(SemanticConventions.AttributeHttpTarget) as string).Split('/');
+
+                var index = templateParts.TakeWhile(x => !x.Contains(apiVersionSegment)).Count();
+
+                templateParts[index] = httpTargetParts[index + 1]; // replace '{version:apiVersion}' segment with the real version without changing other tokens
+
+                endpoint = string.Join("/", templateParts);
+            }
+
+            return endpoint;
         }
 
         private static string GetUri(HttpRequest request)

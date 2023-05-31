@@ -4,5 +4,7 @@
     <PackageVersion Update="Grpc.Tools" Version="[2.44.0,3.0)" />
     <PackageVersion Update="Microsoft.Extensions.Logging" Version="[6.0.0,)" />
     <PackageVersion Update="System.Text.Json" Version="6.0.5" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
   </ItemGroup>
 </Project>

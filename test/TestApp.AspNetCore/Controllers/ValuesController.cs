@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TestApp.AspNetCore.Controllers
 {
+    [ApiController]
+    [ApiVersionNeutral]
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {

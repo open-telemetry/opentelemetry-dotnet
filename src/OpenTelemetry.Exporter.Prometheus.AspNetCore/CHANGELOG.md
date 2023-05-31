@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added [api-versioning](https://github.com/dotnet/aspnet-api-versioning/wiki) support
+  [#2967](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2967), [4525](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4525)
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25

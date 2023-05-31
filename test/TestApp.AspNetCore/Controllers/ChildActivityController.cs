@@ -20,8 +20,10 @@ using OpenTelemetry;
 
 namespace TestApp.AspNetCore.Controllers
 {
+    [ApiController]
     public class ChildActivityController : Controller
     {
+        [ApiVersionNeutral]
         [HttpGet]
         [Route("api/GetChildActivityTraceContext")]
         public Dictionary<string, string> GetChildActivityTraceContext()
