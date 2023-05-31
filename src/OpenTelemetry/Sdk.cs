@@ -96,7 +96,7 @@ namespace OpenTelemetry
         /// to build a <see cref="LoggerProvider"/>.</returns>
         internal static LoggerProviderBuilder CreateLoggerProviderBuilder()
         {
-            return new LoggerProviderServiceCollectionBuilder();
+            return new LoggerProviderBuilderBase();
         }
     }
 }
