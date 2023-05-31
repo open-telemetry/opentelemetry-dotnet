@@ -36,8 +36,11 @@ public class Program
             // Rename an instrument to new name.
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
-            // Change Histogram boundaries
+            // Change Histogram boundaries using the Explicit Bucket Histogram aggregation.
             .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } })
+
+            // Change Histogram to use the Base2 Exponential Bucket Histogram aggregation.
+            .AddView(instrumentName: "MyExponentialBucketHistogram", new Base2ExponentialBucketHistogramConfiguration())
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
             .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
@@ -79,6 +82,12 @@ public class Program
         for (int i = 0; i < 20000; i++)
         {
             histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
+        }
+
+        var exponentialBucketHistogram = Meter1.CreateHistogram<long>("MyExponentialBucketHistogram");
+        for (int i = 0; i < 20000; i++)
+        {
+            exponentialBucketHistogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var counterCustomTags = Meter1.CreateCounter<long>("MyCounterCustomTags");
