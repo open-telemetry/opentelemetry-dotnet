@@ -26,6 +26,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using static OpenTelemetry.Proto.Common.V1.AnyValue;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
@@ -605,6 +606,241 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             // Assert.
             Assert.Equal(ExportResult.Success, result);
+        }
+
+        [Fact]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsFalse_DoesNotContainScopeAttribute()
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = false;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger("Some category");
+
+            const string expectedScopeKey = "Some scope key";
+            const string expectedScopeValue = "Some scope value";
+
+            // Act.
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(expectedScopeKey, expectedScopeValue),
+            }))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, expectedScopeKey);
+            Assert.Null(actualScope);
+        }
+
+        [Theory]
+        [InlineData("Some scope value")]
+        [InlineData('a')]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeStringValue(object scopeValue)
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            const string scopeKey = "Some scope key";
+
+            // Act.
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(scopeKey, scopeValue),
+            }))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
+            Assert.NotNull(actualScope);
+            Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(ValueOneofCase.StringValue, actualScope.Value.ValueCase);
+            Assert.Equal(scopeValue.ToString(), actualScope.Value.StringValue);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeBoolValue(bool scopeValue)
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            const string scopeKey = "Some scope key";
+
+            // Act.
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(scopeKey, scopeValue),
+            }))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
+            Assert.NotNull(actualScope);
+            Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(ValueOneofCase.BoolValue, actualScope.Value.ValueCase);
+            Assert.Equal(scopeValue.ToString(), actualScope.Value.BoolValue.ToString());
+        }
+
+        [Theory]
+        [InlineData(byte.MinValue)]
+        [InlineData(byte.MaxValue)]
+        [InlineData(sbyte.MinValue)]
+        [InlineData(sbyte.MaxValue)]
+        [InlineData(short.MinValue)]
+        [InlineData(short.MaxValue)]
+        [InlineData(ushort.MinValue)]
+        [InlineData(ushort.MaxValue)]
+        [InlineData(int.MinValue)]
+        [InlineData(int.MaxValue)]
+        [InlineData(uint.MinValue)]
+        [InlineData(uint.MaxValue)]
+        [InlineData(long.MinValue)]
+        [InlineData(long.MaxValue)]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeIntValue(object scopeValue)
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            const string scopeKey = "Some scope key";
+
+            // Act.
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(scopeKey, scopeValue),
+            }))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
+            Assert.NotNull(actualScope);
+            Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(ValueOneofCase.IntValue, actualScope.Value.ValueCase);
+            Assert.Equal(scopeValue.ToString(), actualScope.Value.IntValue.ToString());
+        }
+
+        [Theory]
+        [InlineData(float.MinValue)]
+        [InlineData(float.MaxValue)]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeDoubleValueForFloat(float scopeValue)
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            const string scopeKey = "Some scope key";
+
+            // Act.
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(scopeKey, scopeValue),
+            }))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
+            Assert.NotNull(actualScope);
+            Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(ValueOneofCase.DoubleValue, actualScope.Value.ValueCase);
+            Assert.Equal(((double)scopeValue).ToString(), actualScope.Value.DoubleValue.ToString());
+        }
+
+        [Theory]
+        [InlineData(double.MinValue)]
+        [InlineData(double.MaxValue)]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_ContainsScopeAttributeDoubleValueForDouble(double scopeValue)
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            const string scopeKey = "Some scope key";
+
+            // Act.
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(scopeKey, scopeValue),
+            }))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
+            Assert.NotNull(actualScope);
+            Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(scopeValue.ToString(), actualScope.Value.DoubleValue.ToString());
         }
 
         private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)

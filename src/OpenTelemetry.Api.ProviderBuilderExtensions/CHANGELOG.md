@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * Fixed a bug which prevented the
   `TracerProviderBuilder.AddInstrumentation(IServiceProvider, TracerProvider)`
   factory extension from being called during construction of the SDK

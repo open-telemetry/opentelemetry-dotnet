@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * The `OpenTelemetryLoggerOptions.AddOtlpExporter` extension no longer
   automatically sets `OpenTelemetryLoggerOptions.ParseStateValues` to `true`.
   The OpenTelemetry SDK now automatically sets `Attributes` (aka `StateValues`)
