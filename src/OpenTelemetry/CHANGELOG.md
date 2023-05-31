@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* Fixed a bug introduced by
+  [#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508) in
+  1.5.0-rc.1 which caused the "Build" extension to return `null` when performing
+  chained/fluent calls.
+  ([#4529](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4529))
+
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * The default resource provided by `ResourceBuilder.CreateDefault()` now adds
   the `telemetry.sdk.*` attributes defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).

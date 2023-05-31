@@ -128,7 +128,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void CompleteMesaurements(List<List<Metric>> metricsSuperList)
+        internal void CompleteMeasurements(List<List<Metric>> metricsSuperList)
         {
             Debug.Assert(metricsSuperList.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 

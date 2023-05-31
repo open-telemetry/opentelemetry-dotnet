@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * Added direct reference to `System.Text.Encodings.Web` with minimum version of
 `4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
 

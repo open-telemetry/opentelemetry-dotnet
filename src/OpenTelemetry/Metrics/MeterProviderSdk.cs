@@ -413,7 +413,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.compositeMetricReader.CompleteMesaurements(metricsSuperList);
+                this.compositeMetricReader.CompleteMeasurements(metricsSuperList);
             }
         }
 

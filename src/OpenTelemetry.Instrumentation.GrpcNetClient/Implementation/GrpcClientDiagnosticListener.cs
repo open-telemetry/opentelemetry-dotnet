@@ -19,6 +19,7 @@ using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
@@ -36,10 +37,14 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
 
+        private readonly HttpSemanticConvention httpSemanticConvention;
+
         public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")
         {
             this.options = options;
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)

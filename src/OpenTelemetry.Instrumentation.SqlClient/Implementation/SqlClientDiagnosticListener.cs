@@ -17,6 +17,7 @@
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
@@ -40,10 +41,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         private readonly PropertyFetcher<Exception> exceptionFetcher = new("Exception");
         private readonly SqlClientInstrumentationOptions options;
 
+        private readonly HttpSemanticConvention httpSemanticConvention;
+
         public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
             : base(sourceName)
         {
             this.options = options ?? new SqlClientInstrumentationOptions();
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override bool SupportsNullActivity => true;

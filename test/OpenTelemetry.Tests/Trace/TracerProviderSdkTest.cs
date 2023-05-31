@@ -1218,9 +1218,49 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Contains(nonLegacyActivity.OperationName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
         }
 
+        [Fact]
+        public void BuilderTypeDoesNotChangeTest()
+        {
+            var originalBuilder = new TestTracerProviderBuilder();
+
+            // Tests the protected version of AddInstrumentation on TracerProviderBuilderBase
+            var currentBuilder = originalBuilder.AddInstrumentation();
+            Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+            var deferredBuilder = currentBuilder as IDeferredTracerProviderBuilder;
+            Assert.NotNull(deferredBuilder);
+
+            currentBuilder = deferredBuilder.Configure((sp, innerBuilder) => { });
+            Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+            currentBuilder = currentBuilder.ConfigureServices(s => { });
+            Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+            currentBuilder = currentBuilder.AddInstrumentation(() => new object());
+            Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+            currentBuilder = currentBuilder.AddSource("MySource");
+            Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+            currentBuilder = currentBuilder.AddLegacySource("MyLegacySource");
+            Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+            using var provider = currentBuilder.Build();
+
+            Assert.NotNull(provider);
+        }
+
         public void Dispose()
         {
             GC.SuppressFinalize(this);
+        }
+
+        private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase
+        {
+            public TracerProviderBuilder AddInstrumentation()
+            {
+                return this.AddInstrumentation("SomeInstrumentation", "1.0.0", () => new object());
+            }
         }
 
         private class TestInstrumentation : IDisposable
