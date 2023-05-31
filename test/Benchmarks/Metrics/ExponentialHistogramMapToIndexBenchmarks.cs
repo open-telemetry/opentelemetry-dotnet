@@ -18,17 +18,18 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Metrics;
 
 /*
-BenchmarkDotNet=v0.13.3, OS=macOS 13.2.1 (22D68) [Darwin 22.3.0]
+BenchmarkDotNet=v0.13.5, OS=macOS Ventura 13.4 (22F66) [Darwin 22.5.0]
 Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
 .NET SDK=7.0.101
   [Host]     : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
   DefaultJob : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
 
 
-|           Method | Scale |     Mean |    Error |   StdDev | Allocated |
-|----------------- |------ |---------:|---------:|---------:|----------:|
-|       MapToIndex |   -11 | 11.59 ns | 0.069 ns | 0.065 ns |         - |
-|       MapToIndex |    20 | 14.50 ns | 0.037 ns | 0.033 ns |         - |
+|     Method | Scale |     Mean |    Error |   StdDev | Allocated |
+|----------- |------ |---------:|---------:|---------:|----------:|
+| MapToIndex |   -11 | 11.60 ns | 0.057 ns | 0.053 ns |         - |
+| MapToIndex |     3 | 14.63 ns | 0.135 ns | 0.126 ns |         - |
+| MapToIndex |    20 | 14.40 ns | 0.026 ns | 0.024 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -39,7 +40,7 @@ namespace Benchmarks.Metrics
         private readonly Random random = new();
         private Base2ExponentialBucketHistogram exponentialHistogram;
 
-        [Params(-11, 20)]
+        [Params(-11, 3, 20)]
         public int Scale { get; set; }
 
         [GlobalSetup]

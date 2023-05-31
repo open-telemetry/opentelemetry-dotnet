@@ -21,7 +21,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.3, OS=macOS 13.2.1 (22D68) [Darwin 22.3.0]
+BenchmarkDotNet=v0.13.5, OS=macOS Ventura 13.4 (22F66) [Darwin 22.5.0]
 Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
 .NET SDK=7.0.101
   [Host]     : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
@@ -30,8 +30,9 @@ Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
 
 |           Method | Scale |     Mean |    Error |   StdDev | Allocated |
 |----------------- |------ |---------:|---------:|---------:|----------:|
-| HistogramHotPath |   -11 | 29.66 ns | 0.181 ns | 0.151 ns |         - |
-| HistogramHotPath |    20 | 31.79 ns | 0.091 ns | 0.080 ns |         - |
+| HistogramHotPath |   -11 | 29.79 ns | 0.054 ns | 0.042 ns |         - |
+| HistogramHotPath |     3 | 32.10 ns | 0.086 ns | 0.080 ns |         - |
+| HistogramHotPath |    20 | 32.08 ns | 0.076 ns | 0.063 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -44,7 +45,16 @@ namespace Benchmarks.Metrics
         private MeterProvider provider;
         private Meter meter;
 
-        [Params(-11, 20)]
+        // This is a simple benchmark that records values in the range [0, 10000].
+        // The reason the following scales are benchmarked are as follows:
+        //
+        // -11: Non-positive scales should perform better than positive scales.
+        //      The algorithm to map values to buckets for non-positive scales is more efficient.
+        //   3: The benchmark records values in the range [0, 10000] and uses the default max number of buckets (160).
+        //      Scale 3 is the maximum scale that will fit this range of values given the number of buckets.
+        //      That is, no scale down will occur.
+        //  20: Scale 20 should perform the same as scale 3. During warmup the histogram should scale down to 3.
+        [Params(-11, 3, 20)]
         public int Scale { get; set; }
 
         [GlobalSetup]
@@ -61,7 +71,7 @@ namespace Benchmarks.Metrics
                 {
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
                 })
-                .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration() { MaxScale = this.Scale })
+                .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration() { MaxScale = this.Scale, MaxSize = Metric.DefaultExponentialHistogramMaxBuckets })
                 .Build();
         }
 
