@@ -611,7 +611,11 @@ namespace OpenTelemetry.Metrics.Tests
             foreach (var value in valuesToRecord)
             {
                 histogram.Record(value);
-                expectedHistogram.Record(value);
+
+                if (value >= 0)
+                {
+                    expectedHistogram.Record(value);
+                }
             }
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -633,8 +637,8 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = metricPoint.GetHistogramSum();
 
             AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
-            Assert.Equal(40, sum);
-            Assert.Equal(7, count);
+            Assert.Equal(50, sum);
+            Assert.Equal(6, count);
         }
 
         [Theory]
