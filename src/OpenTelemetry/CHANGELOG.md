@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Fixed a bug introduced by
+  [#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508) in
+  1.5.0-rc.1 which caused the "Build" extension to return `null` when performing
+  chained/fluent calls.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25
