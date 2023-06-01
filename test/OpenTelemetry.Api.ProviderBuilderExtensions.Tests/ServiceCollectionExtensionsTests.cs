@@ -100,25 +100,32 @@ public class ServiceCollectionExtensionsTests
     [InlineData(3)]
     public void ConfigureOpenTelemetryLoggerProvider(int numberOfCalls)
     {
-        var invocations = 0;
+        var beforeServiceProviderInvocations = 0;
+        var afterServiceProviderInvocations = 0;
 
         var services = new ServiceCollection();
 
         for (int i = 0; i < numberOfCalls; i++)
         {
-            services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => invocations++);
+            services.ConfigureOpenTelemetryLoggerProvider(builder => beforeServiceProviderInvocations++);
+            services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => afterServiceProviderInvocations++);
         }
 
         using var serviceProvider = services.BuildServiceProvider();
 
         var registrations = serviceProvider.GetServices<IConfigureLoggerProviderBuilder>();
 
+        Assert.Equal(numberOfCalls, beforeServiceProviderInvocations);
+        Assert.Equal(0, afterServiceProviderInvocations);
+
         foreach (var registration in registrations)
         {
             registration.ConfigureBuilder(serviceProvider, null!);
         }
 
-        Assert.Equal(invocations, registrations.Count());
-        Assert.Equal(numberOfCalls, registrations.Count());
+        Assert.Equal(numberOfCalls, beforeServiceProviderInvocations);
+        Assert.Equal(numberOfCalls, afterServiceProviderInvocations);
+
+        Assert.Equal(numberOfCalls * 2, registrations.Count());
     }
 }
