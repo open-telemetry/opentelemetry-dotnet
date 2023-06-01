@@ -304,21 +304,6 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Run the given actions to initialize the <see cref="MeterProvider"/>.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProvider? Build(this MeterProviderBuilder meterProviderBuilder)
-        {
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                return meterProviderBuilderBase.InvokeBuild();
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
         /// This is applied to all the metrics from this provider.
         /// </summary>
@@ -339,5 +324,22 @@ namespace OpenTelemetry.Metrics
 
             return meterProviderBuilder;
         }
+
+#pragma warning disable SA1202 // `public` members should come before `internal` members
+        /// <summary>
+        /// Run the given actions to initialize the <see cref="MeterProvider"/>.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        public static MeterProvider? Build(this MeterProviderBuilder meterProviderBuilder)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.InvokeBuild();
+            }
+
+            return null;
+        }
+#pragma warning restore SA1202
     }
 }
