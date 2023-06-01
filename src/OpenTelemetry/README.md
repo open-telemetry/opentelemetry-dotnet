@@ -151,9 +151,9 @@ You can also find the exact directory by calling these methods from your code.
 
 ### Remarks
 
-A `FileSize`-KiB log file named as `ExecutableName.ProcessId.log` (e.g.
-`foobar.exe.12345.log`) will be generated at the specified directory
-`LogDirectory`, into which logs are written to.
+A `FileSize`-KiB log file named as `<UTC Timestamp>.<MachineName>.<ExecutableName>.<ProcessId>.log`
+(e.g. `20230101T000000Z.MyComputer.foobar.exe.12345.log`) will be generated at
+the specified directory `LogDirectory`, into which logs are written to.
 
 If the SDK fails to parse the `LogDirectory`, `FileSize` or `LogLevel` fields as
 the specified format, the configuration file will be treated as invalid and no
