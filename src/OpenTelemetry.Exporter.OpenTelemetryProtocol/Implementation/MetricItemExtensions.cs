@@ -270,6 +270,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 }
                             }
 
+                            /* Commenting out as Exemplars is marked internal
                             var exemplars = metricPoint.GetExemplars();
                             foreach (var examplar in exemplars)
                             {
@@ -303,6 +304,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                     dataPoint.Exemplars.Add(otlpExemplar);
                                 }
                             }
+                            */
 
                             histogram.DataPoints.Add(dataPoint);
                         }
