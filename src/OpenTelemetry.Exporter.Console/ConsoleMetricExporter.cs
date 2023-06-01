@@ -188,8 +188,8 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
-                    /* Commenting out as Exemplars is marked internal
                     var exemplarString = new StringBuilder();
+                    /* Commenting out as Exemplars is marked internal
                     foreach (var exemplar in metricPoint.GetExemplars())
                     {
                         if (exemplar.Timestamp != default)
