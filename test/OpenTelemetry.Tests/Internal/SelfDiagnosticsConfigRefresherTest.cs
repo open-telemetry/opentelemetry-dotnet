@@ -18,6 +18,7 @@
 
 using System.Text;
 using OpenTelemetry.Tests;
+using OpenTelemetry.Tests.Shared;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -39,10 +40,11 @@ namespace OpenTelemetry.Internal.Tests
         [Fact]
         public void SelfDiagnosticsConfigRefresher_OmitAsConfigured()
         {
+            string logDirectory = Utils.GetCurrentMethodName();
+
             try
             {
-                string logDirectory = Utils.GetCurrentMethodName();
-                this.PurgeAnyLogFiles(logDirectory);
+                FileHelper.DeleteDirectory(logDirectory);
                 CreateConfigFile(logDirectory);
 
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
@@ -50,10 +52,10 @@ namespace OpenTelemetry.Internal.Tests
                 // Emitting event of EventLevel.Warning
                 OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("exception");
 
-                var fileName = FindLogFileName(logDirectory);
+                var logFilePath = FindLogFilePath(logDirectory);
 
                 int bufferSize = 512;
-                byte[] actualBytes = ReadFile(logDirectory, fileName, bufferSize);
+                byte[] actualBytes = ReadFile(logFilePath, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 this.output.WriteLine(logText);  // for debugging in case the test fails
                 Assert.StartsWith(MessageOnNewFileString, logText);
@@ -63,17 +65,19 @@ namespace OpenTelemetry.Internal.Tests
             }
             finally
             {
-                CleanupConfigFile();
+                FileHelper.DeleteFile(ConfigFilePath, fail: false);
+                FileHelper.DeleteDirectory(logDirectory, fail: false);
             }
         }
 
         [Fact]
         public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
         {
+            string logDirectory = Utils.GetCurrentMethodName();
+
             try
             {
-                string logDirectory = Utils.GetCurrentMethodName();
-                this.PurgeAnyLogFiles(logDirectory);
+                FileHelper.DeleteDirectory(logDirectory);
                 CreateConfigFile(logDirectory);
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
@@ -81,10 +85,10 @@ namespace OpenTelemetry.Internal.Tests
                 OpenTelemetrySdkEventSource.Log.TracerProviderException("Event string sample", "Exception string sample");
                 string expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
 
-                var fileName = FindLogFileName(logDirectory);
+                var logFilePath = FindLogFilePath(logDirectory);
 
                 int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
-                byte[] actualBytes = ReadFile(logDirectory, fileName, bufferSize);
+                byte[] actualBytes = ReadFile(logFilePath, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
                 Assert.StartsWith(MessageOnNewFileString, logText);
 
@@ -95,7 +99,8 @@ namespace OpenTelemetry.Internal.Tests
             }
             finally
             {
-                CleanupConfigFile();
+                FileHelper.DeleteFile(ConfigFilePath, fail: false);
+                FileHelper.DeleteDirectory(logDirectory, fail: false);
             }
         }
 
@@ -106,10 +111,9 @@ namespace OpenTelemetry.Internal.Tests
             return logLine.Substring(timestampPrefixLength);
         }
 
-        private static byte[] ReadFile(string logDirectory, string fileName, int byteCount)
+        private static byte[] ReadFile(string filePath, int byteCount)
         {
-            var outputFilePath = Path.Combine(logDirectory, fileName);
-            using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var file = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             byte[] actualBytes = new byte[byteCount];
             _ = file.Read(actualBytes, 0, byteCount);
             return actualBytes;
@@ -127,44 +131,10 @@ namespace OpenTelemetry.Internal.Tests
             file.Write(configBytes, 0, configBytes.Length);
         }
 
-        private static void CleanupConfigFile()
-        {
-            try
-            {
-                File.Delete(ConfigFilePath);
-            }
-            catch
-            {
-                // ignore any exceptions while removing files
-            }
-        }
-
-        private static string FindLogFileName(string logDirectory)
+        private static string FindLogFilePath(string logDirectory)
         {
             string[] logFiles = Directory.GetFiles(logDirectory, "*.log");
-
-            return Path.GetFileName(logFiles[0]);
-        }
-
-        private void PurgeAnyLogFiles(string logDirectory)
-        {
-            if (Directory.Exists(logDirectory))
-            {
-                string[] logFiles = Directory.GetFiles(logDirectory, "*.log");
-
-                foreach (string file in logFiles)
-                {
-                    try
-                    {
-                        File.Delete(file);
-                        this.output.WriteLine($"Deleted file: {file}");
-                    }
-                    catch (Exception ex)
-                    {
-                        this.output.WriteLine($"Error deleting file {file}: {ex.Message}");
-                    }
-                }
-            }
+            return logFiles.Single(); // we're expecting only one file in this directory. Fail if more than one file is found.
         }
     }
 }
