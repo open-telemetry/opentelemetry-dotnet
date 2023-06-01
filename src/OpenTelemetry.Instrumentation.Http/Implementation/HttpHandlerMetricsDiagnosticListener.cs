@@ -55,19 +55,41 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (this.stopRequestFetcher.TryFetch(payload, out HttpRequestMessage request) && request != null)
                 {
                     TagList tags = default;
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
 
-                    if (!request.RequestUri.IsDefaultPort)
+                    if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host));
+
+                        if (!request.RequestUri.IsDefaultPort)
+                        {
+                            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+                        }
+
+                        if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                        {
+                            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
+                        }
                     }
 
-                    if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                    if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, request.RequestUri.Scheme));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
+
+                        if (!request.RequestUri.IsDefaultPort)
+                        {
+                            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, request.RequestUri.Port));
+                        }
+
+                        if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                        {
+                            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
+                        }
                     }
 
                     // We are relying here on HttpClient library to set duration before writing the stop event.
