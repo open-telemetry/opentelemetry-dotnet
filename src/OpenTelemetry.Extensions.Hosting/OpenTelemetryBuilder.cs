@@ -171,7 +171,7 @@ public sealed class OpenTelemetryBuilder
         // Note: This enables ILogger integration
         this.Services.AddLogging().AddOpenTelemetry();
 
-        var builder = new LoggerProviderServiceCollectionBuilder(this.Services);
+        var builder = new LoggerProviderBuilderBase(this.Services);
 
         configure(builder);
 

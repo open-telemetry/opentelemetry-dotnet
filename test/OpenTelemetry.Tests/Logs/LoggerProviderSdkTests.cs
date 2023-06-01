@@ -146,6 +146,29 @@ public sealed class LoggerProviderSdkTests
         Assert.True(provider.Processor is CompositeProcessor<LogRecord>);
     }
 
+    [Fact]
+    public void BuilderTypeDoesNotChangeTest()
+    {
+        var originalBuilder = Sdk.CreateLoggerProviderBuilder();
+        var currentBuilder = originalBuilder;
+
+        var deferredBuilder = currentBuilder as IDeferredLoggerProviderBuilder;
+        Assert.NotNull(deferredBuilder);
+
+        currentBuilder = deferredBuilder.Configure((sp, innerBuilder) => { });
+        Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+        currentBuilder = currentBuilder.ConfigureServices(s => { });
+        Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+        currentBuilder = currentBuilder.AddInstrumentation(() => new object());
+        Assert.True(ReferenceEquals(originalBuilder, currentBuilder));
+
+        using var provider = currentBuilder.Build();
+
+        Assert.NotNull(provider);
+    }
+
     private sealed class NoopProcessor : BaseProcessor<LogRecord>
     {
     }
