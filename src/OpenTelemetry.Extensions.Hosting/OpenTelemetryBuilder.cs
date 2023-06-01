@@ -15,7 +15,6 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -141,15 +140,9 @@ public sealed class OpenTelemetryBuilder
     /// Adds logging services into the builder.
     /// </summary>
     /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>This is safe to be called multiple times and by library authors.
+    /// Note: This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="LoggerProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.</item>
-    /// <item>This operation enables <see cref="ILogger"/> integration
-    /// automatically by calling <see
-    /// cref="OpenTelemetryLoggingExtensions.AddOpenTelemetry(ILoggingBuilder)"/>.</item>
-    /// </list>
+    /// <see cref="IServiceCollection"/>.
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
@@ -168,10 +161,7 @@ public sealed class OpenTelemetryBuilder
     {
         Guard.ThrowIfNull(configure);
 
-        // Note: This enables ILogger integration
-        this.Services.AddLogging().AddOpenTelemetry();
-
-        var builder = new LoggerProviderServiceCollectionBuilder(this.Services);
+        var builder = new LoggerProviderBuilderBase(this.Services);
 
         configure(builder);
 

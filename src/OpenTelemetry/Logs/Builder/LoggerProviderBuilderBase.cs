@@ -1,4 +1,4 @@
-// <copyright file="LoggerProviderServiceCollectionBuilder.cs" company="OpenTelemetry Authors">
+// <copyright file="LoggerProviderBuilderBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,20 +23,17 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Logs;
 
 /// <summary>
-/// Contains methods for registering actions into an <see
-/// cref="IServiceCollection"/> which will be used to build a <see
-/// cref="LoggerProvider"/> once the <see cref="IServiceProvider"/> is
-/// available.
+/// Contains methods for building <see cref="LoggerProvider"/> instances.
 /// </summary>
-internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBuilder, ILoggerProviderBuilder
+internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILoggerProviderBuilder
 {
     private readonly bool allowBuild;
-    private IServiceCollection? services;
+    private readonly LoggerProviderServiceCollectionBuilder innerBuilder;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="LoggerProviderServiceCollectionBuilder"/> class.
+    /// Initializes a new instance of the <see cref="LoggerProviderBuilderBase"/> class.
     /// </summary>
-    public LoggerProviderServiceCollectionBuilder()
+    public LoggerProviderBuilderBase()
     {
         var services = new ServiceCollection();
 
@@ -46,14 +43,12 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
             .TryAddSingleton<LoggerProvider>(
                 sp => throw new NotSupportedException("Self-contained LoggerProvider cannot be accessed using the application IServiceProvider call Build instead."));
 
-        services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => this.services = null);
-
-        this.services = services;
+        this.innerBuilder = new LoggerProviderServiceCollectionBuilder(services);
 
         this.allowBuild = true;
     }
 
-    internal LoggerProviderServiceCollectionBuilder(IServiceCollection services)
+    internal LoggerProviderBuilderBase(IServiceCollection services)
     {
         Guard.ThrowIfNull(services);
 
@@ -61,9 +56,7 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
             .AddOpenTelemetryLoggerProviderBuilderServices()
             .TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
 
-        services.ConfigureOpenTelemetryLoggerProvider((sp, builder) => this.services = null);
-
-        this.services = services;
+        this.innerBuilder = new LoggerProviderServiceCollectionBuilder(services);
 
         this.allowBuild = false;
     }
@@ -74,23 +67,26 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
     /// <inheritdoc />
     public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
-        Guard.ThrowIfNull(instrumentationFactory);
-
-        this.ConfigureBuilderInternal((sp, builder) =>
-        {
-            builder.AddInstrumentation(instrumentationFactory);
-        });
+        this.innerBuilder.AddInstrumentation(instrumentationFactory);
 
         return this;
     }
 
     /// <inheritdoc />
     LoggerProviderBuilder ILoggerProviderBuilder.ConfigureServices(Action<IServiceCollection> configure)
-        => this.ConfigureServicesInternal(configure);
+    {
+        this.innerBuilder.ConfigureServices(configure);
+
+        return this;
+    }
 
     /// <inheritdoc />
     LoggerProviderBuilder IDeferredLoggerProviderBuilder.Configure(Action<IServiceProvider, LoggerProviderBuilder> configure)
-        => this.ConfigureBuilderInternal(configure);
+    {
+        this.innerBuilder.ConfigureBuilder(configure);
+
+        return this;
+    }
 
     internal LoggerProvider Build()
     {
@@ -99,10 +95,10 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
             throw new NotSupportedException("A LoggerProviderBuilder bound to external service cannot be built directly. Access the LoggerProvider using the application IServiceProvider instead.");
         }
 
-        var services = this.services
+        var services = this.innerBuilder.Services
             ?? throw new NotSupportedException("LoggerProviderBuilder build method cannot be called multiple times.");
 
-        this.services = null;
+        this.innerBuilder.Services = null;
 
 #if DEBUG
         bool validateScopes = true;
@@ -112,27 +108,5 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
         var serviceProvider = services.BuildServiceProvider(validateScopes);
 
         return new LoggerProviderSdk(serviceProvider, ownsServiceProvider: true);
-    }
-
-    private LoggerProviderBuilder ConfigureBuilderInternal(Action<IServiceProvider, LoggerProviderBuilder> configure)
-    {
-        var services = this.services
-            ?? throw new NotSupportedException("Builder cannot be configured during LoggerProvider construction.");
-
-        services.ConfigureOpenTelemetryLoggerProvider(configure);
-
-        return this;
-    }
-
-    private LoggerProviderBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
-    {
-        Guard.ThrowIfNull(configure);
-
-        var services = this.services
-            ?? throw new NotSupportedException("Services cannot be configured during LoggerProvider construction.");
-
-        configure(services);
-
-        return this;
     }
 }
