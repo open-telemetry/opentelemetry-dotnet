@@ -18,7 +18,6 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
@@ -270,6 +269,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 }
                             }
 
+                            /* Commenting out as Exemplars is marked internal
                             var exemplars = metricPoint.GetExemplars();
                             foreach (var examplar in exemplars)
                             {
@@ -303,6 +303,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                     dataPoint.Exemplars.Add(otlpExemplar);
                                 }
                             }
+                            */
 
                             histogram.DataPoints.Add(dataPoint);
                         }

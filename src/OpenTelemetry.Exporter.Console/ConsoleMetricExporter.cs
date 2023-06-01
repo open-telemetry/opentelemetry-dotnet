@@ -189,6 +189,7 @@ namespace OpenTelemetry.Exporter
                     }
 
                     var exemplarString = new StringBuilder();
+                    /* Commenting out as Exemplars is marked internal
                     foreach (var exemplar in metricPoint.GetExemplars())
                     {
                         if (exemplar.Timestamp != default)
@@ -219,6 +220,7 @@ namespace OpenTelemetry.Exporter
                             exemplarString.AppendLine();
                         }
                     }
+                    */
 
                     msg = new StringBuilder();
                     msg.Append('(');

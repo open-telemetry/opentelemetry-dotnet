@@ -18,10 +18,11 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics
 {
+#pragma warning disable SA1623 // The property's documentation summary text should begin with: `Gets or sets`
     /// <summary>
     /// Represents an Exemplar data.
     /// </summary>
-    public struct Exemplar
+    internal struct Exemplar
     {
         /// <summary>
         /// Gets the timestamp (UTC).
@@ -51,4 +52,5 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         public List<KeyValuePair<string, object>> FilteredTags { get; internal set; }
     }
+#pragma warning restore SA1623
 }
