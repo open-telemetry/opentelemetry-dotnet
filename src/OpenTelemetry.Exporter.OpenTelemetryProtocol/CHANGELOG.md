@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Remove support for exporting `Exemplars`. This would be added back in the
+  `1.6.*` prerelease versions right after `1.5.0` stable version is released.
+  ([#4533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4533))
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25
