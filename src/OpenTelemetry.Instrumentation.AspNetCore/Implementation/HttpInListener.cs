@@ -285,7 +285,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
-                    AddGrpcAttributes(activity, grpcMethod, context);
+                    this.AddGrpcAttributes(activity, grpcMethod, context);
                 }
                 else if (activity.Status == ActivityStatusCode.Unset)
                 {
