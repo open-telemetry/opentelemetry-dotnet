@@ -470,10 +470,35 @@ public partial class Base2ExponentialBucketHistogramTest
     [Fact]
     public void ScaleOneIndexesWithPowerOfTwoLowerBound()
     {
+        /*
+        The range of indexes tested is fixed to evaluate values recorded
+        within [2^-25, 2^25] or approximately [0.00000002980232239, 33554432].
+
+        For perspective, assume the unit of values recorded is seconds then this
+        test represents the imprecision of MapToIndex for values recorded between
+        approximately 29.80 nanoseconds and 1.06 years.
+
+        The output of this test is as follows:
+
+            Scale: 1
+            Indexes per power of 2: 2
+            Index range: [-50, 50]
+            Value range: [2.9802322387695312E-08, 33554432]
+            Successes: 18
+            Failures: 33
+            Average number of values near a bucket boundary that are off by one: 2.878787878787879
+            Average range of values near a bucket boundary that are off by one: 3.0880480139955346E-09
+
+        That is, there are ~2.89 values near each bucket boundary tested that
+        are mapped to an index off by one. The range of these incorrectly mapped
+        values, assuming seconds as the unit, is ~3.09 nanoseconds.
+        */
+
+        // This test only tests scale 1, but it can be adjusted to test any
+        // positive scale by changing the scale of the histogram. The output
+        // and results are identical for all positive scales.
         var scale = 1;
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
-
-        var indexesPerPowerOf2 = 1 << scale;
 
         // These are used to capture stats for an analysis for where MapToIndex is off by one.
         var successes = 0;
@@ -481,10 +506,21 @@ public partial class Base2ExponentialBucketHistogramTest
         var diffs = new List<double>();
         var numValuesOffByOne = new List<int>();
 
-        var index = -50;
+        // Only indexes with a lower bound that is an exact power of two are tested.
+        var indexesPerPowerOf2 = 1 << scale;
         var exp = -25;
+
+        var index = exp * indexesPerPowerOf2;
+        var endIndex = Math.Abs(index);
         var lowerBound = Math.Pow(2, exp);
-        for (; index <= 50; index += indexesPerPowerOf2, lowerBound = Math.Pow(2, ++exp))
+
+        this.output.WriteLine(string.Empty);
+        this.output.WriteLine($"Scale: {scale}");
+        this.output.WriteLine($"Indexes per power of 2: {indexesPerPowerOf2}");
+        this.output.WriteLine($"Index range: [{index}, {endIndex}]");
+        this.output.WriteLine($"Value range: [{lowerBound}, {Math.Pow(2, Math.Abs(exp))}]");
+
+        for (; index <= endIndex; index += indexesPerPowerOf2, lowerBound = Math.Pow(2, ++exp))
         {
             // Buckets are lower bound exclusive, therefore
             // MapToIndex(LowerBoundOfBucketN) = IndexOfBucketN - 1.
@@ -528,7 +564,6 @@ public partial class Base2ExponentialBucketHistogramTest
             }
         }
 
-        this.output.WriteLine(string.Empty);
         this.output.WriteLine($"Successes: {successes}");
         this.output.WriteLine($"Failures: {failures}");
         this.output.WriteLine($"Average number of values near a bucket boundary that are off by one: {numValuesOffByOne.Average()}");
