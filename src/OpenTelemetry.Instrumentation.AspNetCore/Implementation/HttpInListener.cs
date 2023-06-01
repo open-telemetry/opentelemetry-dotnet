@@ -197,27 +197,55 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
-                if (request.Host.HasValue)
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/specification/trace/semantic_conventions/http.md
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
-                    activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
-
-                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                    if (request.Host.HasValue)
                     {
-                        activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                        activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
+
+                        if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                        {
+                            activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                        }
+                    }
+
+                    activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                    activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
+                    activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
+                    activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
+                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
+
+                    var userAgent = request.Headers["User-Agent"].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(userAgent))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                     }
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
-
-                var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                if (!string.IsNullOrEmpty(userAgent))
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    if (request.Host.HasValue)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeServerAddress, request.Host.Host);
+
+                        if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                        {
+                            activity.SetTag(SemanticConventions.AttributeServerPort, request.Host.Port);
+                        }
+                    }
+
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                    activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
+                    activity.SetTag(SemanticConventions.AttributeUrlPath, path);
+                    activity.SetTag(SemanticConventions.AttributeUrlFull, GetUri(request));
+                    activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
+
+                    var userAgent = request.Headers["User-Agent"].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(userAgent))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeUserAgentOriginal, userAgent);
+                    }
                 }
 
                 try
@@ -244,7 +272,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                }
+
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                }
 
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
@@ -426,7 +462,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
             // The RPC semantic conventions indicate the span name
             // should not have a leading forward slash.
@@ -436,10 +472,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             if (context.Connection.RemoteIpAddress != null)
             {
+                // TODO: This attribute was changed in v1.13.0 https://github.com/open-telemetry/opentelemetry-specification/pull/2614
                 activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             }
 
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+            if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+            {
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+            }
+
+            if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+            {
+                activity.SetTag(SemanticConventions.AttributeClientSocketPort, context.Connection.RemotePort);
+            }
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
             if (validConversion)

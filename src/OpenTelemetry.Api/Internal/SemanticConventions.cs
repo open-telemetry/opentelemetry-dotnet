@@ -110,5 +110,18 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionType = "exception.type";
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
+
+        // NEW v1.21.0 Http Semantic Conventions
+        public const string AttributeClientSocketPort = "client.socket.port";
+        public const string AttributeHttpRequestMethod = "http.request.method";
+        public const string AttributeHttpResponseStatusCode = "http.response.status_code";
+        public const string AttributeNetworkProtocolVersion = "network.protocol.version";
+        public const string AttributeServerAddress = "server.address";
+        public const string AttributeServerName = "server.name";
+        public const string AttributeServerPort = "server.port";
+        public const string AttributeUrlFull = "url.full";
+        public const string AttributeUrlPath = "url.path";
+        public const string AttributeUrlScheme = "url.scheme";
+        public const string AttributeUserAgentOriginal = "user_agent.original";
     }
 }
