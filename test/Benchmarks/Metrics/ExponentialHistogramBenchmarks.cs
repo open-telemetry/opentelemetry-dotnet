@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
@@ -21,18 +22,20 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=macOS Ventura 13.4 (22F66) [Darwin 22.5.0]
-Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
-.NET SDK=7.0.101
-  [Host]     : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
-  DefaultJob : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK=7.0.203
+  [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
-|           Method | Scale |     Mean |    Error |   StdDev | Allocated |
-|----------------- |------ |---------:|---------:|---------:|----------:|
-| HistogramHotPath |   -11 | 29.79 ns | 0.054 ns | 0.042 ns |         - |
-| HistogramHotPath |     3 | 32.10 ns | 0.086 ns | 0.080 ns |         - |
-| HistogramHotPath |    20 | 32.08 ns | 0.076 ns | 0.063 ns |         - |
+|                      Method |      Mean |    Error |   StdDev | Allocated |
+|---------------------------- |----------:|---------:|---------:|----------:|
+|            HistogramHotPath |  54.78 ns | 0.907 ns | 0.848 ns |         - |
+|  HistogramWith1LabelHotPath | 115.37 ns | 0.388 ns | 0.363 ns |         - |
+| HistogramWith3LabelsHotPath | 228.03 ns | 3.767 ns | 3.146 ns |         - |
+| HistogramWith5LabelsHotPath | 316.60 ns | 5.980 ns | 9.311 ns |         - |
+| HistogramWith7LabelsHotPath | 366.86 ns | 2.694 ns | 3.596 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
@@ -41,21 +44,10 @@ public class ExponentialHistogramBenchmarks
 {
     private const int MaxValue = 10000;
     private readonly Random random = new();
+    private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private Histogram<long> histogram;
     private MeterProvider provider;
     private Meter meter;
-
-    // This is a simple benchmark that records values in the range [0, 10000].
-    // The reason the following scales are benchmarked are as follows:
-    //
-    // -11: Non-positive scales should perform better than positive scales.
-    //      The algorithm to map values to buckets for non-positive scales is more efficient.
-    //   3: The benchmark records values in the range [0, 10000] and uses the default max number of buckets (160).
-    //      Scale 3 is the maximum scale that will fit this range of values given the number of buckets.
-    //      That is, no scale down will occur.
-    //  20: Scale 20 should perform the same as scale 3. During warmup the histogram should scale down to 3.
-    [Params(-11, 3, 20)]
-    public int Scale { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -71,7 +63,7 @@ public class ExponentialHistogramBenchmarks
             {
                 metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
             })
-            .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration() { MaxScale = this.Scale, MaxSize = Metric.DefaultExponentialHistogramMaxBuckets })
+            .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration())
             .Build();
     }
 
@@ -86,5 +78,51 @@ public class ExponentialHistogramBenchmarks
     public void HistogramHotPath()
     {
         this.histogram.Record(this.random.Next(MaxValue));
+    }
+
+    [Benchmark]
+    public void HistogramWith1LabelHotPath()
+    {
+        var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
+        this.histogram.Record(this.random.Next(MaxValue), tag1);
+    }
+
+    [Benchmark]
+    public void HistogramWith3LabelsHotPath()
+    {
+        var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
+        var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
+        var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+        this.histogram.Record(this.random.Next(MaxValue), tag1, tag2, tag3);
+    }
+
+    [Benchmark]
+    public void HistogramWith5LabelsHotPath()
+    {
+        var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+        this.histogram.Record(this.random.Next(MaxValue), tags);
+    }
+
+    [Benchmark]
+    public void HistogramWith7LabelsHotPath()
+    {
+        var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+            };
+        this.histogram.Record(this.random.Next(MaxValue), tags);
     }
 }
