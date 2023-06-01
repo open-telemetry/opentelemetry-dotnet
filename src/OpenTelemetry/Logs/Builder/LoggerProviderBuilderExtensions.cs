@@ -151,9 +151,9 @@ internal static class LoggerProviderBuilderExtensions
     /// <returns><see cref="LoggerProvider"/>.</returns>
     public static LoggerProvider Build(this LoggerProviderBuilder loggerProviderBuilder)
     {
-        if (loggerProviderBuilder is LoggerProviderServiceCollectionBuilder loggerProviderServiceCollectionBuilder)
+        if (loggerProviderBuilder is LoggerProviderBuilderBase loggerProviderBuilderBase)
         {
-            return loggerProviderServiceCollectionBuilder.Build();
+            return loggerProviderBuilderBase.Build();
         }
 
         return new LoggerProvider();

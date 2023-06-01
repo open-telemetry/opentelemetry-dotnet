@@ -63,6 +63,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
     {
         bool innerConfigureBuilderTestExecuted = false;
         bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
+        bool innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
 
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureServices(services =>
@@ -70,7 +71,17 @@ public sealed class LoggerProviderBuilderExtensionsTests
                 if (callNestedConfigure)
                 {
                     services.ConfigureOpenTelemetryLoggerProvider(
-                        (sp, builder) => innerConfigureOpenTelemetryLoggerProviderTestExecuted = true);
+                        builder =>
+                        {
+                            innerConfigureOpenTelemetryLoggerProviderTestExecuted = true;
+                            builder.AddInstrumentation<CustomInstrumentation>();
+                        });
+                    services.ConfigureOpenTelemetryLoggerProvider(
+                        (sp, builder) =>
+                        {
+                            innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = true;
+                            Assert.Throws<NotSupportedException>(() => builder.AddInstrumentation<CustomInstrumentation>());
+                        });
                 }
             })
             .ConfigureBuilder((sp, builder) =>
@@ -78,10 +89,22 @@ public sealed class LoggerProviderBuilderExtensionsTests
                 innerConfigureBuilderTestExecuted = true;
                 Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
             })
-            .Build();
+            .Build() as LoggerProviderSdk;
+
+        Assert.NotNull(provider);
 
         Assert.True(innerConfigureBuilderTestExecuted);
         Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestExecuted);
+        Assert.Equal(callNestedConfigure, innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted);
+
+        if (callNestedConfigure)
+        {
+            Assert.Single(provider.Instrumentations);
+        }
+        else
+        {
+            Assert.Empty(provider.Instrumentations);
+        }
 
         Assert.Throws<NotSupportedException>(() => provider.GetServiceProvider()?.GetService<LoggerProvider>());
     }

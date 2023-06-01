@@ -131,7 +131,7 @@ namespace Benchmarks.Metrics
             this.histogramWithTagReduction.Record(random.Next(1000), tags);
         }
 
-        public class HighValueExemplarFilter : ExemplarFilter
+        internal class HighValueExemplarFilter : ExemplarFilter
         {
             public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
             {

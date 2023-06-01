@@ -6,6 +6,12 @@
   and machine name.
   ([#4520](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4520))
 
+* Fixed a bug introduced by
+  [#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508) in
+  1.5.0-rc.1 which caused the "Build" extension to return `null` when performing
+  chained/fluent calls.
+  ([#4529](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4529))
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25
