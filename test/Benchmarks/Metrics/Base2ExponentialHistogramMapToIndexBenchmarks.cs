@@ -1,4 +1,4 @@
-// <copyright file="ExponentialHistogramMapToIndexBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialHistogramMapToIndexBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,7 @@ Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
 
 namespace Benchmarks.Metrics;
 
-public class ExponentialHistogramMapToIndexBenchmarks
+public class Base2ExponentialHistogramMapToIndexBenchmarks
 {
     private const int MaxValue = 10000;
     private readonly Random random = new();

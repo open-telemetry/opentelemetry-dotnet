@@ -45,7 +45,7 @@ internal static class ConfigurationExtensions
 #endif
         out string? value)
     {
-        value = configuration.GetValue<string?>(key, null);
+        value = configuration[key] is string configValue ? configValue : null;
 
         return !string.IsNullOrWhiteSpace(value);
     }
@@ -125,7 +125,7 @@ internal static class ConfigurationExtensions
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
 
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(c),
@@ -146,7 +146,7 @@ internal static class ConfigurationExtensions
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
 
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(sp, c, n),
