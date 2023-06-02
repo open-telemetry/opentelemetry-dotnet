@@ -18,7 +18,6 @@
 
 using System.Text;
 using OpenTelemetry.Tests;
-using OpenTelemetry.Tests.Shared;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -40,11 +39,14 @@ namespace OpenTelemetry.Internal.Tests
         [Fact]
         public void SelfDiagnosticsConfigRefresher_OmitAsConfigured()
         {
-            string logDirectory = Utils.GetCurrentMethodName();
-
             try
             {
-                FileHelper.DeleteDirectory(logDirectory);
+                string logDirectory = Utils.GetCurrentMethodName();
+                if (Directory.Exists(logDirectory))
+                {
+                    Directory.Delete(logDirectory);
+                }
+
                 CreateConfigFile(logDirectory);
 
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
@@ -65,19 +67,21 @@ namespace OpenTelemetry.Internal.Tests
             }
             finally
             {
-                FileHelper.DeleteFile(ConfigFilePath, fail: false);
-                FileHelper.DeleteDirectory(logDirectory, fail: false);
+                CleanupConfigFile();
             }
         }
 
         [Fact]
         public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
         {
-            string logDirectory = Utils.GetCurrentMethodName();
-
             try
             {
-                FileHelper.DeleteDirectory(logDirectory);
+                string logDirectory = Utils.GetCurrentMethodName();
+                if (Directory.Exists(logDirectory))
+                {
+                    Directory.Delete(logDirectory);
+                }
+
                 CreateConfigFile(logDirectory);
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
@@ -99,8 +103,7 @@ namespace OpenTelemetry.Internal.Tests
             }
             finally
             {
-                FileHelper.DeleteFile(ConfigFilePath, fail: false);
-                FileHelper.DeleteDirectory(logDirectory, fail: false);
+                CleanupConfigFile();
             }
         }
 
@@ -129,6 +132,18 @@ namespace OpenTelemetry.Internal.Tests
             using FileStream file = File.Open(ConfigFilePath, FileMode.Create, FileAccess.Write);
             byte[] configBytes = Encoding.UTF8.GetBytes(configJson);
             file.Write(configBytes, 0, configBytes.Length);
+        }
+
+        private static void CleanupConfigFile()
+        {
+            try
+            {
+                File.Delete(ConfigFilePath);
+            }
+            catch
+            {
+                // ignore any exceptions while removing files
+            }
         }
 
         private static string FindLogFilePath(string logDirectory)
