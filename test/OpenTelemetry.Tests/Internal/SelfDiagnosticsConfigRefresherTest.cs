@@ -48,14 +48,12 @@ namespace OpenTelemetry.Internal.Tests
                 }
 
                 CreateConfigFile(logDirectory);
-
                 using var configRefresher = new SelfDiagnosticsConfigRefresher();
 
                 // Emitting event of EventLevel.Warning
                 OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("exception");
 
-                var logFilePath = FindLogFilePath(logDirectory);
-
+                var logFilePath = Directory.GetFiles(logDirectory, "*.log").Single();
                 int bufferSize = 512;
                 byte[] actualBytes = ReadFile(logFilePath, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
@@ -89,8 +87,7 @@ namespace OpenTelemetry.Internal.Tests
                 OpenTelemetrySdkEventSource.Log.TracerProviderException("Event string sample", "Exception string sample");
                 string expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
 
-                var logFilePath = FindLogFilePath(logDirectory);
-
+                var logFilePath = Directory.GetFiles(logDirectory, "*.log").Single();
                 int bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
                 byte[] actualBytes = ReadFile(logFilePath, bufferSize);
                 string logText = Encoding.UTF8.GetString(actualBytes);
@@ -144,12 +141,6 @@ namespace OpenTelemetry.Internal.Tests
             {
                 // ignore any exceptions while removing files
             }
-        }
-
-        private static string FindLogFilePath(string logDirectory)
-        {
-            string[] logFiles = Directory.GetFiles(logDirectory, "*.log");
-            return logFiles.Single(); // we're expecting only one file in this directory. Fail if more than one file is found.
         }
     }
 }
