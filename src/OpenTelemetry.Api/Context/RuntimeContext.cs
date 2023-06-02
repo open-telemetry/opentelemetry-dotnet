@@ -39,11 +39,6 @@ namespace OpenTelemetry.Context
             {
                 Guard.ThrowIfNull(value, nameof(value));
 
-                if (!value.IsGenericType || !value.IsGenericTypeDefinition || value.GetGenericArguments().Length != 1)
-                {
-                    throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument");
-                }
-
                 if (value == typeof(AsyncLocalRuntimeContextSlot<>))
                 {
                     contextSlotType = value;
