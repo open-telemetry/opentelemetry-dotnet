@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* **Breaking change** `RuntimeContext.ContextSlotType` can only be assigned one
+  of the following types: `AsyncLocalRuntimeContextSlot<>`,
+  `ThreadLocalRuntimeContextSlot<>`, and `RemotingRuntimeContextSlot<>`. A
+  `System.NotSupportedException` will be thrown if you try to assign any type
+  other than the three types mentioned.
+  ([#4542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4542))
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25
