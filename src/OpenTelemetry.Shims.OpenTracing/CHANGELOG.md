@@ -2,11 +2,11 @@
 
 ## Unreleased
 
-## 1.5.0-rc.1
+## 1.5.0-beta.1
 
 Released 2023-Jun-05
 
-* Bumped the package version to `1.5.0-rc.1` to keep its major and minor version
+* Bumped the package version to `1.5.0-beta.1` to keep its major and minor version
   in sync with that of the core packages. This would make it more intuitive for
   users to figure out what version of core packages would work with a given
   version of this package.
