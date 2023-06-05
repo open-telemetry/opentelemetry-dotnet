@@ -65,4 +65,12 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
   </ItemGroup>
 
+  <!-- <ItemGroup Condition="'$(IncludeCodeAnalysisAttributes)'=='true' Or '$(IncludeInstrumentationHelpers)'=='true' Or '$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\DynamicallyAccessedMembersAttribute.cs" Link="Includes\DynamicallyAccessedMembersAttribute.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\DynamicallyAccessedMemberTypes.cs" Link="Includes\DynamicallyAccessedMemberTypes.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\RequiresDynamicCodeAttribute.cs" Link="Includes\RequiresDynamicCodeAttribute.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\RequiresUnreferencedCodeAttribute.cs" Link="Includes\RequiresUnreferencedCodeAttribute.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link="Includes\UnconditionalSuppressMessageAttribute.cs" />
+  </ItemGroup> -->
+
 </Project>

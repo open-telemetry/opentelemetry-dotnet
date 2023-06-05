@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
+    <TargetFrameworks>net6.0;netstandard2.0;net462</TargetFrameworks>
     <Description>OpenTelemetry .NET API</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
 
@@ -14,5 +14,15 @@
 
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
+  </ItemGroup>
+
+  <!--
+  v1.4.0 doesn't contain a net6.0 target, so we can't run ApiCompat against it.
+  Instead, run net6.0's ApiCompat check against netstandard2.0.
+  Remove this once 1.5.0 is released.
+  -->
+  <ItemGroup Condition="'$(CheckAPICompatibility)' == 'true' and '$(TargetFramework)' == 'net6.0'">
+    <ResolvedMatchingContract Remove="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
+    <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\netstandard2.0\$(AssemblyName).dll" />
   </ItemGroup>
 </Project>

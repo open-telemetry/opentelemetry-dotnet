@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#nullable enable
 
+#nullable enable
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
     /// <summary>
@@ -97,3 +98,4 @@ namespace System.Diagnostics.CodeAnalysis
         public string? Justification { get; set; }
     }
 }
+#endif
