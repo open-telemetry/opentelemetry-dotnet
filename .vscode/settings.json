@@ -56,5 +56,6 @@
     "xunit",
     "zipkin",
     "zpages"
-  ]
+  ],
+  "dotnet.defaultSolution": "OpenTelemetry.sln"
 }
