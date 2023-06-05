@@ -14,23 +14,47 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs
-{
-    /// <summary>
-    /// Export processor options for logs.
-    /// </summary>
-    public class LogRecordExportProcessorOptions
-    {
-        /// <summary>
-        /// Gets or sets export processor type.
-        /// </summary>
-        public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs;
 
-        /// <summary>
-        /// Gets or sets batch processor options.
-        /// </summary>
-        public BatchExportLogRecordProcessorOptions BatchExportProcessorOptions { get; set; } = new();
+/// <summary>
+/// Options for configuring either a <see cref="SimpleLogRecordExportProcessor"/> or <see cref="BatchLogRecordExportProcessor"/>.
+/// </summary>
+public class LogRecordExportProcessorOptions
+{
+    private BatchExportLogRecordProcessorOptions batchExportProcessorOptions;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LogRecordExportProcessorOptions"/> class.
+    /// </summary>
+    public LogRecordExportProcessorOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal LogRecordExportProcessorOptions(IConfiguration configuration)
+    {
+        this.batchExportProcessorOptions = new BatchExportLogRecordProcessorOptions(configuration);
+    }
+
+    /// <summary>
+    /// Gets or sets the export processor type to be used. The default value is <see cref="ExportProcessorType.Batch"/>.
+    /// </summary>
+    public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+
+    /// <summary>
+    /// Gets or sets the batch export options. Ignored unless <see cref="ExportProcessorType"/> is <see cref="ExportProcessorType.Batch"/>.
+    /// </summary>
+    public BatchExportLogRecordProcessorOptions BatchExportProcessorOptions
+    {
+        get => this.batchExportProcessorOptions ??= new();
+        set
+        {
+            // TODO: Guard.ThrowIfNull(value);
+
+            this.batchExportProcessorOptions = value;
+        }
     }
 }
