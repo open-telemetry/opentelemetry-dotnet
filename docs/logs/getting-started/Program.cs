@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace GettingStarted;
@@ -25,36 +23,23 @@ public class Program
 {
     public static void Main()
     {
-        //using var provider = Sdk.CreateLoggerProviderBuilder()
-        //    .AddOtlpLogExporter()
-        //    .Build();
-
-        //var logger = provider.GetLogger();
-
-        //logger.EmitLog(new LogRecordData { Body = "Hello world" });
-
-        var services = new ServiceCollection();
-
-        services.AddLogging(builder => builder.AddOpenTelemetry());
-        services.ConfigureOpenTelemetryLoggerProvider(builder => builder.AddOtlpLogExporter((o, e) =>
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            e.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { MaxExportBatchSize = 5000 };
-        }));
+            builder.AddOpenTelemetry(options =>
+            {
+                options.AddConsoleExporter();
+            });
+        });
 
-        using var sp = services.BuildServiceProvider();
+        var logger = loggerFactory.CreateLogger<Program>();
 
-        var loggerFactory = sp.GetService<ILoggerFactory>();
+        logger.LogInformation(eventId: 123, "Hello from {name} {price}.", "tomato", 2.99);
 
-        var logger1 = loggerFactory?.CreateLogger("MyLogger");
-
-        logger1?.LogInformation("Hello world");
-
-        //using var loggerFactory = LoggerFactory.Create(builder =>
-        //{
-        //    builder.AddOpenTelemetry(options =>
-        //    {
-        //        options.AddConsoleExporter();
-        //    });
-        //});
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            // If logger.IsEnabled returned false, the code doesn't have to spend time evaluating the arguments.
+            // This can be especially helpful if the arguments are expensive to calculate.
+            logger.LogDebug(eventId: 501, "System.Environment.Version: {version}.", System.Environment.Version);
+        }
     }
 }
