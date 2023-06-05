@@ -25,6 +25,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OpenTelemetry.Shims.OpenTracing.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("getting-started" + AssemblyInfo.PublicKey)]
 
 #if SIGNED
 internal static class AssemblyInfo
