@@ -45,7 +45,7 @@ public class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<
     {
     }
 
-    internal BatchExportLogRecordProcessorOptions(IConfiguration configuration)
+    public BatchExportLogRecordProcessorOptions(IConfiguration configuration)
     {
         if (configuration.TryGetIntValue(ExporterTimeoutEnvVarKey, out var value))
         {
