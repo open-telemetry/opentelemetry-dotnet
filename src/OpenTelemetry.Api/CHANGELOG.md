@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-* **Breaking change** `RuntimeContext.ContextSlotType` can only be assigned one
+* **Breaking change** In order to make `RuntimeContext` compatible with
+  ahead-of-time compilation (AOT),
+  `RuntimeContext.ContextSlotType` can only be assigned one
   of the following types: `AsyncLocalRuntimeContextSlot<>`,
   `ThreadLocalRuntimeContextSlot<>`, and `RemotingRuntimeContextSlot<>`. A
   `System.NotSupportedException` will be thrown if you try to assign any type
