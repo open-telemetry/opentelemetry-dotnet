@@ -45,7 +45,6 @@ Allocation details for .NET 7:
 * Casting of the struct `Microsoft.Extensions.Primitives.StringValues` to `IEnumerable<string>` by `HttpRequestHeaderValuesGetter`
   - `TraceContextPropagator.Extract` = 24 B
   - `BaggageContextPropagator.Extract` = 24 B
-  - `request.Headers["User-Agent"].FirstOrDefault()` = 24 B
 * String creation for `HttpRequest.HostString.Host` = 40 B
 * `Activity.TagsLinkedList` (this is allocated on the first Activity.SetTag call) = 40 B
 * Boxing of `Port` number when adding it as a tag = 24 B
@@ -61,7 +60,7 @@ Allocation details for .NET 7:
   - System.Threading.ExecutionContext = 40 B
 
 Baseline = 2.45 KB
-With Traces = 2.45 + (1162 / 1024) = 2.45 + 1.14 = 3.59 KB
+With Traces = 2.45 + (1138 / 1024) = 2.45 + 1.12 = 3.57 KB
 
 
 // Metrics
@@ -76,7 +75,7 @@ With Metrics = 2.45 + (416 + 40 + 24) / 1024 = 2.45 + 0.47 = 2.92 KB
 
 Baseline = 2.45 KB
 With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
-                        = 2.45 + (1162 + 64) / 1024 = 2.45 + 1.2 = 3.55 KB (~3.56 KB)
+                        = 2.45 + (1138 + 64) / 1024 = 2.45 + 1.17 = ~3.63KB
 */
 
 namespace Benchmarks.Instrumentation
