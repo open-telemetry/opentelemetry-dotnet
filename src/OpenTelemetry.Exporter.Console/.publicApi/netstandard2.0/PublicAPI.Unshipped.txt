@@ -1,0 +1,6 @@
+OpenTelemetry.Exporter.ConsoleActivityJsonExporter
+OpenTelemetry.Exporter.ConsoleActivityJsonExporter.ConsoleActivityJsonExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
+override OpenTelemetry.Exporter.ConsoleActivityJsonExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> batch) -> OpenTelemetry.ExportResult
+static OpenTelemetry.Trace.ConsoleExporterHelperExtensions.AddConsoleJsonExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.ConsoleExporterHelperExtensions.AddConsoleJsonExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, string name, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.ConsoleExporterHelperExtensions.AddConsoleJsonExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
