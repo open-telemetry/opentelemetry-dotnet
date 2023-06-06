@@ -1,28 +1,3 @@
 OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
 OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions.BatchExportLogRecordProcessorOptions() -> void
-OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
-OpenTelemetry.Logs.LogRecord.Attributes.set -> void
-OpenTelemetry.Logs.LogRecord.Body.get -> string?
-OpenTelemetry.Logs.LogRecord.Body.set -> void
-OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration
-OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.Base2ExponentialBucketHistogramConfiguration() -> void
-OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.get -> int
-OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.set -> void
-OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.get -> int
-OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.set -> void
-OpenTelemetry.Metrics.ExponentialHistogramBuckets
-OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator
-OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.Current.get -> long
-OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.Enumerator() -> void
-OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.MoveNext() -> bool
-OpenTelemetry.Metrics.ExponentialHistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator
-OpenTelemetry.Metrics.ExponentialHistogramBuckets.Offset.get -> int
-OpenTelemetry.Metrics.ExponentialHistogramData
-OpenTelemetry.Metrics.ExponentialHistogramData.PositiveBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
-OpenTelemetry.Metrics.ExponentialHistogramData.Scale.get -> int
-OpenTelemetry.Metrics.ExponentialHistogramData.ZeroCount.get -> long
-OpenTelemetry.Metrics.MetricType.ExponentialHistogram = 80 -> OpenTelemetry.Metrics.MetricType
-override OpenTelemetry.BaseExportProcessor<T>.ToString() -> string!
-override OpenTelemetry.BaseProcessor<T>.ToString() -> string!
-OpenTelemetry.Metrics.MetricPoint.GetExponentialHistogramData() -> OpenTelemetry.Metrics.ExponentialHistogramData!
-OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider!, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
+
