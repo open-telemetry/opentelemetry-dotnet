@@ -33,10 +33,10 @@ Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical 
 
 |                     Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |--------------------------- |---------------------- |---------:|--------:|--------:|-------:|----------:|
-| GetRequestForAspNetCoreApp |                  None | 134.8 us | 1.54 us | 1.44 us | 0.4883 |   2.45 KB |
-| GetRequestForAspNetCoreApp |                Traces | 145.8 us | 1.12 us | 0.99 us | 0.7324 |   3.57 KB |
-| GetRequestForAspNetCoreApp |               Metrics | 150.7 us | 3.00 us | 4.58 us | 0.4883 |   2.92 KB |
-| GetRequestForAspNetCoreApp |       Traces, Metrics | 167.0 us | 1.93 us | 1.81 us | 0.7324 |   3.63 KB |
+| GetRequestForAspNetCoreApp |                  None | 136.8 us | 1.56 us | 1.46 us | 0.4883 |   2.45 KB |
+| GetRequestForAspNetCoreApp |                Traces | 148.1 us | 0.88 us | 0.82 us | 0.7324 |   3.57 KB |
+| GetRequestForAspNetCoreApp |               Metrics | 144.4 us | 1.16 us | 1.08 us | 0.4883 |   2.92 KB |
+| GetRequestForAspNetCoreApp |       Traces, Metrics | 163.0 us | 1.60 us | 1.49 us | 0.7324 |   3.63 KB |
 
 Allocation details for .NET 7:
 
