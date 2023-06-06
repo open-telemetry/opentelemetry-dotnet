@@ -21,13 +21,22 @@ using System.Threading;
 using Microsoft.Coyote;
 using Microsoft.Coyote.Logging;
 using Microsoft.Coyote.SystematicTesting;
+using Microsoft.Coyote.SystematicTesting.Frameworks.XUnit;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
         private readonly AggregatorStore aggregatorStore = new("test", AggregationType.Histogram, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+
+        private readonly ITestOutputHelper outputHelper;
+
+        public AggregatorTest(ITestOutputHelper outputHelper)
+        {
+            this.outputHelper = outputHelper;
+        }
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
@@ -143,15 +152,17 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedLongHistogramTest_Coyote()
         {
+            using var logger = new TestOutputLogger(this.outputHelper);
             var config = Configuration.Create()
-                .WithTestingIterations(100)
-                .WithMemoryAccessRaceCheckingEnabled(true);
-
-            // .WithVerbosityEnabled(VerbosityLevel.Debug)
-            // .WithConsoleLoggingEnabled();
-            // .WithPartiallyControlledConcurrencyAllowed(false);
+                        .WithTestingIterations(100)
+                        .WithVerbosityEnabled(VerbosityLevel.Debug)
+                        //.WithConsoleLoggingEnabled()
+                        .WithControlFlowRaceCheckingEnabled()
+                        .WithPartiallyControlledConcurrencyAllowed(false)
+                        .WithPartiallyControlledDataNondeterminismAllowed(false);
 
             var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
+            test.SetLogger(logger);
 
             test.Run();
             Console.WriteLine(test.GetReport());
@@ -179,6 +190,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        [Test]
         public void MultiThreadedHistogramUpdateAndSnapShotTest()
         {
             var boundaries = Array.Empty<double>();

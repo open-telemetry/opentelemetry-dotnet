@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net7.0;net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net7.0;</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <NoWarn>$(NoWarn),CS0618</NoWarn>
   </PropertyGroup>
@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Coyote" Version="1.7.8" />
-    <PackageReference Include="Microsoft.Coyote.Test" Version="1.7.8" />
+    <PackageReference Include="Microsoft.Coyote" Version="1.7.9" />
+    <PackageReference Include="Microsoft.Coyote.Test" Version="1.7.9" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingPkgVer)" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.0-preview.7.22375.6" Condition="$(TargetFramework) == 'net7.0'" />
   </ItemGroup>
