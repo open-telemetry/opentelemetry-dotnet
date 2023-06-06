@@ -57,8 +57,6 @@ namespace OpenTelemetry.Context
                 {
                     throw new NotSupportedException($"{value} is not a supported type.");
                 }
-
-                contextSlotType = value;
             }
         }
 
