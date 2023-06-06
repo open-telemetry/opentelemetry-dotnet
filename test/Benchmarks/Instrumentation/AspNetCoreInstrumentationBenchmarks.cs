@@ -24,8 +24,8 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.22621.1702/22H2/2022Update/SunValley2)
+Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
 .NET SDK=7.0.203
   [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
   DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
@@ -33,10 +33,10 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 |                     Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |--------------------------- |---------------------- |---------:|--------:|--------:|-------:|----------:|
-| GetRequestForAspNetCoreApp |                  None | 226.8 us | 4.00 us | 3.74 us |      - |   2.45 KB |
-| GetRequestForAspNetCoreApp |                Traces | 235.2 us | 4.44 us | 4.15 us | 0.4883 |   3.59 KB |
-| GetRequestForAspNetCoreApp |               Metrics | 229.1 us | 4.44 us | 4.36 us |      - |   2.92 KB |
-| GetRequestForAspNetCoreApp |       Traces, Metrics | 230.6 us | 4.54 us | 5.23 us | 0.4883 |   3.66 KB |
+| GetRequestForAspNetCoreApp |                  None | 134.8 us | 1.54 us | 1.44 us | 0.4883 |   2.45 KB |
+| GetRequestForAspNetCoreApp |                Traces | 145.8 us | 1.12 us | 0.99 us | 0.7324 |   3.57 KB |
+| GetRequestForAspNetCoreApp |               Metrics | 150.7 us | 3.00 us | 4.58 us | 0.4883 |   2.92 KB |
+| GetRequestForAspNetCoreApp |       Traces, Metrics | 167.0 us | 1.93 us | 1.81 us | 0.7324 |   3.63 KB |
 
 Allocation details for .NET 7:
 
