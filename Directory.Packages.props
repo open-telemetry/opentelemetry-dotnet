@@ -21,12 +21,11 @@
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
     <PackageVersion Include="MinVer" Version="[4.2.0,5.0)" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
     <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="7.0.0" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    <PackageVersion Include="System.Text.Encodings.Web" Version="7.0.0" />
+     <PackageVersion Include="System.Text.Encodings.Web" Version="7.0.0" />
     <PackageVersion Include="System.Text.Json" Version="7.0.2" />
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
