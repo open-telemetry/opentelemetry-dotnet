@@ -197,7 +197,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/specification/trace/semantic_conventions/http.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
                 if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
                     if (request.Host.HasValue)
@@ -223,6 +223,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
 
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/specification/trace/semantic_conventions/http.md
                 if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
                     if (request.Host.HasValue)
@@ -235,10 +236,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                         }
                     }
 
+                    if (request.QueryString.HasValue)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+                    }
+
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
                     activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
                     activity.SetTag(SemanticConventions.AttributeUrlPath, path);
-                    activity.SetTag(SemanticConventions.AttributeUrlFull, GetUri(request));
                     activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
 
                     var userAgent = request.Headers["User-Agent"].FirstOrDefault();

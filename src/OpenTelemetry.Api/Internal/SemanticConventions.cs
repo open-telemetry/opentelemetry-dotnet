@@ -122,6 +122,7 @@ namespace OpenTelemetry.Trace
         public const string AttributeUrlFull = "url.full";
         public const string AttributeUrlPath = "url.path";
         public const string AttributeUrlScheme = "url.scheme";
+        public const string AttributeUrlQuery = "url.query";
         public const string AttributeUserAgentOriginal = "user_agent.original";
     }
 }
