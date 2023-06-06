@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.0
+
+Released 2023-Jun-05
+
 * Added an `IServiceCollection.ConfigureOpenTelemetryMeterProvider` overload
   which may be used to configure `MeterProviderBuilder`s while the
   `IServiceCollection` is modifiable (before the `IServiceProvider` has been
