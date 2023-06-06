@@ -19,7 +19,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
 
-/* Note: OpenTelemetry.Extensions.Hosting temporarily sees OpenTelemetry.Api internals for LoggerProvider
 #if SIGNED
 internal static class AssemblyInfo
 {
@@ -33,4 +32,3 @@ internal static class AssemblyInfo
     public const string MoqPublicKey = "";
 }
 #endif
-*/
