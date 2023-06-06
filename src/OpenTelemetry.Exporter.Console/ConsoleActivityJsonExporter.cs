@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -20,8 +20,8 @@ namespace OpenTelemetry.Exporter
                 dynamic activityBuilder = new System.Dynamic.ExpandoObject();
 
 
-                activityBuilder.TraceId = activity.TraceId;
-                activityBuilder.SpanId = activity.SpanId;
+                activityBuilder.TraceId = activity.TraceId.ToString();
+                activityBuilder.SpanId = activity.SpanId.ToString();
                 activityBuilder.ActivityTraceFlags = activity.ActivityTraceFlags;
                 activityBuilder.ActivitySourceName = activity.Source.Name;
                 activityBuilder.DisplayName = activity.DisplayName;
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter
 
                 if (activity.ParentSpanId != default)
                 {
-                    activityBuilder.ParentSpanId = activity.ParentSpanId;
+                    activityBuilder.ParentSpanId = activity.ParentSpanId.ToString();
                 }
 
                 var statusCode = string.Empty;
@@ -85,7 +85,6 @@ namespace OpenTelemetry.Exporter
 
                 if (activity.Events.Any())
                 {
-                    this.WriteLine("Activity.Events:");
                     activityBuilder.Events = new List<dynamic>();
 
                     foreach (ref readonly var activityEvent in activity.EnumerateEvents())
@@ -115,8 +114,8 @@ namespace OpenTelemetry.Exporter
                     {
                         dynamic activityLinkBuilder = new System.Dynamic.ExpandoObject();
 
-                        activityLinkBuilder.TraceId = activityLink.Context.TraceId;
-                        activityLinkBuilder.SpanId = activityLink.Context.SpanId;
+                        activityLinkBuilder.TraceId = activityLink.Context.TraceId.ToString();
+                        activityLinkBuilder.SpanId = activityLink.Context.SpanId.ToString();
 
                         foreach (ref readonly var attribute in activityLink.EnumerateTagObjects())
                         {
@@ -143,11 +142,14 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
-                var json = JsonConvert.SerializeObject(activityBuilder, Formatting.None, new JsonSerializerSettings
+                var options = new JsonSerializerOptions
                 {
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                });
+                    WriteIndented = false,
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                };
+
+                string json = JsonSerializer.Serialize(activityBuilder, options);
 
                 this.WriteLine(json);
             }
