@@ -162,6 +162,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
                 }
 
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
                 if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
@@ -176,6 +177,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
 
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/specification/trace/semantic_conventions/http.md
                 if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
                     activity.SetTag(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);

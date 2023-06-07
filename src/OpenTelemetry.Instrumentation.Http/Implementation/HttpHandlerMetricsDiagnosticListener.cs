@@ -56,6 +56,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     TagList tags = default;
 
+                    // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
                     if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
@@ -74,6 +75,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         }
                     }
 
+                    // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/specification/trace/semantic_conventions/http.md
                     if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
