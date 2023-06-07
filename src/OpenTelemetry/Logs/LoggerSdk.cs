@@ -38,7 +38,7 @@ internal sealed class LoggerSdk : Logger
     }
 
     /// <inheritdoc />
-    public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes = default)
+    public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
     {
         var provider = this.loggerProvider;
         var processor = provider.Processor;
