@@ -219,7 +219,6 @@ namespace OpenTelemetry.Exporter
                             exemplarString.AppendLine();
                         }
                     }
-                    
 
                     msg = new StringBuilder();
                     msg.Append('(');
