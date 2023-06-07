@@ -27,7 +27,7 @@ internal sealed class NoopLogger : Logger
 
     public override void EmitLog(
         in LogRecordData data,
-        in LogRecordAttributeList attributes = default)
+        in LogRecordAttributeList attributes)
     {
     }
 }
