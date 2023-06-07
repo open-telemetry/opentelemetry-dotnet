@@ -17,66 +17,65 @@
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
 
-namespace OpenTelemetry.Logs
+namespace OpenTelemetry.Logs;
+
+/// <summary>
+/// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
+/// </summary>
+public static class OtlpLogExporterHelperExtensions
 {
     /// <summary>
-    /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
+    /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
     /// </summary>
-    public static class OtlpLogExporterHelperExtensions
+    /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
+    /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+    /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
+        => AddOtlpExporterInternal(loggerOptions, configure: null);
+
+    /// <summary>
+    /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+    /// </summary>
+    /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+    /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    public static OpenTelemetryLoggerOptions AddOtlpExporter(
+        this OpenTelemetryLoggerOptions loggerOptions,
+        Action<OtlpExporterOptions> configure)
+        => AddOtlpExporterInternal(loggerOptions, configure);
+
+    private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
+        OpenTelemetryLoggerOptions loggerOptions,
+        Action<OtlpExporterOptions> configure)
     {
-        /// <summary>
-        /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
-        /// </summary>
-        /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
-        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-        public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
-            => AddOtlpExporterInternal(loggerOptions, configure: null);
+        var exporterOptions = new OtlpExporterOptions();
 
-        /// <summary>
-        /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
-        /// </summary>
-        /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-        /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
-        /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
-        public static OpenTelemetryLoggerOptions AddOtlpExporter(
-            this OpenTelemetryLoggerOptions loggerOptions,
-            Action<OtlpExporterOptions> configure)
-            => AddOtlpExporterInternal(loggerOptions, configure);
+        // TODO: We are using span/activity batch environment variable keys
+        // here when we should be using the ones for logs.
+        var defaultBatchOptions = exporterOptions.BatchExportProcessorOptions;
 
-        private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
-            OpenTelemetryLoggerOptions loggerOptions,
-            Action<OtlpExporterOptions> configure)
+        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
+
+        configure?.Invoke(exporterOptions);
+
+        var otlpExporter = new OtlpLogExporter(exporterOptions);
+
+        if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
         {
-            var exporterOptions = new OtlpExporterOptions();
-
-            // TODO: We are using span/activity batch environment variable keys
-            // here when we should be using the ones for logs.
-            var defaultBatchOptions = exporterOptions.BatchExportProcessorOptions;
-
-            Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
-
-            configure?.Invoke(exporterOptions);
-
-            var otlpExporter = new OtlpLogExporter(exporterOptions);
-
-            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
-            {
-                loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
-            }
-            else
-            {
-                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? defaultBatchOptions;
-
-                loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
-                    otlpExporter,
-                    batchOptions.MaxQueueSize,
-                    batchOptions.ScheduledDelayMilliseconds,
-                    batchOptions.ExporterTimeoutMilliseconds,
-                    batchOptions.MaxExportBatchSize));
-            }
-
-            return loggerOptions;
+            loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
         }
+        else
+        {
+            var batchOptions = exporterOptions.BatchExportProcessorOptions ?? defaultBatchOptions;
+
+            loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+                otlpExporter,
+                batchOptions.MaxQueueSize,
+                batchOptions.ScheduledDelayMilliseconds,
+                batchOptions.ExporterTimeoutMilliseconds,
+                batchOptions.MaxExportBatchSize));
+        }
+
+        return loggerOptions;
     }
 }
