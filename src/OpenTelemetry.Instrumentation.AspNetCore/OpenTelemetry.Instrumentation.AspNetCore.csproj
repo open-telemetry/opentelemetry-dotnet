@@ -15,7 +15,6 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link="Includes\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
 
   <ItemGroup>
