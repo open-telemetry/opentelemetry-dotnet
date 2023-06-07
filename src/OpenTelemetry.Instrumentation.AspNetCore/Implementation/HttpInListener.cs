@@ -214,10 +214,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
                 activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
 
-                var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                if (!string.IsNullOrEmpty(userAgent))
+                if (request.Headers.TryGetValue("User-Agent", out var values))
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    var userAgent = values.Count > 0 ? values[0] : null;
+                    if (!string.IsNullOrEmpty(userAgent))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    }
                 }
 
                 try
