@@ -48,10 +48,17 @@ public abstract class Logger
     /// Emit a log.
     /// </summary>
     /// <param name="data"><see cref="LogRecordData"/>.</param>
+    public void EmitLog(in LogRecordData data)
+        => this.EmitLog(in data, default);
+
+    /// <summary>
+    /// Emit a log.
+    /// </summary>
+    /// <param name="data"><see cref="LogRecordData"/>.</param>
     /// <param name="attributes"><see cref="LogRecordAttributeList"/>.</param>
     public abstract void EmitLog(
         in LogRecordData data,
-        in LogRecordAttributeList attributes = default);
+        in LogRecordAttributeList attributes);
 
     internal void SetInstrumentationScope(
         string? version)
