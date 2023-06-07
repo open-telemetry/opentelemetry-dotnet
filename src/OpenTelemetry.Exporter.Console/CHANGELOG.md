@@ -4,6 +4,7 @@
 
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
   for instructions to enable exemplars.
+  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
 
 ## 1.5.0
 
