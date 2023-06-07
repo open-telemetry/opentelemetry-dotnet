@@ -194,38 +194,52 @@ internal sealed class OpenTelemetryLogger : ILogger
             iLoggerData.State = state;
             return null;
         }
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        else if (RuntimeFeature.IsDynamicCodeSupported)
+        {
+            return ParseCustomState(logRecord, state);
+        }
+#endif
         else
         {
-            try
+            OpenTelemetrySdkEventSource.Log.LoggerProcessStateSkipped<TState>();
+            return Array.Empty<KeyValuePair<string, object?>>();
+        }
+    }
+
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026", Justification = "ParseCustomState will only be called when RuntimeFeature.IsDynamicCodeSupported is true.")]
+    private static IReadOnlyList<KeyValuePair<string, object?>> ParseCustomState<TState>(
+        LogRecord logRecord,
+        in TState state)
+    {
+        try
+        {
+            PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state!);
+
+            var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(itemProperties.Count);
+
+            foreach (PropertyDescriptor? itemProperty in itemProperties)
             {
-                PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state);
-
-                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(itemProperties.Count);
-
-                foreach (PropertyDescriptor? itemProperty in itemProperties)
+                if (itemProperty == null)
                 {
-                    if (itemProperty == null)
-                    {
-                        continue;
-                    }
-
-                    object? value = itemProperty.GetValue(state);
-                    if (value == null)
-                    {
-                        continue;
-                    }
-
-                    attributeStorage.Add(new KeyValuePair<string, object?>(itemProperty.Name, value));
+                    continue;
                 }
 
-                return attributeStorage;
-            }
-            catch (Exception parseException)
-            {
-                OpenTelemetrySdkEventSource.Log.LoggerParseStateException<TState>(parseException);
+                object? value = itemProperty.GetValue(state);
+                if (value == null)
+                {
+                    continue;
+                }
 
-                return Array.Empty<KeyValuePair<string, object?>>();
+                attributeStorage.Add(new KeyValuePair<string, object?>(itemProperty.Name, value));
             }
+
+            return attributeStorage;
+        }
+        catch (Exception parseException)
+        {
+            OpenTelemetrySdkEventSource.Log.LoggerParseStateException<TState>(parseException);
+            return Array.Empty<KeyValuePair<string, object?>>();
         }
     }
 

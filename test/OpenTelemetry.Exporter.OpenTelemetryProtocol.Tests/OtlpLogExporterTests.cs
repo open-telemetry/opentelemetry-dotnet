@@ -100,7 +100,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Assert.Null(logRecord.State);
                 Assert.NotNull(logRecord.Attributes);
-                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
             }
             else
             {
@@ -140,7 +139,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Assert.Null(logRecord.State);
                 Assert.NotNull(logRecord.Attributes);
-                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
             }
             else
             {
