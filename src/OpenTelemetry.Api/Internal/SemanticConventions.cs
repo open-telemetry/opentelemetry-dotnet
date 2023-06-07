@@ -119,5 +119,6 @@ namespace OpenTelemetry.Trace
         public const string AttributeServerPort = "server.port";
         public const string AttributeUrlFull = "url.full";
         public const string AttributeUrlScheme = "url.scheme";
+        public const string AttributeUserAgentOriginal = "user_agent.original";
     }
 }

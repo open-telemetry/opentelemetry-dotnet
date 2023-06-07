@@ -190,6 +190,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                     activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                     activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+
+                    if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
+                    {
+                        var userAgent = userAgentValues.FirstOrDefault();
+                        if (!string.IsNullOrEmpty(userAgent))
+                        {
+                            activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                        }
+                    }
                 }
 
                 try
