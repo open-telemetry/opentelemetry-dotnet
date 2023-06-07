@@ -20,9 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Note: OpenTelemetry.Exporter.InMemory temporarily sees OpenTelemetry.Api internals for LoggerProviderBuilder
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
-    -->
   </ItemGroup>
 
 </Project>
