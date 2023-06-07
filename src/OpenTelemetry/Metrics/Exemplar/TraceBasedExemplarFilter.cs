@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics;
 /// An ExemplarFilter which makes those measurements eligible for being an Exemplar,
 /// which are recorded in the context of a sampled parent activity (span).
 /// </summary>
-internal sealed class TraceBasedExemplarFilter : ExemplarFilter
+public sealed class TraceBasedExemplarFilter : ExemplarFilter
 {
     public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
