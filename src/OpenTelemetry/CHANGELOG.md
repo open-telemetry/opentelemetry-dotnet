@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+
 ## 1.5.0
 
 Released 2023-Jun-05
