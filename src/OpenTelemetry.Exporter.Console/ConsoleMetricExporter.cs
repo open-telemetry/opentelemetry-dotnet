@@ -213,7 +213,7 @@ namespace OpenTelemetry.Exporter
                                         exemplarString.Append(result);
                                         exemplarString.Append(' ');
                                     }
-}
+                                }
                             }
 
                             exemplarString.AppendLine();
