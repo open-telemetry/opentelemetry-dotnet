@@ -25,14 +25,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\OpenTelemetrySdkEventSource.cs" Link="Includes\OpenTelemetrySdkEventSource.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Metrics\Base2ExponentialBucketHistogram.LowerBoundary.cs" Link="Includes\Base2ExponentialBucketHistogram.LowerBoundary.cs" />
+    <!-- Note: OpenTelemetry.Exporter.Console temporarily sees OpenTelemetry.Api internals for LoggerProviderBuilder
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
+    -->
+    <!-- Note: OpenTelemetry.Exporter.Console temporarily sees OpenTelemetry internals for LoggerProviderBuilder extensions
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\OpenTelemetrySdkEventSource.cs" Link="Includes\OpenTelemetrySdkEventSource.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link="Includes\UnconditionalSuppressMessageAttribute.cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Metrics\Base2ExponentialBucketHistogram.LowerBoundary.cs" Link="Includes\Base2ExponentialBucketHistogram.LowerBoundary.cs" />
+    -->
   </ItemGroup>
 
 </Project>
