@@ -310,7 +310,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
         /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        internal static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+        public static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
         {
             Guard.ThrowIfNull(exemplarFilter);
 
@@ -325,7 +325,6 @@ namespace OpenTelemetry.Metrics
             return meterProviderBuilder;
         }
 
-#pragma warning disable SA1202 // `public` members should come before `internal` members
         /// <summary>
         /// Run the given actions to initialize the <see cref="MeterProvider"/>.
         /// </summary>
@@ -340,6 +339,5 @@ namespace OpenTelemetry.Metrics
 
             return null;
         }
-#pragma warning restore SA1202
     }
 }

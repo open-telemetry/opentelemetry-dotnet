@@ -19,7 +19,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// An ExemplarFilter which makes all measurements eligible for being an Exemplar.
 /// </summary>
-internal sealed class AlwaysOnExemplarFilter : ExemplarFilter
+public sealed class AlwaysOnExemplarFilter : ExemplarFilter
 {
     public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
     {
