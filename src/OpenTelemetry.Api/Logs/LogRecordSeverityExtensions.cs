@@ -21,7 +21,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
 /// </summary>
-internal static class LogRecordSeverityExtensions
+public static class LogRecordSeverityExtensions
 {
     internal const string UnspecifiedShortName = "UNSPECIFIED";
 
