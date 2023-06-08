@@ -148,6 +148,9 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log category name.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="CategoryName"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// </remarks>
     public string? CategoryName
     {
         get => this.ILoggerData.CategoryName;
@@ -157,7 +160,7 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
     /// </summary>
-    // todo: [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
+    [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
     public LogLevel LogLevel
     {
         get
@@ -183,6 +186,9 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="EventId"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// </remarks>
     public EventId EventId
     {
         get => this.ILoggerData.EventId;
@@ -193,10 +199,15 @@ public sealed class LogRecord
     /// Gets or sets the log formatted message.
     /// </summary>
     /// <remarks>
-    /// Note: Set if <see
-    /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is
-    /// enabled or <c>{OriginalFormat}</c> attribute (message template) is
-    /// not found.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item><see cref="FormattedMessage"/> is only set when emitting logs
+    /// through <see cref="ILogger"/>.</item>
+    /// <item>Set if <see
+    /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is enabled
+    /// or <c>{OriginalFormat}</c> attribute (message template) is not
+    /// found.</item>
+    /// </list>
     /// </remarks>
     public string? FormattedMessage
     {
@@ -221,8 +232,13 @@ public sealed class LogRecord
     /// Gets or sets the raw state attached to the log.
     /// </summary>
     /// <remarks>
-    /// Note: Set to <see langword="null"/> when <see
-    /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item><see cref="State"/> is only set when emitting logs
+    /// through <see cref="ILogger"/>.</item>
+    /// <item>Set to <see langword="null"/> when <see
+    /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.</item>
+    /// </list>
     /// </remarks>
     [Obsolete("State cannot be accessed safely outside of an ILogger.Log call stack. Use Attributes instead to safely access the data attached to a LogRecord. State will be removed in a future version.")]
     public object? State
@@ -259,6 +275,9 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="System.Exception"/>.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="Exception"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// </remarks>
     public Exception? Exception
     {
         get => this.ILoggerData.Exception;
@@ -269,7 +288,7 @@ public sealed class LogRecord
     /// Gets or sets the original string representation of the severity as it is
     /// known at the source.
     /// </summary>
-    internal string? SeverityText
+    public string? SeverityText
     {
         get => this.Data.SeverityText;
         set => this.Data.SeverityText = value;
@@ -278,16 +297,16 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
-    internal LogRecordSeverity? Severity
+    public LogRecordSeverity? Severity
     {
         get => this.Data.Severity;
         set => this.Data.Severity = value;
     }
 
     /// <summary>
-    /// Gets or sets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
+    /// Gets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
     /// </summary>
-    internal Logger? Logger { get; /*todo: internal*/ set; }
+    public Logger? Logger { get; internal set; }
 
     /// <summary>
     /// Executes callback for each currently active scope objects in order
