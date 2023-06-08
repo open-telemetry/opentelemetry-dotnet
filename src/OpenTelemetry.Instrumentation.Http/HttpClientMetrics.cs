@@ -32,13 +32,16 @@ namespace OpenTelemetry.Instrumentation.Http
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
         private readonly Meter meter;
 
+        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
+            => !activityName.Equals("System.Net.Http.Request");
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientMetrics"/> class.
         /// </summary>
         public HttpClientMetrics()
         {
             this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter), this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

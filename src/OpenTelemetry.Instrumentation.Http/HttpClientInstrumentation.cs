@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Http
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
         private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
-            => !activityName.Equals("System.Net.Http.HttpRequestOut");
+            => !(activityName.Equals("System.Net.Http.HttpRequestOut") || activityName.Equals("System.Net.Http.Request"));
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
