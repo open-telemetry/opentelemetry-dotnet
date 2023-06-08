@@ -1,8 +1,9 @@
-abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes = default(OpenTelemetry.Logs.LogRecordAttributeList)) -> void
+abstract OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes) -> void
 abstract OpenTelemetry.Logs.LoggerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation!>! instrumentationFactory) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 OpenTelemetry.Logs.IDeferredLoggerProviderBuilder
 OpenTelemetry.Logs.IDeferredLoggerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
 OpenTelemetry.Logs.Logger
+OpenTelemetry.Logs.Logger.EmitLog(in OpenTelemetry.Logs.LogRecordData data) -> void
 OpenTelemetry.Logs.Logger.Logger(string? name) -> void
 OpenTelemetry.Logs.Logger.Name.get -> string!
 OpenTelemetry.Logs.Logger.Version.get -> string?
