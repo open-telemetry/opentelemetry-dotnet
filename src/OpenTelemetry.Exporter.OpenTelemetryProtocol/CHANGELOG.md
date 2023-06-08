@@ -161,7 +161,7 @@ Released 2022-Sep-29
   `AddOtlpExporter` extension to allow for more fine-grained options management
   ([#3653](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3653))
 
-* `OtlpExporterOptions` can now be bound to `IConfiguation` and
+* `OtlpExporterOptions` can now be bound to `IConfiguration` for logs and
   `HttpClientFactory` may be used to manage the `HttpClient` instance used when
   `HttpProtobuf` is configured
   ([#3640](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3640))
