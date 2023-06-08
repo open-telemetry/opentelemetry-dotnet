@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Represents an Exemplar data.
     /// </summary>
-    internal struct Exemplar
+    public struct Exemplar
     {
         /// <summary>
         /// Gets the timestamp (UTC).

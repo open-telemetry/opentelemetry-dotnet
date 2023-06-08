@@ -24,8 +24,8 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.22621.1702/22H2/2022Update/SunValley2)
+Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
 .NET SDK=7.0.203
   [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
   DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
@@ -33,10 +33,10 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 |                     Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |--------------------------- |---------------------- |---------:|--------:|--------:|-------:|----------:|
-| GetRequestForAspNetCoreApp |                  None | 226.8 us | 4.00 us | 3.74 us |      - |   2.45 KB |
-| GetRequestForAspNetCoreApp |                Traces | 235.2 us | 4.44 us | 4.15 us | 0.4883 |   3.59 KB |
-| GetRequestForAspNetCoreApp |               Metrics | 229.1 us | 4.44 us | 4.36 us |      - |   2.92 KB |
-| GetRequestForAspNetCoreApp |       Traces, Metrics | 230.6 us | 4.54 us | 5.23 us | 0.4883 |   3.66 KB |
+| GetRequestForAspNetCoreApp |                  None | 136.8 us | 1.56 us | 1.46 us | 0.4883 |   2.45 KB |
+| GetRequestForAspNetCoreApp |                Traces | 148.1 us | 0.88 us | 0.82 us | 0.7324 |   3.57 KB |
+| GetRequestForAspNetCoreApp |               Metrics | 144.4 us | 1.16 us | 1.08 us | 0.4883 |   2.92 KB |
+| GetRequestForAspNetCoreApp |       Traces, Metrics | 163.0 us | 1.60 us | 1.49 us | 0.7324 |   3.63 KB |
 
 Allocation details for .NET 7:
 
@@ -45,7 +45,6 @@ Allocation details for .NET 7:
 * Casting of the struct `Microsoft.Extensions.Primitives.StringValues` to `IEnumerable<string>` by `HttpRequestHeaderValuesGetter`
   - `TraceContextPropagator.Extract` = 24 B
   - `BaggageContextPropagator.Extract` = 24 B
-  - `request.Headers["User-Agent"].FirstOrDefault()` = 24 B
 * String creation for `HttpRequest.HostString.Host` = 40 B
 * `Activity.TagsLinkedList` (this is allocated on the first Activity.SetTag call) = 40 B
 * Boxing of `Port` number when adding it as a tag = 24 B
@@ -61,7 +60,7 @@ Allocation details for .NET 7:
   - System.Threading.ExecutionContext = 40 B
 
 Baseline = 2.45 KB
-With Traces = 2.45 + (1162 / 1024) = 2.45 + 1.14 = 3.59 KB
+With Traces = 2.45 + (1138 / 1024) = 2.45 + 1.12 = 3.57 KB
 
 
 // Metrics
@@ -76,7 +75,7 @@ With Metrics = 2.45 + (416 + 40 + 24) / 1024 = 2.45 + 0.47 = 2.92 KB
 
 Baseline = 2.45 KB
 With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
-                        = 2.45 + (1162 + 64) / 1024 = 2.45 + 1.2 = 3.55 KB (~3.56 KB)
+                        = 2.45 + (1138 + 64) / 1024 = 2.45 + 1.17 = ~3.63KB
 */
 
 namespace Benchmarks.Instrumentation

@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+* Merged `OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs` package in to
+`OpenTelemetry.Exporter.OpenTelemetryProtocol`. Going Forward,
+`OpenTelemetry.Exporter.OpenTelemetryProtocol` will be the only package needed
+for all 3 signals (Logs, Metrics and Traces). All the changes made in
+[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.5.0/src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/CHANGELOG.md#changelog)
+are now included in this package.
+([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
+
+* Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
+
+## 1.5.0
+
+Released 2023-Jun-05
+
 * Remove support for exporting `Exemplars`. This would be added back in the
   `1.6.*` prerelease versions right after `1.5.0` stable version is released.
   ([#4533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4533))

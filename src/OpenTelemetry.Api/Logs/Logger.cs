@@ -21,7 +21,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Logger is the class responsible for creating log records.
 /// </summary>
-internal abstract class Logger
+public abstract class Logger
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Logger"/> class.
@@ -48,10 +48,17 @@ internal abstract class Logger
     /// Emit a log.
     /// </summary>
     /// <param name="data"><see cref="LogRecordData"/>.</param>
+    public void EmitLog(in LogRecordData data)
+        => this.EmitLog(in data, default);
+
+    /// <summary>
+    /// Emit a log.
+    /// </summary>
+    /// <param name="data"><see cref="LogRecordData"/>.</param>
     /// <param name="attributes"><see cref="LogRecordAttributeList"/>.</param>
     public abstract void EmitLog(
         in LogRecordData data,
-        in LogRecordAttributeList attributes = default);
+        in LogRecordAttributeList attributes);
 
     internal void SetInstrumentationScope(
         string? version)

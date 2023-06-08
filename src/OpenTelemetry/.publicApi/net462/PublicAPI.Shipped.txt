@@ -10,7 +10,6 @@
 ~OpenTelemetry.Metrics.Metric.MeterVersion.get -> string
 ~OpenTelemetry.Metrics.Metric.Name.get -> string
 ~OpenTelemetry.Metrics.Metric.Unit.get -> string
-OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics.HistogramBuckets!
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
 ~OpenTelemetry.Metrics.MetricStreamConfiguration.Name.get -> string
@@ -79,6 +78,10 @@ OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Failure = 1 -> OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Success = 0 -> OpenTelemetry.ExportResult
 OpenTelemetry.Logs.LogRecord
+OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
+OpenTelemetry.Logs.LogRecord.Attributes.set -> void
+OpenTelemetry.Logs.LogRecord.Body.get -> string?
+OpenTelemetry.Logs.LogRecord.Body.set -> void
 OpenTelemetry.Logs.LogRecord.CategoryName.get -> string?
 OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
 OpenTelemetry.Logs.LogRecord.EventId.get -> Microsoft.Extensions.Logging.EventId
@@ -131,10 +134,27 @@ OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Micro
 OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.Base2ExponentialBucketHistogramConfiguration() -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.get -> int
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxScale.set -> void
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.get -> int
+OpenTelemetry.Metrics.Base2ExponentialBucketHistogramConfiguration.MaxSize.set -> void
 OpenTelemetry.Metrics.BaseExportingMetricReader
 OpenTelemetry.Metrics.BaseExportingMetricReader.SupportedExportModes.get -> OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
 OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.ExplicitBucketHistogramConfiguration() -> void
+OpenTelemetry.Metrics.ExponentialHistogramBuckets
+OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator
+OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.Current.get -> long
+OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.Enumerator() -> void
+OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator.MoveNext() -> bool
+OpenTelemetry.Metrics.ExponentialHistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.ExponentialHistogramBuckets.Enumerator
+OpenTelemetry.Metrics.ExponentialHistogramBuckets.Offset.get -> int
+OpenTelemetry.Metrics.ExponentialHistogramData
+OpenTelemetry.Metrics.ExponentialHistogramData.PositiveBuckets.get -> OpenTelemetry.Metrics.ExponentialHistogramBuckets!
+OpenTelemetry.Metrics.ExponentialHistogramData.Scale.get -> int
+OpenTelemetry.Metrics.ExponentialHistogramData.ZeroCount.get -> long
 OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Pull = 2 -> OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Push = 1 -> OpenTelemetry.Metrics.ExportModes
@@ -167,8 +187,10 @@ OpenTelemetry.Metrics.Metric.MetricType.get -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.Metric.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.MetricPoint
 OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
+OpenTelemetry.Metrics.MetricPoint.GetExponentialHistogramData() -> OpenTelemetry.Metrics.ExponentialHistogramData!
 OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueDouble() -> double
 OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueLong() -> long
+OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics.HistogramBuckets!
 OpenTelemetry.Metrics.MetricPoint.GetHistogramCount() -> long
 OpenTelemetry.Metrics.MetricPoint.GetHistogramSum() -> double
 OpenTelemetry.Metrics.MetricPoint.GetSumDouble() -> double
@@ -206,6 +228,7 @@ OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleGauge = 45 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSum = 29 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSumNonMonotonic = 141 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.ExponentialHistogram = 80 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.Histogram = 64 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongGauge = 42 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricType
@@ -235,6 +258,7 @@ OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource! other) 
 OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> void
 OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.Resources.ResourceBuilder.AddDetector(OpenTelemetry.Resources.IResourceDetector! resourceDetector) -> OpenTelemetry.Resources.ResourceBuilder!
+OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider!, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
 OpenTelemetry.Resources.ResourceBuilder.Build() -> OpenTelemetry.Resources.Resource!
 OpenTelemetry.Resources.ResourceBuilder.Clear() -> OpenTelemetry.Resources.ResourceBuilder!
 OpenTelemetry.Resources.ResourceBuilderExtensions
@@ -296,6 +320,8 @@ override OpenTelemetry.BaseExportProcessor<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T! data) -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
 override OpenTelemetry.BaseExportProcessor<T>.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.BaseExportProcessor<T>.ToString() -> string!
+override OpenTelemetry.BaseProcessor<T>.ToString() -> string!
 override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity! data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnExport(T! data) -> void
