@@ -231,13 +231,13 @@ namespace OpenTelemetry.Trace
                 };
             }
 
-            if (this.sampler is AlwaysOnSampler)
+            if (this.sampler is AlwaysOnSampler or TraceIdRatioBasedSampler { Probability: 1.0})
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
-            else if (this.sampler is AlwaysOffSampler)
+            else if (this.sampler is AlwaysOffSampler or TraceIdRatioBasedSampler { Probability: 0.0})
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent) : ActivitySamplingResult.None;
