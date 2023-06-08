@@ -199,12 +199,17 @@ internal sealed class OpenTelemetryLogger : ILogger
         {
             return ParseCustomState(logRecord, state);
         }
-#endif
         else
         {
             OpenTelemetrySdkEventSource.Log.LoggerProcessStateSkipped<TState>();
             return Array.Empty<KeyValuePair<string, object?>>();
         }
+#else
+        else
+        {
+            return ParseCustomState(logRecord, state);
+        }
+#endif
     }
 
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026", Justification = "ParseCustomState will only be called when RuntimeFeature.IsDynamicCodeSupported is true.")]
