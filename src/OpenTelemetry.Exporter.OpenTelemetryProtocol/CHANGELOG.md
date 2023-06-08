@@ -5,7 +5,9 @@
 * Merged `OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs` package in to
 `OpenTelemetry.Exporter.OpenTelemetryProtocol`. Going Forward,
 `OpenTelemetry.Exporter.OpenTelemetryProtocol` will be the only package needed
-for all 3 signals (Logs, Metrics and Traces).
+for all 3 signals (Logs, Metrics and Traces). All the changes made in
+[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.5.0/src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/CHANGELOG.md#changelog)
+are now included in this package.
 ([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
 
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
@@ -28,27 +30,6 @@ Released 2023-May-25
   [#4201](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4201)).
   This also reintroduces the `System.Reflection.Emit.Lightweight` dependency.
   ([#4407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4407))
-
-* The `OpenTelemetryLoggerOptions.AddOtlpExporter` extension no longer
-  automatically sets `OpenTelemetryLoggerOptions.ParseStateValues` to `true`.
-  The OpenTelemetry SDK now automatically sets `Attributes` (aka `StateValues`)
-  for the common cases where `ParseStateValues` was previously required.
-  `ParseStateValues` can be set to `true` manually by users to enable parsing of
-  custom states which do not implement `IReadOnlyList` / `IEnumerable`
-  interfaces.
-  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
-
-* Updated to use the new `LogRecord.Attributes` field as `LogRecord.StateValues`
-  is now marked obsolete. There is no impact to transmitted data (`StateValues`
-  and `Attributes` are equivalent).
-  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
-
-* Fixed issue where the [observed
-  time](https://github.com/open-telemetry/opentelemetry-proto/blob/395c8422fe90080314c7d9b4114d701a0c049e1f/opentelemetry/proto/logs/v1/logs.proto#L138)
-  field of the OTLP log record was not set. It is now correctly set to equal the
-  [time](https://github.com/open-telemetry/opentelemetry-proto/blob/395c8422fe90080314c7d9b4114d701a0c049e1f/opentelemetry/proto/logs/v1/logs.proto#L121)
-  field.
-  ([#4444](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4444))
 
 ## 1.5.0-alpha.2
 
@@ -160,11 +141,6 @@ Released 2022-Sep-29
 * Added overloads which accept a name to the `TracerProviderBuilder`
   `AddOtlpExporter` extension to allow for more fine-grained options management
   ([#3653](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3653))
-
-* `OtlpExporterOptions` can now be bound to `IConfiguration` for logs and
-  `HttpClientFactory` may be used to manage the `HttpClient` instance used when
-  `HttpProtobuf` is configured
-  ([#3640](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3640))
 
 ## 1.4.0-alpha.2
 
