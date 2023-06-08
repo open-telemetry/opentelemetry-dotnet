@@ -17,7 +17,7 @@
 using System.Diagnostics.Metrics;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
-using Xunit;f
+using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
