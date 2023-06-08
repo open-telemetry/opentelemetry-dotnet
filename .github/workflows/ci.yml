@@ -37,4 +37,4 @@ jobs:
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
 
     - name: Concurrency test
-      run: // currency_test_using_coyote.ps1
+      run: .\build\concurrency_tests_coyote.ps1
