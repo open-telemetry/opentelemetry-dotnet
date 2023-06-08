@@ -22,7 +22,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Extension methods for setting up OpenTelemetry logging services in an <see cref="IServiceCollection" />.
 /// </summary>
-internal static class OpenTelemetryDependencyInjectionLoggingServiceCollectionExtensions
+public static class OpenTelemetryDependencyInjectionLoggingServiceCollectionExtensions
 {
     /// <summary>
     /// Registers an action used to configure the OpenTelemetry <see

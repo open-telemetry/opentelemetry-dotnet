@@ -336,7 +336,7 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <returns><see cref="Exemplar"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal readonly Exemplar[] GetExemplars()
+        public readonly Exemplar[] GetExemplars()
         {
             // TODO: Do not expose Exemplar data structure (array now)
             return this.mpComponents?.Exemplars ?? Array.Empty<Exemplar>();
