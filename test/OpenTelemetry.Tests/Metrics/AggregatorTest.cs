@@ -15,12 +15,9 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
-using Microsoft.Coyote.SystematicTesting;
-using Xunit;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using Microsoft.Coyote;
+using Microsoft.Coyote.SystematicTesting;
+using Xunit;f
 
 namespace OpenTelemetry.Metrics.Tests
 {
