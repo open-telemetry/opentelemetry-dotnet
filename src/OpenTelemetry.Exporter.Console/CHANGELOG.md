@@ -6,6 +6,10 @@
   for instructions to enable exemplars.
   ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
 
+* Updated to display `Severity` and `SeverityText` text instead of
+  `ILogger.LogLevel` when exporting `LogRecord` instances.
+  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
+
 ## 1.5.0
 
 Released 2023-Jun-05

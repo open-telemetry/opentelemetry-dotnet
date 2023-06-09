@@ -16,7 +16,6 @@
 
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -29,11 +28,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
-        private static readonly string[] LogLevels = new string[7]
-        {
-            "Trace", "Debug", "Information", "Warning", "Error", "Critical", "None",
-        };
-
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             SdkLimitOptions sdkLimitOptions,
@@ -71,9 +65,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     TimeUnixNano = timestamp,
                     ObservedTimeUnixNano = timestamp,
-                    SeverityNumber = GetSeverityNumber(logRecord.LogLevel),
-                    SeverityText = LogLevels[(int)logRecord.LogLevel],
+                    SeverityNumber = GetSeverityNumber(logRecord.Severity),
                 };
+
+                if (!string.IsNullOrWhiteSpace(logRecord.SeverityText))
+                {
+                    otlpLogRecord.SeverityText = logRecord.SeverityText;
+                }
+                else if (logRecord.Severity.HasValue)
+                {
+                    otlpLogRecord.SeverityText = logRecord.Severity.Value.ToShortName();
+                }
 
                 var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
                 var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
@@ -226,35 +228,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpLogs.SeverityNumber GetSeverityNumber(LogLevel logLevel)
+        private static OtlpLogs.SeverityNumber GetSeverityNumber(LogRecordSeverity? severity)
         {
-            // Maps the ILogger LogLevel to OpenTelemetry logging level.
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#appendix-b-severitynumber-example-mappings
-            // TODO: for improving perf simply do ((int)loglevel * 4) + 1
-            // or ((int)logLevel << 2) + 1
-            // Current code is just for ease of reading.
-            switch (logLevel)
+            if (!severity.HasValue)
             {
-                case LogLevel.Trace:
-                    return OtlpLogs.SeverityNumber.Trace;
-                case LogLevel.Debug:
-                    return OtlpLogs.SeverityNumber.Debug;
-                case LogLevel.Information:
-                    return OtlpLogs.SeverityNumber.Info;
-                case LogLevel.Warning:
-                    return OtlpLogs.SeverityNumber.Warn;
-                case LogLevel.Error:
-                    return OtlpLogs.SeverityNumber.Error;
-                case LogLevel.Critical:
-                    return OtlpLogs.SeverityNumber.Fatal;
-
-                // TODO:
-                // we reach default only for LogLevel.None
-                // but that is filtered out anyway.
-                // should we throw here then?
-                default:
-                    return OtlpLogs.SeverityNumber.Debug;
+                return OtlpLogs.SeverityNumber.Unspecified;
             }
+
+            return (OtlpLogs.SeverityNumber)(int)severity.Value;
         }
     }
 }
