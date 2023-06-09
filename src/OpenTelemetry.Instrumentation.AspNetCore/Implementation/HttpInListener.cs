@@ -241,6 +241,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                     if (request.QueryString.HasValue)
                     {
+                        // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
                         activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                     }
 
