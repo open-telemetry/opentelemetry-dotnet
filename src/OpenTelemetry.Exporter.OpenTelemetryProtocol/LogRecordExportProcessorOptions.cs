@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol;
@@ -52,8 +53,7 @@ public class LogRecordExportProcessorOptions
         get => this.batchExportProcessorOptions ??= new();
         set
         {
-            // TODO: Guard.ThrowIfNull(value);
-
+            Guard.ThrowIfNull(value);
             this.batchExportProcessorOptions = value;
         }
     }
