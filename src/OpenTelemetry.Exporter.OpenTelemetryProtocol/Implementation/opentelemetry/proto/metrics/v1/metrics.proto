@@ -316,15 +316,17 @@ enum AggregationTemporality {
 // enum is a bit-mask.  To test the presence of a single flag in the flags of
 // a data point, for example, use an expression like:
 //
-//   (point.flags & FLAG_NO_RECORDED_VALUE) == FLAG_NO_RECORDED_VALUE
+//   (point.flags & DATA_POINT_FLAGS_NO_RECORDED_VALUE_MASK) == DATA_POINT_FLAGS_NO_RECORDED_VALUE_MASK
 //
 enum DataPointFlags {
-  FLAG_NONE = 0;
+  // The zero value for the enum. Should not be used for comparisons.
+  // Instead use bitwise "and" with the appropriate mask as shown above.
+  DATA_POINT_FLAGS_DO_NOT_USE = 0;
 
   // This DataPoint is valid but has no recorded value.  This value
   // SHOULD be used to reflect explicitly missing data in a series, as
   // for an equivalent to the Prometheus "staleness marker".
-  FLAG_NO_RECORDED_VALUE = 1;
+  DATA_POINT_FLAGS_NO_RECORDED_VALUE_MASK = 1;
 
   // Bits 2-31 are reserved for future use.
 }
@@ -501,8 +503,8 @@ message ExponentialHistogramDataPoint {
   //   base = (2^(2^-scale))
   //
   // The histogram bucket identified by `index`, a signed integer,
-  // contains values that are greater than or equal to (base^index) and
-  // less than (base^(index+1)).
+  // contains values that are greater than (base^index) and
+  // less than or equal to (base^(index+1)).
   //
   // The positive and negative ranges of the histogram are expressed
   // separately.  Negative values are mapped by their absolute value
@@ -536,9 +538,9 @@ message ExponentialHistogramDataPoint {
     // Note: This uses a varint encoding as a simple form of compression.
     sint32 offset = 1;
 
-    // Count is an array of counts, where count[i] carries the count
-    // of the bucket at index (offset+i).  count[i] is the count of
-    // values greater than or equal to base^(offset+i) and less than
+    // bucket_counts is an array of count values, where bucket_counts[i] carries
+    // the count of the bucket at index (offset+i). bucket_counts[i] is the count
+    // of values greater than base^(offset+i) and less than or equal to
     // base^(offset+i+1).
     //
     // Note: By contrast, the explicit HistogramDataPoint uses
@@ -561,6 +563,14 @@ message ExponentialHistogramDataPoint {
 
   // max is the maximum value over (start_time, end_time].
   optional double max = 13;
+
+  // ZeroThreshold may be optionally set to convey the width of the zero
+  // region. Where the zero region is defined as the closed interval
+  // [-ZeroThreshold, ZeroThreshold].
+  // When ZeroThreshold is 0, zero count bucket stores values that cannot be
+  // expressed using the standard exponential formula as well as values that
+  // have been rounded to zero.
+  double zero_threshold = 14;
 }
 
 // SummaryDataPoint is a single data point in a timeseries that describes the
