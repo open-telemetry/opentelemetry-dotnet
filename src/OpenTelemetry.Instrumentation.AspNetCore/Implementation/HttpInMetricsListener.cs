@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                     if (context.Request.Host.HasValue)
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerName, context.Request.Host.Host));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, context.Request.Host.Host));
 
                         if (context.Request.Host.Port is not null && context.Request.Host.Port != 80 && context.Request.Host.Port != 443)
                         {

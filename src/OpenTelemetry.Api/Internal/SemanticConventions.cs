@@ -117,7 +117,6 @@ namespace OpenTelemetry.Trace
         public const string AttributeHttpResponseStatusCode = "http.response.status_code";
         public const string AttributeNetworkProtocolVersion = "network.protocol.version";
         public const string AttributeServerAddress = "server.address";
-        public const string AttributeServerName = "server.name";
         public const string AttributeServerPort = "server.port";
         public const string AttributeUrlFull = "url.full";
         public const string AttributeUrlPath = "url.path";
