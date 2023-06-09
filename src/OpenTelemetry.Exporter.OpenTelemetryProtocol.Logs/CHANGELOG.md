@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Updated to support `Severity` and `SeverityText` when exporting `LogRecord`s.
+  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25

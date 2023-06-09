@@ -160,7 +160,7 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
     /// </summary>
-    [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
+    [Obsolete("Use Severity instead. LogLevel will be removed in a future version.")]
     public LogLevel LogLevel
     {
         get
@@ -251,7 +251,7 @@ public sealed class LogRecord
     /// Gets or sets the state values attached to the log.
     /// </summary>
     /// <remarks><inheritdoc cref="Attributes" /></remarks>
-    [Obsolete("Use Attributes instead StateValues will be removed in a future version.")]
+    [Obsolete("Use Attributes instead. StateValues will be removed in a future version.")]
     public IReadOnlyList<KeyValuePair<string, object?>>? StateValues
     {
         get => this.Attributes;
