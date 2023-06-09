@@ -33,10 +33,10 @@ Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical 
 
 |            Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |------------------ |---------------------- |---------:|--------:|--------:|-------:|----------:|
-| HttpClientRequest |                  None | 159.8 us | 1.29 us | 1.14 us | 0.4883 |   2.45 KB |
-| HttpClientRequest |                Traces | 170.8 us | 1.60 us | 1.49 us | 0.4883 |   4.31 KB |
-| HttpClientRequest |               Metrics | 164.1 us | 0.99 us | 0.77 us | 0.7324 |   3.71 KB |
-| HttpClientRequest |       Traces, Metrics | 173.5 us | 1.12 us | 1.05 us | 0.4883 |   4.34 KB |
+| HttpClientRequest |                  None | 161.0 us | 1.27 us | 0.99 us | 0.4883 |   2.45 KB |
+| HttpClientRequest |                Traces | 173.1 us | 1.65 us | 1.54 us | 0.4883 |   4.26 KB |
+| HttpClientRequest |               Metrics | 165.8 us | 1.33 us | 1.18 us | 0.7324 |   3.66 KB |
+| HttpClientRequest |       Traces, Metrics | 175.6 us | 1.96 us | 1.83 us | 0.4883 |   4.28 KB |
 */
 
 namespace Benchmarks.Instrumentation
