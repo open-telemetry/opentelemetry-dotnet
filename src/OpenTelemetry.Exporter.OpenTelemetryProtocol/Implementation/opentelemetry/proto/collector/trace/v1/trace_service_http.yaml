@@ -5,5 +5,5 @@ config_version: 3
 http:
  rules:
  - selector: opentelemetry.proto.collector.trace.v1.TraceService.Export
-   post: /v1/trace
+   post: /v1/traces
    body: "*"
