@@ -29,11 +29,17 @@ namespace OpenTelemetry.Instrumentation.Http
         internal static readonly string InstrumentationName = AssemblyName.Name;
         internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();
 
+        private static readonly HashSet<string> DiagnosticSourceEvents = new()
+        {
+            "System.Net.Http.Request",
+            "System.Net.Http.Response",
+        };
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
         private readonly Meter meter;
 
         private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
-            => !activityName.Equals("System.Net.Http.Request");
+            => !DiagnosticSourceEvents.Contains(activityName);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientMetrics"/> class.
