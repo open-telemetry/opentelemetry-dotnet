@@ -2,13 +2,13 @@
 
 ## Unreleased
 
-* Merged `OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs` package in to
-`OpenTelemetry.Exporter.OpenTelemetryProtocol`. Going Forward,
-`OpenTelemetry.Exporter.OpenTelemetryProtocol` will be the only package needed
-for all 3 signals (Logs, Metrics and Traces). All the changes made in
-[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.5.0/src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/CHANGELOG.md#changelog)
-are now included in this package.
-([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
+* Merged `OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs` package into
+  `OpenTelemetry.Exporter.OpenTelemetryProtocol`. Going Forward,
+  `OpenTelemetry.Exporter.OpenTelemetryProtocol` will be the only package needed
+  for all 3 signals (Logs, Metrics, and Traces). All the changes made in
+  [`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/core-1.5.0/src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/CHANGELOG.md#changelog)
+  are now included in this package.
+  ([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
 
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
   for instructions to enable exemplars.
@@ -16,6 +16,9 @@ are now included in this package.
 
 * Updated Grpc.Net.Client to v2.53 to fix unobserved exception
   from failed calls
+
+* Updated to support `Severity` and `SeverityText` when exporting `LogRecord`s.
+  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 ## 1.5.0
 
