@@ -912,10 +912,41 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(otlpLogRecord.Attributes);
         }
 
+        [Fact]
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_AndScopeStateIsOfDictionaryType_ScopeIsProcessed()
+        {
+            // Arrange.
+            var logRecords = new List<LogRecord>(1);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            const string scopeKey = "Some scope key";
+            var scopeState = new Dictionary<string, object>() { { scopeKey, "Some scope value" } };
+
+            // Act.
+            using (logger.BeginScope(scopeState))
+            {
+                logger.LogInformation("Some log information message.");
+            }
+
+            // Assert.
+            var logRecord = logRecords.Single();
+            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
+            Assert.NotNull(actualScope);
+            Assert.Equal(scopeKey, actualScope.Key);
+        }
+
         [Theory]
         [InlineData(typeof(List<KeyValuePair<string, object>>))]
         [InlineData(typeof(ReadOnlyCollection<KeyValuePair<string, object>>))]
-        [InlineData(typeof(Dictionary<string, object>))]
         [InlineData(typeof(HashSet<KeyValuePair<string, object>>))]
         public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_AndScopeStateIsOfEnumerableType_ScopeIsProcessed(Type typeOfScopeState)
         {
