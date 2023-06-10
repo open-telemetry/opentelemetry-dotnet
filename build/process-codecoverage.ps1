@@ -1,4 +1,4 @@
-[xml]$commonProps = Get-Content -Path $PSScriptRoot\Common.props
+[xml]$commonProps = Get-Content -Path $PSScriptRoot\Common.nonprod.props
 $microsoftCodeCoveragePkgVer = [string]$commonProps.Project.PropertyGroup.MicrosoftCodeCoveragePkgVer # This is collected in the format: "[16.10.0]"
 $microsoftCodeCoveragePkgVer = $microsoftCodeCoveragePkgVer.Trim();
 $microsoftCodeCoveragePkgVer = $microsoftCodeCoveragePkgVer.SubString(1, $microsoftCodeCoveragePkgVer.Length - 2) # Removing square brackets
