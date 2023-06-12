@@ -15,11 +15,7 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -110,7 +106,7 @@ public sealed class MockCollectorIntegrationTests
 
     private class MockCollectorState
     {
-        private Grpc.Core.StatusCode[] statusCodes = { };
+        private Grpc.Core.StatusCode[] statusCodes = Array.Empty<Grpc.Core.StatusCode>();
         private int statusCodeIndex = 0;
 
         public void SetStatusCodes(int[] statusCodes)
