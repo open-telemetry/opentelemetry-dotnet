@@ -22,6 +22,15 @@
   provided during Logger creation.
   ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
 
+* Added `LoggerProviderBuilder.AddILogger` extension to turn on `ILogger`
+  integration when setting up a `LoggerProvider` directly.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
+* Added `ILoggingBuilder.ConfigureOpenTelemetry` extension to configure the
+  `LoggerProvider` used by `ILogger` when configuring logging using the
+  Microsoft.Extensions.Logging API.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.5.0
 
 Released 2023-Jun-05

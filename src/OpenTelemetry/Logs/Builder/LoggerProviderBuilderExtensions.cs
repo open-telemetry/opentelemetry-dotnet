@@ -18,6 +18,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -140,6 +141,46 @@ public static class LoggerProviderBuilderExtensions
                 loggerProviderBuilderSdk.AddProcessor(implementationFactory(sp));
             }
         });
+
+        return loggerProviderBuilder;
+    }
+
+    /// <summary>
+    /// Adds <see cref="ILogger"/> integration to the builder.
+    /// </summary>
+    /// <remarks>
+    /// Note: Calling <see cref="AddILogger(LoggerProviderBuilder)"/> turns on
+    /// <c>Microsoft.Extensions.Logging</c> services in the <see
+    /// cref="IServiceCollection"/> used by the <see
+    /// cref="LoggerProviderBuilder"/>. It calls <see
+    /// cref="OpenTelemetryLoggingExtensions.AddOpenTelemetry(ILoggingBuilder)"/>
+    /// to register an <see cref="ILoggerProvider"/> named 'OpenTelemetry' which
+    /// will be used by the <see cref="ILoggerFactory"/>.
+    /// </remarks>
+    /// <param name="loggerProviderBuilder"><see
+    /// cref="LoggerProviderBuilder"/>.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for
+    /// chaining.</returns>
+    public static LoggerProviderBuilder AddILogger(
+        this LoggerProviderBuilder loggerProviderBuilder)
+        => AddILogger(loggerProviderBuilder, o => { });
+
+    /// <summary><inheritdoc cref="AddILogger(LoggerProviderBuilder)"/></summary>
+    /// <remarks><inheritdoc cref="AddILogger(LoggerProviderBuilder)" path="/remarks"/></remarks>
+    /// <param name="loggerProviderBuilder"><see
+    /// cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="configure">Delegate action for configuring ILogger
+    /// integration options.</param>
+    /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for
+    /// chaining.</returns>
+    public static LoggerProviderBuilder AddILogger(
+        this LoggerProviderBuilder loggerProviderBuilder,
+        Action<OpenTelemetryLoggerOptions> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        loggerProviderBuilder.ConfigureServices(services =>
+            services.AddLogging(logging => logging.AddOpenTelemetry(configure)));
 
         return loggerProviderBuilder;
     }

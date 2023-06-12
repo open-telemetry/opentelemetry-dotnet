@@ -32,12 +32,20 @@ namespace Microsoft.Extensions.Logging;
 public static class OpenTelemetryLoggingExtensions
 {
     /// <summary>
-    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// Adds an <see cref="ILoggerProvider"/> named 'OpenTelemetry' to the
+    /// factory which will emit log messages into a <see
+    /// cref="LoggerProvider"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library
-    /// authors. Only a single <see cref="OpenTelemetryLoggerProvider"/>
-    /// will be created for a given <see cref="IServiceCollection"/>.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
+    /// for a given <see cref="IServiceCollection"/>.</item>
+    /// <item>To configure the <see cref="LoggerProvider"/> used by the <see
+    /// cref="OpenTelemetryLoggerProvider"/> call <see
+    /// cref="ConfigureOpenTelemetry"/>.</item>
+    /// </list>
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -82,7 +90,7 @@ public static class OpenTelemetryLoggingExtensions
     }
 
     /// <summary>
-    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// <inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)"/>
     /// </summary>
     /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
@@ -98,5 +106,35 @@ public static class OpenTelemetryLoggingExtensions
         }
 
         return AddOpenTelemetry(builder);
+    }
+
+    /// <summary>
+    /// Registers an action used to configure the OpenTelemetry <see
+    /// cref="LoggerProviderBuilder"/>.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
+    /// Each registered configuration action will be applied
+    /// sequentially.</item>
+    /// <item>A <see cref="LoggerProvider"/> will NOT be created automatically
+    /// using this method. To begin collecting logs call
+    /// <see cref="AddOpenTelemetry(ILoggingBuilder)"/>.</item>
+    /// </list>
+    /// </remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure">Callback action to configure the <see
+    /// cref="LoggerProviderBuilder"/>.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    public static ILoggingBuilder ConfigureOpenTelemetry(
+        this ILoggingBuilder builder,
+        Action<LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(builder);
+
+        builder.Services.ConfigureOpenTelemetryLoggerProvider(configure);
+
+        return builder;
     }
 }
