@@ -17,8 +17,6 @@
 using OpenTelemetry.Context;
 using OpenTelemetry.Internal;
 
-#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
-
 namespace OpenTelemetry
 {
     /// <summary>
@@ -123,6 +121,10 @@ namespace OpenTelemetry
             return new Baggage(baggageCopy);
         }
 
+#if NET6_0_OR_GREATER
+#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
+#endif
+
         /// <summary>
         /// Returns the name/value pairs in the <see cref="Baggage"/>.
         /// </summary>
@@ -131,6 +133,10 @@ namespace OpenTelemetry
         public static IReadOnlyDictionary<string, string> GetBaggage(Baggage baggage = default)
             => baggage == default ? Current.GetBaggage() : baggage.GetBaggage();
 
+#if NET6_0_OR_GREATER
+#pragma warning restore RS0026 // Do not add multiple overloads with optional parameters.
+#endif
+
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
         /// </summary>
@@ -138,6 +144,10 @@ namespace OpenTelemetry
         /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
         public static Dictionary<string, string>.Enumerator GetEnumerator(Baggage baggage = default)
             => baggage == default ? Current.GetEnumerator() : baggage.GetEnumerator();
+
+#if NET6_0_OR_GREATER
+#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
+#endif
 
         /// <summary>
         /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
@@ -184,6 +194,10 @@ namespace OpenTelemetry
                     : baggage.SetBaggage(baggageItems);
             }
         }
+
+#if NET6_0_OR_GREATER
+#pragma warning restore RS0026 // Do not add multiple overloads with optional parameters.
+#endif
 
         /// <summary>
         /// Returns a new <see cref="Baggage"/> with the key/value pair removed.

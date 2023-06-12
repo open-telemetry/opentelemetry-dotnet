@@ -17,8 +17,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
-
 namespace OpenTelemetry.Trace
 {
     /// <summary>
@@ -79,6 +77,10 @@ namespace OpenTelemetry.Trace
         {
             return this.StartSpanHelper(false, name, kind, default, initialAttributes, links, startTime);
         }
+
+#if NET6_0_OR_GREATER
+#pragma warning disable RS0026 // Do not add multiple overloads with optional parameters.
+#endif
 
         /// <summary>
         /// Starts a span and does not make it as current span.
@@ -144,6 +146,10 @@ namespace OpenTelemetry.Trace
             return this.StartSpanHelper(true, name, kind, parentContext, initialAttributes, links, startTime);
         }
 
+#if NET6_0_OR_GREATER
+#pragma warning restore RS0026 // Do not add multiple overloads with optional parameters.
+#endif
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ActivityKind ConvertToActivityKind(SpanKind kind)
         {
@@ -190,5 +196,3 @@ namespace OpenTelemetry.Trace
         }
     }
 }
-
-#pragma warning restore RS0026 // Do not add multiple overloads with optional parameters.
