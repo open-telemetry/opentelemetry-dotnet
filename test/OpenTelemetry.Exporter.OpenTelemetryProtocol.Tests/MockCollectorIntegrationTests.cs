@@ -29,12 +29,14 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public sealed class MockCollectorIntegrationTests
+public sealed class MockCollectorIntegrationTests : IDisposable
 {
-    [Fact]
-    public async Task TestRecoveryAfterFailedExport()
+    private readonly IHost collectorHost;
+    private readonly HttpClient httpClient;
+
+    public MockCollectorIntegrationTests()
     {
-        using var host = await new HostBuilder()
+        this.collectorHost = new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
@@ -63,15 +65,25 @@ public sealed class MockCollectorIntegrationTests
                        endpoints.MapGrpcService<MockTraceService>();
                    });
                }))
-           .StartAsync().ConfigureAwait(false);
+           .Start();
 
-        var httpClient = new HttpClient() { BaseAddress = new System.Uri("http://localhost:5050") };
+        this.httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5050") };
+    }
 
+    public void Dispose()
+    {
+        this.collectorHost.Dispose();
+        this.httpClient.Dispose();
+    }
+
+    [Fact]
+    public async Task TestRecoveryAfterFailedExport()
+    {
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}").ConfigureAwait(false);
+        await this.httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}").ConfigureAwait(false);
 
         var exportResults = new List<ExportResult>();
-        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new System.Uri("http://localhost:4317") });
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri("http://localhost:4317") });
         var delegatingExporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = (batch) =>
@@ -100,8 +112,6 @@ public sealed class MockCollectorIntegrationTests
 
         Assert.Equal(2, exportResults.Count);
         Assert.Equal(ExportResult.Success, exportResults[1]);
-
-        await host.StopAsync().ConfigureAwait(false);
     }
 
     private class MockCollectorState
