@@ -15,7 +15,8 @@
   ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
 
 * Updated Grpc.Net.Client to v2.53 to fix unobserved exception
-  from failed calls
+  from failed calls.
+  ([#4573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4573))
 
 * Updated to support `Severity` and `SeverityText` when exporting `LogRecord`s.
   ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
