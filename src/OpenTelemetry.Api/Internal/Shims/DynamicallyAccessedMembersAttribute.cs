@@ -45,8 +45,7 @@ namespace System.Diagnostics.CodeAnalysis
         AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Method |
         AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Struct,
         Inherited = false)]
-    internal
-    sealed class DynamicallyAccessedMembersAttribute : Attribute
+    internal sealed class DynamicallyAccessedMembersAttribute : Attribute
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DynamicallyAccessedMembersAttribute"/> class
