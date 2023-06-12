@@ -16,7 +16,7 @@
   [specification](https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specification.md#failures).
   Retry support is not available in the `netstandard2.0` or `net462`
   targets of the OTLP exporter.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#4587](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4587))
 
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
   for instructions to enable exemplars.
