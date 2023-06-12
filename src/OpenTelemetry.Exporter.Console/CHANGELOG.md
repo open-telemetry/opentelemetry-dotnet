@@ -11,7 +11,7 @@
   ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 * Added `LoggerProviderBuilder.AddConsoleExporter` registration extension.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4583))
 
 ## 1.5.0
 
