@@ -4,7 +4,6 @@ OpenTelemetry.Exporter.LogRecordExportProcessorOptions.BatchExportProcessorOptio
 OpenTelemetry.Exporter.LogRecordExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Exporter.LogRecordExportProcessorOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.LogRecordExportProcessorOptions.LogRecordExportProcessorOptions() -> void
-OpenTelemetry.Exporter.OpenTelemetryProtocol.LogRecordExportProcessorOptions
 OpenTelemetry.Logs.OtlpLogExporterHelperExtensions
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
