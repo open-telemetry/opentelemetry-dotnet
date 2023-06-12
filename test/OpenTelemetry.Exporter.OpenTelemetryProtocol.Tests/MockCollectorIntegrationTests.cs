@@ -26,6 +26,7 @@ using OpenTelemetry.Proto.Collector.Trace.V1;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using StatusCode = Grpc.Core.StatusCode;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -62,6 +63,13 @@ public sealed class MockCollectorIntegrationTests : IDisposable
                                collectorState.SetStatusCodes(codes);
                            });
 
+                       endpoints.MapGet(
+                           "/MockCollector/GetNumberOfRequests",
+                           (MockCollectorState collectorState) =>
+                           {
+                               return collectorState.GetRequestCount();
+                           });
+
                        endpoints.MapGrpcService<MockTraceService>();
                    });
                }))
@@ -70,16 +78,69 @@ public sealed class MockCollectorIntegrationTests : IDisposable
         this.httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5050") };
     }
 
+    public static IEnumerable<object[]> RetryTestCases =>
+        new List<object[]>
+        {
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.Cancelled, StatusCode.OK } },
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.DeadlineExceeded, StatusCode.OK } },
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.ResourceExhausted, StatusCode.OK } },
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.Aborted, StatusCode.OK } },
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.OutOfRange, StatusCode.OK } },
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.Unavailable, StatusCode.OK } },
+            new object[] { ExportResult.Success, 2, new[] { StatusCode.DataLoss, StatusCode.OK } },
+            new object[] { ExportResult.Success, 3, new[] { StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.OK } },
+            new object[] { ExportResult.Failure, 2, new[] { StatusCode.Unavailable, StatusCode.Unimplemented, StatusCode.OK } },
+            new object[] { ExportResult.Success, 5, new[] { StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.OK } },
+            new object[] { ExportResult.Failure, 5, new[] { StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.Unavailable, StatusCode.OK } },
+        };
+
     public void Dispose()
     {
         this.collectorHost.Dispose();
         this.httpClient.Dispose();
     }
 
+    [Theory]
+    [MemberData(nameof(RetryTestCases))]
+    public async Task TestRetry(ExportResult expectedExportResult, int expectedRequestCount, StatusCode[] statusCodes)
+    {
+        await this.httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", statusCodes.Select(x => (int)x))}").ConfigureAwait(false);
+
+        var exportResults = new List<ExportResult>();
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri("http://localhost:4317") });
+        var delegatingExporter = new DelegatingExporter<Activity>
+        {
+            OnExportFunc = (batch) =>
+            {
+                var result = otlpExporter.Export(batch);
+                exportResults.Add(result);
+                return result;
+            },
+        };
+
+        var activitySourceName = "otlp.collector.test";
+
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .AddProcessor(new SimpleActivityExportProcessor(delegatingExporter));
+
+        using var tracerProvider = builder.Build();
+
+        var source = new ActivitySource(activitySourceName);
+        var activity = source.StartActivity();
+        activity?.Stop();
+
+        var requestsReceived = await this.httpClient.GetStringAsync("/MockCollector/GetNumberOfRequests");
+
+        Assert.Single(exportResults);
+        Assert.Equal(expectedExportResult, exportResults[0]);
+        Assert.Equal(expectedRequestCount, Convert.ToInt32(requestsReceived));
+    }
+
     [Fact]
     public async Task TestRecoveryAfterFailedExport()
     {
-        var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
+        var codes = new[] { StatusCode.Unimplemented, StatusCode.OK };
         await this.httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}").ConfigureAwait(false);
 
         var exportResults = new List<ExportResult>();
@@ -116,20 +177,25 @@ public sealed class MockCollectorIntegrationTests : IDisposable
 
     private class MockCollectorState
     {
-        private Grpc.Core.StatusCode[] statusCodes = Array.Empty<Grpc.Core.StatusCode>();
+        private StatusCode[] statusCodes = Array.Empty<StatusCode>();
         private int statusCodeIndex = 0;
 
         public void SetStatusCodes(int[] statusCodes)
         {
             this.statusCodeIndex = 0;
-            this.statusCodes = statusCodes.Select(x => (Grpc.Core.StatusCode)x).ToArray();
+            this.statusCodes = statusCodes.Select(x => (StatusCode)x).ToArray();
         }
 
-        public Grpc.Core.StatusCode NextStatus()
+        public StatusCode NextStatus()
         {
             return this.statusCodeIndex < this.statusCodes.Length
                 ? this.statusCodes[this.statusCodeIndex++]
-                : Grpc.Core.StatusCode.OK;
+                : StatusCode.OK;
+        }
+
+        public int GetRequestCount()
+        {
+            return this.statusCodeIndex;
         }
     }
 
@@ -145,7 +211,7 @@ public sealed class MockCollectorIntegrationTests : IDisposable
         public override Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
         {
             var statusCode = this.state.NextStatus();
-            if (statusCode != Grpc.Core.StatusCode.OK)
+            if (statusCode != StatusCode.OK)
             {
                 throw new RpcException(new Grpc.Core.Status(statusCode, "Error."));
             }
