@@ -47,7 +47,7 @@ namespace OpenTelemetry.Logs
         /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
         /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
         /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-        internal static LoggerProviderBuilder AddInMemoryExporter(
+        public static LoggerProviderBuilder AddInMemoryExporter(
             this LoggerProviderBuilder loggerProviderBuilder,
             ICollection<LogRecord> exportedItems)
         {
