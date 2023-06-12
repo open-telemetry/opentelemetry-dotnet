@@ -183,6 +183,20 @@ services.AddHttpClient(
 Note: The single instance returned by `HttpClientFactory` is reused by all
 export requests.
 
+## Retry behavior
+
+The OTLP/gRPC exporter targeting `netstandard2.1` and `net6.0` will
+automatically retry failed requests. The
+[specification](https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specification.md#failures)
+defines which status codes are retriable. The retry policy of exporter
+is to retry a maximum of five times using an exponential backoff strategy.
+The retry policy is not configurable.
+
+The OTLP/HTTP exporter does not automatically retry failed requests. However,
+if you [Configure HttpClient](#configure-httpclient), you can implement a
+retry policy using a framework like
+[Polly](https://learn.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/implement-http-call-retries-exponential-backoff-polly).
+
 ## Troubleshooting
 
 This component uses an

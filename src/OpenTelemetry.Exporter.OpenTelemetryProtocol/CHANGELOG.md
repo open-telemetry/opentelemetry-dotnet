@@ -10,6 +10,14 @@
   are now included in this package.
   ([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
 
+* Added support for the OTLP gRPC exporter to retry failed requests due to
+  transient network faults. The status codes that are
+  retried are defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-proto/blob/main/docs/specification.md#failures).
+  Retry support is not available in the `netstandard2.0` or `net462`
+  targets of the OTLP exporter.
+  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
   for instructions to enable exemplars.
   ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
