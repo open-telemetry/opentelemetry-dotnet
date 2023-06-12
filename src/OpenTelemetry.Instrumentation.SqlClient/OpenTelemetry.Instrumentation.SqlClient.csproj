@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>

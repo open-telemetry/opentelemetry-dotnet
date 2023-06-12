@@ -2,11 +2,36 @@
 
 ## Unreleased
 
+* Added extension methods to support using the [Logs Bridge
+  API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
+  implementation (eg `LoggerProviderBuilder`) with dependency injection.
+  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+## 1.5.0
+
+Released 2023-Jun-05
+
+* Added an `IServiceCollection.ConfigureOpenTelemetryMeterProvider` overload
+  which may be used to configure `MeterProviderBuilder`s while the
+  `IServiceCollection` is modifiable (before the `IServiceProvider` has been
+  created).
+  ([#4517](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4517))
+
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * Fixed a bug which prevented the
   `TracerProviderBuilder.AddInstrumentation(IServiceProvider, TracerProvider)`
   factory extension from being called during construction of the SDK
   `TracerProvider`.
   ([#4468](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4468))
+
+* Added an `IServiceCollection.ConfigureOpenTelemetryTracerProvider` overload
+  which may be used to configure `TracerProviderBuilder`s while the
+  `IServiceCollection` is modifiable (before the `IServiceProvider` has been
+  created).
+  ([#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508))
 
 ## 1.5.0-alpha.2
 

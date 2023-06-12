@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+* Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
+
+* Added [Logs Bridge
+  API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
+  implementation (`Sdk.CreateLoggerProviderBuilder`, etc.).
+  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+* Obsoleted `LogRecord.LogLevel` in favor of the `LogRecord.Severity` property
+  which matches the [OpenTelemetry Specification > Logs DataModel > Severity
+  definition](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#field-severitynumber).
+  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+* Added `LogRecord.Logger` property to access the [OpenTelemetry Specification >
+  Instrumentation
+  Scope](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-scope)
+  provided during Logger creation.
+  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+## 1.5.0
+
+Released 2023-Jun-05
+
+* Fixed a bug introduced by
+  [#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508) in
+  1.5.0-rc.1 which caused the "Build" extension to return `null` when performing
+  chained/fluent calls.
+  ([#4529](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4529))
+
+* Marked `Exemplars` and related APIs `internal` as the spec for `Exemplars` is
+  not stable yet. This would be added back in the `1.6.*` prerelease versions
+  right after `1.5.0` stable version is released.
+  ([#4533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4533))
+
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * The default resource provided by `ResourceBuilder.CreateDefault()` now adds
   the `telemetry.sdk.*` attributes defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).

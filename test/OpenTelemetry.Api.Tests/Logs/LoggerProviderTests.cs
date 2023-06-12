@@ -90,7 +90,7 @@ public sealed class LoggerProviderTests
         {
         }
 
-        public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes = default)
+        public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
         {
         }
     }

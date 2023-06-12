@@ -29,6 +29,7 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -62,6 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly HttpSemanticConvention httpSemanticConvention;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -69,6 +71,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             Guard.ThrowIfNull(options);
 
             this.options = options;
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -210,10 +214,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
                 activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
 
-                var userAgent = request.Headers["User-Agent"].FirstOrDefault();
-                if (!string.IsNullOrEmpty(userAgent))
+                if (request.Headers.TryGetValue("User-Agent", out var values))
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    var userAgent = values.Count > 0 ? values[0] : null;
+                    if (!string.IsNullOrEmpty(userAgent))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                    }
                 }
 
                 try

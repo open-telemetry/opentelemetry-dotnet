@@ -123,7 +123,7 @@ public class MetricTestsBase
         }
     }
 
-    public static Exemplar[] GetExemplars(MetricPoint mp)
+    internal static Exemplar[] GetExemplars(MetricPoint mp)
     {
         return mp.GetExemplars().Where(exemplar => exemplar.Timestamp != default).ToArray();
     }

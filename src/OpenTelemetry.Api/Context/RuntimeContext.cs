@@ -28,64 +28,36 @@ namespace OpenTelemetry.Context
     {
         private static readonly ConcurrentDictionary<string, object> Slots = new();
 
-        private static Type contextSlotType;
-
-        private static RuntimeContextSlotFactory runtimeContextSlotFactory;
-
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "The AsyncLocalRuntimeContextSlot type is handled without using Reflection.")]
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050:RequiresDynamicCode", Justification = "The AsyncLocalRuntimeContextSlot type is handled without using Reflection.")]
-        static RuntimeContext()
-        {
-            ContextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
-        }
+        private static Type contextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
 
         /// <summary>
         /// Gets or sets the actual context carrier implementation.
         /// </summary>
         public static Type ContextSlotType
         {
-            get
-            {
-                return contextSlotType;
-            }
-
-            [RequiresUnreferencedCode("Setting a custom ContextSlotType requires using Reflection to initialize the context slot.")]
-            [RequiresDynamicCode("Setting a custom ContextSlotType requires using MakeGenericType to initialize the context slot. The native code for the generic type might not be available at runtime.")]
+            get => contextSlotType;
             set
             {
                 Guard.ThrowIfNull(value, nameof(value));
-                if (!value.IsGenericType || !value.IsGenericTypeDefinition || value.GetGenericArguments().Length != 1)
-                {
-                    throw new NotSupportedException($"Type '{value}' must be generic with a single generic type argument.");
-                }
 
                 if (value == typeof(AsyncLocalRuntimeContextSlot<>))
                 {
-                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.AsyncLocalRuntimeContextSlotFactory();
+                    contextSlotType = value;
                 }
                 else if (value == typeof(ThreadLocalRuntimeContextSlot<>))
                 {
-                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.ThreadLocalRuntimeContextSlotFactory();
+                    contextSlotType = value;
                 }
 #if NETFRAMEWORK
                 else if (value == typeof(RemotingRuntimeContextSlot<>))
                 {
-                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.RemotingRuntimeContextSlotFactory();
+                    contextSlotType = value;
                 }
 #endif
                 else
                 {
-#if NETSTANDARD2_1_OR_GREATER || NET6_OR_GREATER
-                    if (!RuntimeFeature.IsDynamicCodeSupported)
-                    {
-                        throw new NotSupportedException($"Custom RuntimeContextSlot type '{value}' cannot be used because dynamic code is not supported");
-                    }
-#endif
-
-                    runtimeContextSlotFactory = new RuntimeContextSlotFactory.ReflectionRuntimeContextSlotFactory(contextSlotType);
+                    throw new NotSupportedException($"{value} is not a supported type.");
                 }
-
-                contextSlotType = value;
             }
         }
 
@@ -98,6 +70,7 @@ namespace OpenTelemetry.Context
         public static RuntimeContextSlot<T> RegisterSlot<T>(string slotName)
         {
             Guard.ThrowIfNullOrEmpty(slotName);
+            RuntimeContextSlot<T> slot = null;
 
             lock (Slots)
             {
@@ -106,7 +79,21 @@ namespace OpenTelemetry.Context
                     throw new InvalidOperationException($"Context slot already registered: '{slotName}'");
                 }
 
-                var slot = runtimeContextSlotFactory.Create<T>(slotName);
+                if (ContextSlotType == typeof(AsyncLocalRuntimeContextSlot<>))
+                {
+                    slot = new AsyncLocalRuntimeContextSlot<T>(slotName);
+                }
+                else if (ContextSlotType == typeof(ThreadLocalRuntimeContextSlot<>))
+                {
+                    slot = new ThreadLocalRuntimeContextSlot<T>(slotName);
+                }
+
+#if NETFRAMEWORK
+                else if (ContextSlotType == typeof(RemotingRuntimeContextSlot<>))
+                {
+                    slot = new RemotingRuntimeContextSlot<T>(slotName);
+                }
+#endif
 
                 Slots[slotName] = slot;
                 return slot;

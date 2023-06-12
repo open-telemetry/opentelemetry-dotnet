@@ -44,7 +44,8 @@ public partial class Program
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(TestMeter.Name)
-            .SetExemplarFilter(new AlwaysOnExemplarFilter())
+
+            // .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddPrometheusHttpListener(
                 options => options.UriPrefixes = new string[] { $"http://localhost:9185/" })
             .Build();

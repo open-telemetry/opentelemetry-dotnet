@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Contains extension methods for the <see cref="LoggerProvider"/> class.
 /// </summary>
-internal static class LoggerProviderExtensions
+public static class LoggerProviderExtensions
 {
     /// <summary>
     /// Add a processor to the <see cref="LoggerProvider"/>.

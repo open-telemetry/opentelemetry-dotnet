@@ -27,7 +27,7 @@
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
     <MicrosoftCodeCoveragePkgVer>[17.4.1]</MicrosoftCodeCoveragePkgVer>
-    <OTelPreviousStableVer>1.4.0</OTelPreviousStableVer>
+    <OTelPreviousStableVer>1.5.0</OTelPreviousStableVer>
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
   </PropertyGroup>

@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -34,12 +35,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly AspNetCoreMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpServerDuration;
 
+        private readonly HttpSemanticConvention httpSemanticConvention;
+
         internal HttpInMetricsListener(string name, Meter meter, AspNetCoreMetricsInstrumentationOptions options)
             : base(name)
         {
             this.meter = meter;
             this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
+
+            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)

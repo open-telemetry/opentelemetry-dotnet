@@ -2,8 +2,35 @@
 
 ## Unreleased
 
+* Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
+  for instructions to enable exemplars.
+  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
+
+* Updated to display `Severity` and `SeverityText` text instead of
+  `ILogger.LogLevel` when exporting `LogRecord` instances.
+  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
+
+* Added `LoggerProviderBuilder.AddConsoleExporter` registration extension.
+  ([#4583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4583))
+
+## 1.5.0
+
+Released 2023-Jun-05
+
+* Remove support for exporting `Exemplars`. This would be added back in the
+  `1.6.*` prerelease versions right after `1.5.0` stable version is released.
+  ([#4533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4533))
+
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
+* Add display of bucket boundaries when using exponential histograms.
+  ([#4507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4507))
+
 * Added direct reference to `System.Text.Encodings.Web` with minimum version of
 `4.7.2` in response to [CVE-2021-26701](https://github.com/dotnet/runtime/issues/49377).
+  ([#4390](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4390))
 
 * Updated `LogRecord` console output: `Body` is now shown (if set),
   `StateValues` are now written as `Attributes`, and `State` is no longer
