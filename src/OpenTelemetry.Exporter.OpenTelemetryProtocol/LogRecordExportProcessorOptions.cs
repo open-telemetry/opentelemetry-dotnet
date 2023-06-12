@@ -18,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol;
+namespace OpenTelemetry.Exporter;
 
 /// <summary>
 /// Options for configuring either a <see cref="SimpleLogRecordExportProcessor"/> or <see cref="BatchLogRecordExportProcessor"/>.
@@ -50,7 +50,7 @@ public class LogRecordExportProcessorOptions
     /// </summary>
     public BatchExportLogRecordProcessorOptions BatchExportProcessorOptions
     {
-        get => this.batchExportProcessorOptions ??= new();
+        get => this.batchExportProcessorOptions;
         set
         {
             Guard.ThrowIfNull(value);
