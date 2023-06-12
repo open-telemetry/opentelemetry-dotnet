@@ -54,7 +54,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// <param name="memberTypes">The types of members dynamically accessed.</param>
         public DynamicallyAccessedMembersAttribute(DynamicallyAccessedMemberTypes memberTypes)
         {
-            MemberTypes = memberTypes;
+            this.MemberTypes = memberTypes;
         }
 
         /// <summary>
