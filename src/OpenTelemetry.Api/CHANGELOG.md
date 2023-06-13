@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Updated `System.Diagnostics.DiagnosticSource` package version to `7.0.2`.
+  ([#4576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4576))
+
 * **Breaking change** In order to make `RuntimeContext` compatible with
   ahead-of-time compilation (AOT),
   `RuntimeContext.ContextSlotType` can only be assigned one
