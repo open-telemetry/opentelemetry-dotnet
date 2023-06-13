@@ -18,6 +18,8 @@ namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
 {
+    public static Action<string, string> LogUnsupportedAttributeType = null;
+
     public bool TryTransformTag(KeyValuePair<string, object> tag, out T result, int? maxLength = null)
     {
         if (tag.Value == null)
@@ -58,7 +60,7 @@ internal abstract class TagTransformer<T>
                     // If an exception is thrown when calling ToString
                     // on any element of the array, then the entire array value
                     // is ignored.
-                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    LogUnsupportedAttributeType?.Invoke(tag.Value.GetType().ToString(), tag.Key);
                     result = default;
                     return false;
                 }
@@ -79,7 +81,7 @@ internal abstract class TagTransformer<T>
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    LogUnsupportedAttributeType?.Invoke(tag.Value.GetType().ToString(), tag.Key);
                     result = default;
                     return false;
                 }

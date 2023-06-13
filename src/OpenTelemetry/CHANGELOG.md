@@ -22,6 +22,11 @@
   provided during Logger creation.
   ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
 
+* Fix the issue of potentially running into the `ArgumentException`: `An
+  instance of EventSource with Guid af2d5796-946b-50cb-5f76-166a609afcbb already
+  exists.` when using any of the following exporters: `ConsoleExporter`,
+  `OtlpExporter`, `ZipkinExporter`, `JaegerExporter`.
+
 ## 1.5.0
 
 Released 2023-Jun-05
