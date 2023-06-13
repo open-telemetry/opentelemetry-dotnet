@@ -53,7 +53,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
         /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-        internal static LoggerProviderBuilder AddConsoleExporter(
+        public static LoggerProviderBuilder AddConsoleExporter(
             this LoggerProviderBuilder loggerProviderBuilder)
             => AddConsoleExporter(loggerProviderBuilder, name: null, configure: null);
 
@@ -63,7 +63,7 @@ namespace OpenTelemetry.Logs
         /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
         /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
         /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-        internal static LoggerProviderBuilder AddConsoleExporter(
+        public static LoggerProviderBuilder AddConsoleExporter(
             this LoggerProviderBuilder loggerProviderBuilder,
             Action<ConsoleExporterOptions> configure)
             => AddConsoleExporter(loggerProviderBuilder, name: null, configure);
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Logs
         /// <param name="name">Name which is used when retrieving options.</param>
         /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
         /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-        internal static LoggerProviderBuilder AddConsoleExporter(
+        public static LoggerProviderBuilder AddConsoleExporter(
             this LoggerProviderBuilder loggerProviderBuilder,
             string name,
             Action<ConsoleExporterOptions> configure)

@@ -1,0 +1,1 @@
+static OpenTelemetry.Logs.InMemoryExporterLoggingExtensions.AddInMemoryExporter(this OpenTelemetry.Logs.LoggerProviderBuilder loggerProviderBuilder, System.Collections.Generic.ICollection<OpenTelemetry.Logs.LogRecord> exportedItems) -> OpenTelemetry.Logs.LoggerProviderBuilder
