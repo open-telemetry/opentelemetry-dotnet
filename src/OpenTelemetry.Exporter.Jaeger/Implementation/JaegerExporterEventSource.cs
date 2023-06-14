@@ -41,5 +41,17 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             this.WriteEvent(1, exception);
         }
+
+        [Event(2, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+        public void UnsupportedAttributeType(string type, string key)
+        {
+            this.WriteEvent(2, type.ToString(), key);
+        }
+
+        [Event(3, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
+        public void InvalidEnvironmentVariable(string key, string value)
+        {
+            this.WriteEvent(3, key, value);
+        }
     }
 }

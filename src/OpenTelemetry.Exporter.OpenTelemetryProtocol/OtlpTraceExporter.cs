@@ -17,6 +17,7 @@
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Internal;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
@@ -57,6 +58,16 @@ namespace OpenTelemetry.Exporter
             Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
             this.sdkLimitOptions = sdkLimitOptions;
+
+            OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
+            };
+
+            ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
+            };
 
             if (exportClient != null)
             {
