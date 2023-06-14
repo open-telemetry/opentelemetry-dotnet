@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
@@ -31,13 +33,16 @@ public class LogRecordExportProcessorOptions
     /// Initializes a new instance of the <see cref="LogRecordExportProcessorOptions"/> class.
     /// </summary>
     public LogRecordExportProcessorOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(new())
     {
     }
 
-    internal LogRecordExportProcessorOptions(IConfiguration configuration)
+    internal LogRecordExportProcessorOptions(
+        BatchExportLogRecordProcessorOptions defaultBatchExportLogRecordProcessorOptions)
     {
-        this.batchExportProcessorOptions = new BatchExportLogRecordProcessorOptions(configuration);
+        Debug.Assert(defaultBatchExportLogRecordProcessorOptions != null, "defaultBatchExportLogRecordProcessorOptions was null");
+
+        this.batchExportProcessorOptions = defaultBatchExportLogRecordProcessorOptions;
     }
 
     /// <summary>
@@ -56,5 +61,19 @@ public class LogRecordExportProcessorOptions
             Guard.ThrowIfNull(value);
             this.batchExportProcessorOptions = value;
         }
+    }
+
+    internal static void RegisterLogRecordExportProcessorOptionsFactory(IServiceCollection services)
+    {
+        // Note: This registers a factory so that when
+        // sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name)))
+        // is executed the SDK internal
+        // BatchExportLogRecordProcessorOptions(IConfiguration) ctor is used
+        // correctly which allows users to control the OTEL_BLRP_* keys using
+        // IConfiguration (envvars, appSettings, cli, etc.).
+
+        services.RegisterOptionsFactory(
+            (sp, configuration, name) => new LogRecordExportProcessorOptions(
+                sp.GetRequiredService<IOptionsMonitor<BatchExportLogRecordProcessorOptions>>().Get(name)));
     }
 }
