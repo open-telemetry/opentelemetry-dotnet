@@ -846,6 +846,33 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(scopeValue.ToString(), actualScope.Value.DoubleValue.ToString());
         }
 
+        [Fact]
+        public void TestAddOtlpExporter_NamedOptions()
+        {
+            int defaultExporterOptionsConfigureOptionsInvocations = 0;
+            int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+            using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.Configure<OtlpExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                    services.Configure<LogRecordExportProcessorOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<OtlpExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                    services.Configure<LogRecordExportProcessorOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+
+                    services.Configure<OtlpExporterOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
+                    services.Configure<LogRecordExportProcessorOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
+                })
+                .AddOtlpExporter()
+                .AddOtlpExporter("Exporter2", o => { })
+                .AddOtlpExporter("Exporter3", (eo, po) => { })
+                .Build();
+
+            Assert.Equal(2, defaultExporterOptionsConfigureOptionsInvocations);
+            Assert.Equal(4, namedExporterOptionsConfigureOptionsInvocations);
+        }
+
         private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
         {
             return record.Attributes.FirstOrDefault(att => att.Key == key);

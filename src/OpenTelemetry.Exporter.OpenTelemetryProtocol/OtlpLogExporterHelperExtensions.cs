@@ -15,7 +15,11 @@
 // </copyright>
 
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
 
@@ -43,6 +47,186 @@ public static class OtlpLogExporterHelperExtensions
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions> configure)
         => AddOtlpExporterInternal(loggerOptions, configure);
+
+    /// <summary>
+    /// Adds OTLP Exporter as a configuration to the OpenTelemetry LoggerProviderBuilder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddOtlpExporter(LoggerProviderBuilder, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
+    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
+    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder)
+           => AddOtlpExporter(builder, name: null, configureExporter: null);
+
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// </summary>
+    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
+    /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
+     => AddOtlpExporter(builder, name: null, configureExporter: configureExporter);
+
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// </summary>
+    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
+    /// <param name="configureExporterAndProcessor">Callback action for
+    /// configuring <see cref="OtlpExporterOptions"/> and <see
+    /// cref="LogRecordExportProcessorOptions"/>.</param>
+    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder, Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+     => AddOtlpExporter(builder, name: null, configureExporterAndProcessor: null);
+
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// </summary>
+    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public static LoggerProviderBuilder AddOtlpExporter(
+        this LoggerProviderBuilder builder,
+        string name,
+        Action<OtlpExporterOptions> configureExporter)
+    {
+        var finalOptionsName = name ?? Options.DefaultName;
+
+        builder.ConfigureServices(services =>
+        {
+            if (name != null && configureExporter != null)
+            {
+                // If we are using named options we register the
+                // configuration delegate into options pipeline.
+                services.Configure(finalOptionsName, configureExporter);
+
+                LogRecordExportProcessorOptions.RegisterLogRecordExportProcessorOptionsFactory(services);
+                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            }
+        });
+
+        return builder.AddProcessor(sp =>
+        {
+            OtlpExporterOptions exporterOptions;
+
+            if (name == null)
+            {
+                // If we are NOT using named options we create a new
+                // instance always. The reason for this is
+                // OtlpExporterOptions is shared by all signals. Without a
+                // name, delegates for all signals will mix together. See:
+                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+
+                // Configuration delegate is executed inline on the fresh instance.
+                configureExporter?.Invoke(exporterOptions);
+            }
+            else
+            {
+                // When using named options we can properly utilize Options
+                // API to create or reuse an instance.
+                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+            }
+
+            // Note: Not using finalOptionsName here for SdkLimitOptions.
+            // There should only be one provider for a given service
+            // collection so SdkLimitOptions is treated as a single default
+            // instance.
+            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+            return BuildOtlpLogExporterProcessor(
+                exporterOptions,
+                sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
+                sdkOptionsManager,
+                sp);
+        });
+    }
+
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// </summary>
+    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="configureExporterAndProcessor">Callback action for
+    /// configuring <see cref="OtlpExporterOptions"/> and <see
+    /// cref="LogRecordExportProcessorOptions"/>.</param>
+    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public static LoggerProviderBuilder AddOtlpExporter(
+        this LoggerProviderBuilder builder,
+        string name,
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+    {
+        var finalOptionsName = name ?? Options.DefaultName;
+
+        builder.ConfigureServices(services =>
+        {
+            if (name != null && configureExporterAndProcessor != null)
+            {
+                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+                LogRecordExportProcessorOptions.RegisterLogRecordExportProcessorOptionsFactory(services);
+                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            }
+        });
+
+        return builder.AddProcessor(sp =>
+        {
+            OtlpExporterOptions exporterOptions;
+            LogRecordExportProcessorOptions processorOptions;
+
+            if (name == null)
+            {
+                // If we are NOT using named options we create a new
+                // instance always. The reason for this is
+                // OtlpExporterOptions is shared by all signals. Without a
+                // name, delegates for all signals will mix together. See:
+                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+                processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(finalOptionsName);
+
+                // Configuration delegate is executed inline on the fresh instance.
+                configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
+            }
+            else
+            {
+                // When using named options we can properly utilize Options
+                // API to create or reuse an instance.
+                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+                processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
+            }
+
+            // Note: Not using finalOptionsName here for SdkLimitOptions.
+            // There should only be one provider for a given service
+            // collection so SdkLimitOptions is treated as a single default
+            // instance.
+            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+            return BuildOtlpLogExporterProcessor(
+                exporterOptions,
+                sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
+                sdkOptionsManager,
+                sp);
+        });
+    }
+
+    private static BaseProcessor<LogRecord> BuildOtlpLogExporterProcessor(OtlpExporterOptions exporterOptions, LogRecordExportProcessorOptions processorOptions, SdkLimitOptions sdkLimitOptions, IServiceProvider sp)
+    {
+        exporterOptions.TryEnableIHttpClientFactoryIntegration(sp, "OtlpLogExporter");
+
+        BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(exporterOptions, sdkLimitOptions);
+
+        if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
+        {
+            return new SimpleLogRecordExportProcessor(otlpExporter);
+        }
+        else
+        {
+            return new BatchLogRecordExportProcessor(
+                otlpExporter,
+                processorOptions.BatchExportProcessorOptions.MaxQueueSize,
+                processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
+        }
+    }
 
     private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
         OpenTelemetryLoggerOptions loggerOptions,
