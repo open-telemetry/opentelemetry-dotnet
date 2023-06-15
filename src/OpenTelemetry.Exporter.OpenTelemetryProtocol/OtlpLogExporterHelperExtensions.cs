@@ -159,12 +159,9 @@ public static class OtlpLogExporterHelperExtensions
 
         builder.ConfigureServices(services =>
         {
-            if (name != null && configureExporterAndProcessor != null)
-            {
-                OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-                LogRecordExportProcessorOptions.RegisterLogRecordExportProcessorOptionsFactory(services);
-                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-            }
+            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+            LogRecordExportProcessorOptions.RegisterLogRecordExportProcessorOptionsFactory(services);
+            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
         });
 
         return builder.AddProcessor(sp =>
