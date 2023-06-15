@@ -157,7 +157,6 @@ internal sealed class OpenTelemetryLogger : ILogger
     {
         iLoggerData.State = null;
 
-        /* TODO: Enable this if/when LogRecordAttributeList becomes public.
         if (typeof(TState) == typeof(LogRecordAttributeList))
         {
             // Note: This block is written to be elided by the JIT when
@@ -169,8 +168,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             return logRecordAttributes.Export(ref logRecord.AttributeStorage);
         }
-        else */
-        if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
+        else if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
         {
             return stateList;
         }

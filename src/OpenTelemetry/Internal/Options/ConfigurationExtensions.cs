@@ -30,6 +30,8 @@ namespace OpenTelemetry.Internal;
 
 internal static class ConfigurationExtensions
 {
+    public static Action<string, string>? LogInvalidEnvironmentVariable = null;
+
     public delegate bool TryParseFunc<T>(
         string value,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
@@ -66,7 +68,7 @@ internal static class ConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
             return false;
         }
 
@@ -86,7 +88,7 @@ internal static class ConfigurationExtensions
 
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
             return false;
         }
 
@@ -110,7 +112,7 @@ internal static class ConfigurationExtensions
 
         if (!tryParseFunc(stringValue!, out value))
         {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
             return false;
         }
 
