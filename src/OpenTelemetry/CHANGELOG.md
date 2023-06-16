@@ -2,13 +2,13 @@
 
 ## Unreleased
 
-* Addressed TypeDescriptor.GetProperties warning by removing it.
+* Removed support for ParseStateValues if the state neither implements
+  IReadOnlyList nor IEnumberable when `ParseStateValues` is true.
   ([#4560](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4560))
-  **Side effect:** Skip processing log state if the state neither implements
-  IReadOnlyList nor IEnumberable. This is a breaking change that removed the
-  support introduced in PR4334 that used `TypeDescriptor.GetProperties()` to add
-  custom properties to the state.
-  ([#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334))
+  > **Note**
+  This is a breaking change which removed support regarding the aforementioned
+  use case, which was first introduced in release
+  [1.5.0-rc.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.5.0-rc.1).
 
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
   for instructions to enable exemplars.
