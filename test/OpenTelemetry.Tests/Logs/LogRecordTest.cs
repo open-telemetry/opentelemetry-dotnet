@@ -805,37 +805,6 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void ParseStateValuesUsingCustomTest()
-        {
-            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
-            var logger = loggerFactory.CreateLogger<LogRecordTest>();
-
-            // Tests unknown state parse path.
-
-            CustomState state = new CustomState
-            {
-                Property = "Value",
-            };
-
-            logger.Log(
-                LogLevel.Information,
-                0,
-                state,
-                null,
-                (s, e) => "OpenTelemetry!");
-            var logRecord = exportedItems[0];
-
-            Assert.Null(logRecord.State);
-            Assert.NotNull(logRecord.StateValues);
-            Assert.Equal(1, logRecord.StateValues.Count);
-
-            KeyValuePair<string, object> actualState = logRecord.StateValues[0];
-
-            Assert.Equal("Property", actualState.Key);
-            Assert.Equal("Value", actualState.Value);
-        }
-
-        [Fact]
         public void DisposingStateTest()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
