@@ -112,15 +112,15 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
         // v1.21.0 Http Semantic Conventions
-        public const string AttributeClientSocketPort = "client.socket.port";
-        public const string AttributeHttpRequestMethod = "http.request.method";
-        public const string AttributeHttpResponseStatusCode = "http.response.status_code";
-        public const string AttributeNetworkProtocolVersion = "network.protocol.version";
-        public const string AttributeServerAddress = "server.address";
-        public const string AttributeServerPort = "server.port";
-        public const string AttributeUrlPath = "url.path";
-        public const string AttributeUrlScheme = "url.scheme";
+        public const string AttributeClientSocketPort = "client.socket.port"; // replaces: "net.peer.port" (AttributeNetPeerPort)
+        public const string AttributeHttpRequestMethod = "http.request.method"; // replaces: "http.method" (AttributeHttpMethod)
+        public const string AttributeHttpResponseStatusCode = "http.response.status_code"; // replaces: "http.status_code" (AttributeHttpStatusCode)
+        public const string AttributeNetworkProtocolVersion = "network.protocol.version"; // replaces: "http.flavor" (AttributeHttpFlavor)
+        public const string AttributeServerAddress = "server.address"; // replaces: "net.host.name" (AttributeNetHostName)
+        public const string AttributeServerPort = "server.port"; // replaces: "net.host.port" (AttributeNetHostPort)
+        public const string AttributeUrlPath = "url.path"; // replaces: "http.target" (AttributeHttpTarget)
+        public const string AttributeUrlScheme = "url.scheme"; // replaces: "http.scheme" (AttributeHttpScheme)
         public const string AttributeUrlQuery = "url.query";
-        public const string AttributeUserAgentOriginal = "user_agent.original";
+        public const string AttributeUserAgentOriginal = "user_agent.original"; // replaces: "http.user_agent" (AttributeHttpUserAgent)
     }
 }
