@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
-        // v1.21.0 Http Semantic Conventions
+        // v1.21.0 Http Semantic Conventions https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
         public const string AttributeClientSocketPort = "client.socket.port"; // replaces: "net.peer.port" (AttributeNetPeerPort)
         public const string AttributeHttpRequestMethod = "http.request.method"; // replaces: "http.method" (AttributeHttpMethod)
         public const string AttributeHttpResponseStatusCode = "http.response.status_code"; // replaces: "http.status_code" (AttributeHttpStatusCode)
