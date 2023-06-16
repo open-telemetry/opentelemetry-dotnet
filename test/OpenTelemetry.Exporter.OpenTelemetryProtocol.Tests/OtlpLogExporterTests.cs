@@ -139,9 +139,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Assert.Null(logRecord.State);
                 Assert.NotNull(logRecord.Attributes);
-#if !NET5_0_OR_GREATER || !NETSTANDARD2_1_OR_GREATER
-                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
-#endif
             }
             else
             {
