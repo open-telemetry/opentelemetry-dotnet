@@ -301,12 +301,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(47, key, value);
         }
 
-        [Event(48, Message = "Skip processing log state of type '{0}'.", Level = EventLevel.Warning)]
-        public void LoggerProcessStateSkipped(string type)
-        {
-            this.WriteEvent(51, type);
-        }
-
         [Event(49, Message = "LoggerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
         public void LoggerProviderSdkEvent(string message)
         {
@@ -317,6 +311,12 @@ namespace OpenTelemetry.Internal
         public void LoggerProviderException(string methodName, string ex)
         {
             this.WriteEvent(50, methodName, ex);
+        }
+
+        [Event(51, Message = "Skip processing log state of type '{0}'.", Level = EventLevel.Warning)]
+        public void LoggerProcessStateSkipped(string type)
+        {
+            this.WriteEvent(51, type);
         }
 
 #if DEBUG
