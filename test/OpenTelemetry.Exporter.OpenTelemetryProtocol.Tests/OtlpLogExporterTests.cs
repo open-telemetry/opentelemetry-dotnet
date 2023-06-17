@@ -996,12 +996,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
             const string scopeKey = "Some scope key";
+            const string scopeValue1 = "Some scope value";
+            const string scopeValue2 = "Some other scope value";
 
             // Act.
             using (logger.BeginScope(new List<KeyValuePair<string, object>>
             {
-                new KeyValuePair<string, object>(scopeKey, "Some scope value"),
-                new KeyValuePair<string, object>(scopeKey, "Some other scope value"),
+                new KeyValuePair<string, object>(scopeKey, scopeValue1),
+                new KeyValuePair<string, object>(scopeKey, scopeValue2),
             }))
             {
                 logger.LogInformation("Some log information message.");
@@ -1010,8 +1012,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
-            var scopeAttributesCount = otlpLogRecord.Attributes.Count(_ => _.Key == scopeKey);
-            Assert.Equal(2, scopeAttributesCount);
+            var allScopeValues = otlpLogRecord.Attributes
+                .Where(_ => _.Key == scopeKey)
+                .Select(_ => _.Value.StringValue);
+            Assert.Equal(2, allScopeValues.Count());
+            Assert.Contains(scopeValue1, allScopeValues);
+            Assert.Contains(scopeValue2, allScopeValues);
         }
 
         [Fact]
@@ -1030,11 +1036,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
             const string scopeKey = "Some scope key";
+            const string scopeValue1 = "Some scope value";
+            const string scopeValue2 = "Some other scope value";
 
             // Act.
-            using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, "Some scope value") }))
+            using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, scopeValue1) }))
             {
-                using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, "Some scope value") }))
+                using (logger.BeginScope(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, scopeValue2) }))
                 {
                     logger.LogInformation("Some log information message.");
                 }
@@ -1043,8 +1051,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
-            var scopeAttributesCount = otlpLogRecord.Attributes.Count(_ => _.Key == scopeKey);
-            Assert.Equal(2, scopeAttributesCount);
+            var allScopeValues = otlpLogRecord.Attributes
+                .Where(_ => _.Key == scopeKey)
+                .Select(_ => _.Value.StringValue);
+            Assert.Equal(2, allScopeValues.Count());
+            Assert.Contains(scopeValue1, allScopeValues);
+            Assert.Contains(scopeValue2, allScopeValues);
         }
 
         [Fact]
@@ -1063,17 +1075,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
             const string scopeKey = "Some scope key";
+            const string scopeValue1 = "Some scope value";
+            const string scopeValue2 = "Some other scope value";
 
             // Act.
             using (logger.BeginScope(new List<KeyValuePair<string, object>>
             {
-                new KeyValuePair<string, object>(scopeKey, "Some scope value"),
+                new KeyValuePair<string, object>(scopeKey, scopeValue1),
             }))
             {
                 logger.Log(
                     LogLevel.Error,
                     new EventId(1),
-                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, "Some other scope value") },
+                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, scopeValue2) },
                     exception: new Exception("Some exception message"),
                     formatter: (s, e) => string.Empty);
             }
@@ -1081,8 +1095,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
-            var scopeAttributesCount = otlpLogRecord.Attributes.Count(_ => _.Key == scopeKey);
-            Assert.Equal(2, scopeAttributesCount);
+            var allScopeValues = otlpLogRecord.Attributes
+                .Where(_ => _.Key == scopeKey)
+                .Select(_ => _.Value.StringValue);
+            Assert.Equal(2, allScopeValues.Count());
+            Assert.Contains(scopeValue1, allScopeValues);
+            Assert.Contains(scopeValue2, allScopeValues);
         }
 
         private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
