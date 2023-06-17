@@ -1021,7 +1021,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_AndMultpleScopeLevelsWithSameKeyAreAdded_ContainsAllAddedScopeValues()
+        public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_AndMultipleScopeLevelsWithSameKeyAreAdded_ContainsAllAddedScopeValues()
         {
             // Arrange.
             var logRecords = new List<LogRecord>(1);
