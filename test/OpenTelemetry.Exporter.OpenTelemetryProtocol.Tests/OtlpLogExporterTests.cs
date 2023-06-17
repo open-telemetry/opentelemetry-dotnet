@@ -677,6 +677,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
@@ -715,6 +716,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
@@ -765,6 +767,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
@@ -803,6 +806,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
@@ -841,6 +845,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
@@ -939,6 +944,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
@@ -975,6 +981,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             // Assert.
             var logRecord = logRecords.Single();
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
