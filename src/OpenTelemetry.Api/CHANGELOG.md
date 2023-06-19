@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+* Updated `System.Diagnostics.DiagnosticSource` package version to `7.0.2`.
+  ([#4576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4576))
+
+* **Breaking change** In order to make `RuntimeContext` compatible with
+  ahead-of-time compilation (AOT),
+  `RuntimeContext.ContextSlotType` can only be assigned one
+  of the following types: `AsyncLocalRuntimeContextSlot<>`,
+  `ThreadLocalRuntimeContextSlot<>`, and `RemotingRuntimeContextSlot<>`. A
+  `System.NotSupportedException` will be thrown if you try to assign any type
+  other than the three types mentioned.
+  ([#4542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4542))
+
+* Added [Logs Bridge
+  API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
+  implementation (`LoggerProviderBuilder`, `LoggerProvider`, `Logger`, etc.).
+  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+## 1.5.0
+
+Released 2023-Jun-05
+
 ## 1.5.0-rc.1
 
 Released 2023-May-25

@@ -16,6 +16,7 @@
 
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
@@ -48,6 +49,18 @@ namespace OpenTelemetry.Exporter
         /// <param name="exportClient">Client used for sending export request.</param>
         internal OtlpMetricExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient = null)
         {
+            // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
+            // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
+            OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
+            };
+
+            ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
+            };
+
             if (exportClient != null)
             {
                 this.exportClient = exportClient;

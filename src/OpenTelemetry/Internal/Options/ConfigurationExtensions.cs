@@ -30,6 +30,8 @@ namespace OpenTelemetry.Internal;
 
 internal static class ConfigurationExtensions
 {
+    public static Action<string, string>? LogInvalidEnvironmentVariable = null;
+
     public delegate bool TryParseFunc<T>(
         string value,
 #if !NETFRAMEWORK && !NETSTANDARD2_0
@@ -45,7 +47,7 @@ internal static class ConfigurationExtensions
 #endif
         out string? value)
     {
-        value = configuration.GetValue<string?>(key, null);
+        value = configuration[key] is string configValue ? configValue : null;
 
         return !string.IsNullOrWhiteSpace(value);
     }
@@ -66,7 +68,7 @@ internal static class ConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
             return false;
         }
 
@@ -86,7 +88,7 @@ internal static class ConfigurationExtensions
 
         if (!int.TryParse(stringValue, NumberStyles.None, CultureInfo.InvariantCulture, out value))
         {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
             return false;
         }
 
@@ -110,7 +112,7 @@ internal static class ConfigurationExtensions
 
         if (!tryParseFunc(stringValue!, out value))
         {
-            OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, stringValue);
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
             return false;
         }
 
@@ -125,7 +127,7 @@ internal static class ConfigurationExtensions
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
 
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(c),
@@ -146,7 +148,7 @@ internal static class ConfigurationExtensions
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
 
-        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(sp, c, n),

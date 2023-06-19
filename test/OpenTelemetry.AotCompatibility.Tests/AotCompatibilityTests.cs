@@ -81,11 +81,11 @@ namespace OpenTelemetry.AotCompatibility.Tests
             process.Start();
             process.BeginOutputReadLine();
 
-            Assert.True(process.WaitForExit(milliseconds: 180_000), "dotnet publish command timed out after 180 seconds.");
+            Assert.True(process.WaitForExit(milliseconds: 240_000), "dotnet publish command timed out after 240 seconds.");
             Assert.True(process.ExitCode == 0, "Publishing the AotCompatibility app failed. See test output for more details.");
 
             var warnings = expectedOutput.ToString().Split('\n', '\r').Where(line => line.Contains("warning IL"));
-            Assert.Equal(48, warnings.Count());
+            Assert.Equal(37, warnings.Count());
         }
     }
 }

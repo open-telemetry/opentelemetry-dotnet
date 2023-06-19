@@ -54,7 +54,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             Debug.Assert(this.OwnedServiceProvider != null, "ownedServiceProvider was null");
         }
 
-        OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building TracerProvider.");
+        OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building LoggerProvider.");
 
         var configureProviderBuilders = serviceProvider!.GetServices<IConfigureLoggerProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.5.0-beta.1
+
+Released 2023-Jun-05
+
+* Bumped the package version to `1.5.0-beta.1` to keep its major and minor
+  version in sync with that of the core packages. This would make it more
+  intuitive for users to figure out what version of core packages would work
+  with a given version of this package. The pre-release identifier has also been
+  changed from `rc` to `beta` as we believe this more accurately reflects the
+  status of this package. We believe the `rc` identifier will be more
+  appropriate as semantic conventions reach stability.
+
 * Fixed an issue of missing `http.client.duration` metric data in case of
   network failures (when response is not available).
   ([#4098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4098))

@@ -74,7 +74,15 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 }
 
-                this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
+                if (logRecord.Severity.HasValue)
+                {
+                    this.WriteLine($"{"LogRecord.Severity:",-RightPaddingLength}{logRecord.Severity}");
+                }
+
+                if (logRecord.SeverityText != null)
+                {
+                    this.WriteLine($"{"LogRecord.SeverityText:",-RightPaddingLength}{logRecord.SeverityText}");
+                }
 
                 if (logRecord.FormattedMessage != null)
                 {

@@ -60,6 +60,20 @@ namespace OpenTelemetry
         }
 
         /// <summary>
+        /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
+        /// a <see cref="LoggerProvider"/>. In a typical application, a single
+        /// <see cref="LoggerProvider"/> is created at application startup and
+        /// disposed at application shutdown. It is important to ensure that the
+        /// provider is not disposed too early.
+        /// </summary>
+        /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
+        /// to build a <see cref="LoggerProvider"/>.</returns>
+        public static LoggerProviderBuilder CreateLoggerProviderBuilder()
+        {
+            return new LoggerProviderBuilderBase();
+        }
+
+        /// <summary>
         /// Creates a <see cref="MeterProviderBuilder"/> which is used to build
         /// a <see cref="MeterProvider"/>. In a typical application, a single
         /// <see cref="MeterProvider"/> is created at application startup and disposed
@@ -83,20 +97,6 @@ namespace OpenTelemetry
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
             return new TracerProviderBuilderBase();
-        }
-
-        /// <summary>
-        /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
-        /// a <see cref="LoggerProvider"/>. In a typical application, a single
-        /// <see cref="LoggerProvider"/> is created at application startup and
-        /// disposed at application shutdown. It is important to ensure that the
-        /// provider is not disposed too early.
-        /// </summary>
-        /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
-        /// to build a <see cref="LoggerProvider"/>.</returns>
-        internal static LoggerProviderBuilder CreateLoggerProviderBuilder()
-        {
-            return new LoggerProviderBuilderBase();
         }
     }
 }
