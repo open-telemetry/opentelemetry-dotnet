@@ -495,7 +495,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
             {
-                activity.SetTag(SemanticConventions.AttributeClientSocketPort, context.Connection.RemotePort);
+                activity.SetTag(SemanticConventions.AttributeServerPort, context.Connection.RemotePort);
             }
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
