@@ -123,13 +123,13 @@ If you have trouble accessing the doc, please get in touch on
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Alan West](https://github.com/alanwest), New Relic
-* [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
+* [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Robert Paj&#x105;k](https://github.com/pellared), Splunk
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
