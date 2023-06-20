@@ -26,7 +26,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Contains extension methods for the <see cref="LoggerProviderBuilder"/> class.
 /// </summary>
-internal static class LoggerProviderBuilderExtensions
+public static class LoggerProviderBuilderExtensions
 {
     /// <summary>
     /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with

@@ -382,7 +382,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
             Assert.NotNull(otlpLogRecord);
+#pragma warning disable CS0618 // Type or member is obsolete
             Assert.Equal(logRecord.LogLevel.ToString(), otlpLogRecord.SeverityText);
+#pragma warning restore CS0618 // Type or member is obsolete
+            Assert.Equal((int)logRecord.Severity, (int)otlpLogRecord.SeverityNumber);
             switch (logLevel)
             {
                 case LogLevel.Trace:

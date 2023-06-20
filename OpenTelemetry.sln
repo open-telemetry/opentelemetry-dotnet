@@ -268,6 +268,20 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AotCompatibil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-sampler", "docs\trace\links-based-sampler\links-sampler.csproj", "{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs
+		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs
+		src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs = src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs
+		src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs = src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs
+		src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs = src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -609,6 +623,7 @@ Global
 		{800DB925-6014-4136-AC01-3356CF7CADD3} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{9C99621C-343E-479C-A943-332DB6129B71} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{28F3EC79-660C-4659-8B73-F90DC1173316} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
