@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -35,7 +36,7 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// <typeparam name="T">Instrumentation type.</typeparam>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddInstrumentation<T>(this MeterProviderBuilder meterProviderBuilder)
+    public static MeterProviderBuilder AddInstrumentation<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this MeterProviderBuilder meterProviderBuilder)
         where T : class
     {
         meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -35,7 +36,7 @@ public static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensi
     /// <typeparam name="T">Instrumentation type.</typeparam>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-    public static LoggerProviderBuilder AddInstrumentation<T>(this LoggerProviderBuilder loggerProviderBuilder)
+    public static LoggerProviderBuilder AddInstrumentation<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : class
     {
         loggerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());

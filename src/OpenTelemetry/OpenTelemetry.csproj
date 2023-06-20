@@ -20,4 +20,8 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Shims\UnconditionalSuppressMessageAttribute.cs" Link="Includes\UnconditionalSuppressMessageAttribute.cs" />
+  </ItemGroup>
 </Project>
