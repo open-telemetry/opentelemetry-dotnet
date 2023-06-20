@@ -7,9 +7,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Condition=" $(OS) == 'Windows_NT'">
+    <!-- <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Condition=" $(OS) == 'Windows_NT'">
       <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
+    </PackageReference> -->
   </ItemGroup>
 
   <PropertyGroup>
