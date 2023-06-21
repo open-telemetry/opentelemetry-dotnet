@@ -63,18 +63,4 @@ public class LogRecordExportProcessorOptions
             this.batchExportProcessorOptions = value;
         }
     }
-
-    internal static void RegisterLogRecordExportProcessorOptionsFactory(IServiceCollection services)
-    {
-        // Note: This registers a factory so that when
-        // sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name)))
-        // is executed the SDK internal
-        // BatchExportLogRecordProcessorOptions(IConfiguration) ctor is used
-        // correctly which allows users to control the OTEL_BLRP_* keys using
-        // IConfiguration (envvars, appSettings, cli, etc.).
-
-        services.RegisterOptionsFactory(
-            (sp, configuration, name) => new LogRecordExportProcessorOptions(
-                sp.GetRequiredService<IOptionsMonitor<BatchExportLogRecordProcessorOptions>>().Get(name)));
-    }
 }
