@@ -8,7 +8,7 @@ OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
 OpenTelemetry.Logs.LogRecord.SeverityText.set -> void
 OpenTelemetry.Logs.LogRecordExportProcessorOptions
-OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions?
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions!
 OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.set -> void
 OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.set -> void

@@ -17,7 +17,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
 
@@ -26,8 +25,6 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 public class LogRecordExportProcessorOptions
 {
-    private BatchExportLogRecordProcessorOptions? batchExportProcessorOptions;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="LogRecordExportProcessorOptions"/> class.
     /// </summary>
@@ -41,7 +38,7 @@ public class LogRecordExportProcessorOptions
     {
         Debug.Assert(defaultBatchExportLogRecordProcessorOptions != null, "defaultBatchExportLogRecordProcessorOptions was null");
 
-        this.batchExportProcessorOptions = defaultBatchExportLogRecordProcessorOptions;
+        this.BatchExportProcessorOptions = defaultBatchExportLogRecordProcessorOptions ?? new();
     }
 
     /// <summary>
@@ -52,13 +49,5 @@ public class LogRecordExportProcessorOptions
     /// <summary>
     /// Gets or sets the batch export options. Ignored unless <see cref="ExportProcessorType"/> is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
-    public BatchExportLogRecordProcessorOptions? BatchExportProcessorOptions
-    {
-        get => this.batchExportProcessorOptions;
-        set
-        {
-            Guard.ThrowIfNull(value);
-            this.batchExportProcessorOptions = value;
-        }
-    }
+    public BatchExportLogRecordProcessorOptions BatchExportProcessorOptions { get; set; }
 }
