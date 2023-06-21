@@ -7,6 +7,10 @@ OpenTelemetry.Logs.LogRecord.Severity.get -> OpenTelemetry.Logs.LogRecordSeverit
 OpenTelemetry.Logs.LogRecord.Severity.set -> void
 OpenTelemetry.Logs.LogRecord.SeverityText.get -> string?
 OpenTelemetry.Logs.LogRecord.SeverityText.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.LogRecordExportProcessorOptions() -> void
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter
 OpenTelemetry.Metrics.AlwaysOffExemplarFilter.AlwaysOffExemplarFilter() -> void
 OpenTelemetry.Metrics.AlwaysOnExemplarFilter
@@ -35,6 +39,8 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetExemplarFilter(th
 static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.LoggerProviderBuilder!
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~abstract OpenTelemetry.Metrics.ExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
+~OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
+~OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.set -> void
 ~OpenTelemetry.Metrics.Exemplar.FilteredTags.get -> System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>
 ~override OpenTelemetry.Metrics.AlwaysOffExemplarFilter.ShouldSample(double value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool
 ~override OpenTelemetry.Metrics.AlwaysOffExemplarFilter.ShouldSample(long value, System.ReadOnlySpan<System.Collections.Generic.KeyValuePair<string, object>> tags) -> bool

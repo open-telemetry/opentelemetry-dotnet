@@ -1,9 +1,3 @@
-OpenTelemetry.Exporter.LogRecordExportProcessorOptions
-OpenTelemetry.Exporter.LogRecordExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
-OpenTelemetry.Exporter.LogRecordExportProcessorOptions.BatchExportProcessorOptions.set -> void
-OpenTelemetry.Exporter.LogRecordExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
-OpenTelemetry.Exporter.LogRecordExportProcessorOptions.ExportProcessorType.set -> void
-OpenTelemetry.Exporter.LogRecordExportProcessorOptions.LogRecordExportProcessorOptions() -> void
 OpenTelemetry.Logs.OtlpLogExporterHelperExtensions
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions

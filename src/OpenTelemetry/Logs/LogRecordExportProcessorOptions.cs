@@ -18,9 +18,8 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Logs;
 
-namespace OpenTelemetry.Exporter;
+namespace OpenTelemetry.Logs;
 
 /// <summary>
 /// Options for configuring either a <see cref="SimpleLogRecordExportProcessor"/> or <see cref="BatchLogRecordExportProcessor"/>.
