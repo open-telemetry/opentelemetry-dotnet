@@ -16,7 +16,6 @@
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.HttpListener" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Zipkin" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.ZPages" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Hosting" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Propagators" />
     <TrimmerRootAssembly Include="OpenTelemetry.Instrumentation.AspNetCore" />
