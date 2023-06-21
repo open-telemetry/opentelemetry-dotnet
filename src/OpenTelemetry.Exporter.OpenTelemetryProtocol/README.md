@@ -134,7 +134,7 @@ values of the `PeriodicExportingMetricReaderOptions`
 | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
 
-NOTE:  `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is not supported.
+NOTE:  `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is not supported yet.
 
 The following environment variables can be used to override the default
 values of the attribute limits
