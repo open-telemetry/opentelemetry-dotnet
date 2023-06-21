@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Updated [Http Semantic Conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md).
-  * This library can emit either old, new, or both attributes. Users can control
+  This library can emit either old, new, or both attributes. Users can control
   which attributes are emitted by setting the environment variable
   `OTEL_SEMCONV_STABILITY_OPT_IN`.
 
