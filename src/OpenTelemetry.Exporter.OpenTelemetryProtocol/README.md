@@ -46,8 +46,13 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-See the [`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for
-runnable example.
+By default, `AddOtlpExporter()` configures the metric exporter as
+[PeriodicExportingMetricReader](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#periodic-exporting-metricreader)
+with
+[Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
+set as `Cumulative`. See
+[`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for example on how to
+customize the `MetricReaderOptions`.
 
 ## Enable Log Exporter
 
