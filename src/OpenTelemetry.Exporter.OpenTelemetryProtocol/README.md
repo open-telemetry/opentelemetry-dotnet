@@ -48,7 +48,7 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 By default, `AddOtlpExporter()` pairs the OTLP MetricExporter with a
 [PeriodicExportingMetricReader](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#periodic-exporting-metricreader)
-with metric export interval of 60 secs and 
+with metric export interval of 60 secs and
 [Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
 set as `Cumulative`. See
 [`TestMetrics.cs`](../../examples/Console/TestMetrics.cs) for example on how to
@@ -134,7 +134,7 @@ values of the `PeriodicExportingMetricReaderOptions`
 | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
 
-NOTE:  `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is not supported yet.
+NOTE: `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is not supported yet [#3756](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3756).
 
 The following environment variables can be used to override the default
 values of the attribute limits
