@@ -33,7 +33,6 @@ namespace Examples.Console
         /// dotnet run --project Examples.Console.csproj -- jaeger -h localhost -p 6831
         /// dotnet run --project Examples.Console.csproj -- prometheus -p 9464
         /// dotnet run --project Examples.Console.csproj -- otlp -e "http://localhost:4317" -p "grpc"
-        /// dotnet run --project Examples.Console.csproj -- zpages
         /// dotnet run --project Examples.Console.csproj -- metrics --help
         ///
         /// To see all available examples in the project run:
@@ -46,7 +45,7 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
@@ -55,7 +54,6 @@ namespace Examples.Console
                     (LogsOptions options) => TestLogs.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
-                    (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
@@ -126,11 +124,6 @@ namespace Examples.Console
 
     [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
     internal class HttpClientOptions
-    {
-    }
-
-    [Verb("zpages", HelpText = "Specify the options required to test ZPages")]
-    internal class ZPagesOptions
     {
     }
 

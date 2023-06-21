@@ -71,6 +71,16 @@ namespace OpenTelemetry.Exporter
                 throw new NotSupportedException();
             }
 
+            JaegerTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
+            {
+                JaegerExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
+            };
+
+            ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
+            {
+                JaegerExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
+            };
+
             this.client = client;
             this.batchWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes * 2);
             this.spanWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes);

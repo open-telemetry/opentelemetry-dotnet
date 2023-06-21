@@ -78,5 +78,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             this.WriteEvent(9, exceptionMessage);
         }
+
+        [Event(10, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+        public void UnsupportedAttributeType(string type, string key)
+        {
+            this.WriteEvent(10, type.ToString(), key);
+        }
+
+        [Event(11, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
+        public void InvalidEnvironmentVariable(string key, string value)
+        {
+            this.WriteEvent(11, key, value);
+        }
     }
 }
