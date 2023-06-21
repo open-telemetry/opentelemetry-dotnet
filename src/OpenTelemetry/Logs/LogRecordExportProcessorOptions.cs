@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -26,7 +28,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 public class LogRecordExportProcessorOptions
 {
-    private BatchExportLogRecordProcessorOptions batchExportProcessorOptions;
+    private BatchExportLogRecordProcessorOptions? batchExportProcessorOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LogRecordExportProcessorOptions"/> class.
@@ -52,7 +54,7 @@ public class LogRecordExportProcessorOptions
     /// <summary>
     /// Gets or sets the batch export options. Ignored unless <see cref="ExportProcessorType"/> is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
-    public BatchExportLogRecordProcessorOptions BatchExportProcessorOptions
+    public BatchExportLogRecordProcessorOptions? BatchExportProcessorOptions
     {
         get => this.batchExportProcessorOptions;
         set
