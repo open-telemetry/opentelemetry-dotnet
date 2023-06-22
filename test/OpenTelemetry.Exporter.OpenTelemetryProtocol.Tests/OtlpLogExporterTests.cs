@@ -879,6 +879,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(4, namedExporterOptionsConfigureOptionsInvocations);
         }
 
+        [Fact]
         public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_AndScopeStateIsOfTypeString_ScopeIsIgnored()
         {
             // Arrange.
