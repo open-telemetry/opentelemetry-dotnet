@@ -24,19 +24,19 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK=7.0.203
+BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.22621.1702/22H2/2022Update/SunValley2)
+Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
+.NET SDK=7.0.302
   [Host]     : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
   DefaultJob : .NET 7.0.5 (7.0.523.17405), X64 RyuJIT AVX2
 
 
 |            Method | EnableInstrumentation |     Mean |   Error |  StdDev |   Gen0 | Allocated |
 |------------------ |---------------------- |---------:|--------:|--------:|-------:|----------:|
-| HttpClientRequest |                  None | 222.7 us | 4.28 us | 4.75 us |      - |   2.45 KB |
-| HttpClientRequest |                Traces | 233.0 us | 4.08 us | 3.81 us | 0.4883 |   4.36 KB |
-| HttpClientRequest |               Metrics | 208.9 us | 4.17 us | 7.53 us | 0.4883 |   3.76 KB |
-| HttpClientRequest |       Traces, Metrics | 230.9 us | 3.29 us | 2.92 us | 0.4883 |   4.38 KB |
+| HttpClientRequest |                  None | 161.0 us | 1.27 us | 0.99 us | 0.4883 |   2.45 KB |
+| HttpClientRequest |                Traces | 173.1 us | 1.65 us | 1.54 us | 0.4883 |   4.26 KB |
+| HttpClientRequest |               Metrics | 165.8 us | 1.33 us | 1.18 us | 0.7324 |   3.66 KB |
+| HttpClientRequest |       Traces, Metrics | 175.6 us | 1.96 us | 1.83 us | 0.4883 |   4.28 KB |
 */
 
 namespace Benchmarks.Instrumentation

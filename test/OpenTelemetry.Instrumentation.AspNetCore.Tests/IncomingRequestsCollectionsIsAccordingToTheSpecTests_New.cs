@@ -1,4 +1,4 @@
-// <copyright file="IncomingRequestsCollectionsIsAccordingToTheSpecTests.cs" company="OpenTelemetry Authors">
+// <copyright file="IncomingRequestsCollectionsIsAccordingToTheSpecTests_New.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,12 +28,12 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
-    public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
+    public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
         : IClassFixture<WebApplicationFactory<Program>>
     {
         private readonly WebApplicationFactory<Program> factory;
 
-        public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Program> factory)
+        public IncomingRequestsCollectionsIsAccordingToTheSpecTests_New(WebApplicationFactory<Program> factory)
         {
             this.factory = factory;
         }
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [InlineData("/api/values", "?query=1", null, 503, null)]
         [InlineData("/api/exception", null, null, 503, null)]
         [InlineData("/api/exception", null, null, 503, null, true)]
-        public async Task SuccessfulTemplateControllerCallGeneratesASpan_Old(
+        public async Task SuccessfulTemplateControllerCallGeneratesASpan_New(
             string urlPath,
             string query,
             string userAgent,
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             try
             {
-                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", "none");
+                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", "http");
 
                 var exportedItems = new List<Activity>();
 
@@ -112,13 +112,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var activity = exportedItems[0];
 
                 Assert.Equal(ActivityKind.Server, activity.Kind);
-                Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
-                Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
-                Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeHttpFlavor));
-                Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeHttpScheme));
-                Assert.Equal(urlPath, activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
-                Assert.Equal($"http://localhost{urlPath}{query}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
-                Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+                Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+                Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
+                Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
+                Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeUrlScheme));
+                Assert.Equal(urlPath, activity.GetTagValue(SemanticConventions.AttributeUrlPath));
+                Assert.Equal(query, activity.GetTagValue(SemanticConventions.AttributeUrlQuery));
+                Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpResponseStatusCode));
 
                 if (statusCode == 503)
                 {
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     Assert.Equal("exception", activity.Events.First().Name);
                 }
 
-                ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
+                ValidateTagValue(activity, SemanticConventions.AttributeUserAgentOriginal, userAgent);
 
                 activity.Dispose();
             }

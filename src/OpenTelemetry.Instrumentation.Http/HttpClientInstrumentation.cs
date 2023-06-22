@@ -22,10 +22,26 @@ namespace OpenTelemetry.Instrumentation.Http
     /// </summary>
     internal sealed class HttpClientInstrumentation : IDisposable
     {
+        private static readonly HashSet<string> ExcludedDiagnosticSourceEventsNet7OrGreater = new()
+        {
+            "System.Net.Http.Request",
+            "System.Net.Http.Response",
+            "System.Net.Http.HttpRequestOut",
+        };
+
+        private static readonly HashSet<string> ExcludedDiagnosticSourceEvents = new()
+        {
+            "System.Net.Http.Request",
+            "System.Net.Http.Response",
+        };
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
-        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
-            => !activityName.Equals("System.Net.Http.HttpRequestOut");
+        private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
+            => !ExcludedDiagnosticSourceEvents.Contains(eventName);
+
+        private readonly Func<string, object, object, bool> isEnabledNet7OrGreater = (eventName, _, _)
+            => !ExcludedDiagnosticSourceEventsNet7OrGreater.Contains(eventName);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
@@ -41,11 +57,11 @@ namespace OpenTelemetry.Instrumentation.Http
             // so that the sampler's decision is respected.
             if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
             {
-                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled);
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabledNet7OrGreater);
             }
             else
             {
-                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), null);
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled);
             }
 
             this.diagnosticSourceSubscriber.Subscribe();
