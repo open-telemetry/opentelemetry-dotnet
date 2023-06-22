@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>$(RepoDefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(RepoDefaultTargetFrameworks);netstandard2.1</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
     <!--
     TODO: Disable this exception, and actually do document all public API.
