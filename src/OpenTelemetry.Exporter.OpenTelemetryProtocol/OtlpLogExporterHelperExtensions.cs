@@ -97,9 +97,10 @@ public static class OtlpLogExporterHelperExtensions
                 // If we are using named options we register the
                 // configuration delegate into options pipeline.
                 services.Configure(finalOptionsName, configureExporter);
-
-                services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
             }
+
+            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
         });
 
         return builder.AddProcessor(sp =>
