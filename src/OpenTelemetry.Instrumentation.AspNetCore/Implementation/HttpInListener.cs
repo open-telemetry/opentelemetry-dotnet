@@ -197,29 +197,66 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
-                if (request.Host.HasValue)
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
-                    activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
-
-                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                    if (request.Host.HasValue)
                     {
-                        activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                        activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
+
+                        if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                        {
+                            activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
+                        }
+                    }
+
+                    activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                    activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
+                    activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
+                    activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
+                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
+
+                    if (request.Headers.TryGetValue("User-Agent", out var values))
+                    {
+                        var userAgent = values.Count > 0 ? values[0] : null;
+                        if (!string.IsNullOrEmpty(userAgent))
+                        {
+                            activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                        }
                     }
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
-
-                if (request.Headers.TryGetValue("User-Agent", out var values))
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
-                    var userAgent = values.Count > 0 ? values[0] : null;
-                    if (!string.IsNullOrEmpty(userAgent))
+                    if (request.Host.HasValue)
                     {
-                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                        activity.SetTag(SemanticConventions.AttributeServerAddress, request.Host.Host);
+
+                        if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
+                        {
+                            activity.SetTag(SemanticConventions.AttributeServerPort, request.Host.Port);
+                        }
+                    }
+
+                    if (request.QueryString.HasValue)
+                    {
+                        // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
+                        activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+                    }
+
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                    activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
+                    activity.SetTag(SemanticConventions.AttributeUrlPath, path);
+                    activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
+
+                    if (request.Headers.TryGetValue("User-Agent", out var values))
+                    {
+                        var userAgent = values.Count > 0 ? values[0] : null;
+                        if (!string.IsNullOrEmpty(userAgent))
+                        {
+                            activity.SetTag(SemanticConventions.AttributeUserAgentOriginal, userAgent);
+                        }
                     }
                 }
 
@@ -247,12 +284,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                }
+
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                }
 
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
-                    AddGrpcAttributes(activity, grpcMethod, context);
+                    this.AddGrpcAttributes(activity, grpcMethod, context);
                 }
                 else if (activity.Status == ActivityStatusCode.Unset)
                 {
@@ -429,7 +474,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+        private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
         {
             // The RPC semantic conventions indicate the span name
             // should not have a leading forward slash.
@@ -439,10 +484,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
             if (context.Connection.RemoteIpAddress != null)
             {
+                // TODO: This attribute was changed in v1.13.0 https://github.com/open-telemetry/opentelemetry-specification/pull/2614
                 activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             }
 
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+            if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+            {
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+            }
+
+            if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+            {
+                activity.SetTag(SemanticConventions.AttributeServerPort, context.Connection.RemotePort);
+            }
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
             if (validConversion)
