@@ -162,16 +162,44 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
-                activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
-                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+                    activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
+                    activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                    activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+                    if (!request.RequestUri.IsDefaultPort)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+                    }
+
+                    activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
+                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                {
+                    activity.SetTag(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                    activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+                    if (!request.RequestUri.IsDefaultPort)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
+                    }
+
+                    activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
+                    activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+
+                    if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
+                    {
+                        var userAgent = userAgentValues.FirstOrDefault();
+                        if (!string.IsNullOrEmpty(userAgent))
+                        {
+                            activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
+                        }
+                    }
+                }
 
                 try
                 {
@@ -214,7 +242,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                    if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                    }
+
+                    if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                    {
+                        activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                    }
 
                     if (currentStatusCode == ActivityStatusCode.Unset)
                     {
