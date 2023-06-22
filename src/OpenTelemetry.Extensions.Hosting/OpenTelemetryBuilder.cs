@@ -161,7 +161,7 @@ public sealed class OpenTelemetryBuilder
     {
         Guard.ThrowIfNull(configure);
 
-        var builder = new LoggerProviderBuilderBase(this.Services);
+        var builder = new LoggerProviderBuilderBase(this.Services, addSharedServices: false);
 
         configure(builder);
 

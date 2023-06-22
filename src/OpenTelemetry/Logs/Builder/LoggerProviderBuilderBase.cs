@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -48,9 +49,20 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
         this.allowBuild = true;
     }
 
-    internal LoggerProviderBuilderBase(IServiceCollection services)
+    internal LoggerProviderBuilderBase(IServiceCollection services, bool addSharedServices)
     {
         Guard.ThrowIfNull(services);
+
+        if (addSharedServices)
+        {
+            /* Note: This ensures IConfiguration is available when using
+             * IServiceCollections NOT attached to a host. For example when
+             * performing:
+             *
+             * new ServiceCollection().AddLogging(b => b.AddOpenTelemetry())
+            */
+            services.AddOpenTelemetrySharedProviderBuilderServices();
+        }
 
         services
             .AddOpenTelemetryLoggerProviderBuilderServices()
