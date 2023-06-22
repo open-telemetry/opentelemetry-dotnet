@@ -150,11 +150,11 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LoggerProcessStateSkipped<TState>(string typeOfTState, string fix)
+        public void LoggerProcessStateSkipped<TState>()
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.LoggerProcessStateSkipped(typeOfTState, fix);
+                this.LoggerProcessStateSkipped(typeof(TState).FullName!, "This can be fixed by updating the state to be a type that implements either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>.");
             }
         }
 

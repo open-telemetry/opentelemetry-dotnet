@@ -2,11 +2,11 @@
 
 ## Unreleased
 
-* **Breaking Change** Removed support for ParseStateValues if the state
-  implements neither `IReadOnlyList<KeyValuePair<string, object>>` nor
-  `IEnumerable<KeyValuePair<string, object>>` when `ParseStateValues` is
-  true to make `ProcessState` AOT compatible. This feature was first introduced
-  in `1.5.0` stable release with
+* **Breaking Change** Removed support for parsing `TState` types passed to the
+  `ILogger.Log<TState>` API when `ParseStateValues` is true and `TState` does
+  not implement either `IReadOnlyList<KeyValuePair<string, object>>` or
+  `IEnumerable<KeyValuePair<string, object>>`. This was done to make logging AOT
+  compatible. This feature was first introduced in `1.5.0` stable release with
   [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334).
   ([#4560](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4560))
 
