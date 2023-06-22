@@ -14,7 +14,7 @@
   for instructions to enable exemplars.
   ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
 
-* Updated Grpc.Net.Client to v2.53 to fix unobserved exception
+* Updated Grpc.Net.Client to v2.45 to fix unobserved exception
   from failed calls.
   ([#4573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4573))
 
