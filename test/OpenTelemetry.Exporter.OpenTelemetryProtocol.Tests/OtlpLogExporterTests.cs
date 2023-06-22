@@ -880,6 +880,50 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            OtlpExporterOptions options = new OtlpExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new OtlpMetricExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateLoggerProviderBuilder()
+                .AddOtlpExporter(o =>
+                {
+                    o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    o.HttpClientFactory = options.HttpClientFactory;
+                })
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpLogExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpLogExporter(options);
+            });
+        }
+
+        [Fact]
         public void ToOtlpLog_WhenOptionsIncludeScopesIsTrue_AndScopeStateIsOfTypeString_ScopeIsIgnored()
         {
             // Arrange.
