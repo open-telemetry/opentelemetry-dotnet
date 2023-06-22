@@ -49,16 +49,15 @@ public static class OtlpLogExporterHelperExtensions
         => AddOtlpExporterInternal(loggerOptions, configure);
 
     /// <summary>
-    /// Adds OTLP Exporter as a configuration to the OpenTelemetry LoggerProviderBuilder.
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
-    /// <remarks><inheritdoc cref="AddOtlpExporter(LoggerProviderBuilder, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder)
            => AddOtlpExporter(builder, name: null, configureExporter: null);
 
     /// <summary>
-    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="configureExporter">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
@@ -67,7 +66,7 @@ public static class OtlpLogExporterHelperExtensions
      => AddOtlpExporter(builder, name: null, configureExporter: configureExporter);
 
     /// <summary>
-    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="configureExporterAndProcessor">Callback action for
@@ -78,7 +77,7 @@ public static class OtlpLogExporterHelperExtensions
      => AddOtlpExporter(builder, name: null, configureExporterAndProcessor: null);
 
     /// <summary>
-    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="name">Name which is used when retrieving options.</param>
@@ -99,7 +98,6 @@ public static class OtlpLogExporterHelperExtensions
                 // configuration delegate into options pipeline.
                 services.Configure(finalOptionsName, configureExporter);
 
-                LogRecordExportProcessorOptions.RegisterLogRecordExportProcessorOptionsFactory(services);
                 services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
             }
         });
@@ -142,7 +140,7 @@ public static class OtlpLogExporterHelperExtensions
     }
 
     /// <summary>
-    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProviderBuilder.
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <param name="name">Name which is used when retrieving options.</param>
@@ -160,7 +158,6 @@ public static class OtlpLogExporterHelperExtensions
         builder.ConfigureServices(services =>
         {
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-            LogRecordExportProcessorOptions.RegisterLogRecordExportProcessorOptionsFactory(services);
             services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
         });
 
