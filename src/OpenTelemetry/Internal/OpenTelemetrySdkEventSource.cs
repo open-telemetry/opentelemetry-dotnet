@@ -150,11 +150,11 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void LoggerProcessStateSkipped<TState>()
+        public void LoggerProcessStateSkipped<TState>(string typeOfTState, string fix)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.LoggerProcessStateSkipped(typeof(TState).FullName!);
+                this.LoggerProcessStateSkipped(typeOfTState, fix);
             }
         }
 
@@ -313,10 +313,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(50, methodName, ex);
         }
 
-        [Event(51, Message = "Skip processing log state of type '{0}'.", Level = EventLevel.Warning)]
-        public void LoggerProcessStateSkipped(string type)
+        [Event(51, Message = "Skip processing log state of type '{0}' because it does not implement either IReadOnlyList or IEnumerable. Fix: '{1}'.", Level = EventLevel.Warning)]
+        public void LoggerProcessStateSkipped(string type, string fix)
         {
-            this.WriteEvent(51, type);
+            this.WriteEvent(51, type, fix);
         }
 
 #if DEBUG

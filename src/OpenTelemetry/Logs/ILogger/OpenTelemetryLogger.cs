@@ -193,7 +193,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         }
         else
         {
-            OpenTelemetrySdkEventSource.Log.LoggerProcessStateSkipped<TState>();
+            OpenTelemetrySdkEventSource.Log.LoggerProcessStateSkipped<TState>(typeof(TState).FullName!, "This can be fixed by updating the state to be a type that implements either IReadOnlyList or IEnumerable.");
             return Array.Empty<KeyValuePair<string, object?>>();
         }
     }
