@@ -313,7 +313,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(50, methodName, ex);
         }
 
-        [Event(51, Message = "Skip processing log state of type '{0}' because it does not implement either IReadOnlyList or IEnumerable. Fix: '{1}'.", Level = EventLevel.Warning)]
+        [Event(51, Message = "Skip processing log state of type '{0}' because it does not implement either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>. Suggested action: '{1}'.", Level = EventLevel.Warning)]
         public void LoggerProcessStateSkipped(string type, string fix)
         {
             this.WriteEvent(51, type, fix);

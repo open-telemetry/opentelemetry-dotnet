@@ -3,9 +3,11 @@
 ## Unreleased
 
 * **Breaking Change** Removed support for ParseStateValues if the state
-  implements neither IReadOnlyList nor IEnumberable when `ParseStateValues` is
+  implements neither `IReadOnlyList<KeyValuePair<string, object>>` nor
+  `IEnumerable<KeyValuePair<string, object>>` when `ParseStateValues` is
   true to make `ProcessState` AOT compatible. This feature was first introduced
-  in `1.5.0` stable release.
+  in `1.5.0` stable release with
+  [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334).
   ([#4560](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4560))
 
 * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
