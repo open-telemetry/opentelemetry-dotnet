@@ -38,6 +38,38 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     {
         private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ServiceProviderHttpClientFactoryInvoked(bool requestLoggerProviderDirectly)
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+            services.AddLogging(builder => builder.AddOpenTelemetry());
+            services.ConfigureOpenTelemetryLoggerProvider(builder => builder.AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            if (requestLoggerProviderDirectly)
+            {
+                var provider = serviceProvider.GetRequiredService<LoggerProvider>();
+                Assert.NotNull(provider);
+            }
+            else
+            {
+                var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
+                Assert.NotNull(factory);
+            }
+
+            Assert.Equal(1, invocations);
+        }
+
         [Fact]
         public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse()
         {

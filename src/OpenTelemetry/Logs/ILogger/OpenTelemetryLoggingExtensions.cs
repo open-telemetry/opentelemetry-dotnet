@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -73,10 +74,40 @@ public static class OpenTelemetryLoggingExtensions
 
         builder.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
-                sp => new OpenTelemetryLoggerProvider(
-                    sp.GetRequiredService<LoggerProvider>(),
-                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
-                    disposeProvider: false)));
+                sp =>
+                {
+                    var state = sp.GetRequiredService<LoggerProviderBuilderSdk>();
+
+                    var provider = state.Provider;
+                    if (provider == null)
+                    {
+                        /*
+                         * Note:
+                         *
+                         * There is the possibility of a circular reference when
+                         * accessing LoggerProvider from the IServiceProvider.
+                         *
+                         * If LoggerProvider is the first thing accessed and it
+                         * requires some service which accesses ILogger (for
+                         * example IHttpClientFactory) than the
+                         * OpenTelemetryLoggerProvider will try to access the
+                         * LoggerProvider inside the initial access to
+                         * LoggerProvider.
+                         *
+                         * This check uses the provider reference captured on
+                         * LoggerProviderBuilderSdk during construction of
+                         * LoggerProviderSdk to detect if a provider has already
+                         * been created to give to OpenTelemetryLoggerProvider.
+                        */
+                        provider = sp.GetRequiredService<LoggerProvider>();
+                        Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider");
+                    }
+
+                    return new OpenTelemetryLoggerProvider(
+                        provider,
+                        sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
+                        disposeProvider: false);
+                }));
 
         return builder;
     }
