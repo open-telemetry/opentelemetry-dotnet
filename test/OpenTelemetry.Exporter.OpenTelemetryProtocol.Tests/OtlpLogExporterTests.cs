@@ -65,7 +65,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(logRecords);
             var logRecord = logRecords[0];
 #pragma warning disable CS0618 // Type or member is obsolete
-            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.State);
 #pragma warning restore CS0618 // Type or member is obsolete
             Assert.NotNull(logRecord.Attributes);
         }
