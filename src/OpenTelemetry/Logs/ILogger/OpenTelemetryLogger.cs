@@ -155,7 +155,8 @@ internal sealed class OpenTelemetryLogger : ILogger
         bool includeAttributes,
         bool parseStateValues)
     {
-        if (!includeAttributes)
+        if (!includeAttributes
+            || (!typeof(TState).IsValueType && state is null))
         {
             iLoggerData.State = null;
             return null;
@@ -195,7 +196,7 @@ internal sealed class OpenTelemetryLogger : ILogger
                 return attributeStorage;
             }
         }
-        else if (!parseStateValues || state is null)
+        else if (!parseStateValues)
         {
             return null;
         }
