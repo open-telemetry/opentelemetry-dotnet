@@ -10,7 +10,7 @@ Released 2023-Jun-23
   previously set to a valid value when
   `OpenTelemetryLoggerOptions.ParseStateValues` is `false` and states implement
   `IReadOnlyList` or `IEnumerable` of `KeyValuePair<string, object>`s.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4609))
 
 ## 1.5.0
 
