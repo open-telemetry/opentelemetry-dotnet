@@ -95,9 +95,8 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             LogRecordData.SetActivityContext(ref data, activity);
 
-            var attributes = record.Attributes = this.options.IncludeAttributes
-                ? ProcessState(record, ref iloggerData, in state, this.options.ParseStateValues)
-                : null;
+            var attributes = record.Attributes =
+                ProcessState(record, ref iloggerData, in state, this.options.IncludeAttributes, this.options.ParseStateValues);
 
             if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
             {
@@ -153,9 +152,18 @@ internal sealed class OpenTelemetryLogger : ILogger
         LogRecord logRecord,
         ref LogRecord.LogRecordILoggerData iLoggerData,
         in TState state,
+        bool includeAttributes,
         bool parseStateValues)
     {
-        iLoggerData.State = null;
+        if (!includeAttributes)
+        {
+            iLoggerData.State = null;
+            return null;
+        }
+
+        // Note: This is to preserve legacy behavior where State is
+        // exposed if we didn't parse state.
+        iLoggerData.State = !parseStateValues ? state : null;
 
         /* TODO: Enable this if/when LogRecordAttributeList becomes public.
         if (typeof(TState) == typeof(LogRecordAttributeList))
@@ -189,9 +197,6 @@ internal sealed class OpenTelemetryLogger : ILogger
         }
         else if (!parseStateValues || state is null)
         {
-            // Note: This is to preserve legacy behavior where State is
-            // exposed if we didn't parse state.
-            iLoggerData.State = state;
             return null;
         }
         else

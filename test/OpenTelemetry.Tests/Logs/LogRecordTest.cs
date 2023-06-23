@@ -82,7 +82,7 @@ namespace OpenTelemetry.Logs.Tests
             const string message = "Hello, World!";
             logger.LogInformation(message);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Logs.Tests
             var message = $"Hello from potato {0.99}.";
             logger.LogInformation(message);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Logs.Tests
             const string message = "Hello from {name} {price}.";
             logger.LogInformation(message, "tomato", 2.99);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Logs.Tests
             var food = new Food { Name = "artichoke", Price = 3.99 };
             logger.LogInformation("{food}", food);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -226,7 +226,7 @@ namespace OpenTelemetry.Logs.Tests
             var anonymousType = new { Name = "pumpkin", Price = 5.99 };
             logger.LogInformation("{food}", anonymousType);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -271,7 +271,7 @@ namespace OpenTelemetry.Logs.Tests
             };
             logger.LogInformation("{food}", food);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -321,7 +321,13 @@ namespace OpenTelemetry.Logs.Tests
             const string message = "Exception Occurred";
             logger.LogInformation(exception, message);
 
-            Assert.Null(exportedItems[0].State);
+            Assert.NotNull(exportedItems[0].State);
+
+            var state = exportedItems[0].State;
+            var itemCount = state.GetType().GetProperty("Count").GetValue(state);
+
+            // state only has {OriginalFormat}
+            Assert.Equal(1, itemCount);
 
             var attributes = exportedItems[0].Attributes;
             Assert.NotNull(attributes);
@@ -334,6 +340,7 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(exceptionMessage, loggedException.Message);
 
             Assert.Equal(message, exportedItems[0].Body);
+            Assert.Equal(message, state.ToString());
             Assert.Null(exportedItems[0].FormattedMessage);
         }
 
@@ -711,7 +718,14 @@ namespace OpenTelemetry.Logs.Tests
             var logRecord = exportedItems[0];
 
             Assert.NotNull(logRecord.StateValues);
-            Assert.Null(logRecord.State);
+            if (parseStateValues)
+            {
+                Assert.Null(logRecord.State);
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+            }
 
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(3, logRecord.StateValues.Count);
@@ -725,7 +739,14 @@ namespace OpenTelemetry.Logs.Tests
             logRecord = exportedItems[1];
 
             Assert.NotNull(logRecord.StateValues);
-            Assert.Null(logRecord.State);
+            if (parseStateValues)
+            {
+                Assert.Null(logRecord.State);
+            }
+            else
+            {
+                Assert.NotNull(logRecord.State);
+            }
 
             Assert.NotNull(logRecord.StateValues);
             Assert.Equal(4, logRecord.StateValues.Count);
