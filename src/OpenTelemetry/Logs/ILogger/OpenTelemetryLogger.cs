@@ -204,7 +204,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         {
             try
             {
-                PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state);
+                PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state!);
 
                 var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(itemProperties.Count);
 
