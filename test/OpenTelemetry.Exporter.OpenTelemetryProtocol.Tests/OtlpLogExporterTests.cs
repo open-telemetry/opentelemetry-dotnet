@@ -1027,6 +1027,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var allScopeValues = otlpLogRecord.Attributes
                 .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
                 .Select(_ => _.Value.StringValue);
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
             Assert.Equal(2, allScopeValues.Count());
             Assert.Contains(scopeValue1, allScopeValues);
             Assert.Contains(scopeValue2, allScopeValues);
@@ -1067,6 +1068,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var allScopeValues = otlpLogRecord.Attributes
                 .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
                 .Select(_ => _.Value.StringValue);
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
             Assert.Equal(2, allScopeValues.Count());
             Assert.Contains(scopeValue1, allScopeValues);
             Assert.Contains(scopeValue2, allScopeValues);
@@ -1112,6 +1114,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var allScopeValues = otlpLogRecord.Attributes
                 .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
                 .Select(_ => _.Value.StringValue);
+            Assert.Equal(7, otlpLogRecord.Attributes.Count);
             Assert.Equal(2, allScopeValues.Count());
             Assert.Contains(scopeValue1, allScopeValues);
             Assert.Contains(scopeValue2, allScopeValues);
