@@ -934,7 +934,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             const string scopeKey = "Some scope key";
             const string scopeValue = "Some scope value";
-            var scopeState = new Dictionary<string, object>() { { scopeKey,  scopeValue} };
+            var scopeState = new Dictionary<string, object>() { { scopeKey, scopeValue } };
 
             // Act.
             using (logger.BeginScope(scopeState))
