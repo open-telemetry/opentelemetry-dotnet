@@ -58,8 +58,8 @@ public class OpenTelemetryLoggerOptions
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>As of OpenTelemetry 1.5.0 state parsing is handled automatically
-    /// if the state logged implements <see cref="IReadOnlyList{T}"/> or <see
+    /// <item>As of OpenTelemetry v1.5 state parsing is handled automatically if
+    /// the state logged implements <see cref="IReadOnlyList{T}"/> or <see
     /// cref="IEnumerable{T}"/> where <c>T</c> is <c>KeyValuePair&lt;string,
     /// object&gt;</c> than <see cref="LogRecord.Attributes"/> will be set
     /// regardless of the value of <see cref="ParseStateValues"/>.</item>
