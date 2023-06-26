@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Fixed a breaking change causing `LogRecord.State` to be `null` where it was
+  previously set to a valid value when
+  `OpenTelemetryLoggerOptions.ParseStateValues` is `false` and states implement
+  `IReadOnlyList` or `IEnumerable` of `KeyValuePair<string, object>`s.
+  ([#4609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4609))
+
 ## 1.5.0
 
 Released 2023-Jun-05

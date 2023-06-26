@@ -95,9 +95,8 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             LogRecordData.SetActivityContext(ref data, activity);
 
-            var attributes = record.Attributes = this.options.IncludeAttributes
-                ? ProcessState(record, ref iloggerData, in state, this.options.ParseStateValues)
-                : null;
+            var attributes = record.Attributes =
+                ProcessState(record, ref iloggerData, in state, this.options.IncludeAttributes, this.options.ParseStateValues);
 
             if (!TryGetOriginalFormatFromAttributes(attributes, out var originalFormat))
             {
@@ -153,9 +152,15 @@ internal sealed class OpenTelemetryLogger : ILogger
         LogRecord logRecord,
         ref LogRecord.LogRecordILoggerData iLoggerData,
         in TState state,
+        bool includeAttributes,
         bool parseStateValues)
     {
-        iLoggerData.State = null;
+        if (!includeAttributes
+            || (!typeof(TState).IsValueType && state is null))
+        {
+            iLoggerData.State = null;
+            return null;
+        }
 
         /* TODO: Enable this if/when LogRecordAttributeList becomes public.
         if (typeof(TState) == typeof(LogRecordAttributeList))
@@ -172,10 +177,20 @@ internal sealed class OpenTelemetryLogger : ILogger
         else */
         if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
         {
+            // Note: This is to preserve legacy behavior where State is exposed
+            // if we didn't parse state. We use stateList here to prevent a
+            // second boxing of struct TStates.
+            iLoggerData.State = !parseStateValues ? stateList : null;
+
             return stateList;
         }
         else if (state is IEnumerable<KeyValuePair<string, object?>> stateValues)
         {
+            // Note: This is to preserve legacy behavior where State is exposed
+            // if we didn't parse state. We use stateValues here to prevent a
+            // second boxing of struct TStates.
+            iLoggerData.State = !parseStateValues ? stateValues : null;
+
             var attributeStorage = logRecord.AttributeStorage;
             if (attributeStorage == null)
             {
@@ -187,7 +202,7 @@ internal sealed class OpenTelemetryLogger : ILogger
                 return attributeStorage;
             }
         }
-        else if (!parseStateValues || state is null)
+        else if (!parseStateValues)
         {
             // Note: This is to preserve legacy behavior where State is
             // exposed if we didn't parse state.
@@ -196,9 +211,13 @@ internal sealed class OpenTelemetryLogger : ILogger
         }
         else
         {
+            // Note: We clear State because the LogRecord we are processing may
+            // have come from the pool and may have State from a prior log.
+            iLoggerData.State = null;
+
             try
             {
-                PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state);
+                PropertyDescriptorCollection itemProperties = TypeDescriptor.GetProperties(state!);
 
                 var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(itemProperties.Count);
 
