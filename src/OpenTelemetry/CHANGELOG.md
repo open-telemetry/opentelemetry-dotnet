@@ -16,7 +16,7 @@
   [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334) and
   has been removed because it makes the OpenTelemetry .NET SDK incompatible with
   native AOT.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#4614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4614))
 
 ## 1.5.0
 
