@@ -100,7 +100,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Assert.Null(logRecord.State);
                 Assert.NotNull(logRecord.Attributes);
-                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
+
+                // Note: We currently do not support parsing custom states which do
+                // not implement the standard interfaces. We return empty attributes
+                // for these.
+                Assert.Empty(logRecord.Attributes);
             }
             else
             {
@@ -140,7 +144,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Assert.Null(logRecord.State);
                 Assert.NotNull(logRecord.Attributes);
-                Assert.Contains(logRecord.Attributes, kvp => kvp.Key == "propertyA" && (string)kvp.Value == "valueA");
+
+                // Note: We currently do not support parsing custom states which do
+                // not implement the standard interfaces. We return empty attributes
+                // for these.
+                Assert.Empty(logRecord.Attributes);
             }
             else
             {
