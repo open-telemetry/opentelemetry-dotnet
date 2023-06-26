@@ -165,7 +165,7 @@ namespace OpenTelemetry.Internal
             {
                 this.LoggerProcessStateSkipped(
                     typeof(TState).FullName!,
-                    "because it does not implement either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>");
+                    "because it does not implement a supported interface (either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>)");
             }
         }
 
