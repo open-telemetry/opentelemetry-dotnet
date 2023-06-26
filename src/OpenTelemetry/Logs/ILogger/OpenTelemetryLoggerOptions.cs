@@ -58,13 +58,21 @@ public class OpenTelemetryLoggerOptions
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>Parsing is only executed when the state logged does NOT
-    /// implement <see cref="IReadOnlyList{T}"/> or <see
+    /// <item>As of OpenTelemetry 1.5.0 state parsing is handled automatically
+    /// if the state logged implements <see cref="IReadOnlyList{T}"/> or <see
     /// cref="IEnumerable{T}"/> where <c>T</c> is <c>KeyValuePair&lt;string,
-    /// object&gt;</c>.</item>
+    /// object&gt;</c> than <see cref="LogRecord.Attributes"/> will be set
+    /// regardless of the value of <see cref="ParseStateValues"/>.</item>
     /// <item>When <see cref="ParseStateValues"/> is set to <see
     /// langword="true"/> <see cref="LogRecord.State"/> will always be <see
-    /// langword="null"/>.</item>
+    /// langword="null"/>. When <see cref="ParseStateValues"/> is set to <see
+    /// langword="false"/> <see cref="LogRecord.State"/> will always be set to
+    /// the logged state to support legacy exporters which access <see
+    /// cref="LogRecord.State"/> directly. Exporters should NOT access <see
+    /// cref="LogRecord.State"/> directly because is NOT safe and may lead to
+    /// exceptions or incorrect data especially when using batching. Exporters
+    /// should use <see cref="LogRecord.Attributes"/> to safely access any data
+    /// attached to log messages.</item>
     /// </list>
     /// </remarks>
     public bool ParseStateValues { get; set; }
