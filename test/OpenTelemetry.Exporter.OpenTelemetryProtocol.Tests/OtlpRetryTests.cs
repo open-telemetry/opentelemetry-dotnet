@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 var stream = new MemoryStream();
                 status.WriteTo(stream);
 
-                metadata.Add("grpc-status-details-bin", stream.ToArray());
+                metadata.Add(OtlpRetry.GrpcStatusDetailsHeader, stream.ToArray());
                 return metadata;
             }
 

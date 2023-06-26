@@ -56,6 +56,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 /// </summary>
 internal static class OtlpRetry
 {
+    public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
     public const int InitialBackoffMilliseconds = 1000;
     private const int MaxBackoffMilliseconds = 5000;
     private const double BackoffMultiplier = 1.5;
@@ -151,7 +152,7 @@ internal static class OtlpRetry
             return null;
         }
 
-        var statusDetails = trailers.Get("grpc-status-details-bin");
+        var statusDetails = trailers.Get(GrpcStatusDetailsHeader);
         if (statusDetails != null && statusDetails.IsBinary)
         {
             var status = Status.Parser.ParseFrom(statusDetails.ValueBytes);
