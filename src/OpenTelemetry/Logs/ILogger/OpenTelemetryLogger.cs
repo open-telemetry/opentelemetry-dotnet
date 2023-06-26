@@ -170,7 +170,14 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             var logRecordAttributes = (LogRecordAttributeList)(object)state!;
 
-            return logRecordAttributes.Export(ref logRecord.AttributeStorage);
+            var exportedAttributes = logRecordAttributes.Export(ref logRecord.AttributeStorage);
+
+            // Note: This is to preserve legacy behavior where State is exposed
+            // if we didn't parse state. We use exportedAttributes here to prevent a
+            // boxing of struct LogRecordAttributeList.
+            iLoggerData.State = !parseStateValues ? exportedAttributes : null;
+
+            return exportedAttributes;
         }
         else if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
         {
