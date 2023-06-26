@@ -826,7 +826,7 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void ParseStateValuesUsingCustomTest()
+        public void ParseStateValuesUsingNonconformingCustomTypeTest()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -848,12 +848,11 @@ namespace OpenTelemetry.Logs.Tests
 
             Assert.Null(logRecord.State);
             Assert.NotNull(logRecord.StateValues);
-            Assert.Equal(1, logRecord.StateValues.Count);
 
-            KeyValuePair<string, object> actualState = logRecord.StateValues[0];
-
-            Assert.Equal("Property", actualState.Key);
-            Assert.Equal("Value", actualState.Value);
+            // Note: We currently do not support parsing custom states which do
+            // not implement the standard interfaces. We return empty attributes
+            // for these.
+            Assert.Empty(logRecord.StateValues);
         }
 
         [Fact]
