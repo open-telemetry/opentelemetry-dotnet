@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.5.1
+
+Released 2023-Jun-26
 
 * Fixed a breaking change causing `LogRecord.State` to be `null` where it was
   previously set to a valid value when
