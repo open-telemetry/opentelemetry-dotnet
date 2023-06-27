@@ -55,8 +55,11 @@ Activity.Tags:
     http.user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.76
     http.status_code: 200
 Resource associated with Activity:
-    service.name: OTel.NET Getting Started
-    service.instance.id: af85d327-d673-41c8-b529-b7eecf3c90f6
+    service.name: getting-started-aspnetcore
+    service.instance.id: 32c9371c-ed9d-474c-a698-b169e87a5577
+    telemetry.sdk.name: opentelemetry
+    telemetry.sdk.language: dotnet
+    telemetry.sdk.version: 1.5.1
 ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.
@@ -73,10 +76,10 @@ OpenTelemetry [TracerProvider](../customizing-the-sdk/README.MD#tracerprovider)
 using extension methods and setting it to auto-start when the host is started:
 
 ```csharp
-appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(builder => builder
-        .AddService(serviceName: "OTel.NET Getting Started"))
-    .WithTracing(builder => builder
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Environment.ApplicationName))
+    .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddConsoleExporter());
 ```
