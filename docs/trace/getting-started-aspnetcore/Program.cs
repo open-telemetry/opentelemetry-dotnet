@@ -18,17 +18,17 @@ using System.Diagnostics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-var appBuilder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // Configure OpenTelemetry with tracing and auto-start.
-appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(builder => builder
-        .AddService(serviceName: "OTel.NET Getting Started"))
-    .WithTracing(builder => builder
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Environment.ApplicationName))
+    .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddConsoleExporter());
 
-var app = appBuilder.Build();
+var app = builder.Build();
 
 app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}");
 
