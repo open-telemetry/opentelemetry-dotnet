@@ -6,7 +6,7 @@
   lifetime. This
   [example](../../docs/metrics/getting-started-console/Program.cs) shows how an
   instrument is created a `static` field and then used in the application. You
-  could also look at this ASP .NET Core
+  could also look at this ASP.NET Core
   [example](../../examples/AspNetCore/Program.cs) which shows a more Dependency
   Injection friendly way of doing this by extracting the `Meter` and an
   instrument into a dedicated class called
@@ -18,9 +18,8 @@
   to record the measurement.
 
 ```csharp
-
 // If you emit the tag keys in this order: name -> color -> taste, stick to this order of tag keys for subsequent measurements.
-MyFruitCounter.Add(5, new("name", "apple"),new("color", "red"), new("taste", "sweet"));
+MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "sweet"));
 ...
 ...
 ...
@@ -88,7 +87,7 @@ counter.Add(100, readOnlySpanOfTags); // <--- DON'T DO THIS
   a single MeterProvider is built at application startup, and is disposed of at
   application shutdown. For an ASP.NET Core application, use `AddOpenTelemetry`
   and `WithMetrics` methods from the `OpenTelemetry.Extensions.Hosting` package
-  to correctly setup `MeterProvider`. Here's a [sample ASP .NET Core
+  to correctly setup `MeterProvider`. Here's a [sample ASP.NET Core
   app](../../examples/AspNetCore/Program.cs) for reference. For simpler
   applications such as Console apps, refer to this
   [example](../../docs/metrics/getting-started-console/Program.cs).
