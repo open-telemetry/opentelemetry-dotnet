@@ -933,7 +933,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
             const string scopeKey = "Some scope key";
-            var scopeState = new Dictionary<string, object>() { { scopeKey, "Some scope value" } };
+            const string scopeValue = "Some scope value";
+            var scopeState = new Dictionary<string, object>() { { scopeKey, scopeValue } };
 
             // Act.
             using (logger.BeginScope(scopeState))
@@ -948,6 +949,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(scopeValue, actualScope.Value.StringValue);
         }
 
         [Theory]
@@ -969,7 +971,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
             const string scopeKey = "Some scope key";
-            var scopeValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, "Some scope value") };
+            const string scopeValue = "Some scope value";
+            var scopeValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>(scopeKey, scopeValue) };
             var scopeState = Activator.CreateInstance(typeOfScopeState, scopeValues) as ICollection<KeyValuePair<string, object>>;
 
             // Act.
@@ -985,6 +988,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var actualScope = TryGetAttribute(otlpLogRecord, scopeKey);
             Assert.NotNull(actualScope);
             Assert.Equal(scopeKey, actualScope.Key);
+            Assert.Equal(scopeValue, actualScope.Value.StringValue);
         }
 
         [Theory]
@@ -1023,6 +1027,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var allScopeValues = otlpLogRecord.Attributes
                 .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
                 .Select(_ => _.Value.StringValue);
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
             Assert.Equal(2, allScopeValues.Count());
             Assert.Contains(scopeValue1, allScopeValues);
             Assert.Contains(scopeValue2, allScopeValues);
@@ -1063,6 +1068,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var allScopeValues = otlpLogRecord.Attributes
                 .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
                 .Select(_ => _.Value.StringValue);
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
             Assert.Equal(2, allScopeValues.Count());
             Assert.Contains(scopeValue1, allScopeValues);
             Assert.Contains(scopeValue2, allScopeValues);
@@ -1108,6 +1114,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var allScopeValues = otlpLogRecord.Attributes
                 .Where(_ => _.Key == scopeKey1 || _.Key == scopeKey2)
                 .Select(_ => _.Value.StringValue);
+            Assert.Equal(7, otlpLogRecord.Attributes.Count);
             Assert.Equal(2, allScopeValues.Count());
             Assert.Contains(scopeValue1, allScopeValues);
             Assert.Contains(scopeValue2, allScopeValues);
