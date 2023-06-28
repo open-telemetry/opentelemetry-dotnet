@@ -27,6 +27,26 @@
   exists.` when using any of the following exporters: `ConsoleExporter`,
   `OtlpExporter`, `ZipkinExporter`, `JaegerExporter`.
 
+## 1.5.1
+
+Released 2023-Jun-26
+
+* Fixed a breaking change causing `LogRecord.State` to be `null` where it was
+  previously set to a valid value when
+  `OpenTelemetryLoggerOptions.ParseStateValues` is `false` and states implement
+  `IReadOnlyList` or `IEnumerable` of `KeyValuePair<string, object>`s.
+  ([#4609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4609))
+
+* **Breaking Change** Removed the support for parsing `TState` types passed to
+  the `ILogger.Log<TState>` API when `ParseStateValues` is true and `TState`
+  does not implement either `IReadOnlyList<KeyValuePair<string, object>>` or
+  `IEnumerable<KeyValuePair<string, object>>`. This feature was first introduced
+  in the `1.5.0` stable release with
+  [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334) and
+  has been removed because it makes the OpenTelemetry .NET SDK incompatible with
+  native AOT.
+  ([#4614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4614))
+
 ## 1.5.0
 
 Released 2023-Jun-05
