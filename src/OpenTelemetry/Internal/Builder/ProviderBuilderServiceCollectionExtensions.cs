@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -35,6 +36,16 @@ internal static class ProviderBuilderServiceCollectionExtensions
 
         services!.TryAddSingleton<LoggerProviderBuilderSdk>();
         services!.RegisterOptionsFactory(configuration => new BatchExportLogRecordProcessorOptions(configuration));
+
+        // Note: This registers a factory so that when
+        // sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name)))
+        // is executed the SDK internal
+        // BatchExportLogRecordProcessorOptions(IConfiguration) ctor is used
+        // correctly which allows users to control the OTEL_BLRP_* keys using
+        // IConfiguration (envvars, appSettings, cli, etc.).
+        services!.RegisterOptionsFactory(
+            (sp, configuration, name) => new LogRecordExportProcessorOptions(
+                sp.GetRequiredService<IOptionsMonitor<BatchExportLogRecordProcessorOptions>>().Get(name)));
 
         return services!;
     }
