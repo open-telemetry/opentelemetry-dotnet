@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(RepoDefaultTargetFrameworks);netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>$(DefaultTargetFrameworks);netstandard2.1</TargetFrameworks>
     <Description>Jaeger exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Jaeger;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
