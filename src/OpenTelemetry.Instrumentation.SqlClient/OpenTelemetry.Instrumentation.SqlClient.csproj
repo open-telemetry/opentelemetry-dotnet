@@ -13,7 +13,9 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\EnvironmentVariables\*.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
   </ItemGroup>
 
 </Project>

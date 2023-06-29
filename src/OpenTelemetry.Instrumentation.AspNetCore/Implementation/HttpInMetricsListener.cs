@@ -35,16 +35,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly AspNetCoreMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpServerDuration;
 
-        private readonly HttpSemanticConvention httpSemanticConvention;
-
         internal HttpInMetricsListener(string name, Meter meter, AspNetCoreMetricsInstrumentationOptions options)
             : base(name)
         {
             this.meter = meter;
             this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
-
-            this.httpSemanticConvention = options.HttpSemanticConvention;
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -83,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 TagList tags = default;
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme));
@@ -102,7 +98,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));

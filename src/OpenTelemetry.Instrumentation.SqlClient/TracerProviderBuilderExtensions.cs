@@ -62,10 +62,14 @@ namespace OpenTelemetry.Trace
 
             name ??= Options.DefaultName;
 
-            if (configureSqlClientInstrumentationOptions != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configureSqlClientInstrumentationOptions));
-            }
+                if (configureSqlClientInstrumentationOptions != null)
+                {
+                    services.Configure(name, configureSqlClientInstrumentationOptions);
+                }
+                services.RegisterOptionsFactory(configuration => new SqlClientInstrumentationOptions(configuration));
+            });
 
             builder.AddInstrumentation(sp =>
             {
