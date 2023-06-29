@@ -14,6 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
+
 namespace OpenTelemetry.Internal;
 
 /// <summary>
@@ -27,8 +32,10 @@ namespace OpenTelemetry.Internal;
 /// </remarks>
 internal static class HttpSemanticConventionHelper
 {
+    public const string SemanticConventionOptInKeyName = "OTEL_SEMCONV_STABILITY_OPT_IN";
+
     [Flags]
-    internal enum HttpSemanticConvention
+    public enum HttpSemanticConvention
     {
         /// <summary>
         /// Instructs an instrumentation library to emit the old experimental HTTP attributes.
@@ -46,11 +53,13 @@ internal static class HttpSemanticConventionHelper
         Dupe = Old | New,
     }
 
-    public static HttpSemanticConvention GetSemanticConventionOptIn()
+    public static HttpSemanticConvention GetSemanticConventionOptIn(IConfiguration configuration)
     {
+        Debug.Assert(configuration != null, "configuration was null");
+
         try
         {
-            var envVarValue = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
+            var envVarValue = configuration[SemanticConventionOptInKeyName];
             return envVarValue?.ToLowerInvariant() switch
             {
                 "http" => HttpSemanticConvention.New,

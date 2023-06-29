@@ -44,7 +44,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
-            this.httpSemanticConvention = GetSemanticConventionOptIn();
+            this.httpSemanticConvention = options.HttpSemanticConvention;
         }
 
         public override void OnEventWritten(string name, object payload)

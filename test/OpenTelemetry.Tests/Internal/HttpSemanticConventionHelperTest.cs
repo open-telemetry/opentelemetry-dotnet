@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.Configuration;
 using Xunit;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
-namespace OpenTelemetry.Api.Tests.Internal;
+namespace OpenTelemetry.Internal.Tests;
 
 public class HttpSemanticConventionHelperTest
 {
@@ -51,17 +52,40 @@ public class HttpSemanticConventionHelperTest
         this.RunTestWithEnvironmentVariable("HTTP/DUP", HttpSemanticConvention.Dupe);
     }
 
+    [Fact]
+    public void VerifyGetSemanticConventionOptInUsingIConfiguration()
+    {
+        this.RunTestWithIConfiguration(null, HttpSemanticConvention.Old);
+        this.RunTestWithIConfiguration(string.Empty, HttpSemanticConvention.Old);
+        this.RunTestWithIConfiguration("junk", HttpSemanticConvention.Old);
+        this.RunTestWithIConfiguration("none", HttpSemanticConvention.Old);
+        this.RunTestWithIConfiguration("NONE", HttpSemanticConvention.Old);
+        this.RunTestWithIConfiguration("http", HttpSemanticConvention.New);
+        this.RunTestWithIConfiguration("HTTP", HttpSemanticConvention.New);
+        this.RunTestWithIConfiguration("http/dup", HttpSemanticConvention.Dupe);
+        this.RunTestWithIConfiguration("HTTP/DUP", HttpSemanticConvention.Dupe);
+    }
+
     private void RunTestWithEnvironmentVariable(string value, HttpSemanticConvention expected)
     {
         try
         {
-            Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", value);
+            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, value);
 
-            Assert.Equal(expected, GetSemanticConventionOptIn());
+            Assert.Equal(expected, GetSemanticConventionOptIn(new ConfigurationBuilder().AddEnvironmentVariables().Build()));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", null);
+            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, null);
         }
+    }
+
+    private void RunTestWithIConfiguration(string value, HttpSemanticConvention expected)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = value })
+            .Build();
+
+        Assert.Equal(expected, GetSemanticConventionOptIn(configuration));
     }
 }

@@ -72,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             this.options = options;
 
-            this.httpSemanticConvention = GetSemanticConventionOptIn();
+            this.httpSemanticConvention = options.HttpSemanticConvention;
         }
 
         public override void OnEventWritten(string name, object payload)
