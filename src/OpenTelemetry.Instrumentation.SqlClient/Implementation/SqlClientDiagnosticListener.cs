@@ -17,7 +17,6 @@
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {

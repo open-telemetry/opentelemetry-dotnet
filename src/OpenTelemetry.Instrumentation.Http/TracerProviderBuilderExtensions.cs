@@ -71,6 +71,7 @@ namespace OpenTelemetry.Trace
                 {
                     services.Configure(name, configureHttpClientInstrumentationOptions);
                 }
+
                 services.RegisterOptionsFactory(configuration => new HttpClientInstrumentationOptions(configuration));
             });
 
