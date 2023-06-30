@@ -68,6 +68,7 @@ namespace OpenTelemetry.Trace
                 {
                     services.Configure(name, configureSqlClientInstrumentationOptions);
                 }
+
                 services.RegisterOptionsFactory(configuration => new SqlClientInstrumentationOptions(configuration));
             });
 

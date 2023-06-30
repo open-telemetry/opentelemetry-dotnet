@@ -59,7 +59,7 @@ internal static class HttpSemanticConventionHelper
 
         try
         {
-            var envVarValue = configuration[SemanticConventionOptInKeyName];
+            var envVarValue = configuration![SemanticConventionOptInKeyName];
             return envVarValue?.ToLowerInvariant() switch
             {
                 "http" => HttpSemanticConvention.New,

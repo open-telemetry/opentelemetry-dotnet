@@ -69,6 +69,7 @@ namespace OpenTelemetry.Trace
                 {
                     services.Configure(name, configure);
                 }
+
                 services.RegisterOptionsFactory(configuration => new GrpcClientInstrumentationOptions(configuration));
             });
 

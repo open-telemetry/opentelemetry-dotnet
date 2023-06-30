@@ -19,7 +19,6 @@ using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
