@@ -20,7 +20,7 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    [Collection("ListenAndSampleAllActivitySources")]
+    [Collection(nameof(ListenAndSampleAllActivitySources))]
     public class SpanBuilderShimTests
     {
         private const string SpanName1 = "MySpanName/1";

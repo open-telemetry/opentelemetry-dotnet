@@ -21,7 +21,7 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    [Collection("ListenAndSampleAllActivitySources")]
+    [Collection(nameof(ListenAndSampleAllActivitySources))]
     public class ScopeManagerShimTests
     {
         private const string SpanName = "MySpanName/1";

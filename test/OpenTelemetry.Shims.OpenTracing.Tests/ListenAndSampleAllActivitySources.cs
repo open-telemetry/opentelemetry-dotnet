@@ -19,10 +19,10 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
-    [CollectionDefinition("ListenAndSampleAllActivitySources")]
-    public class ListenAndSampleAllActivitySources : ICollectionFixture<ListenAndSampleAllActivitySources.Fixture>
+    [CollectionDefinition(nameof(ListenAndSampleAllActivitySources))]
+    public sealed class ListenAndSampleAllActivitySources : ICollectionFixture<ListenAndSampleAllActivitySources.Fixture>
     {
-        public class Fixture : IDisposable
+        public sealed class Fixture : IDisposable
         {
             private readonly ActivityListener listener;
 
