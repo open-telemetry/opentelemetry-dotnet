@@ -14,31 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
 using OpenTelemetry.Trace;
 using OpenTracing.Tag;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
+    [Collection("ListenAndSampleAllActivitySources")]
     public class SpanShimTests
     {
         private const string SpanName = "MySpanName/1";
         private const string TracerName = "defaultactivitysource";
-
-        static SpanShimTests()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
-            var listener = new ActivityListener
-            {
-                ShouldListenTo = _ => true,
-                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-            };
-
-            ActivitySource.AddActivityListener(listener);
-        }
 
         [Fact]
         public void CtorArgumentValidation()
