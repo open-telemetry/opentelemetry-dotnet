@@ -1,0 +1,24 @@
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithException.get -> System.Action<System.Diagnostics.Activity, System.Exception>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithException.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpRequestMessage.get -> System.Action<System.Diagnostics.Activity, System.Net.Http.HttpRequestMessage>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpRequestMessage.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpResponseMessage.get -> System.Action<System.Diagnostics.Activity, System.Net.Http.HttpResponseMessage>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpResponseMessage.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpWebRequest.get -> System.Action<System.Diagnostics.Activity, System.Net.HttpWebRequest>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpWebRequest.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpWebResponse.get -> System.Action<System.Diagnostics.Activity, System.Net.HttpWebResponse>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.EnrichWithHttpWebResponse.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.FilterHttpRequestMessage.get -> System.Func<System.Net.Http.HttpRequestMessage, bool>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.FilterHttpRequestMessage.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.FilterHttpWebRequest.get -> System.Func<System.Net.HttpWebRequest, bool>
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.FilterHttpWebRequest.set -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.HttpClientInstrumentationOptions() -> void
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.get -> bool
+OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.set -> void
+OpenTelemetry.Metrics.MeterProviderBuilderExtensions
+OpenTelemetry.Trace.TracerProviderBuilderExtensions
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, string name, System.Action<OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions) -> OpenTelemetry.Trace.TracerProviderBuilder
