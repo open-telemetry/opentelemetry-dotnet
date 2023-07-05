@@ -17,6 +17,7 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -41,12 +42,19 @@ namespace OpenTelemetry
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
             Activity.ForceDefaultIdFormat = true;
             SelfDiagnostics.EnsureInitialized();
+
+            var sdkVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
+            Version = sdkVersion != null && System.Version.TryParse(sdkVersion, out var parsedVersion)
+                ? parsedVersion.ToString(3)
+                : "1.0.0";
         }
 
         /// <summary>
         /// Gets a value indicating whether instrumentation is suppressed (disabled).
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
+
+        internal static string Version { get; }
 
         /// <summary>
         /// Sets the Default TextMapPropagator.
