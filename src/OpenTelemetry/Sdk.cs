@@ -56,7 +56,7 @@ namespace OpenTelemetry
              * The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
              */
 
-            var indexOfPlusSign = assemblyInformationalVersion.IndexOf('+');
+            var indexOfPlusSign = assemblyInformationalVersion!.IndexOf('+');
             InformationalVersion = indexOfPlusSign > 0
                 ? assemblyInformationalVersion.Substring(0, indexOfPlusSign)
                 : assemblyInformationalVersion;
