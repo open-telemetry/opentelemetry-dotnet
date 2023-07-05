@@ -17,7 +17,6 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -29,21 +28,6 @@ namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LogRecordTest
     {
-        private static readonly string OpenTelemetrySdkVersion;
-
-        static LogRecordTest()
-        {
-            var sdkVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
-            if (sdkVersion != null)
-            {
-                OpenTelemetrySdkVersion = Version.Parse(sdkVersion).ToString(3);
-            }
-            else
-            {
-                OpenTelemetrySdkVersion = "0.0.0";
-            }
-        }
-
         private enum Field
         {
             FormattedMessage,
@@ -1009,7 +993,7 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(logRecord);
             Assert.NotNull(logRecord.Logger);
             Assert.Equal("OpenTelemetry", logRecord.Logger.Name);
-            Assert.Equal(OpenTelemetrySdkVersion, logRecord.Logger.Version);
+            Assert.Equal(Sdk.InformationalVersion, logRecord.Logger.Version);
         }
 
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)

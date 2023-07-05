@@ -43,10 +43,23 @@ namespace OpenTelemetry
             Activity.ForceDefaultIdFormat = true;
             SelfDiagnostics.EnsureInitialized();
 
-            var sdkVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
-            Version = sdkVersion != null && System.Version.TryParse(sdkVersion, out var parsedVersion)
-                ? parsedVersion.ToString(3)
-                : "1.0.0";
+            var assemblyInformationalVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            if (string.IsNullOrWhiteSpace(assemblyInformationalVersion))
+            {
+                assemblyInformationalVersion = "1.0.0";
+            }
+
+            /*
+             * InformationalVersion will be in the following format:
+             *   {majorVersion}.{minorVersion}.{patchVersion}.{pre-release label}.{pre-release version}.{gitHeight}+{Git SHA of current commit}
+             * Ex: 1.5.0-alpha.1.40+807f703e1b4d9874a92bd86d9f2d4ebe5b5d52e4
+             * The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
+             */
+
+            var indexOfPlusSign = assemblyInformationalVersion.IndexOf('+');
+            InformationalVersion = indexOfPlusSign > 0
+                ? assemblyInformationalVersion.Substring(0, indexOfPlusSign)
+                : assemblyInformationalVersion;
         }
 
         /// <summary>
@@ -54,7 +67,7 @@ namespace OpenTelemetry
         /// </summary>
         public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
 
-        internal static string Version { get; }
+        internal static string InformationalVersion { get; }
 
         /// <summary>
         /// Sets the Default TextMapPropagator.

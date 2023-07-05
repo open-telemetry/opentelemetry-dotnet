@@ -263,7 +263,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         }
 
         public static LoggerInstrumentationScope Instance { get; }
-            = new("OpenTelemetry", Sdk.Version);
+            = new("OpenTelemetry", Sdk.InformationalVersion);
 
         public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
             => throw new NotSupportedException();

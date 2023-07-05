@@ -31,7 +31,7 @@ namespace OpenTelemetry.Resources
         {
             [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
             [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
-            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = Sdk.Version,
+            [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = Sdk.InformationalVersion,
         });
 
         /// <summary>
