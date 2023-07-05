@@ -117,7 +117,7 @@ public sealed class LogRecordAttributeListTests
 
         if (numberOfItems == 0)
         {
-            Assert.Null(exportedAttributes);
+            Assert.Empty(exportedAttributes);
             Assert.Null(storage);
             return;
         }

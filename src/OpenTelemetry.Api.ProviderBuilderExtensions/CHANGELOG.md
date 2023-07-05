@@ -7,6 +7,10 @@
   implementation (eg `LoggerProviderBuilder`) with dependency injection.
   ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
 
+## 1.5.1
+
+Released 2023-Jun-26
+
 ## 1.5.0
 
 Released 2023-Jun-05

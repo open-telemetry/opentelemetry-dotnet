@@ -158,6 +158,17 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void LoggerProcessStateSkipped<TState>()
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.LoggerProcessStateSkipped(
+                    typeof(TState).FullName!,
+                    "because it does not implement a supported interface (either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>)");
+            }
+        }
+
         [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
         public void SpanProcessorException(string evnt, string ex)
         {
@@ -319,6 +330,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(50, methodName, ex);
         }
 
+        [Event(51, Message = "Skipped processing log state of type '{0}' {1}.", Level = EventLevel.Warning)]
+        public void LoggerProcessStateSkipped(string type, string reason)
+        {
+            this.WriteEvent(51, type, reason);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
@@ -358,7 +375,7 @@ namespace OpenTelemetry.Internal
                     message = e.Message;
                 }
 
-                Debug.WriteLine($"{e.EventSource.Name} - EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
+                Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
             }
         }
 #endif
