@@ -44,10 +44,11 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientMetrics"/> class.
         /// </summary>
-        public HttpClientMetrics()
+        /// <param name="options">HttpClient metric instrumentation options.</param>
+        public HttpClientMetrics(HttpClientMetricInstrumentationOptions options)
         {
             this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter), this.isEnabled);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter, options), this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
