@@ -44,22 +44,7 @@ namespace OpenTelemetry
             SelfDiagnostics.EnsureInitialized();
 
             var assemblyInformationalVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            if (string.IsNullOrWhiteSpace(assemblyInformationalVersion))
-            {
-                assemblyInformationalVersion = "1.0.0";
-            }
-
-            /*
-             * InformationalVersion will be in the following format:
-             *   {majorVersion}.{minorVersion}.{patchVersion}.{pre-release label}.{pre-release version}.{gitHeight}+{Git SHA of current commit}
-             * Ex: 1.5.0-alpha.1.40+807f703e1b4d9874a92bd86d9f2d4ebe5b5d52e4
-             * The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
-             */
-
-            var indexOfPlusSign = assemblyInformationalVersion!.IndexOf('+');
-            InformationalVersion = indexOfPlusSign > 0
-                ? assemblyInformationalVersion.Substring(0, indexOfPlusSign)
-                : assemblyInformationalVersion;
+            InformationalVersion = ParseAssemblyInformationalVersion(assemblyInformationalVersion);
         }
 
         /// <summary>
@@ -118,6 +103,26 @@ namespace OpenTelemetry
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
             return new TracerProviderBuilderBase();
+        }
+
+        internal static string ParseAssemblyInformationalVersion(string? informationalVersion)
+        {
+            if (string.IsNullOrWhiteSpace(informationalVersion))
+            {
+                informationalVersion = "1.0.0";
+            }
+
+            /*
+             * InformationalVersion will be in the following format:
+             *   {majorVersion}.{minorVersion}.{patchVersion}.{pre-release label}.{pre-release version}.{gitHeight}+{Git SHA of current commit}
+             * Ex: 1.5.0-alpha.1.40+807f703e1b4d9874a92bd86d9f2d4ebe5b5d52e4
+             * The following parts are optional: pre-release label, pre-release version, git height, Git SHA of current commit
+             */
+
+            var indexOfPlusSign = informationalVersion!.IndexOf('+');
+            return indexOfPlusSign > 0
+                ? informationalVersion.Substring(0, indexOfPlusSign)
+                : informationalVersion;
         }
     }
 }
