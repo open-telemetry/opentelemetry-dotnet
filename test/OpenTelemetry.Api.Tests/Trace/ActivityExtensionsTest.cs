@@ -212,6 +212,30 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Null(activity.GetTagValue("Tag2"));
         }
 
+        [Fact]
+        public void TryGetTagValue_Empty()
+        {
+            using var activity = new Activity("Test");
+
+            Assert.False(activity.TryGetTagValue("Tag1", out var value));
+            Assert.Null(value);
+        }
+
+        [Fact]
+        public void TryGetTagValue()
+        {
+            using var activity = new Activity("Test");
+            activity.SetTag("Tag1", "Value1");
+
+            Assert.True(activity.TryGetTagValue("Tag1", out var value));
+            Assert.Equal("Value1", value);
+
+            Assert.False(activity.TryGetTagValue("tag1", out value));
+            Assert.Null(value);
+            Assert.False(activity.TryGetTagValue("Tag2", out value));
+            Assert.Null(value);
+        }
+
         [Theory]
         [InlineData("Key", "Value", true)]
         [InlineData("CustomTag", null, false)]

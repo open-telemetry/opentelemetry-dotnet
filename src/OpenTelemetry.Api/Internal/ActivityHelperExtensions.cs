@@ -95,6 +95,24 @@ namespace OpenTelemetry.Trace
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetTagValue(this Activity activity, string tagName, out object tagValue)
+        {
+            Debug.Assert(activity != null, "Activity should not be null");
+
+            foreach (ref readonly var tag in activity.EnumerateTagObjects())
+            {
+                if (tag.Key == tagName)
+                {
+                    tagValue = tag.Value;
+                    return true;
+                }
+            }
+
+            tagValue = null;
+            return false;
+        }
+
         /// <summary>
         /// Checks if the user provided tag name is the first tag of the <see cref="Activity"/> and retrieves the tag value.
         /// </summary>
