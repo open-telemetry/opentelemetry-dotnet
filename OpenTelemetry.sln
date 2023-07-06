@@ -267,6 +267,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
+		src\OpenTelemetry\Internal\HttpSemanticConventionHelper.cs = src\OpenTelemetry\Internal\HttpSemanticConventionHelper.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
@@ -336,10 +337,6 @@ Global
 		{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A38AC295-2745-4B85-8B6B-DCA864CEDD5B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56A34828-621A-478B-A0B8-C065FE938383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56A34828-621A-478B-A0B8-C065FE938383}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56A34828-621A-478B-A0B8-C065FE938383}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56A34828-621A-478B-A0B8-C065FE938383}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1AFFF251-3B0C-47CA-BE94-937083732C0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1AFFF251-3B0C-47CA-BE94-937083732C0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AFFF251-3B0C-47CA-BE94-937083732C0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -356,10 +353,6 @@ Global
 		{305E9DFD-E73B-4A28-8769-795C25551020}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.Build.0 = Release|Any CPU
-		{98F9556B-116F-49B5-9211-BB1D418446FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{98F9556B-116F-49B5-9211-BB1D418446FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{98F9556B-116F-49B5-9211-BB1D418446FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{98F9556B-116F-49B5-9211-BB1D418446FF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Release|Any CPU.ActiveCfg = Release|Any CPU
