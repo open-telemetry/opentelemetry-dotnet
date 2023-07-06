@@ -16,6 +16,8 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore
 {
@@ -24,6 +26,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     /// </summary>
     public class AspNetCoreMetricsInstrumentationOptions
     {
+        internal readonly HttpSemanticConvention HttpSemanticConvention;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AspNetCoreMetricsInstrumentationOptions"/> class.
+        /// </summary>
+        public AspNetCoreMetricsInstrumentationOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        {
+        }
+
+        internal AspNetCoreMetricsInstrumentationOptions(IConfiguration configuration)
+        {
+            Debug.Assert(configuration != null, "configuration was null");
+
+            this.HttpSemanticConvention = GetSemanticConventionOptIn(configuration);
+        }
+
         /// <summary>
         /// Delegate for enrichment of recorded metric with additional tags.
         /// </summary>

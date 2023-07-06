@@ -65,10 +65,15 @@ namespace OpenTelemetry.Trace
 
             name ??= Options.DefaultName;
 
-            if (configureHttpClientInstrumentationOptions != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configureHttpClientInstrumentationOptions));
-            }
+                if (configureHttpClientInstrumentationOptions != null)
+                {
+                    services.Configure(name, configureHttpClientInstrumentationOptions);
+                }
+
+                services.RegisterOptionsFactory(configuration => new HttpClientInstrumentationOptions(configuration));
+            });
 
 #if NETFRAMEWORK
             builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
