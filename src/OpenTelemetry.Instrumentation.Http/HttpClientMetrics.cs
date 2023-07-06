@@ -29,15 +29,25 @@ namespace OpenTelemetry.Instrumentation.Http
         internal static readonly string InstrumentationName = AssemblyName.Name;
         internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();
 
-        private readonly HttpClientMetricInstrumentationOptions options;
+        private static readonly HashSet<string> ExcludedDiagnosticSourceEvents = new()
+        {
+            "System.Net.Http.Request",
+            "System.Net.Http.Response",
+        };
+
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
         private readonly Meter meter;
 
-        public HttpClientMetrics(HttpClientMetricInstrumentationOptions options)
+        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
+            => !ExcludedDiagnosticSourceEvents.Contains(activityName);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HttpClientMetrics"/> class.
+        /// </summary>
+        public HttpClientMetrics()
         {
-            this.options = options;
             this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter, this.options), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter), this.isEnabled);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

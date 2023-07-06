@@ -20,7 +20,7 @@ using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http
 {
-    internal class HttpClientMetricInstrumentationOptions
+    internal sealed class HttpClientMetricInstrumentationOptions
     {
         internal readonly HttpSemanticConvention HttpSemanticConvention;
 
