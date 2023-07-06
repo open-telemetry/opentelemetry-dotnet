@@ -302,23 +302,44 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                     ConnectionDetailCache.TryAdd(dataSource, connectionDetails);
                 }
 
-                if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
-                }
-                else
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
-                }
-
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
                     sqlActivity.SetTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
                 }
 
-                if (!string.IsNullOrEmpty(connectionDetails.Port))
+                if (this.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
+                    if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
+                    }
+                    else
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
+                    }
+
+                    if (!string.IsNullOrEmpty(connectionDetails.Port))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
+                    }
+                }
+
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                if (this.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                {
+                    if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeServerAddress, connectionDetails.ServerHostName);
+                    }
+                    else
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeServerSocketAddress, connectionDetails.ServerIpAddress);
+                    }
+
+                    if (!string.IsNullOrEmpty(connectionDetails.Port))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeServerPort, connectionDetails.Port);
+                    }
                 }
             }
         }
