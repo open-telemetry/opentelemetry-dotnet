@@ -18,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Xunit;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
-namespace OpenTelemetry.Internal.Tests;
+namespace OpenTelemetry.Tests.Shared;
 
 public class HttpSemanticConventionHelperTest
 {
@@ -41,32 +41,32 @@ public class HttpSemanticConventionHelperTest
     [Fact]
     public void VerifyGetSemanticConventionOptIn()
     {
-        this.RunTestWithEnvironmentVariable(null, HttpSemanticConvention.Old);
-        this.RunTestWithEnvironmentVariable(string.Empty, HttpSemanticConvention.Old);
-        this.RunTestWithEnvironmentVariable("junk", HttpSemanticConvention.Old);
-        this.RunTestWithEnvironmentVariable("none", HttpSemanticConvention.Old);
-        this.RunTestWithEnvironmentVariable("NONE", HttpSemanticConvention.Old);
-        this.RunTestWithEnvironmentVariable("http", HttpSemanticConvention.New);
-        this.RunTestWithEnvironmentVariable("HTTP", HttpSemanticConvention.New);
-        this.RunTestWithEnvironmentVariable("http/dup", HttpSemanticConvention.Dupe);
-        this.RunTestWithEnvironmentVariable("HTTP/DUP", HttpSemanticConvention.Dupe);
+        RunTestWithEnvironmentVariable(null, HttpSemanticConvention.Old);
+        RunTestWithEnvironmentVariable(string.Empty, HttpSemanticConvention.Old);
+        RunTestWithEnvironmentVariable("junk", HttpSemanticConvention.Old);
+        RunTestWithEnvironmentVariable("none", HttpSemanticConvention.Old);
+        RunTestWithEnvironmentVariable("NONE", HttpSemanticConvention.Old);
+        RunTestWithEnvironmentVariable("http", HttpSemanticConvention.New);
+        RunTestWithEnvironmentVariable("HTTP", HttpSemanticConvention.New);
+        RunTestWithEnvironmentVariable("http/dup", HttpSemanticConvention.Dupe);
+        RunTestWithEnvironmentVariable("HTTP/DUP", HttpSemanticConvention.Dupe);
     }
 
     [Fact]
     public void VerifyGetSemanticConventionOptInUsingIConfiguration()
     {
-        this.RunTestWithIConfiguration(null, HttpSemanticConvention.Old);
-        this.RunTestWithIConfiguration(string.Empty, HttpSemanticConvention.Old);
-        this.RunTestWithIConfiguration("junk", HttpSemanticConvention.Old);
-        this.RunTestWithIConfiguration("none", HttpSemanticConvention.Old);
-        this.RunTestWithIConfiguration("NONE", HttpSemanticConvention.Old);
-        this.RunTestWithIConfiguration("http", HttpSemanticConvention.New);
-        this.RunTestWithIConfiguration("HTTP", HttpSemanticConvention.New);
-        this.RunTestWithIConfiguration("http/dup", HttpSemanticConvention.Dupe);
-        this.RunTestWithIConfiguration("HTTP/DUP", HttpSemanticConvention.Dupe);
+        RunTestWithIConfiguration(null, HttpSemanticConvention.Old);
+        RunTestWithIConfiguration(string.Empty, HttpSemanticConvention.Old);
+        RunTestWithIConfiguration("junk", HttpSemanticConvention.Old);
+        RunTestWithIConfiguration("none", HttpSemanticConvention.Old);
+        RunTestWithIConfiguration("NONE", HttpSemanticConvention.Old);
+        RunTestWithIConfiguration("http", HttpSemanticConvention.New);
+        RunTestWithIConfiguration("HTTP", HttpSemanticConvention.New);
+        RunTestWithIConfiguration("http/dup", HttpSemanticConvention.Dupe);
+        RunTestWithIConfiguration("HTTP/DUP", HttpSemanticConvention.Dupe);
     }
 
-    private void RunTestWithEnvironmentVariable(string value, HttpSemanticConvention expected)
+    private static void RunTestWithEnvironmentVariable(string value, HttpSemanticConvention expected)
     {
         try
         {
@@ -80,7 +80,7 @@ public class HttpSemanticConventionHelperTest
         }
     }
 
-    private void RunTestWithIConfiguration(string value, HttpSemanticConvention expected)
+    private static void RunTestWithIConfiguration(string value, HttpSemanticConvention expected)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = value })
