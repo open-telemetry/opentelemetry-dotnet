@@ -18,7 +18,9 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.SqlClient
 {
@@ -30,6 +32,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     /// </remarks>
     public class SqlClientInstrumentationOptions
     {
+        internal readonly HttpSemanticConvention HttpSemanticConvention;
+
         /*
          * Match...
          *  protocol[ ]:[ ]serverName
@@ -62,6 +66,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         private static readonly Regex NamedPipeRegex = new("pipe\\\\MSSQL\\$(.*?)\\\\", RegexOptions.Compiled);
 
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqlClientInstrumentationOptions"/> class.
+        /// </summary>
+        public SqlClientInstrumentationOptions()
+            : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        {
+        }
+
+        internal SqlClientInstrumentationOptions(IConfiguration configuration)
+        {
+            Debug.Assert(configuration != null, "configuration was null");
+
+            this.HttpSemanticConvention = GetSemanticConventionOptIn(configuration);
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not the <see

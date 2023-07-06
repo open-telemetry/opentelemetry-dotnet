@@ -63,10 +63,15 @@ namespace OpenTelemetry.Trace
 
             name ??= Options.DefaultName;
 
-            if (configure != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configure));
-            }
+                if (configure != null)
+                {
+                    services.Configure(name, configure);
+                }
+
+                services.RegisterOptionsFactory(configuration => new GrpcClientInstrumentationOptions(configuration));
+            });
 
             builder.AddSource(GrpcClientDiagnosticListener.ActivitySourceName);
             builder.AddLegacySource("Grpc.Net.Client.GrpcOut");
