@@ -63,7 +63,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
-        private readonly HttpSemanticConvention httpSemanticConvention;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -71,8 +70,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             Guard.ThrowIfNull(options);
 
             this.options = options;
-
-            this.httpSemanticConvention = GetSemanticConventionOptIn();
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -198,7 +195,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.DisplayName = path;
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
                     if (request.Host.HasValue)
                     {
@@ -227,7 +224,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
                     if (request.Host.HasValue)
                     {
@@ -284,12 +281,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                 }
 
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                 }
@@ -492,12 +489,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             }
 
-            if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
             {
                 activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             }
 
-            if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
             {
                 activity.SetTag(SemanticConventions.AttributeServerPort, context.Connection.RemotePort);
             }

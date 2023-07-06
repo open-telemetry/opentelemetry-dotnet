@@ -13,6 +13,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.3.3]" />
     <PackageVersion Include="Microsoft.CodeCoverage" Version="[17.4.1]" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[2.1.0,)" />
