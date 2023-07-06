@@ -267,7 +267,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
-		src\OpenTelemetry\Internal\HttpSemanticConventionHelper.cs = src\OpenTelemetry\Internal\HttpSemanticConventionHelper.cs
+		src\Shared\HttpSemanticConventionHelper.cs = src\Shared\HttpSemanticConventionHelper.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
