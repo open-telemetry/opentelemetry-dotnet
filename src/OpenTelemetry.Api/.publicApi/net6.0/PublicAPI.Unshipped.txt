@@ -1,4 +1,4 @@
-
+#nullable enable
 OpenTelemetry.ActivityContextExtensions
 OpenTelemetry.Baggage
 OpenTelemetry.Baggage.Baggage() -> void
@@ -28,7 +28,6 @@ OpenTelemetry.Context.Propagation.TextMapPropagator
 OpenTelemetry.Context.Propagation.TextMapPropagator.TextMapPropagator() -> void
 OpenTelemetry.Context.Propagation.TraceContextPropagator
 OpenTelemetry.Context.Propagation.TraceContextPropagator.TraceContextPropagator() -> void
-OpenTelemetry.Context.RemotingRuntimeContextSlot<T>
 OpenTelemetry.Context.RuntimeContext
 OpenTelemetry.Context.RuntimeContextSlot<T>
 OpenTelemetry.Context.RuntimeContextSlot<T>.Dispose() -> void
@@ -166,8 +165,6 @@ override OpenTelemetry.Baggage.GetHashCode() -> int
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
 override OpenTelemetry.Context.Propagation.PropagationContext.GetHashCode() -> int
-override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Get() -> T
-override OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Set(T value) -> void
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Get() -> T
 override OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Set(T value) -> void
@@ -210,9 +207,6 @@ virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out Open
 ~OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object
 ~OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
 ~OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.CompositeTextMapPropagator(System.Collections.Generic.IEnumerable<OpenTelemetry.Context.Propagation.TextMapPropagator> propagators) -> void
-~OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.RemotingRuntimeContextSlot(string name) -> void
-~OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.get -> object
-~OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.set -> void
 ~OpenTelemetry.Context.RuntimeContextSlot<T>.Name.get -> string
 ~OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string name) -> void
 ~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
