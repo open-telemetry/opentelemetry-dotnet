@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context;
 
@@ -29,17 +30,18 @@ namespace OpenTelemetry
         // * Depth = [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
         private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation");
 
+        private static readonly string SuppressActivityProperty = "otel.suppress_instrumentation";
         private readonly SuppressInstrumentationScope? previousScope;
         private bool disposed;
 
         internal SuppressInstrumentationScope(bool value = true)
         {
             this.previousScope = Slot.Get();
-            this.Depth = value ? -1 : 0;
+            this.Depth = (value || (this.previousScope == null && IsSuppressedWithActivityProperty())) ? -1 : 0;
             Slot.Set(this);
         }
 
-        internal static bool IsSuppressed => (Slot.Get()?.Depth ?? 0) != 0;
+        internal static bool IsSuppressed => (Slot.Get()?.Depth ?? 0) != 0 || IsSuppressedWithActivityProperty();
 
         internal int Depth { get; private set; }
 
@@ -158,6 +160,17 @@ namespace OpenTelemetry
             }
 
             return currentDepth;
+        }
+
+        private static bool IsSuppressedWithActivityProperty()
+        {
+            if (Activity.Current?.GetCustomProperty(SuppressActivityProperty) is bool suppressed && suppressed)
+            {
+                Enter();
+                return true;
+            }
+
+            return false;
         }
     }
 }
