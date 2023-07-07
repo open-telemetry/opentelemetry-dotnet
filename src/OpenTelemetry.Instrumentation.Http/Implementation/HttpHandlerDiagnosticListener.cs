@@ -22,6 +22,7 @@ using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
@@ -65,15 +66,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             this.options = options;
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
-            {
-                this.emitOldAttributes = true;
-            }
+            this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
-            {
-                this.emitNewAttributes = true;
-            }
+            this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         public override void OnEventWritten(string name, object payload)

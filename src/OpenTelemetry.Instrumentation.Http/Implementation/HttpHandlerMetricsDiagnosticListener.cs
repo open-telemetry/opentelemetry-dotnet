@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 #if NETFRAMEWORK
 using System.Net.Http;
+using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
@@ -41,15 +42,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
             this.options = options;
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
-            {
-                this.emitOldAttributes = true;
-            }
+            this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
-            {
-                this.emitNewAttributes = true;
-            }
+            this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         public override void OnEventWritten(string name, object payload)
