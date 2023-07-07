@@ -19,6 +19,7 @@ using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
 #if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Routing;
+using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
 
@@ -43,12 +44,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
-            if (this.emitOldAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
             {
                 this.emitOldAttributes = true;
             }
 
-            if (this.emitNewAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
             {
                 this.emitNewAttributes = true;
             }

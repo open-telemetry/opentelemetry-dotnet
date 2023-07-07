@@ -20,6 +20,7 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
@@ -64,12 +65,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             this.options = options;
 
-            if (this.emitOldAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
             {
                 this.emitOldAttributes = true;
             }
 
-            if (this.emitNewAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
             {
                 this.emitNewAttributes = true;
             }

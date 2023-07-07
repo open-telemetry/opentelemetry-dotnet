@@ -72,12 +72,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             this.options = options;
 
-            if (this.emitOldAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
             {
                 this.emitOldAttributes = true;
             }
 
-            if (this.emitNewAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
             {
                 this.emitNewAttributes = true;
             }

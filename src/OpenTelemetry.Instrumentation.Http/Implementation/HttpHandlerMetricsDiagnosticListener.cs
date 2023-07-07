@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 #if NETFRAMEWORK
 using System.Net.Http;
+using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
 
@@ -40,12 +41,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
             this.options = options;
 
-            if (this.emitOldAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
             {
                 this.emitOldAttributes = true;
             }
 
-            if (this.emitNewAttributes)
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
             {
                 this.emitNewAttributes = true;
             }
