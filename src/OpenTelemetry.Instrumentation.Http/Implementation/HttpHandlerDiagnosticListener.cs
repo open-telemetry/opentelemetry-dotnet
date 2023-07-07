@@ -20,7 +20,6 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 

@@ -73,7 +73,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             this.options = options;
 
-
             this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
             this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);

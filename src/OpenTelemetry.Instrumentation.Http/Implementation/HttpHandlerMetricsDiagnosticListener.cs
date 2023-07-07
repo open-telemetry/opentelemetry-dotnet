@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 #if NETFRAMEWORK
 using System.Net.Http;
-using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
