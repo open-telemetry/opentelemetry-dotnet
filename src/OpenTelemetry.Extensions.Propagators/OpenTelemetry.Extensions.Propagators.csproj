@@ -15,7 +15,7 @@
   <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
