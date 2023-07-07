@@ -41,18 +41,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void ServiceProviderHttpClientFactoryInvoked(bool requestLoggerProviderDirectly)
+        public void ResolutionOrderTest(bool requestLoggerProviderDirectly)
         {
             IServiceCollection services = new ServiceCollection();
 
-            services.AddHttpClient();
-
-            int invocations = 0;
-
-            services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
-
             services.AddLogging(builder => builder.AddOpenTelemetry());
-            services.ConfigureOpenTelemetryLoggerProvider(builder => builder.AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
 
             using var serviceProvider = services.BuildServiceProvider();
 
@@ -66,8 +59,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
                 Assert.NotNull(factory);
             }
-
-            Assert.Equal(1, invocations);
         }
 
         [Fact]
@@ -926,7 +917,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 return defaultFactory();
             };
 
-            using (var exporter = new OtlpMetricExporter(options))
+            using (var exporter = new OtlpLogExporter(options))
             {
                 Assert.Equal(1, invocations);
             }
