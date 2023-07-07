@@ -21,7 +21,6 @@ using System.Net.Http;
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
@@ -45,6 +44,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly HttpClientInstrumentationOptions options;
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
 
         static HttpHandlerDiagnosticListener()
         {
@@ -62,6 +63,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             : base("HttpHandlerDiagnosticListener")
         {
             this.options = options;
+
+            if (this.emitOldAttributes)
+            {
+                this.emitOldAttributes = true;
+            }
+
+            if (this.emitNewAttributes)
+            {
+                this.emitNewAttributes = true;
+            }
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -159,7 +170,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.emitOldAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
                     activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
@@ -174,7 +185,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
@@ -238,12 +249,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
-                    if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                    if (this.emitOldAttributes)
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                     }
 
-                    if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                    if (this.emitNewAttributes)
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                     }
