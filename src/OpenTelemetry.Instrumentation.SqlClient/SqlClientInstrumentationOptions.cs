@@ -32,9 +32,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     /// </remarks>
     public class SqlClientInstrumentationOptions
     {
-        private readonly bool emitOldAttributes;
-        private readonly bool emitNewAttributes;
-
         /*
          * Match...
          *  protocol[ ]:[ ]serverName
@@ -67,6 +64,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         private static readonly Regex NamedPipeRegex = new("pipe\\\\MSSQL\\$(.*?)\\\\", RegexOptions.Compiled);
 
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentationOptions"/> class.
