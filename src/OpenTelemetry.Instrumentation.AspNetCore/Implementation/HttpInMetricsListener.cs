@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Routing;
 using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -44,12 +45,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
             {
                 this.emitOldAttributes = true;
             }
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
             {
                 this.emitNewAttributes = true;
             }

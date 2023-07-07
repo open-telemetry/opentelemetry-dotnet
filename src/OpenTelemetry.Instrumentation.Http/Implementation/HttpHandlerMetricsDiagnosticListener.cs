@@ -21,6 +21,7 @@ using System.Net.Http;
 using OpenTelemetry.Internal;
 #endif
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
@@ -41,12 +42,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
             this.options = options;
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.Old))
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
             {
                 this.emitOldAttributes = true;
             }
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConventionHelper.HttpSemanticConvention.New))
+            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
             {
                 this.emitNewAttributes = true;
             }
