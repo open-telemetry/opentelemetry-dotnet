@@ -32,6 +32,7 @@ public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
     internal List<KeyValuePair<string, object?>>? OverflowAttributes;
+    private static readonly IReadOnlyList<KeyValuePair<string, object?>> Empty = Array.Empty<KeyValuePair<string, object?>>();
     private KeyValuePair<string, object?> attribute1;
     private KeyValuePair<string, object?> attribute2;
     private KeyValuePair<string, object?> attribute3;
@@ -207,12 +208,12 @@ public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object
     /// <inheritdoc/>
     readonly IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-    internal readonly List<KeyValuePair<string, object?>>? Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
+    internal readonly IReadOnlyList<KeyValuePair<string, object?>> Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
     {
         int count = this.count;
         if (count <= 0)
         {
-            return null;
+            return Empty;
         }
 
         var overflowAttributes = this.OverflowAttributes;
