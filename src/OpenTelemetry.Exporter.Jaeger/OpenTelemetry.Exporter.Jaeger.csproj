@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
+    <TargetFrameworks>$(DefaultTargetFrameworks);netstandard2.1</TargetFrameworks>
     <Description>Jaeger exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Jaeger;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
