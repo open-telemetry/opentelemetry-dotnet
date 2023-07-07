@@ -327,7 +327,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                     }
                 }
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/database.md
                 if (this.emitNewAttributes)
                 {
                     if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
