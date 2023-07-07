@@ -32,7 +32,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     /// </remarks>
     public class SqlClientInstrumentationOptions
     {
-        internal readonly HttpSemanticConvention HttpSemanticConvention;
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
 
         /*
          * Match...
@@ -79,7 +80,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         {
             Debug.Assert(configuration != null, "configuration was null");
 
-            this.HttpSemanticConvention = GetSemanticConventionOptIn(configuration);
+            var httpSemanticConvention = GetSemanticConventionOptIn(configuration);
+            this.emitOldAttributes = httpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+            this.emitNewAttributes = httpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         /// <summary>
@@ -307,7 +310,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                     sqlActivity.SetTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
                 }
 
-                if (this.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.emitOldAttributes)
                 {
                     if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
                     {
@@ -325,7 +328,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (this.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.emitNewAttributes)
                 {
                     if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
                     {
