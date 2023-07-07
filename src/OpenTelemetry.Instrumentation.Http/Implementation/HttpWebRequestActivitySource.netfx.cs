@@ -122,7 +122,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
                     }
 
-                    activity.SetTag(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                     activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
                     activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 }

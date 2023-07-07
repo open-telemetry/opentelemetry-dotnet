@@ -77,7 +77,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
 

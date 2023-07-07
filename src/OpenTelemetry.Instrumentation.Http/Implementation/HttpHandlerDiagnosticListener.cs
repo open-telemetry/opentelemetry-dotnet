@@ -176,7 +176,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
                 if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
                 {
-                    activity.SetTag(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                     activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                     if (!request.RequestUri.IsDefaultPort)
