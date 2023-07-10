@@ -386,6 +386,7 @@ public sealed class LogRecord
             Data = this.Data,
             ILoggerData = this.ILoggerData.Copy(),
             Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),
+            Logger = this.Logger,
         };
     }
 
