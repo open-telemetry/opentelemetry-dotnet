@@ -31,15 +31,19 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<HttpRequestMessage> stopRequestFetcher = new("Request");
         private readonly Histogram<double> httpClientDuration;
+        private readonly HttpClientMetricInstrumentationOptions options;
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
 
-        private readonly HttpSemanticConvention httpSemanticConvention;
-
-        public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
+        public HttpHandlerMetricsDiagnosticListener(string name, Meter meter, HttpClientMetricInstrumentationOptions options)
             : base(name)
         {
             this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+            this.options = options;
 
-            this.httpSemanticConvention = GetSemanticConventionOptIn();
+            this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+
+            this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -57,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     TagList tags = default;
 
                     // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                    if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                    if (this.emitOldAttributes)
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
@@ -76,7 +80,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     }
 
                     // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                    if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                    if (this.emitNewAttributes)
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));

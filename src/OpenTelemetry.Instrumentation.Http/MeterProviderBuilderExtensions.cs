@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Internal;
@@ -38,6 +40,11 @@ namespace OpenTelemetry.Metrics
             // Note: Warm-up the status code mapping.
             _ = TelemetryHelper.BoxedStatusCodes;
 
+            builder.ConfigureServices(services =>
+            {
+                services.RegisterOptionsFactory(configuration => new HttpClientMetricInstrumentationOptions(configuration));
+            });
+
             // TODO: Implement an IDeferredMeterProviderBuilder
 
             // TODO: Handle HttpClientInstrumentationOptions
@@ -46,9 +53,9 @@ namespace OpenTelemetry.Metrics
             //   Enrich - do we want a similar kind of functionality for metrics?
             //   RecordException - probably doesn't make sense for metric instrumentation
 
-            var instrumentation = new HttpClientMetrics();
             builder.AddMeter(HttpClientMetrics.InstrumentationName);
-            return builder.AddInstrumentation(() => instrumentation);
+            return builder.AddInstrumentation(sp => new HttpClientMetrics(
+                sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().CurrentValue));
         }
     }
 }

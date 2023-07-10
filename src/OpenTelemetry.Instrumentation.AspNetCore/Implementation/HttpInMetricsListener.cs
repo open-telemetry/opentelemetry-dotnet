@@ -34,8 +34,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly Meter meter;
         private readonly AspNetCoreMetricsInstrumentationOptions options;
         private readonly Histogram<double> httpServerDuration;
-
-        private readonly HttpSemanticConvention httpSemanticConvention;
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
 
         internal HttpInMetricsListener(string name, Meter meter, AspNetCoreMetricsInstrumentationOptions options)
             : base(name)
@@ -44,7 +44,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.options = options;
             this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
-            this.httpSemanticConvention = GetSemanticConventionOptIn();
+            this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+
+            this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -83,7 +85,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 TagList tags = default;
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.emitOldAttributes)
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme));
@@ -102,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (this.httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.emitNewAttributes)
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));

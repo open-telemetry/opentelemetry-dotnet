@@ -66,10 +66,15 @@ namespace OpenTelemetry.Metrics
 
             name ??= Options.DefaultName;
 
-            if (configureAspNetCoreInstrumentationOptions != null)
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services => services.Configure(name, configureAspNetCoreInstrumentationOptions));
-            }
+                if (configureAspNetCoreInstrumentationOptions != null)
+                {
+                    services.Configure(name, configureAspNetCoreInstrumentationOptions);
+                }
+
+                services.RegisterOptionsFactory(configuration => new AspNetCoreMetricsInstrumentationOptions(configuration));
+            });
 
             builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
 
