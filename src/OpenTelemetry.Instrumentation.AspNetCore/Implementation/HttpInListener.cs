@@ -321,7 +321,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
 #if NET7_0_OR_GREATER
-            if (activity.TryGetTagValue("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
+            var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
+            if (ReferenceEquals(tagValue, bool.TrueString))
 #else
             if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
 #endif
