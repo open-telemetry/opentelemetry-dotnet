@@ -14,14 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-#if !NETFRAMEWORK
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -104,14 +99,15 @@ namespace OpenTelemetry.Logs.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        [SuppressMessage("CA2254", "CA2254", Justification = "While you shouldn't use interpolation in a log message, this test verifies things work with it anyway.")]
         public void CheckStateForUnstructuredLogWithStringInterpolation(bool includeFormattedMessage)
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
+#pragma warning disable CA2254 // Template should be a static expression
             var message = $"Hello from potato {0.99}.";
             logger.LogInformation(message);
+#pragma warning restore CA2254 // Template should be a static expression
 
             Assert.NotNull(exportedItems[0].State);
 
@@ -983,6 +979,23 @@ namespace OpenTelemetry.Logs.Tests
             }
         }
 
+        [Fact]
+        public void LogRecordInstrumentationScopeTest()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems);
+
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("Hello world!");
+
+            var logRecord = exportedItems.FirstOrDefault();
+
+            Assert.NotNull(logRecord);
+            Assert.NotNull(logRecord.Logger);
+            Assert.Equal("OpenTelemetry", logRecord.Logger.Name);
+            Assert.Equal(Sdk.InformationalVersion, logRecord.Logger.Version);
+        }
+
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
             var items = exportedItems = new List<LogRecord>();
@@ -1005,7 +1018,7 @@ namespace OpenTelemetry.Logs.Tests
             public double Price { get; set; }
         }
 
-        private struct StructState : IReadOnlyList<KeyValuePair<string, object>>
+        private readonly struct StructState : IReadOnlyList<KeyValuePair<string, object>>
         {
             private readonly List<KeyValuePair<string, object>> list;
 
@@ -1161,4 +1174,3 @@ namespace OpenTelemetry.Logs.Tests
         }
     }
 }
-#endif
