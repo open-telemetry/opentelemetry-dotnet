@@ -194,8 +194,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             ValidateAspNetCoreActivity(activity, "/api/values/2");
         }
 
-        [Fact]
-        public async Task CustomPropagator()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task CustomPropagator(bool addSampler)
         {
             try
             {
@@ -219,8 +221,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             builder.ConfigureTestServices(services =>
                             {
                                 Sdk.SetDefaultTextMapPropagator(propagator.Object);
-                                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                                                        .SetSampler(new TestSampler(SamplingDecision.RecordAndSample, new Dictionary<string, object> { { "SomeTag", "SomeKey" }, }))
+                                var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
+
+                                if (addSampler)
+                                {
+                                    tracerProviderBuilder
+                                        .SetSampler(new TestSampler(SamplingDecision.RecordAndSample, new Dictionary<string, object> { { "SomeTag", "SomeKey" }, }));
+                                }
+
+                                this.tracerProvider = tracerProviderBuilder
                                                         .AddAspNetCoreInstrumentation()
                                                         .AddInMemoryExporter(exportedItems)
                                                         .Build();
