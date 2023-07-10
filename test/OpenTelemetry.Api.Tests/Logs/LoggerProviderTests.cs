@@ -16,6 +16,9 @@
 
 #nullable enable
 
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -68,7 +71,12 @@ public sealed class LoggerProviderTests
 
     private sealed class TestLoggerProvider : LoggerProvider
     {
-        protected override bool TryCreateLogger(string? name, out Logger? logger)
+        protected override bool TryCreateLogger(
+            string? name,
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+            [NotNullWhen(true)]
+#endif
+            out Logger? logger)
         {
             logger = new TestLogger(name);
             return true;
