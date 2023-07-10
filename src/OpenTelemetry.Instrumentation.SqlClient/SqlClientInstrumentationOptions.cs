@@ -137,19 +137,23 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para><b>EnableConnectionLevelAttributes is supported on all
-        /// runtimes.</b></para>
-        /// <para>The default behavior is to set the SqlConnection DataSource as
-        /// the <see cref="SemanticConventions.AttributePeerService"/> tag. If
-        /// enabled, SqlConnection DataSource will be parsed and the server name
-        /// will be sent as the <see
-        /// cref="SemanticConventions.AttributeNetPeerName"/> or <see
-        /// cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance
-        /// name will be sent as the <see
-        /// cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and
-        /// the port will be sent as the <see
-        /// cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not
-        /// 1433 (the default port).</para>
+        /// <para>
+        /// <b>EnableConnectionLevelAttributes is supported on all runtimes.</b>
+        /// </para>
+        /// <para>
+        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag.
+        /// If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the
+        /// <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag,
+        /// the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag,
+        /// and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
+        /// </para>
+        /// <para>
+        /// If the environment variable OTEL_SEMCONV_STABILITY_OPT_IN is set to "http", the newer Semantic Convention v1.21.0 Attributes will be emitted.
+        /// SqlConnection DataSource will be parsed and the server name will be sent as the
+        /// <see cref="SemanticConventions.AttributeServerAddress"/> or <see cref="SemanticConventions.AttributeServerSocketAddress"/> tag,
+        /// the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag,
+        /// and the port will be sent as the <see cref="SemanticConventions.AttributeServerPort"/> tag if it is not 1433 (the default port).
+        /// </para>
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; }
 
@@ -341,6 +345,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
                     if (!string.IsNullOrEmpty(connectionDetails.Port))
                     {
+                        // TODO: Should we continue to emit this if the default port (1433) is being used?
                         sqlActivity.SetTag(SemanticConventions.AttributeServerPort, connectionDetails.Port);
                     }
                 }
