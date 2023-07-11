@@ -168,7 +168,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             var activity = source.StartActivity("Test Sql Activity");
 
             var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http/dupe" })
+                .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http/dup" })
                 .Build();
 
             var options = new SqlClientInstrumentationOptions(configuration)
