@@ -26,10 +26,22 @@ internal static partial class TagTransformerJsonHelper
     internal static string JsonSerializeArrayTag(Array array)
         => array switch
         {
+            // This switch needs to support the same set of types as those in TagTransformer.TransformArrayTagInternal
             char[] _ => WriteToString(array, WriteCharArray),
             string[] _ => WriteToString(array, WriteStringArray),
             bool[] _ => WriteToString(array, WriteBooleanArray),
-            byte[] _ => WriteToString(array, WriteByteArray),
+
+            // Runtime allows casting byte[] to sbyte[] and vice versa, so pattern match to sbyte[] doesn't work since it goes through byte[]
+            // Similarly (array is sbyte[]) doesn't help either. Only real type comparison works.
+            // This is true for byte/sbyte, short/ushort, int/uint and so on
+            byte[] _ => array.GetType() == typeof(sbyte[]) ? WriteToString(array, WriteSByteArray) : WriteToString(array, WriteByteArray),
+            short[] _ => array.GetType() == typeof(ushort[]) ? WriteToString(array, WriteUShortArray) : WriteToString(array, WriteShortArray),
+            int[] _ => array.GetType() == typeof(uint[]) ? WriteToString(array, WriteUIntArray) : WriteToString(array, WriteIntArray),
+
+            long[] _ => WriteToString(array, WriteLongArray),
+            float[] _ => WriteToString(array, WriteFloatArray),
+            double[] _ => WriteToString(array, WriteDoubleArray),
+
             _ => throw new NotSupportedException($"Unexpected serialization of array of type {array.GetType()}."),
         };
 
@@ -72,6 +84,94 @@ internal static partial class TagTransformerJsonHelper
     {
         writer.WriteStartArray();
         foreach (var item in (byte[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteSByteArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (sbyte[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteShortArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (short[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteUShortArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (ushort[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteIntArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (int[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteUIntArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (uint[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteLongArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (long[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteFloatArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (float[])data)
+        {
+            writer.WriteNumberValue(item);
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteDoubleArray(object data, Utf8JsonWriter writer)
+    {
+        writer.WriteStartArray();
+        foreach (var item in (double[])data)
         {
             writer.WriteNumberValue(item);
         }
