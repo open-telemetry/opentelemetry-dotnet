@@ -177,6 +177,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             };
             options.AddConnectionLevelDetailsToActivity(dataSource, activity);
 
+            // New
             if (!enableConnectionLevelAttributes)
             {
                 Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributePeerService));
@@ -189,6 +190,20 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
             Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
             Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeServerPort));
+
+            // Old
+            if (!enableConnectionLevelAttributes)
+            {
+                Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributePeerService));
+            }
+            else
+            {
+                Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+            }
+
+            Assert.Equal(expectedServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+            Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
+            Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
     }
 }
