@@ -25,7 +25,7 @@
   CVE-2023-32731. Refer to
   [https://github.com/grpc/grpc/pull/32309](https://github.com/grpc/grpc/pull/32309)
   for more details.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#4647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4647))
 
 ## 1.5.1
 
