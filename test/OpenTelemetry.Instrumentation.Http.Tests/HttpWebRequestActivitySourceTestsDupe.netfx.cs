@@ -803,7 +803,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeUrlFull));
 
-
             // Old
             Assert.NotNull(activity.TagObjects);
             Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
