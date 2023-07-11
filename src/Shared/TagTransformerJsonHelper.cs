@@ -19,191 +19,73 @@ using System.Text.Json;
 
 namespace OpenTelemetry.Internal;
 
-// The class has to be partial so that JSON source generator can provide code for the JsonSerializerContext
-#pragma warning disable SA1601 // Partial elements should be documented
-internal static partial class TagTransformerJsonHelper
+internal static class TagTransformerJsonHelper
 {
     internal static string JsonSerializeArrayTag(Array array)
         => array switch
         {
             // This switch needs to support the same set of types as those in TagTransformer.TransformArrayTagInternal
-            char[] _ => WriteToString(array, WriteCharArray),
-            string[] _ => WriteToString(array, WriteStringArray),
-            bool[] _ => WriteToString(array, WriteBooleanArray),
+            char[] charArray => WriteToString(charArray, WriteCharValue),
+            string[] stringArray => WriteToString(stringArray, WriteStringValue),
+            bool[] booleanArray => WriteToString(booleanArray, WriteBooleanValue),
 
             // Runtime allows casting byte[] to sbyte[] and vice versa, so pattern match to sbyte[] doesn't work since it goes through byte[]
             // Similarly (array is sbyte[]) doesn't help either. Only real type comparison works.
             // This is true for byte/sbyte, short/ushort, int/uint and so on
-            byte[] _ => array.GetType() == typeof(sbyte[]) ? WriteToString(array, WriteSByteArray) : WriteToString(array, WriteByteArray),
-            short[] _ => array.GetType() == typeof(ushort[]) ? WriteToString(array, WriteUShortArray) : WriteToString(array, WriteShortArray),
-            int[] _ => array.GetType() == typeof(uint[]) ? WriteToString(array, WriteUIntArray) : WriteToString(array, WriteIntArray),
+            byte[] byteArray => array.GetType() == typeof(sbyte[]) ? WriteToString((sbyte[])array, WriteSByteValue) : WriteToString(byteArray, WriteByteValue),
+            short[] shortArray => array.GetType() == typeof(ushort[]) ? WriteToString((ushort[])array, WriteUShortValue) : WriteToString(shortArray, WriteShortValue),
+            int[] intArray => array.GetType() == typeof(uint[]) ? WriteToString((uint[])array, WriteUIntValue) : WriteToString(intArray, WriteIntValue),
 
-            long[] _ => WriteToString(array, WriteLongArray),
-            float[] _ => WriteToString(array, WriteFloatArray),
-            double[] _ => WriteToString(array, WriteDoubleArray),
+            long[] longArray => WriteToString(longArray, WriteLongValue),
+            float[] floatArray => WriteToString(floatArray, WriteFloatValue),
+            double[] doubleArray => WriteToString(doubleArray, WriteDoubleValue),
 
             _ => throw new NotSupportedException($"Unexpected serialization of array of type {array.GetType()}."),
         };
 
-    private static void WriteCharArray(object data, Utf8JsonWriter writer)
+    private static void WriteCharValue(char v, Utf8JsonWriter writer)
     {
-        writer.WriteStartArray();
         Span<char> charSpan = stackalloc char[1];
-        foreach (var item in (char[])data)
-        {
-            charSpan[0] = item;
-            writer.WriteStringValue(charSpan);
-        }
-
-        writer.WriteEndArray();
+        charSpan[0] = v;
+        writer.WriteStringValue(charSpan);
     }
 
-    private static void WriteStringArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (string[])data)
-        {
-            writer.WriteStringValue(item);
-        }
+    private static void WriteStringValue(string v, Utf8JsonWriter writer) => writer.WriteStringValue(v);
 
-        writer.WriteEndArray();
-    }
+    private static void WriteBooleanValue(bool v, Utf8JsonWriter writer) => writer.WriteBooleanValue(v);
 
-    private static void WriteBooleanArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (bool[])data)
-        {
-            writer.WriteBooleanValue(item);
-        }
+    private static void WriteByteValue(byte v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-        writer.WriteEndArray();
-    }
+    private static void WriteSByteValue(sbyte v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-    private static void WriteByteArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (byte[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
+    private static void WriteShortValue(short v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-        writer.WriteEndArray();
-    }
+    private static void WriteUShortValue(ushort v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-    private static void WriteSByteArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (sbyte[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
+    private static void WriteIntValue(int v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-        writer.WriteEndArray();
-    }
+    private static void WriteUIntValue(uint v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-    private static void WriteShortArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (short[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
+    private static void WriteLongValue(long v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-        writer.WriteEndArray();
-    }
+    private static void WriteFloatValue(float v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-    private static void WriteUShortArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (ushort[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
+    private static void WriteDoubleValue(double v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-        writer.WriteEndArray();
-    }
-
-    private static void WriteIntArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (int[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
-
-        writer.WriteEndArray();
-    }
-
-    private static void WriteUIntArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (uint[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
-
-        writer.WriteEndArray();
-    }
-
-    private static void WriteLongArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (long[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
-
-        writer.WriteEndArray();
-    }
-
-    private static void WriteFloatArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (float[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
-
-        writer.WriteEndArray();
-    }
-
-    private static void WriteDoubleArray(object data, Utf8JsonWriter writer)
-    {
-        writer.WriteStartArray();
-        foreach (var item in (double[])data)
-        {
-            writer.WriteNumberValue(item);
-        }
-
-        writer.WriteEndArray();
-    }
-
-    private static string WriteToString(object data, Action<object, Utf8JsonWriter> writeAction)
+    private static string WriteToString<T>(T[] data, Action<T, Utf8JsonWriter> writeAction)
     {
         MemoryStream ms = new MemoryStream();
         using (Utf8JsonWriter writer = new Utf8JsonWriter(ms))
         {
-            writeAction(data, writer);
+            writer.WriteStartArray();
+            foreach (T item in data)
+            {
+                writeAction(item, writer);
+            }
+
+            writer.WriteEndArray();
         }
 
         return Encoding.UTF8.GetString(ms.ToArray());
     }
-
-    //[JsonSerializable(typeof(object))]
-    //[JsonSerializable(typeof(char[]))]
-    //[JsonSerializable(typeof(string[]))]
-    //[JsonSerializable(typeof(bool[]))]
-    //[JsonSerializable(typeof(byte[]))]
-    //[JsonSerializable(typeof(sbyte[]))]
-    //[JsonSerializable(typeof(short[]))]
-    //[JsonSerializable(typeof(ushort[]))]
-    //[JsonSerializable(typeof(int[]))]
-    //[JsonSerializable(typeof(uint[]))]
-    //[JsonSerializable(typeof(long[]))]
-    //[JsonSerializable(typeof(float[]))]
-    //[JsonSerializable(typeof(double[]))]
-    //private sealed partial class ArrayTagJsonContext : JsonSerializerContext
-    //{
-    //}
 }
