@@ -26,6 +26,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs" Link="Includes\InstrumentationEventSource.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs" Link="Includes\ListenerHandler.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\TagTransformerJsonHelper.cs" Link="Includes\TagTransformerJsonHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,5 +37,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 </Project>
