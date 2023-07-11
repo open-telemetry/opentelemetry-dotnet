@@ -7,6 +7,10 @@
   which attributes are emitted by setting the environment variable
   `OTEL_SEMCONV_STABILITY_OPT_IN`.
 
+* Fixed an issue affecting NET 7.0+. If custom propagation is being used
+  and tags are added to an Activity during sampling then that Activity would be dropped.
+  ([#4637](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4637))
+
 ## 1.5.0-beta.1
 
 Released 2023-Jun-05
