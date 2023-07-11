@@ -147,5 +147,48 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
             Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeServerPort));
         }
+
+        // Tests for newer HTTP v1.21.0 Semantic Conventions and older attributes.
+        // This test method can be deleted when this library is GA.
+        [Theory]
+        [InlineData(true, "localhost", "localhost", null, null, null)]
+        [InlineData(true, "127.0.0.1,1433", null, "127.0.0.1", null, null)]
+        [InlineData(true, "127.0.0.1,1434", null, "127.0.0.1", null, "1434")]
+        [InlineData(true, "127.0.0.1\\instanceName, 1818", null, "127.0.0.1", "instanceName", "1818")]
+        [InlineData(false, "localhost", "localhost", null, null, null)]
+        public void SqlClientInstrumentationOptions_EnableConnectionLevelAttributes_Dupe(
+            bool enableConnectionLevelAttributes,
+            string dataSource,
+            string expectedServerHostName,
+            string expectedServerIpAddress,
+            string expectedInstanceName,
+            string expectedPort)
+        {
+            var source = new ActivitySource("sql-client-instrumentation");
+            var activity = source.StartActivity("Test Sql Activity");
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http/dupe" })
+                .Build();
+
+            var options = new SqlClientInstrumentationOptions(configuration)
+            {
+                EnableConnectionLevelAttributes = enableConnectionLevelAttributes,
+            };
+            options.AddConnectionLevelDetailsToActivity(dataSource, activity);
+
+            if (!enableConnectionLevelAttributes)
+            {
+                Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributePeerService));
+            }
+            else
+            {
+                Assert.Equal(expectedServerHostName, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            }
+
+            Assert.Equal(expectedServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
+            Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
+            Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeServerPort));
+        }
     }
 }
