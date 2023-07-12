@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-alpha.1
+
+Released 2023-Jul-12
+
 * Added extension methods to support using the [Logs Bridge
   API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
   implementation (eg `LoggerProviderBuilder`) with dependency injection.

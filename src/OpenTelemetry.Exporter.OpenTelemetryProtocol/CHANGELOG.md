@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-alpha.1
+
+Released 2023-Jul-12
+
 * Merged `OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs` package into
   `OpenTelemetry.Exporter.OpenTelemetryProtocol`. Going Forward,
   `OpenTelemetry.Exporter.OpenTelemetryProtocol` will be the only package needed
