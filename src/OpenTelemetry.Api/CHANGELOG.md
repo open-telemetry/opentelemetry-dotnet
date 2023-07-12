@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-alpha.1
+
+Released 2023-Jul-12
+
 * Updated `System.Diagnostics.DiagnosticSource` package version to `7.0.2`.
   ([#4576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4576))
 
