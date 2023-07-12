@@ -43,10 +43,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
-        internal static HttpClientInstrumentationOptions Options = new HttpClientInstrumentationOptions();
-
         private static readonly Version Version = AssemblyName.Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+
+        private static HttpClientInstrumentationOptions options;
+
+        private static bool emitOldAttributes;
+        private static bool emitNewAttributes;
 
         // Fields for reflection
         private static FieldInfo connectionGroupListField;
@@ -82,11 +85,25 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 PrepareReflectionObjects();
                 PerformInjection();
+
+                Options = new HttpClientInstrumentationOptions();
             }
             catch (Exception ex)
             {
                 // If anything went wrong, just no-op. Write an event so at least we can find out.
                 HttpInstrumentationEventSource.Log.ExceptionInitializingInstrumentation(typeof(HttpWebRequestActivitySource).FullName, ex);
+            }
+        }
+
+        internal static HttpClientInstrumentationOptions Options
+        {
+            get => options;
+            set
+            {
+                options = value;
+
+                emitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+                emitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
             }
         }
 
@@ -98,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (activity.IsAllDataRequested)
             {
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                if (Options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (emitOldAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                     activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
@@ -113,7 +130,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 }
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (Options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
                     activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
@@ -142,12 +159,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                if (Options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (emitOldAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                 }
 
-                if (Options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                 }
@@ -180,12 +197,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 if (wexc.Response is HttpWebResponse response)
                 {
-                    if (Options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                    if (emitOldAttributes)
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
                     }
 
-                    if (Options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                    if (emitNewAttributes)
                     {
                         activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)response.StatusCode);
                     }
