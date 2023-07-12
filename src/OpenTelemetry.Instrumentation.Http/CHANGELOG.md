@@ -6,6 +6,8 @@
   This library can emit either old, new, or both attributes. Users can control
   which attributes are emitted by setting the environment variable
   `OTEL_SEMCONV_STABILITY_OPT_IN`.
+  ([#4538](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4538))
+  ([#4639](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4639))
 
 ## 1.5.0-beta.1
 
