@@ -45,6 +45,11 @@ namespace OpenTelemetry
 
             var assemblyInformationalVersion = typeof(Sdk).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             InformationalVersion = ParseAssemblyInformationalVersion(assemblyInformationalVersion);
+
+            ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
+            {
+                OpenTelemetrySdkEventSource.Log.InvalidEnvironmentVariable(key, value);
+            };
         }
 
         /// <summary>
