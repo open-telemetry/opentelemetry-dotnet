@@ -105,8 +105,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
 
-        // Tests for newer HTTP v1.21.0 Semantic Conventions.
-        // This test method can replace the other when this library is GA.
+        // Tests for v1.21.0 Semantic Conventions for database client calls.
+        // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/database.md
+        // This test emits the new attributes.
+        // This test method can replace the other (old) test method when this library is GA.
         [Theory]
         [InlineData(true, "localhost", "localhost", null, null, null)]
         [InlineData(true, "127.0.0.1,1433", null, "127.0.0.1", null, null)]
@@ -148,7 +150,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeServerPort));
         }
 
-        // Tests for newer HTTP v1.21.0 Semantic Conventions and older attributes.
+        // Tests for v1.21.0 Semantic Conventions for database client calls.
+        // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/database.md
+        // This test emits both the new and older attributes.
         // This test method can be deleted when this library is GA.
         [Theory]
         [InlineData(true, "localhost", "localhost", null, null, null)]
