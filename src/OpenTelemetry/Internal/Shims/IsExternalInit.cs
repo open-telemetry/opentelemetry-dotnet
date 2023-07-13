@@ -15,11 +15,10 @@
 // </copyright>
 
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
-namespace System.Runtime.CompilerServices
+namespace System.Runtime.CompilerServices;
+
+// This enabled "init" keyword in net462 + netstandard2.0 targets.
+internal sealed class IsExternalInit
 {
-    // This enabled "init" keyword in net462 + netstandard2.0 targets.
-    internal sealed class IsExternalInit
-    {
-    }
 }
 #endif
