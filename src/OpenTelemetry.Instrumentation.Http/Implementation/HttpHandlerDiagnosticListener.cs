@@ -179,7 +179,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
                 }
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md
                 if (this.emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
