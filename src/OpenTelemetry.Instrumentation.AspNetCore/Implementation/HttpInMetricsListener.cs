@@ -103,7 +103,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md
                 if (this.emitNewAttributes)
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
