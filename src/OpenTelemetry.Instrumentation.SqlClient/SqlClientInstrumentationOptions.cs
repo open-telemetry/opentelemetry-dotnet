@@ -32,8 +32,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     /// </remarks>
     public class SqlClientInstrumentationOptions
     {
-        internal readonly HttpSemanticConvention HttpSemanticConvention;
-
         /*
          * Match...
          *  protocol[ ]:[ ]serverName
@@ -67,6 +65,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
         private static readonly ConcurrentDictionary<string, SqlConnectionDetails> ConnectionDetailCache = new(StringComparer.OrdinalIgnoreCase);
 
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientInstrumentationOptions"/> class.
         /// </summary>
@@ -79,7 +80,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         {
             Debug.Assert(configuration != null, "configuration was null");
 
-            this.HttpSemanticConvention = GetSemanticConventionOptIn(configuration);
+            var httpSemanticConvention = GetSemanticConventionOptIn(configuration);
+            this.emitOldAttributes = httpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+            this.emitNewAttributes = httpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         /// <summary>
@@ -134,19 +137,23 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para><b>EnableConnectionLevelAttributes is supported on all
-        /// runtimes.</b></para>
-        /// <para>The default behavior is to set the SqlConnection DataSource as
-        /// the <see cref="SemanticConventions.AttributePeerService"/> tag. If
-        /// enabled, SqlConnection DataSource will be parsed and the server name
-        /// will be sent as the <see
-        /// cref="SemanticConventions.AttributeNetPeerName"/> or <see
-        /// cref="SemanticConventions.AttributeNetPeerIp"/> tag, the instance
-        /// name will be sent as the <see
-        /// cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag, and
-        /// the port will be sent as the <see
-        /// cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not
-        /// 1433 (the default port).</para>
+        /// <para>
+        /// <b>EnableConnectionLevelAttributes is supported on all runtimes.</b>
+        /// </para>
+        /// <para>
+        /// The default behavior is to set the SqlConnection DataSource as the <see cref="SemanticConventions.AttributePeerService"/> tag.
+        /// If enabled, SqlConnection DataSource will be parsed and the server name will be sent as the
+        /// <see cref="SemanticConventions.AttributeNetPeerName"/> or <see cref="SemanticConventions.AttributeNetPeerIp"/> tag,
+        /// the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag,
+        /// and the port will be sent as the <see cref="SemanticConventions.AttributeNetPeerPort"/> tag if it is not 1433 (the default port).
+        /// </para>
+        /// <para>
+        /// If the environment variable OTEL_SEMCONV_STABILITY_OPT_IN is set to "http", the newer Semantic Convention v1.21.0 Attributes will be emitted.
+        /// SqlConnection DataSource will be parsed and the server name will be sent as the
+        /// <see cref="SemanticConventions.AttributeServerAddress"/> or <see cref="SemanticConventions.AttributeServerSocketAddress"/> tag,
+        /// the instance name will be sent as the <see cref="SemanticConventions.AttributeDbMsSqlInstanceName"/> tag,
+        /// and the port will be sent as the <see cref="SemanticConventions.AttributeServerPort"/> tag if it is not 1433 (the default port).
+        /// </para>
         /// </remarks>
         public bool EnableConnectionLevelAttributes { get; set; }
 
@@ -302,23 +309,45 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                     ConnectionDetailCache.TryAdd(dataSource, connectionDetails);
                 }
 
-                if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
-                }
-                else
-                {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
-                }
-
                 if (!string.IsNullOrEmpty(connectionDetails.InstanceName))
                 {
                     sqlActivity.SetTag(SemanticConventions.AttributeDbMsSqlInstanceName, connectionDetails.InstanceName);
                 }
 
-                if (!string.IsNullOrEmpty(connectionDetails.Port))
+                if (this.emitOldAttributes)
                 {
-                    sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
+                    if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeNetPeerName, connectionDetails.ServerHostName);
+                    }
+                    else
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeNetPeerIp, connectionDetails.ServerIpAddress);
+                    }
+
+                    if (!string.IsNullOrEmpty(connectionDetails.Port))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
+                    }
+                }
+
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md
+                if (this.emitNewAttributes)
+                {
+                    if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeServerAddress, connectionDetails.ServerHostName);
+                    }
+                    else
+                    {
+                        sqlActivity.SetTag(SemanticConventions.AttributeServerSocketAddress, connectionDetails.ServerIpAddress);
+                    }
+
+                    if (!string.IsNullOrEmpty(connectionDetails.Port))
+                    {
+                        // TODO: Should we continue to emit this if the default port (1433) is being used?
+                        sqlActivity.SetTag(SemanticConventions.AttributeServerPort, connectionDetails.Port);
+                    }
                 }
             }
         }
