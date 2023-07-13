@@ -79,11 +79,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         }
                     }
 
-                    // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                    // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md
                     if (this.emitNewAttributes)
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
 
