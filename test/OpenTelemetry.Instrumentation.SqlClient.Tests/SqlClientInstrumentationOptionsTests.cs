@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         // Tests for v1.21.0 Semantic Conventions for database client calls.
-        // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/database.md
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md
         // This test emits the new attributes.
         // This test method can replace the other (old) test method when this library is GA.
         [Theory]
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         // Tests for v1.21.0 Semantic Conventions for database client calls.
-        // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/database.md
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md
         // This test emits both the new and older attributes.
         // This test method can be deleted when this library is GA.
         [Theory]
