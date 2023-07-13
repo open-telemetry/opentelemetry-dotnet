@@ -2,10 +2,12 @@
 
 ## Unreleased
 
-* Updated [Http Semantic Conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md).
-  This library can emit either old, new, or both attributes. Users can control
-  which attributes are emitted by setting the environment variable
-  `OTEL_SEMCONV_STABILITY_OPT_IN`.
+* Updated [Semantic Conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
+  to v1.21.0. This library can emit either old, new, or both attributes.
+  Users can control which attributes are emitted by setting the environment
+  variable `OTEL_SEMCONV_STABILITY_OPT_IN`.
+  ([#4537](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4537))
+  ([#4606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4606))
 
 * Fixed an issue affecting NET 7.0+. If custom propagation is being used
   and tags are added to an Activity during sampling then that Activity would be dropped.
