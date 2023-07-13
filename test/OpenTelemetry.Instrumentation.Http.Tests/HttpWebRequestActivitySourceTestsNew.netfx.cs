@@ -35,7 +35,7 @@ using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     // Tests for v1.21.0 Semantic Conventions for Http spans
-    // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+    // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md
     // These tests emit the new attributes.
     // This test class can replace the other class when this library is GA.
     public class HttpWebRequestActivitySourceTestsNew : IDisposable
