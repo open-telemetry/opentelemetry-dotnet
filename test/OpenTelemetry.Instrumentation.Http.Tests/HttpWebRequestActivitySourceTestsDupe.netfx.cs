@@ -40,7 +40,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     // This test class can be deleted when this library is GA.
     public class HttpWebRequestActivitySourceTestsDupe : IDisposable
     {
-        private static bool validateBaggage;
         private readonly IDisposable testServer;
         private readonly string testServerHost;
         private readonly int testServerPort;
@@ -59,11 +58,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
                 {
                     VerifyHeaders(httpWebRequest);
-
-                    if (validateBaggage)
-                    {
-                        ValidateBaggage(httpWebRequest);
-                    }
                 },
             };
 
@@ -239,12 +233,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 case "OnStartActivity":
                     Assert.True(obj is HttpWebRequest);
                     VerifyHeaders(obj as HttpWebRequest);
-
-                    if (validateBaggage)
-                    {
-                        ValidateBaggage(obj as HttpWebRequest);
-                    }
-
                     break;
 
                 case "OnStopActivity":
