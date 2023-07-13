@@ -18,138 +18,137 @@ using System.Reflection;
 using OpenTelemetry.Internal;
 #pragma warning restore IDE0005
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Instrumentation;
+
+/// <summary>
+/// PropertyFetcher fetches a property from an object.
+/// </summary>
+/// <typeparam name="T">The type of the property being fetched.</typeparam>
+internal sealed class PropertyFetcher<T>
 {
+    private readonly string propertyName;
+    private PropertyFetch innerFetcher;
+
     /// <summary>
-    /// PropertyFetcher fetches a property from an object.
+    /// Initializes a new instance of the <see cref="PropertyFetcher{T}"/> class.
     /// </summary>
-    /// <typeparam name="T">The type of the property being fetched.</typeparam>
-    internal sealed class PropertyFetcher<T>
+    /// <param name="propertyName">Property name to fetch.</param>
+    public PropertyFetcher(string propertyName)
     {
-        private readonly string propertyName;
-        private PropertyFetch innerFetcher;
+        this.propertyName = propertyName;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PropertyFetcher{T}"/> class.
-        /// </summary>
-        /// <param name="propertyName">Property name to fetch.</param>
-        public PropertyFetcher(string propertyName)
+    /// <summary>
+    /// Fetch the property from the object.
+    /// </summary>
+    /// <param name="obj">Object to be fetched.</param>
+    /// <returns>Property fetched.</returns>
+    public T Fetch(object obj)
+    {
+        Guard.ThrowIfNull(obj);
+
+        if (!this.TryFetch(obj, out T value, true))
         {
-            this.propertyName = propertyName;
+            throw new ArgumentException($"Unable to fetch property: '{nameof(obj)}'", nameof(obj));
         }
 
-        /// <summary>
-        /// Fetch the property from the object.
-        /// </summary>
-        /// <param name="obj">Object to be fetched.</param>
-        /// <returns>Property fetched.</returns>
-        public T Fetch(object obj)
+        return value;
+    }
+
+    /// <summary>
+    /// Try to fetch the property from the object.
+    /// </summary>
+    /// <param name="obj">Object to be fetched.</param>
+    /// <param name="value">Fetched value.</param>
+    /// <param name="skipObjNullCheck">Set this to <see langword= "true"/> if we know <paramref name="obj"/> is not <see langword= "null"/>.</param>
+    /// <returns><see langword= "true"/> if the property was fetched.</returns>
+    public bool TryFetch(object obj, out T value, bool skipObjNullCheck = false)
+    {
+        if (!skipObjNullCheck && obj == null)
         {
-            Guard.ThrowIfNull(obj);
-
-            if (!this.TryFetch(obj, out T value, true))
-            {
-                throw new ArgumentException($"Unable to fetch property: '{nameof(obj)}'", nameof(obj));
-            }
-
-            return value;
+            value = default;
+            return false;
         }
 
-        /// <summary>
-        /// Try to fetch the property from the object.
-        /// </summary>
-        /// <param name="obj">Object to be fetched.</param>
-        /// <param name="value">Fetched value.</param>
-        /// <param name="skipObjNullCheck">Set this to <see langword= "true"/> if we know <paramref name="obj"/> is not <see langword= "null"/>.</param>
-        /// <returns><see langword= "true"/> if the property was fetched.</returns>
-        public bool TryFetch(object obj, out T value, bool skipObjNullCheck = false)
+        if (this.innerFetcher == null)
         {
-            if (!skipObjNullCheck && obj == null)
-            {
-                value = default;
-                return false;
-            }
-
-            if (this.innerFetcher == null)
-            {
-                this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
-            }
-
-            if (this.innerFetcher == null)
-            {
-                value = default;
-                return false;
-            }
-
-            return this.innerFetcher.TryFetch(obj, out value);
+            this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
         }
 
-        // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
-        private class PropertyFetch
+        if (this.innerFetcher == null)
         {
-            public static PropertyFetch Create(TypeInfo type, string propertyName)
+            value = default;
+            return false;
+        }
+
+        return this.innerFetcher.TryFetch(obj, out value);
+    }
+
+    // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
+    private class PropertyFetch
+    {
+        public static PropertyFetch Create(TypeInfo type, string propertyName)
+        {
+            var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
+            if (property == null)
             {
-                var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
-                if (property == null)
-                {
-                    property = type.GetProperty(propertyName);
-                }
-
-                return CreateFetcherForProperty(property);
-
-                static PropertyFetch CreateFetcherForProperty(PropertyInfo propertyInfo)
-                {
-                    if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
-                    {
-                        // returns null and wait for a valid payload to arrive.
-                        return null;
-                    }
-
-                    var typedPropertyFetcher = typeof(TypedPropertyFetch<,>);
-                    var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
-                        typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
-                    return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
-                }
+                property = type.GetProperty(propertyName);
             }
 
-            public virtual bool TryFetch(object obj, out T value)
+            return CreateFetcherForProperty(property);
+
+            static PropertyFetch CreateFetcherForProperty(PropertyInfo propertyInfo)
             {
-                value = default;
-                return false;
+                if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
+                {
+                    // returns null and wait for a valid payload to arrive.
+                    return null;
+                }
+
+                var typedPropertyFetcher = typeof(TypedPropertyFetch<,>);
+                var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
+                    typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
+                return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
+            }
+        }
+
+        public virtual bool TryFetch(object obj, out T value)
+        {
+            value = default;
+            return false;
+        }
+
+        private sealed class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
+            where TDeclaredProperty : T
+        {
+            private readonly string propertyName;
+            private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
+
+            private PropertyFetch innerFetcher;
+
+            public TypedPropertyFetch(PropertyInfo property)
+            {
+                this.propertyName = property.Name;
+                this.propertyFetch = (Func<TDeclaredObject, TDeclaredProperty>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, TDeclaredProperty>));
             }
 
-            private sealed class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
-                where TDeclaredProperty : T
+            public override bool TryFetch(object obj, out T value)
             {
-                private readonly string propertyName;
-                private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
-
-                private PropertyFetch innerFetcher;
-
-                public TypedPropertyFetch(PropertyInfo property)
+                if (obj is TDeclaredObject o)
                 {
-                    this.propertyName = property.Name;
-                    this.propertyFetch = (Func<TDeclaredObject, TDeclaredProperty>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, TDeclaredProperty>));
+                    value = this.propertyFetch(o);
+                    return true;
                 }
 
-                public override bool TryFetch(object obj, out T value)
+                this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
+
+                if (this.innerFetcher == null)
                 {
-                    if (obj is TDeclaredObject o)
-                    {
-                        value = this.propertyFetch(o);
-                        return true;
-                    }
-
-                    this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-                    if (this.innerFetcher == null)
-                    {
-                        value = default;
-                        return false;
-                    }
-
-                    return this.innerFetcher.TryFetch(obj, out value);
+                    value = default;
+                    return false;
                 }
+
+                return this.innerFetcher.TryFetch(obj, out value);
             }
         }
     }
