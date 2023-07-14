@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http;
+
 namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 
 public class TestHttpMessageHandler : HttpMessageHandler

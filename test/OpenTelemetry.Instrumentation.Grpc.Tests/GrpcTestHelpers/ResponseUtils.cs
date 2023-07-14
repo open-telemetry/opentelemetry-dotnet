@@ -25,7 +25,8 @@ using System.Net.Http.Headers;
 After:
 using System.Net.Http.Headers;
 */
-using System.Net.Http
+using System.Net.Http;
+using System.Net.Http.Headers;
 /* Unmerged change from project 'OpenTelemetry.Instrumentation.Grpc.Tests(net6.0)'
 Before:
 namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
@@ -159,7 +160,6 @@ internal static class ResponseUtils
     }
 #endif
 */
-.Headers;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 

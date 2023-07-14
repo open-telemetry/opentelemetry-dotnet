@@ -21,6 +21,7 @@ using System.Net.Http.Headers;
 After:
 using System.Net.Http.Headers;
 */
+using System.Net.Http;
 using System.Net.Http.Headers;
 using Google.Protobuf;
 

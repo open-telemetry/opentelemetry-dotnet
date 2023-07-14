@@ -18,6 +18,7 @@ using System.Diagnostics;
 #if NETFRAMEWORK
 using System.Net;
 #endif
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;

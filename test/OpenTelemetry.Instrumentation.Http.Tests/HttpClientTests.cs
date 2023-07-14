@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using Moq;
