@@ -116,6 +116,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
 
+        // Tests for v1.21.0 Semantic Conventions for database client calls.
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md
+        // This test emits the new attributes.
+        // This test method can replace the other (old) test method when this library is GA.
         [Theory]
         [InlineData(null)]
         [InlineData(true)]
@@ -189,7 +193,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeUserAgentOriginal) as string);
         }
 
-
+        // Tests for v1.21.0 Semantic Conventions for database client calls.
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md
+        // This test emits both the new and older attributes.
+        // This test method can be deleted when this library is GA.
         [Theory]
         [InlineData(null)]
         [InlineData(true)]
