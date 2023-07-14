@@ -297,8 +297,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 }
                 else
                 {
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
                     Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
                     Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
                 }
