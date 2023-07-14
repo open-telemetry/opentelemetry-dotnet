@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System.Buffers;
 using System.Text;
 using System.Text.Json;
 
 namespace OpenTelemetry.Internal;
+
+#nullable enable
 
 internal static class TagTransformerJsonHelper
 {
@@ -74,18 +77,112 @@ internal static class TagTransformerJsonHelper
 
     private static string WriteToString<T>(T[] data, Action<T, Utf8JsonWriter> writeAction)
     {
-        MemoryStream ms = new MemoryStream();
-        using (Utf8JsonWriter writer = new Utf8JsonWriter(ms))
+        // Some rough estimate of the necessary size. We estimate each element to be 10 characters long (plus the separator)
+        // that should be enough for almost all non-string arrays.
+        using PooledByteBufferWriter bufferWriter = new PooledByteBufferWriter((data.Length + 1) * 11);
+        using Utf8JsonWriter writer = new Utf8JsonWriter(bufferWriter);
+        writer.WriteStartArray();
+        foreach (T item in data)
         {
-            writer.WriteStartArray();
-            foreach (T item in data)
-            {
-                writeAction(item, writer);
-            }
-
-            writer.WriteEndArray();
+            writeAction(item, writer);
         }
 
-        return Encoding.UTF8.GetString(ms.ToArray());
+        writer.WriteEndArray();
+
+        var m = bufferWriter.WrittenMemory;
+        return Encoding.UTF8.GetString(m.Buffer, 0, m.Length);
+    }
+
+    internal sealed class PooledByteBufferWriter : IBufferWriter<byte>, IDisposable
+    {
+        private const int MinimumBufferSize = 256;
+
+        // Value copied from Array.MaxLength in System.Private.CoreLib/src/libraries/System.Private.CoreLib/src/System/Array.cs.
+        private const int MaximumBufferSize = 0X7FFFFFC7;
+
+        // This class allows two possible configurations: if rentedBuffer is not null then
+        // it can be used as an IBufferWriter and holds a buffer that should eventually be
+        // returned to the shared pool. If rentedBuffer is null, then the instance is in a
+        // cleared/disposed state and it must re-rent a buffer before it can be used again.
+        private byte[]? rentedBuffer;
+        private int index;
+
+        public PooledByteBufferWriter(int initialCapacity)
+        {
+            this.rentedBuffer = ArrayPool<byte>.Shared.Rent(initialCapacity);
+            this.index = 0;
+        }
+
+        public (byte[] Buffer, int Length) WrittenMemory => (this.rentedBuffer!, this.index);
+
+        // Returns the rented buffer back to the pool
+        public void Dispose()
+        {
+            if (this.rentedBuffer == null)
+            {
+                return;
+            }
+
+            this.rentedBuffer.AsSpan(0, this.index).Clear();
+            this.index = 0;
+            byte[] toReturn = this.rentedBuffer;
+            this.rentedBuffer = null;
+            ArrayPool<byte>.Shared.Return(toReturn);
+        }
+
+        public void Advance(int count)
+        {
+            this.index += count;
+        }
+
+        public Memory<byte> GetMemory(int sizeHint = MinimumBufferSize)
+        {
+            this.CheckAndResizeBuffer(sizeHint);
+            return this.rentedBuffer.AsMemory(this.index);
+        }
+
+        public Span<byte> GetSpan(int sizeHint = MinimumBufferSize)
+        {
+            this.CheckAndResizeBuffer(sizeHint);
+            return this.rentedBuffer.AsSpan(this.index);
+        }
+
+        private void CheckAndResizeBuffer(int sizeHint)
+        {
+            int currentLength = this.rentedBuffer!.Length;
+            int availableSpace = currentLength - this.index;
+
+            // If we've reached ~1GB written, grow to the maximum buffer
+            // length to avoid incessant minimal growths causing perf issues.
+            if (this.index >= MaximumBufferSize / 2)
+            {
+                sizeHint = Math.Max(sizeHint, MaximumBufferSize - currentLength);
+            }
+
+            if (sizeHint > availableSpace)
+            {
+                int growBy = Math.Max(sizeHint, currentLength);
+
+                int newSize = currentLength + growBy;
+
+                if ((uint)newSize > MaximumBufferSize)
+                {
+                    newSize = currentLength + sizeHint;
+                    if ((uint)newSize > MaximumBufferSize)
+                    {
+                        throw new OutOfMemoryException();
+                    }
+                }
+
+                byte[] oldBuffer = this.rentedBuffer;
+
+                this.rentedBuffer = ArrayPool<byte>.Shared.Rent(newSize);
+
+                Span<byte> oldBufferAsSpan = oldBuffer.AsSpan(0, this.index);
+                oldBufferAsSpan.CopyTo(this.rentedBuffer);
+                oldBufferAsSpan.Clear();
+                ArrayPool<byte>.Shared.Return(oldBuffer);
+            }
+        }
     }
 }
