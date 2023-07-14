@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-
 /* Unmerged change from project 'OpenTelemetry.Instrumentation.Grpc.Tests(net6.0)'
 Before:
 using System.Net.Http;
