@@ -112,8 +112,8 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
         // v1.21.0 (unreleased as of this commit)
-        // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md
-        // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md
         public const string AttributeHttpRequestMethod = "http.request.method"; // replaces: "http.method" (AttributeHttpMethod)
         public const string AttributeHttpResponseStatusCode = "http.response.status_code"; // replaces: "http.status_code" (AttributeHttpStatusCode)
         public const string AttributeNetworkProtocolVersion = "network.protocol.version"; // replaces: "http.flavor" (AttributeHttpFlavor)
