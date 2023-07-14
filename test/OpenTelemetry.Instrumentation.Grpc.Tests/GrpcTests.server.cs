@@ -24,8 +24,11 @@ using System.Threading;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
@@ -112,6 +115,182 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
             Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes_New(bool? enableGrpcAspNetCoreSupport)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_SEMCONV_STABILITY_OPT_IN"] = "http" })
+                .Build();
+
+            var exportedItems = new List<Activity>();
+            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
+
+            if (enableGrpcAspNetCoreSupport.HasValue)
+            {
+                tracerProviderBuilder.AddAspNetCoreInstrumentation(options =>
+                {
+                    options.EnableGrpcAspNetCoreSupport = enableGrpcAspNetCoreSupport.Value;
+                });
+            }
+            else
+            {
+                tracerProviderBuilder.AddAspNetCoreInstrumentation();
+            }
+
+            using var tracerProvider = tracerProviderBuilder
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
+            var uri = new Uri($"http://localhost:{this.server.Port}");
+
+            using var channel = GrpcChannel.ForAddress(uri);
+            var client = new Greeter.GreeterClient(channel);
+            var returnMsg = client.SayHello(new HelloRequest()).Message;
+            Assert.False(string.IsNullOrEmpty(returnMsg));
+
+            WaitForExporterToReceiveItems(exportedItems, 1);
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+
+            if (!enableGrpcAspNetCoreSupport.HasValue || enableGrpcAspNetCoreSupport.Value)
+            {
+                Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+                Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+                Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+                Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeClientAddress), clientLoopbackAddresses);
+                Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeClientPort));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+                Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+            }
+            else
+            {
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            }
+
+            Assert.Equal(Status.Unset, activity.GetStatus());
+
+            // The following are http.* attributes that are also included on the span for the gRPC invocation.
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            Assert.Equal(this.server.Port, activity.GetTagValue(SemanticConventions.AttributeServerPort));
+            Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
+            Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeUrlScheme));
+            Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeUrlPath));
+            Assert.Equal("2.0", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
+            Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeUserAgentOriginal) as string);
+        }
+
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes_Dupe(bool? enableGrpcAspNetCoreSupport)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_SEMCONV_STABILITY_OPT_IN"] = "http/dup" })
+                .Build();
+
+            var exportedItems = new List<Activity>();
+            var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
+
+            if (enableGrpcAspNetCoreSupport.HasValue)
+            {
+                tracerProviderBuilder.AddAspNetCoreInstrumentation(options =>
+                {
+                    options.EnableGrpcAspNetCoreSupport = enableGrpcAspNetCoreSupport.Value;
+                });
+            }
+            else
+            {
+                tracerProviderBuilder.AddAspNetCoreInstrumentation();
+            }
+
+            using var tracerProvider = tracerProviderBuilder
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
+            var uri = new Uri($"http://localhost:{this.server.Port}");
+
+            using var channel = GrpcChannel.ForAddress(uri);
+            var client = new Greeter.GreeterClient(channel);
+            var returnMsg = client.SayHello(new HelloRequest()).Message;
+            Assert.False(string.IsNullOrEmpty(returnMsg));
+
+            WaitForExporterToReceiveItems(exportedItems, 1);
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+
+            // OLD
+            if (!enableGrpcAspNetCoreSupport.HasValue || enableGrpcAspNetCoreSupport.Value)
+            {
+                Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+                Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+                Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+                Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp), clientLoopbackAddresses);
+                Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+                Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+            }
+            else
+            {
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            }
+
+            Assert.Equal(Status.Unset, activity.GetStatus());
+
+            // The following are http.* attributes that are also included on the span for the gRPC invocation.
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeNetHostName));
+            Assert.Equal(this.server.Port, activity.GetTagValue(SemanticConventions.AttributeNetHostPort));
+            Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
+            Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
+            Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
+
+            // NEW
+            if (!enableGrpcAspNetCoreSupport.HasValue || enableGrpcAspNetCoreSupport.Value)
+            {
+                Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+                Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+                Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+                Assert.Contains(activity.GetTagValue(SemanticConventions.AttributeClientAddress), clientLoopbackAddresses);
+                Assert.NotEqual(0, activity.GetTagValue(SemanticConventions.AttributeClientPort));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+                Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+            }
+            else
+            {
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+                Assert.NotNull(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            }
+
+            Assert.Equal(Status.Unset, activity.GetStatus());
+
+            // The following are http.* attributes that are also included on the span for the gRPC invocation.
+            Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            Assert.Equal(this.server.Port, activity.GetTagValue(SemanticConventions.AttributeServerPort));
+            Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
+            Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeUrlScheme));
+            Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeUrlPath));
+            Assert.Equal("2.0", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
+            Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeUserAgentOriginal) as string);
         }
 
 #if NET6_0_OR_GREATER
