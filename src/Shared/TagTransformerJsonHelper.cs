@@ -80,14 +80,16 @@ internal static class TagTransformerJsonHelper
         // Some rough estimate of the necessary size. We estimate each element to be 10 characters long (plus the separator)
         // that should be enough for almost all non-string arrays.
         using PooledByteBufferWriter bufferWriter = new PooledByteBufferWriter((data.Length + 1) * 11);
-        using Utf8JsonWriter writer = new Utf8JsonWriter(bufferWriter);
-        writer.WriteStartArray();
-        foreach (T item in data)
+        using (Utf8JsonWriter writer = new Utf8JsonWriter(bufferWriter))
         {
-            writeAction(item, writer);
-        }
+            writer.WriteStartArray();
+            foreach (T item in data)
+            {
+                writeAction(item, writer);
+            }
 
-        writer.WriteEndArray();
+            writer.WriteEndArray();
+        }
 
         var m = bufferWriter.WrittenMemory;
         return Encoding.UTF8.GetString(m.Buffer, 0, m.Length);
