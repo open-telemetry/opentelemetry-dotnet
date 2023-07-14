@@ -229,7 +229,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
 
-                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
                 if (this.emitNewAttributes)
                 {
                     if (request.Host.HasValue)
