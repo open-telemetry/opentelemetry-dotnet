@@ -8,6 +8,7 @@
   variable `OTEL_SEMCONV_STABILITY_OPT_IN`.
   ([#4537](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4537))
   ([#4606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4606))
+  ([#4660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4660))
 
 * Fixed an issue affecting NET 7.0+. If custom propagation is being used
   and tags are added to an Activity during sampling then that Activity would be dropped.

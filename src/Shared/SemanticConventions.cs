@@ -111,7 +111,7 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
-        // v1.21.0 (unreleased as of this commit)
+        // v1.21.0
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md
         // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/rpc/rpc-spans.md
