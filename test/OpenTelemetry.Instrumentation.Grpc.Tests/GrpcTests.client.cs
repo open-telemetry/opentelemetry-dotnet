@@ -19,6 +19,7 @@ using System.Net;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var uri = new Uri($"{baseAddress}:1234");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
 
-            var httpClient = ClientTestHelpers.CreateTestClient(async request =>
+            using var httpClient = ClientTestHelpers.CreateTestClient(async request =>
             {
                 var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
                 var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
@@ -132,92 +133,90 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData("http://[::1]", false)]
         public void GrpcClientCallsAreCollectedSuccessfully_New(string baseAddress, bool shouldEnrich = true)
         {
-            try
+            KeyValuePair<string, string>[] config = new KeyValuePair<string, string>[] { new KeyValuePair<string, string>("OTEL_SEMCONV_STABILITY_OPT_IN", "http") };
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(config)
+                .Build();
+
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
+            var uri = new Uri($"{baseAddress}:1234");
+            var uriHostNameType = Uri.CheckHostName(uri.Host);
+
+            using var httpClient = ClientTestHelpers.CreateTestClient(async request =>
             {
-                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", "http");
-                bool enrichWithHttpRequestMessageCalled = false;
-                bool enrichWithHttpResponseMessageCalled = false;
+                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
+                var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
+                response.TrailingHeaders().Add("grpc-message", "value");
+                return response;
+            });
 
-                var uri = new Uri($"{baseAddress}:1234");
-                var uriHostNameType = Uri.CheckHostName(uri.Host);
+            var processor = new Mock<BaseProcessor<Activity>>();
 
-                var httpClient = ClientTestHelpers.CreateTestClient(async request =>
-                {
-                    var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
-                    var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
-                    response.TrailingHeaders().Add("grpc-message", "value");
-                    return response;
-                });
+            using var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
 
-                var processor = new Mock<BaseProcessor<Activity>>();
-
-                using var parent = new Activity("parent")
-                    .SetIdFormat(ActivityIdFormat.W3C)
-                    .Start();
-
-                using (Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOnSampler())
-                        .AddGrpcClientInstrumentation(options =>
-                        {
-                            if (shouldEnrich)
-                            {
-                                options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
-                                options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
-                            }
-                        })
-                        .AddProcessor(processor.Object)
-                        .Build())
-                {
-                    var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
+            using (Sdk.CreateTracerProviderBuilder()
+                    .SetSampler(new AlwaysOnSampler())
+                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                    .AddGrpcClientInstrumentation(options =>
                     {
-                        HttpClient = httpClient,
-                    });
-                    var client = new Greeter.GreeterClient(channel);
-                    var rs = client.SayHello(new HelloRequest());
-                }
-
-                Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-                var activity = (Activity)processor.Invocations[2].Arguments[0];
-
-                ValidateGrpcActivity(activity);
-                Assert.Equal(parent.TraceId, activity.Context.TraceId);
-                Assert.Equal(parent.SpanId, activity.ParentSpanId);
-                Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
-                Assert.NotEqual(default, activity.Context.SpanId);
-
-                Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
-                Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
-                Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
-                Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
-
-                if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
-                {
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerAddress));
-                }
-                else
-                {
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
-                }
-
-                Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeServerPort));
-                Assert.Equal(Status.Unset, activity.GetStatus());
-
-                // Tags added by the library then removed from the instrumentation
-                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
-                Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
-
-                if (shouldEnrich)
-                {
-                    Assert.True(enrichWithHttpRequestMessageCalled);
-                    Assert.True(enrichWithHttpResponseMessageCalled);
-                }
-            }
-            finally
+                        if (shouldEnrich)
+                        {
+                            options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                            options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                        }
+                    })
+                    .AddProcessor(processor.Object)
+                    .Build())
             {
-                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", null);
+                var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
+                {
+                    HttpClient = httpClient,
+                });
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
+            }
+
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
+
+            ValidateGrpcActivity(activity);
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
+
+            Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
+            Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+            Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+            Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+
+            if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
+            {
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            }
+            else
+            {
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            }
+
+            Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeServerPort));
+            Assert.Equal(Status.Unset, activity.GetStatus());
+
+            // Tags added by the library then removed from the instrumentation
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+
+            if (shouldEnrich)
+            {
+                Assert.True(enrichWithHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
             }
         }
 
@@ -230,97 +229,95 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData("http://[::1]", false)]
         public void GrpcClientCallsAreCollectedSuccessfully_Dupe(string baseAddress, bool shouldEnrich = true)
         {
-            try
+            KeyValuePair<string, string>[] config = new KeyValuePair<string, string>[] { new KeyValuePair<string, string>("OTEL_SEMCONV_STABILITY_OPT_IN", "http/dup") };
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(config)
+                .Build();
+
+            bool enrichWithHttpRequestMessageCalled = false;
+            bool enrichWithHttpResponseMessageCalled = false;
+
+            var uri = new Uri($"{baseAddress}:1234");
+            var uriHostNameType = Uri.CheckHostName(uri.Host);
+
+            using var httpClient = ClientTestHelpers.CreateTestClient(async request =>
             {
-                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", "http/dup");
-                bool enrichWithHttpRequestMessageCalled = false;
-                bool enrichWithHttpResponseMessageCalled = false;
+                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
+                var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
+                response.TrailingHeaders().Add("grpc-message", "value");
+                return response;
+            });
 
-                var uri = new Uri($"{baseAddress}:1234");
-                var uriHostNameType = Uri.CheckHostName(uri.Host);
+            var processor = new Mock<BaseProcessor<Activity>>();
 
-                var httpClient = ClientTestHelpers.CreateTestClient(async request =>
-                {
-                    var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
-                    var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
-                    response.TrailingHeaders().Add("grpc-message", "value");
-                    return response;
-                });
+            using var parent = new Activity("parent")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
 
-                var processor = new Mock<BaseProcessor<Activity>>();
-
-                using var parent = new Activity("parent")
-                    .SetIdFormat(ActivityIdFormat.W3C)
-                    .Start();
-
-                using (Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOnSampler())
-                        .AddGrpcClientInstrumentation(options =>
-                        {
-                            if (shouldEnrich)
-                            {
-                                options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
-                                options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
-                            }
-                        })
-                        .AddProcessor(processor.Object)
-                        .Build())
-                {
-                    var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
+            using (Sdk.CreateTracerProviderBuilder()
+                    .SetSampler(new AlwaysOnSampler())
+                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                    .AddGrpcClientInstrumentation(options =>
                     {
-                        HttpClient = httpClient,
-                    });
-                    var client = new Greeter.GreeterClient(channel);
-                    var rs = client.SayHello(new HelloRequest());
-                }
-
-                Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-                var activity = (Activity)processor.Invocations[2].Arguments[0];
-
-                ValidateGrpcActivity(activity);
-                Assert.Equal(parent.TraceId, activity.Context.TraceId);
-                Assert.Equal(parent.SpanId, activity.ParentSpanId);
-                Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
-                Assert.NotEqual(default, activity.Context.SpanId);
-
-                Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
-                Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
-                Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
-                Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
-
-                if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
-                {
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerAddress));
-                }
-                else
-                {
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
-                    Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
-                    Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
-                }
-
-                Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeServerPort));
-                Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
-                Assert.Equal(Status.Unset, activity.GetStatus());
-
-                // Tags added by the library then removed from the instrumentation
-                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
-                Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
-                Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
-
-                if (shouldEnrich)
-                {
-                    Assert.True(enrichWithHttpRequestMessageCalled);
-                    Assert.True(enrichWithHttpResponseMessageCalled);
-                }
-            }
-            finally
+                        if (shouldEnrich)
+                        {
+                            options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                            options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                        }
+                    })
+                    .AddProcessor(processor.Object)
+                    .Build())
             {
-                Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", null);
+                var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
+                {
+                    HttpClient = httpClient,
+                });
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
+            }
+
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
+
+            ValidateGrpcActivity(activity);
+            Assert.Equal(parent.TraceId, activity.Context.TraceId);
+            Assert.Equal(parent.SpanId, activity.ParentSpanId);
+            Assert.NotEqual(parent.SpanId, activity.Context.SpanId);
+            Assert.NotEqual(default, activity.Context.SpanId);
+
+            Assert.Equal($"greet.Greeter/SayHello", activity.DisplayName);
+            Assert.Equal("grpc", activity.GetTagValue(SemanticConventions.AttributeRpcSystem));
+            Assert.Equal("greet.Greeter", activity.GetTagValue(SemanticConventions.AttributeRpcService));
+            Assert.Equal("SayHello", activity.GetTagValue(SemanticConventions.AttributeRpcMethod));
+
+            if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
+            {
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            }
+            else
+            {
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+                Assert.Null(activity.GetTagValue(SemanticConventions.AttributeServerSocketAddress));
+                Assert.Equal(uri.Host, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
+            }
+
+            Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeServerPort));
+            Assert.Equal(uri.Port, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+            Assert.Equal(Status.Unset, activity.GetStatus());
+
+            // Tags added by the library then removed from the instrumentation
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcMethodTagName));
+            Assert.Null(activity.GetTagValue(GrpcTagHelper.GrpcStatusCodeTagName));
+            Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+
+            if (shouldEnrich)
+            {
+                Assert.True(enrichWithHttpRequestMessageCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
             }
         }
 
