@@ -36,6 +36,7 @@ namespace OpenTelemetry.Tests.Shared
         [InlineData(new object[] { new string[] { "" } })]
         [InlineData(new object[] { new string[] { "a", "b", "c", "d" } })]
         [InlineData(new object[] { new string[] { "\r\n", "\t", "\"" } })]
+        [InlineData(new object[] { new string[] { "longlonglonglonglonglonglonglonglong" } })]
         public void StringArray(string[] data)
         {
             VerifySerialization(data);
