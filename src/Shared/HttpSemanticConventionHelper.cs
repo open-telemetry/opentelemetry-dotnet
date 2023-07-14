@@ -28,7 +28,7 @@ namespace OpenTelemetry.Internal;
 /// Due to a breaking change in the semantic convention, affected instrumentation libraries
 /// must inspect an environment variable to determine which attributes to emit.
 /// This is expected to be removed when the instrumentation libraries reach Stable.
-/// <see href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md"/>.
+/// <see href="https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md"/>.
 /// </remarks>
 internal static class HttpSemanticConventionHelper
 {

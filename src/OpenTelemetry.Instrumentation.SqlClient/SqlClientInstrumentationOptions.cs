@@ -331,7 +331,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                     }
                 }
 
-                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md
                 if (this.emitNewAttributes)
                 {
                     if (!string.IsNullOrEmpty(connectionDetails.ServerHostName))
