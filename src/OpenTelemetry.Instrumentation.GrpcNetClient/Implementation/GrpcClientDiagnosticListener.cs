@@ -156,6 +156,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                     activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
                 }
 
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
                 if (this.emitNewAttributes)
                 {
                     if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
