@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Updated Semantic Conventions to [v1.21.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md)
+  This library can emit either old, new, or both attributes.
+  Users can control which attributes are emitted by setting the environment
+  variable `OTEL_SEMCONV_STABILITY_OPT_IN`.
+  ([#4644](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4644))
+
 ## 1.5.0-beta.1
 
 Released 2023-Jun-05

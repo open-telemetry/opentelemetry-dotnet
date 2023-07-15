@@ -16,13 +16,12 @@
 
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+internal class RecordOnlySampler : TestSampler
 {
-    internal class RecordOnlySampler : TestSampler
+    public override SamplingResult ShouldSample(in SamplingParameters param)
     {
-        public override SamplingResult ShouldSample(in SamplingParameters param)
-        {
-            return new SamplingResult(SamplingDecision.RecordOnly);
-        }
+        return new SamplingResult(SamplingDecision.RecordOnly);
     }
 }

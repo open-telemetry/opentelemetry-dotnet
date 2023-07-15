@@ -229,7 +229,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
                 if (this.emitNewAttributes)
                 {
                     if (request.Host.HasValue)
@@ -323,7 +323,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
+#if NET7_0_OR_GREATER
+            var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
+            if (ReferenceEquals(tagValue, bool.TrueString))
+#else
             if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
+#endif
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.

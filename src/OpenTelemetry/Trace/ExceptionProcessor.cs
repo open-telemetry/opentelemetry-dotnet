@@ -21,66 +21,65 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace;
+
+internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 {
-    internal sealed class ExceptionProcessor : BaseProcessor<Activity>
+    private const string ExceptionPointersKey = "otel.exception_pointers";
+
+    private readonly Func<IntPtr> fnGetExceptionPointers;
+
+    public ExceptionProcessor()
     {
-        private const string ExceptionPointersKey = "otel.exception_pointers";
-
-        private readonly Func<IntPtr> fnGetExceptionPointers;
-
-        public ExceptionProcessor()
+        try
         {
-            try
-            {
-                var flags = BindingFlags.Static | BindingFlags.Public;
-                var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, Type.EmptyTypes, null)
-                    ?? throw new InvalidOperationException("Marshal.GetExceptionPointers method could not be resolved reflectively.");
-                var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
-                this.fnGetExceptionPointers = lambda.Compile();
-            }
-            catch (Exception ex)
-            {
-                throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported", ex);
-            }
+            var flags = BindingFlags.Static | BindingFlags.Public;
+            var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, Type.EmptyTypes, null)
+                ?? throw new InvalidOperationException("Marshal.GetExceptionPointers method could not be resolved reflectively.");
+            var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
+            this.fnGetExceptionPointers = lambda.Compile();
+        }
+        catch (Exception ex)
+        {
+            throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported", ex);
+        }
+    }
+
+    /// <inheritdoc />
+    public override void OnStart(Activity activity)
+    {
+        var pointers = this.fnGetExceptionPointers();
+
+        if (pointers != IntPtr.Zero)
+        {
+            activity.SetTag(ExceptionPointersKey, pointers);
+        }
+    }
+
+    /// <inheritdoc />
+    public override void OnEnd(Activity activity)
+    {
+        var pointers = this.fnGetExceptionPointers();
+
+        if (pointers == IntPtr.Zero)
+        {
+            return;
         }
 
-        /// <inheritdoc />
-        public override void OnStart(Activity activity)
-        {
-            var pointers = this.fnGetExceptionPointers();
+        var snapshot = activity.GetTagValue(ExceptionPointersKey) as IntPtr?;
 
-            if (pointers != IntPtr.Zero)
-            {
-                activity.SetTag(ExceptionPointersKey, pointers);
-            }
+        if (snapshot != null)
+        {
+            activity.SetTag(ExceptionPointersKey, null);
         }
 
-        /// <inheritdoc />
-        public override void OnEnd(Activity activity)
+        if (snapshot != pointers)
         {
-            var pointers = this.fnGetExceptionPointers();
+            // TODO: Remove this when SetStatus is deprecated
+            activity.SetStatus(Status.Error);
 
-            if (pointers == IntPtr.Zero)
-            {
-                return;
-            }
-
-            var snapshot = activity.GetTagValue(ExceptionPointersKey) as IntPtr?;
-
-            if (snapshot != null)
-            {
-                activity.SetTag(ExceptionPointersKey, null);
-            }
-
-            if (snapshot != pointers)
-            {
-                // TODO: Remove this when SetStatus is deprecated
-                activity.SetStatus(Status.Error);
-
-                // For processors/exporters checking `Status` property.
-                activity.SetStatus(ActivityStatusCode.Error);
-            }
+            // For processors/exporters checking `Status` property.
+            activity.SetStatus(ActivityStatusCode.Error);
         }
     }
 }
