@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporterEventSource.cs" Link="Includes/PrometheusExporterEventSource.cs" />
