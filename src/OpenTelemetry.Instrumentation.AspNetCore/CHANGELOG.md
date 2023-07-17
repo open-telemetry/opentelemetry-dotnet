@@ -5,22 +5,20 @@
 * The new HTTP and network semantic conventions can be opted in to by setting
   the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. This environment
   variable supports the following values:
-  * `http` - emit the new, frozen (proposed for stable) HTTP and networking attributes, and stop
-  emitting the old experimental HTTP and networking attributes that the
-  instrumentation emitted previously.
-  * `http/dup` - emit both the old and the frozen (proposed for stable) HTTP and networking
-  attributes, allowing for a more seamless transition.
+  * `http` - emit the new, frozen (proposed for stable) HTTP and networking
+  attributes, and stop emitting the old experimental HTTP and networking
+  attributes that the instrumentation emitted previously.
+  * `http/dup` - emit both the old and the frozen (proposed for stable) HTTP
+  and networking attributes, allowing for a more seamless transition.
   * The default behavior (in the absence of one of these values) is to continue
   emitting the same HTTP and network semantic conventions that were emitted in
   `1.5.0-beta.1`.
   * Note: this option will eventually be removed after the new HTTP and
   network semantic conventions are marked stable. At which time this
   instrumentation can receive a stable release, and the old HTTP and
-  network semantic conventions will no longer be supported. A stable release of
-  this instrumentation will come no sooner than six months from now. This is to
-  allow for a transition period for users to experiment with the new semantic
-  conventions and adapt as necessary. Refer to the specification for more
-  information regarding the new HTTP and network semantic conventions for both
+  network semantic conventions will no longer be supported. Refer to the
+  specification for more information regarding the new HTTP and network
+  semantic conventions for both
   [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md)
   and
   [metrics](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md).
