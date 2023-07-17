@@ -5,7 +5,7 @@
 * The new HTTP and network semantic conventions can be opted in to by setting
   the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. This environment
   variable supports the following values:
-  * `http` - emit the new, stable HTTP and networking attributes, and stop
+  * `http` - emit the new, frozen (proposed for stable) HTTP and networking attributes, and stop
   emitting the old experimental HTTP and networking attributes that the
   instrumentation emitted previously.
   * `http/dup` - emit both the old and the stable HTTP and networking
