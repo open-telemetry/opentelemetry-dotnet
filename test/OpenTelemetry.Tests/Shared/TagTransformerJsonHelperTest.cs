@@ -115,6 +115,15 @@ namespace OpenTelemetry.Tests.Shared
         }
 
         [Theory]
+        [InlineData(new object[] { new ulong[] { } })]
+        [InlineData(new object[] { new ulong[] { 0 } })]
+        [InlineData(new object[] { new ulong[] { ulong.MaxValue, ulong.MinValue, 4, 13 } })]
+        public void ULongArray(ulong[] data)
+        {
+            VerifySerialization(data);
+        }
+
+        [Theory]
         [InlineData(new object[] { new float[] { } })]
         [InlineData(new object[] { new float[] { 0 } })]
         [InlineData(new object[] { new float[] { float.MaxValue, float.MinValue, 4, 13 } })]

@@ -28,20 +28,20 @@ internal static class TagTransformerJsonHelper
         => array switch
         {
             // This switch needs to support the same set of types as those in TagTransformer.TransformArrayTagInternal
-            char[] charArray => WriteToString(charArray, WriteCharValue),
-            string[] stringArray => WriteToString(stringArray, WriteStringValue),
-            bool[] booleanArray => WriteToString(booleanArray, WriteBooleanValue),
+            char[] charArray => WriteToString(charArray, WriteCharValue, 1),
+            string[] stringArray => WriteToString(stringArray, WriteStringValue, 10),
+            bool[] booleanArray => WriteToString(booleanArray, WriteBooleanValue, 5),
 
             // Runtime allows casting byte[] to sbyte[] and vice versa, so pattern match to sbyte[] doesn't work since it goes through byte[]
             // Similarly (array is sbyte[]) doesn't help either. Only real type comparison works.
             // This is true for byte/sbyte, short/ushort, int/uint and so on
-            byte[] byteArray => array.GetType() == typeof(sbyte[]) ? WriteToString((sbyte[])array, WriteSByteValue) : WriteToString(byteArray, WriteByteValue),
-            short[] shortArray => array.GetType() == typeof(ushort[]) ? WriteToString((ushort[])array, WriteUShortValue) : WriteToString(shortArray, WriteShortValue),
-            int[] intArray => array.GetType() == typeof(uint[]) ? WriteToString((uint[])array, WriteUIntValue) : WriteToString(intArray, WriteIntValue),
+            byte[] byteArray => array.GetType() == typeof(sbyte[]) ? WriteToString((sbyte[])array, WriteSByteValue, 3) : WriteToString(byteArray, WriteByteValue, 3),
+            short[] shortArray => array.GetType() == typeof(ushort[]) ? WriteToString((ushort[])array, WriteUShortValue, 5) : WriteToString(shortArray, WriteShortValue, 5),
+            int[] intArray => array.GetType() == typeof(uint[]) ? WriteToString((uint[])array, WriteUIntValue, 10) : WriteToString(intArray, WriteIntValue, 10),
+            long[] longArray => array.GetType() == typeof(ulong[]) ? WriteToString((ulong[])array, WriteULongValue, 20) : WriteToString(longArray, WriteLongValue, 20),
 
-            long[] longArray => WriteToString(longArray, WriteLongValue),
-            float[] floatArray => WriteToString(floatArray, WriteFloatValue),
-            double[] doubleArray => WriteToString(doubleArray, WriteDoubleValue),
+            float[] floatArray => WriteToString(floatArray, WriteFloatValue, 15),
+            double[] doubleArray => WriteToString(doubleArray, WriteDoubleValue, 23),
 
             _ => throw new NotSupportedException($"Unexpected serialization of array of type {array.GetType()}."),
         };
@@ -71,15 +71,17 @@ internal static class TagTransformerJsonHelper
 
     private static void WriteLongValue(long v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
+    private static void WriteULongValue(ulong v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
+
     private static void WriteFloatValue(float v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
     private static void WriteDoubleValue(double v, Utf8JsonWriter writer) => writer.WriteNumberValue(v);
 
-    private static string WriteToString<T>(T[] data, Action<T, Utf8JsonWriter> writeAction)
+    private static string WriteToString<T>(T[] data, Action<T, Utf8JsonWriter> writeAction, int elementSizeHint)
     {
-        // Some rough estimate of the necessary size. We estimate each element to be 10 characters long (plus the separator)
-        // that should be enough for almost all non-string arrays.
-        using PooledByteBufferWriter bufferWriter = new PooledByteBufferWriter((data.Length + 1) * 11);
+        // Some rough estimate of the necessary size. We multiple the length of the array (+1 to be on the safe side)
+        // by the estimated size of an element and add 2 for the brackets.
+        using PooledByteBufferWriter bufferWriter = new PooledByteBufferWriter(((data.Length + 1) * (elementSizeHint + 1)) + 2);
         using (Utf8JsonWriter writer = new Utf8JsonWriter(bufferWriter))
         {
             writer.WriteStartArray();
