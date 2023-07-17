@@ -8,7 +8,7 @@
   * `http` - emit the new, frozen (proposed for stable) HTTP and networking attributes, and stop
   emitting the old experimental HTTP and networking attributes that the
   instrumentation emitted previously.
-  * `http/dup` - emit both the old and the stable HTTP and networking
+  * `http/dup` - emit both the old and the frozen (proposed for stable) HTTP and networking
   attributes, allowing for a more seamless transition.
   * The default behavior (in the absence of one of these values) is to continue
   emitting the same HTTP and network semantic conventions that were emitted in
