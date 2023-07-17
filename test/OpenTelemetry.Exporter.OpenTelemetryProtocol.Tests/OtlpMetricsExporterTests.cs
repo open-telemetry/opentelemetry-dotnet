@@ -15,6 +15,8 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
@@ -702,6 +704,34 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             Assert.Empty(dataPoint.Exemplars);
+        }
+
+        [Theory]
+        [InlineData("cumulative", MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("Cumulative", MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("CUMULATIVE", MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("delta", MetricReaderTemporalityPreference.Delta)]
+        [InlineData("Delta", MetricReaderTemporalityPreference.Delta)]
+        [InlineData("DELTA", MetricReaderTemporalityPreference.Delta)]
+        public void TestTemporalityPreferenceConfiguration(string configValue, MetricReaderTemporalityPreference expectedTemporality)
+        {
+            var configData = new Dictionary<string, string> { ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = configValue };
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(configData)
+                .Build();
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddOtlpExporter()
+                .Build();
+
+            var assembly = typeof(Sdk).Assembly;
+            var type = assembly.GetType("OpenTelemetry.Metrics.MeterProviderSdk");
+            var fieldInfo = type.GetField("reader", BindingFlags.Instance | BindingFlags.NonPublic);
+            var reader = fieldInfo.GetValue(meterProvider) as MetricReader;
+            var temporality = reader.TemporalityPreference;
+
+            Assert.Equal(expectedTemporality, temporality);
         }
 
         private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
