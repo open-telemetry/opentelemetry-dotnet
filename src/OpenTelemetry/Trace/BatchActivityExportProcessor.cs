@@ -18,34 +18,33 @@
 
 using System.Diagnostics;
 
-namespace OpenTelemetry
+namespace OpenTelemetry;
+
+public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
 {
-    public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
+    public BatchActivityExportProcessor(
+        BaseExporter<Activity> exporter,
+        int maxQueueSize = DefaultMaxQueueSize,
+        int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
+        int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
+        int maxExportBatchSize = DefaultMaxExportBatchSize)
+        : base(
+            exporter,
+            maxQueueSize,
+            scheduledDelayMilliseconds,
+            exporterTimeoutMilliseconds,
+            maxExportBatchSize)
     {
-        public BatchActivityExportProcessor(
-            BaseExporter<Activity> exporter,
-            int maxQueueSize = DefaultMaxQueueSize,
-            int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
-            int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
-            int maxExportBatchSize = DefaultMaxExportBatchSize)
-            : base(
-                exporter,
-                maxQueueSize,
-                scheduledDelayMilliseconds,
-                exporterTimeoutMilliseconds,
-                maxExportBatchSize)
+    }
+
+    /// <inheritdoc />
+    public override void OnEnd(Activity data)
+    {
+        if (!data.Recorded)
         {
+            return;
         }
 
-        /// <inheritdoc />
-        public override void OnEnd(Activity data)
-        {
-            if (!data.Recorded)
-            {
-                return;
-            }
-
-            this.OnExport(data);
-        }
+        this.OnExport(data);
     }
 }

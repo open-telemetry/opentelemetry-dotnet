@@ -111,12 +111,15 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
 
-        // Http v1.21.0 https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
+        // v1.21.0 (unreleased as of this commit)
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md
         public const string AttributeHttpRequestMethod = "http.request.method"; // replaces: "http.method" (AttributeHttpMethod)
         public const string AttributeHttpResponseStatusCode = "http.response.status_code"; // replaces: "http.status_code" (AttributeHttpStatusCode)
         public const string AttributeNetworkProtocolVersion = "network.protocol.version"; // replaces: "http.flavor" (AttributeHttpFlavor)
-        public const string AttributeServerAddress = "server.address"; // replaces: "net.host.name" (AttributeNetHostName)
+        public const string AttributeServerAddress = "server.address"; // replaces: "net.host.name" (AttributeNetHostName) and "net.peer.name" (AttributeNetPeerName)
         public const string AttributeServerPort = "server.port"; // replaces: "net.host.port" (AttributeNetHostPort) and "net.peer.port" (AttributeNetPeerPort)
+        public const string AttributeServerSocketAddress = "server.socket.address"; // replaces: "net.peer.ip" (AttributeNetPeerIp)
         public const string AttributeUrlFull = "url.full"; // replaces: "http.url" (AttributeHttpUrl)
         public const string AttributeUrlPath = "url.path"; // replaces: "http.target" (AttributeHttpTarget)
         public const string AttributeUrlScheme = "url.scheme"; // replaces: "http.scheme" (AttributeHttpScheme)

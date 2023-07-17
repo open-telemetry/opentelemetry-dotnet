@@ -63,6 +63,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #endif
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly AspNetCoreInstrumentationOptions options;
+        private readonly bool emitOldAttributes;
+        private readonly bool emitNewAttributes;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -70,6 +72,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             Guard.ThrowIfNull(options);
 
             this.options = options;
+
+            this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+
+            this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
 
         public override void OnEventWritten(string name, object payload)
@@ -195,7 +201,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.DisplayName = path;
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.emitOldAttributes)
                 {
                     if (request.Host.HasValue)
                     {
@@ -223,8 +229,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
 
-                // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md
-                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+                if (this.emitNewAttributes)
                 {
                     if (request.Host.HasValue)
                     {
@@ -281,12 +287,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+                if (this.emitOldAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                 }
 
-                if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+                if (this.emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                 }
@@ -317,7 +323,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
 
+#if NET7_0_OR_GREATER
+            var tagValue = activity.GetTagValue("IsCreatedByInstrumentation");
+            if (ReferenceEquals(tagValue, bool.TrueString))
+#else
             if (activity.TryCheckFirstTag("IsCreatedByInstrumentation", out var tagValue) && ReferenceEquals(tagValue, bool.TrueString))
+#endif
             {
                 // If instrumentation started a new Activity, it must
                 // be stopped here.
@@ -485,12 +496,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
             }
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old))
+            if (this.emitOldAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             }
 
-            if (this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+            if (this.emitNewAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeServerPort, context.Connection.RemotePort);
             }

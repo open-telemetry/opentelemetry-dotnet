@@ -266,8 +266,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-sampler", "docs\trace
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}"
 	ProjectSection(SolutionItems) = preProject
+		src\Shared\ActivityHelperExtensions.cs = src\Shared\ActivityHelperExtensions.cs
 		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
+		src\Shared\ExceptionExtensions.cs = src\Shared\ExceptionExtensions.cs
 		src\Shared\HttpSemanticConventionHelper.cs = src\Shared\HttpSemanticConventionHelper.cs
+		src\Shared\PeerServiceResolver.cs = src\Shared\PeerServiceResolver.cs
+		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
+		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
+		src\Shared\SpanHelper.cs = src\Shared\SpanHelper.cs
+		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
+		src\Shared\TagAndValueTransformer.cs = src\Shared\TagAndValueTransformer.cs
+		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
@@ -277,6 +286,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumenta
 		src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs = src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs
 		src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs = src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs
 		src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs = src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EnvironmentVariables", "EnvironmentVariables", "{6D4B4FB2-0A8A-4044-948B-C063FD340439}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\EnvironmentVariables\EnvironmentVariablesConfigurationProvider.cs = src\Shared\EnvironmentVariables\EnvironmentVariablesConfigurationProvider.cs
+		src\Shared\EnvironmentVariables\EnvironmentVariablesConfigurationSource.cs = src\Shared\EnvironmentVariables\EnvironmentVariablesConfigurationSource.cs
+		src\Shared\EnvironmentVariables\EnvironmentVariablesExtensions.cs = src\Shared\EnvironmentVariables\EnvironmentVariablesExtensions.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Options", "Options", "{494902DD-C63F-48E0-BED3-B58EFB4051C8}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\Options\ConfigurationExtensions.cs = src\Shared\Options\ConfigurationExtensions.cs
+		src\Shared\Options\DelegatingOptionsFactory.cs = src\Shared\Options\DelegatingOptionsFactory.cs
 	EndProjectSection
 EndProject
 Global
@@ -613,6 +635,8 @@ Global
 		{9C99621C-343E-479C-A943-332DB6129B71} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{28F3EC79-660C-4659-8B73-F90DC1173316} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
+		{6D4B4FB2-0A8A-4044-948B-C063FD340439} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
+		{494902DD-C63F-48E0-BED3-B58EFB4051C8} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

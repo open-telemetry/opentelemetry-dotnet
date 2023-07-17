@@ -17,20 +17,19 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+internal class InMemoryEventListener : EventListener
 {
-    internal class InMemoryEventListener : EventListener
+    public ConcurrentQueue<EventWrittenEventArgs> Events = new();
+
+    public InMemoryEventListener(EventSource eventSource, EventLevel minLevel = EventLevel.Verbose)
     {
-        public ConcurrentQueue<EventWrittenEventArgs> Events = new();
+        this.EnableEvents(eventSource, minLevel);
+    }
 
-        public InMemoryEventListener(EventSource eventSource, EventLevel minLevel = EventLevel.Verbose)
-        {
-            this.EnableEvents(eventSource, minLevel);
-        }
-
-        protected override void OnEventWritten(EventWrittenEventArgs eventData)
-        {
-            this.Events.Enqueue(eventData);
-        }
+    protected override void OnEventWritten(EventWrittenEventArgs eventData)
+    {
+        this.Events.Enqueue(eventData);
     }
 }

@@ -7,12 +7,13 @@
   <ItemGroup>
     <PackageVersion Include="Google.Protobuf" Version="[3.19.4,4.0)" />
     <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
-    <PackageVersion Include="Grpc.Net.Client" Version="[2.45.0,3.0)" />
+    <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
     <PackageVersion Include="Grpc.Tools" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.3.3]" />
     <PackageVersion Include="Microsoft.CodeCoverage" Version="[17.4.1]" />
+    <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
