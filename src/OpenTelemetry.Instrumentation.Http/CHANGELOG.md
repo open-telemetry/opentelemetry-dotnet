@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Updated [Http Semantic Conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
-  to v1.21.0. This library can emit either old, new, or both attributes.
+* Updated Semantic Conventions to [v1.21.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md).
+  This library can emit either old, new, or both attributes.
   Users can control which attributes are emitted by setting the environment
   variable `OTEL_SEMCONV_STABILITY_OPT_IN`.
   ([#4538](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4538))
