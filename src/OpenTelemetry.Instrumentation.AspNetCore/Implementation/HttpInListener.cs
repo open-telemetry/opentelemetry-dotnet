@@ -490,20 +490,27 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.DisplayName = grpcMethod.TrimStart('/');
 
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
-            if (context.Connection.RemoteIpAddress != null)
-            {
-                // TODO: This attribute was changed in v1.13.0 https://github.com/open-telemetry/opentelemetry-specification/pull/2614
-                activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            }
 
             if (this.emitOldAttributes)
             {
+                if (context.Connection.RemoteIpAddress != null)
+                {
+                    // TODO: This attribute was changed in v1.13.0 https://github.com/open-telemetry/opentelemetry-specification/pull/2614
+                    activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+                }
+
                 activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
             }
 
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/rpc/rpc-spans.md
             if (this.emitNewAttributes)
             {
-                activity.SetTag(SemanticConventions.AttributeServerPort, context.Connection.RemotePort);
+                if (context.Connection.RemoteIpAddress != null)
+                {
+                    activity.SetTag(SemanticConventions.AttributeClientAddress, context.Connection.RemoteIpAddress.ToString());
+                }
+
+                activity.SetTag(SemanticConventions.AttributeClientPort, context.Connection.RemotePort);
             }
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
