@@ -57,7 +57,7 @@ Allocation details for .NET 7:
   - `System.Threading.AsyncLocalValueMap.TwoElementAsyncLocalValueMap` = 48 B
   - `System.Threading.ExecutionContext` = 40 B
 * `DiagNode<KeyValuePair<System.String, System.Object>>`
-  - This is allocated eight times for the seven (eight if query string is available) tags that are added = 7 * 40 = 280 B
+  - This is allocated seven times for the seven (eight if query string is available) tags that are added = 7 * 40 = 280 B
 * `Activity.Stop()` trying to set `Activity.Current` (This happens because of setting another AsyncLocal variable which is `Baggage`
   - System.Threading.AsyncLocalValueMap.OneElementAsyncLocalValueMap = 32 B
   - System.Threading.ExecutionContext = 40 B
