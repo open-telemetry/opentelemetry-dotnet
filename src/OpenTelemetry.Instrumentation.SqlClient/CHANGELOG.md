@@ -19,7 +19,7 @@
   network semantic conventions are marked stable. At which time this
   instrumentation can receive a stable release, and the old HTTP and
   network semantic conventions will no longer be supported. Refer to the
-  specification for more information regarding the new HTTP and network
+  specification for more information regarding the new network
   semantic conventions for 
   [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md).
   ([#4644](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4644))
