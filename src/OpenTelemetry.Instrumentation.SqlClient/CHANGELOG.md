@@ -20,7 +20,7 @@
   instrumentation can receive a stable release, and the old
   network semantic conventions will no longer be supported. Refer to the
   specification for more information regarding the new network
-  semantic conventions for 
+  semantic conventions for
   [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md).
   ([#4644](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4644))
 
