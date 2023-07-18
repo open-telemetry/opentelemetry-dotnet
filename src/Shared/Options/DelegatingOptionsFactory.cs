@@ -31,25 +31,22 @@ namespace Microsoft.Extensions.Options
         IOptionsFactory<TOptions>
         where TOptions : class, new()
     {
-        private readonly Func<IConfiguration, string, TOptions> _optionsFactoryFunc;
-        private readonly IConfiguration _configuration;
-        private readonly DelegatingOptionsFactoryInitializationDelegateWrapper[] _initializations;
-        private readonly IConfigureOptions<TOptions>[] _configures;
+        private readonly Func<IConfiguration, string, TOptions> optionsFactoryFunc;
+        private readonly IConfiguration configuration;
+        private readonly IConfigureOptions<TOptions>[] _setups;
         private readonly IPostConfigureOptions<TOptions>[] _postConfigures;
         private readonly IValidateOptions<TOptions>[] _validations;
 
         /// <summary>
         /// Initializes a new instance with the specified options configurations.
         /// </summary>
-        /// <param name="initializations">The initialization actions to run.</param>
-        /// <param name="configures">The configuration actions to run.</param>
-        /// <param name="postConfigures">The post configuration actions to run.</param>
+        /// <param name="setups">The configuration actions to run.</param>
+        /// <param name="postConfigures">The initialization actions to run.</param>
         /// <param name="validations">The validations to run.</param>
         public DelegatingOptionsFactory(
             Func<IConfiguration, string, TOptions> optionsFactoryFunc,
             IConfiguration configuration,
-            IEnumerable<DelegatingOptionsFactoryInitializationDelegateWrapper> initializations,
-            IEnumerable<IConfigureOptions<TOptions>> configures,
+            IEnumerable<IConfigureOptions<TOptions>> setups,
             IEnumerable<IPostConfigureOptions<TOptions>> postConfigures,
             IEnumerable<IValidateOptions<TOptions>> validations)
         {
@@ -61,10 +58,9 @@ namespace Microsoft.Extensions.Options
             Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
             Debug.Assert(configuration != null, "configuration was null");
 
-            _optionsFactoryFunc = optionsFactoryFunc!;
-            _configuration = configuration!;
-            _initializations = initializations as DelegatingOptionsFactoryInitializationDelegateWrapper[] ?? new List<DelegatingOptionsFactoryInitializationDelegateWrapper>(initializations).ToArray();
-            _configures = configures as IConfigureOptions<TOptions>[] ?? new List<IConfigureOptions<TOptions>>(configures).ToArray();
+            this.optionsFactoryFunc = optionsFactoryFunc!;
+            this.configuration = configuration!;
+            _setups = setups as IConfigureOptions<TOptions>[] ?? new List<IConfigureOptions<TOptions>>(setups).ToArray();
             _postConfigures = postConfigures as IPostConfigureOptions<TOptions>[] ?? new List<IPostConfigureOptions<TOptions>>(postConfigures).ToArray();
             _validations = validations as IValidateOptions<TOptions>[] ?? new List<IValidateOptions<TOptions>>(validations).ToArray();
         }
@@ -78,15 +74,8 @@ namespace Microsoft.Extensions.Options
         /// <exception cref="MissingMethodException">The <typeparamref name="TOptions"/> does not have a public parameterless constructor or <typeparamref name="TOptions"/> is <see langword="abstract"/>.</exception>
         public TOptions Create(string name)
         {
-            TOptions options = _optionsFactoryFunc(this._configuration, name);
-            foreach(var initialization in _initializations)
-            {
-                if (name == initialization.Name)
-                {
-                    initialization.InitializationAction(options, _configuration);
-                }
-            }
-            foreach (IConfigureOptions<TOptions> setup in _configures)
+            TOptions options = this.optionsFactoryFunc(this.configuration, name);
+            foreach (IConfigureOptions<TOptions> setup in _setups)
             {
                 if (setup is IConfigureNamedOptions<TOptions> namedSetup)
                 {
@@ -120,22 +109,6 @@ namespace Microsoft.Extensions.Options
             }
 
             return options;
-        }
-
-        public sealed class DelegatingOptionsFactoryInitializationDelegateWrapper
-        {
-            public string Name { get; }
-
-            public Action<TOptions, IConfiguration> InitializationAction { get; }
-
-            public DelegatingOptionsFactoryInitializationDelegateWrapper(string name, Action<TOptions, IConfiguration> initializationAction)
-            {
-                Debug.Assert(name != null, "name was null");
-                Debug.Assert(initializationAction != null, "initializationAction was null");
-
-                Name = name;
-                InitializationAction = initializationAction;
-            }
         }
     }
 }

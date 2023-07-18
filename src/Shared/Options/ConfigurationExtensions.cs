@@ -132,7 +132,6 @@ internal static class ConfigurationExtensions
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(c),
                 sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<DelegatingOptionsFactory<T>.DelegatingOptionsFactoryInitializationDelegateWrapper>(),
                 sp.GetServices<IConfigureOptions<T>>(),
                 sp.GetServices<IPostConfigureOptions<T>>(),
                 sp.GetServices<IValidateOptions<T>>());
@@ -154,28 +153,11 @@ internal static class ConfigurationExtensions
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(sp, c, n),
                 sp.GetRequiredService<IConfiguration>(),
-                sp.GetServices<DelegatingOptionsFactory<T>.DelegatingOptionsFactoryInitializationDelegateWrapper>(),
                 sp.GetServices<IConfigureOptions<T>>(),
                 sp.GetServices<IPostConfigureOptions<T>>(),
                 sp.GetServices<IValidateOptions<T>>());
         });
 
         return services!;
-    }
-
-    public static IServiceCollection RegisterOptionsFactoryInitializationAction<T>(
-        this IServiceCollection services,
-        string name,
-        Action<T, IConfiguration> initializationAction)
-        where T : class, new()
-    {
-        Debug.Assert(services != null, "services was null");
-        Debug.Assert(name != null, "name was null");
-        Debug.Assert(initializationAction != null, "initializationAction was null");
-
-        return services.AddSingleton(
-            new DelegatingOptionsFactory<T>.DelegatingOptionsFactoryInitializationDelegateWrapper(
-                name,
-                initializationAction));
     }
 }

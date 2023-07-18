@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -72,8 +73,7 @@ namespace OpenTelemetry.Metrics
 
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
 
-                services.RegisterOptionsFactoryInitializationAction<MetricReaderOptions>(
-                    finalOptionsName,
+                services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                     (readerOptions, config) =>
                     {
                         var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
@@ -149,8 +149,8 @@ namespace OpenTelemetry.Metrics
             builder.ConfigureServices(services =>
             {
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
-                services.RegisterOptionsFactoryInitializationAction<MetricReaderOptions>(
-                    name,
+
+                services.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
                     (readerOptions, config) =>
                     {
                         var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
