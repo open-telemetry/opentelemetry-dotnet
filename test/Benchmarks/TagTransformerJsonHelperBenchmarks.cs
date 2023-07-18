@@ -24,6 +24,7 @@ namespace Benchmarks
     /// <summary>
     /// Compares the three different ways to perform JSON array serialization.
     /// </summary>
+    [MemoryDiagnoser]
     public partial class TagTransformerJsonHelperBenchmarks
     {
         [Params(new object[]
