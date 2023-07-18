@@ -25,7 +25,7 @@
   and
   [metrics](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md).
   ([#4537](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4537),
-  [#4606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4606)),
+  [#4606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4606),
   [#4660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4660))
 
 * Fixed an issue affecting NET 7.0+. If custom propagation is being used
