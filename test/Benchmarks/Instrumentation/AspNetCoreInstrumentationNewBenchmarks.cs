@@ -96,10 +96,12 @@ namespace Benchmarks.Instrumentation
                 this.httpClient = new HttpClient();
 
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
                     .AddAspNetCoreInstrumentation()
                     .Build();
 
                 this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
                     .AddAspNetCoreInstrumentation()
                     .Build();
             }
