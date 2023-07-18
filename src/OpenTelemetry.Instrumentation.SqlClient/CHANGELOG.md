@@ -16,9 +16,7 @@
   emitting the same network semantic conventions that were emitted in
   `1.5.0-beta.1`.
   * Note: this option will eventually be removed after the new
-  network semantic conventions are marked stable. At which time this
-  instrumentation can receive a stable release, and the old
-  network semantic conventions will no longer be supported. Refer to the
+  network semantic conventions are marked stable. Refer to the
   specification for more information regarding the new network
   semantic conventions for
   [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md).
