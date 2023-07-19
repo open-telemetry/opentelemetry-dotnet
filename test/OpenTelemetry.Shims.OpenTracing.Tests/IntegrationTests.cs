@@ -28,50 +28,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         private const string ParentActivitySource = "ParentActivitySource";
         private const string ShimTracerName = "OpenTracing.Shim";
 
-        [Theory(Skip = "Known Activate bug")]
-        [InlineData(false, 0)]
-        [InlineData(true, 2)]
-        public void ActiveSpanViaShim(bool listenToShim, int expectedExportedSpansCount)
-        {
-            var exportedSpans = new List<Activity>();
-
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .SetSampler(listenToShim ? new AlwaysOnSampler() : new AlwaysOffSampler())
-                .When(
-                    listenToShim,
-                    b => b.AddSource(ShimTracerName))
-                .Build();
-
-            ITracer otTracer = new TracerShim(
-                tracerProvider.GetTracer(ShimTracerName),
-                Propagators.DefaultTextMapPropagator);
-
-            // Real usage requires a call OpenTracing.Util.GlobalTracer.Register(otTracer),
-            // however, that can only happen once per process, we don't do it here so we
-            // can run multiple tests in the same process.
-
-            using (IScope parentScope = otTracer.BuildSpan("Parent").StartActive())
-            {
-                parentScope.Span.SetTag("parent", true);
-
-                // Create a child span using the ScopeManager
-                var otScopeManager = otTracer.ScopeManager;
-                Assert.NotNull(otScopeManager);
-
-                var otSpan = otTracer.BuildSpan("Child")
-                    .WithTag("parent", false)
-                    .Start();
-                using IScope childScope = otScopeManager.Activate(otSpan, finishSpanOnDispose: true);
-            }
-
-            Assert.Equal(expectedExportedSpansCount, exportedSpans.Count);
-            if (expectedExportedSpansCount > 0)
-            {
-                Assert.Equal("Child", exportedSpans[0].DisplayName);
-                Assert.Equal("Parent", exportedSpans[1].DisplayName);
-            }
-        }
-
         [Theory]
         [InlineData(SamplingDecision.Drop, SamplingDecision.Drop, SamplingDecision.Drop)]
         [InlineData(SamplingDecision.Drop, SamplingDecision.RecordAndSample, SamplingDecision.Drop)]
