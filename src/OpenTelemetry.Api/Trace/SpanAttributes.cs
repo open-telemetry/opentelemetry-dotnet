@@ -130,6 +130,16 @@ public class SpanAttributes
         this.AddInternal(key, values);
     }
 
+    /// <summary>
+    /// Add entry to the attributes.
+    /// </summary>
+    /// <param name="key">Entry key.</param>
+    /// <param name="value">Entry value.</param>
+    public void Add(string key, object value)
+    {
+        this.AddInternal(key, value);
+    }
+
     private void AddInternal(string key, object value)
     {
         Guard.ThrowIfNull(key);

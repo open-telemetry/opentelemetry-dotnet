@@ -43,7 +43,9 @@ public class SpanAttributesTest
         spanAttribute.Add("key_long", 1);
         spanAttribute.Add("key_a_long", new long[] { 1 });
 
-        Assert.Equal(8, spanAttribute.Attributes.Count);
+        spanAttribute.Add("key_object", new object());
+
+        Assert.Equal(9, spanAttribute.Attributes.Count);
     }
 
     [Fact]

@@ -78,3 +78,4 @@ OpenTelemetry.Logs.LogRecordSeverityExtensions
 static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
 static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
 virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool
+~OpenTelemetry.Trace.SpanAttributes.Add(string key, object value) -> void
