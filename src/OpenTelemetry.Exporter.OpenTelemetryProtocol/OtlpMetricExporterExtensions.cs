@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
@@ -26,6 +27,8 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public static class OtlpMetricExporterExtensions
     {
+        internal const string OtlpMetricExporterTemporalityPreferenceEnvVarKey = "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE";
+
         /// <summary>
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
         /// </summary>
@@ -69,6 +72,17 @@ namespace OpenTelemetry.Metrics
                 }
 
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+
+                services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
+                    (readerOptions, config) =>
+                    {
+                        var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
+                        if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
+                            && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
+                        {
+                            readerOptions.TemporalityPreference = enumValue;
+                        }
+                    });
             });
 
             return builder.AddReader(sp =>
@@ -135,6 +149,17 @@ namespace OpenTelemetry.Metrics
             builder.ConfigureServices(services =>
             {
                 OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+
+                services.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
+                    (readerOptions, config) =>
+                    {
+                        var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
+                        if (!string.IsNullOrWhiteSpace(otlpTemporalityPreference)
+                            && Enum.TryParse<MetricReaderTemporalityPreference>(otlpTemporalityPreference, ignoreCase: true, out var enumValue))
+                        {
+                            readerOptions.TemporalityPreference = enumValue;
+                        }
+                    });
             });
 
             return builder.AddReader(sp =>

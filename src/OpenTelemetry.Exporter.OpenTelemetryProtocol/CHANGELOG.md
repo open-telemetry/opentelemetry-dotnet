@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added support for configuring the metric exporter's temporality using the
+  environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` as
+  defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.23.0/specification/metrics/sdk_exporters/otlp.md#additional-configuration).
+  ([#4667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4667))
+
 ## 1.6.0-alpha.1
 
 Released 2023-Jul-12
