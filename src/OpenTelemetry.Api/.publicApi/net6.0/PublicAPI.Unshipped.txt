@@ -222,6 +222,7 @@ virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out Open
 ~OpenTelemetry.Trace.SpanAttributes.Add(string key, double[] values) -> void
 ~OpenTelemetry.Trace.SpanAttributes.Add(string key, long value) -> void
 ~OpenTelemetry.Trace.SpanAttributes.Add(string key, long[] values) -> void
+~OpenTelemetry.Trace.SpanAttributes.Add(string key, object value) -> void
 ~OpenTelemetry.Trace.SpanAttributes.Add(string key, string value) -> void
 ~OpenTelemetry.Trace.SpanAttributes.Add(string key, string[] values) -> void
 ~OpenTelemetry.Trace.SpanAttributes.SpanAttributes(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
