@@ -6,7 +6,7 @@
   <PropertyGroup>
     <OTelPreviousStableVer>1.5.1</OTelPreviousStableVer>
   </PropertyGroup>
-    
+
   <!-- prod packages -->
   <ItemGroup>
     <PackageVersion Include="Google.Protobuf" Version="[3.19.4,4.0)" />
