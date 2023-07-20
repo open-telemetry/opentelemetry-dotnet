@@ -1,6 +1,6 @@
 <Project>
   <ItemGroup>
-    <SolutionProjects Include="**\OpenTelemetry.Instrumentation*.csproj" />
+    <SolutionProjects Include="..\**\OpenTelemetry.Instrumentation*.csproj" />
   </ItemGroup>
 
   <Target Name="Build">

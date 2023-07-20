@@ -32,10 +32,10 @@ jobs:
         fetch-depth: 0 # fetching all
 
     - name: Install dependencies
-      run: dotnet restore InstrumentationLibraries.proj
+      run: dotnet restore ./build/InstrumentationLibraries.proj
 
     - name: Build
-      run: dotnet build InstrumentationLibraries.proj --configuration Release --no-restore
+      run: dotnet build ./build/InstrumentationLibraries.proj --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/Release/${{ matrix.version }}/OpenTelemetry.Instrumentation*.Tests.dll --logger:"console;verbosity=detailed"

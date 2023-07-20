@@ -4,7 +4,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <OTelPreviousStableVer>1.5.1</OTelPreviousStableVer>
+    <OTelLatestStableVer>1.5.1</OTelLatestStableVer>
   </PropertyGroup>
 
   <!-- prod packages -->
@@ -28,8 +28,8 @@
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
     <PackageVersion Include="MinVer" Version="[4.2.0,5.0)" />
-    <PackageVersion Include="OpenTelemetry" Version="$(OTelPreviousStableVer)" />
-    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelPreviousStableVer)" />
+    <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
     <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
 

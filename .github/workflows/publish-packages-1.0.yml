@@ -27,10 +27,10 @@ jobs:
         ref: ${{ github.ref || 'main' }}
 
     - name: Install dependencies
-      run: dotnet restore OpenTelemetry.sln
+      run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build OpenTelemetry.sln --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
+      run: dotnet build --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
 
     - name: dotnet pack
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
