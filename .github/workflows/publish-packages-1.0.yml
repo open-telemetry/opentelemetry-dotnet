@@ -17,6 +17,9 @@ jobs:
   build-pack:
     runs-on: windows-latest
 
+    env:
+      RunningDotNetPack: true
+
     steps:
     - uses: actions/checkout@v3
       with:
