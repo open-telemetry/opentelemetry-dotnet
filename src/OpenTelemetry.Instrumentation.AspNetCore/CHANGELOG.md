@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.1-beta.1
+
+Released 2023-Jul-20
+
 * The new HTTP and network semantic conventions can be opted in to by setting
   the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. This allows for a
   transition period for users to experiment with the new semantic conventions
