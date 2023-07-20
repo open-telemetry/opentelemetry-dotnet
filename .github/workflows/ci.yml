@@ -28,10 +28,10 @@ jobs:
         fetch-depth: 0 # fetching all
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore OpenTelemetry.proj
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"

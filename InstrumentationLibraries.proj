@@ -4,10 +4,10 @@
   </ItemGroup>
 
   <Target Name="Restore">
-    <MSBuild Projects="@(SolutionProjects)" ContinueOnError="ErrorAndStop" />
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
   </Target>
 
   <Target Name="Build">
-    <MSBuild Projects="@(SolutionProjects)" ContinueOnError="ErrorAndStop" />
+    <MSBuild Projects="@(SolutionProjects)" Targets="Build" ContinueOnError="ErrorAndStop" />
   </Target>
 </Project>
