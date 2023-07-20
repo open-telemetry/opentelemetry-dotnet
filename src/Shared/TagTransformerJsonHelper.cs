@@ -1,4 +1,4 @@
-// <copyright file="TagTransformer.Json.cs" company="OpenTelemetry Authors">
+// <copyright file="TagTransformerJsonHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,9 @@
 // </copyright>
 
 using System.Text.Json;
+#if NET6_0_OR_GREATER
 using System.Text.Json.Serialization;
+#endif
 
 namespace OpenTelemetry.Internal;
 
@@ -23,25 +25,37 @@ namespace OpenTelemetry.Internal;
 #pragma warning disable SA1601 // Partial elements should be documented
 internal static partial class TagTransformerJsonHelper
 {
+#if NET6_0_OR_GREATER
+    // In net6.0 or higher use System.Text.Json source generator
+    // this makes the serialization faster and also AOT compatible
+
     internal static string JsonSerializeArrayTag(Array array)
     {
-        return JsonSerializer.Serialize(array, typeof(object), ArrayTagJsonContext.Default);
+        return JsonSerializer.Serialize(array, typeof(Array), ArrayTagJsonContext.Default);
     }
 
-    [JsonSerializable(typeof(object))]
-    [JsonSerializable(typeof(char[]))]
-    [JsonSerializable(typeof(string[]))]
-    [JsonSerializable(typeof(bool[]))]
-    [JsonSerializable(typeof(byte[]))]
-    [JsonSerializable(typeof(sbyte[]))]
-    [JsonSerializable(typeof(short[]))]
-    [JsonSerializable(typeof(ushort[]))]
-    [JsonSerializable(typeof(int[]))]
-    [JsonSerializable(typeof(uint[]))]
-    [JsonSerializable(typeof(long[]))]
-    [JsonSerializable(typeof(float[]))]
-    [JsonSerializable(typeof(double[]))]
+    [JsonSerializable(typeof(Array))]
+    [JsonSerializable(typeof(char))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(bool))]
+    [JsonSerializable(typeof(byte))]
+    [JsonSerializable(typeof(sbyte))]
+    [JsonSerializable(typeof(short))]
+    [JsonSerializable(typeof(ushort))]
+    [JsonSerializable(typeof(int))]
+    [JsonSerializable(typeof(uint))]
+    [JsonSerializable(typeof(long))]
+    [JsonSerializable(typeof(ulong))]
+    [JsonSerializable(typeof(float))]
+    [JsonSerializable(typeof(double))]
     private sealed partial class ArrayTagJsonContext : JsonSerializerContext
     {
     }
+
+#else
+    internal static string JsonSerializeArrayTag(Array array)
+    {
+        return JsonSerializer.Serialize(array);
+    }
+#endif
 }
