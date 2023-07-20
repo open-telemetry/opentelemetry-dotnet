@@ -14,9 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Reflection;
-using OpenTelemetry.Internal;
-#pragma warning restore IDE0005
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Instrumentation;
 
@@ -26,6 +28,9 @@ namespace OpenTelemetry.Instrumentation;
 /// <typeparam name="T">The type of the property being fetched.</typeparam>
 internal sealed class PropertyFetcher<T>
 {
+#if NET6_0_OR_GREATER
+    private const string TrimCompatibilityMessage = "PropertyFetcher access property on the object type; therefore is not trim compatible.";
+#endif
     private readonly string propertyName;
     private PropertyFetch innerFetcher;
 
@@ -39,29 +44,15 @@ internal sealed class PropertyFetcher<T>
     }
 
     /// <summary>
-    /// Fetch the property from the object.
-    /// </summary>
-    /// <param name="obj">Object to be fetched.</param>
-    /// <returns>Property fetched.</returns>
-    public T Fetch(object obj)
-    {
-        Guard.ThrowIfNull(obj);
-
-        if (!this.TryFetch(obj, out T value, true))
-        {
-            throw new ArgumentException($"Unable to fetch property: '{nameof(obj)}'", nameof(obj));
-        }
-
-        return value;
-    }
-
-    /// <summary>
     /// Try to fetch the property from the object.
     /// </summary>
     /// <param name="obj">Object to be fetched.</param>
     /// <param name="value">Fetched value.</param>
     /// <param name="skipObjNullCheck">Set this to <see langword= "true"/> if we know <paramref name="obj"/> is not <see langword= "null"/>.</param>
     /// <returns><see langword= "true"/> if the property was fetched.</returns>
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(TrimCompatibilityMessage)]
+#endif
     public bool TryFetch(object obj, out T value, bool skipObjNullCheck = false)
     {
         if (!skipObjNullCheck && obj == null)
@@ -85,6 +76,9 @@ internal sealed class PropertyFetcher<T>
     }
 
     // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(TrimCompatibilityMessage)]
+#endif
     private class PropertyFetch
     {
         public static PropertyFetch Create(TypeInfo type, string propertyName)
@@ -105,10 +99,29 @@ internal sealed class PropertyFetcher<T>
                     return null;
                 }
 
-                var typedPropertyFetcher = typeof(TypedPropertyFetch<,>);
-                var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
-                    typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
-                return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
+                if (!RuntimeFeature.IsDynamicCodeSupported && (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType))
+                {
+                    return new BoxedValueTypePropertyFech(propertyInfo);
+                }
+                else
+                {
+                    return CreateReferencedTypePropertyFetch(propertyInfo);
+                }
+
+                // IL3050 was generated here because of the call to MakeGenericType, which is problematic in AOT if one of the type parameters is a value type
+                // (because the compiler might need to generate code specific to that type.)
+                // If ALL the type parameters are reference types, it will not be a problem; because the generated code can be shared among
+                // all reference type instantiations.
+#if NET6_0_OR_GREATER
+                [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The code guarantees that all the generic parameters are reference types")]
+#endif
+                static PropertyFetch CreateReferencedTypePropertyFetch(PropertyInfo propertyInfo)
+                {
+                    var typedPropertyFetcher = typeof(ReferenceTypedPropertyFetch<,>);
+                    var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
+                        typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
+                    return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
+                }
             }
         }
 
@@ -118,15 +131,17 @@ internal sealed class PropertyFetcher<T>
             return false;
         }
 
-        private sealed class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
-            where TDeclaredProperty : T
+        // 1. ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a delegate directly to the property getter.
+        // 2. CreateDelegate() is not AOT compatible if any of the types (DeclaringType, property or T) are value types.
+        private sealed class ReferenceTypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
+            where TDeclaredProperty : class, T
+            where TDeclaredObject : class
         {
             private readonly string propertyName;
             private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
-
             private PropertyFetch innerFetcher;
 
-            public TypedPropertyFetch(PropertyInfo property)
+            public ReferenceTypedPropertyFetch(PropertyInfo property)
             {
                 this.propertyName = property.Name;
                 this.propertyFetch = (Func<TDeclaredObject, TDeclaredProperty>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, TDeclaredProperty>));
@@ -137,6 +152,43 @@ internal sealed class PropertyFetcher<T>
                 if (obj is TDeclaredObject o)
                 {
                     value = this.propertyFetch(o);
+                    return true;
+                }
+
+                this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
+
+                if (this.innerFetcher == null)
+                {
+                    value = default;
+                    return false;
+                }
+
+                return this.innerFetcher.TryFetch(obj, out value);
+            }
+        }
+
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode(TrimCompatibilityMessage)]
+#endif
+        private sealed class BoxedValueTypePropertyFech : PropertyFetch
+        {
+            private readonly string propertyName;
+            private readonly Func<object, T> propertyFetch;
+            private readonly Type payloadType;
+            private PropertyFetch innerFetcher;
+
+            public BoxedValueTypePropertyFech(PropertyInfo property)
+            {
+                this.propertyName = property.Name;
+                this.propertyFetch = payload => (T)property.GetValue(this.payloadType);
+                this.payloadType = property.DeclaringType;
+            }
+
+            public override bool TryFetch(object obj, out T value)
+            {
+                if (obj.GetType() == this.payloadType)
+                {
+                    value = this.propertyFetch(obj);
                     return true;
                 }
 
