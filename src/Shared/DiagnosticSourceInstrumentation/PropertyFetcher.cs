@@ -16,9 +16,9 @@
 
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 #endif
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Instrumentation;
 
@@ -83,12 +83,7 @@ internal sealed class PropertyFetcher<T>
     {
         public static PropertyFetch Create(TypeInfo type, string propertyName)
         {
-            var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
-            if (property == null)
-            {
-                property = type.GetProperty(propertyName);
-            }
-
+            var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase)) ?? type.GetProperty(propertyName);
             return CreateFetcherForProperty(property);
 
             static PropertyFetch CreateFetcherForProperty(PropertyInfo propertyInfo)
@@ -99,7 +94,11 @@ internal sealed class PropertyFetcher<T>
                     return null;
                 }
 
-                if (!RuntimeFeature.IsDynamicCodeSupported && (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType))
+                if (
+#if NET6_0_OR_GREATER
+!RuntimeFeature.IsDynamicCodeSupported &&
+#endif
+                 (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType))
                 {
                     return new BoxedValueTypePropertyFech(propertyInfo);
                 }
