@@ -415,6 +415,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(47, key, value);
         }
 
+        [Event(48, Message = "PeriodicExportingMeterReader call to Collect() took {0} ms", Level = EventLevel.Informational)]
+        public void MetricCollectCompleted(string elapsedMs)
+        {
+            this.WriteEvent(48, elapsedMs);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

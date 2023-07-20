@@ -310,6 +310,7 @@ namespace OpenTelemetry.Metrics
                     return false;
                 }
 
+                OpenTelemetrySdkEventSource.Log.MetricCollectCompleted(sw.ElapsedMilliseconds.ToString());
                 OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
                 result = this.ProcessMetrics(metrics, (int)timeout);
                 if (result)

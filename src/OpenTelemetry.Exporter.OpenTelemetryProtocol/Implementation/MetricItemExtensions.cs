@@ -32,6 +32,49 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
         private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
+        // [abeaulieu] Overload which takes a pre-converted OtlpMetrics object.
+        internal static void AddMetrics(
+            this OtlpCollector.ExportMetricsServiceRequest request,
+            OtlpResource.Resource processResource,
+            in OtlpMetrics.Metric otlpMetric,
+            in Metric metric) // [abeaulieu] [PERF] need the original metric to set the resources stuff. Technically we could build this once and clone the message.
+        {
+            var metricsByLibrary = new Dictionary<string, OtlpMetrics.ScopeMetrics>();
+
+            // Only add the process resource once per request.
+            if (request.ResourceMetrics.Count == 0)
+            {
+                var r = new OtlpMetrics.ResourceMetrics
+                {
+                    Resource = processResource,
+                };
+
+                request.ResourceMetrics.Add(r);
+            }
+
+            var resourceMetrics = request.ResourceMetrics[0]; // FIXME: This is ugly but it works for testing.
+
+            // TODO: Replace null check with exception handling.
+            if (otlpMetric == null)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
+                    nameof(MetricItemExtensions),
+                    nameof(AddMetrics));
+                return;
+            }
+
+            var meterName = metric.MeterName;
+            if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
+            {
+                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
+
+                metricsByLibrary.Add(meterName, scopeMetrics);
+                resourceMetrics.ScopeMetrics.Add(scopeMetrics);
+            }
+
+            scopeMetrics.Metrics.Add(otlpMetric);
+        }
+
         internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
             OtlpResource.Resource processResource,
@@ -104,6 +147,201 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 metrics.Scope.Name = name;
                 metrics.Scope.Version = version ?? string.Empty;
+            }
+
+            return metrics;
+        }
+
+        internal static OtlpMetrics.Metric GetMetric(Metric metric)
+        {
+            var otlpMetric = new OtlpMetrics.Metric
+            {
+                Name = metric.Name,
+            };
+
+            if (metric.Description != null)
+            {
+                otlpMetric.Description = metric.Description;
+            }
+
+            if (metric.Unit != null)
+            {
+                otlpMetric.Unit = metric.Unit;
+            }
+
+            return otlpMetric;
+        }
+
+        // [abeaulieu] Attempting to batch data points per metric.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static IEnumerable<OtlpMetrics.Metric> ToBatchedOtlpMetric(this Metric metric, int batchSize = 15000)
+        {
+            List<OtlpMetrics.Metric> metrics = new();
+
+            // Keep this here since it won't change for this metric.
+            OtlpMetrics.AggregationTemporality temporality;
+            if (metric.Temporality == AggregationTemporality.Delta)
+            {
+                temporality = OtlpMetrics.AggregationTemporality.Delta;
+            }
+            else
+            {
+                temporality = OtlpMetrics.AggregationTemporality.Cumulative;
+            }
+
+            var otlpMetric = GetMetric(metric); // In the best case, this only requires one metric message.
+
+            switch (metric.MetricType)
+            {
+                case MetricType.LongSum:
+                case MetricType.LongSumNonMonotonic:
+                    {
+                        var sum = new OtlpMetrics.Sum
+                        {
+                            IsMonotonic = metric.MetricType == MetricType.LongSum,
+                            AggregationTemporality = temporality,
+                        };
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.NumberDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+
+                            dataPoint.AsInt = metricPoint.GetSumLong();
+                            sum.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.Sum = sum;
+                        break;
+                    }
+
+                case MetricType.DoubleSum:
+                case MetricType.DoubleSumNonMonotonic:
+                    {
+                        var sum = new OtlpMetrics.Sum
+                        {
+                            IsMonotonic = metric.MetricType == MetricType.DoubleSum,
+                            AggregationTemporality = temporality,
+                        };
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.NumberDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+
+                            dataPoint.AsDouble = metricPoint.GetSumDouble();
+                            sum.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.Sum = sum;
+                        break;
+                    }
+
+                case MetricType.LongGauge:
+                    {
+                        // FIXME: Cleanup
+                        var gauge = new OtlpMetrics.Gauge();
+                        var curBatch = 0; // Keep a local copy here for performance.
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.NumberDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+                            curBatch++;
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+
+                            dataPoint.AsInt = metricPoint.GetGaugeLastValueLong();
+                            gauge.DataPoints.Add(dataPoint);
+
+                            if (curBatch >= batchSize)
+                            {
+                                // This batch is full, let's offload it and create a new metric message.
+                                otlpMetric.Gauge = gauge;
+                                metrics.Add(otlpMetric);
+                                gauge = new OtlpMetrics.Gauge(); // Create a fresh gauge to store the data points.
+                                otlpMetric = GetMetric(metric); // Get a fresh message.
+                                curBatch = 0;
+                            }
+                        }
+
+                        break;
+                    }
+
+                case MetricType.DoubleGauge:
+                    {
+                        var gauge = new OtlpMetrics.Gauge();
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.NumberDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+
+                            dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
+                            gauge.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.Gauge = gauge;
+                        break;
+                    }
+
+                case MetricType.Histogram:
+                    {
+                        var histogram = new OtlpMetrics.Histogram
+                        {
+                            AggregationTemporality = temporality,
+                        };
+
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.HistogramDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
+
+                            if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                            {
+                                dataPoint.Min = min;
+                                dataPoint.Max = max;
+                            }
+
+                            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                            {
+                                dataPoint.BucketCounts.Add((ulong)histogramMeasurement.BucketCount);
+                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                                {
+                                    dataPoint.ExplicitBounds.Add(histogramMeasurement.ExplicitBound);
+                                }
+                            }
+
+                            histogram.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.Histogram = histogram;
+                        break;
+                    }
             }
 
             return metrics;
