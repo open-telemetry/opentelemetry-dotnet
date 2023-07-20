@@ -128,4 +128,5 @@ Only for Maintainers.
     by sending a Pull Request.
 
 17. If a new stable version of the core packages were released, update
-    `OTelPreviousStableVer` in Common.props to the just released stable version.
+    `OTelLatestStableVer` in Directory.Packages.props to the just released
+    stable version.

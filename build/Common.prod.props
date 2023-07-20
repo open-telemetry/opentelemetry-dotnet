@@ -18,7 +18,7 @@
 
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" PrivateAssets="All" />
-    <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
+    <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelLatestStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds;ValidateApiCompatForSrc" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
@@ -29,7 +29,7 @@
     project with only a single target, this will NOT run and an alternative
     solution will be needed. -->
     <Message Text="ApiCompat: Running the powershell script to download the package for $(MSBuildProjectName)." Importance="High"/>
-    <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot; -workDir &quot;$(RepoRoot)\build\LastMajorVersionBinaries&quot;" />
+    <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelLatestStableVer)&quot; -workDir &quot;$(RepoRoot)\build\LastMajorVersionBinaries&quot;" />
   </Target>
 
   <Target Name="FindContractDependencyPaths" BeforeTargets="ValidateApiCompatForSrc" AfterTargets="ResolveAssemblyReferences" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
