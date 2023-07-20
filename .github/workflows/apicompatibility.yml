@@ -18,7 +18,7 @@ jobs:
         fetch-depth: 0 # fetching all
 
     - name: Install dependencies
-      run: dotnet restore OpenTelemetry.proj
+      run: dotnet restore OpenTelemetry.sln
 
     - name: Build
-      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore
+      run: dotnet build OpenTelemetry.sln --configuration Release --no-restore
