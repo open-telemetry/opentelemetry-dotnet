@@ -16,7 +16,6 @@
 
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 #endif
 using System.Reflection;
 
@@ -94,11 +93,7 @@ internal sealed class PropertyFetcher<T>
                     return null;
                 }
 
-                if (
-#if NET6_0_OR_GREATER
-!RuntimeFeature.IsDynamicCodeSupported &&
-#endif
-                 (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType))
+                if (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType)
                 {
                     return new BoxedValueTypePropertyFech(propertyInfo);
                 }
