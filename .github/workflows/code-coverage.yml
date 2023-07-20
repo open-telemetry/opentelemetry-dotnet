@@ -25,10 +25,10 @@ jobs:
         fetch-depth: 0 # fetching all
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore OpenTelemetry.sln
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build OpenTelemetry.sln --configuration Release --no-restore
 
 #    - name: dotnet test
 #      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
