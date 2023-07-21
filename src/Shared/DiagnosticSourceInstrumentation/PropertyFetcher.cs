@@ -102,10 +102,9 @@ internal sealed class PropertyFetcher<T>
                     return CreateReferencedTypePropertyFetch(propertyInfo);
                 }
 
-                // IL3050 was generated here because of the call to MakeGenericType, which is problematic in AOT if one of the type parameters is a value type
-                // (because the compiler might need to generate code specific to that type.)
-                // If ALL the type parameters are reference types, it will not be a problem; because the generated code can be shared among
-                // all reference type instantiations.
+                // IL3050 was generated here because of the call to MakeGenericType, which is problematic in AOT if one of the type parameters is a value type;
+                // because the compiler might need to generate code specific to that type.
+                // If ALL the type parameters are reference types, there will be no problem; because the generated code can be shared among all reference type instantiations.
 #if NET6_0_OR_GREATER
                 [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The code guarantees that all the generic parameters are reference types")]
 #endif
@@ -125,8 +124,8 @@ internal sealed class PropertyFetcher<T>
             return false;
         }
 
-        // 1. ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a delegate directly to the property getter.
-        // 2. CreateDelegate() is not AOT compatible if any of the types (DeclaringType, property or T) are value types.
+        // 1. ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
+        // 2. CreateDelegate is not AOT compatible if any of the types (DeclaringType, property or T) is a value type.
         private sealed class ReferenceTypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
             where TDeclaredProperty : class, T
             where TDeclaredObject : class
