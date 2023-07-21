@@ -19,83 +19,82 @@ using System.Net.Http;
 #endif
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+
+/// <summary>Base class for sending OTLP export request over HTTP.</summary>
+/// <typeparam name="TRequest">Type of export request.</typeparam>
+internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
 {
-    /// <summary>Base class for sending OTLP export request over HTTP.</summary>
-    /// <typeparam name="TRequest">Type of export request.</typeparam>
-    internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
+    protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
-        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
-        {
-            Guard.ThrowIfNull(options);
-            Guard.ThrowIfNull(httpClient);
-            Guard.ThrowIfNull(signalPath);
-            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
+        Guard.ThrowIfNull(options);
+        Guard.ThrowIfNull(httpClient);
+        Guard.ThrowIfNull(signalPath);
+        Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-            Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
-                ? options.Endpoint.AppendPathIfNotPresent(signalPath)
-                : options.Endpoint;
-            this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
-            this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
-            this.HttpClient = httpClient;
+        Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
+            ? options.Endpoint.AppendPathIfNotPresent(signalPath)
+            : options.Endpoint;
+        this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
+        this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+        this.HttpClient = httpClient;
+    }
+
+    internal HttpClient HttpClient { get; }
+
+    internal Uri Endpoint { get; set; }
+
+    internal IReadOnlyDictionary<string, string> Headers { get; }
+
+    /// <inheritdoc/>
+    public bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var httpRequest = this.CreateHttpRequest(request);
+
+            using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+            httpResponse?.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException ex)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
+
+            return false;
         }
 
-        internal HttpClient HttpClient { get; }
+        return true;
+    }
 
-        internal Uri Endpoint { get; set; }
+    /// <inheritdoc/>
+    public bool Shutdown(int timeoutMilliseconds)
+    {
+        this.HttpClient.CancelPendingRequests();
+        return true;
+    }
 
-        internal IReadOnlyDictionary<string, string> Headers { get; }
+    protected abstract HttpContent CreateHttpContent(TRequest exportRequest);
 
-        /// <inheritdoc/>
-        public bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
+    protected HttpRequestMessage CreateHttpRequest(TRequest exportRequest)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
+        foreach (var header in this.Headers)
         {
-            try
-            {
-                using var httpRequest = this.CreateHttpRequest(request);
-
-                using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
-
-                httpResponse?.EnsureSuccessStatusCode();
-            }
-            catch (HttpRequestException ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
-
-                return false;
-            }
-
-            return true;
+            request.Headers.Add(header.Key, header.Value);
         }
 
-        /// <inheritdoc/>
-        public bool Shutdown(int timeoutMilliseconds)
-        {
-            this.HttpClient.CancelPendingRequests();
-            return true;
-        }
+        request.Content = this.CreateHttpContent(exportRequest);
 
-        protected abstract HttpContent CreateHttpContent(TRequest exportRequest);
+        return request;
+    }
 
-        protected HttpRequestMessage CreateHttpRequest(TRequest exportRequest)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
-            foreach (var header in this.Headers)
-            {
-                request.Headers.Add(header.Key, header.Value);
-            }
-
-            request.Content = this.CreateHttpContent(exportRequest);
-
-            return request;
-        }
-
-        protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
+    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
 #if NET6_0_OR_GREATER
-            return this.HttpClient.Send(request, cancellationToken);
+        return this.HttpClient.Send(request, cancellationToken);
 #else
-            return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+        return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
 #endif
-        }
     }
 }
