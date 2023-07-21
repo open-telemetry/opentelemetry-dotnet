@@ -27,13 +27,13 @@ jobs:
         ref: ${{ github.ref || 'main' }}
 
     - name: Install dependencies
-      run: dotnet restore OpenTelemetryPack.proj
+      run: dotnet restore OpenTelemetry.proj
 
     - name: dotnet build
-      run: dotnet build OpenTelemetryPack.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetryPack.proj --configuration Release --no-build
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v3
