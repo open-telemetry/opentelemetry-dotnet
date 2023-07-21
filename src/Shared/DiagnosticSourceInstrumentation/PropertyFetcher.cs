@@ -95,7 +95,7 @@ internal sealed class PropertyFetcher<T>
 
                 if (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType)
                 {
-                    return new BoxedValueTypePropertyFech(propertyInfo);
+                    return new BoxedValueTypePropertyFetch(propertyInfo);
                 }
                 else
                 {
@@ -164,17 +164,17 @@ internal sealed class PropertyFetcher<T>
 #if NET6_0_OR_GREATER
         [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
-        private sealed class BoxedValueTypePropertyFech : PropertyFetch
+        private sealed class BoxedValueTypePropertyFetch : PropertyFetch
         {
             private readonly string propertyName;
             private readonly Func<object, T> propertyFetch;
             private readonly Type payloadType;
             private PropertyFetch innerFetcher;
 
-            public BoxedValueTypePropertyFech(PropertyInfo property)
+            public BoxedValueTypePropertyFetch(PropertyInfo property)
             {
                 this.propertyName = property.Name;
-                this.propertyFetch = payload => (T)property.GetValue(this.payloadType);
+                this.propertyFetch = payload => (T)property.GetValue(payload);
                 this.payloadType = property.DeclaringType;
             }
 
