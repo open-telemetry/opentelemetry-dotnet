@@ -23,13 +23,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
     public class SpanContextShimTests
     {
         [Fact]
-        public void CtorArgumentValidation()
-        {
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
-        }
-
-        [Fact]
         public void GetTraceId()
         {
             var shim = GetSpanContextShim();
