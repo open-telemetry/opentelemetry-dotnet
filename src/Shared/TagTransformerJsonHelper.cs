@@ -28,7 +28,7 @@ namespace OpenTelemetry.Internal;
 internal static partial class TagTransformerJsonHelper
 {
 #if NET6_0_OR_GREATER
-    // In net6.0 or higher ships System.Text.Json "in box",
+    // In net6.0 or higher ships System.Text.Json "in box" as part of the base class libraries;
     // meaning the consumer automatically got upgraded to use v6.0 System.Text.Json which uses source generator.
     // The source generator makes the serialization faster and also AOT compatible.
 
