@@ -17,6 +17,9 @@ jobs:
   build-pack:
     runs-on: windows-latest
 
+    env:
+      RunningDotNetPack: true
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -24,10 +27,10 @@ jobs:
         ref: ${{ github.ref || 'main' }}
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore OpenTelemetry.proj
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
 
     - name: dotnet pack
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build

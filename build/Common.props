@@ -21,14 +21,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <PropertyGroup Label="Package versions used in this repository">
-    <!--
-      Please sort alphabetically.
-      Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
-    -->
-    <OTelPreviousStableVer>1.5.1</OTelPreviousStableVer>
-  </PropertyGroup>
-
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
   </ItemGroup>
