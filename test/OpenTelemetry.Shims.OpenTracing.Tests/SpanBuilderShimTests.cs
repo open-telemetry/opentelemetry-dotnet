@@ -20,25 +20,12 @@ using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
+    [Collection(nameof(ListenAndSampleAllActivitySources))]
     public class SpanBuilderShimTests
     {
         private const string SpanName1 = "MySpanName/1";
         private const string SpanName2 = "MySpanName/2";
         private const string TracerName = "defaultactivitysource";
-
-        static SpanBuilderShimTests()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
-            var listener = new ActivityListener
-            {
-                ShouldListenTo = _ => true,
-                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-            };
-
-            ActivitySource.AddActivityListener(listener);
-        }
 
         [Fact]
         public void CtorArgumentValidation()
