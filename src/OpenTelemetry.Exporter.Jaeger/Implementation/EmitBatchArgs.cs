@@ -17,58 +17,57 @@
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal sealed class EmitBatchArgs
 {
-    internal sealed class EmitBatchArgs
+    public EmitBatchArgs(TProtocol protocol)
     {
-        public EmitBatchArgs(TProtocol protocol)
+        this.EmitBatchArgsBeginMessage = GenerateBeginMessage(protocol, out int seqIdPosition);
+        this.SeqIdPosition = seqIdPosition;
+        this.EmitBatchArgsEndMessage = GenerateEndMessage(protocol);
+    }
+
+    public byte[] EmitBatchArgsBeginMessage { get; }
+
+    public int SeqIdPosition { get; }
+
+    public byte[] EmitBatchArgsEndMessage { get; }
+
+    public int MinimumMessageSize => this.EmitBatchArgsBeginMessage.Length
+        + this.EmitBatchArgsEndMessage.Length;
+
+    private static byte[] GenerateBeginMessage(TProtocol oprot, out int seqIdPosition)
+    {
+        oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, 0), out seqIdPosition);
+
+        var struc = new TStruct("emitBatch_args");
+        oprot.WriteStructBegin(struc);
+
+        var field = new TField
         {
-            this.EmitBatchArgsBeginMessage = GenerateBeginMessage(protocol, out int seqIdPosition);
-            this.SeqIdPosition = seqIdPosition;
-            this.EmitBatchArgsEndMessage = GenerateEndMessage(protocol);
-        }
+            Name = "batch",
+            Type = TType.Struct,
+            ID = 1,
+        };
 
-        public byte[] EmitBatchArgsBeginMessage { get; }
+        oprot.WriteFieldBegin(field);
 
-        public int SeqIdPosition { get; }
+        byte[] beginMessage = oprot.WrittenData.ToArray();
+        oprot.Clear();
+        return beginMessage;
+    }
 
-        public byte[] EmitBatchArgsEndMessage { get; }
+    private static byte[] GenerateEndMessage(TProtocol oprot)
+    {
+        oprot.WriteFieldEnd();
+        oprot.WriteFieldStop();
+        oprot.WriteStructEnd();
 
-        public int MinimumMessageSize => this.EmitBatchArgsBeginMessage.Length
-            + this.EmitBatchArgsEndMessage.Length;
+        oprot.WriteMessageEnd();
 
-        private static byte[] GenerateBeginMessage(TProtocol oprot, out int seqIdPosition)
-        {
-            oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, 0), out seqIdPosition);
-
-            var struc = new TStruct("emitBatch_args");
-            oprot.WriteStructBegin(struc);
-
-            var field = new TField
-            {
-                Name = "batch",
-                Type = TType.Struct,
-                ID = 1,
-            };
-
-            oprot.WriteFieldBegin(field);
-
-            byte[] beginMessage = oprot.WrittenData.ToArray();
-            oprot.Clear();
-            return beginMessage;
-        }
-
-        private static byte[] GenerateEndMessage(TProtocol oprot)
-        {
-            oprot.WriteFieldEnd();
-            oprot.WriteFieldStop();
-            oprot.WriteStructEnd();
-
-            oprot.WriteMessageEnd();
-
-            byte[] endMessage = oprot.WrittenData.ToArray();
-            oprot.Clear();
-            return endMessage;
-        }
+        byte[] endMessage = oprot.WrittenData.ToArray();
+        oprot.Clear();
+        return endMessage;
     }
 }
