@@ -19,320 +19,319 @@ using OpenTelemetry.Trace;
 using OpenTracing.Tag;
 using Xunit;
 
-namespace OpenTelemetry.Shims.OpenTracing.Tests
+namespace OpenTelemetry.Shims.OpenTracing.Tests;
+
+public class SpanShimTests
 {
-    public class SpanShimTests
+    private const string SpanName = "MySpanName/1";
+    private const string TracerName = "defaultactivitysource";
+
+    static SpanShimTests()
     {
-        private const string SpanName = "MySpanName/1";
-        private const string TracerName = "defaultactivitysource";
+        Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+        Activity.ForceDefaultIdFormat = true;
 
-        static SpanShimTests()
+        var listener = new ActivityListener
         {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+        };
 
-            var listener = new ActivityListener
-            {
-                ShouldListenTo = _ => true,
-                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-            };
+        ActivitySource.AddActivityListener(listener);
+    }
 
-            ActivitySource.AddActivityListener(listener);
-        }
+    [Fact]
+    public void CtorArgumentValidation()
+    {
+        Assert.Throws<ArgumentNullException>(() => new SpanShim(null));
+    }
 
-        [Fact]
-        public void CtorArgumentValidation()
+    [Fact]
+    public void SpanContextIsNotNull()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        // ISpanContext validation handled in a separate test class
+        Assert.NotNull(shim.Context);
+    }
+
+    [Fact]
+    public void FinishSpan()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        shim.Finish();
+
+        Assert.NotEqual(default, shim.Span.Activity.Duration);
+    }
+
+    [Fact]
+    public void FinishSpanUsingSpecificTimestamp()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        var endTime = DateTimeOffset.UtcNow;
+        shim.Finish(endTime);
+
+        Assert.Equal(endTime - shim.Span.Activity.StartTimeUtc, shim.Span.Activity.Duration);
+    }
+
+    [Fact]
+    public void SetOperationName()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        // parameter validation
+        Assert.Throws<ArgumentNullException>(() => shim.SetOperationName(null));
+
+        shim.SetOperationName("bar");
+        Assert.Equal("bar", shim.Span.Activity.DisplayName);
+    }
+
+    [Fact]
+    public void GetBaggageItem()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        // parameter validation
+        Assert.Throws<ArgumentException>(() => shim.GetBaggageItem(null));
+
+        // TODO - Method not implemented
+    }
+
+    [Fact]
+    public void Log()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        shim.Log("foo");
+
+        Assert.Single(shim.Span.Activity.Events);
+        var first = shim.Span.Activity.Events.First();
+        Assert.Equal("foo", first.Name);
+        Assert.False(first.Tags.Any());
+    }
+
+    [Fact]
+    public void LogWithExplicitTimestamp()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        var now = DateTimeOffset.UtcNow;
+        shim.Log(now, "foo");
+
+        Assert.Single(shim.Span.Activity.Events);
+        var first = shim.Span.Activity.Events.First();
+        Assert.Equal("foo", first.Name);
+        Assert.Equal(now, first.Timestamp);
+        Assert.False(first.Tags.Any());
+    }
+
+    [Fact]
+    public void LogUsingFields()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
+
+        shim.Log(new List<KeyValuePair<string, object>>
         {
-            Assert.Throws<ArgumentNullException>(() => new SpanShim(null));
-        }
+            new KeyValuePair<string, object>("foo", "bar"),
+        });
 
-        [Fact]
-        public void SpanContextIsNotNull()
+        // "event" is a special event name
+        shim.Log(new List<KeyValuePair<string, object>>
         {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+            new KeyValuePair<string, object>("event", "foo"),
+        });
 
-            // ISpanContext validation handled in a separate test class
-            Assert.NotNull(shim.Context);
-        }
+        var first = shim.Span.Activity.Events.FirstOrDefault();
+        var last = shim.Span.Activity.Events.LastOrDefault();
 
-        [Fact]
-        public void FinishSpan()
+        Assert.Equal(2, shim.Span.Activity.Events.Count());
+
+        Assert.Equal(SpanShim.DefaultEventName, first.Name);
+        Assert.True(first.Tags.Any());
+
+        Assert.Equal("foo", last.Name);
+        Assert.False(last.Tags.Any());
+    }
+
+    [Fact]
+    public void LogUsingFieldsWithExplicitTimestamp()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
+        var now = DateTimeOffset.UtcNow;
+
+        shim.Log(now, new List<KeyValuePair<string, object>>
         {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+            new KeyValuePair<string, object>("foo", "bar"),
+        });
 
-            shim.Finish();
-
-            Assert.NotEqual(default, shim.Span.Activity.Duration);
-        }
-
-        [Fact]
-        public void FinishSpanUsingSpecificTimestamp()
+        // "event" is a special event name
+        shim.Log(now, new List<KeyValuePair<string, object>>
         {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            var endTime = DateTimeOffset.UtcNow;
-            shim.Finish(endTime);
-
-            Assert.Equal(endTime - shim.Span.Activity.StartTimeUtc, shim.Span.Activity.Duration);
-        }
-
-        [Fact]
-        public void SetOperationName()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            // parameter validation
-            Assert.Throws<ArgumentNullException>(() => shim.SetOperationName(null));
-
-            shim.SetOperationName("bar");
-            Assert.Equal("bar", shim.Span.Activity.DisplayName);
-        }
-
-        [Fact]
-        public void GetBaggageItem()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            // parameter validation
-            Assert.Throws<ArgumentException>(() => shim.GetBaggageItem(null));
-
-            // TODO - Method not implemented
-        }
-
-        [Fact]
-        public void Log()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            shim.Log("foo");
-
-            Assert.Single(shim.Span.Activity.Events);
-            var first = shim.Span.Activity.Events.First();
-            Assert.Equal("foo", first.Name);
-            Assert.False(first.Tags.Any());
-        }
-
-        [Fact]
-        public void LogWithExplicitTimestamp()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            var now = DateTimeOffset.UtcNow;
-            shim.Log(now, "foo");
-
-            Assert.Single(shim.Span.Activity.Events);
-            var first = shim.Span.Activity.Events.First();
-            Assert.Equal("foo", first.Name);
-            Assert.Equal(now, first.Timestamp);
-            Assert.False(first.Tags.Any());
-        }
-
-        [Fact]
-        public void LogUsingFields()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
-
-            shim.Log(new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>("foo", "bar"),
-            });
-
-            // "event" is a special event name
-            shim.Log(new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>("event", "foo"),
-            });
-
-            var first = shim.Span.Activity.Events.FirstOrDefault();
-            var last = shim.Span.Activity.Events.LastOrDefault();
-
-            Assert.Equal(2, shim.Span.Activity.Events.Count());
-
-            Assert.Equal(SpanShim.DefaultEventName, first.Name);
-            Assert.True(first.Tags.Any());
-
-            Assert.Equal("foo", last.Name);
-            Assert.False(last.Tags.Any());
-        }
-
-        [Fact]
-        public void LogUsingFieldsWithExplicitTimestamp()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
-
-            Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null));
-            var now = DateTimeOffset.UtcNow;
+            new KeyValuePair<string, object>("event", "foo"),
+        });
 
-            shim.Log(now, new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>("foo", "bar"),
-            });
+        Assert.Equal(2, shim.Span.Activity.Events.Count());
+        var first = shim.Span.Activity.Events.First();
+        var last = shim.Span.Activity.Events.Last();
 
-            // "event" is a special event name
-            shim.Log(now, new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>("event", "foo"),
-            });
+        Assert.Equal(SpanShim.DefaultEventName, first.Name);
+        Assert.True(first.Tags.Any());
+        Assert.Equal(now, first.Timestamp);
 
-            Assert.Equal(2, shim.Span.Activity.Events.Count());
-            var first = shim.Span.Activity.Events.First();
-            var last = shim.Span.Activity.Events.Last();
+        Assert.Equal("foo", last.Name);
+        Assert.False(last.Tags.Any());
+        Assert.Equal(now, last.Timestamp);
+    }
 
-            Assert.Equal(SpanShim.DefaultEventName, first.Name);
-            Assert.True(first.Tags.Any());
-            Assert.Equal(now, first.Timestamp);
+    [Fact]
+    public void SetTagStringValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            Assert.Equal("foo", last.Name);
-            Assert.False(last.Tags.Any());
-            Assert.Equal(now, last.Timestamp);
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, "foo"));
 
-        [Fact]
-        public void SetTagStringValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag("foo", "bar");
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, "foo"));
+        Assert.Single(shim.Span.Activity.Tags);
+        Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+        Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
+    }
 
-            shim.SetTag("foo", "bar");
+    [Fact]
+    public void SetTagBoolValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            Assert.Single(shim.Span.Activity.Tags);
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, true));
 
-        [Fact]
-        public void SetTagBoolValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag("foo", true);
+        shim.SetTag(Tags.Error.Key, true);
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, true));
+        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+        Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
 
-            shim.SetTag("foo", true);
-            shim.SetTag(Tags.Error.Key, true);
+        // A boolean tag named "error" is a special case that must be checked
+        Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
 
-            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-            Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
+        shim.SetTag(Tags.Error.Key, false);
+        Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+    }
 
-            // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
+    [Fact]
+    public void SetTagIntValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            shim.SetTag(Tags.Error.Key, false);
-            Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, 1));
 
-        [Fact]
-        public void SetTagIntValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag("foo", 1);
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, 1));
+        Assert.Single(shim.Span.Activity.TagObjects);
+        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+        Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
+    }
 
-            shim.SetTag("foo", 1);
+    [Fact]
+    public void SetTagDoubleValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            Assert.Single(shim.Span.Activity.TagObjects);
-            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-            Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag(null, 1D));
 
-        [Fact]
-        public void SetTagDoubleValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag("foo", 1D);
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag(null, 1D));
+        Assert.Single(shim.Span.Activity.TagObjects);
+        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+        Assert.Equal(1, (double)shim.Span.Activity.TagObjects.First().Value);
+    }
 
-            shim.SetTag("foo", 1D);
+    [Fact]
+    public void SetTagBooleanTagValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            Assert.Single(shim.Span.Activity.TagObjects);
-            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-            Assert.Equal(1, (double)shim.Span.Activity.TagObjects.First().Value);
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null, true));
 
-        [Fact]
-        public void SetTagBooleanTagValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag(new BooleanTag("foo"), true);
+        shim.SetTag(new BooleanTag(Tags.Error.Key), true);
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null, true));
+        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+        Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
 
-            shim.SetTag(new BooleanTag("foo"), true);
-            shim.SetTag(new BooleanTag(Tags.Error.Key), true);
+        // A boolean tag named "error" is a special case that must be checked
+        Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
 
-            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-            Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
+        shim.SetTag(Tags.Error.Key, false);
+        Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
+    }
 
-            // A boolean tag named "error" is a special case that must be checked
-            Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
+    [Fact]
+    public void SetTagStringTagValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            shim.SetTag(Tags.Error.Key, false);
-            Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag)null, "foo"));
 
-        [Fact]
-        public void SetTagStringTagValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag(new StringTag("foo"), "bar");
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((StringTag)null, "foo"));
+        Assert.Single(shim.Span.Activity.Tags);
+        Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
+        Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
+    }
 
-            shim.SetTag(new StringTag("foo"), "bar");
+    [Fact]
+    public void SetTagIntTagValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            Assert.Single(shim.Span.Activity.Tags);
-            Assert.Equal("foo", shim.Span.Activity.Tags.First().Key);
-            Assert.Equal("bar", shim.Span.Activity.Tags.First().Value);
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag)null, 1));
 
-        [Fact]
-        public void SetTagIntTagValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag(new IntTag("foo"), 1);
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntTag)null, 1));
+        Assert.Single(shim.Span.Activity.TagObjects);
+        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+        Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
+    }
 
-            shim.SetTag(new IntTag("foo"), 1);
+    [Fact]
+    public void SetTagIntOrStringTagValue()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
 
-            Assert.Single(shim.Span.Activity.TagObjects);
-            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-            Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
-        }
+        Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag)null, "foo"));
 
-        [Fact]
-        public void SetTagIntOrStringTagValue()
-        {
-            var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanShim(tracer.StartSpan(SpanName));
+        shim.SetTag(new IntOrStringTag("foo"), 1);
+        shim.SetTag(new IntOrStringTag("bar"), "baz");
 
-            Assert.Throws<ArgumentNullException>(() => shim.SetTag((IntOrStringTag)null, "foo"));
+        Assert.Equal(2, shim.Span.Activity.TagObjects.Count());
 
-            shim.SetTag(new IntOrStringTag("foo"), 1);
-            shim.SetTag(new IntOrStringTag("bar"), "baz");
+        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
+        Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
 
-            Assert.Equal(2, shim.Span.Activity.TagObjects.Count());
-
-            Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-            Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value);
-
-            Assert.Equal("bar", shim.Span.Activity.TagObjects.Last().Key);
-            Assert.Equal("baz", shim.Span.Activity.TagObjects.Last().Value);
-        }
+        Assert.Equal("bar", shim.Span.Activity.TagObjects.Last().Key);
+        Assert.Equal("baz", shim.Span.Activity.TagObjects.Last().Value);
     }
 }
