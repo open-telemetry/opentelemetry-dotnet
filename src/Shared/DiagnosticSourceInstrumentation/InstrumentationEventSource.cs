@@ -18,35 +18,34 @@ using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 #pragma warning restore IDE0005
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Instrumentation;
+
+/// <summary>
+/// EventSource events emitted from the project.
+/// </summary>
+[EventSource(Name = "OpenTelemetry-Instrumentation")]
+internal sealed class InstrumentationEventSource : EventSource
 {
-    /// <summary>
-    /// EventSource events emitted from the project.
-    /// </summary>
-    [EventSource(Name = "OpenTelemetry-Instrumentation")]
-    internal sealed class InstrumentationEventSource : EventSource
+    public static InstrumentationEventSource Log = new();
+
+    [Event(1, Message = "Current Activity is NULL in the '{0}' callback. Activity will not be recorded.", Level = EventLevel.Warning)]
+    public void NullActivity(string eventName)
     {
-        public static InstrumentationEventSource Log = new();
+        this.WriteEvent(1, eventName);
+    }
 
-        [Event(1, Message = "Current Activity is NULL in the '{0}' callback. Activity will not be recorded.", Level = EventLevel.Warning)]
-        public void NullActivity(string eventName)
+    [NonEvent]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.WriteEvent(1, eventName);
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
         }
+    }
 
-        [NonEvent]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
-            }
-        }
-
-        [Event(2, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
-        public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
-        {
-            this.WriteEvent(2, handlerName, eventName, ex);
-        }
+    [Event(2, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+    {
+        this.WriteEvent(2, handlerName, eventName, ex);
     }
 }

@@ -2,10 +2,35 @@
 
 ## Unreleased
 
-* Updated [Http Semantic Conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md).
-  This library can emit either old, new, or both attributes. Users can control
-  which attributes are emitted by setting the environment variable
-  `OTEL_SEMCONV_STABILITY_OPT_IN`.
+* The new HTTP and network semantic conventions can be opted in to by setting
+  the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. This allows for a
+  transition period for users to experiment with the new semantic conventions
+  and adapt as necessary. The environment variable supports the following
+  values:
+  * `http` - emit the new, frozen (proposed for stable) HTTP and networking
+  attributes, and stop emitting the old experimental HTTP and networking
+  attributes that the instrumentation emitted previously.
+  * `http/dup` - emit both the old and the frozen (proposed for stable) HTTP
+  and networking attributes, allowing for a more seamless transition.
+  * The default behavior (in the absence of one of these values) is to continue
+  emitting the same HTTP and network semantic conventions that were emitted in
+  `1.5.0-beta.1`.
+  * Note: this option will eventually be removed after the new HTTP and
+  network semantic conventions are marked stable. At which time this
+  instrumentation can receive a stable release, and the old HTTP and
+  network semantic conventions will no longer be supported. Refer to the
+  specification for more information regarding the new HTTP and network
+  semantic conventions for both
+  [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md)
+  and
+  [metrics](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md).
+  ([#4537](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4537),
+  [#4606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4606),
+  [#4660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4660))
+
+* Fixed an issue affecting NET 7.0+. If custom propagation is being used
+  and tags are added to an Activity during sampling then that Activity would be dropped.
+  ([#4637](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4637))
 
 ## 1.5.0-beta.1
 

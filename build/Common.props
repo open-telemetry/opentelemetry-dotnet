@@ -21,14 +21,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <PropertyGroup Label="Package versions used in this repository">
-    <!--
-      Please sort alphabetically.
-      Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
-    -->
-    <OTelPreviousStableVer>1.5.1</OTelPreviousStableVer>
-  </PropertyGroup>
-
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/stylecop.json" />
   </ItemGroup>
@@ -54,12 +46,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeInstrumentationHelpers)'=='true' Or '$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanHelper.cs" Link="Includes\SpanHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\SpanHelper.cs" Link="Includes\SpanHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
   </ItemGroup>
 
 </Project>

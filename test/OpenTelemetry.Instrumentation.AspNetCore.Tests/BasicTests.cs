@@ -194,8 +194,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             ValidateAspNetCoreActivity(activity, "/api/values/2");
         }
 
-        [Fact]
-        public async Task CustomPropagator()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task CustomPropagator(bool addSampler)
         {
             try
             {
@@ -219,7 +221,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             builder.ConfigureTestServices(services =>
                             {
                                 Sdk.SetDefaultTextMapPropagator(propagator.Object);
-                                this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation().AddInMemoryExporter(exportedItems).Build();
+                                var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
+
+                                if (addSampler)
+                                {
+                                    tracerProviderBuilder
+                                        .SetSampler(new TestSampler(SamplingDecision.RecordAndSample, new Dictionary<string, object> { { "SomeTag", "SomeKey" }, }));
+                                }
+
+                                this.tracerProvider = tracerProviderBuilder
+                                                        .AddAspNetCoreInstrumentation()
+                                                        .AddInMemoryExporter(exportedItems)
+                                                        .Build();
                             });
                             builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
                         }))
@@ -1134,15 +1147,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private class TestSampler : Sampler
         {
             private readonly SamplingDecision samplingDecision;
+            private readonly IEnumerable<KeyValuePair<string, object>> attributes;
 
-            public TestSampler(SamplingDecision samplingDecision)
+            public TestSampler(SamplingDecision samplingDecision, IEnumerable<KeyValuePair<string, object>> attributes = null)
             {
                 this.samplingDecision = samplingDecision;
+                this.attributes = attributes;
             }
 
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
-                return new SamplingResult(this.samplingDecision);
+                return new SamplingResult(this.samplingDecision, this.attributes);
             }
         }
 

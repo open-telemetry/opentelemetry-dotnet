@@ -3,16 +3,21 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <OTelLatestStableVer>1.5.1</OTelLatestStableVer>
+  </PropertyGroup>
+
   <!-- prod packages -->
   <ItemGroup>
     <PackageVersion Include="Google.Protobuf" Version="[3.19.4,4.0)" />
     <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
-    <PackageVersion Include="Grpc.Net.Client" Version="[2.45.0,3.0)" />
+    <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
     <PackageVersion Include="Grpc.Tools" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.3.3]" />
     <PackageVersion Include="Microsoft.CodeCoverage" Version="[17.4.1]" />
+    <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
@@ -23,6 +28,8 @@
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
     <PackageVersion Include="MinVer" Version="[4.2.0,5.0)" />
+    <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
     <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-alpha.1
+
+Released 2023-Jul-12
+
 * Added `LoggerProviderBuilder.AddInMemoryExporter` registration extension.
   ([#4584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4584))
 

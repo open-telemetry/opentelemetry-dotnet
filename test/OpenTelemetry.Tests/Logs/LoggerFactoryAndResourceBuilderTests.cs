@@ -19,61 +19,60 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using Xunit;
 
-namespace OpenTelemetry.Logs.Tests
+namespace OpenTelemetry.Logs.Tests;
+
+public sealed class LoggerFactoryAndResourceBuilderTests
 {
-    public sealed class LoggerFactoryAndResourceBuilderTests
+    [Fact]
+    public void TestLogExporterCanAccessResource()
     {
-        [Fact]
-        public void TestLogExporterCanAccessResource()
+        VerifyResourceBuilder(
+            assert: (Resource resource) =>
+            {
+                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
+            });
+    }
+
+    [Fact]
+    public void VerifyResourceBuilder_WithServiceNameEnVar()
+    {
+        try
         {
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService");
+
             VerifyResourceBuilder(
                 assert: (Resource resource) =>
                 {
-                    Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
+                    Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.Equals("MyService"));
                 });
         }
-
-        [Fact]
-        public void VerifyResourceBuilder_WithServiceNameEnVar()
+        finally
         {
-            try
-            {
-                Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService");
-
-                VerifyResourceBuilder(
-                    assert: (Resource resource) =>
-                    {
-                        Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.Equals("MyService"));
-                    });
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
-            }
+            Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
         }
+    }
 
-        private static void VerifyResourceBuilder(
-            Action<Resource> assert)
+    private static void VerifyResourceBuilder(
+        Action<Resource> assert)
+    {
+        // Setup
+        using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            // Setup
-            using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
-            using var loggerFactory = LoggerFactory.Create(builder =>
+            builder.AddOpenTelemetry(options =>
             {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.AddProcessor(new SimpleLogRecordExportProcessor(exporter));
-                });
+                options.AddProcessor(new SimpleLogRecordExportProcessor(exporter));
             });
+        });
 
-            var logger = loggerFactory.CreateLogger<LoggerFactoryAndResourceBuilderTests>();
+        var logger = loggerFactory.CreateLogger<LoggerFactoryAndResourceBuilderTests>();
 
-            Assert.NotNull(exporter.ParentProvider);
+        Assert.NotNull(exporter.ParentProvider);
 
-            var resource = exporter.ParentProvider.GetResource();
-            Assert.NotNull(resource);
+        var resource = exporter.ParentProvider.GetResource();
+        Assert.NotNull(resource);
 
-            // Verify
-            assert.Invoke(resource);
-        }
+        // Verify
+        assert.Invoke(resource);
     }
 }

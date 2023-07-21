@@ -18,20 +18,19 @@ using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests
-{
-    public class EventSourceTest
-    {
-        [Fact]
-        public void EventSourceTest_InstrumentationEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(InstrumentationEventSource.Log);
-        }
+namespace OpenTelemetry.Tests;
 
-        [Fact]
-        public void EventSourceTest_OpenTelemetrySdkEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetrySdkEventSource.Log);
-        }
+public class EventSourceTest
+{
+    [Fact]
+    public void EventSourceTest_InstrumentationEventSource()
+    {
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(InstrumentationEventSource.Log);
+    }
+
+    [Fact]
+    public void EventSourceTest_OpenTelemetrySdkEventSource()
+    {
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(OpenTelemetrySdkEventSource.Log);
     }
 }

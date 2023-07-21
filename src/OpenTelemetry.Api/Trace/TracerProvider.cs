@@ -16,39 +16,38 @@
 
 using System.Diagnostics;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Trace;
+
+/// <summary>
+/// TracerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Tracer"/>.
+/// </summary>
+public class TracerProvider : BaseProvider
 {
     /// <summary>
-    /// TracerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Tracer"/>.
+    /// Initializes a new instance of the <see cref="TracerProvider"/> class.
     /// </summary>
-    public class TracerProvider : BaseProvider
+    protected TracerProvider()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TracerProvider"/> class.
-        /// </summary>
-        protected TracerProvider()
+    }
+
+    /// <summary>
+    /// Gets the default <see cref="TracerProvider"/>.
+    /// </summary>
+    public static TracerProvider Default { get; } = new TracerProvider();
+
+    /// <summary>
+    /// Gets a tracer with given name and version.
+    /// </summary>
+    /// <param name="name">Name identifying the instrumentation library.</param>
+    /// <param name="version">Version of the instrumentation library.</param>
+    /// <returns>Tracer instance.</returns>
+    public Tracer GetTracer(string name, string version = null)
+    {
+        if (name == null)
         {
+            name = string.Empty;
         }
 
-        /// <summary>
-        /// Gets the default <see cref="TracerProvider"/>.
-        /// </summary>
-        public static TracerProvider Default { get; } = new TracerProvider();
-
-        /// <summary>
-        /// Gets a tracer with given name and version.
-        /// </summary>
-        /// <param name="name">Name identifying the instrumentation library.</param>
-        /// <param name="version">Version of the instrumentation library.</param>
-        /// <returns>Tracer instance.</returns>
-        public Tracer GetTracer(string name, string version = null)
-        {
-            if (name == null)
-            {
-                name = string.Empty;
-            }
-
-            return new Tracer(new ActivitySource(name, version));
-        }
+        return new Tracer(new ActivitySource(name, version));
     }
 }
