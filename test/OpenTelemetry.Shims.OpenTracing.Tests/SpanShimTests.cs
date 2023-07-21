@@ -14,31 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
 using OpenTelemetry.Trace;
 using OpenTracing.Tag;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
 {
+    [Collection(nameof(ListenAndSampleAllActivitySources))]
     public class SpanShimTests
     {
         private const string SpanName = "MySpanName/1";
         private const string TracerName = "defaultactivitysource";
-
-        static SpanShimTests()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-            Activity.ForceDefaultIdFormat = true;
-
-            var listener = new ActivityListener
-            {
-                ShouldListenTo = _ => true,
-                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-            };
-
-            ActivitySource.AddActivityListener(listener);
-        }
 
         [Fact]
         public void CtorArgumentValidation()
@@ -72,6 +58,14 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+#if NETFRAMEWORK
+            // Under the hood the Activity start time uses DateTime.UtcNow, which
+            // doesn't have the same precision as DateTimeOffset.UtcNow on the .NET Framework.
+            // Add a sleep big enough to ensure that the test doesn't break due to the
+            // low resolution of DateTime.UtcNow on the .NET Framework.
+            Thread.Sleep(TimeSpan.FromMilliseconds(20));
+#endif
 
             var endTime = DateTimeOffset.UtcNow;
             shim.Finish(endTime);
