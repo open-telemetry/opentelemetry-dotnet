@@ -18,14 +18,13 @@ using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Jaeger.Tests
+namespace OpenTelemetry.Exporter.Jaeger.Tests;
+
+public class EventSourceTest
 {
-    public class EventSourceTest
+    [Fact]
+    public void EventSourceTest_JaegerExporterEventSource()
     {
-        [Fact]
-        public void EventSourceTest_JaegerExporterEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(JaegerExporterEventSource.Log);
-        }
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(JaegerExporterEventSource.Log);
     }
 }

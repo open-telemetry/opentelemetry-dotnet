@@ -16,44 +16,43 @@
 
 using System.Net.Sockets;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal sealed class JaegerUdpClient : IJaegerClient
 {
-    internal sealed class JaegerUdpClient : IJaegerClient
+    private readonly string host;
+    private readonly int port;
+    private readonly UdpClient client;
+    private bool disposed;
+
+    public JaegerUdpClient(string host, int port)
     {
-        private readonly string host;
-        private readonly int port;
-        private readonly UdpClient client;
-        private bool disposed;
+        this.host = host;
+        this.port = port;
+        this.client = new UdpClient();
+    }
 
-        public JaegerUdpClient(string host, int port)
+    public bool Connected => this.client.Client.Connected;
+
+    public void Close() => this.client.Close();
+
+    public void Connect() => this.client.Connect(this.host, this.port);
+
+    public int Send(byte[] buffer, int offset, int count)
+    {
+        return this.client.Client.Send(buffer, offset, count, SocketFlags.None);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (this.disposed)
         {
-            this.host = host;
-            this.port = port;
-            this.client = new UdpClient();
+            return;
         }
 
-        public bool Connected => this.client.Client.Connected;
+        this.client.Dispose();
 
-        public void Close() => this.client.Close();
-
-        public void Connect() => this.client.Connect(this.host, this.port);
-
-        public int Send(byte[] buffer, int offset, int count)
-        {
-            return this.client.Client.Send(buffer, offset, count, SocketFlags.None);
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            this.client.Dispose();
-
-            this.disposed = true;
-        }
+        this.disposed = true;
     }
 }

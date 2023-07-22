@@ -20,67 +20,66 @@ using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal sealed class JaegerHttpClient : IJaegerClient
 {
-    internal sealed class JaegerHttpClient : IJaegerClient
+    private static readonly MediaTypeHeaderValue ContentTypeHeader = new("application/vnd.apache.thrift.binary");
+
+    private readonly Uri endpoint;
+    private readonly HttpClient httpClient;
+    private bool disposed;
+
+    public JaegerHttpClient(Uri endpoint, HttpClient httpClient)
     {
-        private static readonly MediaTypeHeaderValue ContentTypeHeader = new("application/vnd.apache.thrift.binary");
+        Debug.Assert(endpoint != null, "endpoint is null");
+        Debug.Assert(httpClient != null, "httpClient is null");
 
-        private readonly Uri endpoint;
-        private readonly HttpClient httpClient;
-        private bool disposed;
+        this.endpoint = endpoint;
+        this.httpClient = httpClient;
+    }
 
-        public JaegerHttpClient(Uri endpoint, HttpClient httpClient)
+    public bool Connected => true;
+
+    public void Close()
+    {
+    }
+
+    public void Connect()
+    {
+    }
+
+    public void Dispose()
+    {
+        if (this.disposed)
         {
-            Debug.Assert(endpoint != null, "endpoint is null");
-            Debug.Assert(httpClient != null, "httpClient is null");
-
-            this.endpoint = endpoint;
-            this.httpClient = httpClient;
+            return;
         }
 
-        public bool Connected => true;
+        this.httpClient.Dispose();
 
-        public void Close()
+        this.disposed = true;
+    }
+
+    public int Send(byte[] buffer, int offset, int count)
+    {
+        // Prevent Jaeger's HTTP operations from being instrumented.
+        using var scope = SuppressInstrumentationScope.Begin();
+
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.endpoint);
+
+        request.Content = new ByteArrayContent(buffer, offset, count)
         {
-        }
-
-        public void Connect()
-        {
-        }
-
-        public void Dispose()
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            this.httpClient.Dispose();
-
-            this.disposed = true;
-        }
-
-        public int Send(byte[] buffer, int offset, int count)
-        {
-            // Prevent Jaeger's HTTP operations from being instrumented.
-            using var scope = SuppressInstrumentationScope.Begin();
-
-            using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.endpoint);
-
-            request.Content = new ByteArrayContent(buffer, offset, count)
-            {
-                Headers = { ContentType = ContentTypeHeader },
-            };
+            Headers = { ContentType = ContentTypeHeader },
+        };
 
 #if NET6_0_OR_GREATER
-            using HttpResponseMessage response = this.httpClient.Send(request);
+        using HttpResponseMessage response = this.httpClient.Send(request);
 #else
-            using HttpResponseMessage response = this.httpClient.SendAsync(request).GetAwaiter().GetResult();
+        using HttpResponseMessage response = this.httpClient.SendAsync(request).GetAwaiter().GetResult();
 #endif
-            response.EnsureSuccessStatusCode();
+        response.EnsureSuccessStatusCode();
 
-            return count;
-        }
+        return count;
     }
 }

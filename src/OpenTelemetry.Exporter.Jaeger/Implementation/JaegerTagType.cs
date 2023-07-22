@@ -14,36 +14,35 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+/// <summary>
+/// Indicates the data type of a Jaeger tag.
+/// </summary>
+internal enum JaegerTagType
 {
     /// <summary>
-    /// Indicates the data type of a Jaeger tag.
+    /// Tag contains a string.
     /// </summary>
-    internal enum JaegerTagType
-    {
-        /// <summary>
-        /// Tag contains a string.
-        /// </summary>
-        STRING = 0,
+    STRING = 0,
 
-        /// <summary>
-        /// Tag contains a double.
-        /// </summary>
-        DOUBLE = 1,
+    /// <summary>
+    /// Tag contains a double.
+    /// </summary>
+    DOUBLE = 1,
 
-        /// <summary>
-        /// Tag contains a boolean.
-        /// </summary>
-        BOOL = 2,
+    /// <summary>
+    /// Tag contains a boolean.
+    /// </summary>
+    BOOL = 2,
 
-        /// <summary>
-        /// Tag contains a long.
-        /// </summary>
-        LONG = 3,
+    /// <summary>
+    /// Tag contains a long.
+    /// </summary>
+    LONG = 3,
 
-        /// <summary>
-        /// Tag contains binary data.
-        /// </summary>
-        BINARY = 4,
-    }
+    /// <summary>
+    /// Tag contains binary data.
+    /// </summary>
+    BINARY = 4,
 }

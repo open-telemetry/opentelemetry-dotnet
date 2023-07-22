@@ -14,27 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+/// <summary>
+/// Defines the exporter protocols supported by the <see cref="JaegerExporter"/>.
+/// </summary>
+public enum JaegerExportProtocol : byte
 {
     /// <summary>
-    /// Defines the exporter protocols supported by the <see cref="JaegerExporter"/>.
+    /// Compact thrift protocol over UDP.
     /// </summary>
-    public enum JaegerExportProtocol : byte
-    {
-        /// <summary>
-        /// Compact thrift protocol over UDP.
-        /// </summary>
-        /// <remarks>
-        /// Note: Supported by Jaeger Agents only.
-        /// </remarks>
-        UdpCompactThrift = 0,
+    /// <remarks>
+    /// Note: Supported by Jaeger Agents only.
+    /// </remarks>
+    UdpCompactThrift = 0,
 
-        /// <summary>
-        /// Binary thrift protocol over HTTP.
-        /// </summary>
-        /// <remarks>
-        /// Note: Supported by Jaeger Collectors only.
-        /// </remarks>
-        HttpBinaryThrift = 1,
-    }
+    /// <summary>
+    /// Binary thrift protocol over HTTP.
+    /// </summary>
+    /// <remarks>
+    /// Note: Supported by Jaeger Collectors only.
+    /// </remarks>
+    HttpBinaryThrift = 1,
 }
