@@ -15,22 +15,21 @@
 // </copyright>
 
 #if NETSTANDARD2_0 || NETFRAMEWORK
-namespace System
-{
-    internal static class ShimExtensions
-    {
-        public static byte[] ToArray(this ArraySegment<byte> arraySegment)
-        {
-            int count = arraySegment.Count;
-            if (count == 0)
-            {
-                return Array.Empty<byte>();
-            }
+namespace System;
 
-            var array = new byte[count];
-            Array.Copy(arraySegment.Array, arraySegment.Offset, array, 0, count);
-            return array;
+internal static class ShimExtensions
+{
+    public static byte[] ToArray(this ArraySegment<byte> arraySegment)
+    {
+        int count = arraySegment.Count;
+        if (count == 0)
+        {
+            return Array.Empty<byte>();
         }
+
+        var array = new byte[count];
+        Array.Copy(arraySegment.Array, arraySegment.Offset, array, 0, count);
+        return array;
     }
 }
 #endif

@@ -19,74 +19,73 @@ using OpenTelemetry.Internal;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal readonly struct JaegerLog : TUnionBase
 {
-    internal readonly struct JaegerLog : TUnionBase
+    public JaegerLog(long timestamp, in PooledList<JaegerTag> fields)
     {
-        public JaegerLog(long timestamp, in PooledList<JaegerTag> fields)
+        this.Timestamp = timestamp;
+        this.Fields = fields;
+    }
+
+    public long Timestamp { get; }
+
+    public PooledList<JaegerTag> Fields { get; }
+
+    public void Write(TProtocol oprot)
+    {
+        oprot.IncrementRecursionDepth();
+        try
         {
-            this.Timestamp = timestamp;
-            this.Fields = fields;
-        }
+            var struc = new TStruct("Log");
+            oprot.WriteStructBegin(struc);
 
-        public long Timestamp { get; }
-
-        public PooledList<JaegerTag> Fields { get; }
-
-        public void Write(TProtocol oprot)
-        {
-            oprot.IncrementRecursionDepth();
-            try
+            var field = new TField
             {
-                var struc = new TStruct("Log");
-                oprot.WriteStructBegin(struc);
+                Name = "timestamp",
+                Type = TType.I64,
+                ID = 1,
+            };
 
-                var field = new TField
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI64(this.Timestamp);
+            oprot.WriteFieldEnd();
+
+            field.Name = "fields";
+            field.Type = TType.List;
+            field.ID = 2;
+
+            oprot.WriteFieldBegin(field);
+            {
+                oprot.WriteListBegin(new TList(TType.Struct, this.Fields.Count));
+
+                for (int i = 0; i < this.Fields.Count; i++)
                 {
-                    Name = "timestamp",
-                    Type = TType.I64,
-                    ID = 1,
-                };
-
-                oprot.WriteFieldBegin(field);
-                oprot.WriteI64(this.Timestamp);
-                oprot.WriteFieldEnd();
-
-                field.Name = "fields";
-                field.Type = TType.List;
-                field.ID = 2;
-
-                oprot.WriteFieldBegin(field);
-                {
-                    oprot.WriteListBegin(new TList(TType.Struct, this.Fields.Count));
-
-                    for (int i = 0; i < this.Fields.Count; i++)
-                    {
-                        this.Fields[i].Write(oprot);
-                    }
-
-                    oprot.WriteListEnd();
+                    this.Fields[i].Write(oprot);
                 }
 
-                oprot.WriteFieldEnd();
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
+                oprot.WriteListEnd();
             }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
-        }
 
-        public override string ToString()
-        {
-            var sb = new StringBuilder("Log(");
-            sb.Append(", Timestamp: ");
-            sb.Append(this.Timestamp);
-            sb.Append(", Fields: ");
-            sb.Append(this.Fields);
-            sb.Append(')');
-            return sb.ToString();
+            oprot.WriteFieldEnd();
+            oprot.WriteFieldStop();
+            oprot.WriteStructEnd();
         }
+        finally
+        {
+            oprot.DecrementRecursionDepth();
+        }
+    }
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder("Log(");
+        sb.Append(", Timestamp: ");
+        sb.Append(this.Timestamp);
+        sb.Append(", Fields: ");
+        sb.Append(this.Fields);
+        sb.Append(')');
+        return sb.ToString();
     }
 }

@@ -14,16 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal interface IJaegerClient : IDisposable
 {
-    internal interface IJaegerClient : IDisposable
-    {
-        bool Connected { get; }
+    bool Connected { get; }
 
-        void Connect();
+    void Connect();
 
-        void Close();
+    void Close();
 
-        int Send(byte[] buffer, int offset, int count);
-    }
+    int Send(byte[] buffer, int offset, int count);
 }

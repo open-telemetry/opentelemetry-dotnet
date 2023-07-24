@@ -16,28 +16,24 @@
 
 using OpenTracing;
 
-namespace OpenTelemetry.Shims.OpenTracing;
-
-internal sealed class SpanContextShim : ISpanContext
+namespace OpenTelemetry.Shims.OpenTracing
 {
-    public SpanContextShim(in Trace.SpanContext spanContext)
+    internal sealed class SpanContextShim : ISpanContext
     {
-        if (!spanContext.IsValid)
+        public SpanContextShim(in Trace.SpanContext spanContext)
         {
-            throw new ArgumentException($"Invalid '{nameof(Trace.SpanContext)}'", nameof(spanContext));
+            this.SpanContext = spanContext;
         }
 
-        this.SpanContext = spanContext;
+        public Trace.SpanContext SpanContext { get; private set; }
+
+        /// <inheritdoc/>
+        public string TraceId => this.SpanContext.TraceId.ToString();
+
+        /// <inheritdoc/>
+        public string SpanId => this.SpanContext.SpanId.ToString();
+
+        public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
+            => Baggage.GetBaggage();
     }
-
-    public Trace.SpanContext SpanContext { get; private set; }
-
-    /// <inheritdoc/>
-    public string TraceId => this.SpanContext.TraceId.ToString();
-
-    /// <inheritdoc/>
-    public string SpanId => this.SpanContext.SpanId.ToString();
-
-    public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
-        => Baggage.GetBaggage();
 }

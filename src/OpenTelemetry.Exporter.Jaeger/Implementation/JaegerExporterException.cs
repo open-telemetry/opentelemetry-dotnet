@@ -14,17 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
-{
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
 #pragma warning disable CA1032 // Implement standard exception constructors
 #pragma warning disable CA1064 // Exceptions should be public
-    internal sealed class JaegerExporterException : Exception
+internal sealed class JaegerExporterException : Exception
 #pragma warning restore CA1064 // Exceptions should be public
 #pragma warning restore CA1032 // Implement standard exception constructors
+{
+    public JaegerExporterException(string message, Exception originalException)
+        : base(message, originalException)
     {
-        public JaegerExporterException(string message, Exception originalException)
-            : base(message, originalException)
-        {
-        }
     }
 }
