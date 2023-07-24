@@ -17,33 +17,32 @@
 using System.Diagnostics;
 using Xunit;
 
-namespace OpenTelemetry.Shims.OpenTracing.Tests
+namespace OpenTelemetry.Shims.OpenTracing.Tests;
+
+[CollectionDefinition(nameof(ListenAndSampleAllActivitySources))]
+public sealed class ListenAndSampleAllActivitySources : ICollectionFixture<ListenAndSampleAllActivitySources.Fixture>
 {
-    [CollectionDefinition(nameof(ListenAndSampleAllActivitySources))]
-    public sealed class ListenAndSampleAllActivitySources : ICollectionFixture<ListenAndSampleAllActivitySources.Fixture>
+    public sealed class Fixture : IDisposable
     {
-        public sealed class Fixture : IDisposable
+        private readonly ActivityListener listener;
+
+        public Fixture()
         {
-            private readonly ActivityListener listener;
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
 
-            public Fixture()
+            this.listener = new ActivityListener
             {
-                Activity.DefaultIdFormat = ActivityIdFormat.W3C;
-                Activity.ForceDefaultIdFormat = true;
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+            };
 
-                this.listener = new ActivityListener
-                {
-                    ShouldListenTo = _ => true,
-                    Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
-                };
+            ActivitySource.AddActivityListener(this.listener);
+        }
 
-                ActivitySource.AddActivityListener(this.listener);
-            }
-
-            public void Dispose()
-            {
-                this.listener.Dispose();
-            }
+        public void Dispose()
+        {
+            this.listener.Dispose();
         }
     }
 }
