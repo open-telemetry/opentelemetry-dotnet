@@ -17,35 +17,34 @@
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
+namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
+
+/// <summary>
+/// EventSource events emitted from the project.
+/// </summary>
+[EventSource(Name = "OpenTelemetry-Instrumentation-Grpc")]
+internal sealed class GrpcInstrumentationEventSource : EventSource
 {
-    /// <summary>
-    /// EventSource events emitted from the project.
-    /// </summary>
-    [EventSource(Name = "OpenTelemetry-Instrumentation-Grpc")]
-    internal sealed class GrpcInstrumentationEventSource : EventSource
+    public static GrpcInstrumentationEventSource Log = new();
+
+    [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
+    public void NullPayload(string handlerName, string eventName)
     {
-        public static GrpcInstrumentationEventSource Log = new();
+        this.WriteEvent(1, handlerName, eventName);
+    }
 
-        [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
-        public void NullPayload(string handlerName, string eventName)
+    [NonEvent]
+    public void EnrichmentException(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.WriteEvent(1, handlerName, eventName);
+            this.EnrichmentException(ex.ToInvariantString());
         }
+    }
 
-        [NonEvent]
-        public void EnrichmentException(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.EnrichmentException(ex.ToInvariantString());
-            }
-        }
-
-        [Event(2, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
-        public void EnrichmentException(string exception)
-        {
-            this.WriteEvent(2, exception);
-        }
+    [Event(2, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
+    public void EnrichmentException(string exception)
+    {
+        this.WriteEvent(2, exception);
     }
 }
