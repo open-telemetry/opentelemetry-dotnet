@@ -18,42 +18,41 @@ using System.Diagnostics;
 using OpenTelemetry.Internal;
 #pragma warning restore IDE0005
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Instrumentation;
+
+internal sealed class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
 {
-    internal sealed class DiagnosticSourceListener : IObserver<KeyValuePair<string, object>>
+    private readonly ListenerHandler handler;
+
+    public DiagnosticSourceListener(ListenerHandler handler)
     {
-        private readonly ListenerHandler handler;
+        Guard.ThrowIfNull(handler);
 
-        public DiagnosticSourceListener(ListenerHandler handler)
+        this.handler = handler;
+    }
+
+    public void OnCompleted()
+    {
+    }
+
+    public void OnError(Exception error)
+    {
+    }
+
+    public void OnNext(KeyValuePair<string, object> value)
+    {
+        if (!this.handler.SupportsNullActivity && Activity.Current == null)
         {
-            Guard.ThrowIfNull(handler);
-
-            this.handler = handler;
+            return;
         }
 
-        public void OnCompleted()
+        try
         {
+            this.handler.OnEventWritten(value.Key, value.Value);
         }
-
-        public void OnError(Exception error)
+        catch (Exception ex)
         {
-        }
-
-        public void OnNext(KeyValuePair<string, object> value)
-        {
-            if (!this.handler.SupportsNullActivity && Activity.Current == null)
-            {
-                return;
-            }
-
-            try
-            {
-                this.handler.OnEventWritten(value.Key, value.Value);
-            }
-            catch (Exception ex)
-            {
-                InstrumentationEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
-            }
+            InstrumentationEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
         }
     }
 }
