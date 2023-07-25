@@ -14,31 +14,30 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
+
+public class Http2UnencryptedSupportTests : IDisposable
 {
-    public class Http2UnencryptedSupportTests : IDisposable
+    private readonly bool initialFlagStatus;
+
+    public Http2UnencryptedSupportTests()
     {
-        private readonly bool initialFlagStatus;
+        this.initialFlagStatus = DetermineInitialFlagStatus();
+    }
 
-        public Http2UnencryptedSupportTests()
+    public void Dispose()
+    {
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", this.initialFlagStatus);
+        GC.SuppressFinalize(this);
+    }
+
+    private static bool DetermineInitialFlagStatus()
+    {
+        if (AppContext.TryGetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", out var flag))
         {
-            this.initialFlagStatus = DetermineInitialFlagStatus();
+            return flag;
         }
 
-        public void Dispose()
-        {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", this.initialFlagStatus);
-            GC.SuppressFinalize(this);
-        }
-
-        private static bool DetermineInitialFlagStatus()
-        {
-            if (AppContext.TryGetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", out var flag))
-            {
-                return flag;
-            }
-
-            return false;
-        }
+        return false;
     }
 }

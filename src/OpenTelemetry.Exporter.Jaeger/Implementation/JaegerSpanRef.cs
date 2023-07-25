@@ -18,94 +18,93 @@ using System.Text;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal readonly struct JaegerSpanRef : TUnionBase
 {
-    internal readonly struct JaegerSpanRef : TUnionBase
+    public JaegerSpanRef(JaegerSpanRefType refType, long traceIdLow, long traceIdHigh, long spanId)
     {
-        public JaegerSpanRef(JaegerSpanRefType refType, long traceIdLow, long traceIdHigh, long spanId)
+        this.RefType = refType;
+        this.TraceIdLow = traceIdLow;
+        this.TraceIdHigh = traceIdHigh;
+        this.SpanId = spanId;
+    }
+
+    public JaegerSpanRefType RefType { get; }
+
+    public long TraceIdLow { get; }
+
+    public long TraceIdHigh { get; }
+
+    public long SpanId { get; }
+
+    public void Write(TProtocol oprot)
+    {
+        oprot.IncrementRecursionDepth();
+        try
         {
-            this.RefType = refType;
-            this.TraceIdLow = traceIdLow;
-            this.TraceIdHigh = traceIdHigh;
-            this.SpanId = spanId;
-        }
+            var struc = new TStruct("SpanRef");
+            oprot.WriteStructBegin(struc);
 
-        public JaegerSpanRefType RefType { get; }
-
-        public long TraceIdLow { get; }
-
-        public long TraceIdHigh { get; }
-
-        public long SpanId { get; }
-
-        public void Write(TProtocol oprot)
-        {
-            oprot.IncrementRecursionDepth();
-            try
+            var field = new TField
             {
-                var struc = new TStruct("SpanRef");
-                oprot.WriteStructBegin(struc);
+                Name = "refType",
+                Type = TType.I32,
+                ID = 1,
+            };
 
-                var field = new TField
-                {
-                    Name = "refType",
-                    Type = TType.I32,
-                    ID = 1,
-                };
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32((int)this.RefType);
+            oprot.WriteFieldEnd();
 
-                oprot.WriteFieldBegin(field);
-                oprot.WriteI32((int)this.RefType);
-                oprot.WriteFieldEnd();
+            field.Name = "traceIdLow";
+            field.Type = TType.I64;
+            field.ID = 2;
 
-                field.Name = "traceIdLow";
-                field.Type = TType.I64;
-                field.ID = 2;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI64(this.TraceIdLow);
+            oprot.WriteFieldEnd();
 
-                oprot.WriteFieldBegin(field);
-                oprot.WriteI64(this.TraceIdLow);
-                oprot.WriteFieldEnd();
+            field.Name = "traceIdHigh";
+            field.Type = TType.I64;
+            field.ID = 3;
 
-                field.Name = "traceIdHigh";
-                field.Type = TType.I64;
-                field.ID = 3;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI64(this.TraceIdHigh);
+            oprot.WriteFieldEnd();
 
-                oprot.WriteFieldBegin(field);
-                oprot.WriteI64(this.TraceIdHigh);
-                oprot.WriteFieldEnd();
+            field.Name = "spanId";
+            field.Type = TType.I64;
+            field.ID = 4;
 
-                field.Name = "spanId";
-                field.Type = TType.I64;
-                field.ID = 4;
-
-                oprot.WriteFieldBegin(field);
-                oprot.WriteI64(this.SpanId);
-                oprot.WriteFieldEnd();
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
-            }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI64(this.SpanId);
+            oprot.WriteFieldEnd();
+            oprot.WriteFieldStop();
+            oprot.WriteStructEnd();
         }
-
-        /// <summary>
-        /// <seealso cref="JaegerSpanRefType"/>
-        /// </summary>
-        /// <returns>A string representation of the object.</returns>
-        public override string ToString()
+        finally
         {
-            var sb = new StringBuilder("SpanRef(");
-            sb.Append(", RefType: ");
-            sb.Append(this.RefType);
-            sb.Append(", TraceIdLow: ");
-            sb.Append(this.TraceIdLow);
-            sb.Append(", TraceIdHigh: ");
-            sb.Append(this.TraceIdHigh);
-            sb.Append(", SpanId: ");
-            sb.Append(this.SpanId);
-            sb.Append(')');
-            return sb.ToString();
+            oprot.DecrementRecursionDepth();
         }
+    }
+
+    /// <summary>
+    /// <seealso cref="JaegerSpanRefType"/>
+    /// </summary>
+    /// <returns>A string representation of the object.</returns>
+    public override string ToString()
+    {
+        var sb = new StringBuilder("SpanRef(");
+        sb.Append(", RefType: ");
+        sb.Append(this.RefType);
+        sb.Append(", TraceIdLow: ");
+        sb.Append(this.TraceIdLow);
+        sb.Append(", TraceIdHigh: ");
+        sb.Append(this.TraceIdHigh);
+        sb.Append(", SpanId: ");
+        sb.Append(this.SpanId);
+        sb.Append(')');
+        return sb.ToString();
     }
 }

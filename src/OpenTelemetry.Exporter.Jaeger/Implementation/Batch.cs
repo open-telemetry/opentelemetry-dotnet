@@ -17,67 +17,66 @@
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal sealed class Batch
 {
-    internal sealed class Batch
+    public Batch(Process process, TProtocol protocol)
     {
-        public Batch(Process process, TProtocol protocol)
+        this.BatchBeginMessage = GenerateBeginMessage(process, protocol, out int spanCountPosition);
+        this.SpanCountPosition = spanCountPosition;
+        this.BatchEndMessage = GenerateEndMessage(protocol);
+    }
+
+    public byte[] BatchBeginMessage { get; }
+
+    public int SpanCountPosition { get; set; }
+
+    public byte[] BatchEndMessage { get; }
+
+    public int MinimumMessageSize => this.BatchBeginMessage.Length
+        + this.BatchEndMessage.Length;
+
+    private static byte[] GenerateBeginMessage(Process process, TProtocol oprot, out int spanCountPosition)
+    {
+        var struc = new TStruct("Batch");
+
+        oprot.WriteStructBegin(struc);
+
+        var field = new TField
         {
-            this.BatchBeginMessage = GenerateBeginMessage(process, protocol, out int spanCountPosition);
-            this.SpanCountPosition = spanCountPosition;
-            this.BatchEndMessage = GenerateEndMessage(protocol);
-        }
+            Name = "process",
+            Type = TType.Struct,
+            ID = 1,
+        };
 
-        public byte[] BatchBeginMessage { get; }
+        oprot.WriteFieldBegin(field);
+        process.Write(oprot);
+        oprot.WriteFieldEnd();
 
-        public int SpanCountPosition { get; set; }
+        field.Name = "spans";
+        field.Type = TType.List;
+        field.ID = 2;
 
-        public byte[] BatchEndMessage { get; }
+        oprot.WriteFieldBegin(field);
 
-        public int MinimumMessageSize => this.BatchBeginMessage.Length
-            + this.BatchEndMessage.Length;
+        oprot.WriteListBegin(new TList(TType.Struct, 0), out spanCountPosition);
 
-        private static byte[] GenerateBeginMessage(Process process, TProtocol oprot, out int spanCountPosition)
-        {
-            var struc = new TStruct("Batch");
+        byte[] beginMessage = oprot.WrittenData.ToArray();
+        oprot.Clear();
+        return beginMessage;
+    }
 
-            oprot.WriteStructBegin(struc);
+    private static byte[] GenerateEndMessage(TProtocol oprot)
+    {
+        oprot.WriteListEnd();
 
-            var field = new TField
-            {
-                Name = "process",
-                Type = TType.Struct,
-                ID = 1,
-            };
+        oprot.WriteFieldEnd();
+        oprot.WriteFieldStop();
+        oprot.WriteStructEnd();
 
-            oprot.WriteFieldBegin(field);
-            process.Write(oprot);
-            oprot.WriteFieldEnd();
-
-            field.Name = "spans";
-            field.Type = TType.List;
-            field.ID = 2;
-
-            oprot.WriteFieldBegin(field);
-
-            oprot.WriteListBegin(new TList(TType.Struct, 0), out spanCountPosition);
-
-            byte[] beginMessage = oprot.WrittenData.ToArray();
-            oprot.Clear();
-            return beginMessage;
-        }
-
-        private static byte[] GenerateEndMessage(TProtocol oprot)
-        {
-            oprot.WriteListEnd();
-
-            oprot.WriteFieldEnd();
-            oprot.WriteFieldStop();
-            oprot.WriteStructEnd();
-
-            byte[] endMessage = oprot.WrittenData.ToArray();
-            oprot.Clear();
-            return endMessage;
-        }
+        byte[] endMessage = oprot.WrittenData.ToArray();
+        oprot.Clear();
+        return endMessage;
     }
 }
