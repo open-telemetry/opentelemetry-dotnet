@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http;
 using System.Net.Http.Headers;
 using Google.Protobuf;
 using Grpc.Net.Compression;

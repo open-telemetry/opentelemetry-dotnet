@@ -17,6 +17,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
