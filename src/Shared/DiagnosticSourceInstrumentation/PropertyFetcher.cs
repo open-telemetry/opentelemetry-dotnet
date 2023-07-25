@@ -16,6 +16,7 @@
 
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 #endif
 using System.Reflection;
 
@@ -28,7 +29,7 @@ namespace OpenTelemetry.Instrumentation;
 internal sealed class PropertyFetcher<T>
 {
 #if NET6_0_OR_GREATER
-    private const string TrimCompatibilityMessage = "PropertyFetcher access property on the object type; therefore is not trim compatible.";
+    private const string TrimCompatibilityMessage = "PropertyFetcher is used to access properties on objects dynamically by design and cannot be made trim compatible.";
 #endif
     private readonly string propertyName;
     private PropertyFetch innerFetcher;
@@ -93,7 +94,11 @@ internal sealed class PropertyFetcher<T>
                     return null;
                 }
 
-                if (propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType)
+                if (
+#if NET6_0_OR_GREATER
+!RuntimeFeature.IsDynamicCodeSupported &&
+#endif
+                IsValueType(propertyInfo))
                 {
                     return new BoxedValueTypePropertyFetch(propertyInfo);
                 }
@@ -114,6 +119,11 @@ internal sealed class PropertyFetcher<T>
                     var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
                         typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
                     return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
+                }
+
+                static bool IsValueType(PropertyInfo propertyInfo)
+                {
+                    return propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType;
                 }
             }
         }
