@@ -16,10 +16,16 @@
 #if !NETFRAMEWORK
 using System.Data;
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
+#endif
     internal sealed class SqlClientDiagnosticListener : ListenerHandler
     {
         public const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
@@ -40,6 +46,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         private readonly PropertyFetcher<Exception> exceptionFetcher = new("Exception");
         private readonly SqlClientInstrumentationOptions options;
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
+#endif
         public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
             : base(sourceName)
         {
