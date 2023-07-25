@@ -47,5 +47,5 @@ internal sealed class JaegerTagTransformer : TagTransformer<JaegerTag>
     }
 
     protected override JaegerTag TransformArrayTag(string key, Array array)
-        => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
+        => this.TransformStringTag(key, TagTransformerJsonHelper.JsonSerializeArrayTag(array));
 }
