@@ -18,14 +18,13 @@ using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.Grpc.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Tests;
+
+public class EventSourceTest
 {
-    public class EventSourceTest
+    [Fact]
+    public void EventSourceTest_GrpcInstrumentationEventSource()
     {
-        [Fact]
-        public void EventSourceTest_GrpcInstrumentationEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(GrpcInstrumentationEventSource.Log);
-        }
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(GrpcInstrumentationEventSource.Log);
     }
 }
