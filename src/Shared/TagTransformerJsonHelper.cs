@@ -24,12 +24,12 @@ namespace OpenTelemetry.Internal;
 /// <summary>
 /// This class has to be partial so that JSON source generator can provide code for the JsonSerializerContext.
 /// </summary>
-#pragma warning disable SA1601 // Partial elements should be documented
 internal static partial class TagTransformerJsonHelper
 {
 #if NET6_0_OR_GREATER
     // In net6.0 or higher ships System.Text.Json "in box" as part of the base class libraries;
-    // meaning the consumer automatically got upgraded to use v6.0 System.Text.Json which uses source generator.
+    // meaning the consumer automatically got upgraded to use v6.0 System.Text.Json
+    // which has support for using source generators for JSON serialization.
     // The source generator makes the serialization faster and also AOT compatible.
 
     internal static string JsonSerializeArrayTag(Array array)
