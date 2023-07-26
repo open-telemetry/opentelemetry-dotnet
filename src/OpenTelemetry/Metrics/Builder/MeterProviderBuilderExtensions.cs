@@ -16,6 +16,9 @@
 
 #nullable enable
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,7 +64,11 @@ public static class MeterProviderBuilderExtensions
     /// <typeparam name="T">Reader type.</typeparam>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddReader<T>(this MeterProviderBuilder meterProviderBuilder)
+    public static MeterProviderBuilder AddReader<
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(this MeterProviderBuilder meterProviderBuilder)
         where T : MetricReader
     {
         meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
