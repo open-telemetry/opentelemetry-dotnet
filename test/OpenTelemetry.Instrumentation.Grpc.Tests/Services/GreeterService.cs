@@ -17,36 +17,35 @@ using Greet;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 
-namespace OpenTelemetry.Instrumentation.Grpc.Services.Tests
+namespace OpenTelemetry.Instrumentation.Grpc.Services.Tests;
+
+public class GreeterService : Greeter.GreeterBase
 {
-    public class GreeterService : Greeter.GreeterBase
+    private readonly ILogger logger;
+
+    public GreeterService(ILoggerFactory loggerFactory)
     {
-        private readonly ILogger logger;
+        this.logger = loggerFactory.CreateLogger<GreeterService>();
+    }
 
-        public GreeterService(ILoggerFactory loggerFactory)
+    public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
+    {
+        this.logger.LogInformation("Sending hello to {Name}", request.Name);
+        return Task.FromResult(new HelloReply { Message = "Hello " + request.Name });
+    }
+
+    public override async Task SayHellos(HelloRequest request, IServerStreamWriter<HelloReply> responseStream, ServerCallContext context)
+    {
+        var i = 0;
+        while (!context.CancellationToken.IsCancellationRequested)
         {
-            this.logger = loggerFactory.CreateLogger<GreeterService>();
-        }
+            var message = $"How are you {request.Name}? {++i}";
+            this.logger.LogInformation("Sending greeting {Message}.", message);
 
-        public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
-        {
-            this.logger.LogInformation("Sending hello to {Name}", request.Name);
-            return Task.FromResult(new HelloReply { Message = "Hello " + request.Name });
-        }
+            await responseStream.WriteAsync(new HelloReply { Message = message }).ConfigureAwait(false);
 
-        public override async Task SayHellos(HelloRequest request, IServerStreamWriter<HelloReply> responseStream, ServerCallContext context)
-        {
-            var i = 0;
-            while (!context.CancellationToken.IsCancellationRequested)
-            {
-                var message = $"How are you {request.Name}? {++i}";
-                this.logger.LogInformation("Sending greeting {Message}.", message);
-
-                await responseStream.WriteAsync(new HelloReply { Message = message }).ConfigureAwait(false);
-
-                // Gotta look busy
-                await Task.Delay(1000).ConfigureAwait(false);
-            }
+            // Gotta look busy
+            await Task.Delay(1000).ConfigureAwait(false);
         }
     }
 }
