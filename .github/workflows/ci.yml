@@ -28,8 +28,6 @@ jobs:
       run: dotnet restore
 
     - name: Publich AOT Test App
-      outputs:
-        output1: ${{ steps.step1.outputs.test }}
       run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false >> "$GITHUB_OUTPUT"
 
     - name: Echo output
