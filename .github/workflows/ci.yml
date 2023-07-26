@@ -1,4 +1,4 @@
-name: Build
+name: Test publish AOTCompatibility testApp
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
     - '**.md'
 
 jobs:
-  install-dependencies:
+  build-test:
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
@@ -27,13 +27,10 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
 
-  publish-AOT-testApp:
-    outputs:
-      output1: ${{ steps.step1.outputs.test }}
-    steps:
-      - id: step1
-        run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false >> "$GITHUB_OUTPUT"
+    - name: Publich AOT Test App
+      outputs:
+        output1: ${{ steps.step1.outputs.test }}
+      run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false >> "$GITHUB_OUTPUT"
 
-  assert-publish-AOT-testApp-output:
-    needs: publish-AOT-testApp
-    run: echo "$GITHUB_OUTPUT $output1"
+    - name: Echo output
+      run: echo "$GITHUB_OUTPUT $output1"
