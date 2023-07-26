@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -35,7 +38,11 @@ public static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensi
     /// <typeparam name="T">Instrumentation type.</typeparam>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-    public static LoggerProviderBuilder AddInstrumentation<T>(this LoggerProviderBuilder loggerProviderBuilder)
+    public static LoggerProviderBuilder AddInstrumentation<
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : class
     {
         loggerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
