@@ -27,243 +27,242 @@ using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+/// <summary>
+/// Zipkin exporter.
+/// </summary>
+public class ZipkinExporter : BaseExporter<Activity>
 {
+    private readonly ZipkinExporterOptions options;
+    private readonly int maxPayloadSizeInBytes;
+    private readonly HttpClient httpClient;
+
     /// <summary>
-    /// Zipkin exporter.
+    /// Initializes a new instance of the <see cref="ZipkinExporter"/> class.
     /// </summary>
-    public class ZipkinExporter : BaseExporter<Activity>
+    /// <param name="options">Configuration options.</param>
+    /// <param name="client">Http client to use to upload telemetry.</param>
+    public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
     {
-        private readonly ZipkinExporterOptions options;
-        private readonly int maxPayloadSizeInBytes;
-        private readonly HttpClient httpClient;
+        Guard.ThrowIfNull(options);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZipkinExporter"/> class.
-        /// </summary>
-        /// <param name="options">Configuration options.</param>
-        /// <param name="client">Http client to use to upload telemetry.</param>
-        public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
+        this.options = options;
+        this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
+        this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
+
+        ZipkinTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
         {
-            Guard.ThrowIfNull(options);
+            ZipkinExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
+        };
 
-            this.options = options;
-            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
-            this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
-
-            ZipkinTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-            {
-                ZipkinExporterEventSource.Log.UnsupportedAttributeType(tagValueType, tagKey);
-            };
-
-            ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
-            {
-                ZipkinExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
-            };
-        }
-
-        internal ZipkinEndpoint LocalEndpoint { get; private set; }
-
-        /// <inheritdoc/>
-        public override ExportResult Export(in Batch<Activity> batch)
+        ConfigurationExtensions.LogInvalidEnvironmentVariable = (string key, string value) =>
         {
-            // Prevent Zipkin's HTTP operations from being instrumented.
-            using var scope = SuppressInstrumentationScope.Begin();
+            ZipkinExporterEventSource.Log.InvalidEnvironmentVariable(key, value);
+        };
+    }
 
-            try
+    internal ZipkinEndpoint LocalEndpoint { get; private set; }
+
+    /// <inheritdoc/>
+    public override ExportResult Export(in Batch<Activity> batch)
+    {
+        // Prevent Zipkin's HTTP operations from being instrumented.
+        using var scope = SuppressInstrumentationScope.Begin();
+
+        try
+        {
+            if (this.LocalEndpoint == null)
             {
-                if (this.LocalEndpoint == null)
-                {
-                    this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
-                }
+                this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
+            }
 
-                var requestUri = this.options.Endpoint;
+            var requestUri = this.options.Endpoint;
 
-                using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new JsonContent(this, batch),
-                };
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new JsonContent(this, batch),
+            };
 
 #if NET6_0_OR_GREATER
-                using var response = this.httpClient.Send(request, CancellationToken.None);
+            using var response = this.httpClient.Send(request, CancellationToken.None);
 #else
-                using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+            using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
 #endif
 
-                response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-                return ExportResult.Success;
-            }
-            catch (Exception ex)
+            return ExportResult.Success;
+        }
+        catch (Exception ex)
+        {
+            ZipkinExporterEventSource.Log.FailedExport(ex);
+
+            return ExportResult.Failure;
+        }
+    }
+
+    internal void SetLocalEndpointFromResource(Resource resource)
+    {
+        var hostName = ResolveHostName();
+
+        string ipv4 = null;
+        string ipv6 = null;
+        if (!string.IsNullOrEmpty(hostName))
+        {
+            ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
+            ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
+        }
+
+        string serviceName = null;
+        foreach (var label in resource.Attributes)
+        {
+            if (label.Key == ResourceSemanticConventions.AttributeServiceName)
             {
-                ZipkinExporterEventSource.Log.FailedExport(ex);
-
-                return ExportResult.Failure;
+                serviceName = label.Value as string;
+                break;
             }
         }
 
-        internal void SetLocalEndpointFromResource(Resource resource)
+        if (string.IsNullOrEmpty(serviceName))
         {
-            var hostName = ResolveHostName();
-
-            string ipv4 = null;
-            string ipv6 = null;
-            if (!string.IsNullOrEmpty(hostName))
-            {
-                ipv4 = ResolveHostAddress(hostName, AddressFamily.InterNetwork);
-                ipv6 = ResolveHostAddress(hostName, AddressFamily.InterNetworkV6);
-            }
-
-            string serviceName = null;
-            foreach (var label in resource.Attributes)
-            {
-                if (label.Key == ResourceSemanticConventions.AttributeServiceName)
-                {
-                    serviceName = label.Value as string;
-                    break;
-                }
-            }
-
-            if (string.IsNullOrEmpty(serviceName))
-            {
-                serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
-                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
-            }
-
-            this.LocalEndpoint = new ZipkinEndpoint(
-                serviceName,
-                ipv4,
-                ipv6,
-                port: null,
-                tags: null);
+            serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
+                pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
         }
 
-        private static string ResolveHostAddress(string hostName, AddressFamily family)
+        this.LocalEndpoint = new ZipkinEndpoint(
+            serviceName,
+            ipv4,
+            ipv6,
+            port: null,
+            tags: null);
+    }
+
+    private static string ResolveHostAddress(string hostName, AddressFamily family)
+    {
+        string result = null;
+
+        try
         {
-            string result = null;
+            var results = Dns.GetHostAddresses(hostName);
 
-            try
+            if (results != null && results.Length > 0)
             {
-                var results = Dns.GetHostAddresses(hostName);
-
-                if (results != null && results.Length > 0)
+                foreach (var addr in results)
                 {
-                    foreach (var addr in results)
+                    if (addr.AddressFamily.Equals(family))
                     {
-                        if (addr.AddressFamily.Equals(family))
-                        {
-                            var sanitizedAddress = new IPAddress(addr.GetAddressBytes()); // Construct address sans ScopeID
-                            result = sanitizedAddress.ToString();
+                        var sanitizedAddress = new IPAddress(addr.GetAddressBytes()); // Construct address sans ScopeID
+                        result = sanitizedAddress.ToString();
 
-                            break;
-                        }
+                        break;
                     }
                 }
             }
-            catch (Exception)
-            {
-                // Ignore
-            }
-
-            return result;
+        }
+        catch (Exception)
+        {
+            // Ignore
         }
 
-        private static string ResolveHostName()
+        return result;
+    }
+
+    private static string ResolveHostName()
+    {
+        string result = null;
+
+        try
         {
-            string result = null;
+            result = Dns.GetHostName();
 
-            try
+            if (!string.IsNullOrEmpty(result))
             {
-                result = Dns.GetHostName();
+                var response = Dns.GetHostEntry(result);
 
-                if (!string.IsNullOrEmpty(result))
+                if (response != null)
                 {
-                    var response = Dns.GetHostEntry(result);
-
-                    if (response != null)
-                    {
-                        return response.HostName;
-                    }
+                    return response.HostName;
                 }
             }
-            catch (Exception)
-            {
-                // Ignore
-            }
-
-            return result;
+        }
+        catch (Exception)
+        {
+            // Ignore
         }
 
-        private sealed class JsonContent : HttpContent
+        return result;
+    }
+
+    private sealed class JsonContent : HttpContent
+    {
+        private static readonly MediaTypeHeaderValue JsonHeader = new("application/json")
         {
-            private static readonly MediaTypeHeaderValue JsonHeader = new("application/json")
-            {
-                CharSet = "utf-8",
-            };
+            CharSet = "utf-8",
+        };
 
-            private readonly ZipkinExporter exporter;
-            private readonly Batch<Activity> batch;
-            private Utf8JsonWriter writer;
+        private readonly ZipkinExporter exporter;
+        private readonly Batch<Activity> batch;
+        private Utf8JsonWriter writer;
 
-            public JsonContent(ZipkinExporter exporter, in Batch<Activity> batch)
-            {
-                this.exporter = exporter;
-                this.batch = batch;
+        public JsonContent(ZipkinExporter exporter, in Batch<Activity> batch)
+        {
+            this.exporter = exporter;
+            this.batch = batch;
 
-                this.Headers.ContentType = JsonHeader;
-            }
+            this.Headers.ContentType = JsonHeader;
+        }
 
 #if NET6_0_OR_GREATER
-            protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
-            {
-                this.SerializeToStreamInternal(stream);
-            }
+        protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
+        {
+            this.SerializeToStreamInternal(stream);
+        }
 #endif
 
-            protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        {
+            this.SerializeToStreamInternal(stream);
+            return Task.CompletedTask;
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            // We can't know the length of the content being pushed to the output stream.
+            length = -1;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SerializeToStreamInternal(Stream stream)
+        {
+            if (this.writer == null)
             {
-                this.SerializeToStreamInternal(stream);
-                return Task.CompletedTask;
+                this.writer = new Utf8JsonWriter(stream);
+            }
+            else
+            {
+                this.writer.Reset(stream);
             }
 
-            protected override bool TryComputeLength(out long length)
+            this.writer.WriteStartArray();
+
+            foreach (var activity in this.batch)
             {
-                // We can't know the length of the content being pushed to the output stream.
-                length = -1;
-                return false;
+                var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
+
+                zipkinSpan.Write(this.writer);
+
+                zipkinSpan.Return();
+                if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)
+                {
+                    this.writer.Flush();
+                }
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void SerializeToStreamInternal(Stream stream)
-            {
-                if (this.writer == null)
-                {
-                    this.writer = new Utf8JsonWriter(stream);
-                }
-                else
-                {
-                    this.writer.Reset(stream);
-                }
+            this.writer.WriteEndArray();
 
-                this.writer.WriteStartArray();
-
-                foreach (var activity in this.batch)
-                {
-                    var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
-
-                    zipkinSpan.Write(this.writer);
-
-                    zipkinSpan.Return();
-                    if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)
-                    {
-                        this.writer.Flush();
-                    }
-                }
-
-                this.writer.WriteEndArray();
-
-                this.writer.Flush();
-            }
+            this.writer.Flush();
         }
     }
 }
