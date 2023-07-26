@@ -18,174 +18,173 @@ using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+internal sealed class PrometheusHttpListener : IDisposable
 {
-    internal sealed class PrometheusHttpListener : IDisposable
+    private readonly PrometheusExporter exporter;
+    private readonly HttpListener httpListener = new();
+    private readonly object syncObject = new();
+
+    private CancellationTokenSource tokenSource;
+    private Task workerThread;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
+    /// </summary>
+    /// <param name="exporter"><see cref="PrometheusExporter"/>The exporter instance.</param>
+    /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
+    public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
     {
-        private readonly PrometheusExporter exporter;
-        private readonly HttpListener httpListener = new();
-        private readonly object syncObject = new();
+        Guard.ThrowIfNull(exporter);
+        Guard.ThrowIfNull(options);
 
-        private CancellationTokenSource tokenSource;
-        private Task workerThread;
+        this.exporter = exporter;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
-        /// </summary>
-        /// <param name="exporter"><see cref="PrometheusExporter"/>The exporter instance.</param>
-        /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
-        public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
+        string path = options.ScrapeEndpointPath;
+
+        if (!path.StartsWith("/"))
         {
-            Guard.ThrowIfNull(exporter);
-            Guard.ThrowIfNull(options);
-
-            this.exporter = exporter;
-
-            string path = options.ScrapeEndpointPath;
-
-            if (!path.StartsWith("/"))
-            {
-                path = $"/{path}";
-            }
-
-            if (!path.EndsWith("/"))
-            {
-                path = $"{path}/";
-            }
-
-            foreach (string uriPrefix in options.UriPrefixes)
-            {
-                this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
-            }
+            path = $"/{path}";
         }
 
-        /// <summary>
-        /// Start the HttpListener.
-        /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP listener.</param>
-        public void Start(CancellationToken token = default)
+        if (!path.EndsWith("/"))
         {
-            lock (this.syncObject)
-            {
-                if (this.tokenSource != null)
-                {
-                    return;
-                }
-
-                // link the passed in token if not null
-                this.tokenSource = token == default ?
-                    new CancellationTokenSource() :
-                    CancellationTokenSource.CreateLinkedTokenSource(token);
-
-                this.workerThread = Task.Factory.StartNew(this.WorkerProc, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-            }
+            path = $"{path}/";
         }
 
-        /// <summary>
-        /// Gracefully stop the PrometheusHttpListener.
-        /// </summary>
-        public void Stop()
+        foreach (string uriPrefix in options.UriPrefixes)
         {
-            lock (this.syncObject)
-            {
-                if (this.tokenSource == null)
-                {
-                    return;
-                }
+            this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
+        }
+    }
 
-                this.tokenSource.Cancel();
-                this.workerThread.Wait();
-                this.tokenSource = null;
+    /// <summary>
+    /// Start the HttpListener.
+    /// </summary>
+    /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP listener.</param>
+    public void Start(CancellationToken token = default)
+    {
+        lock (this.syncObject)
+        {
+            if (this.tokenSource != null)
+            {
+                return;
+            }
+
+            // link the passed in token if not null
+            this.tokenSource = token == default ?
+                new CancellationTokenSource() :
+                CancellationTokenSource.CreateLinkedTokenSource(token);
+
+            this.workerThread = Task.Factory.StartNew(this.WorkerProc, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+    }
+
+    /// <summary>
+    /// Gracefully stop the PrometheusHttpListener.
+    /// </summary>
+    public void Stop()
+    {
+        lock (this.syncObject)
+        {
+            if (this.tokenSource == null)
+            {
+                return;
+            }
+
+            this.tokenSource.Cancel();
+            this.workerThread.Wait();
+            this.tokenSource = null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Stop();
+
+        if (this.httpListener != null && this.httpListener.IsListening)
+        {
+            this.httpListener.Close();
+        }
+    }
+
+    private void WorkerProc()
+    {
+        this.httpListener.Start();
+
+        try
+        {
+            using var scope = SuppressInstrumentationScope.Begin();
+            while (!this.tokenSource.IsCancellationRequested)
+            {
+                var ctxTask = this.httpListener.GetContextAsync();
+                ctxTask.Wait(this.tokenSource.Token);
+                var ctx = ctxTask.Result;
+
+                Task.Run(() => this.ProcessRequestAsync(ctx));
             }
         }
-
-        /// <inheritdoc/>
-        public void Dispose()
+        catch (OperationCanceledException ex)
         {
-            this.Stop();
-
-            if (this.httpListener != null && this.httpListener.IsListening)
-            {
-                this.httpListener.Close();
-            }
+            PrometheusExporterEventSource.Log.CanceledExport(ex);
         }
-
-        private void WorkerProc()
+        finally
         {
-            this.httpListener.Start();
-
             try
             {
-                using var scope = SuppressInstrumentationScope.Begin();
-                while (!this.tokenSource.IsCancellationRequested)
-                {
-                    var ctxTask = this.httpListener.GetContextAsync();
-                    ctxTask.Wait(this.tokenSource.Token);
-                    var ctx = ctxTask.Result;
-
-                    Task.Run(() => this.ProcessRequestAsync(ctx));
-                }
+                this.httpListener.Stop();
+                this.httpListener.Close();
             }
-            catch (OperationCanceledException ex)
+            catch (Exception exFromFinally)
             {
-                PrometheusExporterEventSource.Log.CanceledExport(ex);
+                PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
+            }
+        }
+    }
+
+    private async Task ProcessRequestAsync(HttpListenerContext context)
+    {
+        try
+        {
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            try
+            {
+                context.Response.Headers.Add("Server", string.Empty);
+                if (collectionResponse.View.Count > 0)
+                {
+                    context.Response.StatusCode = 200;
+                    context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                    context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+
+                    await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                }
+                else
+                {
+                    // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                    context.Response.StatusCode = 200;
+                    PrometheusExporterEventSource.Log.NoMetrics();
+                }
             }
             finally
             {
-                try
-                {
-                    this.httpListener.Stop();
-                    this.httpListener.Close();
-                }
-                catch (Exception exFromFinally)
-                {
-                    PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
-                }
+                this.exporter.CollectionManager.ExitCollect();
             }
         }
-
-        private async Task ProcessRequestAsync(HttpListenerContext context)
+        catch (Exception ex)
         {
-            try
-            {
-                var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
-                try
-                {
-                    context.Response.Headers.Add("Server", string.Empty);
-                    if (collectionResponse.View.Count > 0)
-                    {
-                        context.Response.StatusCode = 200;
-                        context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                        context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+            PrometheusExporterEventSource.Log.FailedExport(ex);
 
-                        await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                        context.Response.StatusCode = 200;
-                        PrometheusExporterEventSource.Log.NoMetrics();
-                    }
-                }
-                finally
-                {
-                    this.exporter.CollectionManager.ExitCollect();
-                }
-            }
-            catch (Exception ex)
-            {
-                PrometheusExporterEventSource.Log.FailedExport(ex);
+            context.Response.StatusCode = 500;
+        }
 
-                context.Response.StatusCode = 500;
-            }
-
-            try
-            {
-                context.Response.Close();
-            }
-            catch
-            {
-            }
+        try
+        {
+            context.Response.Close();
+        }
+        catch
+        {
         }
     }
 }
