@@ -16,6 +16,9 @@
 
 #nullable enable
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -105,7 +108,11 @@ public static class LoggerProviderBuilderExtensions
     /// <typeparam name="T">Processor type.</typeparam>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="LoggerProviderBuilder"/> for chaining.</returns>
-    public static LoggerProviderBuilder AddProcessor<T>(this LoggerProviderBuilder loggerProviderBuilder)
+    public static LoggerProviderBuilder AddProcessor<
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : BaseProcessor<LogRecord>
     {
         loggerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
