@@ -32,17 +32,7 @@ jobs:
       id: step1
       run: |
         echo "FOO=$(dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false)" >> $GITHUB_ENV
-  
-  echo-output:
-    strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
-      matrix:
-        os: [ windows-latest ]
-        version: [ net7.0 ]
 
-    runs-on: ${{ matrix.os }}
-    needs: aot-test
-    
-    steps:
-    - name: Echo output
+    - name: echo output
+      id: step2
       run: echo "${{ env.FOO }}"
