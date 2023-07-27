@@ -30,8 +30,9 @@ jobs:
 
     - name: Publich AOT Test App
       id: step1
-      run: |
-        echo "::set-output name=test::dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false"
+      run: |        
+        myOutput=$(dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false)
+        echo "::set-output name=command-output::$myOutput"
   
   echo-output:
     strategy:
