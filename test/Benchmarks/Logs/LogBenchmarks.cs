@@ -39,83 +39,82 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 |                        ThreeProcessors | 174.295 ns | 0.7697 ns | 0.7200 ns | 0.0553 |     232 B |
 */
 
-namespace Benchmarks.Logs
+namespace Benchmarks.Logs;
+
+public class LogBenchmarks
 {
-    public class LogBenchmarks
+    private readonly ILogger loggerWithNoListener;
+    private readonly ILogger loggerWithOneProcessor;
+    private readonly ILogger loggerWithTwoProcessors;
+    private readonly ILogger loggerWithThreeProcessors;
+
+    public LogBenchmarks()
     {
-        private readonly ILogger loggerWithNoListener;
-        private readonly ILogger loggerWithOneProcessor;
-        private readonly ILogger loggerWithTwoProcessors;
-        private readonly ILogger loggerWithThreeProcessors;
+        using var loggerFactoryWithNoListener = LoggerFactory.Create(builder => { });
+        this.loggerWithNoListener = loggerFactoryWithNoListener.CreateLogger<LogBenchmarks>();
 
-        public LogBenchmarks()
+        using var loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
         {
-            using var loggerFactoryWithNoListener = LoggerFactory.Create(builder => { });
-            this.loggerWithNoListener = loggerFactoryWithNoListener.CreateLogger<LogBenchmarks>();
+            builder.AddOpenTelemetry(options => options
+                .AddProcessor(new DummyLogProcessor()));
+        });
+        this.loggerWithOneProcessor = loggerFactoryWithOneProcessor.CreateLogger<LogBenchmarks>();
 
-            using var loggerFactoryWithOneProcessor = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options => options
-                    .AddProcessor(new DummyLogProcessor()));
-            });
-            this.loggerWithOneProcessor = loggerFactoryWithOneProcessor.CreateLogger<LogBenchmarks>();
-
-            using var loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options => options
-                    .AddProcessor(new DummyLogProcessor())
-                    .AddProcessor(new DummyLogProcessor()));
-            });
-            this.loggerWithTwoProcessors = loggerFactoryWithTwoProcessor.CreateLogger<LogBenchmarks>();
-
-            using var loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options => options
-                    .AddProcessor(new DummyLogProcessor())
-                    .AddProcessor(new DummyLogProcessor())
-                    .AddProcessor(new DummyLogProcessor()));
-            });
-            this.loggerWithThreeProcessors = loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
-        }
-
-        [Benchmark]
-        public void NoListener()
+        using var loggerFactoryWithTwoProcessor = LoggerFactory.Create(builder =>
         {
-            this.loggerWithNoListener.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
+            builder.AddOpenTelemetry(options => options
+                .AddProcessor(new DummyLogProcessor())
+                .AddProcessor(new DummyLogProcessor()));
+        });
+        this.loggerWithTwoProcessors = loggerFactoryWithTwoProcessor.CreateLogger<LogBenchmarks>();
 
-        [Benchmark]
-        public void NoListenerWithLoggerMessageGenerator()
+        using var loggerFactoryWithThreeProcessor = LoggerFactory.Create(builder =>
         {
-            Food.SayHello(this.loggerWithNoListener, "tomato", 2.99);
-        }
+            builder.AddOpenTelemetry(options => options
+                .AddProcessor(new DummyLogProcessor())
+                .AddProcessor(new DummyLogProcessor())
+                .AddProcessor(new DummyLogProcessor()));
+        });
+        this.loggerWithThreeProcessors = loggerFactoryWithThreeProcessor.CreateLogger<LogBenchmarks>();
+    }
 
-        [Benchmark]
-        public void OneProcessor()
-        {
-            this.loggerWithOneProcessor.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
+    [Benchmark]
+    public void NoListener()
+    {
+        this.loggerWithNoListener.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+    }
 
-        [Benchmark]
-        public void OneProcessorWithLoggerMessageGenerator()
-        {
-            Food.SayHello(this.loggerWithOneProcessor, "tomato", 2.99);
-        }
+    [Benchmark]
+    public void NoListenerWithLoggerMessageGenerator()
+    {
+        Food.SayHello(this.loggerWithNoListener, "tomato", 2.99);
+    }
 
-        [Benchmark]
-        public void TwoProcessors()
-        {
-            this.loggerWithTwoProcessors.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
+    [Benchmark]
+    public void OneProcessor()
+    {
+        this.loggerWithOneProcessor.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+    }
 
-        [Benchmark]
-        public void ThreeProcessors()
-        {
-            this.loggerWithThreeProcessors.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
+    [Benchmark]
+    public void OneProcessorWithLoggerMessageGenerator()
+    {
+        Food.SayHello(this.loggerWithOneProcessor, "tomato", 2.99);
+    }
 
-        internal class DummyLogProcessor : BaseProcessor<LogRecord>
-        {
-        }
+    [Benchmark]
+    public void TwoProcessors()
+    {
+        this.loggerWithTwoProcessors.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+    }
+
+    [Benchmark]
+    public void ThreeProcessors()
+    {
+        this.loggerWithThreeProcessors.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+    }
+
+    internal class DummyLogProcessor : BaseProcessor<LogRecord>
+    {
     }
 }
