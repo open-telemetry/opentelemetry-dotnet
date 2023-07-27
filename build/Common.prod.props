@@ -67,6 +67,7 @@
     <PackageProjectUrl>https://opentelemetry.io</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>OpenTelemetry Authors</Authors>
+    <Copyright>Copyright The OpenTelemetry Authors</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
