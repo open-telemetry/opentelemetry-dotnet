@@ -31,9 +31,7 @@ jobs:
     - name: Publich AOT Test App
       id: step1
       run: |
-        #myOutput=$(dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false)
-        myOutput=$(dotnet restore)
-        echo "::set-output name=test::$myOutput"
+        echo "FOO=$(dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false)" >> $GITHUB_ENV
   
   echo-output:
     strategy:
@@ -47,4 +45,4 @@ jobs:
     
     steps:
     - name: Echo output
-      run: echo ${{needs.aot-test.outputs.output1}}
+      run: echo "${{ env.FOO }}"
