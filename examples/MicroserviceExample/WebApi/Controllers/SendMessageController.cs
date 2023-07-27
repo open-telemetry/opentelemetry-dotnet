@@ -17,25 +17,24 @@
 using Microsoft.AspNetCore.Mvc;
 using Utils.Messaging;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class SendMessageController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class SendMessageController : ControllerBase
+    private readonly ILogger<SendMessageController> logger;
+    private readonly MessageSender messageSender;
+
+    public SendMessageController(ILogger<SendMessageController> logger, MessageSender messageSender)
     {
-        private readonly ILogger<SendMessageController> logger;
-        private readonly MessageSender messageSender;
+        this.logger = logger;
+        this.messageSender = messageSender;
+    }
 
-        public SendMessageController(ILogger<SendMessageController> logger, MessageSender messageSender)
-        {
-            this.logger = logger;
-            this.messageSender = messageSender;
-        }
-
-        [HttpGet]
-        public string Get()
-        {
-            return this.messageSender.SendMessage();
-        }
+    [HttpGet]
+    public string Get()
+    {
+        return this.messageSender.SendMessage();
     }
 }
