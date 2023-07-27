@@ -28,14 +28,10 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - name: Install dependencies
-      run: dotnet restore
-
     - name: Publich AOT Test App
       id: step1
       run: |
-        myVar=dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false
-        echo "::set-output name=test::$myVar"
+        echo "::set-output name=test::dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false"
   
   echo-output:
     strategy:
