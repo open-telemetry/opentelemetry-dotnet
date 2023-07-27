@@ -80,135 +80,134 @@ Baseline = 2.45 KB
 With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
                         = 2.45 + (1032 + 64) / 1024 = 2.45 + 1.07 = ~3.52KB
 */
-namespace Benchmarks.Instrumentation
+namespace Benchmarks.Instrumentation;
+
+public class AspNetCoreInstrumentationNewBenchmarks
 {
-    public class AspNetCoreInstrumentationNewBenchmarks
+    private HttpClient httpClient;
+    private WebApplication app;
+    private TracerProvider tracerProvider;
+    private MeterProvider meterProvider;
+
+    [Flags]
+    public enum EnableInstrumentationOption
     {
-        private HttpClient httpClient;
-        private WebApplication app;
-        private TracerProvider tracerProvider;
-        private MeterProvider meterProvider;
+        /// <summary>
+        /// Instrumentation is not enabled for any signal.
+        /// </summary>
+        None = 0,
 
-        [Flags]
-        public enum EnableInstrumentationOption
+        /// <summary>
+        /// Instrumentation is enbled only for Traces.
+        /// </summary>
+        Traces = 1,
+
+        /// <summary>
+        /// Instrumentation is enbled only for Metrics.
+        /// </summary>
+        Metrics = 2,
+    }
+
+    [Params(0, 1, 2, 3)]
+    public EnableInstrumentationOption EnableInstrumentation { get; set; }
+
+    [GlobalSetup(Target = nameof(GetRequestForAspNetCoreApp))]
+    public void GetRequestForAspNetCoreAppGlobalSetup()
+    {
+        KeyValuePair<string, string>[] config = new KeyValuePair<string, string>[] { new KeyValuePair<string, string>("OTEL_SEMCONV_STABILITY_OPT_IN", "http") };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(config)
+            .Build();
+
+        if (this.EnableInstrumentation == EnableInstrumentationOption.None)
         {
-            /// <summary>
-            /// Instrumentation is not enabled for any signal.
-            /// </summary>
-            None = 0,
-
-            /// <summary>
-            /// Instrumentation is enbled only for Traces.
-            /// </summary>
-            Traces = 1,
-
-            /// <summary>
-            /// Instrumentation is enbled only for Metrics.
-            /// </summary>
-            Metrics = 2,
+            this.StartWebApplication();
+            this.httpClient = new HttpClient();
         }
-
-        [Params(0, 1, 2, 3)]
-        public EnableInstrumentationOption EnableInstrumentation { get; set; }
-
-        [GlobalSetup(Target = nameof(GetRequestForAspNetCoreApp))]
-        public void GetRequestForAspNetCoreAppGlobalSetup()
+        else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
         {
-            KeyValuePair<string, string>[] config = new KeyValuePair<string, string>[] { new KeyValuePair<string, string>("OTEL_SEMCONV_STABILITY_OPT_IN", "http") };
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(config)
+            this.StartWebApplication();
+            this.httpClient = new HttpClient();
+
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddAspNetCoreInstrumentation()
+                .Build();
+        }
+        else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+        {
+            this.StartWebApplication();
+            this.httpClient = new HttpClient();
+
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddAspNetCoreInstrumentation()
+                .Build();
+        }
+        else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
+            this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+        {
+            this.StartWebApplication();
+            this.httpClient = new HttpClient();
+
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddAspNetCoreInstrumentation()
                 .Build();
 
-            if (this.EnableInstrumentation == EnableInstrumentationOption.None)
-            {
-                this.StartWebApplication();
-                this.httpClient = new HttpClient();
-            }
-            else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
-            {
-                this.StartWebApplication();
-                this.httpClient = new HttpClient();
-
-                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                    .AddAspNetCoreInstrumentation()
-                    .Build();
-            }
-            else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
-            {
-                this.StartWebApplication();
-                this.httpClient = new HttpClient();
-
-                this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                    .AddAspNetCoreInstrumentation()
-                    .Build();
-            }
-            else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
-                this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
-            {
-                this.StartWebApplication();
-                this.httpClient = new HttpClient();
-
-                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                    .AddAspNetCoreInstrumentation()
-                    .Build();
-
-                this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                    .AddAspNetCoreInstrumentation()
-                    .Build();
-            }
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddAspNetCoreInstrumentation()
+                .Build();
         }
+    }
 
-        [GlobalCleanup(Target = nameof(GetRequestForAspNetCoreApp))]
-        public void GetRequestForAspNetCoreAppGlobalCleanup()
+    [GlobalCleanup(Target = nameof(GetRequestForAspNetCoreApp))]
+    public void GetRequestForAspNetCoreAppGlobalCleanup()
+    {
+        if (this.EnableInstrumentation == EnableInstrumentationOption.None)
         {
-            if (this.EnableInstrumentation == EnableInstrumentationOption.None)
-            {
-                this.httpClient.Dispose();
-                this.app.DisposeAsync().GetAwaiter().GetResult();
-            }
-            else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
-            {
-                this.httpClient.Dispose();
-                this.app.DisposeAsync().GetAwaiter().GetResult();
-                this.tracerProvider.Dispose();
-            }
-            else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
-            {
-                this.httpClient.Dispose();
-                this.app.DisposeAsync().GetAwaiter().GetResult();
-                this.meterProvider.Dispose();
-            }
-            else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
-                this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
-            {
-                this.httpClient.Dispose();
-                this.app.DisposeAsync().GetAwaiter().GetResult();
-                this.tracerProvider.Dispose();
-                this.meterProvider.Dispose();
-            }
+            this.httpClient.Dispose();
+            this.app.DisposeAsync().GetAwaiter().GetResult();
         }
-
-        [Benchmark]
-        public async Task GetRequestForAspNetCoreApp()
+        else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
         {
-            var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
-            httpResponse.EnsureSuccessStatusCode();
+            this.httpClient.Dispose();
+            this.app.DisposeAsync().GetAwaiter().GetResult();
+            this.tracerProvider.Dispose();
         }
-
-        private void StartWebApplication()
+        else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
         {
-            var builder = WebApplication.CreateBuilder();
-            builder.Logging.ClearProviders();
-            var app = builder.Build();
-            app.MapGet("/", async context => await context.Response.WriteAsync($"Hello World!"));
-            app.RunAsync();
-
-            this.app = app;
+            this.httpClient.Dispose();
+            this.app.DisposeAsync().GetAwaiter().GetResult();
+            this.meterProvider.Dispose();
         }
+        else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
+            this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+        {
+            this.httpClient.Dispose();
+            this.app.DisposeAsync().GetAwaiter().GetResult();
+            this.tracerProvider.Dispose();
+            this.meterProvider.Dispose();
+        }
+    }
+
+    [Benchmark]
+    public async Task GetRequestForAspNetCoreApp()
+    {
+        var httpResponse = await this.httpClient.GetAsync("http://localhost:5000").ConfigureAwait(false);
+        httpResponse.EnsureSuccessStatusCode();
+    }
+
+    private void StartWebApplication()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
+        app.MapGet("/", async context => await context.Response.WriteAsync($"Hello World!"));
+        app.RunAsync();
+
+        this.app = app;
     }
 }
 #endif
