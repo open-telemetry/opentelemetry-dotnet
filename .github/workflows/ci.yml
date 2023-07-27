@@ -34,8 +34,8 @@ jobs:
     - name: Publich AOT Test App
       id: step1
       run: |
-        cmdOutputOfPublishingAotApp = dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false
-        echo "::set-output name=test::$cmdOutputOfPublishingAotApp"
+        myVar=dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false
+        echo "::set-output name=test::$myVar"
   
   echo-output:
     strategy:
