@@ -30,9 +30,4 @@ jobs:
 
     - name: Publich AOT Test App
       id: step1
-      run: |
-        echo "FOO=$(dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false)" >> $GITHUB_ENV
-
-    - name: echo output
-      id: step2
-      run: echo "${{ env.FOO }}"
+      run: .\build\AOTTest.cmd

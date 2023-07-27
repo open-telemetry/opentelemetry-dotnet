@@ -1,0 +1,5 @@
+SETLOCAL
+SETLOCAL ENABLEEXTENSIONS
+
+cd
+dotnet restore
