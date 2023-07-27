@@ -14,45 +14,44 @@
 // limitations under the License.
 // </copyright>
 
-namespace TestApp.AspNetCore
+namespace TestApp.AspNetCore;
+
+public class ActivityMiddleware
 {
-    public class ActivityMiddleware
+    private readonly ActivityMiddlewareImpl impl;
+    private readonly RequestDelegate next;
+
+    public ActivityMiddleware(RequestDelegate next, ActivityMiddlewareImpl impl)
     {
-        private readonly ActivityMiddlewareImpl impl;
-        private readonly RequestDelegate next;
+        this.next = next;
+        this.impl = impl;
+    }
 
-        public ActivityMiddleware(RequestDelegate next, ActivityMiddlewareImpl impl)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (this.impl != null)
         {
-            this.next = next;
-            this.impl = impl;
+            this.impl.PreProcess(context);
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        await this.next(context).ConfigureAwait(false);
+
+        if (this.impl != null)
         {
-            if (this.impl != null)
-            {
-                this.impl.PreProcess(context);
-            }
+            this.impl.PostProcess(context);
+        }
+    }
 
-            await this.next(context).ConfigureAwait(false);
-
-            if (this.impl != null)
-            {
-                this.impl.PostProcess(context);
-            }
+    public class ActivityMiddlewareImpl
+    {
+        public virtual void PreProcess(HttpContext context)
+        {
+            // Do nothing
         }
 
-        public class ActivityMiddlewareImpl
+        public virtual void PostProcess(HttpContext context)
         {
-            public virtual void PreProcess(HttpContext context)
-            {
-                // Do nothing
-            }
-
-            public virtual void PostProcess(HttpContext context)
-            {
-                // Do nothing
-            }
+            // Do nothing
         }
     }
 }
