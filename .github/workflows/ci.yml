@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     outputs:
-      output1: ${{steps.step1.outpus.test}}
+      output1: ${{steps.step1.outputs.test}}
     
     steps:
     - uses: actions/checkout@v3
