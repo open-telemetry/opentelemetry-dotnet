@@ -18,7 +18,7 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-#if !NET6_0_OR_GREATER
+#if !NET6_0_OR_GREATER && !NETFRAMEWORK
 using System.Linq.Expressions;
 using System.Reflection;
 #endif
@@ -33,7 +33,7 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 
     public ExceptionProcessor()
     {
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER || NETFRAMEWORK
         this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
 #else
         // When running on netstandard or similar the Marshal class is not a part of the netstandard API
