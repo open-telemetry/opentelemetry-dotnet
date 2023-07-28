@@ -17,47 +17,46 @@
 using OpenTelemetry.Trace;
 using Utils.Messaging;
 
-namespace WebApi
+namespace WebApi;
+
+public class Startup
 {
-    public class Startup
+    public Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
+        this.Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
+
+        services.AddSingleton<MessageSender>();
+
+        services.AddOpenTelemetry()
+            .WithTracing(builder => builder
+                .AddAspNetCoreInstrumentation()
+                .AddSource(nameof(MessageSender))
+                .AddZipkinExporter(b =>
+                {
+                    var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+                    b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                }));
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
         {
-            this.Configuration = configuration;
+            app.UseDeveloperExceptionPage();
         }
 
-        public IConfiguration Configuration { get; }
+        app.UseRouting();
 
-        public void ConfigureServices(IServiceCollection services)
+        app.UseEndpoints(endpoints =>
         {
-            services.AddControllers();
-
-            services.AddSingleton<MessageSender>();
-
-            services.AddOpenTelemetry()
-                .WithTracing(builder => builder
-                    .AddAspNetCoreInstrumentation()
-                    .AddSource(nameof(MessageSender))
-                    .AddZipkinExporter(b =>
-                    {
-                        var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                        b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                    }));
-        }
-
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-        }
+            endpoints.MapControllers();
+        });
     }
 }
