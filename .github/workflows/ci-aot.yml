@@ -16,7 +16,7 @@ jobs:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ windows-latest ]
-        version: [ net7.0 ]
+        version: [ net6.0, net7.0 ]
 
     runs-on: ${{ matrix.os }}    
     steps:
@@ -28,6 +28,6 @@ jobs:
     - name: Publich AOT testApp
       run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false > ./build/publishAotTestAppOutput.log
 
-    - name: Read publish AOT testApp Output and assert warning count
+    - name: Read publish AOT testApp output and assert warning count
       shell: pwsh
       run: .\build\assert-publish-aot-testApp-warning-count.ps1
