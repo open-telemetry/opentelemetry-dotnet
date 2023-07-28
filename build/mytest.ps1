@@ -14,8 +14,8 @@ foreach($line in Get-Content .\build\myoutput.log)
     }
 }
 
-$expectedTrimmingWarningCount = 11
-$expectedaotWarningCount = 19
+$expectedTrimmingWarningCount = 0
+$expectedaotWarningCount = 0
 
 Write-Host "trimmingWarningCount: ", $trimmingWarningCount
 Write-Host "aotWarningCount: ", $aotWarningCount
