@@ -42,7 +42,8 @@ public class DiagnosticSourceSubscriberBenchmark
         {
             var subscriber = new DiagnosticSourceSubscriber(
                 new TestListener(),
-                this.UseIsEnabledFilter ? this.isEnabledFilter : null);
+                this.UseIsEnabledFilter ? this.isEnabledFilter : null,
+                logUnknownException: null);
 
             this.subscribers.Add(subscriber);
             subscriber.Subscribe();
