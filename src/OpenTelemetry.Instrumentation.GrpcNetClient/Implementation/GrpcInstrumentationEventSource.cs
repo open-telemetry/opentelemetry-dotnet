@@ -60,6 +60,6 @@ internal sealed class GrpcInstrumentationEventSource : EventSource
     [Event(3, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
     public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
     {
-        this.WriteEvent(2, handlerName, eventName, ex);
+        this.WriteEvent(3, handlerName, eventName, ex);
     }
 }

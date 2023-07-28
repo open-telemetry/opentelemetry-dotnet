@@ -111,6 +111,6 @@ internal sealed class HttpInstrumentationEventSource : EventSource
     [Event(7, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
     public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
     {
-        this.WriteEvent(2, handlerName, eventName, ex);
+        this.WriteEvent(7, handlerName, eventName, ex);
     }
 }
