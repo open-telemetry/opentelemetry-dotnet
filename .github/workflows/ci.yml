@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  push:
+    branches: [ 'main*' ]
+    paths-ignore:
+    - '**.md'
+  pull_request:
+    branches: [ 'main*' ]
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        version: [ net462, net6.0, net7.0 ]
+        exclude:
+        - os: ubuntu-latest
+          version: net462
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # fetching all
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test ${{ matrix.version }}
+      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"

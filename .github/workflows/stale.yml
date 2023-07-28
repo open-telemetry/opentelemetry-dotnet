@@ -1,0 +1,21 @@
+# Syntax: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+# Github Actions Stale: https://github.com/actions/stale
+
+name: "Close stale pull requests"
+on:
+  schedule:
+    - cron: "12 3 * * *"  # arbitrary time not to DDOS GitHub
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v8
+        with:
+          stale-pr-message: 'This PR was marked stale due to lack of activity and will be closed in 7 days. Commenting or Pushing will instruct the bot to automatically remove the label. This bot runs once per day.'
+          close-pr-message: 'Closed as inactive. Feel free to reopen if this PR is still being worked on.'
+          operations-per-run: 400
+          days-before-pr-stale: 7
+          days-before-issue-stale: -1
+          days-before-pr-close: 7
+          days-before-issue-close: -1

@@ -1,0 +1,33 @@
+name: sanitycheck
+
+on:
+  push:
+    branches: [ 'main*' ]
+  pull_request:
+    branches: [ 'main*' ]
+
+jobs:
+  misspell:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v3
+
+    - name: install misspell
+      run: |
+        curl -L -o ./install-misspell.sh https://git.io/misspell
+        sh ./install-misspell.sh
+
+    - name: run misspell
+      run: ./bin/misspell -error .
+
+  encoding:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v3
+
+    - name: detect non-ASCII encoding and trailing space
+      run: python3 ./build/sanitycheck.py

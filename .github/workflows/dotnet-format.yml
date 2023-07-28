@@ -1,0 +1,27 @@
+name: dotnet format
+
+on:
+  push:
+    branches: [ 'main*' ]
+    paths:
+    - '**.cs'
+    - '.editorconfig'
+  pull_request:
+    branches: [ 'main*' ]
+    paths:
+    - '**.cs'
+    - '.editorconfig'
+
+jobs:
+  check-format:
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v3
+
+    - name: Install format tool
+      run: dotnet tool install -g dotnet-format
+
+    - name: dotnet format
+      run: dotnet-format --folder --check
