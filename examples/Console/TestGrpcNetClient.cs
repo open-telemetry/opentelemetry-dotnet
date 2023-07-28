@@ -21,54 +21,53 @@ using Grpc.Net.Client;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-namespace Examples.Console
+namespace Examples.Console;
+
+internal class TestGrpcNetClient
 {
-    internal class TestGrpcNetClient
+    internal static object Run()
     {
-        internal static object Run()
+        // Prerequisite for running this example.
+        // In a separate console window, start the example
+        // ASP.NET Core gRPC service by running the following command
+        // from the reporoot\examples\GrpcService\.
+        // (eg: C:\repos\opentelemetry-dotnet\examples\GrpcService\)
+        //
+        // dotnet run
+
+        // To run this example, run the following command from
+        // the reporoot\examples\Console\.
+        // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
+        //
+        // dotnet run grpc
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddGrpcClientInstrumentation()
+            .AddSource("grpc-net-client-test")
+            .AddConsoleExporter()
+            .Build();
+
+        using var source = new ActivitySource("grpc-net-client-test");
+        using (var parent = source.StartActivity("Main", ActivityKind.Server))
         {
-            // Prerequisite for running this example.
-            // In a separate console window, start the example
-            // ASP.NET Core gRPC service by running the following command
-            // from the reporoot\examples\GrpcService\.
-            // (eg: C:\repos\opentelemetry-dotnet\examples\GrpcService\)
-            //
-            // dotnet run
+            using var channel = GrpcChannel.ForAddress("https://localhost:44335");
+            var client = new Greeter.GreeterClient(channel);
 
-            // To run this example, run the following command from
-            // the reporoot\examples\Console\.
-            // (eg: C:\repos\opentelemetry-dotnet\examples\Console\)
-            //
-            // dotnet run grpc
-
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddGrpcClientInstrumentation()
-                .AddSource("grpc-net-client-test")
-                .AddConsoleExporter()
-                .Build();
-
-            using var source = new ActivitySource("grpc-net-client-test");
-            using (var parent = source.StartActivity("Main", ActivityKind.Server))
+            try
             {
-                using var channel = GrpcChannel.ForAddress("https://localhost:44335");
-                var client = new Greeter.GreeterClient(channel);
-
-                try
-                {
-                    var reply = client.SayHelloAsync(new HelloRequest { Name = "GreeterClient" }).GetAwaiter().GetResult();
-                    System.Console.WriteLine($"Message received: {reply.Message}");
-                }
-                catch (RpcException)
-                {
-                    System.Console.Error.WriteLine($"To run this Grpc.Net.Client example, first start the Examples.GrpcService project.");
-                    throw;
-                }
+                var reply = client.SayHelloAsync(new HelloRequest { Name = "GreeterClient" }).GetAwaiter().GetResult();
+                System.Console.WriteLine($"Message received: {reply.Message}");
             }
-
-            System.Console.WriteLine("Press Enter key to exit.");
-            System.Console.ReadLine();
-
-            return null;
+            catch (RpcException)
+            {
+                System.Console.Error.WriteLine($"To run this Grpc.Net.Client example, first start the Examples.GrpcService project.");
+                throw;
+            }
         }
+
+        System.Console.WriteLine("Press Enter key to exit.");
+        System.Console.ReadLine();
+
+        return null;
     }
 }
