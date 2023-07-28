@@ -18,20 +18,15 @@ jobs:
         os: [ windows-latest ]
         version: [ net7.0 ]
 
-    runs-on: ${{ matrix.os }}
-    
-    outputs:
-      output1: ${{steps.step1.outputs.test}}
-    
+    runs-on: ${{ matrix.os }}    
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
-    - uses: actions/setup-python@v4
 
     - name: Publich AOT Test App
-      id: step1
-      run: .\build\AOTTest.cmd
+      run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false > ./build/myoutput.log
 
-    - name: Read Output
-      run: .\build\openReadAssert.py
+    - name: Read and Assert
+      shell: pwsh
+      run: .\build\mytest.ps1
