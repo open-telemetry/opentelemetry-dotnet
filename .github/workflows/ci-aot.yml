@@ -1,4 +1,4 @@
-name: Test publish AOTCompatibility testApp
+name: Publish AOTCompatibility testApp
 
 on:
   push:
@@ -24,9 +24,10 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - name: Publich AOT Test App
-      run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false > ./build/myoutput.log
+    # powershell does not support AOT compiler yet
+    - name: Publich AOT testApp
+      run: dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj --self-contained -nodeReuse:false /p:UseSharedCompilation=false > ./build/publishAotTestAppOutput.log
 
-    - name: Read and Assert
+    - name: Read publish AOT testApp Output and assert warning count
       shell: pwsh
-      run: .\build\mytest.ps1
+      run: .\build\assert-publish-aot-testApp-warning-count.ps1

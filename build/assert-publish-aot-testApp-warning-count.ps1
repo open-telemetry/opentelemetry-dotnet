@@ -2,7 +2,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 $trimmingWarningCount = 0
 $aotWarningCount = 0
-foreach($line in Get-Content .\build\myoutput.log) 
+foreach($line in Get-Content .\build\publishAotTestAppOutput.log) 
 {
     Write-Host $line
     if ($line -like "*Trim analysis warning IL*") 
