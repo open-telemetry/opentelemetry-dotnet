@@ -1,9 +1,5 @@
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-Write-Host $pwd
-Write-Host "files: "
-Dir -Recurse . | Get-Childitem
-
 $trimmingWarningCount = 0
 $aotWarningCount = 0
 foreach($line in Get-Content .\build\myoutput.log) 

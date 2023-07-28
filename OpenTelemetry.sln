@@ -260,8 +260,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AotCompatibility.TestApp", "test\OpenTelemetry.AotCompatibility.TestApp\OpenTelemetry.AotCompatibility.TestApp.csproj", "{13A59BD9-9475-4991-B74D-7C20F1C63409}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AotCompatibility.Tests", "test\OpenTelemetry.AotCompatibility.Tests\OpenTelemetry.AotCompatibility.Tests.csproj", "{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-sampler", "docs\trace\links-based-sampler\links-sampler.csproj", "{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}"
@@ -595,10 +593,6 @@ Global
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.ActiveCfg = Release|Any CPU
