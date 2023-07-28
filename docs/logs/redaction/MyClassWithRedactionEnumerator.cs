@@ -16,45 +16,44 @@
 
 using System.Collections;
 
-namespace Redaction
+namespace Redaction;
+
+internal class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<string, object>>
 {
-    internal class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<string, object>>
+    private readonly IReadOnlyList<KeyValuePair<string, object>> state;
+
+    public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object>> state)
     {
-        private readonly IReadOnlyList<KeyValuePair<string, object>> state;
+        this.state = state;
+    }
 
-        public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object>> state)
+    public int Count => this.state.Count;
+
+    public KeyValuePair<string, object> this[int index]
+    {
+        get
         {
-            this.state = state;
-        }
-
-        public int Count => this.state.Count;
-
-        public KeyValuePair<string, object> this[int index]
-        {
-            get
+            var item = this.state[index];
+            var entryVal = item.Value;
+            if (entryVal != null && entryVal.ToString() != null && entryVal.ToString().Contains("<secret>"))
             {
-                var item = this.state[index];
-                var entryVal = item.Value;
-                if (entryVal != null && entryVal.ToString() != null && entryVal.ToString().Contains("<secret>"))
-                {
-                    return new KeyValuePair<string, object>(item.Key, "newRedactedValueHere");
-                }
-
-                return item;
+                return new KeyValuePair<string, object>(item.Key, "newRedactedValueHere");
             }
-        }
 
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        {
-            for (var i = 0; i < this.Count; i++)
-            {
-                yield return this[i];
-            }
+            return item;
         }
+    }
 
-        IEnumerator IEnumerable.GetEnumerator()
+    public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+    {
+        for (var i = 0; i < this.Count; i++)
         {
-            return this.GetEnumerator();
+            yield return this[i];
         }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return this.GetEnumerator();
     }
 }
