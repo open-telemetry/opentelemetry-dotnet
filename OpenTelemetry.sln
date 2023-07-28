@@ -289,7 +289,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumenta
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs
 		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs
-		src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs = src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs
 		src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs = src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs
 		src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs = src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs
 	EndProjectSection
