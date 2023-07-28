@@ -82,8 +82,7 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
 
     public object? InstrumentPublished(Instrument instrument)
     {
-        var state = this.meterProviderSdk.InstrumentPublished(instrument, skipShouldListenToCheck: true);
-        return state;
+        return this.meterProviderSdk.InstrumentPublished(instrument, skipShouldListenToCheck: true);
     }
 
     public void MeasurementsCompleted(Instrument instrument, object? userState)
