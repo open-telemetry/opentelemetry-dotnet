@@ -57,7 +57,8 @@ internal sealed class SqlClientInstrumentation : IDisposable
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
            name => new SqlClientDiagnosticListener(name, options),
            listener => listener.Name == SqlClientDiagnosticListenerName,
-           this.isEnabled);
+           this.isEnabled,
+           SqlClientInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
 #endif
     }

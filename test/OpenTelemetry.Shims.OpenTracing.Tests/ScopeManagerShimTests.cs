@@ -28,16 +28,9 @@ public class ScopeManagerShimTests
     private const string TracerName = "defaultactivitysource";
 
     [Fact]
-    public void CtorArgumentValidation()
-    {
-        Assert.Throws<ArgumentNullException>(() => new ScopeManagerShim(null));
-    }
-
-    [Fact]
     public void Active_IsNull()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new ScopeManagerShim(tracer);
+        var shim = new ScopeManagerShim();
 
         Assert.Null(Activity.Current);
         Assert.Null(shim.Active);
@@ -47,7 +40,7 @@ public class ScopeManagerShimTests
     public void Active_IsNotNull()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new ScopeManagerShim(tracer);
+        var shim = new ScopeManagerShim();
         var openTracingSpan = new SpanShim(tracer.StartSpan(SpanName));
 
         var scope = shim.Activate(openTracingSpan, true);
@@ -61,8 +54,7 @@ public class ScopeManagerShimTests
     [Fact]
     public void Activate_SpanMustBeShim()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new ScopeManagerShim(tracer);
+        var shim = new ScopeManagerShim();
 
         Assert.Throws<InvalidCastException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
     }
@@ -71,7 +63,7 @@ public class ScopeManagerShimTests
     public void Activate()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new ScopeManagerShim(tracer);
+        var shim = new ScopeManagerShim();
         var spanShim = new SpanShim(tracer.StartSpan(SpanName));
 
         using (shim.Activate(spanShim, true))
