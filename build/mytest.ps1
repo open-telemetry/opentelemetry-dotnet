@@ -6,7 +6,7 @@ Dir -Recurse . | Get-Childitem
 
 $trimmingWarningCount = 0
 $aotWarningCount = 0
-foreach($line in Get-Content .\myoutput.log) 
+foreach($line in Get-Content .\build\myoutput.log) 
 {
     Write-Host $line
     if ($line -like "*Trim analysis warning IL*") 
