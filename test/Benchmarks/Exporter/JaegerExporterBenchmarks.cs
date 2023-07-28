@@ -25,67 +25,66 @@ using Jaeger::Thrift.Protocol;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 
-namespace Benchmarks.Exporter
+namespace Benchmarks.Exporter;
+
+public class JaegerExporterBenchmarks
 {
-    public class JaegerExporterBenchmarks
+    private Activity activity;
+    private CircularBuffer<Activity> activityBatch;
+
+    [Params(1, 10, 100)]
+    public int NumberOfBatches { get; set; }
+
+    [Params(10000)]
+    public int NumberOfSpans { get; set; }
+
+    [GlobalSetup]
+    public void GlobalSetup()
     {
-        private Activity activity;
-        private CircularBuffer<Activity> activityBatch;
+        this.activity = ActivityHelper.CreateTestActivity();
+        this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
+    }
 
-        [Params(1, 10, 100)]
-        public int NumberOfBatches { get; set; }
+    [Benchmark]
+    public void JaegerExporter_Batching()
+    {
+        using JaegerExporter exporter = new JaegerExporter(
+            new JaegerExporterOptions(),
+            new TCompactProtocol.Factory(),
+            new NoopJaegerClient());
 
-        [Params(10000)]
-        public int NumberOfSpans { get; set; }
-
-        [GlobalSetup]
-        public void GlobalSetup()
+        for (int i = 0; i < this.NumberOfBatches; i++)
         {
-            this.activity = ActivityHelper.CreateTestActivity();
-            this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
+            for (int c = 0; c < this.NumberOfSpans; c++)
+            {
+                this.activityBatch.Add(this.activity);
+            }
+
+            exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
         }
 
-        [Benchmark]
-        public void JaegerExporter_Batching()
+        exporter.Shutdown();
+    }
+
+    private sealed class NoopJaegerClient : IJaegerClient
+    {
+        public bool Connected => true;
+
+        public void Close()
         {
-            using JaegerExporter exporter = new JaegerExporter(
-                new JaegerExporterOptions(),
-                new TCompactProtocol.Factory(),
-                new NoopJaegerClient());
-
-            for (int i = 0; i < this.NumberOfBatches; i++)
-            {
-                for (int c = 0; c < this.NumberOfSpans; c++)
-                {
-                    this.activityBatch.Add(this.activity);
-                }
-
-                exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
-            }
-
-            exporter.Shutdown();
         }
 
-        private sealed class NoopJaegerClient : IJaegerClient
+        public void Connect()
         {
-            public bool Connected => true;
+        }
 
-            public void Close()
-            {
-            }
+        public void Dispose()
+        {
+        }
 
-            public void Connect()
-            {
-            }
-
-            public void Dispose()
-            {
-            }
-
-            public int Send(byte[] buffer, int offset, int count)
-            {
-                return count;
-            }
+        public int Send(byte[] buffer, int offset, int count)
+        {
+            return count;
         }
     }
 }

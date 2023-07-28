@@ -311,7 +311,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\Shims\IsExternalInit.cs = src\Shared\Shims\IsExternalInit.cs
 		src\Shared\Shims\NullableAttributes.cs = src\Shared\Shims\NullableAttributes.cs
-		src\Shared\Shims\UnconditionalSuppressMessageAttribute.cs = src\Shared\Shims\UnconditionalSuppressMessageAttribute.cs
 	EndProjectSection
 EndProject
 Global
