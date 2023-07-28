@@ -18,74 +18,73 @@ using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.AotCompatibility.Tests
+namespace OpenTelemetry.AotCompatibility.Tests;
+
+public class AotCompatibilityTests
 {
-    public class AotCompatibilityTests
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public AotCompatibilityTests(ITestOutputHelper testOutputHelper)
     {
-        private readonly ITestOutputHelper testOutputHelper;
+        this.testOutputHelper = testOutputHelper;
+    }
 
-        public AotCompatibilityTests(ITestOutputHelper testOutputHelper)
+    /// <summary>
+    /// This test ensures that the intended APIs of the OpenTelemetry.AotCompatibility.TestApp libraries are
+    /// trimming and NativeAOT compatible.
+    ///
+    /// This test follows the instructions in https://learn.microsoft.com/dotnet/core/deploying/trimming/prepare-libraries-for-trimming#show-all-warnings-with-sample-application
+    ///
+    /// If this test fails, it is due to adding trimming and/or AOT incompatible changes
+    /// to code that is supposed to be compatible.
+    ///
+    /// To diagnose the problem, inspect the test output which will contain the trimming and AOT errors. For example:
+    ///
+    /// error IL2091: 'T' generic argument does not satisfy 'DynamicallyAccessedMemberTypes.PublicConstructors'.
+    /// </summary>
+    [Fact]
+    public void EnsureAotCompatibility()
+    {
+        string[] paths = { @"..", "..", "..", "..", "OpenTelemetry.AotCompatibility.TestApp" };
+        string testAppPath = Path.Combine(paths);
+        string testAppProject = "OpenTelemetry.AotCompatibility.TestApp.csproj";
+
+        // ensure we run a clean publish every time
+        DirectoryInfo testObjDir = new DirectoryInfo(Path.Combine(testAppPath, "obj"));
+        if (testObjDir.Exists)
         {
-            this.testOutputHelper = testOutputHelper;
+            testObjDir.Delete(recursive: true);
         }
 
-        /// <summary>
-        /// This test ensures that the intended APIs of the OpenTelemetry.AotCompatibility.TestApp libraries are
-        /// trimming and NativeAOT compatible.
-        ///
-        /// This test follows the instructions in https://learn.microsoft.com/dotnet/core/deploying/trimming/prepare-libraries-for-trimming#show-all-warnings-with-sample-application
-        ///
-        /// If this test fails, it is due to adding trimming and/or AOT incompatible changes
-        /// to code that is supposed to be compatible.
-        ///
-        /// To diagnose the problem, inspect the test output which will contain the trimming and AOT errors. For example:
-        ///
-        /// error IL2091: 'T' generic argument does not satisfy 'DynamicallyAccessedMemberTypes.PublicConstructors'.
-        /// </summary>
-        [Fact]
-        public void EnsureAotCompatibility()
+        var process = new Process
         {
-            string[] paths = { @"..", "..", "..", "..", "OpenTelemetry.AotCompatibility.TestApp" };
-            string testAppPath = Path.Combine(paths);
-            string testAppProject = "OpenTelemetry.AotCompatibility.TestApp.csproj";
-
-            // ensure we run a clean publish every time
-            DirectoryInfo testObjDir = new DirectoryInfo(Path.Combine(testAppPath, "obj"));
-            if (testObjDir.Exists)
+            // set '-nodereuse:false /p:UseSharedCompilation=false' so the MSBuild and Roslyn server processes don't hang around, which may hang the test in CI
+            StartInfo = new ProcessStartInfo("dotnet", $"publish {testAppProject} --self-contained -nodereuse:false /p:UseSharedCompilation=false")
             {
-                testObjDir.Delete(recursive: true);
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = testAppPath,
+            },
+        };
+
+        var expectedOutput = new System.Text.StringBuilder();
+        process.OutputDataReceived += (sender, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                this.testOutputHelper.WriteLine(e.Data);
+                expectedOutput.AppendLine(e.Data);
             }
+        };
 
-            var process = new Process
-            {
-                // set '-nodereuse:false /p:UseSharedCompilation=false' so the MSBuild and Roslyn server processes don't hang around, which may hang the test in CI
-                StartInfo = new ProcessStartInfo("dotnet", $"publish {testAppProject} --self-contained -nodereuse:false /p:UseSharedCompilation=false")
-                {
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = testAppPath,
-                },
-            };
+        process.Start();
+        process.BeginOutputReadLine();
 
-            var expectedOutput = new System.Text.StringBuilder();
-            process.OutputDataReceived += (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    this.testOutputHelper.WriteLine(e.Data);
-                    expectedOutput.AppendLine(e.Data);
-                }
-            };
+        Assert.True(process.WaitForExit(milliseconds: 240_000), "dotnet publish command timed out after 240 seconds.");
+        Assert.True(process.ExitCode == 0, "Publishing the AotCompatibility app failed. See test output for more details.");
 
-            process.Start();
-            process.BeginOutputReadLine();
-
-            Assert.True(process.WaitForExit(milliseconds: 240_000), "dotnet publish command timed out after 240 seconds.");
-            Assert.True(process.ExitCode == 0, "Publishing the AotCompatibility app failed. See test output for more details.");
-
-            var warnings = expectedOutput.ToString().Split('\n', '\r').Where(line => line.Contains("warning IL"));
-            Assert.Equal(30, warnings.Count());
-        }
+        var warnings = expectedOutput.ToString().Split('\n', '\r').Where(line => line.Contains("warning IL"));
+        Assert.Equal(30, warnings.Count());
     }
 }
