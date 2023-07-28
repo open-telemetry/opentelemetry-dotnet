@@ -32,7 +32,7 @@ public class TracerShim : global::OpenTracing.ITracer
 
         this.tracer = tracer;
         this.propagator = textFormat;
-        this.ScopeManager = new ScopeManagerShim(this.tracer);
+        this.ScopeManager = new ScopeManagerShim();
     }
 
     /// <inheritdoc/>
