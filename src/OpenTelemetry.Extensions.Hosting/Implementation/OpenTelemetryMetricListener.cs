@@ -102,7 +102,7 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
 
     private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
     {
-        var meterProvider = this.meterProviderSdk!;
+        var meterProvider = this.meterProviderSdk;
 
         if (state is List<Metric>)
         {
@@ -120,7 +120,7 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
 
     private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
     {
-        var meterProvider = this.meterProviderSdk!;
+        var meterProvider = this.meterProviderSdk;
 
         if (state is List<Metric>)
         {
