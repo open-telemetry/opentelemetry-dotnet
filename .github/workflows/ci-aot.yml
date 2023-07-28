@@ -18,7 +18,7 @@ jobs:
         os: [ windows-latest ]
         version: [ net6.0, net7.0 ]
 
-    runs-on: ${{ matrix.os }}    
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
       with:
