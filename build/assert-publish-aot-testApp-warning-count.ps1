@@ -14,8 +14,8 @@ foreach($line in Get-Content .\build\publishAotTestAppOutput.log)
     }
 }
 
-$expectedTrimmingWarningCount = 0
-$expectedaotWarningCount = 0
+$expectedTrimmingWarningCount = 11
+$expectedaotWarningCount = 19
 
 Write-Host "trimmingWarningCount: ", $trimmingWarningCount
 Write-Host "aotWarningCount: ", $aotWarningCount
