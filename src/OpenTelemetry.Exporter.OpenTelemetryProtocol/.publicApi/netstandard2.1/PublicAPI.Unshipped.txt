@@ -1,3 +1,7 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.ClientCertificateFile.get -> string
+OpenTelemetry.Exporter.OtlpExporterOptions.ClientCertificateFile.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.ClientKeyFile.get -> string
+OpenTelemetry.Exporter.OtlpExporterOptions.ClientKeyFile.set -> void
 OpenTelemetry.Logs.OtlpLogExporterHelperExtensions
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions

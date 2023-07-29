@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -39,6 +40,8 @@ public class OtlpExporterOptions
     internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
     internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
     internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
+    internal const string ClientKeyFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY";
+    internal const string ClientCertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE";
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -84,6 +87,16 @@ public class OtlpExporterOptions
             this.TimeoutMilliseconds = timeout;
         }
 
+        if (configuration.TryGetStringValue(ClientCertificateFileEnvVarName, out var clientCertificateFile))
+        {
+            this.ClientCertificateFile = clientCertificateFile;
+        }
+
+        if (configuration.TryGetStringValue(ClientKeyFileEnvVarName, out var clientKeyFile))
+        {
+            this.ClientKeyFile = clientKeyFile;
+        }
+
         if (configuration.TryGetValue<OtlpExportProtocol>(
             ProtocolEnvVarName,
             OtlpExportProtocolParser.TryParse,
@@ -94,7 +107,7 @@ public class OtlpExporterOptions
 
         this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
         {
-            return new HttpClient
+            return new HttpClient(this.GetDefaultHttpMessageHandler(), disposeHandler: true)
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
@@ -158,6 +171,16 @@ public class OtlpExporterOptions
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
     /// <summary>
+    /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
+    /// </summary>
+    public string ClientKeyFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the certificate/chain trust for clients private key to use in mTLS communication in PEM format.
+    /// </summary>
+    public string ClientCertificateFile { get; set; }
+
+    /// <summary>
     /// Gets or sets the factory function called to create the <see
     /// cref="HttpClient"/> instance that will be used at runtime to
     /// transmit telemetry over HTTP. The returned instance will be reused
@@ -195,6 +218,17 @@ public class OtlpExporterOptions
     /// </summary>
     internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
 
+    internal HttpClientHandler GetDefaultHttpMessageHandler()
+    {
+        var handler = new HttpClientHandler();
+        if (this.ClientCertificateFile != null)
+        {
+            handler.ClientCertificates.Add(LoadCertificateFromPemFiles(this.ClientCertificateFile, this.ClientKeyFile));
+        }
+
+        return handler;
+    }
+
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
         services.RegisterOptionsFactory(
@@ -215,5 +249,18 @@ public class OtlpExporterOptions
         {
             return UserAgentProduct;
         }
+    }
+
+    private static X509Certificate2 LoadCertificateFromPemFiles(string certFile, string keyFile)
+    {
+#if NET5_0_OR_GREATER
+        // loading ephemeral pem files have problem on Windows
+        // https://github.com/dotnet/runtime/issues/23749
+        using var pemCert = X509Certificate2.CreateFromPemFile(certFile, keyFile);
+        return new X509Certificate2(pemCert.Export(X509ContentType.Pkcs12));
+#else
+        // TODO this is pretty complex to implement in old .NET
+        throw new PlatformNotSupportedException();
+#endif
     }
 }

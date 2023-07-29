@@ -43,12 +43,28 @@ internal static class OtlpExporterOptionsExtensions
         }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        return GrpcChannel.ForAddress(options.Endpoint);
+        var channelOptions = new GrpcChannelOptions();
+        if (options.ClientCertificateFile != null)
+        {
+            var clientCertChain = File.ReadAllText(options.ClientCertificateFile);
+            var clientPrivateKey = options.ClientKeyFile == null ? string.Empty : File.ReadAllText(options.ClientKeyFile);
+
+            channelOptions.Credentials = new SslCredentials(
+                rootCertificates: null,
+                keyCertificatePair: new KeyCertificatePair(clientCertChain, clientPrivateKey));
+        }
+
+        return GrpcChannel.ForAddress(options.Endpoint, channelOptions);
 #else
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
         {
-            channelCredentials = new SslCredentials();
+            var clientCertChain = File.ReadAllText(options.ClientCertificateFile);
+            var clientPrivateKey = options.ClientKeyFile == null ? string.Empty : File.ReadAllText(options.ClientKeyFile);
+
+            channelCredentials = new SslCredentials(
+                rootCertificates: null,
+                keyCertificatePair: new KeyCertificatePair(clientCertChain, clientPrivateKey));
         }
         else
         {

@@ -63,6 +63,8 @@ public class OtlpExporterOptionsTests : IDisposable
         Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "A=2,B=3");
         Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "2000");
         Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "http/protobuf");
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.ClientCertificateFileEnvVarName, "/path/to/my/certificate.pem");
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.ClientKeyFileEnvVarName, "/path/to/my/key.pem");
 
         var options = new OtlpExporterOptions();
 
@@ -70,6 +72,8 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal("A=2,B=3", options.Headers);
         Assert.Equal(2000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        Assert.Equal("/path/to/my/certificate.pem", options.ClientCertificateFile);
+        Assert.Equal("/path/to/my/key.pem", options.ClientKeyFile);
     }
 
     [Fact]
@@ -81,6 +85,8 @@ public class OtlpExporterOptionsTests : IDisposable
             [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
             [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
             [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
+            [OtlpExporterOptions.ClientCertificateFileEnvVarName] = "/path/to/my/certificate.pem",
+            [OtlpExporterOptions.ClientKeyFileEnvVarName] = "/path/to/my/key.pem",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -93,6 +99,8 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal("A=2,B=3", options.Headers);
         Assert.Equal(2000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        Assert.Equal("/path/to/my/certificate.pem", options.ClientCertificateFile);
+        Assert.Equal("/path/to/my/key.pem", options.ClientKeyFile);
     }
 
     [Fact]
@@ -158,6 +166,58 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal("OTEL_EXPORTER_OTLP_HEADERS", OtlpExporterOptions.HeadersEnvVarName);
         Assert.Equal("OTEL_EXPORTER_OTLP_TIMEOUT", OtlpExporterOptions.TimeoutEnvVarName);
         Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", OtlpExporterOptions.ProtocolEnvVarName);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_NoCertificate_DefaultHttpClientDoesnotHaveCertificate()
+    {
+        var values = new Dictionary<string, string>()
+        {
+            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+            [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
+            [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
+            [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var options = new OtlpExporterOptions(configuration, new());
+        using var defaultHandler = options.GetDefaultHttpMessageHandler();
+
+        Assert.Empty(defaultHandler.ClientCertificates);
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_WithCertificate_PassesCertificateToDefaultHttpClient()
+    {
+#if NET5_0_OR_GREATER
+        var certPath = Path.Combine(AppContext.BaseDirectory, "Certificates", "4096b-rsa-example-cert.pem");
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "Certificates", "4096b-rsa-example-keypair.pem");
+
+        var values = new Dictionary<string, string>()
+        {
+            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+            [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
+            [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
+            [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
+            [OtlpExporterOptions.ClientCertificateFileEnvVarName] = certPath,
+            [OtlpExporterOptions.ClientKeyFileEnvVarName] = pKeyPath,
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var options = new OtlpExporterOptions(configuration, new());
+        using var defaultHandler = options.GetDefaultHttpMessageHandler();
+
+        Assert.Single(defaultHandler.ClientCertificates);
+
+        // compare thumbprint
+        Assert.Equal("2013BADFCD6BDD058E39B98D6B1177E870603B93", defaultHandler.ClientCertificates[0].GetCertHashString());
+#endif
     }
 
     private static void ClearEnvVars()
