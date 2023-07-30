@@ -23,6 +23,7 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -223,7 +224,7 @@ public class OtlpExporterOptions
         var handler = new HttpClientHandler();
         if (this.ClientCertificateFile != null)
         {
-            handler.ClientCertificates.Add(LoadCertificateFromPemFiles(this.ClientCertificateFile, this.ClientKeyFile));
+            handler.ClientCertificates.Add(CertificateHelper.LoadCertificateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile));
         }
 
         return handler;
@@ -249,18 +250,5 @@ public class OtlpExporterOptions
         {
             return UserAgentProduct;
         }
-    }
-
-    private static X509Certificate2 LoadCertificateFromPemFiles(string certFile, string keyFile)
-    {
-#if NET5_0_OR_GREATER
-        // loading ephemeral pem files have problem on Windows
-        // https://github.com/dotnet/runtime/issues/23749
-        using var pemCert = X509Certificate2.CreateFromPemFile(certFile, keyFile);
-        return new X509Certificate2(pemCert.Export(X509ContentType.Pkcs12));
-#else
-        // TODO this is pretty complex to implement in old .NET
-        throw new PlatformNotSupportedException();
-#endif
     }
 }

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -189,12 +190,15 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Empty(defaultHandler.ClientCertificates);
     }
 
-    [Fact]
-    public void OtlpExporterOptions_WithCertificate_PassesCertificateToDefaultHttpClient()
-    {
+    [Theory]
+    [InlineData("4096b-rsa-example-cert.pem", "4096b-rsa-example-keypair.pem", "rsa")]
 #if NET5_0_OR_GREATER
-        var certPath = Path.Combine(AppContext.BaseDirectory, "Certificates", "4096b-rsa-example-cert.pem");
-        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "Certificates", "4096b-rsa-example-keypair.pem");
+    [InlineData("prime256v1-ecdsa-cert.pem", "prime256v1-ecdsa-keypair.pem", "ecdsa")]
+#endif
+    public void OtlpExporterOptions_WithCertificate_PassesCertificateToDefaultHttpClient(string certFileName, string keyFileName, string alg)
+    {
+        var certPath = Path.Combine(AppContext.BaseDirectory, "Certificates", certFileName);
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "Certificates", keyFileName);
 
         var values = new Dictionary<string, string>()
         {
@@ -215,9 +219,36 @@ public class OtlpExporterOptionsTests : IDisposable
 
         Assert.Single(defaultHandler.ClientCertificates);
 
+        switch (alg)
+        {
+            case "rsa":
+                AssertRsaClientCertificate(defaultHandler.ClientCertificates[0]);
+                break;
+            case "ecdsa":
+                AssertECCCertificate(defaultHandler.ClientCertificates[0]);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(alg));
+        }
+    }
+
+    private static void AssertRsaClientCertificate(X509Certificate certificate)
+    {
         // compare thumbprint
-        Assert.Equal("2013BADFCD6BDD058E39B98D6B1177E870603B93", defaultHandler.ClientCertificates[0].GetCertHashString());
+        var cert = (X509Certificate2)certificate;
+        Assert.Equal("2013BADFCD6BDD058E39B98D6B1177E870603B93", cert.GetCertHashString());
+#if NET5_0_OR_GREATER
+        var rsa = cert.GetRSAPrivateKey();
+#else
+        var rsa = (RSA)cert.PrivateKey;
 #endif
+        Assert.Equal(4096, rsa.KeySize);
+    }
+
+    private static void AssertECCCertificate(X509Certificate certificate)
+    {
+        var cert = (X509Certificate2)certificate;
+        Assert.Equal("A94CD0470C3733C084BC43E511EF0AC8DE7898A8", cert.Thumbprint);
     }
 
     private static void ClearEnvVars()
