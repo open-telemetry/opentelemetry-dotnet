@@ -21,40 +21,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable SA1402 // File may only contain a single type
-#pragma warning disable SA1403 // File may only contain a single namespace
-#pragma warning disable SA1649 // File name should match first type name
-
-#if !NET6_0_OR_GREATER
-namespace System.Runtime.CompilerServices
-{
-    /// <summary>Allows capturing of the expressions passed to a method.</summary>
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    internal sealed class CallerArgumentExpressionAttribute : Attribute
-    {
-        public CallerArgumentExpressionAttribute(string parameterName)
-        {
-            this.ParameterName = parameterName;
-        }
-
-        public string ParameterName { get; }
-    }
-}
-#endif
-
-#if !NET6_0_OR_GREATER && !NETSTANDARD2_1_OR_GREATER
-namespace System.Diagnostics.CodeAnalysis
-{
-    /// <summary>Specifies that an output is not <see langword="null"/> even if
-    /// the corresponding type allows it. Specifies that an input argument was
-    /// not <see langword="null"/> when the call returns.</summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.ReturnValue, Inherited = false)]
-    internal sealed class NotNullAttribute : Attribute
-    {
-    }
-}
-#endif
-
 namespace OpenTelemetry.Internal;
 
 /// <summary>
