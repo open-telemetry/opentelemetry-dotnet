@@ -1,3 +1,5 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.CertificateFile.get -> string
+OpenTelemetry.Exporter.OtlpExporterOptions.CertificateFile.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.ClientCertificateFile.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.ClientCertificateFile.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.ClientKeyFile.get -> string

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 using Xunit;
@@ -189,6 +191,33 @@ public class OtlpExporterOptionsTests : IDisposable
 
         Assert.Empty(defaultHandler.ClientCertificates);
     }
+
+#if NET6_0_OR_GREATER
+    [Fact]
+    public async Task OtlpExporterOptions_ServerTrustCert()
+    {
+        var certPath = "D:\\workplace\\oss\\rsa\\ca-cert.pem";
+
+        var values = new Dictionary<string, string>()
+        {
+            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+            [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
+            [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
+            [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
+            [OtlpExporterOptions.CertificateFileEnvVarName] = certPath,
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var options = new OtlpExporterOptions(configuration, new());
+        using var defaultHandler = options.GetDefaultHttpMessageHandler();
+        using var httpC = new HttpClient(defaultHandler);
+
+        var x = await httpC.GetStringAsync("https://localhost:5005/");
+    }
+#endif
 
     [Theory]
     [InlineData("4096b-rsa-example-cert.pem", "4096b-rsa-example-keypair.pem", "rsa")]

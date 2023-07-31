@@ -43,6 +43,7 @@ public class OtlpExporterOptions
     internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
     internal const string ClientKeyFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_KEY";
     internal const string ClientCertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE";
+    internal const string CertificateFileEnvVarName = "OTEL_EXPORTER_OTLP_CERTIFICATE";
 
     internal static readonly KeyValuePair<string, string>[] StandardHeaders = new KeyValuePair<string, string>[]
     {
@@ -96,6 +97,11 @@ public class OtlpExporterOptions
         if (configuration.TryGetStringValue(ClientKeyFileEnvVarName, out var clientKeyFile))
         {
             this.ClientKeyFile = clientKeyFile;
+        }
+
+        if (configuration.TryGetStringValue(CertificateFileEnvVarName, out var certificateFile))
+        {
+            this.CertificateFile = certificateFile;
         }
 
         if (configuration.TryGetValue<OtlpExportProtocol>(
@@ -171,6 +177,18 @@ public class OtlpExporterOptions
     /// </summary>
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
+#pragma warning disable CS1587 // XML comment is not placed on a valid language element
+    /// <summary>
+    /// Gets or sets the trusted certificate to use when verifying a server's TLS credentials.
+    /// </summary>
+#if !NET6_0_OR_GREATER
+    /// <remarks>
+    /// This option does not effect  <see cref="OtlpExportProtocol.HttpProtobuf"/> protocol.
+    /// </remarks>
+#endif
+    public string CertificateFile { get; set; }
+#pragma warning restore CS1587 // XML comment is not placed on a valid language element
+
     /// <summary>
     /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
     /// </summary>
@@ -219,23 +237,38 @@ public class OtlpExporterOptions
     /// </summary>
     internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
 
-    internal HttpClientHandler GetDefaultHttpMessageHandler()
-    {
-        var handler = new HttpClientHandler();
-        if (this.ClientCertificateFile != null)
-        {
-            handler.ClientCertificates.Add(CertificateHelper.LoadCertificateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile));
-        }
-
-        return handler;
-    }
-
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
         services.RegisterOptionsFactory(
             (sp, configuration, name) => new OtlpExporterOptions(
                 configuration,
                 sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+    }
+
+    internal HttpClientHandler GetDefaultHttpMessageHandler()
+    {
+        var handler = new HttpClientHandler();
+
+#if NET6_0_OR_GREATER
+        if (this.CertificateFile != null)
+        {
+            var publicCertificate = CertificateHelper.LoadCertificateFromPemFile(this.CertificateFile, null);
+
+            handler.ServerCertificateCustomValidationCallback = (message, serverCert, chain, policyErrs) =>
+            {
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.CustomTrustStore.Add(publicCertificate);
+                var buildResult = chain.Build(serverCert);
+                return buildResult;
+            };
+        }
+#endif
+        if (this.ClientCertificateFile != null)
+        {
+            handler.ClientCertificates.Add(CertificateHelper.LoadCertificateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile));
+        }
+
+        return handler;
     }
 
     private static string GetUserAgentString()

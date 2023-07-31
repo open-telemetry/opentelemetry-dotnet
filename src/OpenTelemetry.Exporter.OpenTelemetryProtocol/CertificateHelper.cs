@@ -33,9 +33,14 @@ internal static class CertificateHelper
     public static X509Certificate2 LoadCertificateFromPemFile(string certificatePath, string privateKeyPath)
     {
 #if NET5_0_OR_GREATER
+        // API here is a bit tricky, CreateFromPemFile requires private key,
+        // while CreateFromPem can simply load the public cert
+        using var pemCert = privateKeyPath is null
+            ? X509Certificate2.CreateFromPem(File.ReadAllText(certificatePath))
+            : X509Certificate2.CreateFromPemFile(certificatePath, privateKeyPath);
+
         // loading ephemeral pem files have problem on Windows
         // https://github.com/dotnet/runtime/issues/23749
-        using var pemCert = X509Certificate2.CreateFromPemFile(certificatePath, privateKeyPath);
         return new X509Certificate2(pemCert.Export(X509ContentType.Pkcs12));
 #else
         if (privateKeyPath == null)

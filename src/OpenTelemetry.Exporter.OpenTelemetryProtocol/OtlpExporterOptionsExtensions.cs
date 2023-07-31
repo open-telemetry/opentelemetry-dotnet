@@ -42,16 +42,21 @@ internal static class OtlpExporterOptionsExtensions
             throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
         }
 
+        var rootCertificate = options.CertificateFile is null ? null : File.ReadAllText(options.CertificateFile);
+        KeyCertificatePair clientCertificatePair = options.ClientCertificateFile switch
+        {
+            null => null,
+            string f => new KeyCertificatePair(File.ReadAllText(f), options.ClientKeyFile == null ? null : File.ReadAllText(options.ClientKeyFile)),
+        };
+
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
         var channelOptions = new GrpcChannelOptions();
-        if (options.ClientCertificateFile != null)
-        {
-            var clientCertChain = File.ReadAllText(options.ClientCertificateFile);
-            var clientPrivateKey = options.ClientKeyFile == null ? string.Empty : File.ReadAllText(options.ClientKeyFile);
 
+        if (clientCertificatePair != null || rootCertificate != null)
+        {
             channelOptions.Credentials = new SslCredentials(
-                rootCertificates: null,
-                keyCertificatePair: new KeyCertificatePair(clientCertChain, clientPrivateKey));
+                rootCertificates: rootCertificate,
+                keyCertificatePair: clientCertificatePair);
         }
 
         return GrpcChannel.ForAddress(options.Endpoint, channelOptions);
@@ -59,12 +64,9 @@ internal static class OtlpExporterOptionsExtensions
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
         {
-            var clientCertChain = File.ReadAllText(options.ClientCertificateFile);
-            var clientPrivateKey = options.ClientKeyFile == null ? string.Empty : File.ReadAllText(options.ClientKeyFile);
-
             channelCredentials = new SslCredentials(
-                rootCertificates: null,
-                keyCertificatePair: new KeyCertificatePair(clientCertChain, clientPrivateKey));
+                rootCertificates: rootCertificate,
+                keyCertificatePair: clientCertificatePair);
         }
         else
         {
