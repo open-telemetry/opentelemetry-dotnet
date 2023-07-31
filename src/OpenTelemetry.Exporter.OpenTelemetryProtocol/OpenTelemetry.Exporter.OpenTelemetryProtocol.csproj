@@ -19,8 +19,6 @@
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Condition="'$(TargetFramework)' != 'net6.0'" />
-    <PackageReference Include="BouncyCastle.Cryptography"
-                      Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net462'" />
   </ItemGroup>
 
   <ItemGroup>

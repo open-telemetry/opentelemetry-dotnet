@@ -69,6 +69,7 @@ public class OtlpExporterOptionsTests : IDisposable
         Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "http/protobuf");
         Environment.SetEnvironmentVariable(OtlpExporterOptions.ClientCertificateFileEnvVarName, "/path/to/my/certificate.pem");
         Environment.SetEnvironmentVariable(OtlpExporterOptions.ClientKeyFileEnvVarName, "/path/to/my/key.pem");
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.CertificateFileEnvVarName, "/path/to/my/ca.pem");
 
         var options = new OtlpExporterOptions();
 
@@ -78,6 +79,7 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.Equal("/path/to/my/certificate.pem", options.ClientCertificateFile);
         Assert.Equal("/path/to/my/key.pem", options.ClientKeyFile);
+        Assert.Equal("/path/to/my/ca.pem", options.CertificateFile);
     }
 
     [Fact]
@@ -91,6 +93,7 @@ public class OtlpExporterOptionsTests : IDisposable
             [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
             [OtlpExporterOptions.ClientCertificateFileEnvVarName] = "/path/to/my/certificate.pem",
             [OtlpExporterOptions.ClientKeyFileEnvVarName] = "/path/to/my/key.pem",
+            [OtlpExporterOptions.CertificateFileEnvVarName] = "/path/to/my/ca.pem",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -105,6 +108,7 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.Equal("/path/to/my/certificate.pem", options.ClientCertificateFile);
         Assert.Equal("/path/to/my/key.pem", options.ClientKeyFile);
+        Assert.Equal("/path/to/my/ca.pem", options.CertificateFile);
     }
 
     [Fact]
@@ -218,8 +222,12 @@ public class OtlpExporterOptionsTests : IDisposable
         var options = new OtlpExporterOptions(configuration, new());
         using var defaultHandler = options.GetDefaultHttpMessageHandler();
 
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreWrongUsage;
+
         var serverCertValidationResult = defaultHandler.ServerCertificateCustomValidationCallback.Invoke(
-            new HttpRequestMessage(), serverCert, new X509Chain(), SslPolicyErrors.RemoteCertificateChainErrors);
+            new HttpRequestMessage(), serverCert, chain, SslPolicyErrors.RemoteCertificateChainErrors);
 
         Assert.True(serverCertValidationResult);
     }
@@ -292,5 +300,8 @@ public class OtlpExporterOptionsTests : IDisposable
         Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, null);
         Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, null);
         Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, null);
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.CertificateFileEnvVarName, null);
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.ClientCertificateFileEnvVarName, null);
+        Environment.SetEnvironmentVariable(OtlpExporterOptions.ClientKeyFileEnvVarName, null);
     }
 }

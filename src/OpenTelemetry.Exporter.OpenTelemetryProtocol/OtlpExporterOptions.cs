@@ -23,7 +23,6 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -177,26 +176,46 @@ public class OtlpExporterOptions
     /// </summary>
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
-#pragma warning disable CS1587 // XML comment is not placed on a valid language element
+#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets or sets the trusted certificate to use when verifying a server's TLS credentials.
     /// </summary>
-#if !NET6_0_OR_GREATER
+#else
+    /// <summary>
+    /// Gets or sets the trusted certificate to use when verifying a server's TLS credentials.
+    /// </summary>
     /// <remarks>
-    /// This option does not effect  <see cref="OtlpExportProtocol.HttpProtobuf"/> protocol.
+    /// This option does not affect <see cref="OtlpExportProtocol.HttpProtobuf"/> protocol.
     /// </remarks>
 #endif
     public string CertificateFile { get; set; }
-#pragma warning restore CS1587 // XML comment is not placed on a valid language element
 
+#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
     /// </summary>
+#else
+    /// <summary>
+    /// Gets or sets the path to the private key to use in mTLS communication in PEM format.
+    /// </summary>
+    /// <remarks>
+    /// This option does not affect <see cref="OtlpExportProtocol.HttpProtobuf"/> protocol.
+    /// </remarks>
+#endif
     public string ClientKeyFile { get; set; }
 
+#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets or sets the path to the certificate/chain trust for clients private key to use in mTLS communication in PEM format.
     /// </summary>
+#else
+    /// <summary>
+    /// Gets or sets the path to the certificate/chain trust for clients private key to use in mTLS communication in PEM format.
+    /// </summary>
+    /// <remarks>
+    /// This option does not affect <see cref="OtlpExportProtocol.HttpProtobuf"/> protocol.
+    /// </remarks>
+#endif
     public string ClientCertificateFile { get; set; }
 
     /// <summary>
@@ -252,26 +271,39 @@ public class OtlpExporterOptions
 #if NET6_0_OR_GREATER
         if (this.CertificateFile != null)
         {
-            var publicCertificate = CertificateHelper.LoadCertificateFromPemFile(this.CertificateFile, null);
+            var trustedCA = LoadCertificateFromPemFile(this.CertificateFile, null);
 
             handler.ServerCertificateCustomValidationCallback = (message, serverCert, chain, policyErrs) =>
             {
                 chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreWrongUsage;
-                chain.ChainPolicy.CustomTrustStore.Add(publicCertificate);
+                chain.ChainPolicy.CustomTrustStore.Add(trustedCA);
                 var buildResult = chain.Build(serverCert);
                 return buildResult;
             };
         }
-#endif
+
         if (this.ClientCertificateFile != null)
         {
-            handler.ClientCertificates.Add(CertificateHelper.LoadCertificateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile));
+            handler.ClientCertificates.Add(LoadCertificateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile));
         }
-
+#endif
         return handler;
     }
+
+#if NET6_0_OR_GREATER
+    private static X509Certificate2 LoadCertificateFromPemFile(string certificatePath, string privateKeyPath)
+    {
+        // API here is a bit tricky, apparently CreateFromPemFile requires private key,
+        // while CreateFromPem can simply load the public cert
+        using var pemCert = privateKeyPath is null
+            ? X509Certificate2.CreateFromPem(File.ReadAllText(certificatePath))
+            : X509Certificate2.CreateFromPemFile(certificatePath, privateKeyPath);
+
+        // loading ephemeral pem files have problem on Windows
+        // https://github.com/dotnet/runtime/issues/23749
+        return new X509Certificate2(pemCert.Export(X509ContentType.Pkcs12));
+    }
+#endif
 
     private static string GetUserAgentString()
     {
