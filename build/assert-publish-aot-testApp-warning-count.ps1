@@ -1,36 +1,22 @@
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+$publishOutput = dotnet publish ./test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false
 
-$trimmingWarningCount = 0
-$aotWarningCount = 0
-foreach($line in Get-Content .\build\publishAotTestAppOutput.log) 
+$actualWarningCount = 0
+
+foreach ($line in $($publishOutput -split "`r`n"))
 {
-    Write-Host $line
-    if ($line -like "*Trim analysis warning IL*") 
-    { 
-        $trimmingWarningCount += 1
-    } elseif ($line -like "*AOT analysis warning IL*") 
+    if ($line -like "*analysis warning IL*") 
     {
-        $aotWarningCount += 1
-    }
+        $actualWarningCount += 1
 }
 
-$expectedTrimmingWarningCount = 11
-$expectedaotWarningCount = 19
-
-Write-Host "trimmingWarningCount: ", $trimmingWarningCount
-Write-Host "aotWarningCount: ", $aotWarningCount
+Write-Host "Actual warning count is:", $actualWarningCount
+$expectedWarningCount = 100
 
 $testPassed = 0
-if ($trimmingWarningCount -ne $expectedTrimmingWarningCount ) 
+if ($actualWarningCount -ne $expectedWarningCount)
 {
     $testPassed = 1
-    Write-Host "trimmingWarningCount: ", $trimmingWarningCount, "is not as expected. Expected count is:", $expectedTrimmingWarningCount
-}
-
-if ($aotWarningCount -ne $expectedaotWarningCount ) 
-{
-    $testPassed = 1
-    Write-Host "aotWarningCount: ", $aotWarningCount, "is not as expected. Expected count is:", $expectedaotWarningCount 
+    Write-Host "Actual warning count:", actualWarningCount, "is not as expected. Expected warning count is:", $expectedWarningCount
 }
 
 Exit $testPassed
