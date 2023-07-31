@@ -10,7 +10,7 @@ foreach ($line in $($publishOutput -split "`r`n"))
 }
 
 Write-Host "Actual warning count is:", $actualWarningCount
-$expectedWarningCount = 100
+$expectedWarningCount = 28
 
 $testPassed = 0
 if ($actualWarningCount -ne $expectedWarningCount)
