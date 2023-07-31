@@ -85,6 +85,6 @@ public class AotCompatibilityTests
         Assert.True(process.ExitCode == 0, "Publishing the AotCompatibility app failed. See test output for more details.");
 
         var warnings = expectedOutput.ToString().Split('\n', '\r').Where(line => line.Contains("warning IL"));
-        Assert.Equal(30, warnings.Count());
+        Assert.Equal(28, warnings.Count());
     }
 }
