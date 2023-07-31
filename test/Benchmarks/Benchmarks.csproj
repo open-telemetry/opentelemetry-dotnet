@@ -29,7 +29,6 @@
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs" Link="Includes\DiagnosticSourceListener.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs" Link="Includes\DiagnosticSourceSubscriber.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs" Link="Includes\ListenerHandler.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs" Link="Includes\InstrumentationEventSource.cs" />
   </ItemGroup>
 
   <ItemGroup>
