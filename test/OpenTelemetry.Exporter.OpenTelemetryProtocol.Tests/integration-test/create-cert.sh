@@ -9,6 +9,8 @@ openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
 # container and test container can access
 cp /otel-collector.crt /otel-collector.key /cfg
 
+chmod 644 /cfg/otel-collector.key
+
 # The integration test is run via docker-compose with the --exit-code-from
 # option. The --exit-code-from option implies --abort-on-container-exit
 # which means when any container exits then all containers are stopped.
