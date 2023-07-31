@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Net.Http;
+using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
@@ -194,9 +195,12 @@ public class OtlpExporterOptionsTests : IDisposable
 
 #if NET6_0_OR_GREATER
     [Fact]
-    public async Task OtlpExporterOptions_ServerTrustCert()
+    public void OtlpExporterOptions_WithCACertificate_AddsToHttpMessageHandlerTrustStore()
     {
-        var certPath = "D:\\workplace\\oss\\rsa\\ca-cert.pem";
+        var caPath = Path.Combine(AppContext.BaseDirectory, "Certificates", "TrustStore", "rootCA.crt");
+        using var serverCert = X509Certificate2.CreateFromPemFile(
+            certPemFilePath: Path.Combine(AppContext.BaseDirectory, "Certificates", "TrustStore", "server.crt"),
+            keyPemFilePath: Path.Combine(AppContext.BaseDirectory, "Certificates", "TrustStore", "server.key"));
 
         var values = new Dictionary<string, string>()
         {
@@ -204,7 +208,7 @@ public class OtlpExporterOptionsTests : IDisposable
             [OtlpExporterOptions.HeadersEnvVarName] = "A=2,B=3",
             [OtlpExporterOptions.TimeoutEnvVarName] = "2000",
             [OtlpExporterOptions.ProtocolEnvVarName] = "http/protobuf",
-            [OtlpExporterOptions.CertificateFileEnvVarName] = certPath,
+            [OtlpExporterOptions.CertificateFileEnvVarName] = caPath,
         };
 
         var configuration = new ConfigurationBuilder()
@@ -213,9 +217,11 @@ public class OtlpExporterOptionsTests : IDisposable
 
         var options = new OtlpExporterOptions(configuration, new());
         using var defaultHandler = options.GetDefaultHttpMessageHandler();
-        using var httpC = new HttpClient(defaultHandler);
 
-        var x = await httpC.GetStringAsync("https://localhost:5005/");
+        var serverCertValidationResult = defaultHandler.ServerCertificateCustomValidationCallback.Invoke(
+            new HttpRequestMessage(), serverCert, new X509Chain(), SslPolicyErrors.RemoteCertificateChainErrors);
+
+        Assert.True(serverCertValidationResult);
     }
 #endif
 
@@ -224,7 +230,7 @@ public class OtlpExporterOptionsTests : IDisposable
 #if NET5_0_OR_GREATER
     [InlineData("prime256v1-ecdsa-cert.pem", "prime256v1-ecdsa-keypair.pem", "ecdsa")]
 #endif
-    public void OtlpExporterOptions_WithCertificate_PassesCertificateToDefaultHttpClient(string certFileName, string keyFileName, string alg)
+    public void OtlpExporterOptions_WithClientCertificate_PassesCertificateToDefaultHttpClient(string certFileName, string keyFileName, string alg)
     {
         var certPath = Path.Combine(AppContext.BaseDirectory, "Certificates", certFileName);
         var pKeyPath = Path.Combine(AppContext.BaseDirectory, "Certificates", keyFileName);

@@ -257,6 +257,8 @@ public class OtlpExporterOptions
             handler.ServerCertificateCustomValidationCallback = (message, serverCert, chain, policyErrs) =>
             {
                 chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreWrongUsage;
                 chain.ChainPolicy.CustomTrustStore.Add(publicCertificate);
                 var buildResult = chain.Build(serverCert);
                 return buildResult;
