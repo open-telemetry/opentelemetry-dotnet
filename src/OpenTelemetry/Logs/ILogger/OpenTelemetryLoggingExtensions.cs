@@ -96,7 +96,7 @@ public static class OpenTelemetryLoggingExtensions
         // are of a primitive type.
 #if NET6_0_OR_GREATER
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
-        [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "OpenTelemetryLoggerOptions only contains primitive properties.")]
+        [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
 #endif
         static void RegisterLoggerProviderOptions(IServiceCollection services)
         {
