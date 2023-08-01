@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.IO;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography;
@@ -176,6 +177,84 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", OtlpExporterOptions.ProtocolEnvVarName);
     }
 
+    [Theory]
+#if NET6_0_OR_GREATER
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+#endif
+    [InlineData(OtlpExportProtocol.Grpc)]
+    public void OtlpExporterOptions_ClientCertificateDoesNotExist_ThrowsException(OtlpExportProtocol protocol)
+    {
+        var certPath = Path.Combine(AppContext.BaseDirectory, "no", "such", "cert.pem");
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "no", "such", "key.pem");
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = protocol,
+            ClientCertificateFile = certPath,
+            ClientKeyFile = pKeyPath,
+        };
+
+        Assert.ThrowsAny<IOException>(() => OtlpExporterOptionsExtensions.GetLogExportClient(options));
+        Assert.ThrowsAny<IOException>(() => OtlpExporterOptionsExtensions.GetMetricsExportClient(options));
+        Assert.ThrowsAny<IOException>(() => OtlpExporterOptionsExtensions.GetTraceExportClient(options));
+    }
+
+    [Theory]
+#if NET6_0_OR_GREATER
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+#endif
+    [InlineData(OtlpExportProtocol.Grpc)]
+    public void OtlpExporterOptions_CertificateDoesNotExist_ThrowsException(OtlpExportProtocol protocol)
+    {
+        var caPath = Path.Combine(AppContext.BaseDirectory, "no", "such", "ca.pem");
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = protocol,
+            CertificateFile = caPath,
+        };
+
+        Assert.ThrowsAny<IOException>(() => OtlpExporterOptionsExtensions.GetLogExportClient(options));
+        Assert.ThrowsAny<IOException>(() => OtlpExporterOptionsExtensions.GetMetricsExportClient(options));
+        Assert.ThrowsAny<IOException>(() => OtlpExporterOptionsExtensions.GetTraceExportClient(options));
+    }
+
+#if !NET6_0_OR_GREATER
+    [Fact]
+    public void OtlpExporterOptions_ClientCertificateWithHttpProtobuf_ThrowsPlatformNotSupportedException()
+    {
+        var certPath = Path.Combine(AppContext.BaseDirectory, "my", "cert.pem");
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "my", "key.pem");
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            ClientCertificateFile = certPath,
+            ClientKeyFile = pKeyPath,
+        };
+
+        Assert.ThrowsAny<PlatformNotSupportedException>(() => OtlpExporterOptionsExtensions.GetLogExportClient(options));
+        Assert.ThrowsAny<PlatformNotSupportedException>(() => OtlpExporterOptionsExtensions.GetMetricsExportClient(options));
+        Assert.ThrowsAny<PlatformNotSupportedException>(() => OtlpExporterOptionsExtensions.GetTraceExportClient(options));
+    }
+
+    [Fact]
+    public void OtlpExporterOptions_CACertificateWithHttpProtobuf_ThrowsPlatformNotSupportedException()
+    {
+        var caPath = Path.Combine(AppContext.BaseDirectory, "my", "ca.pem");
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            CertificateFile = caPath,
+        };
+
+        Assert.ThrowsAny<PlatformNotSupportedException>(() => OtlpExporterOptionsExtensions.GetLogExportClient(options));
+        Assert.ThrowsAny<PlatformNotSupportedException>(() => OtlpExporterOptionsExtensions.GetMetricsExportClient(options));
+        Assert.ThrowsAny<PlatformNotSupportedException>(() => OtlpExporterOptionsExtensions.GetTraceExportClient(options));
+    }
+#endif
+
     [Fact]
     public void OtlpExporterOptions_NoCertificate_DefaultHttpClientDoesnotHaveCertificate()
     {
@@ -192,7 +271,7 @@ public class OtlpExporterOptionsTests : IDisposable
             .Build();
 
         var options = new OtlpExporterOptions(configuration, new());
-        using var defaultHandler = options.GetDefaultHttpMessageHandler();
+        using var defaultHandler = options.CreateDefaultHttpMessageHandler();
 
         Assert.Empty(defaultHandler.ClientCertificates);
     }
@@ -220,7 +299,7 @@ public class OtlpExporterOptionsTests : IDisposable
             .Build();
 
         var options = new OtlpExporterOptions(configuration, new());
-        using var defaultHandler = options.GetDefaultHttpMessageHandler();
+        using var defaultHandler = options.CreateDefaultHttpMessageHandler();
 
         using var chain = new X509Chain();
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
@@ -231,13 +310,10 @@ public class OtlpExporterOptionsTests : IDisposable
 
         Assert.True(serverCertValidationResult);
     }
-#endif
 
     [Theory]
     [InlineData("4096b-rsa-example-cert.pem", "4096b-rsa-example-keypair.pem", "rsa")]
-#if NET5_0_OR_GREATER
     [InlineData("prime256v1-ecdsa-cert.pem", "prime256v1-ecdsa-keypair.pem", "ecdsa")]
-#endif
     public void OtlpExporterOptions_WithClientCertificate_PassesCertificateToDefaultHttpClient(string certFileName, string keyFileName, string alg)
     {
         var certPath = Path.Combine(AppContext.BaseDirectory, "Certificates", certFileName);
@@ -258,7 +334,7 @@ public class OtlpExporterOptionsTests : IDisposable
             .Build();
 
         var options = new OtlpExporterOptions(configuration, new());
-        using var defaultHandler = options.GetDefaultHttpMessageHandler();
+        using var defaultHandler = options.CreateDefaultHttpMessageHandler();
 
         Assert.Single(defaultHandler.ClientCertificates);
 
@@ -280,11 +356,7 @@ public class OtlpExporterOptionsTests : IDisposable
         // compare thumbprint
         var cert = (X509Certificate2)certificate;
         Assert.Equal("2013BADFCD6BDD058E39B98D6B1177E870603B93", cert.GetCertHashString());
-#if NET5_0_OR_GREATER
         var rsa = cert.GetRSAPrivateKey();
-#else
-        var rsa = (RSA)cert.PrivateKey;
-#endif
         Assert.Equal(4096, rsa.KeySize);
     }
 
@@ -293,6 +365,7 @@ public class OtlpExporterOptionsTests : IDisposable
         var cert = (X509Certificate2)certificate;
         Assert.Equal("A94CD0470C3733C084BC43E511EF0AC8DE7898A8", cert.Thumbprint);
     }
+#endif
 
     private static void ClearEnvVars()
     {

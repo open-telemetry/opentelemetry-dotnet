@@ -113,7 +113,7 @@ public class OtlpExporterOptions
 
         this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
         {
-            return new HttpClient(this.GetDefaultHttpMessageHandler(), disposeHandler: true)
+            return new HttpClient(this.CreateDefaultHttpMessageHandler(), disposeHandler: true)
             {
                 Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
             };
@@ -264,13 +264,13 @@ public class OtlpExporterOptions
                 sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
     }
 
-    internal HttpClientHandler GetDefaultHttpMessageHandler()
+    internal HttpClientHandler CreateDefaultHttpMessageHandler()
     {
         var handler = new HttpClientHandler();
 
-#if NET6_0_OR_GREATER
         if (this.CertificateFile != null)
         {
+#if NET6_0_OR_GREATER
             var trustedCA = LoadCertificateFromPemFile(this.CertificateFile, null);
 
             handler.ServerCertificateCustomValidationCallback = (message, serverCert, chain, policyErrs) =>
@@ -280,13 +280,20 @@ public class OtlpExporterOptions
                 var buildResult = chain.Build(serverCert);
                 return buildResult;
             };
+#else
+            throw new PlatformNotSupportedException("Client certificate option is not supported for HTTP/Protobuf protocol.");
+#endif
         }
 
         if (this.ClientCertificateFile != null)
         {
+#if NET6_0_OR_GREATER
             handler.ClientCertificates.Add(LoadCertificateFromPemFile(this.ClientCertificateFile, this.ClientKeyFile));
-        }
+#else
+            throw new PlatformNotSupportedException("Trusted certificate option is not supported for HTTP/Protobuf protocol.");
 #endif
+        }
+
         return handler;
     }
 
