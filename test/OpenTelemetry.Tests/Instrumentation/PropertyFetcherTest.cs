@@ -78,6 +78,24 @@ public class PropertyFetcherTest
         Assert.Equal("A", propertyValue);
     }
 
+    [Fact]
+    public void FetchPropertyWithDerivedInstanceType()
+    {
+        var fetch = new PropertyFetcher<BaseType>("Property");
+
+        Assert.True(fetch.TryFetch(new PayloadTypeWithBaseType(), out BaseType value));
+        Assert.IsType<DerivedType>(value);
+    }
+
+    [Fact]
+    public void FetchPropertyWithDerivedDeclaredType()
+    {
+        var fetch = new PropertyFetcher<BaseType>("Property");
+
+        Assert.True(fetch.TryFetch(new PayloadTypeWithDerivedType(), out BaseType value));
+        Assert.IsType<DerivedType>(value);
+    }
+
     private class PayloadTypeA
     {
         public string Property { get; set; } = "A";
@@ -90,5 +108,23 @@ public class PropertyFetcherTest
 
     private class PayloadTypeC
     {
+    }
+
+    private class BaseType
+    {
+    }
+
+    private class DerivedType : BaseType
+    {
+    }
+
+    private class PayloadTypeWithBaseType
+    {
+        public BaseType Property { get; set; } = new DerivedType();
+    }
+
+    private class PayloadTypeWithDerivedType
+    {
+        public DerivedType Property { get; set; } = new DerivedType();
     }
 }
