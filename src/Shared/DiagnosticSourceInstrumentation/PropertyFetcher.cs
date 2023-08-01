@@ -94,31 +94,40 @@ internal sealed class PropertyFetcher<T>
                     return null;
                 }
 
-                if (
-#if NET6_0_OR_GREATER
-                RuntimeFeature.IsDynamicCodeSupported &&
-#endif
-!propertyInfo.DeclaringType!.IsValueType && !propertyInfo.PropertyType.IsValueType && !typeof(T).IsValueType)
+                Type declaringType = propertyInfo.DeclaringType;
+                if (declaringType.IsValueType)
                 {
-                    return CreateReferencedTypePropertyFetch(propertyInfo);
+                    throw new NotSupportedException(
+                        $"PropertyFetcher can only operate on reference payload types." +
+                        $"Type {declaringType.FullName} is a value type though.");
+                }
+
+                if (declaringType == typeof(object))
+                {
+                    // This is only necessary on .NET 7. In .NET 8 the compiler is improved and using the MakeGenericMethod will work on its own.
+                    // The reason is to force the compiler to create an instantiation of the method with a reference type.
+                    // The code for that instantiation can then be reused at runtime to create instantiation over any other reference.
+                    return CreateInstantiated<object>(propertyInfo);
                 }
                 else
                 {
-                    return new BoxedValueTypePropertyFetch(propertyInfo);
+                    return DynamicInstantiationHelper(declaringType, propertyInfo);
                 }
 
+                // Separated as local function to be able to target the suppression to just this call
                 // IL3050 was generated here because of the call to MakeGenericType, which is problematic in AOT if one of the type parameters is a value type;
                 // because the compiler might need to generate code specific to that type.
-                // If ALL the type parameters are reference types, there will be no problem; because the generated code can be shared among all reference type instantiations.
+                // If the type parameter is reference type, there will be no problem; because the generated code can be shared among all reference type instantiations.
 #if NET6_0_OR_GREATER
+                [RequiresUnreferencedCode(TrimCompatibilityMessage)]
                 [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The code guarantees that all the generic parameters are reference types")]
 #endif
-                static PropertyFetch CreateReferencedTypePropertyFetch(PropertyInfo propertyInfo)
+                static PropertyFetch DynamicInstantiationHelper(Type declaringType, PropertyInfo propertyInfo)
                 {
-                    var typedPropertyFetcher = typeof(ReferenceTypedPropertyFetch<,>);
-                    var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
-                        typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
-                    return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
+                    return (PropertyFetch)typeof(PropertyFetch)
+                        .GetMethod(nameof(CreateInstantiated), BindingFlags.NonPublic | BindingFlags.Static)!
+                        .MakeGenericMethod(declaringType) // This is validated above that it's a reference type
+                        .Invoke(null, new object[] { propertyInfo });
                 }
             }
         }
@@ -129,20 +138,37 @@ internal sealed class PropertyFetcher<T>
             return false;
         }
 
+        // The goal is to make the code AOT compatible. AOT can't guarantee correctness if it's asked to
+        // MakeGenericType or MakeGenericMethod where one of the generic parameters is a value type (reference types are OK).
+        // So for PropertyFetcher we decided that the type of the object (the object from which to get the property value)
+        // must be a reference type, so creating generics with the declared object type as a generic parameter is OK.
+        // But we need the return type of the property to be a value type (on top of reference types as well).
+        // Normally we would have a helper class like the `PropertyFetchInstantiated` take 2 generic parameters
+        // the declared object type and the type of the property value. But that would mean calling MakeGenericType
+        // with value type parameters which AOT won't support.
+        // To work around that, we split the generic instantiation. The property value type comes from the PropertyFetcher generic
+        // parameter (and that can be a value type), but that type is known statically during compilation because
+        // the PropertyFetcher is used with it.
+        // The declared object type is then passed as a generic parameter to a generic method on the PropertyFetcher<T> (or nested type)
+        // in which case calling MakeGenericMethod will only need to specify one parameter, the declared object type.
+        // But that one is guaranteed to be a reference type and thus the MakeGenericMethod is AOT compatible.
+        private static PropertyFetch CreateInstantiated<TDeclaredObject>(PropertyInfo propertyInfo)
+            where TDeclaredObject : class
+            => new PropertyFetchInstantiated<TDeclaredObject>(propertyInfo);
+
         // 1. ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
         // 2. CreateDelegate is not AOT compatible if any of the types (DeclaringType, property or T) is a value type.
-        private sealed class ReferenceTypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
-            where TDeclaredProperty : class, T
+        private sealed class PropertyFetchInstantiated<TDeclaredObject> : PropertyFetch
             where TDeclaredObject : class
         {
             private readonly string propertyName;
-            private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
+            private readonly Func<TDeclaredObject, T> propertyFetch;
             private PropertyFetch innerFetcher;
 
-            public ReferenceTypedPropertyFetch(PropertyInfo property)
+            public PropertyFetchInstantiated(PropertyInfo property)
             {
                 this.propertyName = property.Name;
-                this.propertyFetch = (Func<TDeclaredObject, TDeclaredProperty>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, TDeclaredProperty>));
+                this.propertyFetch = (Func<TDeclaredObject, T>)property.GetMethod.CreateDelegate(typeof(Func<TDeclaredObject, T>));
             }
 
             public override bool TryFetch(object obj, out T value)
@@ -150,43 +176,6 @@ internal sealed class PropertyFetcher<T>
                 if (obj is TDeclaredObject o)
                 {
                     value = this.propertyFetch(o);
-                    return true;
-                }
-
-                this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-                if (this.innerFetcher == null)
-                {
-                    value = default;
-                    return false;
-                }
-
-                return this.innerFetcher.TryFetch(obj, out value);
-            }
-        }
-
-#if NET6_0_OR_GREATER
-        [RequiresUnreferencedCode(TrimCompatibilityMessage)]
-#endif
-        private sealed class BoxedValueTypePropertyFetch : PropertyFetch
-        {
-            private readonly string propertyName;
-            private readonly Func<object, T> propertyFetch;
-            private readonly Type payloadType;
-            private PropertyFetch innerFetcher;
-
-            public BoxedValueTypePropertyFetch(PropertyInfo property)
-            {
-                this.propertyName = property.Name;
-                this.propertyFetch = payload => (T)property.GetValue(payload);
-                this.payloadType = property.DeclaringType;
-            }
-
-            public override bool TryFetch(object obj, out T value)
-            {
-                if (obj.GetType() == this.payloadType)
-                {
-                    value = this.propertyFetch(obj);
                     return true;
                 }
 
