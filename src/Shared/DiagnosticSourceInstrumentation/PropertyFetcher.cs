@@ -96,15 +96,15 @@ internal sealed class PropertyFetcher<T>
 
                 if (
 #if NET6_0_OR_GREATER
-!RuntimeFeature.IsDynamicCodeSupported &&
+                RuntimeFeature.IsDynamicCodeSupported &&
 #endif
-                IsValueType(propertyInfo))
+!propertyInfo.DeclaringType!.IsValueType && !propertyInfo.PropertyType.IsValueType && !typeof(T).IsValueType)
                 {
-                    return new BoxedValueTypePropertyFetch(propertyInfo);
+                    return CreateReferencedTypePropertyFetch(propertyInfo);
                 }
                 else
                 {
-                    return CreateReferencedTypePropertyFetch(propertyInfo);
+                    return new BoxedValueTypePropertyFetch(propertyInfo);
                 }
 
                 // IL3050 was generated here because of the call to MakeGenericType, which is problematic in AOT if one of the type parameters is a value type;
@@ -119,11 +119,6 @@ internal sealed class PropertyFetcher<T>
                     var instantiatedTypedPropertyFetcher = typedPropertyFetcher.MakeGenericType(
                         typeof(T), propertyInfo.DeclaringType, propertyInfo.PropertyType);
                     return (PropertyFetch)Activator.CreateInstance(instantiatedTypedPropertyFetcher, propertyInfo);
-                }
-
-                static bool IsValueType(PropertyInfo propertyInfo)
-                {
-                    return propertyInfo.DeclaringType!.IsValueType || propertyInfo.PropertyType.IsValueType || typeof(T).IsValueType;
                 }
             }
         }
