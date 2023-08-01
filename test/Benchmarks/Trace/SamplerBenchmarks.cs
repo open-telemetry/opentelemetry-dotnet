@@ -37,83 +37,82 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 
 */
 
-namespace Benchmarks.Trace
+namespace Benchmarks.Trace;
+
+public class SamplerBenchmarks
 {
-    public class SamplerBenchmarks
+    private readonly ActivitySource sourceNotModifyTracestate = new("SamplerNotModifyingTraceState");
+    private readonly ActivitySource sourceModifyTracestate = new("SamplerModifyingTraceState");
+    private readonly ActivitySource sourceAppendTracestate = new("SamplerAppendingTraceState");
+    private readonly ActivityContext parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, "a=b", true);
+
+    public SamplerBenchmarks()
     {
-        private readonly ActivitySource sourceNotModifyTracestate = new("SamplerNotModifyingTraceState");
-        private readonly ActivitySource sourceModifyTracestate = new("SamplerModifyingTraceState");
-        private readonly ActivitySource sourceAppendTracestate = new("SamplerAppendingTraceState");
-        private readonly ActivityContext parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, "a=b", true);
-
-        public SamplerBenchmarks()
+        var testSamplerNotModifyTracestate = new TestSampler
         {
-            var testSamplerNotModifyTracestate = new TestSampler
+            SamplingAction = (samplingParams) =>
             {
-                SamplingAction = (samplingParams) =>
-                {
-                    return new SamplingResult(SamplingDecision.RecordAndSample);
-                },
-            };
+                return new SamplingResult(SamplingDecision.RecordAndSample);
+            },
+        };
 
-            var testSamplerModifyTracestate = new TestSampler
+        var testSamplerModifyTracestate = new TestSampler
+        {
+            SamplingAction = (samplingParams) =>
             {
-                SamplingAction = (samplingParams) =>
-                {
-                    return new SamplingResult(SamplingDecision.RecordAndSample, "a=b");
-                },
-            };
+                return new SamplingResult(SamplingDecision.RecordAndSample, "a=b");
+            },
+        };
 
-            var testSamplerAppendTracestate = new TestSampler
+        var testSamplerAppendTracestate = new TestSampler
+        {
+            SamplingAction = (samplingParams) =>
             {
-                SamplingAction = (samplingParams) =>
-                {
-                    return new SamplingResult(SamplingDecision.RecordAndSample, samplingParams.ParentContext.TraceState + ",addedkey=bar");
-                },
-            };
+                return new SamplingResult(SamplingDecision.RecordAndSample, samplingParams.ParentContext.TraceState + ",addedkey=bar");
+            },
+        };
 
-            Sdk.CreateTracerProviderBuilder()
-                .SetSampler(testSamplerNotModifyTracestate)
-                .AddSource(this.sourceNotModifyTracestate.Name)
-                .Build();
+        Sdk.CreateTracerProviderBuilder()
+            .SetSampler(testSamplerNotModifyTracestate)
+            .AddSource(this.sourceNotModifyTracestate.Name)
+            .Build();
 
-            Sdk.CreateTracerProviderBuilder()
-                .SetSampler(testSamplerModifyTracestate)
-                .AddSource(this.sourceModifyTracestate.Name)
-                .Build();
+        Sdk.CreateTracerProviderBuilder()
+            .SetSampler(testSamplerModifyTracestate)
+            .AddSource(this.sourceModifyTracestate.Name)
+            .Build();
 
-            Sdk.CreateTracerProviderBuilder()
-                .SetSampler(testSamplerAppendTracestate)
-                .AddSource(this.sourceAppendTracestate.Name)
-                .Build();
-        }
+        Sdk.CreateTracerProviderBuilder()
+            .SetSampler(testSamplerAppendTracestate)
+            .AddSource(this.sourceAppendTracestate.Name)
+            .Build();
+    }
 
-        [Benchmark]
-        public void SamplerNotModifyingTraceState()
+    [Benchmark]
+    public void SamplerNotModifyingTraceState()
+    {
+        using var activity = this.sourceNotModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+    }
+
+    [Benchmark]
+    public void SamplerModifyingTraceState()
+    {
+        using var activity = this.sourceModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+    }
+
+    [Benchmark]
+    public void SamplerAppendingTraceState()
+    {
+        using var activity = this.sourceAppendTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+    }
+
+    internal class TestSampler : Sampler
+    {
+        public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
+
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
-            using var activity = this.sourceNotModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
-        }
-
-        [Benchmark]
-        public void SamplerModifyingTraceState()
-        {
-            using var activity = this.sourceModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
-        }
-
-        [Benchmark]
-        public void SamplerAppendingTraceState()
-        {
-            using var activity = this.sourceAppendTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
-        }
-
-        internal class TestSampler : Sampler
-        {
-            public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
-
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            {
-                return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
-            }
+            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
         }
     }
 }

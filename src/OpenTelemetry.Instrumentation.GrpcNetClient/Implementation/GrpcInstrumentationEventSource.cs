@@ -42,9 +42,24 @@ internal sealed class GrpcInstrumentationEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
+        }
+    }
+
     [Event(2, Message = "Enrichment threw exception. Exception {0}.", Level = EventLevel.Error)]
     public void EnrichmentException(string exception)
     {
         this.WriteEvent(2, exception);
+    }
+
+    [Event(3, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+    {
+        this.WriteEvent(3, handlerName, eventName, ex);
     }
 }

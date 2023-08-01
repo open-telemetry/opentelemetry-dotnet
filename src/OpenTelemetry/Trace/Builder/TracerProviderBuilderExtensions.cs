@@ -17,6 +17,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -80,7 +83,11 @@ public static class TracerProviderBuilderExtensions
     /// <typeparam name="T">Sampler type.</typeparam>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-    public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
+    public static TracerProviderBuilder SetSampler<
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : Sampler
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
@@ -196,7 +203,11 @@ public static class TracerProviderBuilderExtensions
     /// <typeparam name="T">Processor type.</typeparam>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-    public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
+    public static TracerProviderBuilder AddProcessor<
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : BaseProcessor<Activity>
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
