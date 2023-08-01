@@ -1,6 +1,6 @@
 # Create a container for running the OpenTelemetry Collector integration tests.
 # This should be run from the root of the repo:
-# docker build --file test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/Dockerfile
+# docker build --file test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
 
 ARG BUILD_SDK_VERSION=7.0
 ARG TEST_SDK_VERSION=7.0
@@ -16,4 +16,5 @@ RUN dotnet publish "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" -
 FROM mcr.microsoft.com/dotnet/sdk:${TEST_SDK_VERSION} AS final
 WORKDIR /test
 COPY --from=build /drop .
-ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.dll", "--logger:console;verbosity=detailed"]
+
+RUN apt-get update && apt-get install ca-certificates
