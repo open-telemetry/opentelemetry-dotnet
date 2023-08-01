@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
 namespace OpenTelemetry.Instrumentation.SqlClient
@@ -54,9 +51,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
         /// </summary>
         /// <param name="options">Configuration options for sql instrumentation.</param>
-#if NET6_0_OR_GREATER
-        [RequiresUnreferencedCode(SqlClientTrimmingUnsupportedMessage)]
-#endif
         public SqlClientInstrumentation(
             SqlClientInstrumentationOptions options = null)
         {
