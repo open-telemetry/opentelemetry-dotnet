@@ -86,31 +86,18 @@ public static class OtlpLogExporterHelperExtensions
     {
         var exporterOptions = new OtlpExporterOptions();
 
-        // TODO: We are using span/activity batch environment variable keys
-        // here when we should be using the ones for logs.
-        var defaultBatchOptions = exporterOptions.BatchExportProcessorOptions;
-
-        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
-
         configure?.Invoke(exporterOptions);
 
         var otlpExporter = new OtlpLogExporter(exporterOptions);
 
-        if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
-        {
-            loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
-        }
-        else
-        {
-            var batchOptions = exporterOptions.BatchExportProcessorOptions ?? defaultBatchOptions;
+        var batchOptions = new BatchExportLogRecordProcessorOptions();
 
-            loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
-                otlpExporter,
-                batchOptions.MaxQueueSize,
-                batchOptions.ScheduledDelayMilliseconds,
-                batchOptions.ExporterTimeoutMilliseconds,
-                batchOptions.MaxExportBatchSize));
-        }
+        loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+            otlpExporter,
+            batchOptions.MaxQueueSize,
+            batchOptions.ScheduledDelayMilliseconds,
+            batchOptions.ExporterTimeoutMilliseconds,
+            batchOptions.MaxExportBatchSize));
 
         return loggerOptions;
     }
