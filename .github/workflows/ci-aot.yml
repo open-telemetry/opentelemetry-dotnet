@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
-        os: [ windows-latest ]
+        os: [ windows-latest, ubuntu-latest ]
         version: [ net7.0 ]
 
     runs-on: ${{ matrix.os }}
