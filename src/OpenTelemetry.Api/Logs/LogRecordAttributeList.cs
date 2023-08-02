@@ -22,7 +22,11 @@ using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+namespace OpenTelemetry.Logs.Experimental;
+#else
 namespace OpenTelemetry.Logs;
+#endif
 
 /// <summary>
 /// Stores attributes to be added to a log message.

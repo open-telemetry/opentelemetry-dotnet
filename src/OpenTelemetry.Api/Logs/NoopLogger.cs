@@ -16,6 +16,10 @@
 
 #nullable enable
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+using OpenTelemetry.Logs.Experimental;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 internal sealed class NoopLogger : Logger

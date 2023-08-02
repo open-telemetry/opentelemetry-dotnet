@@ -18,7 +18,11 @@
 
 using System.Diagnostics;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+namespace OpenTelemetry.Logs.Experimental;
+#else
 namespace OpenTelemetry.Logs;
+#endif
 
 /// <summary>
 /// Stores details about a log message.

@@ -16,7 +16,11 @@
 
 #nullable enable
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+namespace OpenTelemetry.Logs.Experimental;
+#else
 namespace OpenTelemetry.Logs;
+#endif
 
 /// <summary>
 /// LoggerProviderBuilder base class.
