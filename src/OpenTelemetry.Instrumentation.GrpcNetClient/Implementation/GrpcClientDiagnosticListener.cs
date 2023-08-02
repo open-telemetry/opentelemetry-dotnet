@@ -21,196 +21,195 @@ using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
-namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
+namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
+
+internal sealed class GrpcClientDiagnosticListener : ListenerHandler
 {
-    internal sealed class GrpcClientDiagnosticListener : ListenerHandler
+    internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
+    internal static readonly string ActivitySourceName = AssemblyName.Name;
+    internal static readonly Version Version = AssemblyName.Version;
+    internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+
+    private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
+    private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
+
+    private readonly GrpcClientInstrumentationOptions options;
+    private readonly bool emitOldAttributes;
+    private readonly bool emitNewAttributes;
+    private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
+    private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
+
+    public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
+        : base("Grpc.Net.Client")
     {
-        internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
-        internal static readonly string ActivitySourceName = AssemblyName.Name;
-        internal static readonly Version Version = AssemblyName.Version;
-        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+        this.options = options;
 
-        private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
-        private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
+        this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
-        private readonly GrpcClientInstrumentationOptions options;
-        private readonly bool emitOldAttributes;
-        private readonly bool emitNewAttributes;
-        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
-        private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
+        this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
+    }
 
-        public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
-            : base("Grpc.Net.Client")
+    public override void OnEventWritten(string name, object payload)
+    {
+        switch (name)
         {
-            this.options = options;
+            case OnStartEvent:
+                {
+                    this.OnStartActivity(Activity.Current, payload);
+                }
 
-            this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+                break;
+            case OnStopEvent:
+                {
+                    this.OnStopActivity(Activity.Current, payload);
+                }
 
-            this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
+                break;
+        }
+    }
+
+    public void OnStartActivity(Activity activity, object payload)
+    {
+        // The overall flow of what GrpcClient library does is as below:
+        // Activity.Start()
+        // DiagnosticSource.WriteEvent("Start", payload)
+        // DiagnosticSource.WriteEvent("Stop", payload)
+        // Activity.Stop()
+
+        // This method is in the WriteEvent("Start", payload) path.
+        // By this time, samplers have already run and
+        // activity.IsAllDataRequested populated accordingly.
+
+        if (Sdk.SuppressInstrumentation)
+        {
+            return;
         }
 
-        public override void OnEventWritten(string name, object payload)
+        // Ensure context propagation irrespective of sampling decision
+        if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
         {
-            switch (name)
-            {
-                case OnStartEvent:
-                    {
-                        this.OnStartActivity(Activity.Current, payload);
-                    }
-
-                    break;
-                case OnStopEvent:
-                    {
-                        this.OnStopActivity(Activity.Current, payload);
-                    }
-
-                    break;
-            }
+            GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
+            return;
         }
 
-        public void OnStartActivity(Activity activity, object payload)
+        if (this.options.SuppressDownstreamInstrumentation)
         {
-            // The overall flow of what GrpcClient library does is as below:
-            // Activity.Start()
-            // DiagnosticSource.WriteEvent("Start", payload)
-            // DiagnosticSource.WriteEvent("Stop", payload)
-            // Activity.Stop()
+            SuppressInstrumentationScope.Enter();
 
-            // This method is in the WriteEvent("Start", payload) path.
-            // By this time, samplers have already run and
-            // activity.IsAllDataRequested populated accordingly.
+            // If we are suppressing downstream instrumentation then inject
+            // context here. Grpc.Net.Client uses HttpClient, so
+            // SuppressDownstreamInstrumentation means that the
+            // OpenTelemetry instrumentation for HttpClient will not be
+            // invoked.
 
-            if (Sdk.SuppressInstrumentation)
+            // Note that HttpClient natively generates its own activity and
+            // propagates W3C trace context headers regardless of whether
+            // OpenTelemetry HttpClient instrumentation is invoked.
+            // Therefore, injecting here preserves more intuitive span
+            // parenting - i.e., the entry point span of a downstream
+            // service would be parented to the span generated by
+            // Grpc.Net.Client rather than the span generated natively by
+            // HttpClient. Injecting here also ensures that baggage is
+            // propagated to downstream services.
+            // Injecting context here also ensures that the configured
+            // propagator is used, as HttpClient by itself will only
+            // do TraceContext propagation.
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+            textMapPropagator.Inject(
+                new PropagationContext(activity.Context, Baggage.Current),
+                request,
+                HttpRequestMessageContextPropagation.HeaderValueSetter);
+        }
+
+        if (activity.IsAllDataRequested)
+        {
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+            ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+
+            var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
+
+            activity.DisplayName = grpcMethod?.Trim('/');
+
+            activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
+
+            if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
             {
-                return;
+                activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
+                activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
+
+                // Remove the grpc.method tag added by the gRPC .NET library
+                activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
             }
 
-            // Ensure context propagation irrespective of sampling decision
-            if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
+            var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
+            if (this.emitOldAttributes)
             {
-                GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
-                return;
+                if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
+                {
+                    activity.SetTag(SemanticConventions.AttributeNetPeerIp, request.RequestUri.Host);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+                }
+
+                activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
             }
 
-            if (this.options.SuppressDownstreamInstrumentation)
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+            if (this.emitNewAttributes)
             {
-                SuppressInstrumentationScope.Enter();
+                if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
+                {
+                    activity.SetTag(SemanticConventions.AttributeServerSocketAddress, request.RequestUri.Host);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+                }
 
-                // If we are suppressing downstream instrumentation then inject
-                // context here. Grpc.Net.Client uses HttpClient, so
-                // SuppressDownstreamInstrumentation means that the
-                // OpenTelemetry instrumentation for HttpClient will not be
-                // invoked.
-
-                // Note that HttpClient natively generates its own activity and
-                // propagates W3C trace context headers regardless of whether
-                // OpenTelemetry HttpClient instrumentation is invoked.
-                // Therefore, injecting here preserves more intuitive span
-                // parenting - i.e., the entry point span of a downstream
-                // service would be parented to the span generated by
-                // Grpc.Net.Client rather than the span generated natively by
-                // HttpClient. Injecting here also ensures that baggage is
-                // propagated to downstream services.
-                // Injecting context here also ensures that the configured
-                // propagator is used, as HttpClient by itself will only
-                // do TraceContext propagation.
-                var textMapPropagator = Propagators.DefaultTextMapPropagator;
-                textMapPropagator.Inject(
-                    new PropagationContext(activity.Context, Baggage.Current),
-                    request,
-                    HttpRequestMessageContextPropagation.HeaderValueSetter);
+                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
             }
 
-            if (activity.IsAllDataRequested)
+            try
             {
-                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                this.options.EnrichWithHttpRequestMessage?.Invoke(activity, request);
+            }
+            catch (Exception ex)
+            {
+                GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
+            }
+        }
+    }
 
-                var grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
-
-                activity.DisplayName = grpcMethod?.Trim('/');
-
-                activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
-
-                if (GrpcTagHelper.TryParseRpcServiceAndRpcMethod(grpcMethod, out var rpcService, out var rpcMethod))
+    public void OnStopActivity(Activity activity, object payload)
+    {
+        if (activity.IsAllDataRequested)
+        {
+            bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
+            if (validConversion)
+            {
+                if (activity.Status == ActivityStatusCode.Unset)
                 {
-                    activity.SetTag(SemanticConventions.AttributeRpcService, rpcService);
-                    activity.SetTag(SemanticConventions.AttributeRpcMethod, rpcMethod);
-
-                    // Remove the grpc.method tag added by the gRPC .NET library
-                    activity.SetTag(GrpcTagHelper.GrpcMethodTagName, null);
+                    activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
                 }
 
-                var uriHostNameType = Uri.CheckHostName(request.RequestUri.Host);
-                if (this.emitOldAttributes)
-                {
-                    if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeNetPeerIp, request.RequestUri.Host);
-                    }
-                    else
-                    {
-                        activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                    }
+                // setting rpc.grpc.status_code
+                activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
+            }
 
-                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
-                }
+            // Remove the grpc.status_code tag added by the gRPC .NET library
+            activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
 
-                // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-                if (this.emitNewAttributes)
-                {
-                    if (uriHostNameType == UriHostNameType.IPv4 || uriHostNameType == UriHostNameType.IPv6)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeServerSocketAddress, request.RequestUri.Host);
-                    }
-                    else
-                    {
-                        activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-                    }
-
-                    activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-                }
-
+            if (this.stopRequestFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+            {
                 try
                 {
-                    this.options.EnrichWithHttpRequestMessage?.Invoke(activity, request);
+                    this.options.EnrichWithHttpResponseMessage?.Invoke(activity, response);
                 }
                 catch (Exception ex)
                 {
                     GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
-                }
-            }
-        }
-
-        public void OnStopActivity(Activity activity, object payload)
-        {
-            if (activity.IsAllDataRequested)
-            {
-                bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
-                if (validConversion)
-                {
-                    if (activity.Status == ActivityStatusCode.Unset)
-                    {
-                        activity.SetStatus(GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status));
-                    }
-
-                    // setting rpc.grpc.status_code
-                    activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
-                }
-
-                // Remove the grpc.status_code tag added by the gRPC .NET library
-                activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
-
-                if (this.stopRequestFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
-                {
-                    try
-                    {
-                        this.options.EnrichWithHttpResponseMessage?.Invoke(activity, response);
-                    }
-                    catch (Exception ex)
-                    {
-                        GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
-                    }
                 }
             }
         }

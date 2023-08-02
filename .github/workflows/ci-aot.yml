@@ -1,0 +1,29 @@
+name: Publish AOTCompatibility testApp
+
+on:
+  push:
+    branches: [ 'main*' ]
+    paths-ignore:
+    - '**.md'
+  pull_request:
+    branches: [ 'main*' ]
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  aot-test:
+    strategy:
+      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
+      matrix:
+        os: [ windows-latest ]
+        version: [ net7.0 ]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # fetching all
+
+    - name: Read publish AOT testApp output and assert warning count
+      shell: pwsh
+      run: .\build\assert-publish-aot-testApp-warning-count.ps1
