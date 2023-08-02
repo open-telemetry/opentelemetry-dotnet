@@ -44,6 +44,42 @@ public static class OtlpLogExporterHelperExtensions
         Action<OtlpExporterOptions> configure)
         => AddOtlpExporterInternal(loggerOptions, configure);
 
+    /// <summary>
+    /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+    /// </summary>
+    /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+    /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
+    /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    public static OpenTelemetryLoggerOptions AddOtlpExporter(
+        this OpenTelemetryLoggerOptions loggerOptions,
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+    {
+        var exporterOptions = new OtlpExporterOptions();
+        var processorOptions = new LogRecordExportProcessorOptions();
+
+        configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
+
+        var otlpExporter = new OtlpLogExporter(exporterOptions);
+
+        if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
+        {
+            loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
+        }
+        else
+        {
+            var batchOptions = processorOptions.BatchExportProcessorOptions;
+
+            loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+                otlpExporter,
+                batchOptions.MaxQueueSize,
+                batchOptions.ScheduledDelayMilliseconds,
+                batchOptions.ExporterTimeoutMilliseconds,
+                batchOptions.MaxExportBatchSize));
+        }
+
+        return loggerOptions;
+    }
+
     private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
         OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions> configure)
