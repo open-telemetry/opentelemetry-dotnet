@@ -27,7 +27,12 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Stores attributes to be added to a log message.
 /// </summary>
-public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public
+#else
+internal
+#endif
+    struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;

@@ -21,7 +21,12 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Describes the severity level of a log record.
 /// </summary>
-public enum LogRecordSeverity
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public
+#else
+internal
+#endif
+    enum LogRecordSeverity
 {
     /// <summary>Unspecified severity (0).</summary>
     Unspecified = 0,

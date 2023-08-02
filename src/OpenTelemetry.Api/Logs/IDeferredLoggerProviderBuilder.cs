@@ -23,7 +23,12 @@ namespace OpenTelemetry.Logs;
 /// initialization using an <see cref="IServiceProvider"/> to perform
 /// dependency injection.
 /// </summary>
-public interface IDeferredLoggerProviderBuilder
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public
+#else
+internal
+#endif
+    interface IDeferredLoggerProviderBuilder
 {
     /// <summary>
     /// Register a callback action to configure the <see

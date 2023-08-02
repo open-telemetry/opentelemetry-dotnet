@@ -25,7 +25,12 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// LoggerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Logger"/>.
 /// </summary>
-public class LoggerProvider : BaseProvider
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public
+#else
+internal
+#endif
+    class LoggerProvider : BaseProvider
 {
     private static readonly NoopLogger NoopLogger = new();
 

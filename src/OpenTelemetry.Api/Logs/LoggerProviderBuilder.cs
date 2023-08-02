@@ -21,7 +21,12 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// LoggerProviderBuilder base class.
 /// </summary>
-public abstract class LoggerProviderBuilder
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public
+#else
+internal
+#endif
+    abstract class LoggerProviderBuilder
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="LoggerProviderBuilder"/> class.
