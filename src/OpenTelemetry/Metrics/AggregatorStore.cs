@@ -24,6 +24,8 @@ internal sealed class AggregatorStore
 {
     private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
     private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
+    private static bool emitOverflowAttribute;
+
     private readonly object lockZeroTags = new();
     private readonly HashSet<string> tagKeysInteresting;
     private readonly int tagsKeysInterestingCount;
@@ -44,6 +46,7 @@ internal sealed class AggregatorStore
     private readonly UpdateDoubleDelegate updateDoubleCallback;
     private readonly int maxMetricPoints;
     private readonly ExemplarFilter exemplarFilter;
+
     private int metricPointIndex = 0;
     private int batchSize = 0;
     private int metricCapHitMessageLogged;
@@ -80,6 +83,25 @@ internal sealed class AggregatorStore
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
             this.tagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
+        }
+
+        // If the switch is not set at all or if it's explicitly set to false
+        if (AppContext.TryGetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", out bool shouldEmitOverflowAttribute) == false ||
+            shouldEmitOverflowAttribute == false)
+        {
+            emitOverflowAttribute = false;
+        }
+        else if (this.maxMetricPoints > 1)
+        {
+            // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
+
+            emitOverflowAttribute = true;
+
+            // Setting this to as we would reserve the metricPoints[1] for overflow attribute.
+            // Newer attributes should be added starting at the index: 2
+            this.metricPointIndex = 1;
+
+            this.metricPoints[1] = new MetricPoint(this, this.aggType, new KeyValuePair<string, object>[] { new("otel.metric.overflow", true) }, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
         }
     }
 
@@ -329,12 +351,20 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsDefault(tags);
             if (index < 0)
             {
-                if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                if (emitOverflowAttribute)
                 {
-                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    this.metricPoints[1].Update(value);
+                    return;
                 }
+                else
+                {
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    }
 
-                return;
+                    return;
+                }
             }
 
             // TODO: can special case built-in filters to be bit faster.
@@ -361,12 +391,20 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsCustomTag(tags);
             if (index < 0)
             {
-                if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                if (emitOverflowAttribute)
                 {
-                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    this.metricPoints[1].Update(value);
+                    return;
                 }
+                else
+                {
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    }
 
-                return;
+                    return;
+                }
             }
 
             // TODO: can special case built-in filters to be bit faster.
@@ -393,12 +431,20 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsDefault(tags);
             if (index < 0)
             {
-                if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                if (emitOverflowAttribute)
                 {
-                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    this.metricPoints[1].Update(value);
+                    return;
                 }
+                else
+                {
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    }
 
-                return;
+                    return;
+                }
             }
 
             // TODO: can special case built-in filters to be bit faster.
@@ -425,12 +471,20 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsCustomTag(tags);
             if (index < 0)
             {
-                if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                if (emitOverflowAttribute)
                 {
-                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    this.metricPoints[1].Update(value);
+                    return;
                 }
+                else
+                {
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+                    }
 
-                return;
+                    return;
+                }
             }
 
             // TODO: can special case built-in filters to be bit faster.

@@ -1,4 +1,4 @@
-// <copyright file="MetricSnapshotTests.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricSnapshotTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,22 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class MetricSnapshotTests
+#pragma warning disable SA1402
+
+public abstract class MetricSnapshotTestsBase : IDisposable
 {
+    private readonly bool emitOverflowAttribute;
+
+    protected MetricSnapshotTestsBase(bool emitOverflowAttribute)
+    {
+        this.emitOverflowAttribute = emitOverflowAttribute;
+
+        if (emitOverflowAttribute)
+        {
+            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+        }
+    }
+
     [Fact]
     public void VerifySnapshot_Counter()
     {
@@ -53,7 +67,16 @@ public class MetricSnapshotTests
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
-        Assert.Single(snapshot1.MetricPoints);
+
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, snapshot1.MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(snapshot1.MetricPoints);
+        }
+
         Assert.Equal(10, snapshot1.MetricPoints[0].GetSumLong());
 
         // Verify Metric == Snapshot
@@ -87,7 +110,16 @@ public class MetricSnapshotTests
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-        Assert.Single(snapshot2.MetricPoints);
+
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, snapshot2.MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(snapshot2.MetricPoints);
+        }
+
         Assert.Equal(15, snapshot2.MetricPoints[0].GetSumLong());
     }
 
@@ -124,7 +156,16 @@ public class MetricSnapshotTests
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
-        Assert.Single(snapshot1.MetricPoints);
+
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, snapshot1.MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(snapshot1.MetricPoints);
+        }
+
         Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
         Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
         snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
@@ -174,7 +215,16 @@ public class MetricSnapshotTests
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-        Assert.Single(snapshot2.MetricPoints);
+
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, snapshot2.MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(snapshot2.MetricPoints);
+        }
+
         Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
         Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
         snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
@@ -214,18 +264,27 @@ public class MetricSnapshotTests
         metricPoint1.TryGetHistogramMinMaxValues(out var min, out var max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
-        AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
+        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
 
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
-        Assert.Single(snapshot1.MetricPoints);
+
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, snapshot1.MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(snapshot1.MetricPoints);
+        }
+
         Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
         Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
         snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
-        AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
+        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
 
         // Verify Metric == Snapshot
         Assert.Equal(metric1.Name, snapshot1.Name);
@@ -259,7 +318,7 @@ public class MetricSnapshotTests
         metricPoint1.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
-        AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint2.GetExponentialHistogramData());
+        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint2.GetExponentialHistogramData());
 
         // Verify Snapshot 1 after second export
         // This value is expected to be unchanged.
@@ -272,12 +331,42 @@ public class MetricSnapshotTests
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-        Assert.Single(snapshot2.MetricPoints);
+
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, snapshot2.MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(snapshot2.MetricPoints);
+        }
+
         Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
         Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
         snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
-        AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
+        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
+    }
+
+    public void Dispose()
+    {
+        AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+    }
+}
+
+public class MetricSnapshotTests : MetricSnapshotTestsBase
+{
+    public MetricSnapshotTests()
+        : base(false)
+    {
+    }
+}
+
+public class MetricSnapshotTestsWithOverflowAttribute : MetricSnapshotTestsBase
+{
+    public MetricSnapshotTestsWithOverflowAttribute()
+        : base(true)
+    {
     }
 }

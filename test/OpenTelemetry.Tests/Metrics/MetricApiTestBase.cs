@@ -1,4 +1,4 @@
-// <copyright file="MetricAPITest.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricApiTestBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Drawing.Drawing2D;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
@@ -24,7 +25,9 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class MetricApiTest : MetricTestsBase
+#pragma warning disable SA1402
+
+public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
 {
     private const int MaxTimeToAllowForFlush = 10000;
     private static readonly int NumberOfThreads = Environment.ProcessorCount;
@@ -32,10 +35,17 @@ public class MetricApiTest : MetricTestsBase
     private static readonly double DeltaDoubleValueUpdatedByEachCall = 11.987;
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
+    private readonly bool emitOverflowAttribute;
 
-    public MetricApiTest(ITestOutputHelper output)
+    protected MetricApiTestBase(ITestOutputHelper output, bool emitOverflowAttribute)
     {
         this.output = output;
+        this.emitOverflowAttribute = emitOverflowAttribute;
+
+        if (emitOverflowAttribute)
+        {
+            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+        }
     }
 
     [Fact]
@@ -61,14 +71,36 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
-        Assert.Equal(100, metricPoint.GetSumLong());
-        Assert.Equal(1, metricPoint.Tags.Count);
-        var tagEnumerator = metricPoint.Tags.GetEnumerator();
-        tagEnumerator.MoveNext();
-        Assert.Equal("tagWithNullValue", tagEnumerator.Current.Key);
-        Assert.Null(tagEnumerator.Current.Value);
+        if (this.emitOverflowAttribute)
+        {
+            // Cumulative metric export would always emit the metric overflow attribute first
+            Assert.Equal(2, metricPoints.Count);
+
+            var metricPoint = metricPoints[0];
+            Assert.Equal(0, metricPoint.GetSumLong());
+            Assert.Equal(1, metricPoint.Tags.Count);
+            Assert.Equal("otel.metric.overflow", metricPoint.Tags.KeyAndValues[0].Key);
+            Assert.Equal(true, metricPoint.Tags.KeyAndValues[0].Value);
+
+            metricPoint = metricPoints[1];
+            Assert.Equal(100, metricPoint.GetSumLong());
+            Assert.Equal(1, metricPoint.Tags.Count);
+            var tagEnumerator = metricPoint.Tags.GetEnumerator();
+            tagEnumerator.MoveNext();
+            Assert.Equal("tagWithNullValue", tagEnumerator.Current.Key);
+            Assert.Null(tagEnumerator.Current.Value);
+        }
+        else
+        {
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+            Assert.Equal(100, metricPoint.GetSumLong());
+            Assert.Equal(1, metricPoint.Tags.Count);
+            var tagEnumerator = metricPoint.Tags.GetEnumerator();
+            tagEnumerator.MoveNext();
+            Assert.Equal("tagWithNullValue", tagEnumerator.Current.Key);
+            Assert.Null(tagEnumerator.Current.Value);
+        }
     }
 
     [Fact]
@@ -94,10 +126,29 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
-        Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
-        Assert.True(metricPoint.Tags.Count > 0);
+        if (this.emitOverflowAttribute)
+        {
+            // Cumulative metric export would always emit the metric overflow attribute first
+            Assert.Equal(2, metricPoints.Count);
+
+            var metricPoint = metricPoints[0];
+            Assert.Equal(0, metricPoint.GetGaugeLastValueLong());
+            Assert.Equal(1, metricPoint.Tags.Count);
+            Assert.Equal("otel.metric.overflow", metricPoint.Tags.KeyAndValues[0].Key);
+            Assert.Equal(true, metricPoint.Tags.KeyAndValues[0].Value);
+
+            metricPoint = metricPoints[1];
+            Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
+            Assert.True(metricPoint.Tags.Count > 0);
+        }
+        else
+        {
+            Assert.Single(metricPoints);
+
+            var metricPoint = metricPoints[0];
+            Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
+            Assert.True(metricPoint.Tags.Count > 0);
+        }
     }
 
     [Fact]
@@ -115,7 +166,17 @@ public class MetricApiTest : MetricTestsBase
         meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new Exception("gauge read error"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
+
+        if (this.emitOverflowAttribute)
+        {
+            // The metric point for overflow attribute would be created even though `observeValues` throws an exception
+            Assert.Equal(2, exportedItems.Count);
+        }
+        else
+        {
+            Assert.Single(exportedItems);
+        }
+
         var metric = exportedItems[0];
         Assert.Equal("myGauge", metric.Name);
         List<MetricPoint> metricPoints = new List<MetricPoint>();
@@ -124,10 +185,29 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
-        Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
-        Assert.True(metricPoint.Tags.Count > 0);
+        if (this.emitOverflowAttribute)
+        {
+            // Cumulative metric export would always emit the metric overflow attribute first
+            Assert.Equal(2, metricPoints.Count);
+
+            var metricPoint = metricPoints[0];
+            Assert.Equal(0, metricPoint.GetGaugeLastValueLong());
+            Assert.Equal(1, metricPoint.Tags.Count);
+            Assert.Equal("otel.metric.overflow", metricPoint.Tags.KeyAndValues[0].Key);
+            Assert.Equal(true, metricPoint.Tags.KeyAndValues[0].Value);
+
+            metricPoint = metricPoints[1];
+            Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
+            Assert.True(metricPoint.Tags.Count > 0);
+        }
+        else
+        {
+            Assert.Single(metricPoints);
+
+            var metricPoint = metricPoints[0];
+            Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
+            Assert.True(metricPoint.Tags.Count > 0);
+        }
     }
 
     [Theory]
@@ -205,7 +285,16 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, metricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metricPoints);
+        }
+
+        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
         var metricPoint1 = metricPoints[0];
         Assert.Equal(30, metricPoint1.GetSumLong());
     }
@@ -242,17 +331,27 @@ public class MetricApiTest : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
-        Assert.Equal(10, metricPoint1.GetSumLong());
-
         List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, metric1MetricPoints.Count);
+            Assert.Equal(2, metric2MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metric1MetricPoints);
+            Assert.Single(metric2MetricPoints);
+        }
+
+        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
+        var metricPoint1 = metric1MetricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(20, metricPoint2.GetSumLong());
     }
@@ -289,17 +388,27 @@ public class MetricApiTest : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
-        Assert.Equal(10, metricPoint1.GetSumLong());
-
         List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, metric1MetricPoints.Count);
+            Assert.Equal(2, metric2MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metric1MetricPoints);
+            Assert.Single(metric2MetricPoints);
+        }
+
+        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
+        var metricPoint1 = metric1MetricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(20, metricPoint2.GetSumLong());
     }
@@ -334,17 +443,27 @@ public class MetricApiTest : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
-        Assert.Equal(10, metricPoint1.GetSumLong());
-
         List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, metric1MetricPoints.Count);
+            Assert.Equal(2, metric2MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metric1MetricPoints);
+            Assert.Single(metric2MetricPoints);
+        }
+
+        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
+        var metricPoint1 = metric1MetricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(20D, metricPoint2.GetSumDouble());
     }
@@ -379,17 +498,27 @@ public class MetricApiTest : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
-        Assert.Equal(10, metricPoint1.GetSumLong());
-
         List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric2.GetMetricPoints())
         {
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, metric1MetricPoints.Count);
+            Assert.Equal(2, metric2MetricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metric1MetricPoints);
+            Assert.Single(metric2MetricPoints);
+        }
+
+        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
+        var metricPoint1 = metric1MetricPoints[0];
+        Assert.Equal(10, metricPoint1.GetSumLong());
+
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(1, metricPoint2.GetHistogramCount());
         Assert.Equal(20D, metricPoint2.GetHistogramSum());
@@ -752,17 +881,27 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Equal(3, metricPoints.Count);
+        int offsetForOverflowAttribute = 0;
 
-        var metricPoint1 = metricPoints[0];
+        if (this.emitOverflowAttribute && exportDelta == false)
+        {
+            Assert.Equal(4, metricPoints.Count);
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(3, metricPoints.Count);
+        }
+
+        var metricPoint1 = metricPoints[offsetForOverflowAttribute + 0];
         Assert.Equal(10, metricPoint1.GetSumLong());
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
-        var metricPoint2 = metricPoints[1];
+        var metricPoint2 = metricPoints[offsetForOverflowAttribute + 1];
         Assert.Equal(10, metricPoint2.GetSumLong());
         ValidateMetricPointTags(tags2, metricPoint2.Tags);
 
-        var metricPoint3 = metricPoints[2];
+        var metricPoint3 = metricPoints[offsetForOverflowAttribute + 2];
         Assert.Equal(10, metricPoint3.GetSumLong());
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
 
@@ -778,17 +917,25 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Equal(3, metricPoints.Count);
+        if (this.emitOverflowAttribute && exportDelta == false)
+        {
+            Assert.Equal(4, metricPoints.Count);
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(3, metricPoints.Count);
+        }
 
-        metricPoint1 = metricPoints[0];
+        metricPoint1 = metricPoints[offsetForOverflowAttribute + 0];
         Assert.Equal(exportDelta ? 0 : 10, metricPoint1.GetSumLong());
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
-        metricPoint2 = metricPoints[1];
+        metricPoint2 = metricPoints[offsetForOverflowAttribute + 1];
         Assert.Equal(exportDelta ? 0 : 10, metricPoint2.GetSumLong());
         ValidateMetricPointTags(tags2, metricPoint2.Tags);
 
-        metricPoint3 = metricPoints[2];
+        metricPoint3 = metricPoints[offsetForOverflowAttribute + 2];
         Assert.Equal(exportDelta ? 0 : 10, metricPoint3.GetSumLong());
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
     }
@@ -1036,17 +1183,29 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Equal(3, metricPoints.Count);
+        int offsetForOverflowAttribute = 0;
 
-        var metricPoint1 = metricPoints[0];
+        // No need to check specifically if the exporter temporality is Delta or Cumulative.
+        // ObservableUpDownCounter always uses Cumulative AggregationTemporality.
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(4, metricPoints.Count);
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(3, metricPoints.Count);
+        }
+
+        var metricPoint1 = metricPoints[offsetForOverflowAttribute + 0];
         Assert.Equal(10, metricPoint1.GetSumLong());
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
-        var metricPoint2 = metricPoints[1];
+        var metricPoint2 = metricPoints[offsetForOverflowAttribute + 1];
         Assert.Equal(10, metricPoint2.GetSumLong());
         ValidateMetricPointTags(tags2, metricPoint2.Tags);
 
-        var metricPoint3 = metricPoints[2];
+        var metricPoint3 = metricPoints[offsetForOverflowAttribute + 2];
         Assert.Equal(10, metricPoint3.GetSumLong());
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
 
@@ -1062,18 +1221,26 @@ public class MetricApiTest : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Equal(3, metricPoints.Count);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(4, metricPoints.Count);
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(3, metricPoints.Count);
+        }
 
         // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
-        metricPoint1 = metricPoints[0];
+        metricPoint1 = metricPoints[offsetForOverflowAttribute + 0];
         Assert.Equal(10, metricPoint1.GetSumLong());
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
-        metricPoint2 = metricPoints[1];
+        metricPoint2 = metricPoints[offsetForOverflowAttribute + 1];
         Assert.Equal(10, metricPoint2.GetSumLong());
         ValidateMetricPointTags(tags2, metricPoint2.Tags);
 
-        metricPoint3 = metricPoints[2];
+        metricPoint3 = metricPoints[offsetForOverflowAttribute + 2];
         Assert.Equal(10, metricPoint3.GetSumLong());
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
     }
@@ -1134,11 +1301,22 @@ public class MetricApiTest : MetricTestsBase
             new("Key6", "Value3"),
         };
 
-        Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+        int offsetForOverflowAttribute = 0;
+
+        if (this.emitOverflowAttribute && exportDelta == false)
+        {
+            Assert.Equal(5, GetNumberOfMetricPoints(exportedItems));
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+        }
+
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, offsetForOverflowAttribute + 1);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, offsetForOverflowAttribute + 2);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, offsetForOverflowAttribute + 3);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, offsetForOverflowAttribute + 4);
         long sumReceived = GetLongSum(exportedItems);
         Assert.Equal(75, sumReceived);
 
@@ -1153,11 +1331,20 @@ public class MetricApiTest : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+        if (this.emitOverflowAttribute && exportDelta == false)
+        {
+            Assert.Equal(5, GetNumberOfMetricPoints(exportedItems));
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+        }
+
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, offsetForOverflowAttribute + 1);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, offsetForOverflowAttribute + 2);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, offsetForOverflowAttribute + 3);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, offsetForOverflowAttribute + 4);
         sumReceived = GetLongSum(exportedItems);
         if (exportDelta)
         {
@@ -1225,11 +1412,22 @@ public class MetricApiTest : MetricTestsBase
             new("Key6", "Value3"),
         };
 
-        Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+        int offsetForOverflowAttribute = 0;
+
+        if (this.emitOverflowAttribute && exportDelta == false)
+        {
+            Assert.Equal(5, GetNumberOfMetricPoints(exportedItems));
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+        }
+
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, offsetForOverflowAttribute + 1);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, offsetForOverflowAttribute + 2);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, offsetForOverflowAttribute + 3);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, offsetForOverflowAttribute + 4);
         long sumReceived = GetLongSum(exportedItems);
         Assert.Equal(75, sumReceived);
 
@@ -1244,11 +1442,20 @@ public class MetricApiTest : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
-        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+        if (this.emitOverflowAttribute && exportDelta == false)
+        {
+            Assert.Equal(5, GetNumberOfMetricPoints(exportedItems));
+            offsetForOverflowAttribute = 1;
+        }
+        else
+        {
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+        }
+
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, offsetForOverflowAttribute + 1);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, offsetForOverflowAttribute + 2);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, offsetForOverflowAttribute + 3);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, offsetForOverflowAttribute + 4);
         sumReceived = GetLongSum(exportedItems);
         if (exportDelta)
         {
@@ -1518,6 +1725,11 @@ public class MetricApiTest : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
+    public void Dispose()
+    {
+        AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+    }
+
     private static void CounterUpdateThread<T>(object obj)
         where T : struct, IComparable
     {
@@ -1668,11 +1880,14 @@ public class MetricApiTest : MetricTestsBase
 
         metricReader.Collect();
 
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+
         foreach (var metric in metrics)
         {
             foreach (var metricPoint in metric.GetMetricPoints())
             {
                 bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
+                break;
             }
         }
 
@@ -1687,5 +1902,21 @@ public class MetricApiTest : MetricTestsBase
         public int ThreadsStartedCount;
         public Instrument<T> Instrument;
         public T[] ValuesToRecord;
+    }
+}
+
+public class MetricApiTest : MetricApiTestBase
+{
+    public MetricApiTest(ITestOutputHelper output)
+        : base(output, false)
+    {
+    }
+}
+
+public class MetricApiTestWithOverflowAttribute : MetricApiTestBase
+{
+    public MetricApiTestWithOverflowAttribute(ITestOutputHelper output)
+        : base(output, true)
+    {
     }
 }

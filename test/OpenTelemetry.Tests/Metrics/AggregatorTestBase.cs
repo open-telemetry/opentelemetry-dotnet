@@ -1,4 +1,4 @@
-// <copyright file="AggregatorTest.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregatorTestBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,27 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class AggregatorTest
+#pragma warning disable SA1402
+
+public abstract class AggregatorTestBase : IDisposable
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
+
     private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
+    private readonly bool emitOverflowAttribute;
+
+    protected AggregatorTestBase(bool emitOverflowAttribute)
+    {
+        this.emitOverflowAttribute = emitOverflowAttribute;
+
+        if (emitOverflowAttribute)
+        {
+            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+        }
+    }
 
     [Fact]
     public void HistogramDistributeToAllBucketsDefault()
@@ -224,6 +238,11 @@ public class AggregatorTest
         Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
     }
 
+    public void Dispose()
+    {
+        AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+    }
+
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
     {
         Assert.Equal(expectedHistogram.Scale, data.Scale);
@@ -307,7 +326,15 @@ public class AggregatorTest
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
+        if (this.emitOverflowAttribute && aggregationTemporality == AggregationTemporality.Cumulative)
+        {
+            Assert.Equal(2, metricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metricPoints);
+        }
+
         var metricPoint = metricPoints[0];
 
         var count = metricPoint.GetHistogramCount();
@@ -404,7 +431,15 @@ public class AggregatorTest
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
+        if (this.emitOverflowAttribute)
+        {
+            Assert.Equal(2, metricPoints.Count);
+        }
+        else
+        {
+            Assert.Single(metricPoints);
+        }
+
         var metricPoint = metricPoints[0];
 
         // After a single measurement there will not have been a scale down.
@@ -461,5 +496,21 @@ public class AggregatorTest
         public int ThreadStartedCount;
         public long ThreadsFinishedAllUpdatesCount;
         public double SumOfDelta;
+    }
+}
+
+public class AggregatorTests : AggregatorTestBase
+{
+    public AggregatorTests()
+        : base(false)
+    {
+    }
+}
+
+public class AggregatorTestsWithOverflowAttribute : AggregatorTestBase
+{
+    public AggregatorTestsWithOverflowAttribute()
+        : base(true)
+    {
     }
 }
