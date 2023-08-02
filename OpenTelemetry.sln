@@ -41,6 +41,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
 		build\PreBuild.ps1 = build\PreBuild.ps1
 		build\process-codecoverage.ps1 = build\process-codecoverage.ps1
+		build\assert-publish-aot-testApp-warning-count.ps1 = build\assert-publish-aot-testApp-warning-count.ps1
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
 		build\xunit.runner.json = build\xunit.runner.json
@@ -94,6 +95,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\apicompatibility.yml = .github\workflows\apicompatibility.yml
+		.github\workflows\ci-aot.yml = .github\workflows\ci-aot.yml
 		.github\workflows\ci-md.yml = .github\workflows\ci-md.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml
@@ -238,8 +240,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore", "test\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "redaction", "docs\logs\redaction\redaction.csproj", "{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.csproj", "{7263001A-49F8-4C3C-AAA8-998F12DAAF64}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Console.Tests", "test\OpenTelemetry.Exporter.Console.Tests\OpenTelemetry.Exporter.Console.Tests.csproj", "{011E70E1-152A-47BB-AF83-12DD12B125ED}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.ProviderBuilderExtensions", "src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj", "{171A87CB-393C-4296-913F-E704CD8CEAE9}"
@@ -256,11 +256,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail-based-sampling-example
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "stratified-sampling-example", "docs\trace\stratified-sampling-example\stratified-sampling-example.csproj", "{9C99621C-343E-479C-A943-332DB6129B71}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.Tests", "test\OpenTelemetry.Api.Tests\OpenTelemetry.Api.Tests.csproj", "{FD8433F4-EDCF-475C-9B4A-625D3DE11671}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AotCompatibility.TestApp", "test\OpenTelemetry.AotCompatibility.TestApp\OpenTelemetry.AotCompatibility.TestApp.csproj", "{13A59BD9-9475-4991-B74D-7C20F1C63409}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.AotCompatibility.Tests", "test\OpenTelemetry.AotCompatibility.Tests\OpenTelemetry.AotCompatibility.Tests.csproj", "{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-sampler", "docs\trace\links-based-sampler\links-sampler.csproj", "{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}"
 EndProject
@@ -282,13 +278,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\StatusHelper.cs = src\Shared\StatusHelper.cs
 		src\Shared\TagAndValueTransformer.cs = src\Shared\TagAndValueTransformer.cs
 		src\Shared\TagTransformer.cs = src\Shared\TagTransformer.cs
+		src\Shared\TagTransformerJsonHelper.cs = src\Shared\TagTransformerJsonHelper.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiagnosticSourceInstrumentation", "DiagnosticSourceInstrumentation", "{28F3EC79-660C-4659-8B73-F90DC1173316}"
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceListener.cs
 		src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs = src\Shared\DiagnosticSourceInstrumentation\DiagnosticSourceSubscriber.cs
-		src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs = src\Shared\DiagnosticSourceInstrumentation\InstrumentationEventSource.cs
 		src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs = src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs
 		src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs = src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs
 	EndProjectSection
@@ -551,10 +547,6 @@ Global
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2DF46DE-50D7-4887-8C9D-4BD79CA19FAA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7263001A-49F8-4C3C-AAA8-998F12DAAF64}.Release|Any CPU.Build.0 = Release|Any CPU
 		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{011E70E1-152A-47BB-AF83-12DD12B125ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -587,18 +579,10 @@ Global
 		{9C99621C-343E-479C-A943-332DB6129B71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C99621C-343E-479C-A943-332DB6129B71}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FD8433F4-EDCF-475C-9B4A-625D3DE11671}.Release|Any CPU.Build.0 = Release|Any CPU
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13A59BD9-9475-4991-B74D-7C20F1C63409}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D438EF9C-7959-47A0-B2A2-DEBFCDC2A8DC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.ActiveCfg = Release|Any CPU

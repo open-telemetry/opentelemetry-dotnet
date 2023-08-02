@@ -11,16 +11,28 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  otlp/tls:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:5317
+        tls:
+          cert_file: /cfg/otel-collector.crt
+          key_file: /cfg/otel-collector.key
+      http:
+        endpoint: 0.0.0.0:5318
+        tls:
+          cert_file: /cfg/otel-collector.crt
+          key_file: /cfg/otel-collector.key
 
 exporters:
   logging:
-    loglevel: debug
+    verbosity: detailed
 
 service:
   pipelines:
     traces:
-      receivers: [otlp]
+      receivers: [otlp, otlp/tls]
       exporters: [logging]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, otlp/tls]
       exporters: [logging]

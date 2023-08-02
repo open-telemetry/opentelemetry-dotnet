@@ -52,15 +52,17 @@ public sealed class IntegrationTests : IDisposable
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Simple, false)]
     [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple, true)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Simple, true)]
+    [InlineData(OtlpExportProtocol.Grpc, ":5317", ExportProcessorType.Simple, true, "https")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/traces", ExportProcessorType.Simple, true, "https")]
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush)
+    public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush, string scheme = "http")
     {
         using EventWaitHandle handle = new ManualResetEvent(false);
 
         var exporterOptions = new OtlpExporterOptions
         {
-            Endpoint = new Uri($"http://{CollectorHostname}{endpoint}"),
+            Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
             Protocol = protocol,
             ExportProcessorType = exportProcessorType,
             BatchExportProcessorOptions = new()
@@ -133,15 +135,17 @@ public sealed class IntegrationTests : IDisposable
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true, false)]
     [InlineData(OtlpExportProtocol.Grpc, ":4317", true, true)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true, true)]
+    [InlineData(OtlpExportProtocol.Grpc, ":5317", true, true, "https")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/metrics", true, true, "https")]
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void MetricExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool useManualExport, bool forceFlush)
+    public void MetricExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool useManualExport, bool forceFlush, string scheme = "http")
     {
         using EventWaitHandle handle = new ManualResetEvent(false);
 
         var exporterOptions = new OtlpExporterOptions
         {
-            Endpoint = new Uri($"http://{CollectorHostname}{endpoint}"),
+            Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
             Protocol = protocol,
         };
 

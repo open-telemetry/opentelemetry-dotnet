@@ -16,30 +16,29 @@
 
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus;
+
+/// <summary>
+/// Prometheus exporter options.
+/// </summary>
+internal sealed class PrometheusExporterOptions
 {
+    private int scrapeResponseCacheDurationMilliseconds = 300;
+
     /// <summary>
-    /// Prometheus exporter options.
+    /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
     /// </summary>
-    internal sealed class PrometheusExporterOptions
+    /// <remarks>
+    /// Note: Specify 0 to disable response caching.
+    /// </remarks>
+    public int ScrapeResponseCacheDurationMilliseconds
     {
-        private int scrapeResponseCacheDurationMilliseconds = 300;
-
-        /// <summary>
-        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
-        /// </summary>
-        /// <remarks>
-        /// Note: Specify 0 to disable response caching.
-        /// </remarks>
-        public int ScrapeResponseCacheDurationMilliseconds
+        get => this.scrapeResponseCacheDurationMilliseconds;
+        set
         {
-            get => this.scrapeResponseCacheDurationMilliseconds;
-            set
-            {
-                Guard.ThrowIfOutOfRange(value, min: 0);
+            Guard.ThrowIfOutOfRange(value, min: 0);
 
-                this.scrapeResponseCacheDurationMilliseconds = value;
-            }
+            this.scrapeResponseCacheDurationMilliseconds = value;
         }
     }
 }
