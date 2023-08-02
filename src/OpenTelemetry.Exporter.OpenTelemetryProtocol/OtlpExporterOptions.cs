@@ -16,7 +16,9 @@
 
 using System.Diagnostics;
 using System.Reflection;
+#if NET6_0_OR_GREATER
 using System.Security.Cryptography.X509Certificates;
+#endif
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
