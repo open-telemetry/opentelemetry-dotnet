@@ -92,8 +92,7 @@
 
   <!--PublicApi Analyzer-->
   <ItemGroup>
-    <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.Unshipped.txt" Condition="'$(ExposeExperimentalFeatures)' != 'true'" />
+    <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
     <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.Unshipped.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
     <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
     <None Include=".publicApi\**\PublicAPI.*.txt" />
