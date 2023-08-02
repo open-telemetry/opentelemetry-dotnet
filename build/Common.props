@@ -10,7 +10,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
-    <ExposeExperimentalFeatures>true</ExposeExperimentalFeatures>
+    <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
