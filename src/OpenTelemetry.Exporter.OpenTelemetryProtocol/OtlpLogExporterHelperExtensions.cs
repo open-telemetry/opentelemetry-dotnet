@@ -58,6 +58,31 @@ public static class OtlpLogExporterHelperExtensions
 
         configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
+        return AddOtlpLogExporterInternal(
+             loggerOptions,
+             exporterOptions: exporterOptions,
+             processorOptions: processorOptions);
+    }
+
+    private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
+        OpenTelemetryLoggerOptions loggerOptions,
+        Action<OtlpExporterOptions> configure)
+    {
+        var exporterOptions = new OtlpExporterOptions();
+
+        configure?.Invoke(exporterOptions);
+
+        return AddOtlpLogExporterInternal(
+            loggerOptions,
+            exporterOptions: exporterOptions,
+            processorOptions: new());
+    }
+
+    private static OpenTelemetryLoggerOptions AddOtlpLogExporterInternal(
+        OpenTelemetryLoggerOptions loggerOptions,
+        OtlpExporterOptions exporterOptions,
+        LogRecordExportProcessorOptions processorOptions)
+    {
         var otlpExporter = new OtlpLogExporter(exporterOptions);
 
         if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
@@ -75,28 +100,6 @@ public static class OtlpLogExporterHelperExtensions
                 batchOptions.ExporterTimeoutMilliseconds,
                 batchOptions.MaxExportBatchSize));
         }
-
-        return loggerOptions;
-    }
-
-    private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
-        OpenTelemetryLoggerOptions loggerOptions,
-        Action<OtlpExporterOptions> configure)
-    {
-        var exporterOptions = new OtlpExporterOptions();
-
-        configure?.Invoke(exporterOptions);
-
-        var otlpExporter = new OtlpLogExporter(exporterOptions);
-
-        var batchOptions = new BatchExportLogRecordProcessorOptions();
-
-        loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
-            otlpExporter,
-            batchOptions.MaxQueueSize,
-            batchOptions.ScheduledDelayMilliseconds,
-            batchOptions.ExporterTimeoutMilliseconds,
-            batchOptions.MaxExportBatchSize));
 
         return loggerOptions;
     }

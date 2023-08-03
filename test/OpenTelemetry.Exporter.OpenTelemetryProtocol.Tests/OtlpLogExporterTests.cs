@@ -1150,13 +1150,16 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal(5000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
     }
 
-    [Fact]
-    public void AddOtlpLogExporterLogRecordProcessorOptionsTest()
+    [Theory]
+    [InlineData(ExportProcessorType.Simple)]
+    [InlineData(ExportProcessorType.Batch)]
+    public void AddOtlpLogExporterLogRecordProcessorOptionsTest(ExportProcessorType processorType)
     {
         var options = new OpenTelemetryLoggerOptions();
 
         options.AddOtlpExporter((o, l) =>
         {
+            l.ExportProcessorType = processorType;
             l.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = 1000 };
         });
 
@@ -1164,13 +1167,22 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         Assert.Single(processors);
 
-        var batchProcesor = processors[0] as BatchLogRecordExportProcessor;
+        if (processorType == ExportProcessorType.Batch)
+        {
+            var batchProcesor = processors[0] as BatchLogRecordExportProcessor;
 
-        Assert.NotNull(batchProcesor);
+            Assert.NotNull(batchProcesor);
 
-        var batchProcessorType = typeof(BatchExportProcessor<LogRecord>);
+            var batchProcessorType = typeof(BatchExportProcessor<LogRecord>);
 
-        Assert.Equal(1000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
+            Assert.Equal(1000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
+        }
+        else
+        {
+            var simpleProcesor = processors[0] as SimpleLogRecordExportProcessor;
+
+            Assert.NotNull(simpleProcesor);
+        }
     }
 
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
