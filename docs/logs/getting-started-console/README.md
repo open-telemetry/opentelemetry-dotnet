@@ -1,4 +1,4 @@
-# Getting Started with OpenTelemetry .NET Logs in 5 Minutes
+# Getting Started with OpenTelemetry .NET Logs in 5 Minutes - Console Application
 
 First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
@@ -31,34 +31,41 @@ package:
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
+Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
+files to the project folder.
 
 Run the application again (using `dotnet run`) and you should see the log output
 on the console.
 
 ```text
-LogRecord.Timestamp:               2023-01-21T00:33:08.1467491Z
-LogRecord.CategoryName:            GettingStarted.Program
-LogRecord.LogLevel:                Information
-LogRecord.State (Key:Value):
-    name: tomato
-    price: 2.99
-    OriginalFormat (a.k.a Body): Hello from {name} {price}.
-LogRecord.EventId:                 123
+LogRecord.Timestamp:               2023-08-03T20:54:42.1933237Z
+LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Severity:                Info
+LogRecord.SeverityText:            Information
+LogRecord.FormattedMessage:        Food `artichoke` price changed to `9.99`.
+LogRecord.Body:                    Food `{name}` price changed to `{price}`.
+LogRecord.Attributes (Key:Value):
+    name: artichoke
+    price: 9.99
+    OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
+LogRecord.EventId:                 1
+LogRecord.EventName:               FoodPriceChanged
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
 
 What does the above program do?
 
-The program creates a
+The program has a
 [`LoggerFactory`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.iloggerfactory)
 with OpenTelemetry added as a
 [LoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
 This `LoggerFactory` is used to create an
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-instance, which is then used to do the logging. The log is sent to the
-`OpenTelemetryLoggerProvider`, which is configured to export logs to
+instance, which is then used to do the logging. [Compile-time logging source
+  generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+was to achieve structured logging and better performance. The logs are sent to
+the `OpenTelemetryLoggerProvider`, which is configured to export logs to
 `ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
 
 > **Note**
@@ -76,6 +83,7 @@ application.
 
 ## Learn more
 
-* [Compile-time logging source generation](../source-generation/README.md)
+* [Compile-time logging source
+  generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
 * [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
 * [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)
