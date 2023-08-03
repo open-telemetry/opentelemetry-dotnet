@@ -38,7 +38,7 @@ Run the application again (using `dotnet run`) and you should see the log output
 on the console.
 
 ```text
-LogRecord.Timestamp:               2023-08-03T20:54:42.1933237Z
+LogRecord.Timestamp:               2023-08-03T22:53:51.0194130Z
 LogRecord.CategoryName:            SourceGeneration.Program
 LogRecord.Severity:                Info
 LogRecord.SeverityText:            Information
@@ -50,6 +50,34 @@ LogRecord.Attributes (Key:Value):
     OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
 LogRecord.EventId:                 1
 LogRecord.EventName:               FoodPriceChanged
+
+Resource associated with LogRecord:
+telemetry.sdk.name: opentelemetry
+telemetry.sdk.language: dotnet
+telemetry.sdk.version: 1.6.0-alpha.1.55
+service.name: unknown_service:getting-started
+
+LogRecord.Timestamp:               2023-08-03T22:53:51.0403466Z
+LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Severity:                Fatal
+LogRecord.SeverityText:            Critical
+LogRecord.FormattedMessage:        A `Food & Beverages` recall notice was published for `Contoso Salads` produced by `Contoso Fresh Vegetables, Inc.` (due to a possible health risk from Listeria monocytogenes).
+LogRecord.Body:                    A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
+LogRecord.Attributes (Key:Value):
+    brandName: Contoso
+    productDescription: Salads
+    productType: Food & Beverages
+    recallReasonDescription: due to a possible health risk from Listeria monocytogenes
+    companyName: Contoso Fresh Vegetables, Inc.
+    OriginalFormat (a.k.a Body): A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
+LogRecord.EventId:                 2
+LogRecord.EventName:               FoodRecallNotice
+
+Resource associated with LogRecord:
+telemetry.sdk.name: opentelemetry
+telemetry.sdk.language: dotnet
+telemetry.sdk.version: 1.6.0-alpha.1.55
+service.name: unknown_service:getting-started
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
