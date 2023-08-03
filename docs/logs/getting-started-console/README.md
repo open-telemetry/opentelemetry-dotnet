@@ -64,7 +64,7 @@ This `LoggerFactory` is used to create an
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
 instance, which is then used to do the logging. [Compile-time logging source
   generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
-was to achieve structured logging and better performance. The logs are sent to
+is used to achieve structured logging and better performance. The logs are sent to
 the `OpenTelemetryLoggerProvider`, which is configured to export logs to
 `ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
 
