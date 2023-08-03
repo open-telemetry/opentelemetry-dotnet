@@ -39,10 +39,10 @@ repo.
 
 If you are new here, please read the getting started docs:
 
-* logs: [Console](./docs/logs/getting-started-console/README.md)
-* metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
+* Logs: [Console](./docs/logs/getting-started-console/README.md)
+* Metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
   [Console](./docs/metrics/getting-started-console/README.md)
-* traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
+* Traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
   [Console](./docs/trace/getting-started-console/README.md)
 
 This repository includes multiple installable components, available on
