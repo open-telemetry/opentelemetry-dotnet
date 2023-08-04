@@ -7,6 +7,7 @@ foreach ($line in $($publishOutput -split "`r`n"))
 {
     if ($line -like "*analysis warning IL*") 
     {
+        Write-Host $line
         $actualWarningCount += 1
     }
 }
