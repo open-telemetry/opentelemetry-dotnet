@@ -38,9 +38,15 @@ public static class OpenTelemetryLoggingExtensions
     /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library
-    /// authors. Only a single <see cref="OpenTelemetryLoggerProvider"/>
-    /// will be created for a given <see cref="IServiceCollection"/>.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
+    /// for a given <see cref="IServiceCollection"/>.</item>
+    /// <item><see cref="IServiceCollection"/> / <see cref="IServiceProvider"/>
+    /// features (DI, Options, IConfiguration, etc.) are not available when
+    /// using <see cref="ILoggingBuilder"/>.</item>
+    /// </list>
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
