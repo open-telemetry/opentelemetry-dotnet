@@ -29,12 +29,9 @@ public abstract class AggregatorTestBase : IDisposable
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
     private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
-    private readonly bool emitOverflowAttribute;
 
     protected AggregatorTestBase(bool emitOverflowAttribute)
     {
-        this.emitOverflowAttribute = emitOverflowAttribute;
-
         if (emitOverflowAttribute)
         {
             AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
@@ -326,14 +323,7 @@ public abstract class AggregatorTestBase : IDisposable
             metricPoints.Add(mp);
         }
 
-        if (this.emitOverflowAttribute && aggregationTemporality == AggregationTemporality.Cumulative)
-        {
-            Assert.Equal(2, metricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(metricPoints);
-        }
+        Assert.Single(metricPoints);
 
         var metricPoint = metricPoints[0];
 
@@ -431,14 +421,7 @@ public abstract class AggregatorTestBase : IDisposable
             metricPoints.Add(mp);
         }
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, metricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(metricPoints);
-        }
+        Assert.Single(metricPoints);
 
         var metricPoint = metricPoints[0];
 

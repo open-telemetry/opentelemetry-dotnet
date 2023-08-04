@@ -27,6 +27,7 @@ internal sealed class AggregatorStore
     private static bool emitOverflowAttribute;
 
     private readonly object lockZeroTags = new();
+    private readonly object lockOverflowTag = new();
     private readonly HashSet<string> tagKeysInteresting;
     private readonly int tagsKeysInterestingCount;
 
@@ -51,6 +52,7 @@ internal sealed class AggregatorStore
     private int batchSize = 0;
     private int metricCapHitMessageLogged;
     private bool zeroTagMetricPointInitialized;
+    private bool overflowTagMetricPointInitialized;
 
     internal AggregatorStore(
         MetricStreamIdentity metricStreamIdentity,
@@ -100,8 +102,6 @@ internal sealed class AggregatorStore
             // Setting this to as we would reserve the metricPoints[1] for overflow attribute.
             // Newer attributes should be added starting at the index: 2
             this.metricPointIndex = 1;
-
-            this.metricPoints[1] = new MetricPoint(this, this.aggType, new KeyValuePair<string, object>[] { new("otel.metric.overflow", true) }, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
         }
     }
 
@@ -214,6 +214,22 @@ internal sealed class AggregatorStore
                 {
                     this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                     this.zeroTagMetricPointInitialized = true;
+                }
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void InitializeOverflowTagPointIfNotInitialized()
+    {
+        if (!this.overflowTagMetricPointInitialized)
+        {
+            lock (this.lockOverflowTag)
+            {
+                if (!this.overflowTagMetricPointInitialized)
+                {
+                    this.metricPoints[1] = new MetricPoint(this, this.aggType, new KeyValuePair<string, object>[] { new("otel.metric.overflow", true) }, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                    this.overflowTagMetricPointInitialized = true;
                 }
             }
         }
@@ -353,6 +369,7 @@ internal sealed class AggregatorStore
             {
                 if (emitOverflowAttribute)
                 {
+                    this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
                     return;
                 }
@@ -393,6 +410,7 @@ internal sealed class AggregatorStore
             {
                 if (emitOverflowAttribute)
                 {
+                    this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
                     return;
                 }
@@ -433,6 +451,7 @@ internal sealed class AggregatorStore
             {
                 if (emitOverflowAttribute)
                 {
+                    this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
                     return;
                 }
@@ -473,6 +492,7 @@ internal sealed class AggregatorStore
             {
                 if (emitOverflowAttribute)
                 {
+                    this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
                     return;
                 }

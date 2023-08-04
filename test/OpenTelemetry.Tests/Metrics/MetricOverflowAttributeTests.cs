@@ -69,16 +69,7 @@ public class MetricOverflowAttributeTests
             MetricPoint overflowMetricPoint;
 
             // We still have not exceeded the max MetricPoint limit
-            if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
-            {
-                Assert.DoesNotContain(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
-            }
-            else
-            {
-                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
-                Assert.Equal(true, overflowMetricPoint.Tags.KeyAndValues[0].Value);
-                Assert.Equal(0, overflowMetricPoint.GetSumLong()); // No recording should have been made for the overflow attribute at this point
-            }
+            Assert.DoesNotContain(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
 
             exportedItems.Clear();
             metricPoints.Clear();
@@ -175,17 +166,7 @@ public class MetricOverflowAttributeTests
             MetricPoint overflowMetricPoint;
 
             // We still have not exceeded the max MetricPoint limit
-            if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
-            {
-                Assert.DoesNotContain(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
-            }
-            else
-            {
-                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
-                Assert.Equal(true, overflowMetricPoint.Tags.KeyAndValues[0].Value);
-                Assert.Equal(0, overflowMetricPoint.GetHistogramSum()); // No recording should have been made for the overflow attribute at this point
-                Assert.Equal(0, overflowMetricPoint.GetHistogramCount());
-            }
+            Assert.DoesNotContain(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
 
             exportedItems.Clear();
             metricPoints.Clear();

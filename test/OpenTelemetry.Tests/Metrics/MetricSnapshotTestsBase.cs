@@ -26,12 +26,8 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public abstract class MetricSnapshotTestsBase : IDisposable
 {
-    private readonly bool emitOverflowAttribute;
-
     protected MetricSnapshotTestsBase(bool emitOverflowAttribute)
     {
-        this.emitOverflowAttribute = emitOverflowAttribute;
-
         if (emitOverflowAttribute)
         {
             AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
@@ -68,14 +64,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, snapshot1.MetricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(snapshot1.MetricPoints);
-        }
+        Assert.Single(snapshot1.MetricPoints);
 
         Assert.Equal(10, snapshot1.MetricPoints[0].GetSumLong());
 
@@ -111,14 +100,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, snapshot2.MetricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(snapshot2.MetricPoints);
-        }
+        Assert.Single(snapshot2.MetricPoints);
 
         Assert.Equal(15, snapshot2.MetricPoints[0].GetSumLong());
     }
@@ -157,14 +139,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, snapshot1.MetricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(snapshot1.MetricPoints);
-        }
+        Assert.Single(snapshot1.MetricPoints);
 
         Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
         Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
@@ -216,14 +191,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, snapshot2.MetricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(snapshot2.MetricPoints);
-        }
+        Assert.Single(snapshot2.MetricPoints);
 
         Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
         Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
@@ -270,14 +238,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, snapshot1.MetricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(snapshot1.MetricPoints);
-        }
+        Assert.Single(snapshot1.MetricPoints);
 
         Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
         Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
@@ -332,14 +293,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
 
-        if (this.emitOverflowAttribute)
-        {
-            Assert.Equal(2, snapshot2.MetricPoints.Count);
-        }
-        else
-        {
-            Assert.Single(snapshot2.MetricPoints);
-        }
+        Assert.Single(snapshot2.MetricPoints);
 
         Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
         Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
