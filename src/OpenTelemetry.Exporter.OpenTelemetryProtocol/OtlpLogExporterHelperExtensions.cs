@@ -24,7 +24,7 @@ namespace OpenTelemetry.Logs;
 public static class OtlpLogExporterHelperExtensions
 {
     /// <summary>
-    /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+    /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="AddOtlpExporter(OpenTelemetryLoggerOptions, Action{OtlpExporterOptions})" path="/remarks"/></remarks>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
@@ -33,7 +33,7 @@ public static class OtlpLogExporterHelperExtensions
         => AddOtlpExporterInternal(loggerOptions, configure: null);
 
     /// <summary>
-    /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+    /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
     /// </summary>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
@@ -44,7 +44,7 @@ public static class OtlpLogExporterHelperExtensions
         => AddOtlpExporterInternal(loggerOptions, configure);
 
     /// <summary>
-    /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+    /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
     /// </summary>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
