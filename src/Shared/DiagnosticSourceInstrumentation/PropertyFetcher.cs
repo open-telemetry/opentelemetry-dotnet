@@ -156,9 +156,7 @@ internal sealed class PropertyFetcher<T>
         //    since PropertyFetcher is used with it.
         // 2. Then, the declared object type was passed as a generic parameter to a generic method on PropertyFetcher<T> (or nested type.)
         //    Therefore, calling into MakeGenericMethod will only require specifying one parameter - the declared object type.
-        //    The declared object type is guaranteed to be a reference type (throw on value type.)
-        //
-        // Thus, MakeGenericMethod is AOT compatible.
+        //    The declared object type is guaranteed to be a reference type (throw on value type.) Thus, MakeGenericMethod is AOT compatible.
         private static PropertyFetch CreateInstantiated<TDeclaredObject>(PropertyInfo propertyInfo)
             where TDeclaredObject : class
             => new PropertyFetchInstantiated<TDeclaredObject>(propertyInfo);
