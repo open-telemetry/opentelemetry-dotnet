@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Text.Json;
 #if NET6_0_OR_GREATER
 using System.Text.Json.Serialization;
