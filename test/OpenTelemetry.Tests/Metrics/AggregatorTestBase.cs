@@ -324,7 +324,6 @@ public abstract class AggregatorTestBase : IDisposable
         }
 
         Assert.Single(metricPoints);
-
         var metricPoint = metricPoints[0];
 
         var count = metricPoint.GetHistogramCount();
@@ -422,7 +421,6 @@ public abstract class AggregatorTestBase : IDisposable
         }
 
         Assert.Single(metricPoints);
-
         var metricPoint = metricPoints[0];
 
         // After a single measurement there will not have been a scale down.

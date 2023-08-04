@@ -63,9 +63,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
-
         Assert.Single(snapshot1.MetricPoints);
-
         Assert.Equal(10, snapshot1.MetricPoints[0].GetSumLong());
 
         // Verify Metric == Snapshot
@@ -138,9 +136,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
-
         Assert.Single(snapshot1.MetricPoints);
-
         Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
         Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
         snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
@@ -190,9 +186,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-
         Assert.Single(snapshot2.MetricPoints);
-
         Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
         Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
         snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
@@ -237,9 +231,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
         var snapshot1 = exportedSnapshots[0];
-
         Assert.Single(snapshot1.MetricPoints);
-
         Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
         Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
         snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
@@ -292,9 +284,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-
         Assert.Single(snapshot2.MetricPoints);
-
         Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
         Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
         snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);

@@ -95,11 +95,9 @@ internal sealed class AggregatorStore
         }
         else if (this.maxMetricPoints > 1)
         {
-            // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
-
             emitOverflowAttribute = true;
 
-            // Setting this to as we would reserve the metricPoints[1] for overflow attribute.
+            // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
             // Newer attributes should be added starting at the index: 2
             this.metricPointIndex = 1;
         }

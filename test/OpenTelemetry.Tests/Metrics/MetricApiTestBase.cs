@@ -102,7 +102,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metricPoints);
-
         var metricPoint = metricPoints[0];
         Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
         Assert.True(metricPoint.Tags.Count > 0);
@@ -123,9 +122,7 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new Exception("gauge read error"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
         Assert.Single(exportedItems);
-
         var metric = exportedItems[0];
         Assert.Equal("myGauge", metric.Name);
         List<MetricPoint> metricPoints = new List<MetricPoint>();
@@ -135,7 +132,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metricPoints);
-
         var metricPoint = metricPoints[0];
         Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
         Assert.True(metricPoint.Tags.Count > 0);
@@ -217,8 +213,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metricPoints);
-
-        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
         var metricPoint1 = metricPoints[0];
         Assert.Equal(30, metricPoint1.GetSumLong());
     }
@@ -256,8 +250,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric1MetricPoints);
-
-        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
@@ -268,7 +260,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric2MetricPoints);
-
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(20, metricPoint2.GetSumLong());
     }
@@ -306,8 +297,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric1MetricPoints);
-
-        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
@@ -318,7 +307,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric2MetricPoints);
-
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(20, metricPoint2.GetSumLong());
     }
@@ -354,8 +342,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric1MetricPoints);
-
-        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
@@ -366,7 +352,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric2MetricPoints);
-
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(20D, metricPoint2.GetSumDouble());
     }
@@ -402,8 +387,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric1MetricPoints);
-
-        // 1st MetricPoint is reserved for zero-tags. In this test, the metrics are emitted with zero tags.
         var metricPoint1 = metric1MetricPoints[0];
         Assert.Equal(10, metricPoint1.GetSumLong());
 
@@ -414,7 +397,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         }
 
         Assert.Single(metric2MetricPoints);
-
         var metricPoint2 = metric2MetricPoints[0];
         Assert.Equal(1, metricPoint2.GetHistogramCount());
         Assert.Equal(20D, metricPoint2.GetHistogramSum());
@@ -1160,7 +1142,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         };
 
         Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
@@ -1180,7 +1161,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
@@ -1253,7 +1233,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         };
 
         Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
@@ -1273,7 +1252,6 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
-
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
         CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
@@ -1702,14 +1680,11 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
 
         metricReader.Collect();
 
-        List<MetricPoint> metricPoints = new List<MetricPoint>();
-
         foreach (var metric in metrics)
         {
             foreach (var metricPoint in metric.GetMetricPoints())
             {
                 bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
-                break;
             }
         }
 
