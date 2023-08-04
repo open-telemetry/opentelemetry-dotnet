@@ -15,7 +15,7 @@
 
   // Setup MeterProvider
   ```
-  
+
   ([#4737](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4737))
 
 ## 1.6.0-alpha.1
