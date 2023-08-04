@@ -161,8 +161,10 @@ internal sealed class PropertyFetcher<T>
             where TDeclaredObject : class
             => new PropertyFetchInstantiated<TDeclaredObject>(propertyInfo);
 
-        // 1. ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
-        // 2. CreateDelegate is not AOT compatible if any of the types (DeclaringType, property or T) is a value type.
+        // ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("AOT", "IL2109", Justification = "The code guarantees that TDeclaredObject is a reference type.")]
+#endif
         private sealed class PropertyFetchInstantiated<TDeclaredObject> : PropertyFetch
             where TDeclaredObject : class
         {
@@ -176,6 +178,9 @@ internal sealed class PropertyFetcher<T>
                 this.propertyFetch = (Func<TDeclaredObject, T>)property.GetMethod!.CreateDelegate(typeof(Func<TDeclaredObject, T>));
             }
 
+#if NET6_0_OR_GREATER
+            [RequiresUnreferencedCode(TrimCompatibilityMessage)]
+#endif
             public override bool TryFetch(object obj, out T value)
             {
                 if (obj is TDeclaredObject o)
