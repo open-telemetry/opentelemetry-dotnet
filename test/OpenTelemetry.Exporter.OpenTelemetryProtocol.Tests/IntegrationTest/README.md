@@ -7,7 +7,7 @@ Run the following command from the root of the repository to run the
 integration tests locally:
 
 ```shell
-docker-compose \
+docker compose \
     --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml \
     --project-directory=. \
     up \
