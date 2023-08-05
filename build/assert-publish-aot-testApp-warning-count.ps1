@@ -12,17 +12,19 @@ foreach ($line in $($publishOutput -split "`r`n"))
     }
 }
 
-
 pushd $rootDirectory\test\OpenTelemetry.AotCompatibility.TestApp/bin/Debug/net7.0/linux-x64
-Dir -Recurse . | Get-Childitem -Name
-
 chmod +x ./OpenTelemetry.AotCompatibility.TestApp
 chmod 777 ./OpenTelemetry.AotCompatibility.TestApp
-Write-Host "Execute test App"
+
+Write-Host "Executing test App..."
 ./OpenTelemetry.AotCompatibility.TestApp
 Write-Host "Finished executing test App"
-Write-Host "LastExitCode is:", $LastExitCode
-Write-Host "Exit without error", $?
+
+if ($LastExitCode -ne 0)
+{
+  Write-Host "There was an error while executing AotCompatibility Test App. LastExitCode is:", $LastExitCode
+}
+
 popd
 
 Write-Host "Actual warning count is:", $actualWarningCount
