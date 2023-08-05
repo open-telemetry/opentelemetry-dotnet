@@ -53,11 +53,11 @@ internal sealed class PropertyFetcher<T>
 #if NET6_0_OR_GREATER
     [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
-    public bool TryFetch(object obj, out T value, bool skipObjNullCheck = false)
+    public bool TryFetch(object obj, out T? value, bool skipObjNullCheck = false)
     {
         if (!skipObjNullCheck && obj == null)
         {
-            value = default!;
+            value = default;
             return false;
         }
 
@@ -68,11 +68,11 @@ internal sealed class PropertyFetcher<T>
 
         if (this.innerFetcher == null)
         {
-            value = default!;
+            value = default;
             return false;
         }
 
-        return this.innerFetcher.TryFetch(obj, out value);
+        return this.innerFetcher.TryFetch(obj, out value!);
     }
 
     // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
@@ -133,9 +133,9 @@ internal sealed class PropertyFetcher<T>
             }
         }
 
-        public virtual bool TryFetch(object obj, out T value)
+        public virtual bool TryFetch(object obj, out T? value)
         {
-            value = default!;
+            value = default;
             return false;
         }
 
@@ -164,6 +164,7 @@ internal sealed class PropertyFetcher<T>
         // ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
 #if NET6_0_OR_GREATER
         [UnconditionalSuppressMessage("AOT", "IL2109", Justification = "The code guarantees that TDeclaredObject is a reference type.")]
+        [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
         private sealed class PropertyFetchInstantiated<TDeclaredObject> : PropertyFetch
             where TDeclaredObject : class
@@ -178,10 +179,7 @@ internal sealed class PropertyFetcher<T>
                 this.propertyFetch = (Func<TDeclaredObject, T>)property.GetMethod!.CreateDelegate(typeof(Func<TDeclaredObject, T>));
             }
 
-#if NET6_0_OR_GREATER
-            [RequiresUnreferencedCode(TrimCompatibilityMessage)]
-#endif
-            public override bool TryFetch(object obj, out T value)
+            public override bool TryFetch(object obj, out T? value)
             {
                 if (obj is TDeclaredObject o)
                 {
@@ -193,11 +191,11 @@ internal sealed class PropertyFetcher<T>
 
                 if (this.innerFetcher == null)
                 {
-                    value = default!;
+                    value = default;
                     return false;
                 }
 
-                return this.innerFetcher.TryFetch(obj, out value);
+                return this.innerFetcher.TryFetch(obj, out value!);
             }
         }
     }
