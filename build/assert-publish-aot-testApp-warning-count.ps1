@@ -12,6 +12,10 @@ foreach ($line in $($publishOutput -split "`r`n"))
     }
 }
 
+Write-Host $pwd
+Write-Host "files: "
+Dir -Recurse . | Get-Childitem
+
 Write-Host "Actual warning count is:", $actualWarningCount
 $expectedWarningCount = 28
 
