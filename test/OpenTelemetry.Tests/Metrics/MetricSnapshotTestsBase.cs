@@ -30,7 +30,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
     {
         if (emitOverflowAttribute)
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, "true");
         }
     }
 
@@ -226,7 +226,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         metricPoint1.TryGetHistogramMinMaxValues(out var min, out var max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
-        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
+        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
 
         // Verify Snapshot 1
         Assert.Single(exportedSnapshots);
@@ -237,7 +237,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
-        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
+        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
 
         // Verify Metric == Snapshot
         Assert.Equal(metric1.Name, snapshot1.Name);
@@ -271,7 +271,7 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         metricPoint1.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
-        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint2.GetExponentialHistogramData());
+        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint2.GetExponentialHistogramData());
 
         // Verify Snapshot 1 after second export
         // This value is expected to be unchanged.
@@ -290,12 +290,12 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
-        AggregatorTestBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
+        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
     }
 
     public void Dispose()
     {
-        AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+        Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
     }
 }
 

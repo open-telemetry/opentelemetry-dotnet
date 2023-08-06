@@ -1,4 +1,4 @@
-// <copyright file="AggregatorTestBase.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregatorTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,21 +21,24 @@ namespace OpenTelemetry.Metrics.Tests;
 
 #pragma warning disable SA1402
 
-public abstract class AggregatorTestBase : IDisposable
+public abstract class AggregatorTestsBase
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
-    private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
+    private readonly bool emitOverflowAttribute;
+    private readonly AggregatorStore aggregatorStore;
 
-    protected AggregatorTestBase(bool emitOverflowAttribute)
+    protected AggregatorTestsBase(bool emitOverflowAttribute)
     {
         if (emitOverflowAttribute)
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+            this.emitOverflowAttribute = emitOverflowAttribute;
         }
+
+        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute);
     }
 
     [Fact]
@@ -235,11 +238,6 @@ public abstract class AggregatorTestBase : IDisposable
         Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
     }
 
-    public void Dispose()
-    {
-        AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
-    }
-
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
     {
         Assert.Equal(expectedHistogram.Scale, data.Scale);
@@ -300,6 +298,7 @@ public abstract class AggregatorTestBase : IDisposable
             aggregationType,
             aggregationTemporality,
             maxMetricPoints: 1024,
+            this.emitOverflowAttribute,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
@@ -407,7 +406,8 @@ public abstract class AggregatorTestBase : IDisposable
             metricStreamIdentity,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
-            maxMetricPoints: 1024);
+            maxMetricPoints: 1024,
+            this.emitOverflowAttribute);
 
         aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
 
@@ -480,7 +480,7 @@ public abstract class AggregatorTestBase : IDisposable
     }
 }
 
-public class AggregatorTests : AggregatorTestBase
+public class AggregatorTests : AggregatorTestsBase
 {
     public AggregatorTests()
         : base(false)
@@ -488,7 +488,7 @@ public class AggregatorTests : AggregatorTestBase
     }
 }
 
-public class AggregatorTestsWithOverflowAttribute : AggregatorTestBase
+public class AggregatorTestsWithOverflowAttribute : AggregatorTestsBase
 {
     public AggregatorTestsWithOverflowAttribute()
         : base(true)

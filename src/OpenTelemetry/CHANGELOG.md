@@ -3,9 +3,9 @@
 ## Unreleased
 
 * **Experimental Feature** Added an opt-in feature to aggregate any metric
-  measurements that were dropped due to reaching the max MetricPoints limit.
+  measurements that were dropped due to reaching the [max MetricPoints limit](https://github.com/open-telemetry/opentelemetry-dotnet/tree/core-1.6.0-alpha.1/docs/metrics/customizing-the-sdk).
   When this feature is enabled, SDK would aggregate such measurements using a
-  reserved MetricPoint with a single tag with key as `otel.metric.overflow` amd
+  reserved MetricPoint with a single tag with key as `otel.metric.overflow` and
   value as `true`. The feature is turned-off by default. You can enable it by
   setting the `AppContext` switch: `OTel.Dotnet.EmitMetricOverflowAttribute`
   before setting up the `MeterProvider`.

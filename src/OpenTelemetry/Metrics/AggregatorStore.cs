@@ -22,9 +22,8 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
-    private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
+    private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
     private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
-    private static bool emitOverflowAttribute;
 
     private readonly object lockZeroTags = new();
     private readonly object lockOverflowTag = new();
@@ -46,6 +45,7 @@ internal sealed class AggregatorStore
     private readonly UpdateLongDelegate updateLongCallback;
     private readonly UpdateDoubleDelegate updateDoubleCallback;
     private readonly int maxMetricPoints;
+    private readonly bool emitOverflowAttribute;
     private readonly ExemplarFilter exemplarFilter;
 
     private int metricPointIndex = 0;
@@ -59,6 +59,7 @@ internal sealed class AggregatorStore
         AggregationType aggType,
         AggregationTemporality temporality,
         int maxMetricPoints,
+        bool emitOverflowAttribute,
         ExemplarFilter exemplarFilter = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
@@ -87,16 +88,10 @@ internal sealed class AggregatorStore
             this.tagsKeysInterestingCount = hs.Count;
         }
 
-        // If the switch is not set at all or if it's explicitly set to false
-        if (AppContext.TryGetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", out bool shouldEmitOverflowAttribute) == false ||
-            shouldEmitOverflowAttribute == false)
-        {
-            emitOverflowAttribute = false;
-        }
-        else if (this.maxMetricPoints > 1)
-        {
-            emitOverflowAttribute = true;
+        this.emitOverflowAttribute = emitOverflowAttribute;
 
+        if (emitOverflowAttribute)
+        {
             // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
             // Newer attributes should be added starting at the index: 2
             this.metricPointIndex = 1;
@@ -365,7 +360,7 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsDefault(tags);
             if (index < 0)
             {
-                if (emitOverflowAttribute)
+                if (this.emitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
@@ -406,7 +401,7 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsCustomTag(tags);
             if (index < 0)
             {
-                if (emitOverflowAttribute)
+                if (this.emitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
@@ -447,7 +442,7 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsDefault(tags);
             if (index < 0)
             {
-                if (emitOverflowAttribute)
+                if (this.emitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);
@@ -488,7 +483,7 @@ internal sealed class AggregatorStore
             var index = this.FindMetricAggregatorsCustomTag(tags);
             if (index < 0)
             {
-                if (emitOverflowAttribute)
+                if (this.emitOverflowAttribute)
                 {
                     this.InitializeOverflowTagPointIfNotInitialized();
                     this.metricPoints[1].Update(value);

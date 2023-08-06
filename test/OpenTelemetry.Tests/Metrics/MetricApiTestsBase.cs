@@ -1,4 +1,4 @@
-// <copyright file="MetricApiTestBase.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricApiTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics.Tests;
 
 #pragma warning disable SA1402
 
-public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
+public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 {
     private const int MaxTimeToAllowForFlush = 10000;
     private static readonly int NumberOfThreads = Environment.ProcessorCount;
@@ -35,13 +35,13 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
-    protected MetricApiTestBase(ITestOutputHelper output, bool emitOverflowAttribute)
+    protected MetricApiTestsBase(ITestOutputHelper output, bool emitOverflowAttribute)
     {
         this.output = output;
 
         if (emitOverflowAttribute)
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+            Environment.SetEnvironmentVariable(EmitOverFlowAttributeConfigKey, "true");
         }
     }
 
@@ -1527,7 +1527,7 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
 
     public void Dispose()
     {
-        AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+        Environment.SetEnvironmentVariable(EmitOverFlowAttributeConfigKey, null);
     }
 
     private static void CounterUpdateThread<T>(object obj)
@@ -1702,7 +1702,7 @@ public abstract class MetricApiTestBase : MetricTestsBase, IDisposable
     }
 }
 
-public class MetricApiTest : MetricApiTestBase
+public class MetricApiTest : MetricApiTestsBase
 {
     public MetricApiTest(ITestOutputHelper output)
         : base(output, false)
@@ -1710,7 +1710,7 @@ public class MetricApiTest : MetricApiTestBase
     }
 }
 
-public class MetricApiTestWithOverflowAttribute : MetricApiTestBase
+public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
 {
     public MetricApiTestWithOverflowAttribute(ITestOutputHelper output)
         : base(output, true)

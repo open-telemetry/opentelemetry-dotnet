@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -23,13 +26,140 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricOverflowAttributeTests
 {
     [Theory]
+    [InlineData("false", false)]
+    [InlineData("False", false)]
+    [InlineData("FALSE", false)]
+    [InlineData("true", true)]
+    [InlineData("True", true)]
+    [InlineData("TRUE", true)]
+    public void TestEmitOverflowAttributeConfigWithEnvVar(string value, bool isEmitOverflowAttributeKeySet)
+    {
+        try
+        {
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, value);
+
+            var exportedItems = new List<Metric>();
+
+            var meter = new Meter(Utils.GetCurrentMethodName());
+            var counter = meter.CreateCounter<long>("TestCounter");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            counter.Add(10);
+
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+
+            var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
+            var emitOverflowAttribute = (bool)typeof(AggregatorStore).GetField("emitOverflowAttribute", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
+
+            Assert.Equal(isEmitOverflowAttributeKeySet, emitOverflowAttribute);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
+        }
+    }
+
+    [Theory]
+    [InlineData("false", false)]
+    [InlineData("False", false)]
+    [InlineData("FALSE", false)]
+    [InlineData("true", true)]
+    [InlineData("True", true)]
+    [InlineData("TRUE", true)]
+    public void TestEmitOverflowAttributeConfigWithOtherConfigProvider(string value, bool isEmitOverflowAttributeKeySet)
+    {
+        try
+        {
+            var exportedItems = new List<Metric>();
+
+            var meter = new Meter(Utils.GetCurrentMethodName());
+            var counter = meter.CreateCounter<long>("TestCounter");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .ConfigureServices(services =>
+                {
+                    var configuration = new ConfigurationBuilder()
+                    .AddInMemoryCollection(new Dictionary<string, string> { [MetricTestsBase.EmitOverFlowAttributeConfigKey] = value })
+                    .Build();
+
+                    services.AddSingleton<IConfiguration>(configuration);
+                })
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            counter.Add(10);
+
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+
+            var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
+            var emitOverflowAttribute = (bool)typeof(AggregatorStore).GetField("emitOverflowAttribute", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
+
+            Assert.Equal(isEmitOverflowAttributeKeySet, emitOverflowAttribute);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
+        }
+    }
+
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(2, true)]
+    [InlineData(10, true)]
+    public void EmitOverflowAttributeIsOnlySetWhenMaxMetricPointsIsGreaterThanOne(int maxMetricPoints, bool isEmitOverflowAttributeKeySet)
+    {
+        try
+        {
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, "true");
+
+            var exportedItems = new List<Metric>();
+
+            var meter = new Meter(Utils.GetCurrentMethodName());
+            var counter = meter.CreateCounter<long>("TestCounter");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .SetMaxMetricPointsPerMetricStream(maxMetricPoints)
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            counter.Add(10);
+
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+
+            var aggregatorStore = typeof(Metric).GetField("aggStore", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(metric) as AggregatorStore;
+            var emitOverflowAttribute = (bool)typeof(AggregatorStore).GetField("emitOverflowAttribute", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(aggregatorStore);
+
+            Assert.Equal(isEmitOverflowAttributeKeySet, emitOverflowAttribute);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
+        }
+    }
+
+    [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     public void MetricOverflowAttributeIsRecordedCorrectlyForCounter(MetricReaderTemporalityPreference temporalityPreference)
     {
         try
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, "true");
 
             var exportedItems = new List<Metric>();
 
@@ -85,6 +215,7 @@ public class MetricOverflowAttributeTests
 
             overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
             Assert.Equal(true, overflowMetricPoint.Tags.KeyAndValues[0].Value);
+            Assert.Equal(1, overflowMetricPoint.Tags.Count);
             Assert.Equal(5, overflowMetricPoint.GetSumLong());
 
             exportedItems.Clear();
@@ -112,10 +243,37 @@ public class MetricOverflowAttributeTests
             {
                 Assert.Equal(255, overflowMetricPoint.GetSumLong()); // 5 + (50 * 5)
             }
+
+            exportedItems.Clear();
+            metricPoints.Clear();
+
+            // Test that the SDK continues to correctly aggregate the previously registered measurements even after overflow has occurred
+            counter.Add(15, new KeyValuePair<string, object>("Key", 0));
+
+            meterProvider.ForceFlush();
+            metric = exportedItems[0];
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            var metricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "Key" && (int)mp.Tags.KeyAndValues[0].Value == 0);
+
+            if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
+            {
+                Assert.Equal(15, metricPoint.GetSumLong());
+            }
+            else
+            {
+                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+
+                Assert.Equal(25, metricPoint.GetSumLong()); // 10 + 15
+                Assert.Equal(255, overflowMetricPoint.GetSumLong());
+            }
         }
         finally
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
         }
     }
 
@@ -126,7 +284,7 @@ public class MetricOverflowAttributeTests
     {
         try
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", true);
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, "true");
 
             var exportedItems = new List<Metric>();
 
@@ -182,8 +340,8 @@ public class MetricOverflowAttributeTests
 
             overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
             Assert.Equal(true, overflowMetricPoint.Tags.KeyAndValues[0].Value);
-            Assert.Equal(5, overflowMetricPoint.GetHistogramSum());
             Assert.Equal(1, overflowMetricPoint.GetHistogramCount());
+            Assert.Equal(5, overflowMetricPoint.GetHistogramSum());
 
             exportedItems.Clear();
             metricPoints.Clear();
@@ -204,18 +362,48 @@ public class MetricOverflowAttributeTests
             overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
             if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
             {
-                Assert.Equal(250, overflowMetricPoint.GetHistogramSum()); // 50 * 5
                 Assert.Equal(50, overflowMetricPoint.GetHistogramCount());
+                Assert.Equal(250, overflowMetricPoint.GetHistogramSum()); // 50 * 5
             }
             else
             {
-                Assert.Equal(255, overflowMetricPoint.GetHistogramSum()); // 5 + (50 * 5)
                 Assert.Equal(51, overflowMetricPoint.GetHistogramCount());
+                Assert.Equal(255, overflowMetricPoint.GetHistogramSum()); // 5 + (50 * 5)
+            }
+
+            exportedItems.Clear();
+            metricPoints.Clear();
+
+            // Test that the SDK continues to correctly aggregate the previously registered measurements even after overflow has occurred
+            histogram.Record(15, new KeyValuePair<string, object>("Key", 0));
+
+            meterProvider.ForceFlush();
+            metric = exportedItems[0];
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            var metricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "Key" && (int)mp.Tags.KeyAndValues[0].Value == 0);
+
+            if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
+            {
+                Assert.Equal(1, metricPoint.GetHistogramCount());
+                Assert.Equal(15, metricPoint.GetHistogramSum());
+            }
+            else
+            {
+                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+
+                Assert.Equal(2, metricPoint.GetHistogramCount());
+                Assert.Equal(25, metricPoint.GetHistogramSum()); // 10 + 15
+
+                Assert.Equal(255, overflowMetricPoint.GetHistogramSum());
             }
         }
         finally
         {
-            AppContext.SetSwitch("OTel.Dotnet.EmitMetricOverflowAttribute", false);
+            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
         }
     }
 }
