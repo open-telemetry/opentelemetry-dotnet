@@ -52,7 +52,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         state.RegisterProvider(this);
 
         var config = serviceProvider!.GetRequiredService<IConfiguration>();
-        bool isEmitOverflowAttributeKeySet = config.GetValue(EmitOverFlowAttributeConfigKey, defaultValue: false);
+        _ = config.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out bool isEmitOverflowAttributeKeySet);
 
         this.ServiceProvider = serviceProvider!;
 
