@@ -13,8 +13,6 @@ foreach ($line in $($publishOutput -split "`r`n"))
 }
 
 pushd $rootDirectory\test\OpenTelemetry.AotCompatibility.TestApp/bin/Debug/net7.0/linux-x64
-chmod +x ./OpenTelemetry.AotCompatibility.TestApp
-chmod 777 ./OpenTelemetry.AotCompatibility.TestApp
 
 Write-Host "Executing test App..."
 ./OpenTelemetry.AotCompatibility.TestApp
