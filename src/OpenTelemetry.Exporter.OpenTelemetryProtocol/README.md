@@ -105,7 +105,7 @@ TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch. **Note**: This option is
-  only applicable in case of trace exporter.
+  only applicable to trace exporter.
 
 * `Protocol`: OTLP transport protocol. Supported values:
   `OtlpExportProtocol.Grpc` and `OtlpExportProtocol.HttpProtobuf`.
