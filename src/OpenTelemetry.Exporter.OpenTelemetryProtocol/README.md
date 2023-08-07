@@ -155,7 +155,7 @@ specification](https://github.com/open-telemetry/opentelemetry-specification/blo
 | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                    |
 
 The following environment variables can be used to override the default values
-for `BatchExportProcessorOptions` in case of `trace` exporter (following the
+for `BatchExportProcessorOptions` in case of `log` exporter (following the
 [OpenTelemetry
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor))
 
