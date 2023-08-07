@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
 namespace OpenTelemetry.Instrumentation.SqlClient;
