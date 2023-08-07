@@ -143,7 +143,7 @@ values of the `OtlpExporterOptions`
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
 
 The following environment variables can be used to override the default values
-for `BatchExportProcessorOptions` in case of `trace` exporter (following the
+for `BatchExportProcessorOptions` in case of `OtlpTraceExporter` (following the
 [OpenTelemetry
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-span-processor))
 
