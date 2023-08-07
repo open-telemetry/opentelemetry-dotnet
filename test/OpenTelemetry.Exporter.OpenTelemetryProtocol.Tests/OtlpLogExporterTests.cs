@@ -267,7 +267,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
 
         // Event
-        Assert.Contains("Id", otlpLogRecordAttributes);
+        Assert.Contains("dotnet.ilogger.event_id", otlpLogRecordAttributes);
         Assert.Contains("10", otlpLogRecordAttributes);
 
         logRecords.Clear();
@@ -283,9 +283,9 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
 
         // Event
-        Assert.Contains("Id", otlpLogRecordAttributes);
+        Assert.Contains("dotnet.ilogger.event_id", otlpLogRecordAttributes);
         Assert.Contains("10", otlpLogRecordAttributes);
-        Assert.Contains("Name", otlpLogRecordAttributes);
+        Assert.Contains("dotnet.ilogger.event_name", otlpLogRecordAttributes);
         Assert.Contains("MyEvent10", otlpLogRecordAttributes);
     }
 

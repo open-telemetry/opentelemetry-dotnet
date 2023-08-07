@@ -95,12 +95,12 @@ internal static class LogRecordExtensions
 
             if (logRecord.EventId.Id != default)
             {
-                otlpLogRecord.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id, attributeCountLimit);
+                otlpLogRecord.AddIntAttribute("dotnet.ilogger.event_id", logRecord.EventId.Id, attributeCountLimit);
             }
 
             if (!string.IsNullOrEmpty(logRecord.EventId.Name))
             {
-                otlpLogRecord.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                otlpLogRecord.AddStringAttribute("dotnet.ilogger.event_name", logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
             }
 
             if (logRecord.Exception != null)
