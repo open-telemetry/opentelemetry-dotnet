@@ -18,18 +18,18 @@
 
 using System.Diagnostics;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Stores details about a log message.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 public
 #else
+/// <summary>
+/// Stores details about a log message.
+/// </summary>
 internal
 #endif
     struct LogRecordData

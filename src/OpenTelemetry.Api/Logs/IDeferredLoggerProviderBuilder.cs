@@ -16,20 +16,22 @@
 
 #nullable enable
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Describes a logger provider builder that supports deferred
 /// initialization using an <see cref="IServiceProvider"/> to perform
 /// dependency injection.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 public
 #else
+/// <summary>
+/// Describes a logger provider builder that supports deferred
+/// initialization using an <see cref="IServiceProvider"/> to perform
+/// dependency injection.
+/// </summary>
 internal
 #endif
     interface IDeferredLoggerProviderBuilder

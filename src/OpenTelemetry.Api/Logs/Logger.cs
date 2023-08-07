@@ -16,18 +16,18 @@
 
 #nullable enable
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Logger is the class responsible for creating log records.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
 public
 #else
+/// <summary>
+/// Logger is the class responsible for creating log records.
+/// </summary>
 internal
 #endif
     abstract class Logger

@@ -16,18 +16,18 @@
 
 #nullable enable
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 public
 #else
+/// <summary>
+/// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
+/// </summary>
 internal
 #endif
     static class LogRecordSeverityExtensions

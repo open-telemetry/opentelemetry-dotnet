@@ -16,18 +16,18 @@
 
 #nullable enable
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Describes the severity level of a log record.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 public
 #else
+/// <summary>
+/// Describes the severity level of a log record.
+/// </summary>
 internal
 #endif
     enum LogRecordSeverity

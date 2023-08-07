@@ -16,18 +16,18 @@
 
 #nullable enable
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// LoggerProviderBuilder base class.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 public
 #else
+/// <summary>
+/// LoggerProviderBuilder base class.
+/// </summary>
 internal
 #endif
     abstract class LoggerProviderBuilder

@@ -20,18 +20,18 @@
 using System.Diagnostics.CodeAnalysis;
 #endif
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-namespace OpenTelemetry.Logs.Experimental;
-#else
 namespace OpenTelemetry.Logs;
-#endif
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// LoggerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Logger"/>.
 /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 public
 #else
+/// <summary>
+/// LoggerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Logger"/>.
+/// </summary>
 internal
 #endif
     class LoggerProvider : BaseProvider
