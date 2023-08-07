@@ -147,24 +147,24 @@ for `BatchExportProcessorOptions` in case of `OtlpTraceExporter` (following the
 [OpenTelemetry
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-span-processor))
 
-| Environment variable             | `BatchExportProcessorOptions` property  |
-| ---------------------------------| ----------------------------------------|
-| `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`            |
-| `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`           |
-| `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                          |
-| `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                    |
+| Environment variable             | `OtlpExporterOptions.BatchExportProcessorOptions` property  |
+| ---------------------------------| ------------------------------------------------------------|
+| `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                |
+| `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                               |
+| `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                              |
+| `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                        |
 
 The following environment variables can be used to override the default values
 for `BatchExportProcessorOptions` in case of `OtlpLogExporter` (following the
 [OpenTelemetry
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor))
 
-| Environment variable              | `BatchExportProcessorOptions` property  |
-| ----------------------------------| ----------------------------------------|
-| `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`            |
-| `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`           |
-| `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                          |
-| `OTEL_BLRP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                    |
+| Environment variable              | `LogRecordExportProcessorOptions.BatchExportProcessorOptions` property  |
+| ----------------------------------| ------------------------------------------------------------------------|
+| `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                            |
+| `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                                           |
+| `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                                          |
+| `OTEL_BLRP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                                    |
 
 The following environment variables can be used to override the default
 values of the `PeriodicExportingMetricReaderOptions`
