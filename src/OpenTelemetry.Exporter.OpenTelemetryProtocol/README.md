@@ -100,7 +100,7 @@ TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
   exporting
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
-  The default is Batch. **Note**: This option is only applicable in case of
+  The default is Batch. **Note**: This option is only applicable to
   trace exporter.
 
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
