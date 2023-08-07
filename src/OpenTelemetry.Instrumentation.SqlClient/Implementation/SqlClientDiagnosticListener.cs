@@ -16,10 +16,10 @@
 #if !NETFRAMEWORK
 using System.Data;
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
