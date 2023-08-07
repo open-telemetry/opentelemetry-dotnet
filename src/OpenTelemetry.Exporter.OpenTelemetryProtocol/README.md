@@ -159,8 +159,8 @@ for `BatchExportProcessorOptions` in case of `log` exporter (following the
 [OpenTelemetry
 specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor))
 
-| Environment variable             | `BatchExportProcessorOptions` property   |
-| ---------------------------------| -----------------------------------------|
+| Environment variable              | `BatchExportProcessorOptions` property  |
+| ----------------------------------| ----------------------------------------|
 | `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`            |
 | `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`           |
 | `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                          |
