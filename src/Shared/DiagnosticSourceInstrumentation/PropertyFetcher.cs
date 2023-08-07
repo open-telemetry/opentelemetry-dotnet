@@ -163,7 +163,6 @@ internal sealed class PropertyFetcher<T>
 
         // ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
 #if NET6_0_OR_GREATER
-        [UnconditionalSuppressMessage("AOT", "IL2109", Justification = "The code guarantees that TDeclaredObject is a reference type.")]
         [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
         private sealed class PropertyFetchInstantiated<TDeclaredObject> : PropertyFetch
