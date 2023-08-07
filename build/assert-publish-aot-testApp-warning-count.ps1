@@ -12,7 +12,8 @@ foreach ($line in $($publishOutput -split "`r`n"))
     }
 }
 
-pushd $rootDirectory\test\OpenTelemetry.AotCompatibility.TestApp/bin/Debug/net7.0/linux-x64
+pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Debug/net7.0/linux-x64
+
 
 Write-Host "Executing test App..."
 ./OpenTelemetry.AotCompatibility.TestApp
