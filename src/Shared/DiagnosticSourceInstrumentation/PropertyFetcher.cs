@@ -61,10 +61,7 @@ internal sealed class PropertyFetcher<T>
             return false;
         }
 
-        if (this.innerFetcher == null)
-        {
-            this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
-        }
+        this.innerFetcher ??= PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
 
         if (this.innerFetcher == null)
         {
@@ -81,10 +78,10 @@ internal sealed class PropertyFetcher<T>
 #endif
     private class PropertyFetch
     {
-        public static PropertyFetch Create(TypeInfo type, string propertyName)
+        public static PropertyFetch? Create(TypeInfo type, string propertyName)
         {
             var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase)) ?? type.GetProperty(propertyName);
-            return CreateFetcherForProperty(property!)!;
+            return CreateFetcherForProperty(property!);
 
             static PropertyFetch? CreateFetcherForProperty(PropertyInfo propertyInfo)
             {
@@ -107,7 +104,7 @@ internal sealed class PropertyFetcher<T>
                     // It was used to force the AOT compiler to create an instantiation of the method with a reference type.
                     // The code for that instantiation can then be reused at runtime to create instantiation over any other reference.
                     // TODO: when adding net8.0 as the project target:
-                    // This is not needed in.NET 8, because the compiler is improved and call into MakeGenericMethod will be AOT-compatible.
+                    // This is not needed in .NET 8, because the compiler is improved and call into MakeGenericMethod will be AOT-compatible.
                     return CreateInstantiated<object>(propertyInfo);
                 }
                 else
@@ -115,17 +112,17 @@ internal sealed class PropertyFetcher<T>
                     return DynamicInstantiationHelper(declaringType, propertyInfo);
                 }
 
-                // Separated as local function to be able to target the suppression to just this call
+                // Separated as a local function to be able to target the suppression to just this call.
                 // IL3050 was generated here because of the call to MakeGenericType, which is problematic in AOT if one of the type parameters is a value type;
                 // because the compiler might need to generate code specific to that type.
-                // If the type parameter is reference type, there will be no problem; because the generated code can be shared among all reference type instantiations.
+                // If the type parameter is a reference type, there will be no problem; because the generated code can be shared among all reference type instantiations.
 #if NET6_0_OR_GREATER
                 [RequiresUnreferencedCode(TrimCompatibilityMessage)]
                 [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The code guarantees that all the generic parameters are reference types.")]
 #endif
-                static PropertyFetch DynamicInstantiationHelper(Type declaringType, PropertyInfo propertyInfo)
+                static PropertyFetch? DynamicInstantiationHelper(Type declaringType, PropertyInfo propertyInfo)
                 {
-                    return (PropertyFetch)typeof(PropertyFetch)
+                    return (PropertyFetch?)typeof(PropertyFetch)
                         .GetMethod(nameof(CreateInstantiated), BindingFlags.NonPublic | BindingFlags.Static)!
                         .MakeGenericMethod(declaringType) // This is validated in the earlier call chain to be a reference type.
                         .Invoke(null, new object[] { propertyInfo })!;
