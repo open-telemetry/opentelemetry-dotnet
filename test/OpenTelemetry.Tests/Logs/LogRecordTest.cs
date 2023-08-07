@@ -604,6 +604,43 @@ public sealed class LogRecordTest
     }
 
     [Fact]
+    public void VerifyStringValueEnumarbles_True()
+    {
+        var exportedItems = new List<LogRecord>();
+
+        using var source = new ActivitySource($"{Utils.GetCurrentMethodName()}");
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source.Name)
+            .Build();
+
+        // Creating the logger factory explicitly because we want to configute it to add the activityTrackingOptions
+        using var factory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
+            {
+                options.IncludeScopes = true;
+                options.AddInMemoryExporter(exportedItems);
+            });
+            builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
+            builder.Configure(options => options.ActivityTrackingOptions = ActivityTrackingOptions.Baggage);
+        });
+
+
+        var logger = factory.CreateLogger<LogRecordTest>();
+
+        using var testActivity = source.StartActivity("testActivity");
+        using var scope = logger.BeginScope("string_scope");
+        Activity.Current?.AddBaggage("key", "value");
+        logger.LogInformation("OpenTelemetry!");
+        var logRecord = exportedItems[0];
+
+        List<object> scopes = new List<object>();
+        logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope.Scope), null);
+        Assert.Contains(scopes, scope => scope is IEnumerable<KeyValuePair<string, string?>> enumarableScope && enumarableScope.Any(kvp => kvp.Key.Equals("key")));
+    }
+
+
+    [Fact]
     public void VerifyIncludeScopes_True()
     {
         using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = true);
