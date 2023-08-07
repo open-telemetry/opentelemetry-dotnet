@@ -72,7 +72,7 @@ internal sealed class PropertyFetcher<T>
             return false;
         }
 
-        return this.innerFetcher.TryFetch(obj, out value!);
+        return this.innerFetcher.TryFetch(obj, out value);
     }
 
     // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
@@ -84,9 +84,9 @@ internal sealed class PropertyFetcher<T>
         public static PropertyFetch Create(TypeInfo type, string propertyName)
         {
             var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase)) ?? type.GetProperty(propertyName);
-            return CreateFetcherForProperty(property!)!;
+            return CreateFetcherForProperty(property!);
 
-            static PropertyFetch? CreateFetcherForProperty(PropertyInfo propertyInfo)
+            static PropertyFetch CreateFetcherForProperty(PropertyInfo propertyInfo)
             {
                 if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
                 {
@@ -194,7 +194,7 @@ internal sealed class PropertyFetcher<T>
                     return false;
                 }
 
-                return this.innerFetcher.TryFetch(obj, out value!);
+                return this.innerFetcher.TryFetch(obj, out value);
             }
         }
     }
