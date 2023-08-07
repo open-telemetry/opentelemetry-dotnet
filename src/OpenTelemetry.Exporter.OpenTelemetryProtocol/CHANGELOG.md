@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added extension method for configuring export processor options for otlp log
+exporter.
+([#4733](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4733))
+
 * Added support for configuring the metric exporter's temporality using the
   environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` as
   defined in the

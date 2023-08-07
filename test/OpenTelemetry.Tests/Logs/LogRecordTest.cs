@@ -83,7 +83,7 @@ public sealed class LogRecordTest
         Assert.NotNull(attributes);
 
         // state only has {OriginalFormat}
-        Assert.Equal(1, attributes.Count);
+        Assert.Single(attributes);
 
         Assert.Equal(message, exportedItems[0].Body);
         if (includeFormattedMessage)
@@ -115,7 +115,7 @@ public sealed class LogRecordTest
         Assert.NotNull(attributes);
 
         // state only has {OriginalFormat}
-        Assert.Equal(1, attributes.Count);
+        Assert.Single(attributes);
 
         Assert.Equal(message, exportedItems[0].Body);
         if (includeFormattedMessage)
@@ -329,7 +329,7 @@ public sealed class LogRecordTest
         Assert.NotNull(attributes);
 
         // state only has {OriginalFormat}
-        Assert.Equal(1, attributes.Count);
+        Assert.Single(attributes);
 
         var loggedException = exportedItems[0].Exception;
         Assert.NotNull(loggedException);
@@ -773,7 +773,7 @@ public sealed class LogRecordTest
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Equal(1, logRecord.StateValues.Count);
+        Assert.Single(logRecord.StateValues);
         Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
     }
 
@@ -795,7 +795,7 @@ public sealed class LogRecordTest
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Equal(1, logRecord.StateValues.Count);
+        Assert.Single(logRecord.StateValues);
         Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
     }
 
@@ -817,7 +817,7 @@ public sealed class LogRecordTest
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Equal(1, logRecord.StateValues.Count);
+        Assert.Single(logRecord.StateValues);
         Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
     }
 
@@ -871,7 +871,7 @@ public sealed class LogRecordTest
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Equal(1, logRecord.StateValues.Count);
+        Assert.Single(logRecord.StateValues);
 
         KeyValuePair<string, object> actualState = logRecord.StateValues[0];
 
