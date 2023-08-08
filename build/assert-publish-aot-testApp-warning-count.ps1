@@ -8,6 +8,14 @@ foreach ($line in $($publishOutput -split "`r`n"))
     if ($line -like "*analysis warning IL*") 
     {
         Write-Host $line
+
+        # OpenTelemetry.Instrumentation.SqlClient is properly AOT-annotated.
+        # The caller of OpenTelemetry.Instrumentation.SqlClient will be notified.
+        if ($line -like "*Trimming is not yet supported with SqlClient*")
+        {
+            continue
+        }
+
         $actualWarningCount += 1
     }
 }
