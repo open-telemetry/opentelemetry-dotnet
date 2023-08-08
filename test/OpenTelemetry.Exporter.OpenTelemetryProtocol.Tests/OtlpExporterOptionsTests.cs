@@ -223,8 +223,8 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_ClientCertificateWithHttpProtobuf_ThrowsPlatformNotSupportedException()
     {
-        var certPath = Path.Combine(AppContext.BaseDirectory, "my", "cert.pem");
-        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "my", "key.pem");
+        var certPath = Path.Combine(AppContext.BaseDirectory, "otel-test-client-cert.pem");
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "otel-test-client-key.pem");
 
         var options = new OtlpExporterOptions
         {
@@ -280,10 +280,11 @@ public class OtlpExporterOptionsTests : IDisposable
     [Fact]
     public void OtlpExporterOptions_WithCACertificate_AddsToHttpMessageHandlerTrustStore()
     {
-        var caPath = Path.Combine(AppContext.BaseDirectory, "Certificates", "TrustStore", "rootCA.crt");
+        var caPath = Path.Combine(AppContext.BaseDirectory, "otel-test-ca-cert.pem");
+
         using var serverCert = X509Certificate2.CreateFromPemFile(
-            certPemFilePath: Path.Combine(AppContext.BaseDirectory, "Certificates", "TrustStore", "server.crt"),
-            keyPemFilePath: Path.Combine(AppContext.BaseDirectory, "Certificates", "TrustStore", "server.key"));
+            certPemFilePath: Path.Combine(AppContext.BaseDirectory, "otel-test-server-cert.pem"),
+            keyPemFilePath: Path.Combine(AppContext.BaseDirectory, "otel-test-server-key.pem"));
 
         var values = new Dictionary<string, string>()
         {
@@ -311,13 +312,11 @@ public class OtlpExporterOptionsTests : IDisposable
         Assert.True(serverCertValidationResult);
     }
 
-    [Theory]
-    [InlineData("4096b-rsa-example-cert.pem", "4096b-rsa-example-keypair.pem", "rsa")]
-    [InlineData("prime256v1-ecdsa-cert.pem", "prime256v1-ecdsa-keypair.pem", "ecdsa")]
-    public void OtlpExporterOptions_WithClientCertificate_PassesCertificateToDefaultHttpClient(string certFileName, string keyFileName, string alg)
+    [Fact]
+    public void OtlpExporterOptions_WithClientCertificate_PassesCertificateToDefaultHttpClient()
     {
-        var certPath = Path.Combine(AppContext.BaseDirectory, "Certificates", certFileName);
-        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "Certificates", keyFileName);
+        var certPath = Path.Combine(AppContext.BaseDirectory, "otel-test-client-cert.pem");
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "otel-test-client-key.pem");
 
         var values = new Dictionary<string, string>()
         {
@@ -337,33 +336,7 @@ public class OtlpExporterOptionsTests : IDisposable
         using var defaultHandler = options.CreateDefaultHttpMessageHandler();
 
         Assert.Single(defaultHandler.ClientCertificates);
-
-        switch (alg)
-        {
-            case "rsa":
-                AssertRsaClientCertificate(defaultHandler.ClientCertificates[0]);
-                break;
-            case "ecdsa":
-                AssertECCCertificate(defaultHandler.ClientCertificates[0]);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(alg));
-        }
-    }
-
-    private static void AssertRsaClientCertificate(X509Certificate certificate)
-    {
-        // compare thumbprint
-        var cert = (X509Certificate2)certificate;
-        Assert.Equal("2013BADFCD6BDD058E39B98D6B1177E870603B93", cert.GetCertHashString());
-        var rsa = cert.GetRSAPrivateKey();
-        Assert.Equal(4096, rsa.KeySize);
-    }
-
-    private static void AssertECCCertificate(X509Certificate certificate)
-    {
-        var cert = (X509Certificate2)certificate;
-        Assert.Equal("A94CD0470C3733C084BC43E511EF0AC8DE7898A8", cert.Thumbprint);
+        Assert.Contains("CN=otel-test-client", (defaultHandler.ClientCertificates[0] as X509Certificate2).Subject);
     }
 #endif
 

@@ -42,6 +42,18 @@ internal static class OtlpExporterOptionsExtensions
             throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
         }
 
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+        var channelOptions = new GrpcChannelOptions();
+
+        if (options.ClientCertificateFile != null || options.CertificateFile != null)
+        {
+            // Setting certificate in SslCredentials won't work: https://aka.ms/aspnet/grpc/certauth
+            channelOptions.HttpHandler = channelOptions.HttpHandler = options.CreateDefaultHttpMessageHandler();
+            channelOptions.DisposeHttpClient = true;
+        }
+
+        return GrpcChannel.ForAddress(options.Endpoint, channelOptions);
+#else
         var rootCertificate = options.CertificateFile is null ? null : File.ReadAllText(options.CertificateFile);
         KeyCertificatePair clientCertificatePair = options.ClientCertificateFile switch
         {
@@ -49,18 +61,6 @@ internal static class OtlpExporterOptionsExtensions
             string f => new KeyCertificatePair(File.ReadAllText(f), options.ClientKeyFile == null ? null : File.ReadAllText(options.ClientKeyFile)),
         };
 
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        var channelOptions = new GrpcChannelOptions();
-
-        if (clientCertificatePair != null || rootCertificate != null)
-        {
-            channelOptions.Credentials = new SslCredentials(
-                rootCertificates: rootCertificate,
-                keyCertificatePair: clientCertificatePair);
-        }
-
-        return GrpcChannel.ForAddress(options.Endpoint, channelOptions);
-#else
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
         {

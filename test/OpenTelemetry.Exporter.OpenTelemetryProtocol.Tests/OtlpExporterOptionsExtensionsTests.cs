@@ -169,4 +169,21 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
 
         Assert.Equal(expectedUri, resultUri.AbsoluteUri);
     }
+
+    [Fact]
+    public void CreateGrpcChannel_WithCertificates_ReturnsChannelWithoutException()
+    {
+        var trustedCACertPath = Path.Combine(AppContext.BaseDirectory, "otel-test-ca-cert.pem");
+        var certPath = Path.Combine(AppContext.BaseDirectory, "otel-test-client-cert.pem");
+        var pKeyPath = Path.Combine(AppContext.BaseDirectory, "otel-test-client-key.pem");
+
+        var otlpOptions = new OtlpExporterOptions
+        {
+            CertificateFile = trustedCACertPath,
+            ClientCertificateFile = certPath,
+            ClientKeyFile = pKeyPath
+        };
+
+        using var channel = OtlpExporterOptionsExtensions.CreateChannel(otlpOptions);
+    }
 }
