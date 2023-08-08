@@ -1,4 +1,4 @@
-// <copyright file="PrometheusSerializerExt.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusType.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ internal enum PrometheusType
     Untyped,
 
     /// <summary>
-    /// Mapped from Guage and UpDownCounter.
+    /// Mapped from Gauge and UpDownCounter.
     /// </summary>
     Gauge,
 
