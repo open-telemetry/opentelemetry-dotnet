@@ -24,22 +24,30 @@ Released 2023-Jul-12
   are now included in this package.
   ([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
 
-* Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
-  for instructions to enable exemplars.
-  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
-
 * Updated Grpc.Net.Client to `2.45.0` to fix unobserved exception
   from failed calls.
   ([#4573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4573))
-
-* Updated to support `Severity` and `SeverityText` when exporting `LogRecord`s.
-  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 * Updated Grpc.Net.Client to `2.52.0` to address the vulnerability reported by
   CVE-2023-32731. Refer to
   [https://github.com/grpc/grpc/pull/32309](https://github.com/grpc/grpc/pull/32309)
   for more details.
   ([#4647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4647))
+
+* **Experimental (pre-release builds only):**
+
+  * Note: See
+    [#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735)
+    for the introduction of experimental api support.
+
+  * Add back support for Exemplars. See
+    [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
+    instructions to enable exemplars.
+    ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
+  
+  * Updated to support `Severity` and `SeverityText` when exporting
+    `LogRecord`s.
+    ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 ## 1.5.1
 
