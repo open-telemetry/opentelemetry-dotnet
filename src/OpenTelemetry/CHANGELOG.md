@@ -28,7 +28,7 @@ Released 2023-Jul-12
     ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
   
   * Added `LogRecord.Logger` property to access the [OpenTelemetry Specification
-    > Instrumentation
+    Instrumentation
     Scope](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-scope)
     provided during Logger creation.
     ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
