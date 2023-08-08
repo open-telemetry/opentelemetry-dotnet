@@ -22,4 +22,5 @@ using System.Runtime.CompilerServices;
 
 #if !EXPOSE_EXPERIMENTAL_FEATURES
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Console" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting" + AssemblyInfo.PublicKey)]
 #endif
