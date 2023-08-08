@@ -4,6 +4,10 @@
     <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
