@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -1126,6 +1128,61 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal(2, allScopeValues.Count());
         Assert.Contains(scopeValue1, allScopeValues);
         Assert.Contains(scopeValue2, allScopeValues);
+    }
+
+    [Fact]
+    public void AddOtlpLogExporterDefaultOptionsTest()
+    {
+        var options = new OpenTelemetryLoggerOptions();
+
+        options.AddOtlpExporter();
+
+        var processors = (List<BaseProcessor<LogRecord>>)typeof(OpenTelemetryLoggerOptions).GetField("Processors", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(options);
+
+        Assert.Single(processors);
+
+        var batchProcesor = processors[0] as BatchLogRecordExportProcessor;
+
+        Assert.NotNull(batchProcesor);
+
+        var batchProcessorType = typeof(BatchExportProcessor<LogRecord>);
+
+        Assert.Equal(5000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
+    }
+
+    [Theory]
+    [InlineData(ExportProcessorType.Simple)]
+    [InlineData(ExportProcessorType.Batch)]
+    public void AddOtlpLogExporterLogRecordProcessorOptionsTest(ExportProcessorType processorType)
+    {
+        var options = new OpenTelemetryLoggerOptions();
+
+        options.AddOtlpExporter((o, l) =>
+        {
+            l.ExportProcessorType = processorType;
+            l.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = 1000 };
+        });
+
+        var processors = (List<BaseProcessor<LogRecord>>)typeof(OpenTelemetryLoggerOptions).GetField("Processors", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(options);
+
+        Assert.Single(processors);
+
+        if (processorType == ExportProcessorType.Batch)
+        {
+            var batchProcesor = processors[0] as BatchLogRecordExportProcessor;
+
+            Assert.NotNull(batchProcesor);
+
+            var batchProcessorType = typeof(BatchExportProcessor<LogRecord>);
+
+            Assert.Equal(1000, batchProcessorType.GetField("scheduledDelayMilliseconds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(batchProcesor));
+        }
+        else
+        {
+            var simpleProcesor = processors[0] as SimpleLogRecordExportProcessor;
+
+            Assert.NotNull(simpleProcesor);
+        }
     }
 
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
