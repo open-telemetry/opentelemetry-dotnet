@@ -63,11 +63,14 @@ internal class PrometheusMetric
 
         this.Name = sanitizedName;
         this.Unit = sanitizedUnit;
+        this.Type = type;
     }
 
     public string Name { get; }
 
     public string Unit { get; }
+
+    public PrometheusType Type { get; }
 
     internal static string SanitizeMetricName(string metricName)
     {

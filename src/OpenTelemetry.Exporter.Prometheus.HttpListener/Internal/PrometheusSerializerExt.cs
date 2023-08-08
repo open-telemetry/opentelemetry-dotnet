@@ -37,24 +37,6 @@ internal static partial class PrometheusSerializer
         PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
     };
 
-    private static string MapPrometheusType(PrometheusType type)
-    {
-        return type switch
-        {
-            PrometheusType.Gauge => "gauge",
-            PrometheusType.Counter => "counter",
-            PrometheusType.Summary => "summary",
-            PrometheusType.Histogram => "histogram",
-            _ => "untyped",
-        };
-    }
-
-    private static PrometheusType GetPrometheusType(Metric metric)
-    {
-        int metricType = (int)metric.MetricType >> 4;
-        return MetricTypes[metricType];
-    }
-
     private static readonly ConcurrentDictionary<Metric, PrometheusMetric> MetricsCache = new ConcurrentDictionary<Metric, PrometheusMetric>();
     private static int metricsCacheCount;
 
@@ -67,10 +49,9 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        PrometheusType prometheusType = GetPrometheusType(metric);
         var prometheusMetric = GetPrometheusMetric(metric);
 
-        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, MapPrometheusType(prometheusType));
+        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description);
 
@@ -252,5 +233,23 @@ internal static partial class PrometheusSerializer
                 return new PrometheusMetric(m.Name, m.Unit, GetPrometheusType(metric));
             });
         }
+    }
+
+    private static string MapPrometheusType(PrometheusType type)
+    {
+        return type switch
+        {
+            PrometheusType.Gauge => "gauge",
+            PrometheusType.Counter => "counter",
+            PrometheusType.Summary => "summary",
+            PrometheusType.Histogram => "histogram",
+            _ => "untyped",
+        };
+    }
+
+    private static PrometheusType GetPrometheusType(Metric metric)
+    {
+        int metricType = (int)metric.MetricType >> 4;
+        return MetricTypes[metricType];
     }
 }
