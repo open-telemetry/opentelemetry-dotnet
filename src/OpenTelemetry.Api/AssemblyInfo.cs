@@ -23,6 +23,10 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("OpenTelemetry.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
 
+#if !EXPOSE_EXPERIMENTAL_FEATURES
+[assembly: InternalsVisibleTo("OpenTelemetry.Api.ProviderBuilderExtensions.Tests" + AssemblyInfo.PublicKey)]
+#endif
+
 #if SIGNED
 internal static class AssemblyInfo
 {
