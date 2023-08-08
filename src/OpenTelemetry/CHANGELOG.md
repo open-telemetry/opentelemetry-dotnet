@@ -12,8 +12,9 @@ Released 2023-Jul-12
     [#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735)
     for the introduction of experimental api support.
 
-  * Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
-    for instructions to enable exemplars.
+  * Add back support for Exemplars. See
+    [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
+    instructions to enable exemplars.
     ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
 
   * Added [Logs Bridge
@@ -26,8 +27,8 @@ Released 2023-Jul-12
     definition](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#field-severitynumber).
     ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
   
-  * Added `LogRecord.Logger` property to access the [OpenTelemetry Specification >
-    Instrumentation
+  * Added `LogRecord.Logger` property to access the [OpenTelemetry Specification
+    > Instrumentation
     Scope](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-scope)
     provided during Logger creation.
     ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
