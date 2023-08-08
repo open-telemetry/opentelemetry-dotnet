@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Concurrent;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -23,16 +24,39 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal static partial class PrometheusSerializer
 {
+    private const int MaxCachedMetrics = 1024;
+
     /* Counter becomes counter
        Gauge becomes gauge
        Histogram becomes histogram
        UpDownCounter becomes gauge
      * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
     */
-    private static readonly string[] MetricTypes = new string[]
+    private static readonly PrometheusType[] MetricTypes = new PrometheusType[]
     {
-        "untyped", "counter", "gauge", "summary", "histogram", "histogram", "histogram", "histogram", "gauge",
+        PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
     };
+
+    private static string MapPrometheusType(PrometheusType type)
+    {
+        return type switch
+        {
+            PrometheusType.Gauge => "gauge",
+            PrometheusType.Counter => "counter",
+            PrometheusType.Summary => "summary",
+            PrometheusType.Histogram => "histogram",
+            _ => "untyped",
+        };
+    }
+
+    private static PrometheusType GetPrometheusType(Metric metric)
+    {
+        int metricType = (int)metric.MetricType >> 4;
+        return MetricTypes[metricType];
+    }
+
+    private static readonly ConcurrentDictionary<Metric, PrometheusMetric> MetricsCache = new ConcurrentDictionary<Metric, PrometheusMetric>();
+    private static int metricsCacheCount;
 
     public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
     {
@@ -43,10 +67,12 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        int metricType = (int)metric.MetricType >> 4;
-        cursor = WriteTypeMetadata(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
-        cursor = WriteUnitMetadata(buffer, cursor, metric.Name, metric.Unit);
-        cursor = WriteHelpMetadata(buffer, cursor, metric.Name, metric.Unit, metric.Description);
+        PrometheusType prometheusType = GetPrometheusType(metric);
+        var prometheusMetric = GetPrometheusMetric(metric);
+
+        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, MapPrometheusType(prometheusType));
+        cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
+        cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description);
 
         if (!metric.MetricType.IsHistogram())
         {
@@ -56,7 +82,7 @@ internal static partial class PrometheusSerializer
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                 // Counter and Gauge
-                cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
+                cursor = WriteMetricName(buffer, cursor, prometheusMetric);
 
                 if (tags.Count > 0)
                 {
@@ -118,7 +144,7 @@ internal static partial class PrometheusSerializer
                 {
                     totalCount += histogramMeasurement.BucketCount;
 
-                    cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
+                    cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
 
                     foreach (var tag in tags)
@@ -149,7 +175,7 @@ internal static partial class PrometheusSerializer
                 }
 
                 // Histogram sum
-                cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
+                cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
                 if (tags.Count > 0)
@@ -175,7 +201,7 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = ASCII_LINEFEED;
 
                 // Histogram count
-                cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
+                cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
 
                 if (tags.Count > 0)
@@ -205,5 +231,26 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
+    }
+
+    private static PrometheusMetric GetPrometheusMetric(Metric metric)
+    {
+        if (metricsCacheCount >= MaxCachedMetrics)
+        {
+            if (!MetricsCache.TryGetValue(metric, out var formatter))
+            {
+                formatter = new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric));
+            }
+
+            return formatter;
+        }
+        else
+        {
+            return MetricsCache.GetOrAdd(metric, m =>
+            {
+                Interlocked.Increment(ref metricsCacheCount);
+                return new PrometheusMetric(m.Name, m.Unit, GetPrometheusType(metric));
+            });
+        }
     }
 }

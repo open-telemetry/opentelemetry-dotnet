@@ -208,8 +208,8 @@ public sealed class PrometheusSerializerTests
         var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
         Assert.Matches(
             ("^"
-                + "# TYPE test_counter counter\n"
-                + "test_counter \\+Inf \\d+\n"
+                + "# TYPE test_counter_total counter\n"
+                + "test_counter_total \\+Inf \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
