@@ -1,3 +1,5 @@
+param([string]$targetNetFramework)
+
 $rootDirectory = Split-Path $PSScriptRoot -Parent
 $publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false
 
@@ -12,7 +14,7 @@ foreach ($line in $($publishOutput -split "`r`n"))
     }
 }
 
-pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Debug/${{ matrix.version }}/linux-x64
+pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Debug/$targetNetFramework/linux-x64
 
 Write-Host "Executing test App..."
 ./OpenTelemetry.AotCompatibility.TestApp
