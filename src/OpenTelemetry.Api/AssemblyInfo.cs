@@ -26,6 +26,7 @@ using System.Runtime.CompilerServices;
 #if !EXPOSE_EXPERIMENTAL_FEATURES
 [assembly: InternalsVisibleTo("OpenTelemetry.Api.ProviderBuilderExtensions.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Console" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.InMemory" + AssemblyInfo.PublicKey)]
 #endif
 
 #if SIGNED
