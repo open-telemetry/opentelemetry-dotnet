@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
-        os: [ windows-latest ]
+        os: [ ubuntu-latest ]
         version: [ net7.0 ]
 
     runs-on: ${{ matrix.os }}
@@ -24,6 +24,6 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - name: Read publish AOT testApp output and assert warning count
+    - name: publish AOT testApp, assert static analysis warning count, and run the app
       shell: pwsh
-      run: .\build\assert-publish-aot-testApp-warning-count.ps1
+      run: .\build\test-aot-compatibility.ps1 ${{ matrix.version }}
