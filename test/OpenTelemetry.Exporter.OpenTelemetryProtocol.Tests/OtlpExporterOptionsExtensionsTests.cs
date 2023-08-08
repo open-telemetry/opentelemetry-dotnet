@@ -181,7 +181,7 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
         {
             CertificateFile = trustedCACertPath,
             ClientCertificateFile = certPath,
-            ClientKeyFile = pKeyPath
+            ClientKeyFile = pKeyPath,
         };
 
         using var channel = OtlpExporterOptionsExtensions.CreateChannel(otlpOptions);
