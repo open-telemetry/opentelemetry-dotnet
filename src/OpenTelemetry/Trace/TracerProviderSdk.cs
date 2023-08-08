@@ -74,6 +74,8 @@ internal sealed class TracerProviderSdk : TracerProvider
         this.Resource = resourceBuilder.Build();
 
         this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+        OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
+
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
         bool legacyActivityWildcardMode = false;
