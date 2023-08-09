@@ -15,7 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Reflection;
 using System.Text.Json;
 using Moq;
