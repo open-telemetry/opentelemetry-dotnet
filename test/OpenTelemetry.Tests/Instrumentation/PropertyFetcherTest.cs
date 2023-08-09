@@ -96,6 +96,23 @@ public class PropertyFetcherTest
         Assert.IsType<DerivedType>(value);
     }
 
+    [Fact]
+    public void FetchPropertyWhenPayloadIsValueType()
+    {
+        var fetch = new PropertyFetcher<BaseType>("Property");
+        var ex = Assert.Throws<NotSupportedException>(() => fetch.TryFetch(new PayloadTypeIsValueType(), out BaseType value));
+        Assert.Contains("PropertyFetcher can only operate on reference payload types.", ex.Message);
+    }
+
+    private struct PayloadTypeIsValueType
+    {
+        public PayloadTypeIsValueType()
+        {
+        }
+
+        public DerivedType Property { get; set; } = new DerivedType();
+    }
+
     private class PayloadTypeA
     {
         public string Property { get; set; } = "A";
