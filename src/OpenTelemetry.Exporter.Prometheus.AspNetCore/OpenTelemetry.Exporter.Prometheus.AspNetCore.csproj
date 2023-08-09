@@ -16,7 +16,6 @@
   Remove this property once we have released a stable version.-->
   <PropertyGroup>
     <RunApiCompat>false</RunApiCompat>
-    <LangVersion>11.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

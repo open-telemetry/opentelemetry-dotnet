@@ -313,4 +313,16 @@ internal static partial class PrometheusSerializer
 
         return cursor;
     }
+
+    private static string MapPrometheusType(PrometheusType type)
+    {
+        return type switch
+        {
+            PrometheusType.Gauge => "gauge",
+            PrometheusType.Counter => "counter",
+            PrometheusType.Summary => "summary",
+            PrometheusType.Histogram => "histogram",
+            _ => "untyped",
+        };
+    }
 }

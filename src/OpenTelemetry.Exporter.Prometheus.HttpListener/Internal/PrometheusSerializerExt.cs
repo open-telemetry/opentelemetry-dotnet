@@ -216,10 +216,12 @@ internal static partial class PrometheusSerializer
 
     private static PrometheusMetric GetPrometheusMetric(Metric metric)
     {
+        // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
         if (metricsCacheCount >= MaxCachedMetrics)
         {
             if (!MetricsCache.TryGetValue(metric, out var formatter))
             {
+                // The cache is full and the metric isn't in it.
                 formatter = new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric));
             }
 
@@ -233,23 +235,11 @@ internal static partial class PrometheusSerializer
                 return new PrometheusMetric(m.Name, m.Unit, GetPrometheusType(metric));
             });
         }
-    }
 
-    private static string MapPrometheusType(PrometheusType type)
-    {
-        return type switch
+        static PrometheusType GetPrometheusType(Metric metric)
         {
-            PrometheusType.Gauge => "gauge",
-            PrometheusType.Counter => "counter",
-            PrometheusType.Summary => "summary",
-            PrometheusType.Histogram => "histogram",
-            _ => "untyped",
-        };
-    }
-
-    private static PrometheusType GetPrometheusType(Metric metric)
-    {
-        int metricType = (int)metric.MetricType >> 4;
-        return MetricTypes[metricType];
+            int metricType = (int)metric.MetricType >> 4;
+            return MetricTypes[metricType];
+        }
     }
 }
