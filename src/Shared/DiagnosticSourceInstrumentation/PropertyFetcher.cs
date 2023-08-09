@@ -101,7 +101,7 @@ internal sealed class PropertyFetcher<T>
                 if (declaringType == typeof(object))
                 {
                     // This is only necessary on .NET 7.
-                    // It was used to force the AOT compiler to create an instantiation of the method with a reference type.
+                    // It is used to force the AOT compiler to create an instantiation of the method with a reference type.
                     // The code for that instantiation can then be reused at runtime to create instantiation over any other reference.
                     // TODO: when adding net8.0 as the project target:
                     // This is not needed in .NET 8, because the compiler is improved and call into MakeGenericMethod will be AOT-compatible.
@@ -148,10 +148,10 @@ internal sealed class PropertyFetcher<T>
         // But that would mean calling MakeGenericType, with value type parameters which AOT won't support.
         //
         // As a workaround, Generic instantiation was split into:
-        // 1. The property value type comes from the PropertyFetcher generic parameter.
+        // 1. The object type comes from the PropertyFetcher generic parameter.
         //    Compiler supports it even if it is a value type; the type is known statically during compilation
         //    since PropertyFetcher is used with it.
-        // 2. Then, the declared object type was passed as a generic parameter to a generic method on PropertyFetcher<T> (or nested type.)
+        // 2. Then, the declared object type is passed as a generic parameter to a generic method on PropertyFetcher<T> (or nested type.)
         //    Therefore, calling into MakeGenericMethod will only require specifying one parameter - the declared object type.
         //    The declared object type is guaranteed to be a reference type (throw on value type.) Thus, MakeGenericMethod is AOT compatible.
         private static PropertyFetch CreateInstantiated<TDeclaredObject>(PropertyInfo propertyInfo)
