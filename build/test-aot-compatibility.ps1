@@ -1,5 +1,7 @@
+param([string]$targetNetFramework)
+
 $rootDirectory = Split-Path $PSScriptRoot -Parent
-$publishOutput = dotnet publish $rootDirectory\test\OpenTelemetry.AotCompatibility.TestApp\OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false
+$publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false
 
 $actualWarningCount = 0
 
@@ -11,6 +13,19 @@ foreach ($line in $($publishOutput -split "`r`n"))
         $actualWarningCount += 1
     }
 }
+
+pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Debug/$targetNetFramework/linux-x64
+
+Write-Host "Executing test App..."
+./OpenTelemetry.AotCompatibility.TestApp
+Write-Host "Finished executing test App"
+
+if ($LastExitCode -ne 0)
+{
+  Write-Host "There was an error while executing AotCompatibility Test App. LastExitCode is:", $LastExitCode
+}
+
+popd
 
 Write-Host "Actual warning count is:", $actualWarningCount
 $expectedWarningCount = 33

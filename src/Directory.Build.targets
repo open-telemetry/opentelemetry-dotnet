@@ -1,7 +1,6 @@
 <Project>
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Condition="'$(IntegrationBuild)' != 'true'">
-      <PrivateAssets>all</PrivateAssets>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
