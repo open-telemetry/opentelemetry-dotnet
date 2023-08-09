@@ -18,7 +18,7 @@ using System.Text;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
-internal class PrometheusMetric
+internal sealed class PrometheusMetric
 {
     public PrometheusMetric(string name, string unit, PrometheusType type)
     {
