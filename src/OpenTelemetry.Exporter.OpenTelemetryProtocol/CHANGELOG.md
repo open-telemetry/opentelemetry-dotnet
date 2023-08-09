@@ -44,7 +44,7 @@ Released 2023-Jul-12
     [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
     instructions to enable exemplars.
     ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
- 
+
   * Updated to support `Severity` and `SeverityText` when exporting
     `LogRecord`s.
     ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
