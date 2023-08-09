@@ -27,6 +27,9 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
     - name: Install dependencies
       run: dotnet restore
 

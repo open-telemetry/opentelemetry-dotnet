@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 

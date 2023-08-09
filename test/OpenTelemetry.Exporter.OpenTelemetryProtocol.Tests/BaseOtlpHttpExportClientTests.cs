@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 

@@ -15,9 +15,8 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Net.Http;
 #if !NET6_0_OR_GREATER
-using System.Threading.Tasks;
+using System.Net.Http;
 #endif
 using Moq;
 using Moq.Protected;
