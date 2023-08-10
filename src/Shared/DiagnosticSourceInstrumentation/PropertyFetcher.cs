@@ -100,11 +100,11 @@ internal sealed class PropertyFetcher<T>
 
                 if (declaringType == typeof(object))
                 {
-                    // This is only necessary on .NET 7.
+                    // TODO: REMOVE this if branch when .NET 7 is out of support.
+                    // This branch is never executed and is only needed for .NET 7 AOT-compiler at trimming stage; i.e.,
+                    // this is not needed in .NET 8, because the compiler is improved and call into MakeGenericMethod will be AOT-compatible.
                     // It is used to force the AOT compiler to create an instantiation of the method with a reference type.
                     // The code for that instantiation can then be reused at runtime to create instantiation over any other reference.
-                    // TODO: when adding net8.0 as the project target:
-                    // This is not needed in .NET 8, because the compiler is improved and call into MakeGenericMethod will be AOT-compatible.
                     return CreateInstantiated<object>(propertyInfo);
                 }
                 else
