@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -31,6 +32,8 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal readonly IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
+
+    private const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
 
     private readonly List<object> instrumentations = new();
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
@@ -47,6 +50,9 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
+
+        var config = serviceProvider!.GetRequiredService<IConfiguration>();
+        _ = config.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out bool isEmitOverflowAttributeKeySet);
 
         this.ServiceProvider = serviceProvider!;
 
@@ -79,7 +85,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             reader.SetParentProvider(this);
             reader.SetMaxMetricStreams(state.MaxMetricStreams);
-            reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
+            reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream, isEmitOverflowAttributeKeySet);
             reader.SetExemplarFilter(state.ExemplarFilter);
 
             if (this.reader == null)

@@ -95,6 +95,26 @@ internal static class ConfigurationExtensions
         return true;
     }
 
+    public static bool TryGetBoolValue(
+        this IConfiguration configuration,
+        string key,
+        out bool value)
+    {
+        if (!configuration.TryGetStringValue(key, out var stringValue))
+        {
+            value = default;
+            return false;
+        }
+
+        if (!bool.TryParse(stringValue, out value))
+        {
+            LogInvalidEnvironmentVariable?.Invoke(key, stringValue!);
+            return false;
+        }
+
+        return true;
+    }
+
     public static bool TryGetValue<T>(
         this IConfiguration configuration,
         string key,

@@ -1,4 +1,4 @@
-// <copyright file="MetricAPITest.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricApiTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,9 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class MetricApiTest : MetricTestsBase
+#pragma warning disable SA1402
+
+public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 {
     private const int MaxTimeToAllowForFlush = 10000;
     private static readonly int NumberOfThreads = Environment.ProcessorCount;
@@ -33,9 +35,14 @@ public class MetricApiTest : MetricTestsBase
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
-    public MetricApiTest(ITestOutputHelper output)
+    protected MetricApiTestsBase(ITestOutputHelper output, bool emitOverflowAttribute)
     {
         this.output = output;
+
+        if (emitOverflowAttribute)
+        {
+            Environment.SetEnvironmentVariable(EmitOverFlowAttributeConfigKey, "true");
+        }
     }
 
     [Fact]
@@ -1518,6 +1525,11 @@ public class MetricApiTest : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
+    public void Dispose()
+    {
+        Environment.SetEnvironmentVariable(EmitOverFlowAttributeConfigKey, null);
+    }
+
     private static void CounterUpdateThread<T>(object obj)
         where T : struct, IComparable
     {
@@ -1687,5 +1699,21 @@ public class MetricApiTest : MetricTestsBase
         public int ThreadsStartedCount;
         public Instrument<T> Instrument;
         public T[] ValuesToRecord;
+    }
+}
+
+public class MetricApiTest : MetricApiTestsBase
+{
+    public MetricApiTest(ITestOutputHelper output)
+        : base(output, false)
+    {
+    }
+}
+
+public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
+{
+    public MetricApiTestWithOverflowAttribute(ITestOutputHelper output)
+        : base(output, true)
+    {
     }
 }
