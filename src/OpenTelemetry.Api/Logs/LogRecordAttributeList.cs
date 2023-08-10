@@ -24,10 +24,19 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Stores attributes to be added to a log message.
 /// </summary>
-public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// Stores attributes to be added to a log message.
+/// </summary>
+internal
+#endif
+    struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;

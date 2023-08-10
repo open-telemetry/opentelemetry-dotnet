@@ -18,10 +18,19 @@
 
 namespace OpenTelemetry.Logs;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
 /// </summary>
-public static class LogRecordSeverityExtensions
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
+/// </summary>
+internal
+#endif
+    static class LogRecordSeverityExtensions
 {
     internal const string UnspecifiedShortName = "UNSPECIFIED";
 

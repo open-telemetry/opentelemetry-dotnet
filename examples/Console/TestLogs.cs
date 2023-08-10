@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace Examples.Console;
@@ -73,12 +74,36 @@ internal class TestLogs
                         System.Console.WriteLine($"Export protocol {options.Protocol} is not supported. Default protocol 'grpc' will be used.");
                     }
 
-                    opt.AddOtlpExporter(otlpOptions =>
+                    var processorType = ExportProcessorType.Batch;
+                    if (options.ProcessorType.Trim().ToLower().Equals("batch"))
                     {
-                        otlpOptions.Protocol = protocol;
+                        processorType = ExportProcessorType.Batch;
+                    }
+                    else if (options.Protocol.Trim().ToLower().Equals("simple"))
+                    {
+                        processorType = ExportProcessorType.Simple;
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"Export processor type {options.ProcessorType} is not supported. Default processor type 'batch' will be used.");
+                    }
+
+                    opt.AddOtlpExporter((exporterOptions, processorOptions) =>
+                    {
+                        exporterOptions.Protocol = protocol;
                         if (!string.IsNullOrWhiteSpace(options.Endpoint))
                         {
-                            otlpOptions.Endpoint = new Uri(options.Endpoint);
+                            exporterOptions.Endpoint = new Uri(options.Endpoint);
+                        }
+
+                        if (processorType == ExportProcessorType.Simple)
+                        {
+                            processorOptions.ExportProcessorType = ExportProcessorType.Simple;
+                        }
+                        else
+                        {
+                            processorOptions.ExportProcessorType = ExportProcessorType.Batch;
+                            processorOptions.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = options.ScheduledDelayInMilliseconds };
                         }
                     });
                 }
