@@ -130,6 +130,10 @@ internal sealed class PrometheusMetric
 
     internal static string RemoveAnnotations(string unit)
     {
+        // UCUM standard says the curly braces shouldn't be nested:
+        // https://ucum.org/ucum#section-Character-Set-and-Lexical-Rules
+        // What should happen if they are nested isn't defined.
+        // Right now the remove annotations code doesn't attempt to balance multiple start and end braces.
         StringBuilder sb = null;
 
         var hasOpenBrace = false;
