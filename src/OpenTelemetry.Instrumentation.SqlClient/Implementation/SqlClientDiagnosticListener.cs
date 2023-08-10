@@ -46,9 +46,6 @@ internal sealed class SqlClientDiagnosticListener : ListenerHandler
     private readonly PropertyFetcher<Exception> exceptionFetcher = new("Exception");
     private readonly SqlClientInstrumentationOptions options;
 
-#if NET6_0_OR_GREATER
-    [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
-#endif
     public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)
         : base(sourceName)
     {
