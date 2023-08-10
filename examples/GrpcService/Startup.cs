@@ -36,11 +36,11 @@ public class Startup
             .WithTracing(builder =>
             {
                 builder
-                    .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")))
+                    .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")!)) // "ServiceName" is defined in appSettings.json
                     .AddAspNetCoreInstrumentation();
 
                 // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
-                var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+                var exporter = this.Configuration.GetValue<string>("UseExporter")!.ToLowerInvariant(); // "UseExporter" is defined in appSettings.json
                 switch (exporter)
                 {
                     case "jaeger":
@@ -53,7 +53,7 @@ public class Startup
                     case "zipkin":
                         builder.AddZipkinExporter(zipkinOptions =>
                         {
-                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint")!); // "Zipkin:Endpoint" is defined in appSettings.json
                         });
                         break;
                     default:
