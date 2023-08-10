@@ -116,7 +116,7 @@ TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
 
-The following options are only applicable to trace exporter:
+The following options are only applicable to `OtlpTraceExporter`:
 
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
   exporting
