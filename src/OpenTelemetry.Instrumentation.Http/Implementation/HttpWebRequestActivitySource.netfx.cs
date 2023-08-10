@@ -17,6 +17,7 @@
 #if NETFRAMEWORK
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -39,12 +40,16 @@ internal static class HttpWebRequestActivitySource
     internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
     internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
+    internal static readonly string InstrumentationName = AssemblyName.Name;
 
     internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
     internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
     private static readonly Version Version = AssemblyName.Version;
     private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+
+    private static readonly Meter WebRequestMeter = new Meter(InstrumentationName, Version.ToString());
+    private static readonly Histogram<double> HttpClientDuration;
 
     private static HttpClientInstrumentationOptions options;
 
@@ -87,6 +92,7 @@ internal static class HttpWebRequestActivitySource
             PerformInjection();
 
             Options = new HttpClientInstrumentationOptions();
+            HttpClientDuration = WebRequestMeter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         }
         catch (Exception ex)
         {
@@ -395,7 +401,49 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
+        activity.SetEndTime(DateTime.UtcNow);
         activity.Stop();
+
+        TagList tags = default;
+
+        // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
+        if (emitOldAttributes)
+        {
+            foreach (var tag in activity.TagObjects)
+            {
+                switch (tag.Key)
+                {
+                    case SemanticConventions.AttributeHttpMethod:
+                    case SemanticConventions.AttributeHttpScheme:
+                    case SemanticConventions.AttributeHttpFlavor:
+                    case SemanticConventions.AttributeNetPeerName:
+                    case SemanticConventions.AttributeNetPeerPort:
+                    case SemanticConventions.AttributeHttpStatusCode:
+                        tags.Add(new KeyValuePair<string, object>(tag.Key, tag.Value));
+                        break;
+                }
+            }
+        }
+
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+        if (emitNewAttributes)
+        {
+            foreach (var tag in activity.TagObjects)
+            {
+                switch (tag.Key)
+                {
+                    case SemanticConventions.AttributeHttpRequestMethod:
+                    case SemanticConventions.AttributeNetworkProtocolVersion:
+                    case SemanticConventions.AttributeServerAddress:
+                    case SemanticConventions.AttributeServerPort:
+                    case SemanticConventions.AttributeHttpResponseStatusCode:
+                        tags.Add(new KeyValuePair<string, object>(tag.Key, tag.Value));
+                        break;
+                }
+            }
+        }
+
+        HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
     }
 
     private static void PrepareReflectionObjects()
