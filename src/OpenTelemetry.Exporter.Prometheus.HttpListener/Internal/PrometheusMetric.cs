@@ -15,11 +15,23 @@
 // </copyright>
 
 using System.Text;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
 internal sealed class PrometheusMetric
 {
+    /* Counter becomes counter
+       Gauge becomes gauge
+       Histogram becomes histogram
+       UpDownCounter becomes gauge
+     * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
+    */
+    private static readonly PrometheusType[] MetricTypes = new PrometheusType[]
+    {
+        PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
+    };
+
     public PrometheusMetric(string name, string unit, PrometheusType type)
     {
         // The metric name is
@@ -71,6 +83,11 @@ internal sealed class PrometheusMetric
     public string Unit { get; }
 
     public PrometheusType Type { get; }
+
+    public static PrometheusMetric Create(Metric metric)
+    {
+        return new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric));
+    }
 
     internal static string SanitizeMetricName(string metricName)
     {
@@ -193,6 +210,12 @@ internal sealed class PrometheusMetric
         }
 
         return false;
+    }
+
+    private static PrometheusType GetPrometheusType(Metric metric)
+    {
+        int metricType = (int)metric.MetricType >> 4;
+        return MetricTypes[metricType];
     }
 
     // The map to translate OTLP units to Prometheus units

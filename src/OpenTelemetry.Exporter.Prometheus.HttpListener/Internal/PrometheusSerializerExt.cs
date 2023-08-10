@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Concurrent;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -24,33 +23,20 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal static partial class PrometheusSerializer
 {
-    private const int MaxCachedMetrics = 1024;
-
-    /* Counter becomes counter
-       Gauge becomes gauge
-       Histogram becomes histogram
-       UpDownCounter becomes gauge
-     * https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#otlp-metric-points-to-prometheus
-    */
-    private static readonly PrometheusType[] MetricTypes = new PrometheusType[]
-    {
-        PrometheusType.Untyped, PrometheusType.Counter, PrometheusType.Gauge, PrometheusType.Summary, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Histogram, PrometheusType.Gauge,
-    };
-
-    private static readonly ConcurrentDictionary<Metric, PrometheusMetric> MetricsCache = new ConcurrentDictionary<Metric, PrometheusMetric>();
-    private static int metricsCacheCount;
-
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
+    public static bool CanWriteMetric(Metric metric)
     {
         if (metric.MetricType == MetricType.ExponentialHistogram)
         {
             // Exponential histograms are not yet support by Prometheus.
             // They are ignored for now.
-            return cursor;
+            return false;
         }
 
-        var prometheusMetric = GetPrometheusMetric(metric);
+        return true;
+    }
 
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric)
+    {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description);
@@ -212,34 +198,5 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
-    }
-
-    private static PrometheusMetric GetPrometheusMetric(Metric metric)
-    {
-        // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
-        if (metricsCacheCount >= MaxCachedMetrics)
-        {
-            if (!MetricsCache.TryGetValue(metric, out var formatter))
-            {
-                // The cache is full and the metric isn't in it.
-                formatter = new PrometheusMetric(metric.Name, metric.Unit, GetPrometheusType(metric));
-            }
-
-            return formatter;
-        }
-        else
-        {
-            return MetricsCache.GetOrAdd(metric, m =>
-            {
-                Interlocked.Increment(ref metricsCacheCount);
-                return new PrometheusMetric(m.Name, m.Unit, GetPrometheusType(metric));
-            });
-        }
-
-        static PrometheusType GetPrometheusType(Metric metric)
-        {
-            int metricType = (int)metric.MetricType >> 4;
-            return MetricTypes[metricType];
-        }
     }
 }
