@@ -81,7 +81,7 @@
     <PackageVersion Include="Moq" Version="[4.18.4,5.0)" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="[1.5.0,2.0)" />
     <PackageVersion Include="RabbitMQ.Client" Version="[6.5.0,7.0)" />
-    <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
+    <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.507,2.0)" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="[6.4.0]" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="Testcontainers.MsSql" Version="3.3.0" />
