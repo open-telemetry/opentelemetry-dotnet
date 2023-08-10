@@ -76,14 +76,14 @@ internal sealed class PropertyFetcher<T>
 #if NET6_0_OR_GREATER
     [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
-    private class PropertyFetch
+    private abstract class PropertyFetch
     {
         public static PropertyFetch? Create(TypeInfo type, string propertyName)
         {
             var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase)) ?? type.GetProperty(propertyName);
-            return CreateFetcherForProperty(property!);
+            return CreateFetcherForProperty(property);
 
-            static PropertyFetch? CreateFetcherForProperty(PropertyInfo propertyInfo)
+            static PropertyFetch? CreateFetcherForProperty(PropertyInfo? propertyInfo)
             {
                 if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
                 {
@@ -130,11 +130,7 @@ internal sealed class PropertyFetcher<T>
             }
         }
 
-        public virtual bool TryFetch(object obj, out T? value)
-        {
-            value = default;
-            return false;
-        }
+        public abstract bool TryFetch(object obj, out T? value);
 
         // Goal: make PropertyFetcher AOT-compatible.
         // AOT compiler can't guarantee correctness when call into MakeGenericType or MakeGenericMethod
@@ -158,7 +154,6 @@ internal sealed class PropertyFetcher<T>
             where TDeclaredObject : class
             => new PropertyFetchInstantiated<TDeclaredObject>(propertyInfo);
 
-        // ReferenceTypePropertyFetch is the optimized version because it uses CreateDelegate to get a Delegate directly to get the property.
 #if NET6_0_OR_GREATER
         [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
