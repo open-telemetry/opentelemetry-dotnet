@@ -331,12 +331,23 @@ public struct MetricPoint
         return false;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Gets the exemplars associated with the metric point.
+    /// </summary>
+    /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+    /// <returns><see cref="Exemplar"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public
+#else
     /// <summary>
     /// Gets the exemplars associated with the metric point.
     /// </summary>
     /// <returns><see cref="Exemplar"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly Exemplar[] GetExemplars()
+    internal
+#endif
+        readonly Exemplar[] GetExemplars()
     {
         // TODO: Do not expose Exemplar data structure (array now)
         return this.mpComponents?.Exemplars ?? Array.Empty<Exemplar>();
