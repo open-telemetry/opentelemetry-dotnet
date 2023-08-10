@@ -19,7 +19,9 @@ using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
+#if !NETFRAMEWORK
 using OpenTelemetry.Tests;
+#endif
 using OpenTelemetry.Trace;
 using Xunit;
 

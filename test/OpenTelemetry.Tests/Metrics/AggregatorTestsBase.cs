@@ -1,4 +1,4 @@
-// <copyright file="AggregatorTest.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregatorTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,27 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class AggregatorTest
+#pragma warning disable SA1402
+
+public abstract class AggregatorTestsBase
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
-    private readonly AggregatorStore aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024);
+
+    private readonly bool emitOverflowAttribute;
+    private readonly AggregatorStore aggregatorStore;
+
+    protected AggregatorTestsBase(bool emitOverflowAttribute)
+    {
+        if (emitOverflowAttribute)
+        {
+            this.emitOverflowAttribute = emitOverflowAttribute;
+        }
+
+        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute);
+    }
 
     [Fact]
     public void HistogramDistributeToAllBucketsDefault()
@@ -284,6 +298,7 @@ public class AggregatorTest
             aggregationType,
             aggregationTemporality,
             maxMetricPoints: 1024,
+            this.emitOverflowAttribute,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
@@ -391,7 +406,8 @@ public class AggregatorTest
             metricStreamIdentity,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
-            maxMetricPoints: 1024);
+            maxMetricPoints: 1024,
+            this.emitOverflowAttribute);
 
         aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
 
@@ -461,5 +477,21 @@ public class AggregatorTest
         public int ThreadStartedCount;
         public long ThreadsFinishedAllUpdatesCount;
         public double SumOfDelta;
+    }
+}
+
+public class AggregatorTests : AggregatorTestsBase
+{
+    public AggregatorTests()
+        : base(false)
+    {
+    }
+}
+
+public class AggregatorTestsWithOverflowAttribute : AggregatorTestsBase
+{
+    public AggregatorTestsWithOverflowAttribute()
+        : base(true)
+    {
     }
 }

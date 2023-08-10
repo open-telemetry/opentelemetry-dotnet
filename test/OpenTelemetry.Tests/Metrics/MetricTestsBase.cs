@@ -20,6 +20,8 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class MetricTestsBase
 {
+    public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+
     public static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
     {
         int tagIndex = 0;

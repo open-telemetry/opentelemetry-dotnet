@@ -636,7 +636,7 @@ public class MetricViewTests : MetricTestsBase
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
 
-        AggregatorTest.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
+        AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
         Assert.Equal(50, sum);
         Assert.Equal(6, count);
     }
