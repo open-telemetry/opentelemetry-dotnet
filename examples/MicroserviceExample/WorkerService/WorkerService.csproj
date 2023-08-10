@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
