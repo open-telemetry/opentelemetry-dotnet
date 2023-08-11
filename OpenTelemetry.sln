@@ -26,7 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E-03FA-4FFF-89A5-C51F107623FD}"
 	ProjectSection(SolutionItems) = preProject
-		build\assert-publish-aot-testApp-warning-count.ps1 = build\assert-publish-aot-testApp-warning-count.ps1
 		build\Common.nonprod.props = build\Common.nonprod.props
 		build\Common.prod.props = build\Common.prod.props
 		build\Common.props = build\Common.props
@@ -45,6 +44,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\process-codecoverage.ps1 = build\process-codecoverage.ps1
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
+		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
 		build\xunit.runner.json = build\xunit.runner.json
 	EndProjectSection
 EndProject
@@ -97,6 +97,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\apicompatibility.yml = .github\workflows\apicompatibility.yml
 		.github\workflows\ci-aot.yml = .github\workflows\ci-aot.yml
+		.github\workflows\ci-instrumentation-libraries-md.yml = .github\workflows\ci-instrumentation-libraries-md.yml
+		.github\workflows\ci-instrumentation-libraries.yml = .github\workflows\ci-instrumentation-libraries.yml
 		.github\workflows\ci-md.yml = .github\workflows\ci-md.yml
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml

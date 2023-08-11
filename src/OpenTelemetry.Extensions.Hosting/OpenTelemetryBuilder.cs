@@ -136,6 +136,20 @@ public sealed class OpenTelemetryBuilder
         return this;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="LoggerProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public
+#else
     /// <summary>
     /// Adds logging services into the builder.
     /// </summary>
@@ -146,9 +160,12 @@ public sealed class OpenTelemetryBuilder
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-    internal OpenTelemetryBuilder WithLogging()
+    internal
+#endif
+        OpenTelemetryBuilder WithLogging()
         => this.WithLogging(b => { });
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Adds logging services into the builder.
     /// </summary>
@@ -157,7 +174,19 @@ public sealed class OpenTelemetryBuilder
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
-    internal OpenTelemetryBuilder WithLogging(Action<LoggerProviderBuilder> configure)
+    public
+#else
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="LoggerProviderBuilder"/>
+    /// configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    internal
+#endif
+        OpenTelemetryBuilder WithLogging(Action<LoggerProviderBuilder> configure)
     {
         Guard.ThrowIfNull(configure);
 

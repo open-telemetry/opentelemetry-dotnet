@@ -148,7 +148,7 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ExitGlobalLock()
     {
-        this.globalLockState = 0;
+        Interlocked.Exchange(ref this.globalLockState, 0);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

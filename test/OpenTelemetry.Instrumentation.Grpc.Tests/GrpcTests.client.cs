@@ -17,12 +17,16 @@
 using System.Diagnostics;
 using System.Net;
 using Greet;
+#if !NETFRAMEWORK
 using Grpc.Core;
+#endif
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+#if !NETFRAMEWORK
 using OpenTelemetry.Context.Propagation;
+#endif
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;

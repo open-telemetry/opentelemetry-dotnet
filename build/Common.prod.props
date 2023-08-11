@@ -2,14 +2,11 @@
   <Import Project=".\Common.props" />
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Condition="'$(IntegrationBuild)' != 'true'">
+    <PackageReference Include="MinVer"  PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -49,14 +46,17 @@
     <NoWarn>$(NoWarn),1573,1712</NoWarn>
     <PackageOutputPath Condition="$(Build_ArtifactStagingDirectory) != ''">$(Build_ArtifactStagingDirectory)</PackageOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!--<MinVerVerbosity>detailed</MinVerVerbosity>-->
     <ApiCompatExcludeAttributeList>$(RepoRoot)\build\GlobalAttrExclusions.txt</ApiCompatExcludeAttributeList>
   </PropertyGroup>
 
   <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
     <PropertyGroup>
       <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</FileVersion>
+      <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' != ''">true</ExposeExperimentalFeatures>
+      <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' == ''">false</ExposeExperimentalFeatures>
     </PropertyGroup>
+
+    <Message Importance="high" Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), MinVerMajor: $(MinVerMajor), MinVerMinor: $(MinVerMinor), MinVerPatch: $(MinVerPatch), MinVerPreRelease: $(MinVerPreRelease), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
   </Target>
 
   <PropertyGroup>
@@ -92,10 +92,10 @@
 
   <!--PublicApi Analyzer-->
   <ItemGroup>
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
-    <None Include=".publicApi\*\PublicAPI.Shipped.txt" />
-    <None Include=".publicApi\*\PublicAPI.Unshipped.txt" />
+    <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
+    <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
+    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+    <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
 
 </Project>

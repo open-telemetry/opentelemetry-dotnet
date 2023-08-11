@@ -6,10 +6,16 @@
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
     <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
+    <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
+    <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -27,13 +33,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
-    <PackageReference Include="StyleCop.Analyzers" Condition="'$(SkipAnalysis)'!='true'">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
     <PackageReference Include="Microsoft.CodeCoverage" PrivateAssets="All" Condition="'$(Configuration)'=='Release'" />
-    <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Condition="'$(SkipAnalysis)'!='true'">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>-->
+    <!--
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
+    -->
   </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">

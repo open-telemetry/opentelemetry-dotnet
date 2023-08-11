@@ -58,7 +58,22 @@ environment variables.
 
 ## Enable Log Exporter
 
-// TODO
+```csharp
+var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddOpenTelemetry(options =>
+    {
+        options.AddOtlpExporter();
+    });
+});
+```
+
+By default, `AddOtlpExporter()` pairs the OTLP Log Exporter with a [batching
+processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/sdk.md#batching-processor).
+See [`TestLogs.cs`](../../examples/Console/TestLogs.cs) for example on how to
+customize the `LogRecordExportProcessorOptions` or see the [Environment
+Variables](#environment-variables) section below on how to customize using
+environment variables.
 
 ## Configuration
 
@@ -82,14 +97,6 @@ TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
 ## OtlpExporterOptions
 
-* `ExportProcessorType`: Whether the exporter should use [Batch or Simple
-  exporting
-  processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
-  The default is Batch.
-
-* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
-  Only used if ExportProcessorType is set to Batch.
-
 * `Protocol`: OTLP transport protocol. Supported values:
   `OtlpExportProtocol.Grpc` and `OtlpExportProtocol.HttpProtobuf`.
    The default is `OtlpExportProtocol.Grpc`.
@@ -109,6 +116,16 @@ TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
 
+The following options are only applicable to `OtlpTraceExporter`:
+
+* `ExportProcessorType`: Whether the exporter should use [Batch or Simple
+  exporting
+  processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
+  The default is Batch.
+
+* `BatchExportProcessorOptions`: Configuration options for the batch exporter.
+  Only used if ExportProcessorType is set to Batch.
+
 See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
 an example of how to use the exporter.
 
@@ -124,6 +141,30 @@ values of the `OtlpExporterOptions`
 | `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                             |
 | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
+
+The following environment variables can be used to override the default values
+for `BatchExportProcessorOptions` in case of `OtlpTraceExporter` (following the
+[OpenTelemetry
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-span-processor))
+
+| Environment variable             | `OtlpExporterOptions.BatchExportProcessorOptions` property  |
+| ---------------------------------| ------------------------------------------------------------|
+| `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                |
+| `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                               |
+| `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                              |
+| `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                        |
+
+The following environment variables can be used to override the default values
+for `BatchExportProcessorOptions` in case of `OtlpLogExporter` (following the
+[OpenTelemetry
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#batch-logrecord-processor))
+
+| Environment variable              | `LogRecordExportProcessorOptions.BatchExportProcessorOptions` property  |
+| ----------------------------------| ------------------------------------------------------------------------|
+| `OTEL_BLRP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                                            |
+| `OTEL_BLRP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                                           |
+| `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                                          |
+| `OTEL_BLRP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                                    |
 
 The following environment variables can be used to override the default
 values of the `PeriodicExportingMetricReaderOptions`
