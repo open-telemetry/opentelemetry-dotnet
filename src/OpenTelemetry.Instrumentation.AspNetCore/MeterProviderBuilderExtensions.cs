@@ -78,6 +78,10 @@ public static class MeterProviderBuilderExtensions
 
         builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
 
+        builder.AddView(
+            instrumentName: HttpInMetricsListener.HttpServerDurationMetricName,
+            metricStreamConfiguration: new ExplicitBucketHistogramConfiguration { Boundaries = HttpInMetricsListener.HttpServerDurationMetricExplicitBounds });
+
         builder.AddInstrumentation(sp =>
         {
             var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreMetricsInstrumentationOptions>>().Get(name);

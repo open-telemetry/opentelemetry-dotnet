@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* **Breaking change** The metric `http.server.duration` has been updated to the
+  latest spec for [metrics](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md).
+  Unit has been changed from millisecond to second and the histogram bounds
+  have been updated accordingly.
+  ([]())
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20

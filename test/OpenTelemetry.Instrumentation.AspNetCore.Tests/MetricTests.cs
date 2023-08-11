@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -243,6 +244,18 @@ public class MetricTests
         Assert.Contains(host, attributes);
         Assert.Contains(route, attributes);
         Assert.Equal(expectedTagsCount, attributes.Length);
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = metricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+            actual: histogramBounds);
 
         return attributes;
     }

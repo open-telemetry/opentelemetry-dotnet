@@ -27,7 +27,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 internal sealed class HttpInMetricsListener : ListenerHandler
 {
-    private const string HttpServerDurationMetricName = "http.server.duration";
+    internal const string HttpServerDurationMetricName = "http.server.duration";
+
+    // Http Metrics use custom histogram boundaries. See the spec: https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md
+    internal static double[] HttpServerDurationMetricExplicitBounds = new double[] { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 };
+
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
 
@@ -42,7 +46,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     {
         this.meter = meter;
         this.options = options;
-        this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
+        this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
