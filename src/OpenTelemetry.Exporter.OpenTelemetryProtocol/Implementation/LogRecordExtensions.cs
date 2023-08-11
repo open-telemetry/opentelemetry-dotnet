@@ -16,9 +16,13 @@
 
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
+#if EXPOSE_EXPERIMENTAL_FEATURES
 using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Logs;
+#if EXPOSE_EXPERIMENTAL_FEATURES
 using OpenTelemetry.Trace;
+#endif
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
