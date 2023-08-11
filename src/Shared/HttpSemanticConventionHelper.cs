@@ -77,12 +77,7 @@ internal static class HttpSemanticConventionHelper
     {
         try
         {
-            var stringValue = Environment.GetEnvironmentVariable(SemanticConventionOptInKeyName);
-
-            if (string.IsNullOrWhiteSpace(stringValue))
-            {
-                stringValue = configuration![SemanticConventionOptInKeyName];
-            }
+            var stringValue = configuration![SemanticConventionOptInKeyName];
 
             if (string.IsNullOrWhiteSpace(stringValue))
             {

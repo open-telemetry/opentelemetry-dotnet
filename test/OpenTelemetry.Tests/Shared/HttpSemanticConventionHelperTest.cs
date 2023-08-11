@@ -70,23 +70,6 @@ public class HttpSemanticConventionHelperTest
             Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, input);
 
             var expected = Enum.Parse(typeof(HttpSemanticConvention), expectedValue);
-            Assert.Equal(expected, GetSemanticConventionOptIn(new ConfigurationBuilder().Build()));
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, null);
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(TestCases))]
-    public void VerifyGetSemanticConventionOptIn_UsingEnvironmentVariable_ViaIConfig(string input, string expectedValue)
-    {
-        try
-        {
-            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, input);
-
-            var expected = Enum.Parse(typeof(HttpSemanticConvention), expectedValue);
             Assert.Equal(expected, GetSemanticConventionOptIn(new ConfigurationBuilder().AddEnvironmentVariables().Build()));
         }
         finally
