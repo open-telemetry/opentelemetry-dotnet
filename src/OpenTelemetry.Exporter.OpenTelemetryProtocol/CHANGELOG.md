@@ -12,6 +12,11 @@ exporter.
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.23.0/specification/metrics/sdk_exporters/otlp.md#additional-configuration).
   ([#4667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4667))
 
+* **[Experimental feature](./README.md#experimental-features)**
+  Exporting the following fields from `LogRecord` is now considered
+  an experimental feature: `CategoryName`, `EventId`, and `Exception`.
+  Refer to the documentation for more details.
+
 ## 1.6.0-alpha.1
 
 Released 2023-Jul-12
@@ -34,20 +39,18 @@ Released 2023-Jul-12
   for more details.
   ([#4647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4647))
 
-* **Experimental (pre-release builds only):**
+* **[Experimental feature](./README.md#experimental-features)**
+  Add back support for Exemplars which is now treated as an experimental
+  feature available only in pre-release builds. See
+  [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
+  instructions to enable exemplars.
+  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
 
-  * Note: See
-    [#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735)
-    for the introduction of experimental api support.
-
-  * Add back support for Exemplars. See
-    [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
-    instructions to enable exemplars.
-    ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
-
-  * Updated to support `Severity` and `SeverityText` when exporting
-    `LogRecord`s.
-    ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
+* **[Experimental feature](./README.md#experimental-features)**
+  The `Severity` and `SeverityText` fields on `LogRecord` are only available in
+  pre-release builds of the SDK. Pre-release builds of the OTLP exporter will
+  export these fields.
+  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 ## 1.5.1
 

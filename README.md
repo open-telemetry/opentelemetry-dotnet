@@ -104,6 +104,19 @@ extension scenarios:
 * Building a custom sampler for
   [traces](./docs/trace/extending-the-sdk/README.md#sampler).
 
+## Experimental Features
+
+Various experimental features are available by the components of OpenTelemetry
+.NET.
+
+Experimental features are enabled in a variety of different ways. Some features
+are only available in pre-release builds while others may be available in
+stable builds gated by a feature flag. Feature flags are implemented using
+environment variables (e.g., `OTEL_DOTNET_EXPERIMENTAL_SOME_FEATURE`).
+
+The README of a each component will contain information for any available
+experimental features and how to use them.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
