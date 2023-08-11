@@ -6,7 +6,7 @@
   latest spec for [metrics](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md).
   Unit has been changed from millisecond to second and the histogram bounds
   have been updated accordingly.
-  ([]())
+  ([#4766](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4766))
 
 ## 1.5.1-beta.1
 
