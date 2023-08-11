@@ -163,6 +163,12 @@ internal class LogsOptions
 
     [Option('p', "protocol", HelpText = "Transport protocol used by OTLP exporter. Supported values: grpc and http/protobuf. Only applicable if Exporter is OTLP", Default = "grpc")]
     public string Protocol { get; set; }
+
+    [Option("processorType", Default = "batch", HelpText = "export processor type. Supported values: simple and batch", Required = false)]
+    public string ProcessorType { get; set; }
+
+    [Option("scheduledDelay", Default = 5000, HelpText = "The delay interval in milliseconds between two consecutive exports.", Required = false)]
+    public int ScheduledDelayInMilliseconds { get; set; }
 }
 
 [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

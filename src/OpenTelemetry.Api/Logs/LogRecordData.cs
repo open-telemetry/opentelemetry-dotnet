@@ -20,10 +20,19 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Logs;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Stores details about a log message.
 /// </summary>
-public struct LogRecordData
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// Stores details about a log message.
+/// </summary>
+internal
+#endif
+    struct LogRecordData
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;
 
