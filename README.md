@@ -114,6 +114,10 @@ are only available in pre-release builds while others may be available in
 stable builds gated by a feature flag. Feature flags are implemented using
 environment variables (e.g., `OTEL_DOTNET_EXPERIMENTAL_SOME_FEATURE`).
 
+Experimental features are subject to breaking changes. Typically, they are
+works-in-progress that we intend to eventually provide in a stable release.
+However, this is not guaranteed and they may be removed entirely.
+
 The README of a each component will contain information for any available
 experimental features and how to use them.
 
