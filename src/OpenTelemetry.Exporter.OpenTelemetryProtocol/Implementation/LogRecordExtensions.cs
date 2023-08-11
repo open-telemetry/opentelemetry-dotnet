@@ -79,7 +79,7 @@ internal static class LogRecordExtensions
 
             var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
             var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
-
+#if EXPOSE_EXPERIMENTAL_FEATURES
             // First add the generic attributes like Category, EventId and Exception,
             // so they are less likely being dropped because of AttributeCountLimit.
 
@@ -109,7 +109,7 @@ internal static class LogRecordExtensions
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
             }
-
+#endif
             bool bodyPopulatedFromFormattedMessage = false;
             if (logRecord.FormattedMessage != null)
             {
