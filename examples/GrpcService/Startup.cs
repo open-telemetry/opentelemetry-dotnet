@@ -36,24 +36,24 @@ public class Startup
             .WithTracing(builder =>
             {
                 builder
-                    .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("ServiceName")))
+                    .ConfigureResource(r => r.AddService(this.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!))
                     .AddAspNetCoreInstrumentation();
 
                 // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
-                var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
+                var exporter = this.Configuration.GetValue("UseExporter", defaultValue: "console")!.ToLowerInvariant();
                 switch (exporter)
                 {
                     case "jaeger":
-                        builder.AddJaegerExporter(jaegerOptions =>
+                        _ = builder.AddJaegerExporter(jaegerOptions =>
                         {
-                            jaegerOptions.AgentHost = this.Configuration.GetValue<string>("Jaeger:Host");
-                            jaegerOptions.AgentPort = this.Configuration.GetValue<int>("Jaeger:Port");
+                            jaegerOptions.AgentHost = this.Configuration.GetValue("Jaeger:Host", defaultValue: "localhost");
+                            jaegerOptions.AgentPort = this.Configuration.GetValue("Jaeger:Port", defaultValue: 6831);
                         });
                         break;
                     case "zipkin":
                         builder.AddZipkinExporter(zipkinOptions =>
                         {
-                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Zipkin:Endpoint"));
+                            zipkinOptions.Endpoint = new Uri(this.Configuration.GetValue("Zipkin:Endpoint", defaultValue: "http://localhost:9411/api/v2/spans")!);
                         });
                         break;
                     default:
