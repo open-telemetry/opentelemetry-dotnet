@@ -23,7 +23,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+#if EXPOSE_EXPERIMENTAL_FEATURES
 using OpenTelemetry.Internal;
+#endif
 using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
