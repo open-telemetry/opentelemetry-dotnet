@@ -18,12 +18,23 @@
 
 namespace OpenTelemetry.Logs;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Describes a logger provider builder that supports deferred
 /// initialization using an <see cref="IServiceProvider"/> to perform
 /// dependency injection.
 /// </summary>
-public interface IDeferredLoggerProviderBuilder
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// Describes a logger provider builder that supports deferred
+/// initialization using an <see cref="IServiceProvider"/> to perform
+/// dependency injection.
+/// </summary>
+internal
+#endif
+    interface IDeferredLoggerProviderBuilder
 {
     /// <summary>
     /// Register a callback action to configure the <see
