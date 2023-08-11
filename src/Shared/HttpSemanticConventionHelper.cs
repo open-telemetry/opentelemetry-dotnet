@@ -60,7 +60,7 @@ internal static class HttpSemanticConventionHelper
 
         if (configuration != null && TryGetConfiguredValues(configuration, out var values))
         {
-            if (values!.Contains("http/dup"))
+            if (values.Contains("http/dup"))
             {
                 return HttpSemanticConvention.Dupe;
             }
