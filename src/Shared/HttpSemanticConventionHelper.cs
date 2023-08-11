@@ -58,7 +58,7 @@ internal static class HttpSemanticConventionHelper
     {
         Debug.Assert(configuration != null, "configuration was null");
 
-        if (TryGetConfiguredValues(configuration, out var values))
+        if (configuration != null && TryGetConfiguredValues(configuration, out var values))
         {
             if (values!.Contains("http/dup"))
             {
