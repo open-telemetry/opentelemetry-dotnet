@@ -90,12 +90,8 @@ internal static class HttpSemanticConventionHelper
                 return false;
             }
 
-            var stringValues = stringValue.Split(separator: new[] { ',' }, options: StringSplitOptions.RemoveEmptyEntries)
-                .Select(value => value.Trim())
-                .Where(value => !string.IsNullOrWhiteSpace(value));
-
+            var stringValues = stringValue.Split(separator: new[] { ',', ' ' }, options: StringSplitOptions.RemoveEmptyEntries);
             values = new HashSet<string>(stringValues, StringComparer.OrdinalIgnoreCase);
-
             return true;
         }
         catch
