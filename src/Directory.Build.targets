@@ -1,4 +1,8 @@
 <Project>
+  <PropertyGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(RunPackageValidation)' == 'true' AND '$(RunApiCompat)' == 'true'">
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>$(OTelLatestStableVer)</PackageValidationBaselineVersion>
+  </PropertyGroup>
 
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
