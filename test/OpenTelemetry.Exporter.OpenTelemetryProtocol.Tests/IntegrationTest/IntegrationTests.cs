@@ -56,10 +56,8 @@ public sealed class IntegrationTests : IDisposable
     [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/traces", ExportProcessorType.Simple, true, "https")]
     [Trait("CategoryName", "CollectorIntegrationTests")]
     [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-    public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush, string scheme = "http")
+    public void ExportTrace_ReturnsSucceedResult(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush, string scheme = "http")
     {
-        using EventWaitHandle handle = new ManualResetEvent(false);
-
         var exporterOptions = new OtlpExporterOptions
         {
             Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
@@ -71,60 +69,107 @@ public sealed class IntegrationTests : IDisposable
             },
         };
 
-        DelegatingExporter<Activity> delegatingExporter = null;
-        var exportResults = new List<ExportResult>();
+        this.VerifyTraceExportResult(exporterOptions, forceFlush, ExportResult.Success);
+    }
 
-        var activitySourceName = "otlp.collector.test";
-
-        var builder = Sdk.CreateTracerProviderBuilder()
-            .AddSource(activitySourceName);
-
-        builder.AddProcessor(OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
-            exporterOptions,
-            DefaultSdkLimitOptions,
-            serviceProvider: null,
-            configureExporterInstance: otlpExporter =>
-            {
-                delegatingExporter = new DelegatingExporter<Activity>
-                {
-                    OnExportFunc = (batch) =>
-                    {
-                        var result = otlpExporter.Export(batch);
-                        exportResults.Add(result);
-                        handle.Set();
-                        return result;
-                    },
-                };
-                return delegatingExporter;
-            }));
-
-        using (var tracerProvider = builder.Build())
+    [InlineData(OtlpExportProtocol.Grpc, ":6317", ExportProcessorType.Simple, true)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":6318/v1/traces", ExportProcessorType.Simple, true)]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
+    public void ExportTrace_UntrustedRoot_CustomCATrustStore_ReturnsSucceedResult(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType,
+        bool forceFlush)
+    {
+        var exporterOptions = new OtlpExporterOptions
         {
-            using var source = new ActivitySource(activitySourceName);
-            var activity = source.StartActivity($"{protocol} Test Activity");
-            activity?.Stop();
-
-            Assert.NotNull(delegatingExporter);
-
-            if (forceFlush)
+            Endpoint = new Uri($"https://{CollectorHostname}{endpoint}"),
+            Protocol = protocol,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
             {
-                Assert.True(tracerProvider.ForceFlush());
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
-            }
-            else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
-            {
-                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                Assert.Single(exportResults);
-                Assert.Equal(ExportResult.Success, exportResults[0]);
-            }
-        }
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
+            CertificateFile = "/cfg/otel-untrusted-collector.crt",
+        };
 
-        if (!forceFlush && exportProcessorType == ExportProcessorType.Simple)
+        this.VerifyTraceExportResult(exporterOptions, forceFlush, ExportResult.Success);
+    }
+
+    [InlineData(OtlpExportProtocol.Grpc, ":6317", ExportProcessorType.Simple)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":6318/v1/traces", ExportProcessorType.Simple)]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
+    public void ExportTrace_UntrustedRoot_NoCertificateSet_ReturnsFailureResult(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType)
+    {
+        var exporterOptions = new OtlpExporterOptions
         {
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
-        }
+            Endpoint = new Uri($"https://{CollectorHostname}{endpoint}"),
+            Protocol = protocol,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
+            {
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
+        };
+
+        this.VerifyTraceExportResult(exporterOptions, true, ExportResult.Failure);
+    }
+
+    [InlineData(OtlpExportProtocol.Grpc, ":7317", ExportProcessorType.Simple)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":7318/v1/traces", ExportProcessorType.Simple)]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
+    public void ExportTrace_MTLS_WithClientCertificate_ReturnsSucceedResult(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType)
+    {
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"https://{CollectorHostname}{endpoint}"),
+            Protocol = protocol,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
+            {
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
+            ClientCertificateFile = "/cfg/otel-client.crt",
+            ClientKeyFile = "/cfg/otel-client.key",
+        };
+
+        this.VerifyTraceExportResult(exporterOptions, true, ExportResult.Success);
+    }
+
+    [InlineData(OtlpExportProtocol.Grpc, ":7317", ExportProcessorType.Simple)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":7318/v1/traces", ExportProcessorType.Simple)]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
+    public void ExportTrace_MTLS_NoClientCertificate_ReturnsFailureResult(
+        OtlpExportProtocol protocol,
+        string endpoint,
+        ExportProcessorType exportProcessorType)
+    {
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"https://{CollectorHostname}{endpoint}"),
+            Protocol = protocol,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
+            {
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
+        };
+
+        this.VerifyTraceExportResult(exporterOptions, true, ExportResult.Failure);
     }
 
     [InlineData(OtlpExportProtocol.Grpc, ":4317", false, false)]
@@ -234,6 +279,66 @@ public sealed class IntegrationTests : IDisposable
         else
         {
             Assert.Null(exception);
+        }
+    }
+
+    private void VerifyTraceExportResult(OtlpExporterOptions exporterOptions, bool forceFlush, ExportResult expectedResult)
+    {
+        using EventWaitHandle handle = new ManualResetEvent(false);
+
+        DelegatingExporter<Activity> delegatingExporter = null;
+        var exportResults = new List<ExportResult>();
+
+        var activitySourceName = "otlp.collector.test";
+
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName);
+
+        builder.AddProcessor(OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
+            exporterOptions,
+            DefaultSdkLimitOptions,
+            serviceProvider: null,
+            configureExporterInstance: otlpExporter =>
+            {
+                delegatingExporter = new DelegatingExporter<Activity>
+                {
+                    OnExportFunc = (batch) =>
+                    {
+                        var result = otlpExporter.Export(batch);
+                        exportResults.Add(result);
+                        handle.Set();
+                        return result;
+                    },
+                };
+                return delegatingExporter;
+            }));
+
+        using (var tracerProvider = builder.Build())
+        {
+            using var source = new ActivitySource(activitySourceName);
+            var activity = source.StartActivity($"{exporterOptions.Protocol} Test Activity");
+            activity?.Stop();
+
+            Assert.NotNull(delegatingExporter);
+
+            if (forceFlush)
+            {
+                Assert.True(tracerProvider.ForceFlush());
+                Assert.Single(exportResults);
+                Assert.Equal(expectedResult, exportResults[0]);
+            }
+            else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
+            {
+                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                Assert.Single(exportResults);
+                Assert.Equal(expectedResult, exportResults[0]);
+            }
+        }
+
+        if (!forceFlush && exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+        {
+            Assert.Single(exportResults);
+            Assert.Equal(expectedResult, exportResults[0]);
         }
     }
 
