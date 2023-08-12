@@ -184,6 +184,10 @@ public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
             ClientKeyFile = pKeyPath,
         };
 
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
         using var channel = OtlpExporterOptionsExtensions.CreateChannel(otlpOptions);
+#else
+        _ = OtlpExporterOptionsExtensions.CreateChannel(otlpOptions);
+#endif
     }
 }
