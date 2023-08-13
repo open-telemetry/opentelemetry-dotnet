@@ -15,12 +15,10 @@
 // </copyright>
 
 #if NETFRAMEWORK
-using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
