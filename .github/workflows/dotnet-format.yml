@@ -20,6 +20,9 @@ jobs:
     - name: check out code
       uses: actions/checkout@v3
 
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
     - name: Install format tool
       run: dotnet tool install -g dotnet-format
 

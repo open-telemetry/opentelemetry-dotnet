@@ -33,6 +33,7 @@ public abstract partial class MetricReader
     private Metric[] metrics;
     private Metric[] metricsCurrentBatch;
     private int metricIndex = -1;
+    private bool emitOverflowAttribute;
 
     private ExemplarFilter exemplarFilter;
 
@@ -71,7 +72,7 @@ public abstract partial class MetricReader
                 Metric metric = null;
                 try
                 {
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
+                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, this.exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -156,7 +157,7 @@ public abstract partial class MetricReader
                 }
                 else
                 {
-                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.exemplarFilter);
+                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics[index] = metric;
@@ -230,9 +231,18 @@ public abstract partial class MetricReader
         this.exemplarFilter = exemplarFilter;
     }
 
-    internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
+    internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream, bool isEmitOverflowAttributeKeySet)
     {
         this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
+
+        if (isEmitOverflowAttributeKeySet)
+        {
+            // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
+            if (maxMetricPointsPerMetricStream > 1)
+            {
+                this.emitOverflowAttribute = true;
+            }
+        }
     }
 
     private Batch<Metric> GetMetricsBatch()

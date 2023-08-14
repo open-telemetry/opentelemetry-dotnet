@@ -1,13 +1,13 @@
 param([string]$targetNetFramework)
 
 $rootDirectory = Split-Path $PSScriptRoot -Parent
-$publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false
+$publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false /p:ExposeExperimentalFeatures=true
 
 $actualWarningCount = 0
 
 foreach ($line in $($publishOutput -split "`r`n"))
 {
-    if ($line -like "*analysis warning IL*") 
+    if ($line -like "*analysis warning IL*")
     {
         Write-Host $line
         $actualWarningCount += 1
@@ -28,7 +28,7 @@ if ($LastExitCode -ne 0)
 popd
 
 Write-Host "Actual warning count is:", $actualWarningCount
-$expectedWarningCount = 28
+$expectedWarningCount = 33
 
 $testPassed = 0
 if ($actualWarningCount -ne $expectedWarningCount)
