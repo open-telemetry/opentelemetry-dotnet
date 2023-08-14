@@ -35,10 +35,24 @@ public static class MeterProviderBuilderExtensions
     public static MeterProviderBuilder AddHttpClientInstrumentation(
         this MeterProviderBuilder builder)
     {
+        return AddHttpClientInstrumentation(builder, name: null);
+    }
+
+    /// <summary>
+    /// Enables HttpClient instrumentation.
+    /// </summary>
+    /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+    public static MeterProviderBuilder AddHttpClientInstrumentation(
+        this MeterProviderBuilder builder, string name)
+    {
         Guard.ThrowIfNull(builder);
 
         // Note: Warm-up the status code mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
+
+        name ??= Options.DefaultName;
 
         builder.ConfigureServices(services =>
         {
@@ -54,7 +68,22 @@ public static class MeterProviderBuilderExtensions
         //   RecordException - probably doesn't make sense for metric instrumentation
 
         builder.AddMeter(HttpClientMetrics.InstrumentationName);
-        return builder.AddInstrumentation(sp => new HttpClientMetrics(
+        builder.AddInstrumentation(sp => new HttpClientMetrics(
             sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().CurrentValue));
+
+#if NETFRAMEWORK
+        builder.AddMeter(HttpWebRequestActivitySource.InstrumentationName);
+        builder.ConfigureServices(s =>
+        {
+            s.ConfigureOpenTelemetryMeterProvider((sp, _) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
+
+                HttpWebRequestActivitySource.Options = options;
+            });
+        });
+#endif
+
+        return builder;
     }
 }
