@@ -41,7 +41,7 @@ public class HttpSemanticConventionHelperTest
             new object[] { "junk,http , http ,junk",  HttpSemanticConvention.New },
             new object[] { "junk,http/dup",  HttpSemanticConvention.Dupe },
             new object[] { "junk, http/dup ",  HttpSemanticConvention.Dupe },
-            new object[] { "junk, http/dup ",  HttpSemanticConvention.Dupe },
+            new object[] { "http/dup,http",  HttpSemanticConvention.Dupe },
             new object[] { "http,http/dup",  HttpSemanticConvention.Dupe },
         };
 
