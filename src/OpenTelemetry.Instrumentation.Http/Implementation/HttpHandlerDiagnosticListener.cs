@@ -220,7 +220,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         if (activity.IsAllDataRequested)
         {
-            var requestTaskStatus = this.GetRequestStatusOnStopActivity(payload);
+            var requestTaskStatus = this.GetRequestStatus(payload);
 
             ActivityStatusCode currentStatusCode = activity.Status;
             if (requestTaskStatus != TaskStatus.RanToCompletion)
@@ -242,7 +242,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 }
             }
 
-            if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+            if (!this.TryFetchResponse(payload, out HttpResponseMessage response))
             {
                 if (this.emitOldAttributes)
                 {
@@ -340,7 +340,17 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
 #endif
-    private TaskStatus GetRequestStatusOnStopActivity(object payload)
+    private bool TryFetchResponse(object payload, out HttpResponseMessage response)
+    {
+        if (!this.stopResponseFetcher.TryFetch(payload, out response) || response == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private TaskStatus GetRequestStatus(object payload)
     {
         //// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
         //// requestTaskStatus is not null
