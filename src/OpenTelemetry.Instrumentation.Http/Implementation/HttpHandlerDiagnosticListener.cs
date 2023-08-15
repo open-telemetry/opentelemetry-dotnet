@@ -242,7 +242,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 }
             }
 
-            if (!this.TryFetchResponse(payload, out HttpResponseMessage response))
+            if (this.TryFetchResponse(payload, out HttpResponseMessage response))
             {
                 if (this.emitOldAttributes)
                 {
@@ -342,12 +342,12 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 #endif
     private bool TryFetchResponse(object payload, out HttpResponseMessage response)
     {
-        if (!this.stopResponseFetcher.TryFetch(payload, out response) || response == null)
+        if (this.stopResponseFetcher.TryFetch(payload, out response) && response != null)
         {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
