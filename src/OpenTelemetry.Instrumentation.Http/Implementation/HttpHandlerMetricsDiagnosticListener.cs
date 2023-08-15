@@ -118,10 +118,10 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
         if (this.stopResponseFetcher.TryFetch(payload, out response) && response != null)
         {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
@@ -134,9 +134,9 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
         if (this.stopRequestFetcher.TryFetch(payload, out request) && request != null)
         {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 }
