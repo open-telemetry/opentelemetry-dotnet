@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -112,7 +115,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             return;
         }
 
-        if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
+        if (!this.TryFetchRequest(payload, out HttpRequestMessage request))
         {
             HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
             return;
@@ -217,9 +220,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         if (activity.IsAllDataRequested)
         {
-            // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
-            // requestTaskStatus is not null
-            _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
+            var requestTaskStatus = this.GetRequestStatusOnStopActivity(payload);
 
             ActivityStatusCode currentStatusCode = activity.Status;
             if (requestTaskStatus != TaskStatus.RanToCompletion)
@@ -274,7 +275,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         if (activity.IsAllDataRequested)
         {
-            if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
+            if (!this.TryFetchException(payload, out Exception exc))
             {
                 HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                 return;
@@ -299,5 +300,52 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 HttpInstrumentationEventSource.Log.EnrichmentException(ex);
             }
         }
+    }
+
+    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
+    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+    private bool TryFetchException(object payload, out Exception exc)
+    {
+        if (!this.stopExceptionFetcher.TryFetch(payload, out exc) || exc == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
+    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+    private bool TryFetchRequest(object payload, out HttpRequestMessage request)
+    {
+        if (!this.startRequestFetcher.TryFetch(payload, out request) || request == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
+    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+    private TaskStatus GetRequestStatusOnStopActivity(object payload)
+    {
+        //// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
+        //// requestTaskStatus is not null
+        _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
+
+        return requestTaskStatus;
     }
 }
