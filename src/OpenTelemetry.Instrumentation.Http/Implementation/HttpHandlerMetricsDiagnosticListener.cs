@@ -112,7 +112,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
     private bool TryFetchResponse(object payload, out HttpResponseMessage response)
     {
@@ -128,7 +128,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
     private bool TryFetchRequest(object payload, out HttpRequestMessage request)
     {
