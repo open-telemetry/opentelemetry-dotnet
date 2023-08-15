@@ -31,8 +31,8 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 {
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
-    private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
-    private readonly PropertyFetcher<HttpRequestMessage> stopRequestFetcher = new("Request");
+    private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
+    private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private readonly Histogram<double> httpClientDuration;
     private readonly HttpClientMetricInstrumentationOptions options;
     private readonly bool emitOldAttributes;
@@ -59,7 +59,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             }
 
             var activity = Activity.Current;
-            if (this.TryFetchRequest(payload, out HttpRequestMessage request))
+            if (TryFetchRequest(payload, out HttpRequestMessage request))
             {
                 TagList tags = default;
 
@@ -76,7 +76,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                     }
 
-                    if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                    if (StopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
@@ -94,7 +94,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, request.RequestUri.Port));
                     }
 
-                    if (this.TryFetchResponse(payload, out HttpResponseMessage response))
+                    if (TryFetchResponse(payload, out HttpResponseMessage response))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
@@ -108,35 +108,19 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
         }
     }
 
-    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
-    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
-    private bool TryFetchResponse(object payload, out HttpResponseMessage response)
-    {
-        if (this.stopResponseFetcher.TryFetch(payload, out response) && response != null)
-        {
-            return true;
-        }
+    private static bool TryFetchResponse(object payload, out HttpResponseMessage response) =>
+        StopResponseFetcher.TryFetch(payload, out response) && response != null;
 
-        return false;
-    }
-
-    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
-    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
-    private bool TryFetchRequest(object payload, out HttpRequestMessage request)
-    {
-        if (this.stopRequestFetcher.TryFetch(payload, out request) && request != null)
-        {
-            return true;
-        }
-
-        return false;
-    }
+    private static bool TryFetchRequest(object payload, out HttpRequestMessage request) =>
+        StopRequestFetcher.TryFetch(payload, out request) && request != null;
 }

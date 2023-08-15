@@ -43,10 +43,10 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     private const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
     private const string OnUnhandledExceptionEvent = "System.Net.Http.Exception";
 
-    private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
-    private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
-    private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
-    private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
+    private static readonly PropertyFetcher<HttpRequestMessage> StartRequestFetcher = new("Request");
+    private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
+    private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
+    private static readonly PropertyFetcher<TaskStatus> StopRequestStatusFetcher = new("RequestTaskStatus");
     private readonly HttpClientInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
@@ -115,7 +115,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             return;
         }
 
-        if (!this.TryFetchRequest(payload, out HttpRequestMessage request))
+        if (!TryFetchRequest(payload, out HttpRequestMessage request))
         {
             HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
             return;
@@ -220,7 +220,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         if (activity.IsAllDataRequested)
         {
-            var requestTaskStatus = this.GetRequestStatus(payload);
+            var requestTaskStatus = GetRequestStatus(payload);
 
             ActivityStatusCode currentStatusCode = activity.Status;
             if (requestTaskStatus != TaskStatus.RanToCompletion)
@@ -242,7 +242,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 }
             }
 
-            if (this.TryFetchResponse(payload, out HttpResponseMessage response))
+            if (TryFetchResponse(payload, out HttpResponseMessage response))
             {
                 if (this.emitOldAttributes)
                 {
@@ -275,7 +275,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         if (activity.IsAllDataRequested)
         {
-            if (!this.TryFetchException(payload, out Exception exc))
+            if (!TryFetchException(payload, out Exception exc))
             {
                 HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnException));
                 return;
@@ -302,15 +302,14 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         }
     }
 
-    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
-    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
-    private bool TryFetchException(object payload, out Exception exc)
+    private static bool TryFetchException(object payload, out Exception exc)
     {
-        if (!this.stopExceptionFetcher.TryFetch(payload, out exc) || exc == null)
+        if (!StopExceptionFetcher.TryFetch(payload, out exc) || exc == null)
         {
             return false;
         }
@@ -318,15 +317,14 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         return true;
     }
 
-    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
-    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
-    private bool TryFetchRequest(object payload, out HttpRequestMessage request)
+    private static bool TryFetchRequest(object payload, out HttpRequestMessage request)
     {
-        if (!this.startRequestFetcher.TryFetch(payload, out request) || request == null)
+        if (!StartRequestFetcher.TryFetch(payload, out request) || request == null)
         {
             return false;
         }
@@ -334,15 +332,14 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         return true;
     }
 
-    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
-    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
-    private bool TryFetchResponse(object payload, out HttpResponseMessage response)
+    private static bool TryFetchResponse(object payload, out HttpResponseMessage response)
     {
-        if (this.stopResponseFetcher.TryFetch(payload, out response) && response != null)
+        if (StopResponseFetcher.TryFetch(payload, out response) && response != null)
         {
             return true;
         }
@@ -350,17 +347,16 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         return false;
     }
 
-    // The AOT-annotation DynamicallyAccessedMembers(https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute?view=net-7.0)
-    // in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
 #endif
-    private TaskStatus GetRequestStatus(object payload)
+    private static TaskStatus GetRequestStatus(object payload)
     {
-        //// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
-        //// requestTaskStatus is not null
-        _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
+        // requestTaskStatus (type is TaskStatus) is a non-nullable enum so we don't need to have a null check here.
+        // See: https://github.com/dotnet/runtime/blob/79c021d65c280020246d1035b0e87ae36f2d36a9/src/libraries/System.Net.Http/src/HttpDiagnosticsGuide.md?plain=1#L69
+        _ = StopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
         return requestTaskStatus;
     }
