@@ -401,7 +401,6 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
-        activity.SetEndTime(DateTime.UtcNow);
         activity.Stop();
 
         TagList tags = default;
