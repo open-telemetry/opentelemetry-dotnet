@@ -31,8 +31,8 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 {
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
-    private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
+    private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
     private readonly Histogram<double> httpClientDuration;
     private readonly HttpClientMetricInstrumentationOptions options;
     private readonly bool emitOldAttributes;
