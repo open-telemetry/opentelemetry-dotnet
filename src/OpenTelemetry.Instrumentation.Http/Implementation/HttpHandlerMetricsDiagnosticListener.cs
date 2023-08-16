@@ -76,7 +76,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                     }
 
-                    if (StopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+                    if (TryFetchResponse(payload, out HttpResponseMessage response))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
@@ -108,7 +108,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
         }
     }
 
-    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in System.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
@@ -116,7 +116,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private static bool TryFetchResponse(object payload, out HttpResponseMessage response) =>
         StopResponseFetcher.TryFetch(payload, out response) && response != null;
 
-    // The AOT-annotation DynamicallyAccessedMembers in Systm.Net.Http library ensures that top-level properties on the payload object are always preserved.
+    // The AOT-annotation DynamicallyAccessedMembers in System.Net.Http library ensures that top-level properties on the payload object are always preserved.
     // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
 #if NET6_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
