@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.SqlClient;
@@ -32,6 +35,9 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
+#endif
     public static TracerProviderBuilder AddSqlClientInstrumentation(this TracerProviderBuilder builder)
         => AddSqlClientInstrumentation(builder, name: null, configureSqlClientInstrumentationOptions: null);
 
@@ -41,6 +47,9 @@ public static class TracerProviderBuilderExtensions
     /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
     /// <param name="configureSqlClientInstrumentationOptions">Callback action for configuring <see cref="SqlClientInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
+#endif
     public static TracerProviderBuilder AddSqlClientInstrumentation(
         this TracerProviderBuilder builder,
         Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions)
@@ -53,6 +62,10 @@ public static class TracerProviderBuilderExtensions
     /// <param name="name">Name which is used when retrieving options.</param>
     /// <param name="configureSqlClientInstrumentationOptions">Callback action for configuring <see cref="SqlClientInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
+#endif
+
     public static TracerProviderBuilder AddSqlClientInstrumentation(
         this TracerProviderBuilder builder,
         string name,
