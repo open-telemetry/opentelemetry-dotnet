@@ -23,7 +23,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
