@@ -15,7 +15,8 @@
 // </copyright>
 
 #nullable enable
-#if NET6_0_OR_GREATER
+
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Reflection;
@@ -48,28 +49,36 @@ internal sealed class PropertyFetcher<T>
     /// </summary>
     /// <param name="obj">Object to be fetched.</param>
     /// <param name="value">Fetched value.</param>
-    /// <param name="skipObjNullCheck">Set this to <see langword= "true"/> if we know <paramref name="obj"/> is not <see langword= "null"/>.</param>
     /// <returns><see langword= "true"/> if the property was fetched.</returns>
 #if NET6_0_OR_GREATER
     [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
-    public bool TryFetch(object obj, out T? value, bool skipObjNullCheck = false)
+    public bool TryFetch(
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
+        [NotNullWhen(true)]
+#endif
+        object? obj,
+        out T? value)
     {
-        if (!skipObjNullCheck && obj == null)
+        var innerFetcher = this.innerFetcher;
+        if (innerFetcher == null)
         {
-            value = default;
-            return false;
+            if (obj is null)
+            {
+                value = default;
+                return false;
+            }
+
+            innerFetcher = this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
+
+            if (innerFetcher == null)
+            {
+                value = default;
+                return false;
+            }
         }
 
-        this.innerFetcher ??= PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-        if (this.innerFetcher == null)
-        {
-            value = default;
-            return false;
-        }
-
-        return this.innerFetcher.TryFetch(obj, out value);
+        return innerFetcher.TryFetch(obj, out value);
     }
 
     // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
@@ -130,7 +139,12 @@ internal sealed class PropertyFetcher<T>
             }
         }
 
-        public abstract bool TryFetch(object obj, out T? value);
+        public abstract bool TryFetch(
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
+            [NotNullWhen(true)]
+#endif
+            object? obj,
+            out T? value);
 
         // Goal: make PropertyFetcher AOT-compatible.
         // AOT compiler can't guarantee correctness when call into MakeGenericType or MakeGenericMethod
@@ -170,7 +184,12 @@ internal sealed class PropertyFetcher<T>
                 this.propertyFetch = (Func<TDeclaredObject, T>)property.GetMethod!.CreateDelegate(typeof(Func<TDeclaredObject, T>));
             }
 
-            public override bool TryFetch(object obj, out T? value)
+            public override bool TryFetch(
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
+                [NotNullWhen(true)]
+#endif
+                object? obj,
+                out T? value)
             {
                 if (obj is TDeclaredObject o)
                 {
@@ -178,15 +197,25 @@ internal sealed class PropertyFetcher<T>
                     return true;
                 }
 
-                this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-                if (this.innerFetcher == null)
+                var innerFetcher = this.innerFetcher;
+                if (innerFetcher == null)
                 {
-                    value = default;
-                    return false;
+                    if (obj is null)
+                    {
+                        value = default;
+                        return false;
+                    }
+
+                    innerFetcher = this.innerFetcher = Create(obj.GetType().GetTypeInfo(), this.propertyName);
+
+                    if (innerFetcher == null)
+                    {
+                        value = default;
+                        return false;
+                    }
                 }
 
-                return this.innerFetcher.TryFetch(obj, out value);
+                return innerFetcher.TryFetch(obj, out value);
             }
         }
     }
