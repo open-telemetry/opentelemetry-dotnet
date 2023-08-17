@@ -268,7 +268,7 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 It is also common for exporters to provide their own extensions to simplify
 registration. The snippet below shows how to add the
-[JaegerExporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md) to the
+[ZipkinExporter](../../../src/OpenTelemetry.Exporter.Zipkin/README.md) to the
 provider before it is built.
 
  ```csharp
@@ -276,7 +276,7 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddJaegerExporter()
+    .AddZipkinExporter()
     .Build();
 ```
 
@@ -620,7 +620,7 @@ components.
 Options classes can always be configured through code but users typically want to
 control key settings through configuration.
 
-The following example shows how to configure `JaegerExporterOptions` by binding
+The following example shows how to configure `ZipkinExporterOptions` by binding
 to an `IConfiguration` section.
 
 Json config file (usually appsettings.json):
@@ -628,13 +628,8 @@ Json config file (usually appsettings.json):
 ```json
 {
   "OpenTelemetry": {
-    "Jaeger": {
-      "Protocol": "UdpCompactThrift"
-      "AgentHost": "localhost",
-      "AgentPort": 6831,
-      "BatchExportProcessorOptions": {
-        "ScheduledDelayMilliseconds": 5000
-      }
+    "Zipkin": {
+      "Endpoint": "http://localhost:9411/api/v2/spans"
     }
   }
 }
@@ -645,11 +640,11 @@ Code:
 ```csharp
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.Configure<JaegerExporterOptions>(
-    appBuilder.Configuration.GetSection("OpenTelemetry:Jaeger"));
+appBuilder.Services.Configure<ZipkinExporterOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:Zipkin"));
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddJaegerExporter());
+    .WithTracing(builder => builder.AddZipkinExporter());
 ```
 
 The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
@@ -659,7 +654,7 @@ users to target configuration at specific components a "name" parameter is
 typically supported on configuration extensions to control the options instance
 used for the component being registered.
 
-The below example shows how to configure two `JaegerExporter` instances inside a
+The below example shows how to configure two `ZipkinExporter` instances inside a
 single `TracerProvider` sending to different ports.
 
 Json config file (usually appsettings.json):
@@ -667,12 +662,12 @@ Json config file (usually appsettings.json):
 ```json
 {
   "OpenTelemetry": {
-    "JaegerPrimary": {
-      "AgentPort": 1818
+    "ZipkinPrimary": {
+      "Endpoint": "http://localhost:9411/api/v2/spans"
     },
-    "JaegerSecondary": {
-      "AgentPort": 8818
-    }
+    "ZipkinSecondary": {
+      "Endpoint": "http://localhost:9421/api/v2/spans"
+    },
   }
 }
 ```
@@ -682,16 +677,16 @@ Code:
 ```csharp
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.Configure<JaegerExporterOptions>(
-    "JaegerPrimary",
-    appBuilder.Configuration.GetSection("OpenTelemetry:JaegerPrimary"));
+appBuilder.Services.Configure<ZipkinExporterOptions>(
+    "ZipkinPrimary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:ZipkinPrimary"));
 
-appBuilder.Services.Configure<JaegerExporterOptions>(
-    "JaegerSecondary",
-    appBuilder.Configuration.GetSection("OpenTelemetry:JaegerSecondary"));
+appBuilder.Services.Configure<ZipkinExporterOptions>(
+    "ZipkinSecondary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:ZipkinSecondary"));
 
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
-        .AddJaegerExporter(name: "JaegerPrimary", configure: null)
-        .AddJaegerExporter(name: "JaegerSecondary", configure: null));
+        .AddZipkinExporter(name: "ZipkinPrimary", configure: null)
+        .AddZipkinExporter(name: "ZipkinSecondary", configure: null));
 ```
