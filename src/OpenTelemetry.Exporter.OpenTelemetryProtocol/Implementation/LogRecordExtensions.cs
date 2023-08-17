@@ -78,7 +78,7 @@ internal static class LogRecordExtensions
             var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
             var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
 
-/*
+            /*
             // Removing this temporarily for stable release
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491
@@ -111,7 +111,7 @@ internal static class LogRecordExtensions
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
             }
-*/
+            */
 
             bool bodyPopulatedFromFormattedMessage = false;
             if (logRecord.FormattedMessage != null)
