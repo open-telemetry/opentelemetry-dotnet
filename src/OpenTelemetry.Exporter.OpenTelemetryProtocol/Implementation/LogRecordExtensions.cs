@@ -77,6 +77,7 @@ internal static class LogRecordExtensions
 
             var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
             var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
+
 /*
             // Removing this temporarily for stable release
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776
