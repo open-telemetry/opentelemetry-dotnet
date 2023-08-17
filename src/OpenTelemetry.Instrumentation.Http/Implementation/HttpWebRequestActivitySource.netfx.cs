@@ -408,7 +408,7 @@ internal static class HttpWebRequestActivitySource
         // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
         if (emitOldAttributes)
         {
-            foreach (var tag in activity.TagObjects)
+            foreach (ref readonly var tag in activity.EnumerateTagObjects())
             {
                 switch (tag.Key)
                 {
@@ -427,7 +427,7 @@ internal static class HttpWebRequestActivitySource
         // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
         if (emitNewAttributes)
         {
-            foreach (var tag in activity.TagObjects)
+            foreach (ref readonly var tag in activity.EnumerateTagObjects())
             {
                 switch (tag.Key)
                 {
