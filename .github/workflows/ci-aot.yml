@@ -16,14 +16,14 @@ jobs:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ ubuntu-latest ]
-        version: [ net7.0 ]
+        version: [ 8.0.0-preview.7.23375.9 ]
 
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
-        dotnet-version: 8.0.0-preview.7.23375.9
+        dotnet-version: ${{ matrix.version }}
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
