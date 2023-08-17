@@ -4,7 +4,7 @@
 
 * Excluded attributes corresponding to `LogRecord.EventId`,
 `LogRecord.CategoryName` and `LogRecord.Exception` from the exported data. This
-is done in order to move ahead with stable release of exporter. THe attributes
+is done in order to move ahead with stable release of exporter. The attributes
 will be brought back in the pre-release version post stable release.
 ([#4781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4781))
 
