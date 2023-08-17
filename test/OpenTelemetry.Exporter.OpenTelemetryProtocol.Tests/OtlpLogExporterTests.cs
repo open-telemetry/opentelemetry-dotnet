@@ -186,11 +186,13 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal(3, otlpLogRecord.Attributes.Count);
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
-/*
+
+        /*
         Assert.Equal("dotnet.ilogger.category", attribute.Key);
         Assert.Equal("OtlpLogExporterTests", attribute.Value.StringValue);
         attribute = otlpLogRecord.Attributes[++index];
-*/
+        */
+
         Assert.Equal("name", attribute.Key);
         Assert.Equal("tomato", attribute.Value.StringValue);
 
@@ -204,90 +206,90 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     }
 
     /*
-        [Fact]
-        public void CheckToOtlpLogRecordLoggerCategory()
+    [Fact]
+    public void CheckToOtlpLogRecordLoggerCategory()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            var logRecords = new List<LogRecord>();
-            using var loggerFactory = LoggerFactory.Create(builder =>
+            builder.AddOpenTelemetry(options =>
             {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(logRecords);
-                });
+                options.AddInMemoryExporter(logRecords);
             });
+        });
 
-            var logger1 = loggerFactory.CreateLogger("CategoryA");
-            logger1.LogInformation("Hello");
-            Assert.Single(logRecords);
+        var logger1 = loggerFactory.CreateLogger("CategoryA");
+        logger1.LogInformation("Hello");
+        Assert.Single(logRecords);
 
-            var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
-            Assert.NotNull(otlpLogRecord);
-            Assert.Single(otlpLogRecord.Attributes);
+        var logRecord = logRecords[0];
+        var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+        Assert.NotNull(otlpLogRecord);
+        Assert.Single(otlpLogRecord.Attributes);
 
-            var attribute = otlpLogRecord.Attributes[0];
-            Assert.Equal("dotnet.ilogger.category", attribute.Key);
-            Assert.Equal("CategoryA", attribute.Value.StringValue);
+        var attribute = otlpLogRecord.Attributes[0];
+        Assert.Equal("dotnet.ilogger.category", attribute.Key);
+        Assert.Equal("CategoryA", attribute.Value.StringValue);
 
-            logRecords.Clear();
-            var logger2 = loggerFactory.CreateLogger(string.Empty);
-            logger2.LogInformation("Hello");
-            Assert.Single(logRecords);
+        logRecords.Clear();
+        var logger2 = loggerFactory.CreateLogger(string.Empty);
+        logger2.LogInformation("Hello");
+        Assert.Single(logRecords);
 
-            logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
-            Assert.NotNull(otlpLogRecord);
-            Assert.Empty(otlpLogRecord.Attributes);
-        }
+        logRecord = logRecords[0];
+        otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+        Assert.NotNull(otlpLogRecord);
+        Assert.Empty(otlpLogRecord.Attributes);
+    }
 
-        [Fact]
-        public void CheckToOtlpLogRecordEventId()
+    [Fact]
+    public void CheckToOtlpLogRecordEventId()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            var logRecords = new List<LogRecord>();
-            using var loggerFactory = LoggerFactory.Create(builder =>
+            builder.AddOpenTelemetry(options =>
             {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.IncludeFormattedMessage = true;
-                    options.ParseStateValues = true;
-                    options.AddInMemoryExporter(logRecords);
-                });
+                options.IncludeFormattedMessage = true;
+                options.ParseStateValues = true;
+                options.AddInMemoryExporter(logRecords);
             });
+        });
 
-            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation(new EventId(10, null), "Hello from {name} {price}.", "tomato", 2.99);
-            Assert.Single(logRecords);
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+        logger.LogInformation(new EventId(10, null), "Hello from {name} {price}.", "tomato", 2.99);
+        Assert.Single(logRecords);
 
-            var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+        var logRecord = logRecords[0];
+        var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
-            Assert.NotNull(otlpLogRecord);
-            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
-            var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
+        var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
 
-            // Event
-            Assert.Contains("Id", otlpLogRecordAttributes);
-            Assert.Contains("10", otlpLogRecordAttributes);
+        // Event
+        Assert.Contains("Id", otlpLogRecordAttributes);
+        Assert.Contains("10", otlpLogRecordAttributes);
 
-            logRecords.Clear();
+        logRecords.Clear();
 
-            logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {name} {price}.", "tomato", 2.99);
-            Assert.Single(logRecords);
+        logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {name} {price}.", "tomato", 2.99);
+        Assert.Single(logRecords);
 
-            logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
-            Assert.NotNull(otlpLogRecord);
-            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+        logRecord = logRecords[0];
+        otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
-            otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
+        otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
 
-            // Event
-            Assert.Contains("Id", otlpLogRecordAttributes);
-            Assert.Contains("10", otlpLogRecordAttributes);
-            Assert.Contains("Name", otlpLogRecordAttributes);
-            Assert.Contains("MyEvent10", otlpLogRecordAttributes);
-        }
+        // Event
+        Assert.Contains("Id", otlpLogRecordAttributes);
+        Assert.Contains("10", otlpLogRecordAttributes);
+        Assert.Contains("Name", otlpLogRecordAttributes);
+        Assert.Contains("MyEvent10", otlpLogRecordAttributes);
+    }
     */
 
     [Fact]
@@ -488,78 +490,78 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     }
 
     /*
-        [Fact]
-        public void CheckToOtlpLogRecordExceptionAttributes()
+    [Fact]
+    public void CheckToOtlpLogRecordExceptionAttributes()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            var logRecords = new List<LogRecord>();
-            using var loggerFactory = LoggerFactory.Create(builder =>
+            builder.AddOpenTelemetry(options =>
             {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(logRecords);
-                });
+                options.AddInMemoryExporter(logRecords);
             });
+        });
 
-            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation(new Exception("Exception Message"), "Exception Occurred");
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+        logger.LogInformation(new Exception("Exception Message"), "Exception Occurred");
 
-            var logRecord = logRecords[0];
-            var loggedException = logRecord.Exception;
-            var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
+        var logRecord = logRecords[0];
+        var loggedException = logRecord.Exception;
+        var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions);
 
-            Assert.NotNull(otlpLogRecord);
-            var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
-            Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
-            Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
+        Assert.NotNull(otlpLogRecord);
+        var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
+        Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
 
-            Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
-            Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes);
+        Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes);
 
-            Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
-            Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
-        }
+        Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
+        Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
+    }
 
-        [Fact]
-        public void CheckToOtlpLogRecordRespectsAttributeLimits()
+    [Fact]
+    public void CheckToOtlpLogRecordRespectsAttributeLimits()
+    {
+        var sdkLimitOptions = new SdkLimitOptions
         {
-            var sdkLimitOptions = new SdkLimitOptions
-            {
-                AttributeCountLimit = 2,
-                AttributeValueLengthLimit = 8,
-            };
+            AttributeCountLimit = 2,
+            AttributeValueLengthLimit = 8,
+        };
 
-            var logRecords = new List<LogRecord>();
-            using var loggerFactory = LoggerFactory.Create(builder =>
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
             {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(logRecords);
-                });
+                options.AddInMemoryExporter(logRecords);
             });
+        });
 
-            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation(new NotSupportedException("I'm the exception message."), "Exception Occurred");
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+        logger.LogInformation(new NotSupportedException("I'm the exception message."), "Exception Occurred");
 
-            var logRecord = logRecords[0];
-            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
+        var logRecord = logRecords[0];
+        var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
 
-            Assert.NotNull(otlpLogRecord);
-            Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
 
-            var exceptionTypeAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType);
-            Assert.NotNull(exceptionTypeAtt);
+        var exceptionTypeAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType);
+        Assert.NotNull(exceptionTypeAtt);
 
-            // "NotSuppo" == first 8 chars from the exception typename "NotSupportedException"
-            Assert.Equal("NotSuppo", exceptionTypeAtt.Value.StringValue);
-            var exceptionMessageAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage);
-            Assert.NotNull(exceptionMessageAtt);
+        // "NotSuppo" == first 8 chars from the exception typename "NotSupportedException"
+        Assert.Equal("NotSuppo", exceptionTypeAtt.Value.StringValue);
+        var exceptionMessageAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage);
+        Assert.NotNull(exceptionMessageAtt);
 
-            // "I'm the " == first 8 chars from the exception message
-            Assert.Equal("I'm the ", exceptionMessageAtt.Value.StringValue);
+        // "I'm the " == first 8 chars from the exception message
+        Assert.Equal("I'm the ", exceptionMessageAtt.Value.StringValue);
 
-            var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
-            Assert.Null(exceptionStackTraceAtt);
-        }
+        var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
+        Assert.Null(exceptionStackTraceAtt);
+    }
     */
 
     // Remove this when adding back the category, eventid and exception attributes
