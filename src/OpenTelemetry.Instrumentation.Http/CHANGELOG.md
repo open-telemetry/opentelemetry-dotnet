@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added support for exposing `http.client.duration` on .NET Framework for `HttpWebRequest`, including `HttpClient`. Metrics support requires tracing to be enabled via `AddHttpClientInstrumentation` (#4768)[https://github.com/open-telemetry/opentelemetry-dotnet/pull/4768]
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20

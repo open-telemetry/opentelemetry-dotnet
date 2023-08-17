@@ -68,7 +68,7 @@ public class Program
 #### Metrics
 
 > **Note**
-> Metrics are not available for .NET Framework.
+> Metrics are only available for .NET Framework when tracing is enabled.
 
 The following example demonstrates adding `HttpClient` instrumentation with the
 extension method `.AddHttpClientInstrumentation()` on `MeterProviderBuilder` to
