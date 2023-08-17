@@ -12,6 +12,8 @@
   `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` to `true` before
   setting up the `MeterProvider`.
   ([#4737](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4737))
+* Remove Jaeger Exporter from the core SDK. Jaeger supports OTLP protocol natively.
+  ([#4777](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4777))
 
 ## 1.6.0-alpha.1
 
