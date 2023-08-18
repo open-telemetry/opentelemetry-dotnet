@@ -268,7 +268,7 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 It is also common for exporters to provide their own extensions to simplify
 registration. The snippet below shows how to add the
-[ZipkinExporter](../../../src/OpenTelemetry.Exporter.Zipkin/README.md) to the
+[OtlpExporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) to the
 provider before it is built.
 
  ```csharp
@@ -276,7 +276,7 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddZipkinExporter()
+    .AddOtlpExporter()
     .Build();
 ```
 
@@ -620,7 +620,7 @@ components.
 Options classes can always be configured through code but users typically want to
 control key settings through configuration.
 
-The following example shows how to configure `ZipkinExporterOptions` by binding
+The following example shows how to configure `OtlpExporterOptions` by binding
 to an `IConfiguration` section.
 
 Json config file (usually appsettings.json):
@@ -628,8 +628,8 @@ Json config file (usually appsettings.json):
 ```json
 {
   "OpenTelemetry": {
-    "Zipkin": {
-      "Endpoint": "http://localhost:9411/api/v2/spans"
+    "Otlp": {
+      "Endpoint": "http://localhost:4317"
     }
   }
 }
@@ -640,11 +640,11 @@ Code:
 ```csharp
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.Configure<ZipkinExporterOptions>(
-    appBuilder.Configuration.GetSection("OpenTelemetry:Zipkin"));
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:Otlp"));
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddZipkinExporter());
+    .WithTracing(builder => builder.AddOtlpExporter());
 ```
 
 The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
@@ -654,7 +654,7 @@ users to target configuration at specific components a "name" parameter is
 typically supported on configuration extensions to control the options instance
 used for the component being registered.
 
-The below example shows how to configure two `ZipkinExporter` instances inside a
+The below example shows how to configure two `OtlpExporter` instances inside a
 single `TracerProvider` sending to different ports.
 
 Json config file (usually appsettings.json):
@@ -662,11 +662,11 @@ Json config file (usually appsettings.json):
 ```json
 {
   "OpenTelemetry": {
-    "ZipkinPrimary": {
-      "Endpoint": "http://localhost:9411/api/v2/spans"
+    "OtlpPrimary": {
+      "Endpoint": "http://localhost:4317"
     },
-    "ZipkinSecondary": {
-      "Endpoint": "http://localhost:9421/api/v2/spans"
+    "OtlpSecondary": {
+      "Endpoint": "http://localhost:4327"
     },
   }
 }
@@ -677,16 +677,16 @@ Code:
 ```csharp
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.Configure<ZipkinExporterOptions>(
-    "ZipkinPrimary",
-    appBuilder.Configuration.GetSection("OpenTelemetry:ZipkinPrimary"));
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    "OtlpPrimary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:OtlpPrimary"));
 
-appBuilder.Services.Configure<ZipkinExporterOptions>(
-    "ZipkinSecondary",
-    appBuilder.Configuration.GetSection("OpenTelemetry:ZipkinSecondary"));
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    "OtlpSecondary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:OtlpSecondary"));
 
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
-        .AddZipkinExporter(name: "ZipkinPrimary", configure: null)
-        .AddZipkinExporter(name: "ZipkinSecondary", configure: null));
+        .AddOtlpExporter(name: "OtlpPrimary", configure: null)
+        .AddOtlpExporter(name: "OtlpSecondary", configure: null));
 ```
