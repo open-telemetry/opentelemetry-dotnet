@@ -310,6 +310,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10
 		src\Shared\Shims\UnconditionalSuppressMessageAttribute.cs = src\Shared\Shims\UnconditionalSuppressMessageAttribute.cs
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.Tests", "test\OpenTelemetry.Api.Tests\OpenTelemetry.Api.Tests.csproj", "{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -584,6 +586,10 @@ Global
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62AF4BD3-DCAE-4D44-AA5B-991C1071166B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
