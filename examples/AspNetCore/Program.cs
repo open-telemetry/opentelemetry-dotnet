@@ -25,7 +25,7 @@ using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-// Note: Switch between Zipkin/Jaeger/OTLP/Console by setting UseTracingExporter in appsettings.json.
+// Note: Switch between Zipkin/OTLP/Console by setting UseTracingExporter in appsettings.json.
 var tracingExporter = appBuilder.Configuration.GetValue("UseTracingExporter", defaultValue: "console")!.ToLowerInvariant();
 
 // Note: Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
@@ -67,19 +67,6 @@ appBuilder.Services.AddOpenTelemetry()
 
         switch (tracingExporter)
         {
-            case "jaeger":
-                builder.AddJaegerExporter();
-
-                builder.ConfigureServices(services =>
-                {
-                    // Use IConfiguration binding for Jaeger exporter options.
-                    services.Configure<JaegerExporterOptions>(appBuilder.Configuration.GetSection("Jaeger"));
-
-                    // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
-                    services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
-                });
-                break;
-
             case "zipkin":
                 builder.AddZipkinExporter();
 
