@@ -73,6 +73,9 @@ internal sealed class PropertyFetcher<T>
         return innerFetcher.TryFetch(obj, out value);
     }
 
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(TrimCompatibilityMessage)]
+#endif
     private static bool TryFetchRare(object? obj, string propertyName, ref PropertyFetch? destination, out T? value)
     {
         if (obj is null)
