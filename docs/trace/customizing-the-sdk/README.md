@@ -268,8 +268,8 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 It is also common for exporters to provide their own extensions to simplify
 registration. The snippet below shows how to add the
-[OtlpExporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) to the
-provider before it is built.
+[OtlpExporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+to the provider before it is built.
 
  ```csharp
 using OpenTelemetry;
