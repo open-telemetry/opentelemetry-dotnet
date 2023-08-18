@@ -3,7 +3,7 @@
 
 # Description: This workflow exists to unblock documentation-only PRs.
 
-# IMPORTANT: This workflow MUST use the same 'name' as the non -md workflow.
+# IMPORTANT: This workflow MUST use the same 'name' and 'matrix' as the non -md workflow.
 
 name: Test instrumentation libraries
 
