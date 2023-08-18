@@ -44,6 +44,10 @@ internal sealed class PropertyFetcher<T>
         this.propertyName = propertyName;
     }
 
+    public int NumberOfInnerFetchers => this.innerFetcher == null
+        ? 0
+        : 1 + this.innerFetcher.NumberOfInnerFetchers;
+
     /// <summary>
     /// Try to fetch the property from the object.
     /// </summary>
@@ -61,24 +65,33 @@ internal sealed class PropertyFetcher<T>
         out T? value)
     {
         var innerFetcher = this.innerFetcher;
-        if (innerFetcher == null)
+        if (innerFetcher is null)
         {
-            if (obj is null)
-            {
-                value = default;
-                return false;
-            }
-
-            innerFetcher = this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-            if (innerFetcher == null)
-            {
-                value = default;
-                return false;
-            }
+            return TryFetchRare(obj, this.propertyName, ref this.innerFetcher, out value);
         }
 
         return innerFetcher.TryFetch(obj, out value);
+    }
+
+    private static bool TryFetchRare(object? obj, string propertyName, ref PropertyFetch? destination, out T? value)
+    {
+        if (obj is null)
+        {
+            value = default;
+            return false;
+        }
+
+        var fetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), propertyName);
+
+        if (fetcher is null)
+        {
+            value = default;
+            return false;
+        }
+
+        destination = fetcher;
+
+        return fetcher.TryFetch(obj, out value);
     }
 
     // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
@@ -87,6 +100,8 @@ internal sealed class PropertyFetcher<T>
 #endif
     private abstract class PropertyFetch
     {
+        public abstract int NumberOfInnerFetchers { get; }
+
         public static PropertyFetch? Create(TypeInfo type, string propertyName)
         {
             var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase)) ?? type.GetProperty(propertyName);
@@ -184,6 +199,10 @@ internal sealed class PropertyFetcher<T>
                 this.propertyFetch = (Func<TDeclaredObject, T>)property.GetMethod!.CreateDelegate(typeof(Func<TDeclaredObject, T>));
             }
 
+            public override int NumberOfInnerFetchers => this.innerFetcher == null
+                ? 0
+                : 1 + this.innerFetcher.NumberOfInnerFetchers;
+
             public override bool TryFetch(
 #if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
                 [NotNullWhen(true)]
@@ -198,21 +217,9 @@ internal sealed class PropertyFetcher<T>
                 }
 
                 var innerFetcher = this.innerFetcher;
-                if (innerFetcher == null)
+                if (innerFetcher is null)
                 {
-                    if (obj is null)
-                    {
-                        value = default;
-                        return false;
-                    }
-
-                    innerFetcher = this.innerFetcher = Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-                    if (innerFetcher == null)
-                    {
-                        value = default;
-                        return false;
-                    }
+                    return TryFetchRare(obj, this.propertyName, ref this.innerFetcher, out value);
                 }
 
                 return innerFetcher.TryFetch(obj, out value);

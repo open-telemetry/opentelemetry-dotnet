@@ -25,9 +25,20 @@ public class PropertyFetcherTest
     public void FetchValidProperty()
     {
         using var activity = new Activity("test");
+
         var fetch = new PropertyFetcher<string>("DisplayName");
+
+        Assert.Equal(0, fetch.NumberOfInnerFetchers);
+
         Assert.True(fetch.TryFetch(activity, out string result));
         Assert.Equal(activity.DisplayName, result);
+
+        Assert.Equal(1, fetch.NumberOfInnerFetchers);
+
+        Assert.True(fetch.TryFetch(activity, out result));
+        Assert.Equal(activity.DisplayName, result);
+
+        Assert.Equal(1, fetch.NumberOfInnerFetchers);
     }
 
     [Fact]
@@ -56,15 +67,25 @@ public class PropertyFetcherTest
     {
         var fetch = new PropertyFetcher<string>("Property");
 
+        Assert.Equal(0, fetch.NumberOfInnerFetchers);
+
         Assert.True(fetch.TryFetch(new PayloadTypeA(), out string propertyValue));
         Assert.Equal("A", propertyValue);
+
+        Assert.Equal(1, fetch.NumberOfInnerFetchers);
 
         Assert.True(fetch.TryFetch(new PayloadTypeB(), out propertyValue));
         Assert.Equal("B", propertyValue);
 
+        Assert.Equal(2, fetch.NumberOfInnerFetchers);
+
         Assert.False(fetch.TryFetch(new PayloadTypeC(), out _));
 
+        Assert.Equal(2, fetch.NumberOfInnerFetchers);
+
         Assert.False(fetch.TryFetch(null, out _));
+
+        Assert.Equal(2, fetch.NumberOfInnerFetchers);
     }
 
     [Fact]
