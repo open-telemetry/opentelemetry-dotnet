@@ -144,7 +144,6 @@ internal sealed class PropertyFetcher<T>
                 // because the compiler might need to generate code specific to that type.
                 // If the type parameter is a reference type, there will be no problem; because the generated code can be shared among all reference type instantiations.
 #if NET6_0_OR_GREATER
-                [RequiresUnreferencedCode(TrimCompatibilityMessage)]
                 [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The code guarantees that all the generic parameters are reference types.")]
 #endif
                 static PropertyFetch? DynamicInstantiationHelper(Type declaringType, PropertyInfo propertyInfo)

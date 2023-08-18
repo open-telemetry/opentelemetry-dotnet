@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;

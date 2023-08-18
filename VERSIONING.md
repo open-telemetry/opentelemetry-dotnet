@@ -28,7 +28,7 @@ versions [1.1.0, 2.0.0).
 
 Core components refer to the set of components which are required as per the
 spec. This includes API, SDK, and exporters which are required by the
-specification. These exporters are OTLP, Jaeger, Zipkin, Console and InMemory.
+specification. These exporters are OTLP, Zipkin, Console and InMemory.
 
 The core components are always versioned and released together. For example, if
 Zipkin exporter has a bug fix and is released as 1.0.1, then all other core
