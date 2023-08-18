@@ -3,9 +3,7 @@
 ## Unreleased
 
 * Excluded attributes corresponding to `LogRecord.EventId`,
-`LogRecord.CategoryName` and `LogRecord.Exception` from the exported data. This
-is done in order to move ahead with stable release of exporter. The attributes
-will be brought back in the pre-release version post stable release.
+`LogRecord.CategoryName` and `LogRecord.Exception` from the exported data.
 ([#4781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4781))
 
 * Added extension method for configuring export processor options for otlp log
