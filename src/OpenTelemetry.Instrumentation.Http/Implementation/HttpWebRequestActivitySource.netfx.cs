@@ -403,46 +403,50 @@ internal static class HttpWebRequestActivitySource
 
         activity.Stop();
 
-        TagList tags = default;
-
-        // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-        if (emitOldAttributes)
+        // Only calculate duration if the Meter is subscribed to
+        if (HttpClientDuration.Enabled)
         {
-            foreach (ref readonly var tag in activity.EnumerateTagObjects())
+            TagList tags = default;
+
+            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
+            if (emitOldAttributes)
             {
-                switch (tag.Key)
+                foreach (ref readonly var tag in activity.EnumerateTagObjects())
                 {
-                    case SemanticConventions.AttributeHttpMethod:
-                    case SemanticConventions.AttributeHttpScheme:
-                    case SemanticConventions.AttributeHttpFlavor:
-                    case SemanticConventions.AttributeNetPeerName:
-                    case SemanticConventions.AttributeNetPeerPort:
-                    case SemanticConventions.AttributeHttpStatusCode:
-                        tags.Add(new KeyValuePair<string, object>(tag.Key, tag.Value));
-                        break;
+                    switch (tag.Key)
+                    {
+                        case SemanticConventions.AttributeHttpMethod:
+                        case SemanticConventions.AttributeHttpScheme:
+                        case SemanticConventions.AttributeHttpFlavor:
+                        case SemanticConventions.AttributeNetPeerName:
+                        case SemanticConventions.AttributeNetPeerPort:
+                        case SemanticConventions.AttributeHttpStatusCode:
+                            tags.Add(new KeyValuePair<string, object>(tag.Key, tag.Value));
+                            break;
+                    }
                 }
             }
-        }
 
-        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-        if (emitNewAttributes)
-        {
-            foreach (ref readonly var tag in activity.EnumerateTagObjects())
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+            if (emitNewAttributes)
             {
-                switch (tag.Key)
+                foreach (ref readonly var tag in activity.EnumerateTagObjects())
                 {
-                    case SemanticConventions.AttributeHttpRequestMethod:
-                    case SemanticConventions.AttributeNetworkProtocolVersion:
-                    case SemanticConventions.AttributeServerAddress:
-                    case SemanticConventions.AttributeServerPort:
-                    case SemanticConventions.AttributeHttpResponseStatusCode:
-                        tags.Add(new KeyValuePair<string, object>(tag.Key, tag.Value));
-                        break;
+                    switch (tag.Key)
+                    {
+                        case SemanticConventions.AttributeHttpRequestMethod:
+                        case SemanticConventions.AttributeNetworkProtocolVersion:
+                        case SemanticConventions.AttributeServerAddress:
+                        case SemanticConventions.AttributeServerPort:
+                        case SemanticConventions.AttributeHttpResponseStatusCode:
+                            tags.Add(new KeyValuePair<string, object>(tag.Key, tag.Value));
+                            break;
+                    }
                 }
             }
-        }
 
-        HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+            HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+        }
     }
 
     private static void PrepareReflectionObjects()
