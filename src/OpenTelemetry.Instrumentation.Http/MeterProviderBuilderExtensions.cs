@@ -67,10 +67,6 @@ public static class MeterProviderBuilderExtensions
         //   Enrich - do we want a similar kind of functionality for metrics?
         //   RecordException - probably doesn't make sense for metric instrumentation
 
-        builder.AddMeter(HttpClientMetrics.InstrumentationName);
-        builder.AddInstrumentation(sp => new HttpClientMetrics(
-            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().CurrentValue));
-
 #if NETFRAMEWORK
         builder.AddMeter(HttpWebRequestActivitySource.InstrumentationName);
         builder.ConfigureServices(s =>
@@ -82,6 +78,10 @@ public static class MeterProviderBuilderExtensions
                 HttpWebRequestActivitySource.Options = options;
             });
         });
+#else
+        builder.AddMeter(HttpClientMetrics.InstrumentationName);
+        builder.AddInstrumentation(sp => new HttpClientMetrics(
+            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().CurrentValue));
 #endif
 
         return builder;
