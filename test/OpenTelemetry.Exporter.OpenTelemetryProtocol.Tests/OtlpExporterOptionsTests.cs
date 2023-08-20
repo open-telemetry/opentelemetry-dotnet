@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.IO;
-using System.Net.Http;
-using System.Net.Security;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+#if NET6_0_OR_GREATER
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+#endif
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
