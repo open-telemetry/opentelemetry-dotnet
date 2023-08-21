@@ -64,6 +64,8 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
+        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Metric overflow attribute key set to: {isEmitOverflowAttributeKeySet}");
+
         var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
         {
