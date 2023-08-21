@@ -68,7 +68,7 @@ public partial class Program
 
         logger = loggerFactory?.CreateLogger<Program>();
 
-        Stress(concurrency: 1, prometheusPort: 9464);
+        Stress(concurrency: 0, prometheusPort: 9464);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
