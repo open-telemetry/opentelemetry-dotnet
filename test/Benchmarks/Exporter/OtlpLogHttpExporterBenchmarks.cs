@@ -15,6 +15,7 @@
 // </copyright>
 
 extern alias OpenTelemetryProtocol;
+
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
