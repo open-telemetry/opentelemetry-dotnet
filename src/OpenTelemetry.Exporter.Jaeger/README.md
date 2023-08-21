@@ -65,9 +65,6 @@ properties:
   |`UdpCompactThrift`| Apache Thrift compact over UDP to a Jaeger Agent.     |
   |`HttpBinaryThrift`| Apache Thrift binary over HTTP to a Jaeger Collector. |
 
-See the [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
-for an example of how to use the exporter.
-
 ## Environment Variables
 
 The following environment variables can be used to override the default
