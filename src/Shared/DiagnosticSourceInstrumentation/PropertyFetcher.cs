@@ -15,7 +15,8 @@
 // </copyright>
 
 #nullable enable
-#if NET6_0_OR_GREATER
+
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Reflection;
@@ -43,33 +44,57 @@ internal sealed class PropertyFetcher<T>
         this.propertyName = propertyName;
     }
 
+    public int NumberOfInnerFetchers => this.innerFetcher == null
+        ? 0
+        : 1 + this.innerFetcher.NumberOfInnerFetchers;
+
     /// <summary>
     /// Try to fetch the property from the object.
     /// </summary>
     /// <param name="obj">Object to be fetched.</param>
     /// <param name="value">Fetched value.</param>
-    /// <param name="skipObjNullCheck">Set this to <see langword= "true"/> if we know <paramref name="obj"/> is not <see langword= "null"/>.</param>
     /// <returns><see langword= "true"/> if the property was fetched.</returns>
 #if NET6_0_OR_GREATER
     [RequiresUnreferencedCode(TrimCompatibilityMessage)]
 #endif
-    public bool TryFetch(object obj, out T? value, bool skipObjNullCheck = false)
+    public bool TryFetch(
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
+        [NotNullWhen(true)]
+#endif
+        object? obj,
+        out T? value)
     {
-        if (!skipObjNullCheck && obj == null)
+        var innerFetcher = this.innerFetcher;
+        if (innerFetcher is null)
+        {
+            return TryFetchRare(obj, this.propertyName, ref this.innerFetcher, out value);
+        }
+
+        return innerFetcher.TryFetch(obj, out value);
+    }
+
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(TrimCompatibilityMessage)]
+#endif
+    private static bool TryFetchRare(object? obj, string propertyName, ref PropertyFetch? destination, out T? value)
+    {
+        if (obj is null)
         {
             value = default;
             return false;
         }
 
-        this.innerFetcher ??= PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
+        var fetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), propertyName);
 
-        if (this.innerFetcher == null)
+        if (fetcher is null)
         {
             value = default;
             return false;
         }
 
-        return this.innerFetcher.TryFetch(obj, out value);
+        destination = fetcher;
+
+        return fetcher.TryFetch(obj, out value);
     }
 
     // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
@@ -78,6 +103,8 @@ internal sealed class PropertyFetcher<T>
 #endif
     private abstract class PropertyFetch
     {
+        public abstract int NumberOfInnerFetchers { get; }
+
         public static PropertyFetch? Create(TypeInfo type, string propertyName)
         {
             var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase)) ?? type.GetProperty(propertyName);
@@ -117,7 +144,6 @@ internal sealed class PropertyFetcher<T>
                 // because the compiler might need to generate code specific to that type.
                 // If the type parameter is a reference type, there will be no problem; because the generated code can be shared among all reference type instantiations.
 #if NET6_0_OR_GREATER
-                [RequiresUnreferencedCode(TrimCompatibilityMessage)]
                 [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The code guarantees that all the generic parameters are reference types.")]
 #endif
                 static PropertyFetch? DynamicInstantiationHelper(Type declaringType, PropertyInfo propertyInfo)
@@ -130,7 +156,12 @@ internal sealed class PropertyFetcher<T>
             }
         }
 
-        public abstract bool TryFetch(object obj, out T? value);
+        public abstract bool TryFetch(
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
+            [NotNullWhen(true)]
+#endif
+            object? obj,
+            out T? value);
 
         // Goal: make PropertyFetcher AOT-compatible.
         // AOT compiler can't guarantee correctness when call into MakeGenericType or MakeGenericMethod
@@ -170,7 +201,16 @@ internal sealed class PropertyFetcher<T>
                 this.propertyFetch = (Func<TDeclaredObject, T>)property.GetMethod!.CreateDelegate(typeof(Func<TDeclaredObject, T>));
             }
 
-            public override bool TryFetch(object obj, out T? value)
+            public override int NumberOfInnerFetchers => this.innerFetcher == null
+                ? 0
+                : 1 + this.innerFetcher.NumberOfInnerFetchers;
+
+            public override bool TryFetch(
+#if NETSTANDARD2_1_0_OR_GREATER || NET6_0_OR_GREATER
+                [NotNullWhen(true)]
+#endif
+                object? obj,
+                out T? value)
             {
                 if (obj is TDeclaredObject o)
                 {
@@ -178,15 +218,13 @@ internal sealed class PropertyFetcher<T>
                     return true;
                 }
 
-                this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
-
-                if (this.innerFetcher == null)
+                var innerFetcher = this.innerFetcher;
+                if (innerFetcher is null)
                 {
-                    value = default;
-                    return false;
+                    return TryFetchRare(obj, this.propertyName, ref this.innerFetcher, out value);
                 }
 
-                return this.innerFetcher.TryFetch(obj, out value);
+                return innerFetcher.TryFetch(obj, out value);
             }
         }
     }
