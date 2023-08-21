@@ -520,51 +520,8 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
         Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
     }
-
-    [Fact]
-    public void CheckToOtlpLogRecordRespectsAttributeLimits()
-    {
-        var sdkLimitOptions = new SdkLimitOptions
-        {
-            AttributeCountLimit = 2,
-            AttributeValueLengthLimit = 8,
-        };
-
-        var logRecords = new List<LogRecord>();
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
-        });
-
-        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.LogInformation(new NotSupportedException("I'm the exception message."), "Exception Occurred");
-
-        var logRecord = logRecords[0];
-        var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
-
-        Assert.NotNull(otlpLogRecord);
-        Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
-
-        var exceptionTypeAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType);
-        Assert.NotNull(exceptionTypeAtt);
-
-        // "NotSuppo" == first 8 chars from the exception typename "NotSupportedException"
-        Assert.Equal("NotSuppo", exceptionTypeAtt.Value.StringValue);
-        var exceptionMessageAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage);
-        Assert.NotNull(exceptionMessageAtt);
-
-        // "I'm the " == first 8 chars from the exception message
-        Assert.Equal("I'm the ", exceptionMessageAtt.Value.StringValue);
-
-        var exceptionStackTraceAtt = TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace);
-        Assert.Null(exceptionStackTraceAtt);
-    }
     */
 
-    // Remove this when adding back the category, eventid and exception attributes
     [Fact]
     public void CheckToOtlpLogRecordRespectsAttributeLimits()
     {
