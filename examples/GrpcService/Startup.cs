@@ -39,10 +39,16 @@ public class Startup
                     .ConfigureResource(r => r.AddService(this.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!))
                     .AddAspNetCoreInstrumentation();
 
-                // Switch between Zipkin/Console by setting UseExporter in appsettings.json.
+                // Switch between Otlp/Zipkin/Console by setting UseExporter in appsettings.json.
                 var exporter = this.Configuration.GetValue("UseExporter", defaultValue: "console")!.ToLowerInvariant();
                 switch (exporter)
                 {
+                    case "otlp":
+                        builder.AddOtlpExporter(otlpOptions =>
+                        {
+                            otlpOptions.Endpoint = new Uri(this.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
+                        });
+                        break;
                     case "zipkin":
                         builder.AddZipkinExporter(zipkinOptions =>
                         {
