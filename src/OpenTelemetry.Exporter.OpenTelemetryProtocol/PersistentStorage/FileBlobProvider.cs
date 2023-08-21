@@ -27,7 +27,7 @@ namespace OpenTelemetry.PersistentStorage.FileSystem;
 /// Persistent file storage <see cref="FileBlobProvider"/> allows to save data
 /// as blobs in file storage.
 /// </summary>
-internal sealed class FileBlobProvider : PersistentBlobProvider, IDisposable
+internal class FileBlobProvider : PersistentBlobProvider, IDisposable
 {
     internal readonly string DirectoryPath;
     private readonly DirectorySizeTracker directorySizeTracker;

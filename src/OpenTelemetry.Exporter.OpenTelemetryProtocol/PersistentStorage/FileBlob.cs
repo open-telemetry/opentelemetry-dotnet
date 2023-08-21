@@ -26,7 +26,7 @@ namespace OpenTelemetry.PersistentStorage.FileSystem;
 /// The <see cref="FileBlob"/> allows to save a blob
 /// in file storage.
 /// </summary>
-internal sealed class FileBlob : PersistentBlob
+internal class FileBlob : PersistentBlob
 {
     private readonly DirectorySizeTracker? directorySizeTracker;
 
