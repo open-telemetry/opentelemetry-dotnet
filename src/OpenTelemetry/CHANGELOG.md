@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
 * **Experimental Feature** Added an opt-in feature to aggregate any metric
   measurements that were dropped due to reaching the [max MetricPoints
   limit](https://github.com/open-telemetry/opentelemetry-dotnet/tree/core-1.6.0-alpha.1/docs/metrics/customizing-the-sdk).
