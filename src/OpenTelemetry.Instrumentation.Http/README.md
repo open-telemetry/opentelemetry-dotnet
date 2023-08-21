@@ -68,7 +68,9 @@ public class Program
 #### Metrics
 
 > **Note**
-> Metrics are only available for .NET Framework when tracing is enabled.
+> Metrics are only available for .NET Framework when traces are recorded. This requires:
+> 1. Tracing to be enabled by calling `.AddHttpClientInstrumentation()` on `TracerProviderBuilder`
+> 2. [If a sampler is in place, return `SamplingDecision.RecordAndSampled` for `ShouldSample`](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/trace/extending-the-sdk/README.md#filtering-processor)
 
 The following example demonstrates adding `HttpClient` instrumentation with the
 extension method `.AddHttpClientInstrumentation()` on `MeterProviderBuilder` to
