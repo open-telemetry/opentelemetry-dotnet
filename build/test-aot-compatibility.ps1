@@ -18,6 +18,9 @@ foreach ($line in $($publishOutput -split "`r`n"))
 pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Release/$targetNetFramework/linux-x64
 
 Write-Host "Executing test App..."
+Write-Host "Print out directories:..."
+ls
+
 ./OpenTelemetry.AotCompatibility.TestApp
 Write-Host "Finished executing test App"
 
