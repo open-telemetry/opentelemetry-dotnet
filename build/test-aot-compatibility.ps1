@@ -13,23 +13,6 @@ foreach ($line in $($publishOutput -split "`r`n"))
     }
 }
 
-Write-Host $pwd
-Write-Host "files: "
-Dir -Recurse . | Get-Childitem
-
-pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Debug/8.0.100-preview.7.23376.3/linux-x64
-
-Write-Host "Executing test App..."
-./OpenTelemetry.AotCompatibility.TestApp
-Write-Host "Finished executing test App"
-
-if ($LastExitCode -ne 0)
-{
-  Write-Host "There was an error while executing AotCompatibility Test App. LastExitCode is:", $LastExitCode
-}
-
-popd
-
 Write-Host "Actual warning count is:", $actualWarningCount
 $expectedWarningCount = 19
 
