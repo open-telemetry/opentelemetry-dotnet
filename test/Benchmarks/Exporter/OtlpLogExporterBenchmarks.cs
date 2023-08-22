@@ -1,4 +1,4 @@
-// <copyright file="OtlpLogHttpExporterBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpLogExporterBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@ extern alias OpenTelemetryProtocol;
 
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
+using Grpc.Core;
+using Moq;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -25,27 +27,45 @@ using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Logs.V1;
 
 namespace Benchmarks.Exporter;
 
-public class OtlpLogHttpExporterBenchmarks
+public class OtlpLogExporterBenchmarks
 {
     private readonly byte[] buffer = new byte[1024 * 1024];
-    private IDisposable server;
-    private string serverHost;
-    private int serverPort;
     private OtlpLogExporter exporter;
     private LogRecord logRecord;
     private CircularBuffer<LogRecord> logRecordBatch;
 
-    [Params(1, 10, 100)]
-    public int NumberOfBatches { get; set; }
+    private IDisposable server;
+    private string serverHost;
+    private int serverPort;
 
-    [Params(10000)]
-    public int NumberOfLogs { get; set; }
+    [GlobalSetup(Target =nameof(OtlpExporter_Grpc))]
+    public void GlobalSetupGrpc()
+    {
+        var mockClient = new Mock<OtlpCollector.LogsService.LogsServiceClient>();
+        mockClient
+            .Setup(m => m.Export(
+                It.IsAny<OtlpCollector.ExportLogsServiceRequest>(),
+                It.IsAny<Metadata>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new OtlpCollector.ExportLogsServiceResponse());
 
-    [GlobalSetup]
-    public void GlobalSetup()
+        var options = new OtlpExporterOptions();
+        this.exporter = new OtlpLogExporter(
+            options,
+            new SdkLimitOptions(),
+            new OtlpGrpcLogExportClient(options, mockClient.Object));
+
+        this.logRecord = LogRecordHelper.CreateTestLogRecord();
+        this.logRecordBatch = new CircularBuffer<LogRecord>(1);
+    }
+
+    [GlobalSetup(Target = nameof(OtlpExporter_Http))]
+    public void GlobalSetupHttp()
     {
         this.server = TestHttpServer.RunServer(
             (ctx) =>
@@ -77,11 +97,18 @@ public class OtlpLogHttpExporterBenchmarks
             new OtlpHttpLogExportClient(options, options.HttpClientFactory()));
 
         this.logRecord = LogRecordHelper.CreateTestLogRecord();
-        this.logRecordBatch = new CircularBuffer<LogRecord>(this.NumberOfLogs);
+        this.logRecordBatch = new CircularBuffer<LogRecord>(1);
     }
 
-    [GlobalCleanup]
-    public void GlobalCleanup()
+    [GlobalCleanup(Target = nameof(OtlpExporter_Grpc))]
+    public void GlobalCleanupGrpc()
+    {
+        this.exporter.Shutdown();
+        this.exporter.Dispose();
+    }
+
+    [GlobalCleanup(Target = nameof(OtlpExporter_Http))]
+    public void GlobalCleanupHttp()
     {
         this.exporter.Shutdown();
         this.exporter.Dispose();
@@ -89,16 +116,16 @@ public class OtlpLogHttpExporterBenchmarks
     }
 
     [Benchmark]
-    public void OtlpExporter_Batching()
+    public void OtlpExporter_Http()
     {
-        for (int i = 0; i < this.NumberOfBatches; i++)
-        {
-            for (int c = 0; c < this.NumberOfLogs; c++)
-            {
-                this.logRecordBatch.Add(this.logRecord);
-            }
+        this.logRecordBatch.Add(this.logRecord);
+        this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
+    }
 
-            this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, this.NumberOfLogs));
-        }
+    [Benchmark]
+    public void OtlpExporter_Grpc()
+    {
+        this.logRecordBatch.Add(this.logRecord);
+        this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
     }
 }
