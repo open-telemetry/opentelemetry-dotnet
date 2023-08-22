@@ -30,6 +30,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
 public class MetricTests
     : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
+    public const string SemanticConventionOptInKeyName = "OTEL_SEMCONV_STABILITY_OPT_IN";
+
     private const int StandardTagsCount = 6;
 
     private readonly WebApplicationFactory<Program> factory;
@@ -47,47 +49,79 @@ public class MetricTests
         Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
     }
 
-    [Fact]
-    public async Task RequestMetricIsCaptured()
+    [Theory]
+    [InlineData(null, true, false, 6)] // emits old metric & attributes
+    [InlineData("http", false, true, 6)] // emits new metric & attributes
+    [InlineData("http/dup", true, true, 11)] // emits both old & new
+    public async Task RequestMetricIsCaptured(string environmentVarValue, bool validateOldSemConv, bool validateNewSemConv, int expectedTagsCount)
     {
-        var metricItems = new List<Metric>();
-
-        this.meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(metricItems)
-            .Build();
-
-        using (var client = this.factory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-            })
-            .CreateClient())
+        try
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, environmentVarValue);
 
-            response1.EnsureSuccessStatusCode();
-            response2.EnsureSuccessStatusCode();
+            var metricItems = new List<Metric>();
+
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(metricItems)
+                .Build();
+
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                })
+                .CreateClient())
+            {
+                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+
+                response1.EnsureSuccessStatusCode();
+                response2.EnsureSuccessStatusCode();
+            }
+
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+            this.meterProvider.Dispose();
+
+            if (validateOldSemConv)
+            {
+                var requestMetrics = metricItems
+                    .Where(item => item.Name == "http.server.duration")
+                    .ToArray();
+
+                var metric = Assert.Single(requestMetrics);
+                Assert.Equal("ms", metric.Unit);
+                var metricPoints = GetMetricPoints(metric);
+                Assert.Equal(2, metricPoints.Count);
+
+                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedTagsCount, validateOldSemConv: true);
+                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedTagsCount, validateOldSemConv: true);
+            }
+
+            if (validateNewSemConv)
+            {
+                var requestMetrics = metricItems
+                    .Where(item => item.Name == "http.server.request.duration")
+                    .ToArray();
+
+                var metric = Assert.Single(requestMetrics);
+                Assert.Equal("s", metric.Unit);
+                var metricPoints = GetMetricPoints(metric);
+                Assert.Equal(2, metricPoints.Count);
+
+                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedTagsCount, validateNewSemConv: true);
+                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedTagsCount, validateNewSemConv: true);
+            }
+
         }
-
-        // We need to let End callback execute as it is executed AFTER response was returned.
-        // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-
-        this.meterProvider.Dispose();
-
-        var requestMetrics = metricItems
-            .Where(item => item.Name == "http.server.duration")
-            .ToArray();
-
-        var metric = Assert.Single(requestMetrics);
-        var metricPoints = GetMetricPoints(metric);
-        Assert.Equal(2, metricPoints.Count);
-
-        AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values");
-        AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}");
+        finally
+        {
+            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, null);
+        }
     }
 
     [Fact]
@@ -133,7 +167,7 @@ public class MetricTests
 
         // Assert single because we filtered out one route
         var metricPoint = Assert.Single(GetMetricPoints(metric));
-        AssertMetricPoint(metricPoint);
+        AssertMetricPoint(metricPoint, validateOldSemConv: true);
     }
 
     [Fact]
@@ -187,7 +221,7 @@ public class MetricTests
         var metric = Assert.Single(requestMetrics);
         var metricPoint = Assert.Single(GetMetricPoints(metric));
 
-        var tags = AssertMetricPoint(metricPoint, expectedTagsCount: StandardTagsCount + 2);
+        var tags = AssertMetricPoint(metricPoint, expectedTagsCount: StandardTagsCount + 2, validateOldSemConv: true);
 
         Assert.Contains(tagsToAdd[0], tags);
         Assert.Contains(tagsToAdd[1], tags);
@@ -215,7 +249,9 @@ public class MetricTests
     private static KeyValuePair<string, object>[] AssertMetricPoint(
         MetricPoint metricPoint,
         string expectedRoute = "api/Values",
-        int expectedTagsCount = StandardTagsCount)
+        int expectedTagsCount = StandardTagsCount,
+        bool validateNewSemConv = false,
+        bool validateOldSemConv = false)
     {
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
@@ -230,19 +266,40 @@ public class MetricTests
             attributes[i++] = tag;
         }
 
-        var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
-        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
-        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
-        var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
-        var host = new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, "localhost");
-        var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
-        Assert.Contains(method, attributes);
-        Assert.Contains(scheme, attributes);
-        Assert.Contains(statusCode, attributes);
-        Assert.Contains(flavor, attributes);
-        Assert.Contains(host, attributes);
-        Assert.Contains(route, attributes);
+        // Inspect Attributes
         Assert.Equal(expectedTagsCount, attributes.Length);
+
+        if (validateNewSemConv)
+        {
+            var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "GET");
+            var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
+            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
+            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
+            var host = new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, "localhost");
+            var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
+            Assert.Contains(method, attributes);
+            Assert.Contains(scheme, attributes);
+            Assert.Contains(statusCode, attributes);
+            Assert.Contains(flavor, attributes);
+            Assert.Contains(host, attributes);
+            Assert.Contains(route, attributes);
+        }
+
+        if (validateOldSemConv)
+        {
+            var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
+            var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
+            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
+            var host = new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, "localhost");
+            var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
+            Assert.Contains(method, attributes);
+            Assert.Contains(scheme, attributes);
+            Assert.Contains(statusCode, attributes);
+            Assert.Contains(flavor, attributes);
+            Assert.Contains(host, attributes);
+            Assert.Contains(route, attributes);
+        }
 
         // Inspect Histogram Bounds
         var histogramBuckets = metricPoint.GetHistogramBuckets();
@@ -252,9 +309,19 @@ public class MetricTests
             histogramBounds.Add(t.ExplicitBound);
         }
 
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
+        if (validateNewSemConv)
+        {
+            Assert.Equal(
+                expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+                actual: histogramBounds);
+        }
+
+        if (validateOldSemConv)
+        {
+            Assert.Equal(
+                expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
+                actual: histogramBounds);
+        }
 
         return attributes;
     }

@@ -28,6 +28,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 internal sealed class HttpInMetricsListener : ListenerHandler
 {
     internal const string HttpServerDurationMetricName = "http.server.duration";
+    internal const string HttpServerRequestDurationMetricName = "http.server.request.duration";
 
     // Http Metrics use custom histogram boundaries. See the spec: https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md
     internal static double[] HttpServerDurationMetricExplicitBounds = new double[] { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 };
@@ -38,6 +39,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
     private readonly Histogram<double> httpServerDuration;
+    private readonly Histogram<double> httpServerRequestDuration;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
 
@@ -46,7 +48,8 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     {
         this.meter = meter;
         this.options = options;
-        this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
+        this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
+        this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
@@ -148,7 +151,15 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             // We are relying here on ASP.NET Core to set duration before writing the stop event.
             // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
             // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-            this.httpServerDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
+            if (this.emitNewAttributes)
+            {
+                this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
+            }
+
+            if (this.emitOldAttributes)
+            {
+                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+            }
         }
     }
 }

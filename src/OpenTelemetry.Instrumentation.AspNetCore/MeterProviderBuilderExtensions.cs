@@ -14,11 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Metrics;
 
@@ -78,9 +80,17 @@ public static class MeterProviderBuilderExtensions
 
         builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
 
-        builder.AddView(
-            instrumentName: HttpInMetricsListener.HttpServerDurationMetricName,
-            metricStreamConfiguration: new ExplicitBucketHistogramConfiguration { Boundaries = HttpInMetricsListener.HttpServerDurationMetricExplicitBounds });
+        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        var httpSemanticConvention = GetSemanticConventionOptIn(configuration);
+        if (httpSemanticConvention.HasFlag(HttpSemanticConvention.New))
+        {
+            // THIS IS A HACK.
+            // TODO: REMOVE VIEW AND USE HINT API WHEN AVAILABLE.
+            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/4766#discussion_r1291903760
+            builder.AddView(
+                instrumentName: HttpInMetricsListener.HttpServerRequestDurationMetricName,
+                metricStreamConfiguration: new ExplicitBucketHistogramConfiguration { Boundaries = HttpInMetricsListener.HttpServerDurationMetricExplicitBounds });
+        }
 
         builder.AddInstrumentation(sp =>
         {
