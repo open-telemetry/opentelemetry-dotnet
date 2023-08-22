@@ -59,7 +59,7 @@ internal class HttpInListener : ListenerHandler
     private const string UnknownHostName = "UNKNOWN-HOST";
 
     private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-    private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
+    private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
 
 #if !NET6_0_OR_GREATER
     private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
@@ -438,7 +438,7 @@ internal class HttpInListener : ListenerHandler
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
 #endif
         static bool TryFetchException(object payload, out Exception exc)
-            => StopExceptionFetcher.TryFetch(payload, out exc) && exc != null;
+            => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
     private static string GetUri(HttpRequest request)
