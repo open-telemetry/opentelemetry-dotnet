@@ -1,6 +1,6 @@
 # Persistent Storage APIs for OTLP Exporter
 
-The files in this folder has been forked in from
+The files in this folder have been copied over from
 [OpenTelemetry.PersistentStorage.Abstractions](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.Abstractions)
 and
 [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem).
