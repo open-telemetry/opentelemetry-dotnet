@@ -20,6 +20,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Timers;
 using OpenTelemetry.Internal;
 using OpenTelemetry.PersistentStorage.Abstractions;
+using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.PersistentStorage.FileSystem;
 
@@ -27,13 +28,18 @@ namespace OpenTelemetry.PersistentStorage.FileSystem;
 /// Persistent file storage <see cref="FileBlobProvider"/> allows to save data
 /// as blobs in file storage.
 /// </summary>
-internal class FileBlobProvider : PersistentBlobProvider, IDisposable
+
+#if BUILDING_INTERNAL_PERSISTENT_STORAGE
+internal sealed class FileBlobProvider : PersistentBlobProvider, IDisposable
+#else
+public class FileBlobProvider : PersistentBlobProvider, IDisposable
+#endif
 {
     internal readonly string DirectoryPath;
     private readonly DirectorySizeTracker directorySizeTracker;
     private readonly long retentionPeriodInMilliseconds;
     private readonly int writeTimeoutInMilliseconds;
-    private readonly System.Timers.Timer maintenanceTimer;
+    private readonly Timer maintenanceTimer;
     private bool disposedValue;
 
     /// <summary>
@@ -96,7 +102,7 @@ internal class FileBlobProvider : PersistentBlobProvider, IDisposable
         this.retentionPeriodInMilliseconds = retentionPeriodInMilliseconds;
         this.writeTimeoutInMilliseconds = writeTimeoutInMilliseconds;
 
-        this.maintenanceTimer = new System.Timers.Timer(maintenancePeriodInMilliseconds);
+        this.maintenanceTimer = new Timer(maintenancePeriodInMilliseconds);
         this.maintenanceTimer.Elapsed += this.OnMaintenanceEvent;
         this.maintenanceTimer.AutoReset = true;
         this.maintenanceTimer.Enabled = true;
@@ -108,7 +114,11 @@ internal class FileBlobProvider : PersistentBlobProvider, IDisposable
         GC.SuppressFinalize(this);
     }
 
+#if BUILDING_INTERNAL_PERSISTENT_STORAGE
+    private void Dispose(bool disposing)
+#else
     protected virtual void Dispose(bool disposing)
+#endif
     {
         if (!this.disposedValue)
         {

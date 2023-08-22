@@ -23,7 +23,11 @@ namespace OpenTelemetry.PersistentStorage.Abstractions;
 /// <summary>
 /// Represents persistent blob provider.
 /// </summary>
+#if BUILDING_INTERNAL_PERSISTENT_STORAGE
 internal abstract class PersistentBlobProvider
+#else
+public abstract class PersistentBlobProvider
+#endif
 {
     /// <summary>
     /// Attempts to create a new blob with the provided data and lease it.

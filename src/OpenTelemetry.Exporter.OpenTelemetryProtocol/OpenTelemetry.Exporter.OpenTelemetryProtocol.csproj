@@ -7,6 +7,7 @@
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
+    <DefineConstants>BUILDING_INTERNAL_PERSISTENT_STORAGE;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

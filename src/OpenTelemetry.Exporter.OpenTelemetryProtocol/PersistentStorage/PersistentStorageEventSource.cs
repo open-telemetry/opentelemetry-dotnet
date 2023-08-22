@@ -23,7 +23,11 @@ namespace OpenTelemetry.PersistentStorage.FileSystem;
 internal sealed class PersistentStorageEventSource : EventSource
 {
     public static PersistentStorageEventSource Log = new PersistentStorageEventSource();
+#if BUILDING_INTERNAL_PERSISTENT_STORAGE
+    private const string EventSourceName = "OpenTelemetry-PersistentStorage-FileSystem-Otlp";
+#else
     private const string EventSourceName = "OpenTelemetry-PersistentStorage-FileSystem";
+#endif
 
     [NonEvent]
     public void CouldNotReadFileBlob(string filePath, Exception ex)
