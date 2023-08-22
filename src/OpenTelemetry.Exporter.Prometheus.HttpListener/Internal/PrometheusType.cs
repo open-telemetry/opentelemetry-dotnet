@@ -1,4 +1,4 @@
-// <copyright file="JaegerExportProtocol.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusType.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,32 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter;
+namespace OpenTelemetry.Exporter.Prometheus;
 
-/// <summary>
-/// Defines the exporter protocols supported by the <see cref="JaegerExporter"/>.
-/// </summary>
-public enum JaegerExportProtocol : byte
+internal enum PrometheusType
 {
     /// <summary>
-    /// Compact thrift protocol over UDP.
+    /// Not mapped.
     /// </summary>
-    /// <remarks>
-    /// Note: Supported by Jaeger Agents only.
-    /// </remarks>
-    UdpCompactThrift = 0,
+    Untyped,
 
     /// <summary>
-    /// Binary thrift protocol over HTTP.
+    /// Mapped from Gauge and UpDownCounter.
     /// </summary>
-    /// <remarks>
-    /// Note: Supported by Jaeger Collectors only.
-    /// </remarks>
-    HttpBinaryThrift = 1,
+    Gauge,
+
+    /// <summary>
+    /// Mapped from Counter.
+    /// </summary>
+    Counter,
+
+    /// <summary>
+    /// Not mapped.
+    /// </summary>
+    Summary,
+
+    /// <summary>
+    /// Mapped from Histogram.
+    /// </summary>
+    Histogram,
 }

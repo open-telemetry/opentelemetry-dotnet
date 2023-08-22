@@ -10,6 +10,7 @@ foreach ($line in $($publishOutput -split "`r`n"))
     if ($line -like "*analysis warning IL*")
     {
         Write-Host $line
+
         $actualWarningCount += 1
     }
 }
@@ -28,7 +29,7 @@ if ($LastExitCode -ne 0)
 popd
 
 Write-Host "Actual warning count is:", $actualWarningCount
-$expectedWarningCount = 33
+$expectedWarningCount = 16
 
 $testPassed = 0
 if ($actualWarningCount -ne $expectedWarningCount)
