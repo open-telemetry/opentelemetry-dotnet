@@ -116,7 +116,6 @@ public class MetricTests
                 AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedTagsCount, validateNewSemConv: true);
                 AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedTagsCount, validateNewSemConv: true);
             }
-
         }
         finally
         {
