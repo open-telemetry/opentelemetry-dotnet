@@ -37,7 +37,7 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
     private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
 
     private static readonly PropertyFetcher<HttpRequestMessage> StartRequestFetcher = new("Request");
-    private static readonly PropertyFetcher<HttpResponseMessage> StopRequestFetcher = new("Response");
+    private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
 
     private readonly GrpcClientInstrumentationOptions options;
     private readonly bool emitOldAttributes;
@@ -191,14 +191,7 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
 #endif
         static bool TryFetchRequest(object payload, out HttpRequestMessage request)
-        {
-            if (!StartRequestFetcher.TryFetch(payload, out request) || request == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
+            => StartRequestFetcher.TryFetch(payload, out request) && request != null;
     }
 
     public void OnStopActivity(Activity activity, object payload)
@@ -239,13 +232,6 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
 #endif
         static bool TryFetchResponse(object payload, out HttpResponseMessage response)
-        {
-            if (StopRequestFetcher.TryFetch(payload, out response) && response != null)
-            {
-                return true;
-            }
-
-            return false;
-        }
+            => StopResponseFetcher.TryFetch(payload, out response) && response != null;
     }
 }

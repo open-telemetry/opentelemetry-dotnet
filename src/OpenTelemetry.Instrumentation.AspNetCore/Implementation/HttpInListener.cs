@@ -438,14 +438,7 @@ internal class HttpInListener : ListenerHandler
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
 #endif
         static bool TryFetchException(object payload, out Exception exc)
-        {
-            if (!StopExceptionFetcher.TryFetch(payload, out exc) || exc == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
+            => StopExceptionFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
     private static string GetUri(HttpRequest request)
