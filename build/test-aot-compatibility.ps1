@@ -3,6 +3,8 @@ param([string]$targetNetFramework)
 $rootDirectory = Split-Path $PSScriptRoot -Parent
 $publishOutput = dotnet publish $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj -nodeReuse:false /p:UseSharedCompilation=false /p:ExposeExperimentalFeatures=true
 
+Write-Host "publish output:", $publishOutput
+
 $actualWarningCount = 0
 
 foreach ($line in $($publishOutput -split "`r`n"))
