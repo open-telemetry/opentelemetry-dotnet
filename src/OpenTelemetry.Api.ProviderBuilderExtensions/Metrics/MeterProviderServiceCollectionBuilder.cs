@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#pragma warning disable CA1859
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 
@@ -92,3 +93,4 @@ internal sealed class MeterProviderServiceCollectionBuilder : MeterProviderBuild
         return this;
     }
 }
+#pragma warning restore CA1859
