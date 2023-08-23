@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Increased the character limit of the Meter instrument name from 63 to 255.
+  ([#4774](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4774))
+
 ## 1.6.0-rc.1
 
 Released 2023-Aug-21
