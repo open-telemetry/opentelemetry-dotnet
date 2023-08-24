@@ -116,16 +116,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
-
-                if (context.Request.Host.HasValue)
-                {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, context.Request.Host.Host));
-
-                    if (context.Request.Host.Port is not null && context.Request.Host.Port != 80 && context.Request.Host.Port != 443)
-                    {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, context.Request.Host.Port));
-                    }
-                }
             }
 
 #if NET6_0_OR_GREATER

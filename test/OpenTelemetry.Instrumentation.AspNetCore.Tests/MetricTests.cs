@@ -51,8 +51,8 @@ public class MetricTests
 
     [Theory]
     [InlineData(null, true, false, 6)] // emits old metric & attributes
-    [InlineData("http", false, true, 6)] // emits new metric & attributes
-    [InlineData("http/dup", true, true, 11)] // emits both old & new
+    [InlineData("http", false, true, 5)] // emits new metric & attributes
+    [InlineData("http/dup", true, true, 10)] // emits both old & new
     public async Task RequestMetricIsCaptured(string environmentVarValue, bool validateOldSemConv, bool validateNewSemConv, int expectedTagsCount)
     {
         try
@@ -274,13 +274,11 @@ public class MetricTests
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
             var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
             var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
-            var host = new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, "localhost");
             var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
             Assert.Contains(method, attributes);
             Assert.Contains(scheme, attributes);
             Assert.Contains(statusCode, attributes);
             Assert.Contains(flavor, attributes);
-            Assert.Contains(host, attributes);
             Assert.Contains(route, attributes);
         }
 
