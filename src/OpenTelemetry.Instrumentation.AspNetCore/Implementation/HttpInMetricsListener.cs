@@ -48,6 +48,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
         // TODO: This needs to be changed to  "s" (seconds). This is blocked until we can change the default histogram.
+        // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
         this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
@@ -143,6 +144,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             if (this.emitNewAttributes)
             {
                 // TODO: This needs to be changed to TotalSeconds. This is blocked until we can change the default histogram.
+                // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
                 this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
             }
 

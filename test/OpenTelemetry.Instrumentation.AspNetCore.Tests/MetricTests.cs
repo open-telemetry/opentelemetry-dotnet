@@ -307,6 +307,7 @@ public class MetricTests
         }
 
         // TODO: This will need to test for the new histograms. This is blocked until we can change the default histogram.
+        // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
         Assert.Equal(
             expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
             actual: histogramBounds);
