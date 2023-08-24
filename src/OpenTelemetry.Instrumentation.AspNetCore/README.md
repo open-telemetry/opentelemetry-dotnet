@@ -90,21 +90,24 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-The instrumentation is implemented based on [metrics semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpserverduration).
-Currently, the instrumentation supports the following metric.
+The instrumentation is implemented based on
+[metrics semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/4bbb8c907402caa90bc077214e8a2c78807c1ab9/docs/http/http-metrics.md).
 
-| Name  | Instrument Type | Unit | Description |
-|-------|-----------------|------|-------------|
-| `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+Have you opt-ed into the new Http Semantic Conventions?
+
+- If yes, the instrumentation supports the following metric.
+
+    | Name  | Instrument Type | Unit | Description |
+    |-------|-----------------|------|-------------|
+    | `http.server.request.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
 
 
-If you've opt-ed into the [newer Semantic Conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverduration),
-the instrumentation supports the following metric.
+- If no, instrumentation supports the following metric.
 
-| Name  | Instrument Type | Unit | Description |
-|-------|-----------------|------|-------------|
-| `http.server.request.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+    | Name  | Instrument Type | Unit | Description |
+    |-------|-----------------|------|-------------|
+    | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+
 
 ## Advanced configuration
 
