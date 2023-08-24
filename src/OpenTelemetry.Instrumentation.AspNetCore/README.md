@@ -95,19 +95,17 @@ The instrumentation is implemented based on
 
 Have you opt-ed into the new Http Semantic Conventions?
 
-- If yes, the instrumentation supports the following metric.
+* If yes, the instrumentation supports the following metric.
 
     | Name  | Instrument Type | Unit | Description |
     |-------|-----------------|------|-------------|
     | `http.server.request.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
 
-
-- If no, instrumentation supports the following metric.
+* If no, the instrumentation supports the following metric.
 
     | Name  | Instrument Type | Unit | Description |
     |-------|-----------------|------|-------------|
     | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
-
 
 ## Advanced configuration
 
