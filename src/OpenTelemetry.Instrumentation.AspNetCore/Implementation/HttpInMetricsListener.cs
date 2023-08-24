@@ -27,13 +27,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 internal sealed class HttpInMetricsListener : ListenerHandler
 {
-    private const string HttpServerDurationMetricName = "http.server.duration";
+    internal const string HttpServerDurationMetricName = "http.server.duration";
+    internal const string HttpServerRequestDurationMetricName = "http.server.request.duration";
+
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
     private readonly Histogram<double> httpServerDuration;
+    private readonly Histogram<double> httpServerRequestDuration;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
 
@@ -43,6 +46,9 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         this.meter = meter;
         this.options = options;
         this.httpServerDuration = meter.CreateHistogram<double>(HttpServerDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
+
+        // TODO: This needs to be changed to  "s" (seconds). This is blocked until we can change the default histogram.
+        this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
@@ -144,7 +150,16 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             // We are relying here on ASP.NET Core to set duration before writing the stop event.
             // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
             // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-            this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+            if (this.emitNewAttributes)
+            {
+                // TODO: This needs to be changed to TotalSeconds. This is blocked until we can change the default histogram.
+                this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+            }
+
+            if (this.emitOldAttributes)
+            {
+                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+            }
         }
     }
 }
