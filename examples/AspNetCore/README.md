@@ -1,4 +1,4 @@
-# OpenTelemetry ASP.NET Core 7  Web API Example
+# OpenTelemetry ASP.NET Core 7 Web API Example
 
 This example uses the new WebApplication host that ships with .NET 7
 and shows how to setup
