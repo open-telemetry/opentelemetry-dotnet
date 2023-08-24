@@ -109,7 +109,10 @@ public class MetricTests
                     .ToArray();
 
                 var metric = Assert.Single(requestMetrics);
-                Assert.Equal("ms", metric.Unit); // TODO: This needs to be changed to "s" (seconds). This is blocked until we can change the default histogram.
+
+                // TODO: This needs to be changed to "s" (seconds). This is blocked until we can change the default histogram.
+                // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
+                Assert.Equal("ms", metric.Unit);
                 var metricPoints = GetMetricPoints(metric);
                 Assert.Equal(2, metricPoints.Count);
 
