@@ -117,6 +117,7 @@ internal static class OtlpRetry
         {
             try
             {
+                // TODO: Consider making nextRetryDelayMilliseconds a double to avoid the need for convert/overflow handling
                 nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelay.Value.TotalMilliseconds);
             }
             catch (OverflowException)
@@ -200,7 +201,9 @@ internal static class OtlpRetry
         }
     }
 
-    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool hasRetryDelay)
+#pragma warning disable SA1313 // Parameter should begin with lower-case letter
+    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool _)
+#pragma warning restore SA1313 // Parameter should begin with lower-case letter
     {
         switch (statusCode)
         {
@@ -232,11 +235,11 @@ internal static class OtlpRetry
 #endif
     }
 
-    public struct RetryResult
+    public readonly struct RetryResult
     {
-        public bool Throttled;
-        public TimeSpan RetryDelay;
-        public int NextRetryDelayMilliseconds;
+        public readonly bool Throttled;
+        public readonly TimeSpan RetryDelay;
+        public readonly int NextRetryDelayMilliseconds;
 
         public RetryResult(bool throttled, TimeSpan retryDelay, int nextRetryDelayMilliseconds)
         {
