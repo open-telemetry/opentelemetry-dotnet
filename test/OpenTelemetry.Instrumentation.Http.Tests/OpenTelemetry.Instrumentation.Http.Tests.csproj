@@ -23,8 +23,7 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>

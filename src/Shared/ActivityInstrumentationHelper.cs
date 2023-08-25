@@ -15,33 +15,24 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Linq.Expressions;
-using System.Reflection;
 #pragma warning restore IDE0005
 
-namespace OpenTelemetry.Instrumentation
+namespace OpenTelemetry.Instrumentation;
+
+internal static class ActivityInstrumentationHelper
 {
-    internal static class ActivityInstrumentationHelper
+    internal static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
+    internal static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
+
+    private static Action<Activity, ActivitySource> CreateActivitySourceSetter()
     {
-        internal static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
-        internal static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
+        return (Action<Activity, ActivitySource>)typeof(Activity).GetProperty("Source")
+            .SetMethod.CreateDelegate(typeof(Action<Activity, ActivitySource>));
+    }
 
-        private static Action<Activity, ActivitySource> CreateActivitySourceSetter()
-        {
-            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
-            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivitySource), "propertyValue");
-            PropertyInfo sourcePropertyInfo = typeof(Activity).GetProperty("Source");
-            var body = Expression.Assign(Expression.Property(instance, sourcePropertyInfo), propertyValue);
-            return Expression.Lambda<Action<Activity, ActivitySource>>(body, instance, propertyValue).Compile();
-        }
-
-        private static Action<Activity, ActivityKind> CreateActivityKindSetter()
-        {
-            ParameterExpression instance = Expression.Parameter(typeof(Activity), "instance");
-            ParameterExpression propertyValue = Expression.Parameter(typeof(ActivityKind), "propertyValue");
-            PropertyInfo kindPropertyInfo = typeof(Activity).GetProperty("Kind");
-            var body = Expression.Assign(Expression.Property(instance, kindPropertyInfo), propertyValue);
-            return Expression.Lambda<Action<Activity, ActivityKind>>(body, instance, propertyValue).Compile();
-        }
+    private static Action<Activity, ActivityKind> CreateActivityKindSetter()
+    {
+        return (Action<Activity, ActivityKind>)typeof(Activity).GetProperty("Kind")
+            .SetMethod.CreateDelegate(typeof(Action<Activity, ActivityKind>));
     }
 }

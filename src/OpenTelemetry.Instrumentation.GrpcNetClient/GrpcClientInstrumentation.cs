@@ -15,29 +15,28 @@
 // </copyright>
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 
-namespace OpenTelemetry.Instrumentation.GrpcNetClient
+namespace OpenTelemetry.Instrumentation.GrpcNetClient;
+
+/// <summary>
+/// GrpcClient instrumentation.
+/// </summary>
+internal sealed class GrpcClientInstrumentation : IDisposable
 {
+    private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+
     /// <summary>
-    /// GrpcClient instrumentation.
+    /// Initializes a new instance of the <see cref="GrpcClientInstrumentation"/> class.
     /// </summary>
-    internal sealed class GrpcClientInstrumentation : IDisposable
+    /// <param name="options">Configuration options for Grpc client instrumentation.</param>
+    public GrpcClientInstrumentation(GrpcClientInstrumentationOptions options = null)
     {
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(options), isEnabledFilter: null, GrpcInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
+        this.diagnosticSourceSubscriber.Subscribe();
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="GrpcClientInstrumentation"/> class.
-        /// </summary>
-        /// <param name="options">Configuration options for Grpc client instrumentation.</param>
-        public GrpcClientInstrumentation(GrpcClientInstrumentationOptions options = null)
-        {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(options), null);
-            this.diagnosticSourceSubscriber.Subscribe();
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.diagnosticSourceSubscriber.Dispose();
-        }
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.diagnosticSourceSubscriber.Dispose();
     }
 }

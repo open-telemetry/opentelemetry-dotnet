@@ -16,18 +16,17 @@
 
 using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+internal class TestSampler : Sampler
 {
-    internal class TestSampler : Sampler
+    public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
+
+    public SamplingParameters LatestSamplingParameters { get; private set; }
+
+    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
-
-        public SamplingParameters LatestSamplingParameters { get; private set; }
-
-        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-        {
-            this.LatestSamplingParameters = samplingParameters;
-            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
-        }
+        this.LatestSamplingParameters = samplingParameters;
+        return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
     }
 }

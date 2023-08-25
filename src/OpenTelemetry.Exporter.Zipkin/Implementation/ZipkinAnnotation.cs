@@ -13,20 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-namespace OpenTelemetry.Exporter.Zipkin.Implementation
+namespace OpenTelemetry.Exporter.Zipkin.Implementation;
+
+internal readonly struct ZipkinAnnotation
 {
-    internal readonly struct ZipkinAnnotation
+    public ZipkinAnnotation(
+        long timestamp,
+        string value)
     {
-        public ZipkinAnnotation(
-            long timestamp,
-            string value)
-        {
-            this.Timestamp = timestamp;
-            this.Value = value;
-        }
-
-        public long Timestamp { get; }
-
-        public string Value { get; }
+        this.Timestamp = timestamp;
+        this.Value = value;
     }
+
+    public long Timestamp { get; }
+
+    public string Value { get; }
 }

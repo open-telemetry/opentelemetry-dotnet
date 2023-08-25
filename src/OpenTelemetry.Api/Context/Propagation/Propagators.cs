@@ -14,26 +14,25 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Context.Propagation
+namespace OpenTelemetry.Context.Propagation;
+
+/// <summary>
+/// Propagators allow setting the global default Propagators.
+/// </summary>
+public static class Propagators
 {
+    private static readonly TextMapPropagator Noop = new NoopTextMapPropagator();
+
     /// <summary>
-    /// Propagators allow setting the global default Propagators.
+    /// Gets the Default TextMapPropagator to be used.
     /// </summary>
-    public static class Propagators
+    /// <remarks>
+    /// Setting this can be done only from Sdk.
+    /// </remarks>
+    public static TextMapPropagator DefaultTextMapPropagator { get; internal set; } = Noop;
+
+    internal static void Reset()
     {
-        private static readonly TextMapPropagator Noop = new NoopTextMapPropagator();
-
-        /// <summary>
-        /// Gets the Default TextMapPropagator to be used.
-        /// </summary>
-        /// <remarks>
-        /// Setting this can be done only from Sdk.
-        /// </remarks>
-        public static TextMapPropagator DefaultTextMapPropagator { get; internal set; } = Noop;
-
-        internal static void Reset()
-        {
-            DefaultTextMapPropagator = Noop;
-        }
+        DefaultTextMapPropagator = Noop;
     }
 }

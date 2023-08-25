@@ -5,14 +5,18 @@
     <TargetFramework>net7.0</TargetFramework>
     <PublishAot Condition="!$([MSBuild]::IsOSPlatform('OSX'))">true</PublishAot>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <TrimmerRootAssembly Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
     <TrimmerRootAssembly Include="OpenTelemetry.Api" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Console" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.InMemory" />
-    <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Jaeger" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.HttpListener" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Zipkin" />
