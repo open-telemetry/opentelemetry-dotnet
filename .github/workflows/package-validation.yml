@@ -7,7 +7,7 @@ on:
     - '**.md'
 
 jobs:
-  build-test:
+  build-test-stable:
     runs-on: windows-latest
     env:
       RunPackageValidation: true
@@ -24,4 +24,23 @@ jobs:
       run: dotnet restore
 
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore
+      run: dotnet pack --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
+
+  build-test-experimental:
+    runs-on: windows-latest
+    env:
+      RunPackageValidation: true
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # fetching all
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Pack
+      run: dotnet pack --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
