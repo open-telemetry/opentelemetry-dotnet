@@ -175,8 +175,6 @@ values of the `PeriodicExportingMetricReaderOptions`
 | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
 
-NOTE: `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is not supported yet [#3756](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3756).
-
 The following environment variables can be used to override the default
 values of the attribute limits
 (following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.15.0/specification/sdk-environment-variables.md#attribute-limits)).
