@@ -35,7 +35,7 @@ internal class LogRecordHelper
         };
 
         logRecord.Timestamp = DateTime.UtcNow;
-
+  
         return logRecord;
     }
 }
