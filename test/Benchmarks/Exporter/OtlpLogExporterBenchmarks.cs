@@ -31,6 +31,20 @@ using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Logs.
 
 namespace Benchmarks.Exporter;
 
+/*
+BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)
+AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 7.0.400
+  [Host]     : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
+
+
+|            Method |       Mean |     Error |    StdDev |   Gen0 |   Gen1 | Allocated |
+|------------------ |-----------:|----------:|----------:|-------:|-------:|----------:|
+| OtlpExporter_Http | 147.112 us | 2.9354 us | 2.4512 us | 0.7324 | 0.4883 |   12289 B |
+| OtlpExporter_Grpc |   2.071 us | 0.0410 us | 0.0456 us | 0.0572 | 0.0534 |     968 B |
+*/
+
 public class OtlpLogExporterBenchmarks
 {
     private readonly byte[] buffer = new byte[1024 * 1024];
@@ -98,6 +112,7 @@ public class OtlpLogExporterBenchmarks
 
         this.logRecord = LogRecordHelper.CreateTestLogRecord();
         this.logRecordBatch = new CircularBuffer<LogRecord>(1);
+        this.logRecordBatch.Add(this.logRecord);
     }
 
     [GlobalCleanup(Target = nameof(OtlpExporter_Grpc))]
@@ -118,14 +133,12 @@ public class OtlpLogExporterBenchmarks
     [Benchmark]
     public void OtlpExporter_Http()
     {
-        this.logRecordBatch.Add(this.logRecord);
         this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
     }
 
     [Benchmark]
     public void OtlpExporter_Grpc()
     {
-        this.logRecordBatch.Add(this.logRecord);
         this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
     }
 }
