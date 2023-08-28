@@ -75,9 +75,9 @@ customize the `LogRecordExportProcessorOptions` or see the [Environment
 Variables](#environment-variables) section below on how to customize using
 environment variables.
 
-> **Note** For details on how to configure logging with OpenTelemetry check
-> [this](../../docs/logs/getting-started-console/Program.cs) example app. Check
-this
+> **Note** For details on how to configure logging with OpenTelemetry check this
+> [console](../../docs/logs/getting-started-console/Program.cs) or [ASP.NET
+Core](../../examples/AspNetCore/Program.cs) example app. Check this
 **[section](../../docs/logs/getting-started-console/readme.md#note-for-different-application-types)**
 for configuring OpenTelemetry with `ILogger` for certain application types such
 as ASP.NET Core and .NET Worker.
