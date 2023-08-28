@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
 namespace Benchmarks.Helper;
@@ -23,20 +23,15 @@ internal class LogRecordHelper
 {
     internal static LogRecord CreateTestLogRecord()
     {
-        var logRecord = new LogRecord();
-        logRecord.Body = "Test Message";
-        logRecord.CategoryName = "Test";
-        logRecord.Data = new LogRecordData()
-        {
-            TraceId = ActivityTraceId.CreateRandom(),
-            SpanId = ActivitySpanId.CreateRandom(),
-            Body = "log record body",
-            Severity = LogRecordSeverity.Error,
-            Timestamp = DateTime.UtcNow,
-        };
+        var items = new List<LogRecord>(1);
+        using var factory = LoggerFactory.Create(builder => builder
+            .AddOpenTelemetry(loggerOptions =>
+            {
+                loggerOptions.AddInMemoryExporter(items);
+            }));
 
-        logRecord.Timestamp = DateTime.UtcNow;
-
-        return logRecord;
+        var logger = factory.CreateLogger("TestLogger");
+        logger.LogInformation("Hello from {Food} {Price}.", "artichoke", 3.99);
+        return items[0];
     }
 }
