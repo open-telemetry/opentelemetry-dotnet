@@ -75,28 +75,12 @@ customize the `LogRecordExportProcessorOptions` or see the [Environment
 Variables](#environment-variables) section below on how to customize using
 environment variables.
 
-The example has a
-[`LoggerFactory`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.iloggerfactory)
-with OpenTelemetry added as a
-[LoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
-This `LoggerFactory` is used to create an
-[`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-instance, which is then used to do the logging. The logs are sent to
-the `OpenTelemetryLoggerProvider`, which is configured to export logs to
-`OtlpLogExporter`.
-
-> **Note**
-> Certain types of applications (e.g. [ASP.NET
-Core](https://learn.microsoft.com/aspnet/core) and [.NET
-Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)) have an
-`ILogger` based logging pipeline set up by default. In such apps, enabling
-OpenTelemetry should be done by adding OpenTelemetry as a provider to the
-*existing* logging pipeline, and users should not create a new `LoggerFactory`
-(which sets up a totally new logging pipeline). Also, obtaining `ILogger`
-instance could be done differently as well. See [Example ASP.NET Core
-application](../../examples/AspNetCore/Program.cs) for an example which shows
-how to add OpenTelemetry to the logging pipeline already setup by the
-application and export logs to Otlp endpoint.
+> **Note** For details on how to configure logging with OpenTelemetry check
+> [this](../../docs/logs/getting-started-console/Program.cs) example app. Check
+this
+**[section](../../docs/logs/getting-started-console/readme.md#note-for-different-application-types)**
+for configuring OpenTelemetry with `ILogger` for certain application types such
+as ASP.NET Core and .NET Worker.
 
 ## Configuration
 
