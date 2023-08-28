@@ -30,7 +30,8 @@ internal class LogRecordHelper
         {
             TraceId = ActivityTraceId.CreateRandom(),
             SpanId = ActivitySpanId.CreateRandom(),
-            Body = "log record body", Severity = LogRecordSeverity.Error,
+            Body = "log record body",
+            Severity = LogRecordSeverity.Error,
             Timestamp = DateTime.UtcNow,
         };
 

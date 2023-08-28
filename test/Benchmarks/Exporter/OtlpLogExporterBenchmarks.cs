@@ -56,7 +56,7 @@ public class OtlpLogExporterBenchmarks
     private string serverHost;
     private int serverPort;
 
-    [GlobalSetup(Target =nameof(OtlpExporter_Grpc))]
+    [GlobalSetup(Target = nameof(OtlpExporter_Grpc))]
     public void GlobalSetupGrpc()
     {
         var mockClient = new Mock<OtlpCollector.LogsService.LogsServiceClient>();
