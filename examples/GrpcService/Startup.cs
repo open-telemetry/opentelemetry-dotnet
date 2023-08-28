@@ -39,15 +39,14 @@ public class Startup
                     .ConfigureResource(r => r.AddService(this.Configuration.GetValue("ServiceName", defaultValue: "otel-test")!))
                     .AddAspNetCoreInstrumentation();
 
-                // Switch between Jaeger/Zipkin/Console by setting UseExporter in appsettings.json.
+                // Switch between Otlp/Zipkin/Console by setting UseExporter in appsettings.json.
                 var exporter = this.Configuration.GetValue("UseExporter", defaultValue: "console")!.ToLowerInvariant();
                 switch (exporter)
                 {
-                    case "jaeger":
-                        _ = builder.AddJaegerExporter(jaegerOptions =>
+                    case "otlp":
+                        builder.AddOtlpExporter(otlpOptions =>
                         {
-                            jaegerOptions.AgentHost = this.Configuration.GetValue("Jaeger:Host", defaultValue: "localhost");
-                            jaegerOptions.AgentPort = this.Configuration.GetValue("Jaeger:Port", defaultValue: 6831);
+                            otlpOptions.Endpoint = new Uri(this.Configuration.GetValue("Otlp:Endpoint", defaultValue: "http://localhost:4317")!);
                         });
                         break;
                     case "zipkin":

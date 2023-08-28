@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http;
@@ -33,11 +36,12 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
     private const string OnStartEvent = "Grpc.Net.Client.GrpcOut.Start";
     private const string OnStopEvent = "Grpc.Net.Client.GrpcOut.Stop";
 
+    private static readonly PropertyFetcher<HttpRequestMessage> StartRequestFetcher = new("Request");
+    private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
+
     private readonly GrpcClientInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
-    private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
-    private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
 
     public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
         : base("Grpc.Net.Client")
@@ -86,7 +90,7 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
         }
 
         // Ensure context propagation irrespective of sampling decision
-        if (!this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) || request == null)
+        if (!TryFetchRequest(payload, out HttpRequestMessage request))
         {
             GrpcInstrumentationEventSource.Log.NullPayload(nameof(GrpcClientDiagnosticListener), nameof(this.OnStartActivity));
             return;
@@ -180,6 +184,14 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
                 GrpcInstrumentationEventSource.Log.EnrichmentException(ex);
             }
         }
+
+        // See https://github.com/grpc/grpc-dotnet/blob/ff1a07b90c498f259e6d9f4a50cdad7c89ecd3c0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L1180-L1183
+        // this makes sure that top-level properties on the payload object are always preserved.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchRequest(object payload, out HttpRequestMessage request)
+            => StartRequestFetcher.TryFetch(payload, out request) && request != null;
     }
 
     public void OnStopActivity(Activity activity, object payload)
@@ -201,7 +213,7 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
             // Remove the grpc.status_code tag added by the gRPC .NET library
             activity.SetTag(GrpcTagHelper.GrpcStatusCodeTagName, null);
 
-            if (this.stopRequestFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
+            if (TryFetchResponse(payload, out HttpResponseMessage response))
             {
                 try
                 {
@@ -213,5 +225,13 @@ internal sealed class GrpcClientDiagnosticListener : ListenerHandler
                 }
             }
         }
+
+        // See https://github.com/grpc/grpc-dotnet/blob/ff1a07b90c498f259e6d9f4a50cdad7c89ecd3c0/src/Grpc.Net.Client/Internal/GrpcCall.cs#L1180-L1183
+        // this makes sure that top-level properties on the payload object are always preserved.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchResponse(object payload, out HttpResponseMessage response)
+            => StopResponseFetcher.TryFetch(payload, out response) && response != null;
     }
 }
