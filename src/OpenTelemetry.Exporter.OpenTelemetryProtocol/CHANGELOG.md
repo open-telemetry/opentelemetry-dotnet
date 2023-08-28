@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
 * Excluded attributes corresponding to `LogRecord.EventId`,
 `LogRecord.CategoryName` and `LogRecord.Exception` from the exported data. This
 is done as the semantic conventions for these attributes are not yet stable.
