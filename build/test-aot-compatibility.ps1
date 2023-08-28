@@ -29,7 +29,7 @@ if ($LastExitCode -ne 0)
 popd
 
 Write-Host "Actual warning count is:", $actualWarningCount
-$expectedWarningCount = 19
+$expectedWarningCount = 16
 
 $testPassed = 0
 if ($actualWarningCount -ne $expectedWarningCount)
