@@ -145,7 +145,7 @@ public class OtlpLogExporterBenchmarks
         this.exporter.Export(new Batch<LogRecord>(this.logRecordBatch, 1));
     }
 
-    private class MockLogService : OtlpCollector.LogsService.LogsServiceBase
+    private sealed class MockLogService : OtlpCollector.LogsService.LogsServiceBase
     {
         private static OtlpCollector.ExportLogsServiceResponse response = new OtlpCollector.ExportLogsServiceResponse();
 
