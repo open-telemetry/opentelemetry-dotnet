@@ -75,6 +75,13 @@ customize the `LogRecordExportProcessorOptions` or see the [Environment
 Variables](#environment-variables) section below on how to customize using
 environment variables.
 
+> **Note** For details on how to configure logging with OpenTelemetry check this
+> [console](../../docs/logs/getting-started-console/Program.cs) or [ASP.NET
+Core](../../examples/AspNetCore/Program.cs) example app. Check this
+**[section](../../docs/logs/getting-started-console/readme.md#note-for-different-application-types)**
+for configuring OpenTelemetry with `ILogger` for certain application types such
+as ASP.NET Core and .NET Worker.
+
 ## Configuration
 
 You can configure the `OtlpExporter` through `OtlpExporterOptions`
@@ -166,16 +173,18 @@ specification](https://github.com/open-telemetry/opentelemetry-specification/blo
 | `OTEL_BLRP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                                          |
 | `OTEL_BLRP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSize`                                                    |
 
-The following environment variables can be used to override the default
-values of the `PeriodicExportingMetricReaderOptions`
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+The following environment variables can be used to override the default values
+of the `PeriodicExportingMetricReaderOptions` (following the [OpenTelemetry
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
 
 | Environment variable                                | `PeriodicExportingMetricReaderOptions` property |
 | ----------------------------------------------------| ------------------------------------------------|
 | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
 | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
 
-NOTE: `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is not supported yet [#3756](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3756).
+| Environment variable                                | `MetricReaderOptions` property                  |
+| ----------------------------------------------------| ------------------------------------------------|
+| `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` | `PeriodicExportingMetricReaderOptions`          |
 
 The following environment variables can be used to override the default
 values of the attribute limits
