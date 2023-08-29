@@ -70,22 +70,50 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             var context = payload as HttpContext;
             if (context == null)
             {
-                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
+                if (this.emitOldAttributes)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
+                }
+
+                if (this.emitNewAttributes)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
+                }
                 return;
             }
 
-            try
+            if (this.emitOldAttributes)
             {
-                if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
+                try
                 {
-                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
+                    if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
                     return;
                 }
             }
-            catch (Exception ex)
+
+            if (this.emitNewAttributes)
             {
-                AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
-                return;
+                try
+                {
+                    if (this.options.Filter?.Invoke(HttpServerRequestDurationMetricName, context) == false)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
+                    return;
+                }
             }
 
             // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
