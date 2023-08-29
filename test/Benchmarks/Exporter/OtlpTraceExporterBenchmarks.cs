@@ -106,11 +106,9 @@ public class OtlpTraceExporterBenchmarks
         var options = new OtlpExporterOptions
         {
             Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
         };
-        this.exporter = new OtlpTraceExporter(
-            options,
-            new SdkLimitOptions(),
-            new OtlpHttpTraceExportClient(options, options.HttpClientFactory()));
+        this.exporter = new OtlpTraceExporter(options);
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(1);

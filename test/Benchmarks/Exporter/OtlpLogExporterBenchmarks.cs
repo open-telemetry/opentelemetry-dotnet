@@ -106,11 +106,9 @@ public class OtlpLogExporterBenchmarks
         var options = new OtlpExporterOptions
         {
             Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
         };
-        this.exporter = new OtlpLogExporter(
-            options,
-            new SdkLimitOptions(),
-            new OtlpHttpLogExportClient(options, options.HttpClientFactory()));
+        this.exporter = new OtlpLogExporter(options);
 
         this.logRecord = LogRecordHelper.CreateTestLogRecord();
         this.logRecordBatch = new CircularBuffer<LogRecord>(1);
