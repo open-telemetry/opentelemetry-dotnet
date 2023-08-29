@@ -16,7 +16,6 @@
 
 #if !NETFRAMEWORK
 using System.Diagnostics;
-using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
