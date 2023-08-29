@@ -96,11 +96,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                 return;
             }
 
-            TagList oldTags = default, newTags = default;
-
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
             if (this.emitOldAttributes)
             {
+                TagList oldTags = default;
+
                 oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
                 oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme));
                 oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Method));
@@ -115,65 +115,71 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                         oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostPort, context.Request.Host.Port));
                     }
                 }
+
+#if NET6_0_OR_GREATER
+                var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+                if (!string.IsNullOrEmpty(route))
+                {
+                    if (this.emitOldAttributes)
+                    {
+                        oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
+                    }
+                }
+#endif
+                if (this.options.Enrich != null)
+                {
+                    try
+                    {
+                        this.options.Enrich(HttpServerDurationMetricName, context, ref oldTags);
+                    }
+                    catch (Exception ex)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
+                    }
+                }
+
+                // We are relying here on ASP.NET Core to set duration before writing the stop event.
+                // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
+                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, oldTags);
             }
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (this.emitNewAttributes)
             {
+                TagList newTags = default;
+
                 newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
                 newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
                 newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
                 newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
-            }
 
 #if NET6_0_OR_GREATER
-            var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-            if (!string.IsNullOrEmpty(route))
-            {
-                if (this.emitOldAttributes)
-                {
-                    oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
-                }
-
-                if (this.emitNewAttributes)
+                var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+                if (!string.IsNullOrEmpty(route))
                 {
                     newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
                 }
-            }
 #endif
-            if (this.options.Enrich != null)
-            {
-                try
+                if (this.options.Enrich != null)
                 {
-                    if (this.emitOldAttributes)
-                    {
-                        this.options.Enrich(HttpServerDurationMetricName, context, ref oldTags);
-                    }
-
-                    if (this.emitNewAttributes)
+                    try
                     {
                         this.options.Enrich(HttpServerDurationMetricName, context, ref newTags);
                     }
+                    catch (Exception ex)
+                    {
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
-                }
-            }
 
-            // We are relying here on ASP.NET Core to set duration before writing the stop event.
-            // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
-            // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-            if (this.emitNewAttributes)
-            {
+                // We are relying here on ASP.NET Core to set duration before writing the stop event.
+                // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
+                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+
                 // TODO: This needs to be changed to TotalSeconds. This is blocked until we can change the default histogram.
                 // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
                 this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalMilliseconds, newTags);
-            }
-
-            if (this.emitOldAttributes)
-            {
-                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, oldTags);
             }
         }
     }
