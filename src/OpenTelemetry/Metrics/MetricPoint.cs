@@ -1250,15 +1250,9 @@ public struct MetricPoint
     private static void AcquireLock(ref int isCriticalSectionOccupied)
     {
         var sw = default(SpinWait);
-        while (true)
+        while (Interlocked.Exchange(ref isCriticalSectionOccupied, 1) != 0)
         {
-            if (Interlocked.Exchange(ref isCriticalSectionOccupied, 1) != 0)
-            {
-                sw.SpinOnce();
-                continue;
-            }
-
-            break;
+            sw.SpinOnce();
         }
     }
 
