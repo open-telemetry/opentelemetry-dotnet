@@ -169,7 +169,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                     }
                     catch (Exception ex)
                     {
-                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
+                        AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
                     }
                 }
 
