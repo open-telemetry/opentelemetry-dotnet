@@ -7,6 +7,7 @@
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
+    <DefineConstants>BUILDING_INTERNAL_PERSISTENT_STORAGE;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +31,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
   <ItemGroup>
