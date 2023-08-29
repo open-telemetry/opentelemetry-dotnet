@@ -438,73 +438,43 @@ public struct MetricPoint
         {
             case AggregationType.LongSumIncomingDelta:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+
+                    unchecked
                     {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            unchecked
-                            {
-                                this.runningValue.AsLong += number;
-                            }
-
-                            if (isSampled)
-                            {
-                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
-                            }
-
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong += number;
                     }
+
+                    if (isSampled)
+                    {
+                        this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                    }
+
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.LongSumIncomingCumulative:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.runningValue.AsLong = number;
-                            this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
+                    this.runningValue.AsLong = number;
+                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
 
-                        sw.SpinOnce();
-                    }
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.LongGauge:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.runningValue.AsLong = number;
-                            this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
+                    this.runningValue.AsLong = number;
+                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
 
-                        sw.SpinOnce();
-                    }
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -657,81 +627,51 @@ public struct MetricPoint
         {
             case AggregationType.DoubleSumIncomingDelta:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+
+                    unchecked
                     {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            unchecked
-                            {
-                                this.runningValue.AsDouble += number;
-                            }
-
-                            if (isSampled)
-                            {
-                                this.mpComponents.ExemplarReservoir.Offer(number, tags);
-                            }
-
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsDouble += number;
                     }
+
+                    if (isSampled)
+                    {
+                        this.mpComponents.ExemplarReservoir.Offer(number, tags);
+                    }
+
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.DoubleSumIncomingCumulative:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+
+                    unchecked
                     {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            unchecked
-                            {
-                                this.runningValue.AsDouble = number;
-                            }
-
-                            this.mpComponents.ExemplarReservoir.Offer(number, tags);
-
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsDouble = number;
                     }
+
+                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.DoubleGauge:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+
+                    unchecked
                     {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            unchecked
-                            {
-                                this.runningValue.AsDouble = number;
-                            }
-
-                            this.mpComponents.ExemplarReservoir.Offer(number, tags);
-
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsDouble = number;
                     }
+
+                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
+
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -889,41 +829,32 @@ public struct MetricPoint
             case AggregationType.HistogramWithBuckets:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                            }
-
-                            for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
-                                if (outputDelta)
-                                {
-                                    histogramBuckets.RunningBucketCounts[i] = 0;
-                                }
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
                     }
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    {
+                        histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
+                        if (outputDelta)
+                        {
+                            histogramBuckets.RunningBucketCounts[i] = 0;
+                        }
+                    }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -931,30 +862,20 @@ public struct MetricPoint
             case AggregationType.Histogram:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
                     }
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -962,44 +883,35 @@ public struct MetricPoint
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                    histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                    histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-                            histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
-                            histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                                histogramBuckets.RunningMin = double.PositiveInfinity;
-                                histogramBuckets.RunningMax = double.NegativeInfinity;
-                            }
-
-                            for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
-                                if (outputDelta)
-                                {
-                                    histogramBuckets.RunningBucketCounts[i] = 0;
-                                }
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
+                        histogramBuckets.RunningMin = double.PositiveInfinity;
+                        histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    {
+                        histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
+                        if (outputDelta)
+                        {
+                            histogramBuckets.RunningBucketCounts[i] = 0;
+                        }
+                    }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1007,34 +919,25 @@ public struct MetricPoint
             case AggregationType.HistogramWithMinMax:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                    histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                    histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-                            histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
-                            histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                                histogramBuckets.RunningMin = double.PositiveInfinity;
-                                histogramBuckets.RunningMax = double.NegativeInfinity;
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
+                        histogramBuckets.RunningMin = double.PositiveInfinity;
+                        histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1042,32 +945,23 @@ public struct MetricPoint
             case AggregationType.Base2ExponentialHistogram:
                 {
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogram.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogram.SnapshotSum = histogram.RunningSum;
+                    histogram.Snapshot();
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogram.SnapshotSum = histogram.RunningSum;
-                            histogram.Snapshot();
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogram.RunningSum = 0;
-                                histogram.Reset();
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogram.RunningSum = 0;
+                        histogram.Reset();
                     }
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogram.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1075,36 +969,27 @@ public struct MetricPoint
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogram.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogram.SnapshotSum = histogram.RunningSum;
+                    histogram.Snapshot();
+                    histogram.SnapshotMin = histogram.RunningMin;
+                    histogram.SnapshotMax = histogram.RunningMax;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogram.SnapshotSum = histogram.RunningSum;
-                            histogram.Snapshot();
-                            histogram.SnapshotMin = histogram.RunningMin;
-                            histogram.SnapshotMax = histogram.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogram.RunningSum = 0;
-                                histogram.Reset();
-                                histogram.RunningMin = double.PositiveInfinity;
-                                histogram.RunningMax = double.NegativeInfinity;
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogram.RunningSum = 0;
+                        histogram.Reset();
+                        histogram.RunningMin = double.PositiveInfinity;
+                        histogram.RunningMax = double.NegativeInfinity;
                     }
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogram.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1118,34 +1003,23 @@ public struct MetricPoint
             case AggregationType.LongSumIncomingDelta:
             case AggregationType.LongSumIncomingCumulative:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-
-                            if (outputDelta)
-                            {
-                                long initValue = this.runningValue.AsLong;
-                                this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
-                                this.deltaLastValue.AsLong = initValue;
-                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                            }
-                            else
-                            {
-                                this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        long initValue = this.runningValue.AsLong;
+                        this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
+                        this.deltaLastValue.AsLong = initValue;
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                     }
+                    else
+                    {
+                        this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1153,82 +1027,49 @@ public struct MetricPoint
             case AggregationType.DoubleSumIncomingDelta:
             case AggregationType.DoubleSumIncomingCumulative:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-
-                            if (outputDelta)
-                            {
-                                double initValue = this.runningValue.AsDouble;
-                                this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
-                                this.deltaLastValue.AsDouble = initValue;
-                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                            }
-                            else
-                            {
-                                this.snapshotValue.AsDouble = this.runningValue.AsDouble;
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        double initValue = this.runningValue.AsDouble;
+                        this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
+                        this.deltaLastValue.AsDouble = initValue;
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                     }
+                    else
+                    {
+                        this.snapshotValue.AsDouble = this.runningValue.AsDouble;
+                    }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.LongGauge:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
-                    }
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.DoubleGauge:
                 {
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        if (Interlocked.Exchange(ref this.mpComponents!.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
+                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
-                            this.snapshotValue.AsDouble = this.runningValue.AsDouble;
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.snapshotValue.AsDouble = this.runningValue.AsDouble;
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
-                            // Release lock
-                            Interlocked.Exchange(ref this.mpComponents.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
-                    }
+                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1236,41 +1077,32 @@ public struct MetricPoint
             case AggregationType.HistogramWithBuckets:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                            }
-
-                            for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
-                                if (outputDelta)
-                                {
-                                    histogramBuckets.RunningBucketCounts[i] = 0;
-                                }
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
                     }
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    {
+                        histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
+                        if (outputDelta)
+                        {
+                            histogramBuckets.RunningBucketCounts[i] = 0;
+                        }
+                    }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1278,31 +1110,22 @@ public struct MetricPoint
             case AggregationType.Histogram:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
                     }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1310,44 +1133,35 @@ public struct MetricPoint
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                    histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                    histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-                            histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
-                            histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                                histogramBuckets.RunningMin = double.PositiveInfinity;
-                                histogramBuckets.RunningMax = double.NegativeInfinity;
-                            }
-
-                            for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
-                                if (outputDelta)
-                                {
-                                    histogramBuckets.RunningBucketCounts[i] = 0;
-                                }
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
+                        histogramBuckets.RunningMin = double.PositiveInfinity;
+                        histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    {
+                        histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
+                        if (outputDelta)
+                        {
+                            histogramBuckets.RunningBucketCounts[i] = 0;
+                        }
+                    }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1355,35 +1169,26 @@ public struct MetricPoint
             case AggregationType.HistogramWithMinMax:
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+                    histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+                    histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
-                            histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
-                            histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogramBuckets.RunningSum = 0;
-                                histogramBuckets.RunningMin = double.PositiveInfinity;
-                                histogramBuckets.RunningMax = double.NegativeInfinity;
-                            }
-
-                            this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogramBuckets.RunningSum = 0;
+                        histogramBuckets.RunningMin = double.PositiveInfinity;
+                        histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
+
+                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1391,32 +1196,23 @@ public struct MetricPoint
             case AggregationType.Base2ExponentialHistogram:
                 {
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogram.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogram.SnapshotSum = histogram.RunningSum;
+                    histogram.Snapshot();
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogram.SnapshotSum = histogram.RunningSum;
-                            histogram.Snapshot();
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogram.RunningSum = 0;
-                                histogram.Reset();
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogram.RunningSum = 0;
+                        histogram.Reset();
                     }
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogram.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1424,100 +1220,93 @@ public struct MetricPoint
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
-                    var sw = default(SpinWait);
-                    while (true)
+
+                    AcquireLock(ref histogram.IsCriticalSectionOccupied);
+
+                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    histogram.SnapshotSum = histogram.RunningSum;
+                    histogram.Snapshot();
+                    histogram.SnapshotMin = histogram.RunningMin;
+                    histogram.SnapshotMax = histogram.RunningMax;
+
+                    if (outputDelta)
                     {
-                        if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
-                        {
-                            // Lock acquired
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            histogram.SnapshotSum = histogram.RunningSum;
-                            histogram.Snapshot();
-                            histogram.SnapshotMin = histogram.RunningMin;
-                            histogram.SnapshotMax = histogram.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                histogram.RunningSum = 0;
-                                histogram.Reset();
-                                histogram.RunningMin = double.PositiveInfinity;
-                                histogram.RunningMax = double.NegativeInfinity;
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                            // Release lock
-                            Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
-                            break;
-                        }
-
-                        sw.SpinOnce();
+                        this.runningValue.AsLong = 0;
+                        histogram.RunningSum = 0;
+                        histogram.Reset();
+                        histogram.RunningMin = double.PositiveInfinity;
+                        histogram.RunningMax = double.NegativeInfinity;
                     }
+
+                    this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                    ReleaseLock(ref histogram.IsCriticalSectionOccupied);
 
                     break;
                 }
         }
     }
 
-    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private static void AcquireLock(ref int isCriticalSectionOccupied)
     {
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
         var sw = default(SpinWait);
         while (true)
         {
-            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+            if (Interlocked.Exchange(ref isCriticalSectionOccupied, 1) != 0)
             {
-                // Lock acquired
-                unchecked
-                {
-                    this.runningValue.AsLong++;
-                    histogramBuckets.RunningSum += number;
-                }
-
-                if (reportExemplar)
-                {
-                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
-                }
-
-                // Release lock
-                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                break;
+                sw.SpinOnce();
+                continue;
             }
 
-            sw.SpinOnce();
+            break;
         }
+    }
+
+    private static void ReleaseLock(ref int isCriticalSectionOccupied)
+    {
+        Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
+    }
+
+    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    {
+        var histogramBuckets = this.mpComponents!.HistogramBuckets;
+
+        AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+        unchecked
+        {
+            this.runningValue.AsLong++;
+            histogramBuckets.RunningSum += number;
+        }
+
+        if (reportExemplar)
+        {
+            this.mpComponents.ExemplarReservoir.Offer(number, tags);
+        }
+
+        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
-        var sw = default(SpinWait);
-        while (true)
+
+        AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+        unchecked
         {
-            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-            {
-                // Lock acquired
-                unchecked
-                {
-                    this.runningValue.AsLong++;
-                    histogramBuckets.RunningSum += number;
-                    histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
-                    histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
-                }
-
-                if (reportExemplar)
-                {
-                    this.mpComponents.ExemplarReservoir.Offer(number, tags);
-                }
-
-                // Release lock
-                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                break;
-            }
-
-            sw.SpinOnce();
+            this.runningValue.AsLong++;
+            histogramBuckets.RunningSum += number;
+            histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
+            histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
         }
+
+        if (reportExemplar)
+        {
+            this.mpComponents.ExemplarReservoir.Offer(number, tags);
+        }
+
+        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
@@ -1525,30 +1314,20 @@ public struct MetricPoint
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
         int i = histogramBuckets.FindBucketIndex(number);
 
-        var sw = default(SpinWait);
-        while (true)
+        AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+        unchecked
         {
-            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+            this.runningValue.AsLong++;
+            histogramBuckets.RunningSum += number;
+            histogramBuckets.RunningBucketCounts[i]++;
+            if (reportExemplar)
             {
-                // Lock acquired
-                unchecked
-                {
-                    this.runningValue.AsLong++;
-                    histogramBuckets.RunningSum += number;
-                    histogramBuckets.RunningBucketCounts[i]++;
-                    if (reportExemplar)
-                    {
-                        this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
-                    }
-                }
-
-                // Release lock
-                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                break;
+                this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
             }
-
-            sw.SpinOnce();
         }
+
+        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
@@ -1556,33 +1335,23 @@ public struct MetricPoint
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
         int i = histogramBuckets.FindBucketIndex(number);
 
-        var sw = default(SpinWait);
-        while (true)
+        AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+
+        unchecked
         {
-            if (Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+            this.runningValue.AsLong++;
+            histogramBuckets.RunningSum += number;
+            histogramBuckets.RunningBucketCounts[i]++;
+            if (reportExemplar)
             {
-                // Lock acquired
-                unchecked
-                {
-                    this.runningValue.AsLong++;
-                    histogramBuckets.RunningSum += number;
-                    histogramBuckets.RunningBucketCounts[i]++;
-                    if (reportExemplar)
-                    {
-                        this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
-                    }
-
-                    histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
-                    histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
-                }
-
-                // Release lock
-                Interlocked.Exchange(ref histogramBuckets.IsCriticalSectionOccupied, 0);
-                break;
+                this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
             }
 
-            sw.SpinOnce();
+            histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
+            histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
         }
+
+        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
 #pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
@@ -1596,26 +1365,16 @@ public struct MetricPoint
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
-        var sw = default(SpinWait);
-        while (true)
+        AcquireLock(ref histogram.IsCriticalSectionOccupied);
+
+        unchecked
         {
-            if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
-            {
-                // Lock acquired
-                unchecked
-                {
-                    this.runningValue.AsLong++;
-                    histogram.RunningSum += number;
-                    histogram.Record(number);
-                }
-
-                // Release lock
-                Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
-                break;
-            }
-
-            sw.SpinOnce();
+            this.runningValue.AsLong++;
+            histogram.RunningSum += number;
+            histogram.Record(number);
         }
+
+        ReleaseLock(ref histogram.IsCriticalSectionOccupied);
     }
 
 #pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
@@ -1629,29 +1388,19 @@ public struct MetricPoint
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
-        var sw = default(SpinWait);
-        while (true)
+        AcquireLock(ref histogram.IsCriticalSectionOccupied);
+
+        unchecked
         {
-            if (Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 1) == 0)
-            {
-                // Lock acquired
-                unchecked
-                {
-                    this.runningValue.AsLong++;
-                    histogram.RunningSum += number;
-                    histogram.Record(number);
+            this.runningValue.AsLong++;
+            histogram.RunningSum += number;
+            histogram.Record(number);
 
-                    histogram.RunningMin = Math.Min(histogram.RunningMin, number);
-                    histogram.RunningMax = Math.Max(histogram.RunningMax, number);
-                }
-
-                // Release lock
-                Interlocked.Exchange(ref histogram.IsCriticalSectionOccupied, 0);
-                break;
-            }
-
-            sw.SpinOnce();
+            histogram.RunningMin = Math.Min(histogram.RunningMin, number);
+            histogram.RunningMax = Math.Max(histogram.RunningMax, number);
         }
+
+        ReleaseLock(ref histogram.IsCriticalSectionOccupied);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
