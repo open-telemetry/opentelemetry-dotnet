@@ -96,23 +96,23 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                 return;
             }
 
-            TagList tags = default;
+            TagList oldTags = default, newTags = default;
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
             if (this.emitOldAttributes)
             {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Method));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
+                oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
+                oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme));
+                oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Method));
+                oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
 
                 if (context.Request.Host.HasValue)
                 {
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, context.Request.Host.Host));
+                    oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, context.Request.Host.Host));
 
                     if (context.Request.Host.Port is not null && context.Request.Host.Port != 80 && context.Request.Host.Port != 443)
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostPort, context.Request.Host.Port));
+                        oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostPort, context.Request.Host.Port));
                     }
                 }
             }
@@ -120,24 +120,40 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (this.emitNewAttributes)
             {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
+                newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
+                newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
+                newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
+                newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
             }
 
 #if NET6_0_OR_GREATER
             var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
             if (!string.IsNullOrEmpty(route))
             {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
+                if (this.emitOldAttributes)
+                {
+                    oldTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
+                }
+
+                if (this.emitNewAttributes)
+                {
+                    newTags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
+                }
             }
 #endif
             if (this.options.Enrich != null)
             {
                 try
                 {
-                    this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
+                    if (this.emitOldAttributes)
+                    {
+                        this.options.Enrich(HttpServerDurationMetricName, context, ref oldTags);
+                    }
+
+                    if (this.emitNewAttributes)
+                    {
+                        this.options.Enrich(HttpServerDurationMetricName, context, ref newTags);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -152,12 +168,12 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             {
                 // TODO: This needs to be changed to TotalSeconds. This is blocked until we can change the default histogram.
                 // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
-                this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+                this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalMilliseconds, newTags);
             }
 
             if (this.emitOldAttributes)
             {
-                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+                this.httpServerDuration.Record(Activity.Current.Duration.TotalMilliseconds, oldTags);
             }
         }
     }

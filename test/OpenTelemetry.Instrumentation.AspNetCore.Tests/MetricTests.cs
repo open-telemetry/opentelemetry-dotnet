@@ -50,10 +50,10 @@ public class MetricTests
     }
 
     [Theory]
-    [InlineData(null, true, false, 6)] // emits old metric & attributes
-    [InlineData("http", false, true, 5)] // emits new metric & attributes
-    [InlineData("http/dup", true, true, 10)] // emits both old & new
-    public async Task RequestMetricIsCaptured(string environmentVarValue, bool validateOldSemConv, bool validateNewSemConv, int expectedTagsCount)
+    [InlineData(null, true, false, 6, 0)] // emits old metric & attributes
+    [InlineData("http", false, true, 0, 5)] // emits new metric & attributes
+    [InlineData("http/dup", true, true, 6, 5)] // emits both old & new
+    public async Task RequestMetricIsCaptured(string environmentVarValue, bool validateOldSemConv, bool validateNewSemConv, int expectedOldTagsCount, int expectedNewTagsCount)
     {
         try
         {
@@ -98,8 +98,8 @@ public class MetricTests
                 var metricPoints = GetMetricPoints(metric);
                 Assert.Equal(2, metricPoints.Count);
 
-                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedTagsCount, validateOldSemConv: true);
-                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedTagsCount, validateOldSemConv: true);
+                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
+                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
             }
 
             if (validateNewSemConv)
@@ -116,8 +116,8 @@ public class MetricTests
                 var metricPoints = GetMetricPoints(metric);
                 Assert.Equal(2, metricPoints.Count);
 
-                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedTagsCount, validateNewSemConv: true);
-                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedTagsCount, validateNewSemConv: true);
+                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
+                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
             }
         }
         finally
