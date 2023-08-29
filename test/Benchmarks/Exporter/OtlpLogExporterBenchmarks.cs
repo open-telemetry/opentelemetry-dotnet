@@ -33,8 +33,6 @@ using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implem
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Logs.V1;
 
-namespace Benchmarks.Exporter;
-
 /*
 BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)
 AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
@@ -48,6 +46,8 @@ AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
 | OtlpLogExporter_Http | 138.7 us | 2.08 us | 1.95 us | 0.4883 | 0.2441 |   9.85 KB |
 | OtlpLogExporter_Grpc | 268.3 us | 2.57 us | 2.28 us | 0.4883 |      - |   9.54 KB |
 */
+
+namespace Benchmarks.Exporter;
 
 public class OtlpLogExporterBenchmarks
 {
