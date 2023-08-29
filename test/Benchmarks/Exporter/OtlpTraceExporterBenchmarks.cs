@@ -147,7 +147,7 @@ public class OtlpTraceExporterBenchmarks
         this.exporter.Export(new Batch<Activity>(this.activityBatch, 1));
     }
 
-    private class MockTraceService : OtlpCollector.TraceService.TraceServiceBase
+    private sealed class MockTraceService : OtlpCollector.TraceService.TraceServiceBase
     {
         private static OtlpCollector.ExportTraceServiceResponse response = new OtlpCollector.ExportTraceServiceResponse();
 
