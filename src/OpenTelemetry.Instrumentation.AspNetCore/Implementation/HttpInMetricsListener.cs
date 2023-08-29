@@ -165,7 +165,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                 {
                     try
                     {
-                        this.options.Enrich(HttpServerDurationMetricName, context, ref newTags);
+                        this.options.Enrich(HttpServerRequestDurationMetricName, context, ref newTags);
                     }
                     catch (Exception ex)
                     {
