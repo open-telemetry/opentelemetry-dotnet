@@ -447,6 +447,8 @@ public struct MetricPoint
 
                     if (isSampled)
                     {
+                        // TODO: Need to ensure that the lock is always released.
+                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                         this.mpComponents.ExemplarReservoir.Offer(number, tags);
                     }
 
@@ -460,6 +462,9 @@ public struct MetricPoint
                     AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     this.runningValue.AsLong = number;
+
+                    // TODO: Need to ensure that the lock is always released.
+                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                     this.mpComponents.ExemplarReservoir.Offer(number, tags);
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -472,6 +477,9 @@ public struct MetricPoint
                     AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
                     this.runningValue.AsLong = number;
+
+                    // TODO: Need to ensure that the lock is always released.
+                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                     this.mpComponents.ExemplarReservoir.Offer(number, tags);
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -636,6 +644,8 @@ public struct MetricPoint
 
                     if (isSampled)
                     {
+                        // TODO: Need to ensure that the lock is always released.
+                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                         this.mpComponents.ExemplarReservoir.Offer(number, tags);
                     }
 
@@ -653,6 +663,8 @@ public struct MetricPoint
                         this.runningValue.AsDouble = number;
                     }
 
+                    // TODO: Need to ensure that the lock is always released.
+                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                     this.mpComponents.ExemplarReservoir.Offer(number, tags);
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -669,6 +681,8 @@ public struct MetricPoint
                         this.runningValue.AsDouble = number;
                     }
 
+                    // TODO: Need to ensure that the lock is always released.
+                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                     this.mpComponents.ExemplarReservoir.Offer(number, tags);
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
@@ -1275,6 +1289,8 @@ public struct MetricPoint
 
         if (reportExemplar)
         {
+            // TODO: Need to ensure that the lock is always released.
+            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
             this.mpComponents.ExemplarReservoir.Offer(number, tags);
         }
 
@@ -1297,6 +1313,8 @@ public struct MetricPoint
 
         if (reportExemplar)
         {
+            // TODO: Need to ensure that the lock is always released.
+            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
             this.mpComponents.ExemplarReservoir.Offer(number, tags);
         }
 
@@ -1317,6 +1335,8 @@ public struct MetricPoint
             histogramBuckets.RunningBucketCounts[i]++;
             if (reportExemplar)
             {
+                // TODO: Need to ensure that the lock is always released.
+                // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                 this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
             }
         }
@@ -1338,6 +1358,8 @@ public struct MetricPoint
             histogramBuckets.RunningBucketCounts[i]++;
             if (reportExemplar)
             {
+                // TODO: Need to ensure that the lock is always released.
+                // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
                 this.mpComponents.ExemplarReservoir.Offer(number, tags, i);
             }
 
