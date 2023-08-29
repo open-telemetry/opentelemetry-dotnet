@@ -26,8 +26,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public struct MetricPoint
 {
-    // TODO: Ask spec to define a default value for this.
-    private const int DefaultSimpleReservoirPoolSize = 10;
+    private const int DefaultSimpleReservoirPoolSize = 1;
 
     private readonly AggregatorStore aggregatorStore;
 
