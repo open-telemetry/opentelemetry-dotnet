@@ -51,7 +51,6 @@ AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
 
 public class OtlpLogExporterBenchmarks
 {
-    private readonly byte[] buffer = new byte[1024 * 1024];
     private OtlpLogExporter exporter;
     private LogRecord logRecord;
     private CircularBuffer<LogRecord> logRecordBatch;
