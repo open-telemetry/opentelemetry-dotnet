@@ -122,6 +122,7 @@ public class OtlpTraceExporterBenchmarks
     {
         this.exporter.Shutdown();
         this.exporter.Dispose();
+        this.activity.Dispose();
         this.host.Dispose();
     }
 
@@ -131,6 +132,7 @@ public class OtlpTraceExporterBenchmarks
         this.exporter.Shutdown();
         this.exporter.Dispose();
         this.server.Dispose();
+        this.activity.Dispose();
     }
 
     [Benchmark]
