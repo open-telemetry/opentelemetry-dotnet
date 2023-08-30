@@ -43,7 +43,9 @@ internal static class OtlpExporterOptionsExtensions
         }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        return GrpcChannel.ForAddress(options.Endpoint);
+        var httpClient = options.HttpClientFactory == null || options.HttpClientFactory == options.DefaultHttpClientFactory ? null : options.HttpClientFactory();
+
+        return GrpcChannel.ForAddress(options.Endpoint, new GrpcChannelOptions { HttpClient = httpClient });
 #else
         ChannelCredentials channelCredentials;
         if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
