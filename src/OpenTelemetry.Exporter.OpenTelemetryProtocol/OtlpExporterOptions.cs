@@ -168,8 +168,9 @@ public class OtlpExporterOptions
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>This is only invoked for the <see
-    /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol.</item>
+    /// <item>This is invoked for the <see
+    /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol or &lt;see
+    /// cref="OtlpExportProtocol.Grpc"/>(only netstandard2.1+ and net6.0+) protocol.</item>
     /// <item>The default behavior when using the <see
     /// cref="OtlpTraceExporterHelperExtensions.AddOtlpExporter(TracerProviderBuilder,
     /// Action{OtlpExporterOptions})"/> extension is if an <a
