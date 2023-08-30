@@ -5,6 +5,10 @@
 * Fix: Do not raise `ArgumentException` if `Activity` behind the shim span
   has an invalid context.
   ([#2787](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2787))
+* Obsolete `TracerShim(Tracer, TextMapPropagator)` constructor.
+  Provide `TracerShim(TracerProvider)`
+  and `TracerShim(TracerProvider, TextMapPropagator)` constructors.
+  ([#4812](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4812))
 
 ## 1.5.0-beta.1
 

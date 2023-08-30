@@ -26,7 +26,6 @@ public class IntegrationTests
 {
     private const string ChildActivitySource = "ChildActivitySource";
     private const string ParentActivitySource = "ParentActivitySource";
-    private const string ShimTracerName = "OpenTracing.Shim";
 
     [Theory]
     [InlineData(SamplingDecision.Drop, SamplingDecision.Drop, SamplingDecision.Drop)]
@@ -63,14 +62,14 @@ public class IntegrationTests
                 b => b.AddSource(ParentActivitySource))
             .When(
                 shimSamplingDecision == SamplingDecision.RecordAndSample,
-                b => b.AddSource(ShimTracerName))
+                b => b.AddSource("opentracing-shim"))
             .When(
                 childActivitySamplingDecision == SamplingDecision.RecordAndSample,
                 b => b.AddSource(ChildActivitySource))
             .Build();
 
         ITracer otTracer = new TracerShim(
-            tracerProvider.GetTracer(ShimTracerName),
+            tracerProvider,
             Propagators.DefaultTextMapPropagator);
 
         // Real usage requires a call OpenTracing.Util.GlobalTracer.Register(otTracer),
