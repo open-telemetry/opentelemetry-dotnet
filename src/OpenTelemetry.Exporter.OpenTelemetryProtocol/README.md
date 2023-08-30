@@ -248,8 +248,7 @@ export requests.
 
 ## Experimental features
 
-The OTLP exporter contains the following [experimental
-features](../../README.md#experimental-features):
+The OTLP exporter contains the following experimental features:
 
 * The [exemplar
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
