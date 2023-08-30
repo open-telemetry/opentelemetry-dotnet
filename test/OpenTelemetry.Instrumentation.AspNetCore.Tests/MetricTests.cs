@@ -98,8 +98,10 @@ public class MetricTests
                 var metricPoints = GetMetricPoints(metric);
                 Assert.Equal(2, metricPoints.Count);
 
-                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
-                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
+                // AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
+                // AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
+                AssertMetricPoint(GetMetricPoint(metricPoints, "api/Values").Value, expectedRoute: "api/Values", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
+                AssertMetricPoint(GetMetricPoint(metricPoints, "api/Values/{id}").Value, expectedRoute: "api/Values/{id}", expectedTagsCount: expectedOldTagsCount, validateOldSemConv: true);
             }
 
             if (validateNewSemConv)
@@ -116,8 +118,10 @@ public class MetricTests
                 var metricPoints = GetMetricPoints(metric);
                 Assert.Equal(2, metricPoints.Count);
 
-                AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
-                AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
+                // AssertMetricPoint(metricPoints[0], expectedRoute: "api/Values", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
+                // AssertMetricPoint(metricPoints[1], expectedRoute: "api/Values/{id}", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
+                AssertMetricPoint(GetMetricPoint(metricPoints, "api/Values").Value, expectedRoute: "api/Values", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
+                AssertMetricPoint(GetMetricPoint(metricPoints, "api/Values/{id}").Value, expectedRoute: "api/Values/{id}", expectedTagsCount: expectedNewTagsCount, validateNewSemConv: true);
             }
         }
         finally
@@ -246,6 +250,25 @@ public class MetricTests
         }
 
         return metricPoints;
+    }
+
+    private static MetricPoint? GetMetricPoint(List<MetricPoint> metricPoints, string expectedRoute)
+    {
+        for (int i = 0; i < metricPoints.Count; i++)
+        {
+            var metricPoint = metricPoints[i];
+
+            foreach (var tag in metricPoint.Tags)
+            {
+                if (tag.Key == SemanticConventions.AttributeHttpRoute && tag.Value.ToString() == expectedRoute)
+                {
+                    return metricPoint;
+                }
+            }
+        }
+
+        Assert.Fail("MetricPoint not found");
+        return null;
     }
 
     private static KeyValuePair<string, object>[] AssertMetricPoint(
