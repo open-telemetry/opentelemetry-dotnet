@@ -82,8 +82,13 @@ Core](../../examples/AspNetCore/Program.cs) example app. Check this
 for configuring OpenTelemetry with `ILogger` for certain application types such
 as ASP.NET Core and .NET Worker.
 
-**ILogger Scopes**: Otlp log exporter supports exporting ILogger scopes.
-**Note**: Scope attributes with key set as empty string or `{OriginalFormat}`
+**ILogger Scopes**: Otlp log exporter supports exporting ILogger scopes when
+enabled using
+[IncludeScopes](../../docs/logs/customizing-the-sdk/Readme.md#IncludeScopes)
+setting on `OpenTelemetryLoggerOptions`.
+
+> **Note**
+> Scope attributes with key set as empty string or `{OriginalFormat}`
 are ignored by exporter. Duplicate keys are exported as is.
 
 ## Configuration
@@ -249,7 +254,7 @@ export requests.
 ## Experimental features
 
 The OTLP exporter contains the following experimental features that are
-available only in pre-release package:
+available only in pre-release packages:
 
 * The [exemplar
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
@@ -259,8 +264,9 @@ available only in pre-release package:
   `EventId`, and `Exception`. These fields are unique to OpenTelemetry .NET's
   data model (i.e., they are not reflected in the [standard data
   model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#log-and-event-record-definition)).
-  Therefore, the conventions for exporting these fields is not yet stable. In
-  pre-release builds, these fields are exported as attributes mapped as follows:
+  While they can be exported as attributes, there is no established conventions
+  for the attribute key names. In pre-release builds, these fields are exported
+  as attributes mapped as follows:
   * `CategoryName` maps to `dotnet.ilogger.category_name`.
   * `EventId` maps to two attributes `Id` and `Name` representing `Event.Id` and
     `EventId.Name`, respectively.
