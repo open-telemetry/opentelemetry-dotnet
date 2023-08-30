@@ -1,0 +1,37 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.rpc;
+
+import "google/protobuf/duration.proto";
+
+// Describes when the clients can retry a failed request. Clients could ignore
+// the recommendation here or retry when this information is missing from error
+// responses.
+//
+// It's always recommended that clients should use exponential backoff when
+// retrying.
+//
+// Clients should wait until `retry_delay` amount of time has passed since
+// receiving the error response before retrying.  If retrying requests also
+// fail, clients should use an exponential backoff scheme to gradually increase
+// the delay between retries based on `retry_delay`, until either a maximum
+// number of retries have been reached or a maximum retry delay cap has been
+// reached.
+message RetryInfo {
+  // Clients should wait at least this long between retrying the same request.
+  google.protobuf.Duration retry_delay = 1;
+}
