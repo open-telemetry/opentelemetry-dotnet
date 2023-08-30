@@ -66,6 +66,7 @@ internal static class LogRecordExtensions
                 SeverityNumber = GetSeverityNumber(logRecord.Severity),
             };
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
             if (!string.IsNullOrWhiteSpace(logRecord.SeverityText))
             {
                 otlpLogRecord.SeverityText = logRecord.SeverityText;
@@ -74,6 +75,7 @@ internal static class LogRecordExtensions
             {
                 otlpLogRecord.SeverityText = logRecord.Severity.Value.ToShortName();
             }
+#endif
 
             var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
             var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
