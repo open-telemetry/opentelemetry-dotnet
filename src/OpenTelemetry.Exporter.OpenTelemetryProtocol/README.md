@@ -82,9 +82,9 @@ Core](../../examples/AspNetCore/Program.cs) example app. Check this
 for configuring OpenTelemetry with `ILogger` for certain application types such
 as ASP.NET Core and .NET Worker.
 
-**ILogger Scopes**: Otlp log exporter supports exporting ILogger scopes. **Note**: Scope attributes with key
-set as empty string or `{OriginalFormat}` are ignored by exporter. Duplicate keys
-are exported as is.
+**ILogger Scopes**: Otlp log exporter supports exporting ILogger scopes.
+**Note**: Scope attributes with key set as empty string or `{OriginalFormat}`
+are ignored by exporter. Duplicate keys are exported as is.
 
 ## Configuration
 
@@ -248,25 +248,25 @@ export requests.
 
 ## Experimental features
 
-The OTLP exporter contains the following
-[experimental features](../../README.md#experimental-features):
+The OTLP exporter contains the following [experimental
+features](../../README.md#experimental-features):
 
-* The
-  [exemplar specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
+* The [exemplar
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
   is not yet stable. Pre-release builds of the OpenTelemetry .NET SDK and the
   OTLP exporter support sampling and exporting exemplars.
 * Support for exporting the following fields on `LogRecord`: `CategoryName`,
   `EventId`, and `Exception`. These fields are unique to OpenTelemetry .NET's
-  data model (i.e., they are not reflected in the
-  [standard data model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#log-and-event-record-definition)).
-  Therefore, the conventions
-  for exporting these fields is not yet stable. In pre-release builds, these
-  fields are exported as attributes mapped as follows:
+  data model (i.e., they are not reflected in the [standard data
+  model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#log-and-event-record-definition)).
+  Therefore, the conventions for exporting these fields is not yet stable. In
+  pre-release builds, these fields are exported as attributes mapped as follows:
   * `CategoryName` maps to `dotnet.ilogger.category_name`.
-  * `EventId` maps to two attributes `Id` and `Name` representing
-    `Event.Id` and `EventId.Name`, respectively.
-  * `Exception` maps to the attributes defined by the experimental
-    [exception semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
+  * `EventId` maps to two attributes `Id` and `Name` representing `Event.Id` and
+    `EventId.Name`, respectively.
+  * `Exception` maps to the attributes defined by the experimental [exception
+    semantic
+    conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
 * In pre-release builds of the OpenTelemetry .NET SDK `LogRecord` contains new
   fields: `Severity` and `SeverityText`, and they will be exported by the OTLP
   exporter.
