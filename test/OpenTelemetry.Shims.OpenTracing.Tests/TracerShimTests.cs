@@ -27,27 +27,20 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
 public class TracerShimTests
 {
-    private const string TracerName = "defaultactivitysource";
-
     [Fact]
     public void CtorArgumentValidation()
     {
-        // null tracer and text format
-        Assert.Throws<ArgumentNullException>(() => new TracerShim(null, null));
+        // null tracer provider and text format
+        Assert.Throws<ArgumentNullException>(() => new TracerShim((TracerProvider)null, null));
 
-        // null tracer
-        Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextPropagator()));
-
-        // null context format
-        var tracerMock = new Mock<Tracer>();
-        Assert.Throws<ArgumentNullException>(() => new TracerShim(TracerProvider.Default.GetTracer("test"), null));
+        // null tracer provider
+        Assert.Throws<ArgumentNullException>(() => new TracerShim((TracerProvider)null, new TraceContextPropagator()));
     }
 
     [Fact]
     public void ScopeManager_NotNull()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         // Internals of the ScopeManagerShim tested elsewhere
         Assert.NotNull(shim.ScopeManager as ScopeManagerShim);
@@ -56,8 +49,7 @@ public class TracerShimTests
     [Fact]
     public void BuildSpan_NotNull()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         // Internals of the SpanBuilderShim tested elsewhere
         Assert.NotNull(shim.BuildSpan("foo") as SpanBuilderShim);
@@ -66,8 +58,7 @@ public class TracerShimTests
     [Fact]
     public void Inject_ArgumentValidation()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
         var mockFormat = new Mock<IFormat<ITextMap>>();
@@ -82,8 +73,7 @@ public class TracerShimTests
     [Fact]
     public void Inject_UnknownFormatIgnored()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
@@ -98,8 +88,7 @@ public class TracerShimTests
     [Fact]
     public void Extract_ArgumentValidation()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new Mock<ITextMap>().Object));
         Assert.Throws<ArgumentNullException>(() => shim.Extract(new Mock<IFormat<ITextMap>>().Object, null));
@@ -108,8 +97,7 @@ public class TracerShimTests
     [Fact]
     public void Extract_UnknownFormatIgnored()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
@@ -124,8 +112,7 @@ public class TracerShimTests
     [Fact]
     public void Extract_InvalidTraceParent()
     {
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, new TraceContextPropagator());
+        var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var mockCarrier = new Mock<ITextMap>();
 
@@ -154,8 +141,7 @@ public class TracerShimTests
 
         var format = new TraceContextPropagator();
 
-        var tracer = TracerProvider.Default.GetTracer(TracerName);
-        var shim = new TracerShim(tracer, format);
+        var shim = new TracerShim(TracerProvider.Default, format);
 
         // first inject
         shim.Inject(spanContextShim, BuiltinFormats.TextMap, carrier);
