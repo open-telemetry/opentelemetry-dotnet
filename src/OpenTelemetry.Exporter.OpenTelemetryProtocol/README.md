@@ -84,7 +84,7 @@ as ASP.NET Core and .NET Worker.
 
 **ILogger Scopes**: Otlp log exporter supports exporting ILogger scopes when
 enabled using
-[IncludeScopes](../../docs/logs/customizing-the-sdk/Readme.md#IncludeScopes)
+[IncludeScopes](../../docs/logs/customizing-the-sdk/Readme.md#includescopes)
 setting on `OpenTelemetryLoggerOptions`.
 
 > **Note**
