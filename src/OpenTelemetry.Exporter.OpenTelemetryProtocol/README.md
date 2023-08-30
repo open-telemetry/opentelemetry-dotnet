@@ -268,7 +268,7 @@ available only in pre-release packages:
   for the attribute key names. In pre-release builds, these fields are exported
   as attributes mapped as follows:
   * `CategoryName` maps to `dotnet.ilogger.category_name`.
-  * `EventId` maps to two attributes `Id` and `Name` representing `Event.Id` and
+  * `EventId` maps to two attributes `Id` and `Name` representing `EventId.Id` and
     `EventId.Name`, respectively.
   * `Exception` maps to the attributes defined by the experimental [exception
     semantic
