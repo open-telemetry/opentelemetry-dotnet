@@ -3,7 +3,7 @@
 ## Unreleased
 
 * GrpcExporter support custom HttpClient.
-  ([#4813](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4813))
+  ([#4813](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4814))
 
 ## 1.6.0-rc.1
 
