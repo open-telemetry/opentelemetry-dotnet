@@ -266,9 +266,6 @@ The OTLP exporter contains the following experimental features:
   * `Exception` maps to the attributes defined by the experimental [exception
     semantic
     conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
-* In pre-release builds of the OpenTelemetry .NET SDK `LogRecord` contains new
-  fields: `Severity` and `SeverityText`, and they will be exported by the OTLP
-  exporter.
 
 ## Troubleshooting
 
