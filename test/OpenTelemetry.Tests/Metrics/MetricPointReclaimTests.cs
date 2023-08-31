@@ -20,237 +20,236 @@ using System.Reflection;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Metrics.Tests
+namespace OpenTelemetry.Metrics.Tests;
+
+public class MetricPointReclaimTests
 {
-    public class MetricPointReclaimTests
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions)
     {
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void MeasurementsAreNotDropped(bool emitMetricWithNoDimensions)
+        var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("MyFruitCounter");
+
+        int numberOfUpdateThreads = 25;
+        int maxNumberofDistinctMetricPoints = 4000; // Default max MetricPoints * 2
+
+        using var exporter = new CustomExporter();
+        using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
         {
-            var meter = new Meter(Utils.GetCurrentMethodName());
-            var counter = meter.CreateCounter<long>("MyFruitCounter");
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
 
-            int numberOfUpdateThreads = 25;
-            int maxNumberofDistinctMetricPoints = 4000; // Default max MetricPoints * 2
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(Utils.GetCurrentMethodName())
+            .AddReader(metricReader)
+            .Build();
 
-            using var exporter = new CustomExporter();
-            using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
+        void EmitMetric(object obj)
+        {
+            var threadArguments = obj as ThreadArguments;
+            var random = new Random();
+            while (true)
             {
-                TemporalityPreference = MetricReaderTemporalityPreference.Delta,
-            };
-
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(Utils.GetCurrentMethodName())
-                .AddReader(metricReader)
-                .Build();
-
-            void EmitMetric(object obj)
-            {
-                var threadArguments = obj as ThreadArguments;
-                var random = new Random();
-                while (true)
+                int i = Interlocked.Increment(ref threadArguments!.Counter);
+                if (i <= maxNumberofDistinctMetricPoints)
                 {
-                    int i = Interlocked.Increment(ref threadArguments!.Counter);
-                    if (i <= maxNumberofDistinctMetricPoints)
+                    // Check for cases where a metric with no dimension is also emitted
+                    if (emitMetricWithNoDimensions)
                     {
-                        // Check for cases where a metric with no dimension is also emitted
-                        if (emitMetricWithNoDimensions)
-                        {
-                            counter.Add(25);
-                        }
+                        counter.Add(25);
+                    }
 
-                        // There are separate code paths for single dimension vs multiple dimensions
-                        if (random.Next(2) == 0)
-                        {
-                            counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
-                        }
-                        else
-                        {
-                            counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"), new KeyValuePair<string, object>("dimensionKey", "dimensionValue"));
-                        }
-
-                        Thread.Sleep(25);
+                    // There are separate code paths for single dimension vs multiple dimensions
+                    if (random.Next(2) == 0)
+                    {
+                        counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
                     }
                     else
                     {
-                        break;
+                        counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"), new KeyValuePair<string, object>("dimensionKey", "dimensionValue"));
                     }
+
+                    Thread.Sleep(25);
                 }
-            }
-
-            var threads = new Thread[numberOfUpdateThreads];
-            var threadArgs = new ThreadArguments();
-
-            for (int i = 0; i < threads.Length; i++)
-            {
-                threads[i] = new Thread(EmitMetric!);
-                threads[i].Start(threadArgs);
-            }
-
-            for (int i = 0; i < threads.Length; i++)
-            {
-                threads[i].Join();
-            }
-
-            meterProvider.ForceFlush();
-
-            long expectedSum;
-
-            if (emitMetricWithNoDimensions)
-            {
-                expectedSum = maxNumberofDistinctMetricPoints * (25 + 100);
-            }
-            else
-            {
-                expectedSum = maxNumberofDistinctMetricPoints * 100;
-            }
-
-            Assert.Equal(expectedSum, exporter.Sum);
-        }
-
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void MeasurementsAreAggregatedAfterMetricPointReclaim(bool emitMetricWithNoDimension)
-        {
-            var meter = new Meter(Utils.GetCurrentMethodName());
-            var counter = meter.CreateCounter<long>("MyFruitCounter");
-
-            long sum = 0;
-            var measurementValues = new long[] { 10, 20 };
-
-            int numberOfUpdateThreads = 4;
-            int numberOfMeasurementsPerThread = 10;
-
-            using var exporter = new CustomExporter();
-            using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
-            {
-                TemporalityPreference = MetricReaderTemporalityPreference.Delta,
-            };
-
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(Utils.GetCurrentMethodName())
-                .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 5
-                .AddReader(metricReader)
-                .Build();
-
-            // Add nine distinct combinations of dimensions to switch AggregatorStore Snapshot behavior
-            // to start reclaiming Metric Points. (One MetricPoint is reserved for metric point with no dimensions)
-            for (int i = 1; i < 10; i++)
-            {
-                counter.Add(100, new KeyValuePair<string, object>("key", Guid.NewGuid()));
-            }
-
-            meterProvider.ForceFlush();
-            meterProvider.ForceFlush();
-
-            exporter.Sum = 0;
-
-            void EmitMetric()
-            {
-                int numberOfMeasurements = 0;
-                var random = new Random();
-                while (emitMetricWithNoDimension)
+                else
                 {
-                    if (numberOfMeasurements < numberOfMeasurementsPerThread)
-                    {
-                        // Check for cases where a metric with no dimension is also emitted
-                        if (true)
-                        {
-                            counter.Add(25);
-                            Interlocked.Add(ref sum, 25);
-                        }
-
-                        var index = random.Next(measurementValues.Length);
-                        var measurement = measurementValues[index];
-                        counter.Add(measurement, new KeyValuePair<string, object>("key", $"value{index}"));
-                        Interlocked.Add(ref sum, measurement);
-
-                        numberOfMeasurements++;
-
-                        Thread.Sleep(25);
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
-
-            var threads = new Thread[numberOfUpdateThreads];
-
-            for (int i = 0; i < threads.Length; i++)
-            {
-                threads[i] = new Thread(EmitMetric!);
-                threads[i].Start();
-            }
-
-            for (int i = 0; i < threads.Length; i++)
-            {
-                threads[i].Join();
-            }
-
-            meterProvider.ForceFlush();
-            Assert.Equal(sum, exporter.Sum);
         }
 
-        private class ThreadArguments
+        var threads = new Thread[numberOfUpdateThreads];
+        var threadArgs = new ThreadArguments();
+
+        for (int i = 0; i < threads.Length; i++)
         {
-            public int Counter;
+            threads[i] = new Thread(EmitMetric!);
+            threads[i].Start(threadArgs);
         }
 
-        private class CustomExporter : BaseExporter<Metric>
+        for (int i = 0; i < threads.Length; i++)
         {
-            public long Sum = 0;
+            threads[i].Join();
+        }
 
-            private readonly FieldInfo aggStoreFieldInfo;
+        meterProvider.ForceFlush();
 
-            private readonly FieldInfo metricPointLookupDictionaryFieldInfo;
+        long expectedSum;
 
-            public CustomExporter()
+        if (emitMetricWithNoDimensions)
+        {
+            expectedSum = maxNumberofDistinctMetricPoints * (25 + 100);
+        }
+        else
+        {
+            expectedSum = maxNumberofDistinctMetricPoints * 100;
+        }
+
+        Assert.Equal(expectedSum, exporter.Sum);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MeasurementsAreAggregatedAfterMetricPointReclaim(bool emitMetricWithNoDimension)
+    {
+        var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("MyFruitCounter");
+
+        long sum = 0;
+        var measurementValues = new long[] { 10, 20 };
+
+        int numberOfUpdateThreads = 4;
+        int numberOfMeasurementsPerThread = 10;
+
+        using var exporter = new CustomExporter();
+        using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(Utils.GetCurrentMethodName())
+            .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 5
+            .AddReader(metricReader)
+            .Build();
+
+        // Add nine distinct combinations of dimensions to switch AggregatorStore Snapshot behavior
+        // to start reclaiming Metric Points. (One MetricPoint is reserved for metric point with no dimensions)
+        for (int i = 1; i < 10; i++)
+        {
+            counter.Add(100, new KeyValuePair<string, object>("key", Guid.NewGuid()));
+        }
+
+        meterProvider.ForceFlush();
+        meterProvider.ForceFlush();
+
+        exporter.Sum = 0;
+
+        void EmitMetric()
+        {
+            int numberOfMeasurements = 0;
+            var random = new Random();
+            while (emitMetricWithNoDimension)
             {
-                var metricFields = typeof(Metric).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-                this.aggStoreFieldInfo = metricFields!.FirstOrDefault(field => field.Name == "aggStore");
-
-                var aggregatorStoreFields = typeof(AggregatorStore).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-                this.metricPointLookupDictionaryFieldInfo = aggregatorStoreFields!.FirstOrDefault(field => field.Name == "tagsToMetricPointIndexDictionaryDelta");
-            }
-
-            public override ExportResult Export(in Batch<Metric> batch)
-            {
-                foreach (var metric in batch)
+                if (numberOfMeasurements < numberOfMeasurementsPerThread)
                 {
-                    var aggStore = this.aggStoreFieldInfo.GetValue(metric) as AggregatorStore;
-                    var metricPointLookupDictionary = this.metricPointLookupDictionaryFieldInfo.GetValue(aggStore) as ConcurrentDictionary<Tags, LookupData>;
-
-                    var droppedMeasurements = aggStore.DroppedMeasurements;
-
-                    Assert.Equal(0, droppedMeasurements);
-
-                    // This is to ensure that the lookup dictionary does not have unbounded growth
-                    Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault * 2));
-
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    // Check for cases where a metric with no dimension is also emitted
+                    if (true)
                     {
-                        // Access the tags to ensure that this does not throw any exception due to
-                        // any erroneous thread interactions.
-                        foreach (var tag in metricPoint.Tags)
-                        {
-                            _ = tag.Key;
-                            _ = tag.Value;
-                        }
+                        counter.Add(25);
+                        Interlocked.Add(ref sum, 25);
+                    }
 
-                        if (metric.MetricType.IsSum())
-                        {
-                            this.Sum += metricPoint.GetSumLong();
-                        }
+                    var index = random.Next(measurementValues.Length);
+                    var measurement = measurementValues[index];
+                    counter.Add(measurement, new KeyValuePair<string, object>("key", $"value{index}"));
+                    Interlocked.Add(ref sum, measurement);
+
+                    numberOfMeasurements++;
+
+                    Thread.Sleep(25);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        var threads = new Thread[numberOfUpdateThreads];
+
+        for (int i = 0; i < threads.Length; i++)
+        {
+            threads[i] = new Thread(EmitMetric!);
+            threads[i].Start();
+        }
+
+        for (int i = 0; i < threads.Length; i++)
+        {
+            threads[i].Join();
+        }
+
+        meterProvider.ForceFlush();
+        Assert.Equal(sum, exporter.Sum);
+    }
+
+    private class ThreadArguments
+    {
+        public int Counter;
+    }
+
+    private class CustomExporter : BaseExporter<Metric>
+    {
+        public long Sum = 0;
+
+        private readonly FieldInfo aggStoreFieldInfo;
+
+        private readonly FieldInfo metricPointLookupDictionaryFieldInfo;
+
+        public CustomExporter()
+        {
+            var metricFields = typeof(Metric).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+            this.aggStoreFieldInfo = metricFields!.FirstOrDefault(field => field.Name == "aggStore");
+
+            var aggregatorStoreFields = typeof(AggregatorStore).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+            this.metricPointLookupDictionaryFieldInfo = aggregatorStoreFields!.FirstOrDefault(field => field.Name == "tagsToMetricPointIndexDictionaryDelta");
+        }
+
+        public override ExportResult Export(in Batch<Metric> batch)
+        {
+            foreach (var metric in batch)
+            {
+                var aggStore = this.aggStoreFieldInfo.GetValue(metric) as AggregatorStore;
+                var metricPointLookupDictionary = this.metricPointLookupDictionaryFieldInfo.GetValue(aggStore) as ConcurrentDictionary<Tags, LookupData>;
+
+                var droppedMeasurements = aggStore.DroppedMeasurements;
+
+                Assert.Equal(0, droppedMeasurements);
+
+                // This is to ensure that the lookup dictionary does not have unbounded growth
+                Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault * 2));
+
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    // Access the tags to ensure that this does not throw any exception due to
+                    // any erroneous thread interactions.
+                    foreach (var tag in metricPoint.Tags)
+                    {
+                        _ = tag.Key;
+                        _ = tag.Value;
+                    }
+
+                    if (metric.MetricType.IsSum())
+                    {
+                        this.Sum += metricPoint.GetSumLong();
                     }
                 }
-
-                return ExportResult.Success;
             }
+
+            return ExportResult.Success;
         }
     }
 }

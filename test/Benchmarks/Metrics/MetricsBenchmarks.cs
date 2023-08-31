@@ -45,109 +45,108 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 | CounterWith7LabelsHotPath |                  Delta | 316.55 ns | 3.161 ns | 2.957 ns |         - |
 */
 
-namespace Benchmarks.Metrics
+namespace Benchmarks.Metrics;
+
+public class MetricsBenchmarks
 {
-    public class MetricsBenchmarks
+    private readonly Random random = new();
+    private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+    private Counter<long> counter;
+    private MeterProvider provider;
+    private Meter meter;
+
+    [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
+    public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
+
+    [GlobalSetup]
+    public void Setup()
     {
-        private readonly Random random = new();
-        private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
-        private Counter<long> counter;
-        private MeterProvider provider;
-        private Meter meter;
+        this.meter = new Meter(Utils.GetCurrentMethodName());
 
-        [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
-        public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
-
-        [GlobalSetup]
-        public void Setup()
-        {
-            this.meter = new Meter(Utils.GetCurrentMethodName());
-
-            var exportedItems = new List<Metric>();
-            this.provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
-                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
-                {
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-                    metricReaderOptions.TemporalityPreference = this.AggregationTemporality;
-                })
-                .Build();
-
-            this.counter = this.meter.CreateCounter<long>("counter");
-        }
-
-        [GlobalCleanup]
-        public void Cleanup()
-        {
-            this.meter?.Dispose();
-            this.provider?.Dispose();
-        }
-
-        [Benchmark]
-        public void CounterHotPath()
-        {
-            this.counter.Add(100);
-        }
-
-        [Benchmark]
-        public void CounterWith1LabelsHotPath()
-        {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            this.counter.Add(100, tag1);
-        }
-
-        [Benchmark]
-        public void CounterWith3LabelsHotPath()
-        {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
-            this.counter.Add(100, tag1, tag2, tag3);
-        }
-
-        [Benchmark]
-        public void CounterWith5LabelsHotPath()
-        {
-            var tags = new TagList
+        var exportedItems = new List<Metric>();
+        this.provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
-                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
-            };
-            this.counter.Add(100, tags);
-        }
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+                metricReaderOptions.TemporalityPreference = this.AggregationTemporality;
+            })
+            .Build();
 
-        [Benchmark]
-        public void CounterWith6LabelsHotPath()
-        {
-            var tags = new TagList
-            {
-                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
-            };
-            this.counter.Add(100, tags);
-        }
+        this.counter = this.meter.CreateCounter<long>("counter");
+    }
 
-        [Benchmark]
-        public void CounterWith7LabelsHotPath()
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        this.meter?.Dispose();
+        this.provider?.Dispose();
+    }
+
+    [Benchmark]
+    public void CounterHotPath()
+    {
+        this.counter.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith1LabelsHotPath()
+    {
+        var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
+        this.counter.Add(100, tag1);
+    }
+
+    [Benchmark]
+    public void CounterWith3LabelsHotPath()
+    {
+        var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
+        var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
+        var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+        this.counter.Add(100, tag1, tag2, tag3);
+    }
+
+    [Benchmark]
+    public void CounterWith5LabelsHotPath()
+    {
+        var tags = new TagList
         {
-            var tags = new TagList
-            {
-                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
-            };
-            this.counter.Add(100, tags);
-        }
+            { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+        };
+        this.counter.Add(100, tags);
+    }
+
+    [Benchmark]
+    public void CounterWith6LabelsHotPath()
+    {
+        var tags = new TagList
+        {
+            { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+        };
+        this.counter.Add(100, tags);
+    }
+
+    [Benchmark]
+    public void CounterWith7LabelsHotPath()
+    {
+        var tags = new TagList
+        {
+            { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+        };
+        this.counter.Add(100, tags);
     }
 }

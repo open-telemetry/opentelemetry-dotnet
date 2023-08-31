@@ -14,19 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
-{
-    internal class LookupData
-    {
-        public int Index;
-        public Tags SortedTags;
-        public Tags GivenTags;
+namespace OpenTelemetry.Metrics;
 
-        public LookupData(int index, Tags sortedTags, Tags givenTags)
-        {
-            this.Index = index;
-            this.SortedTags = sortedTags;
-            this.GivenTags = givenTags;
-        }
+internal sealed class LookupData
+{
+    public int Index;
+    public Tags SortedTags;
+    public Tags GivenTags;
+
+    public LookupData(int index, Tags sortedTags, Tags givenTags)
+    {
+        this.Index = index;
+        this.SortedTags = sortedTags;
+        this.GivenTags = givenTags;
     }
 }
