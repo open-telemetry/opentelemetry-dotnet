@@ -202,7 +202,7 @@ internal sealed class AggregatorStore
         {
             switch (metricStreamIdentity.MeterName)
             {
-                // .NET 8 meter
+                // AspNetCore .NET 8 meter
                 case "Microsoft.AspNetCore.RateLimiting":
                 {
                     switch (metricStreamIdentity.InstrumentName)
@@ -229,7 +229,7 @@ internal sealed class AggregatorStore
                     break;
                 }
 
-                // AspNetCore instrumentation
+                // AspNetCore .NET 8 meter
                 case "Microsoft.AspNetCore.Hosting":
                 {
                     switch (metricStreamIdentity.InstrumentName)
@@ -241,7 +241,7 @@ internal sealed class AggregatorStore
                     break;
                 }
 
-                // AspNetCore instrumentation
+                // AspNetCore .NET 8 meter
                 case "Microsoft.AspNetCore.Server.Kestrel":
                 {
                     switch (metricStreamIdentity.InstrumentName)
@@ -254,7 +254,7 @@ internal sealed class AggregatorStore
                     break;
                 }
 
-                // AspNetCore instrumentation
+                // AspNetCore .NET 8 meter
                 case "Microsoft.AspNetCore.Http.Connections":
                 {
                     switch (metricStreamIdentity.InstrumentName)
@@ -272,6 +272,30 @@ internal sealed class AggregatorStore
                     switch (metricStreamIdentity.InstrumentName)
                     {
                         case "dns.lookups.duration":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // OTel AspNetCore Instrumentation
+                case "OpenTelemetry.Instrumentation.AspNetCore":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "http.server.duration":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // OTel Http Instrumentation
+                case "OpenTelemetry.Instrumentation.Http":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "http.client.duration":
                             return Metric.DefaultHistogramBoundsSeconds;
                     }
 
