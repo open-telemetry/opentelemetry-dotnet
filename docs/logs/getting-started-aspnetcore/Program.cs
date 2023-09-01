@@ -14,25 +14,31 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-using OpenTelemetry.Metrics;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure OpenTelemetry with metrics and auto-start.
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource
-        .AddService(serviceName: builder.Environment.ApplicationName))
-    .WithMetrics(metrics => metrics
-        .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
-        {
-            metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-        }));
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeScopes = true;
+    logging.ParseStateValues = true;
+
+    var resourceBuilder = ResourceBuilder
+        .CreateDefault()
+        .AddService(builder.Environment.ApplicationName);
+
+    logging.SetResourceBuilder(resourceBuilder)
+        .AddConsoleExporter();
+});
 
 var app = builder.Build();
 
-app.MapGet("/", () => $"Hello from OpenTelemetry Metrics!");
+app.MapGet("/", (ILogger<Program> logger) =>
+{
+    logger.SayHello();
+
+    return "Hello from OpenTelemetry Logs!";
+});
 
 app.Run();
