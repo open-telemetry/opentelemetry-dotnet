@@ -69,7 +69,7 @@ internal sealed class AggregatorStore
         this.currentMetricPointBatch = new int[maxMetricPoints];
         this.aggType = aggType;
         this.outputDelta = temporality == AggregationTemporality.Delta;
-        this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? Metric.DefaultHistogramBounds;
+        this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
@@ -195,6 +195,93 @@ internal sealed class AggregatorStore
 
     internal MetricPointsAccessor GetMetricPoints()
         => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+
+    private static double[] FindDefaultHistogramBounds(in MetricStreamIdentity metricStreamIdentity)
+    {
+        if (metricStreamIdentity.Unit == "s")
+        {
+            switch (metricStreamIdentity.MeterName)
+            {
+                // .NET 8 meter
+                case "Microsoft.AspNetCore.RateLimiting":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "aspnetcore.rate_limiting.request_lease.duration":
+                        case "aspnetcore.rate_limiting.request.time_in_queue":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // .NET 8 meter
+                case "System.Net.Http":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "http.client.connection.duration":
+                        case "http.client.request.duration":
+                        case "http.client.request.time_in_queue":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // AspNetCore instrumentation
+                case "Microsoft.AspNetCore.Hosting":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "http.server.request.duration":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // AspNetCore instrumentation
+                case "Microsoft.AspNetCore.Server.Kestrel":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "kestrel.connection.duration":
+                        case "kestrel.tls_handshake.duration":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // AspNetCore instrumentation
+                case "Microsoft.AspNetCore.Http.Connections":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "signalr.server.connection.duration":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+
+                // .NET 8 meter
+                case "System.Net.NameResolution":
+                {
+                    switch (metricStreamIdentity.InstrumentName)
+                    {
+                        case "dns.lookups.duration":
+                            return Metric.DefaultHistogramBoundsSeconds;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        return Metric.DefaultHistogramBounds;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void InitializeZeroTagPointIfNotInitialized()

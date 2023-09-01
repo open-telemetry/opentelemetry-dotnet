@@ -28,6 +28,7 @@ public sealed class Metric
     internal const int DefaultExponentialHistogramMaxScale = 20;
 
     internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
+    internal static readonly double[] DefaultHistogramBoundsSeconds = new double[] { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 };
 
     private readonly AggregatorStore aggStore;
 
