@@ -239,18 +239,18 @@ public abstract class AggregatorTestsBase
     }
 
     [Theory]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration")]
+    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration")]
     [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration")]
     [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue")]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration")]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration")]
+    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration")]
+    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration")]
     [InlineData("System.Net.Http", "http.client.connection.duration")]
     [InlineData("System.Net.Http", "http.client.request.duration")]
     [InlineData("System.Net.Http", "http.client.request.time_in_queue")]
-    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration")]
-    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration")]
-    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration")]
-    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration")]
     [InlineData("System.Net.NameResolution", "dns.lookups.duration")]
-    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration")]
-    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration")]
     public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName)
     {
         RunTest(meterName, instrumentName, unit: "s");
