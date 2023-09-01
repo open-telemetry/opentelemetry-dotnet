@@ -18,24 +18,23 @@
 
 using System.Diagnostics;
 
-namespace OpenTelemetry
+namespace OpenTelemetry;
+
+public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
 {
-    public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
+    public SimpleActivityExportProcessor(BaseExporter<Activity> exporter)
+        : base(exporter)
     {
-        public SimpleActivityExportProcessor(BaseExporter<Activity> exporter)
-            : base(exporter)
+    }
+
+    /// <inheritdoc />
+    public override void OnEnd(Activity data)
+    {
+        if (!data.Recorded)
         {
+            return;
         }
 
-        /// <inheritdoc />
-        public override void OnEnd(Activity data)
-        {
-            if (!data.Recorded)
-            {
-                return;
-            }
-
-            this.OnExport(data);
-        }
+        this.OnExport(data);
     }
 }

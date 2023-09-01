@@ -18,44 +18,36 @@ using System.Diagnostics;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Shims.OpenTracing.Tests
+namespace OpenTelemetry.Shims.OpenTracing.Tests;
+
+public class SpanContextShimTests
 {
-    public class SpanContextShimTests
+    [Fact]
+    public void GetTraceId()
     {
-        [Fact]
-        public void CtorArgumentValidation()
-        {
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(default));
-            Assert.Throws<ArgumentException>(() => new SpanContextShim(new SpanContext(default, default, ActivityTraceFlags.None)));
-        }
+        var shim = GetSpanContextShim();
 
-        [Fact]
-        public void GetTraceId()
-        {
-            var shim = GetSpanContextShim();
+        Assert.Equal(shim.TraceId.ToString(), shim.TraceId);
+    }
 
-            Assert.Equal(shim.TraceId.ToString(), shim.TraceId);
-        }
+    [Fact]
+    public void GetSpanId()
+    {
+        var shim = GetSpanContextShim();
 
-        [Fact]
-        public void GetSpanId()
-        {
-            var shim = GetSpanContextShim();
+        Assert.Equal(shim.SpanId.ToString(), shim.SpanId);
+    }
 
-            Assert.Equal(shim.SpanId.ToString(), shim.SpanId);
-        }
+    [Fact]
+    public void GetBaggage()
+    {
+        var shim = GetSpanContextShim();
+        var baggage = shim.GetBaggageItems();
+        Assert.Empty(baggage);
+    }
 
-        [Fact]
-        public void GetBaggage()
-        {
-            var shim = GetSpanContextShim();
-            var baggage = shim.GetBaggageItems();
-            Assert.Empty(baggage);
-        }
-
-        internal static SpanContextShim GetSpanContextShim()
-        {
-            return new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
-        }
+    internal static SpanContextShim GetSpanContextShim()
+    {
+        return new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
     }
 }

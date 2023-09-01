@@ -2,6 +2,102 @@
 
 ## Unreleased
 
+* Increased the character limit of the Meter instrument name from 63 to 255.
+  ([#4774](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4774))
+
+* Update default size for `SimpleExemplarReservoir` to `1`.
+  ([#4803](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4803))
+
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
+* **Experimental Feature** Added an opt-in feature to aggregate any metric
+  measurements that were dropped due to reaching the [max MetricPoints
+  limit](https://github.com/open-telemetry/opentelemetry-dotnet/tree/core-1.6.0-alpha.1/docs/metrics/customizing-the-sdk).
+  When this feature is enabled, SDK would aggregate such measurements using a
+  reserved MetricPoint with a single tag with key as `otel.metric.overflow` and
+  value as `true`. The feature is turned-off by default. You can enable it by
+  setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE` to `true` before
+  setting up the `MeterProvider`.
+  ([#4737](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4737))
+
+## 1.6.0-alpha.1
+
+Released 2023-Jul-12
+
+* **Experimental (pre-release builds only):**
+
+  * Note: See
+    [#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735)
+    for the introduction of experimental api support.
+
+  * Add back support for Exemplars. See
+    [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
+    instructions to enable exemplars.
+    ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
+
+  * Added [Logs Bridge
+    API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
+    implementation (`Sdk.CreateLoggerProviderBuilder`, etc.).
+    ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+  * Obsoleted `LogRecord.LogLevel` in favor of the `LogRecord.Severity` property
+    which matches the [OpenTelemetry Specification > Logs DataModel > Severity
+    definition](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#field-severitynumber).
+    ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+  * Added `LogRecord.Logger` property to access the [OpenTelemetry Specification
+    Instrumentation
+    Scope](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-scope)
+    provided during Logger creation.
+    ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+
+* Fix the issue of potentially running into the `ArgumentException`: `An
+  instance of EventSource with Guid af2d5796-946b-50cb-5f76-166a609afcbb already
+  exists.` when using any of the following exporters: `ConsoleExporter`,
+  `OtlpExporter`, `ZipkinExporter`, `JaegerExporter`.
+
+## 1.5.1
+
+Released 2023-Jun-26
+
+* Fixed a breaking change causing `LogRecord.State` to be `null` where it was
+  previously set to a valid value when
+  `OpenTelemetryLoggerOptions.ParseStateValues` is `false` and states implement
+  `IReadOnlyList` or `IEnumerable` of `KeyValuePair<string, object>`s.
+  ([#4609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4609))
+
+* **Breaking Change** Removed the support for parsing `TState` types passed to
+  the `ILogger.Log<TState>` API when `ParseStateValues` is true and `TState`
+  does not implement either `IReadOnlyList<KeyValuePair<string, object>>` or
+  `IEnumerable<KeyValuePair<string, object>>`. This feature was first introduced
+  in the `1.5.0` stable release with
+  [#4334](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4334) and
+  has been removed because it makes the OpenTelemetry .NET SDK incompatible with
+  native AOT.
+  ([#4614](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4614))
+
+## 1.5.0
+
+Released 2023-Jun-05
+
+* Fixed a bug introduced by
+  [#4508](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4508) in
+  1.5.0-rc.1 which caused the "Build" extension to return `null` when performing
+  chained/fluent calls.
+  ([#4529](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4529))
+
+* Marked `Exemplars` and related APIs `internal` as the spec for `Exemplars` is
+  not stable yet. This would be added back in the `1.6.*` prerelease versions
+  right after `1.5.0` stable version is released.
+  ([#4533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4533))
+
+## 1.5.0-rc.1
+
+Released 2023-May-25
+
 * The default resource provided by `ResourceBuilder.CreateDefault()` now adds
   the `telemetry.sdk.*` attributes defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/tree/12fcec1ff255b1535db75708e52a3a21f86f0fae/specification/resource/semantic_conventions#semantic-attributes-with-sdk-provided-default-value).

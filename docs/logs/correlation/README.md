@@ -1,6 +1,6 @@
 # Logs correlation
 
-The getting started docs for [logs](../getting-started/README.md) and
+The getting started docs for [logs](../getting-started-console/README.md) and
 [traces](../../trace/getting-started-console/README.md) showed how to emit logs
 and traces independently, and export them to console exporter.
 
@@ -18,8 +18,8 @@ corresponding `Activity`.
 
 The good news is that, in OpenTelemetry .NET SDK, there is no user action
 required to enable correlation. i.e the SDK automatically enables logs to
-`Activity` correlation, by populating the fields `TraceId`, `SpanId`,
-`TraceFlags`, `TraceState` from the active activity (i.e `Activity.Current`), if
+`Activity` correlation, by populating the fields `TraceId`, `SpanId` and
+`TraceFlags` from the active activity (i.e `Activity.Current`), if
 any.
 
 The example [Program.cs](./Program.cs) shows how to emit logs within the context
@@ -54,8 +54,8 @@ Resource associated with Activity:
 
 As you can see, the `LogRecord` automatically had the `TraceId`, `SpanId` fields
 matching the ones from the `Activity`. In [the logs getting
-started](../getting-started/README.md) doc, the logging was done outside of an
-`Activity` context, hence these fields in `LogRecord` were not populated.
+started](../getting-started-console/README.md) doc, the logging was done outside
+of an `Activity` context, hence these fields in `LogRecord` were not populated.
 
 ## Learn more
 

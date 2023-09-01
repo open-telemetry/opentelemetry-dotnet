@@ -24,16 +24,14 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - name: Setup .NET 7.0
-      uses: actions/setup-dotnet@v3.0.3
-      with:
-        dotnet-version: '7.0.x'
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
       run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
 
 #    - name: dotnet test
 #      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
@@ -51,7 +49,7 @@ jobs:
     - name: Merging test results
       run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -assemblyFilters:"-microsoft.data.sqlclient*;-grpc.core*;-opentracing*"
 
-    - uses: codecov/codecov-action@v3.1.3
+    - uses: codecov/codecov-action@v3.1.4
       with:
         file: TestResults/Cobertura.xml
         env_vars: OS

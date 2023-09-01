@@ -24,14 +24,24 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Logs;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Stores attributes to be added to a log message.
 /// </summary>
-internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// Stores attributes to be added to a log message.
+/// </summary>
+internal
+#endif
+    struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
 {
     internal const int OverflowMaxCount = 8;
     internal const int OverflowAdditionalCapacity = 16;
     internal List<KeyValuePair<string, object?>>? OverflowAttributes;
+    private static readonly IReadOnlyList<KeyValuePair<string, object?>> Empty = Array.Empty<KeyValuePair<string, object?>>();
     private KeyValuePair<string, object?> attribute1;
     private KeyValuePair<string, object?> attribute2;
     private KeyValuePair<string, object?> attribute3;
@@ -207,12 +217,12 @@ internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, obje
     /// <inheritdoc/>
     readonly IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-    internal readonly List<KeyValuePair<string, object?>>? Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
+    internal readonly IReadOnlyList<KeyValuePair<string, object?>> Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
     {
         int count = this.count;
         if (count <= 0)
         {
-            return null;
+            return Empty;
         }
 
         var overflowAttributes = this.OverflowAttributes;

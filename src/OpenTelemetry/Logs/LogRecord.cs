@@ -148,6 +148,9 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log category name.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="CategoryName"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// </remarks>
     public string? CategoryName
     {
         get => this.ILoggerData.CategoryName;
@@ -157,7 +160,9 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
     /// </summary>
-    // todo: [Obsolete("Use Severity instead LogLevel will be removed in a future version.")]
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    [Obsolete("Use Severity instead. LogLevel will be removed in a future version.")]
+#endif
     public LogLevel LogLevel
     {
         get
@@ -183,6 +188,9 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="EventId"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// </remarks>
     public EventId EventId
     {
         get => this.ILoggerData.EventId;
@@ -193,10 +201,15 @@ public sealed class LogRecord
     /// Gets or sets the log formatted message.
     /// </summary>
     /// <remarks>
-    /// Note: Set if <see
-    /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is
-    /// enabled or <c>{OriginalFormat}</c> attribute (message template) is
-    /// not found.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item><see cref="FormattedMessage"/> is only set when emitting logs
+    /// through <see cref="ILogger"/>.</item>
+    /// <item>Set if <see
+    /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is enabled
+    /// or <c>{OriginalFormat}</c> attribute (message template) is not
+    /// found.</item>
+    /// </list>
     /// </remarks>
     public string? FormattedMessage
     {
@@ -221,8 +234,13 @@ public sealed class LogRecord
     /// Gets or sets the raw state attached to the log.
     /// </summary>
     /// <remarks>
-    /// Note: Set to <see langword="null"/> when <see
-    /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item><see cref="State"/> is only set when emitting logs
+    /// through <see cref="ILogger"/>.</item>
+    /// <item>Set to <see langword="null"/> when <see
+    /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.</item>
+    /// </list>
     /// </remarks>
     [Obsolete("State cannot be accessed safely outside of an ILogger.Log call stack. Use Attributes instead to safely access the data attached to a LogRecord. State will be removed in a future version.")]
     public object? State
@@ -235,7 +253,7 @@ public sealed class LogRecord
     /// Gets or sets the state values attached to the log.
     /// </summary>
     /// <remarks><inheritdoc cref="Attributes" /></remarks>
-    [Obsolete("Use Attributes instead StateValues will be removed in a future version.")]
+    [Obsolete("Use Attributes instead. StateValues will be removed in a future version.")]
     public IReadOnlyList<KeyValuePair<string, object?>>? StateValues
     {
         get => this.Attributes;
@@ -259,35 +277,65 @@ public sealed class LogRecord
     /// <summary>
     /// Gets or sets the log <see cref="System.Exception"/>.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="Exception"/> is only set when emitting logs through <see cref="ILogger"/>.
+    /// </remarks>
     public Exception? Exception
     {
         get => this.ILoggerData.Exception;
         set => this.ILoggerData.Exception = value;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the original string representation of the severity as it is
     /// known at the source.
     /// </summary>
-    internal string? SeverityText
+    /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+    public
+#else
+    /// <summary>
+    /// Gets or sets the original string representation of the severity as it is
+    /// known at the source.
+    /// </summary>
+    internal
+#endif
+    string? SeverityText
     {
         get => this.Data.SeverityText;
         set => this.Data.SeverityText = value;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
-    internal LogRecordSeverity? Severity
+    /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+    public
+#else
+    /// <summary>
+    /// Gets or sets the log <see cref="LogRecordSeverity"/>.
+    /// </summary>
+    internal
+#endif
+        LogRecordSeverity? Severity
     {
         get => this.Data.Severity;
         set => this.Data.Severity = value;
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Gets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
+    public Logger? Logger { get; internal set; }
+#else
     /// <summary>
     /// Gets or sets the <see cref="Logs.Logger"/> which emitted the <see cref="LogRecord"/>.
     /// </summary>
-    internal Logger? Logger { get; /*todo: internal*/ set; }
+    internal Logger? Logger { get; set; }
+#endif
 
     /// <summary>
     /// Executes callback for each currently active scope objects in order
@@ -367,6 +415,7 @@ public sealed class LogRecord
             Data = this.Data,
             ILoggerData = this.ILoggerData.Copy(),
             Attributes = this.Attributes == null ? null : new List<KeyValuePair<string, object?>>(this.Attributes),
+            Logger = this.Logger,
         };
     }
 

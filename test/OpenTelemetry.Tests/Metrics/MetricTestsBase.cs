@@ -20,6 +20,8 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class MetricTestsBase
 {
+    public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
     public static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
@@ -127,7 +129,7 @@ public class MetricTestsBase
         }
     }
 
-    public static Exemplar[] GetExemplars(MetricPoint mp)
+    internal static Exemplar[] GetExemplars(MetricPoint mp)
     {
         return mp.GetExemplars().Where(exemplar => exemplar.Timestamp != default).ToArray();
     }

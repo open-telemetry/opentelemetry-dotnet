@@ -15,19 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Moq" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <DotNetCliToolReference Include="dotnet-xunit" />
-
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFramework)' != 'net462'" />
     <PackageReference Include="Grpc.Net.Client"  />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

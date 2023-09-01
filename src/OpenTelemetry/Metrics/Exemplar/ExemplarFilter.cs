@@ -15,10 +15,19 @@
 // </copyright>
 namespace OpenTelemetry.Metrics;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// The base class for defining Exemplar Filter.
 /// </summary>
-public abstract class ExemplarFilter
+/// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// The base class for defining Exemplar Filter.
+/// </summary>
+internal
+#endif
+    abstract class ExemplarFilter
 {
     /// <summary>
     /// Determines if a given measurement is eligible for being

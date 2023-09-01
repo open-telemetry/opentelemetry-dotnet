@@ -26,31 +26,35 @@ using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
+namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
+
+public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
+    : IClassFixture<WebApplicationFactory<Program>>
 {
-    public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
-        : IClassFixture<WebApplicationFactory<Program>>
+    private readonly WebApplicationFactory<Program> factory;
+
+    public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Program> factory)
     {
-        private readonly WebApplicationFactory<Program> factory;
+        this.factory = factory;
+    }
 
-        public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Program> factory)
+    [Theory]
+    [InlineData("/api/values", null, "user-agent", 503, "503")]
+    [InlineData("/api/values", "?query=1", null, 503, null)]
+    [InlineData("/api/exception", null, null, 503, null)]
+    [InlineData("/api/exception", null, null, 503, null, true)]
+    public async Task SuccessfulTemplateControllerCallGeneratesASpan_Old(
+        string urlPath,
+        string query,
+        string userAgent,
+        int statusCode,
+        string reasonPhrase,
+        bool recordException = false)
+    {
+        try
         {
-            this.factory = factory;
-        }
+            Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", "none");
 
-        [Theory]
-        [InlineData("/api/values", null, "user-agent", 503, "503")]
-        [InlineData("/api/values", "?query=1", null, 503, null)]
-        [InlineData("/api/exception", null, null, 503, null)]
-        [InlineData("/api/exception", null, null, 503, null, true)]
-        public async Task SuccessfulTemplateControllerCallGeneratesASpan(
-            string urlPath,
-            string query,
-            string userAgent,
-            int statusCode,
-            string reasonPhrase,
-            bool recordException = false)
-        {
             var exportedItems = new List<Activity>();
 
             // Arrange
@@ -146,43 +150,47 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             activity.Dispose();
         }
-
-        private static void ValidateTagValue(Activity activity, string attribute, string expectedValue)
+        finally
         {
-            if (string.IsNullOrEmpty(expectedValue))
-            {
-                Assert.Null(activity.GetTagValue(attribute));
-            }
-            else
-            {
-                Assert.Equal(expectedValue, activity.GetTagValue(attribute));
-            }
+            Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", null);
+        }
+    }
+
+    private static void ValidateTagValue(Activity activity, string attribute, string expectedValue)
+    {
+        if (string.IsNullOrEmpty(expectedValue))
+        {
+            Assert.Null(activity.GetTagValue(attribute));
+        }
+        else
+        {
+            Assert.Equal(expectedValue, activity.GetTagValue(attribute));
+        }
+    }
+
+    public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
+    {
+        private readonly int statusCode;
+        private readonly string reasonPhrase;
+
+        public TestCallbackMiddlewareImpl(int statusCode, string reasonPhrase)
+        {
+            this.statusCode = statusCode;
+            this.reasonPhrase = reasonPhrase;
         }
 
-        public class TestCallbackMiddlewareImpl : CallbackMiddleware.CallbackMiddlewareImpl
+        public override async Task<bool> ProcessAsync(HttpContext context)
         {
-            private readonly int statusCode;
-            private readonly string reasonPhrase;
+            context.Response.StatusCode = this.statusCode;
+            context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = this.reasonPhrase;
+            await context.Response.WriteAsync("empty").ConfigureAwait(false);
 
-            public TestCallbackMiddlewareImpl(int statusCode, string reasonPhrase)
+            if (context.Request.Path.Value.EndsWith("exception"))
             {
-                this.statusCode = statusCode;
-                this.reasonPhrase = reasonPhrase;
+                throw new Exception("exception description");
             }
 
-            public override async Task<bool> ProcessAsync(HttpContext context)
-            {
-                context.Response.StatusCode = this.statusCode;
-                context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = this.reasonPhrase;
-                await context.Response.WriteAsync("empty").ConfigureAwait(false);
-
-                if (context.Request.Path.Value.EndsWith("exception"))
-                {
-                    throw new Exception("exception description");
-                }
-
-                return false;
-            }
+            return false;
         }
     }
 }

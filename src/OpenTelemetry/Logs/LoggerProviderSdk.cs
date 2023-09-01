@@ -17,6 +17,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -54,7 +57,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             Debug.Assert(this.OwnedServiceProvider != null, "ownedServiceProvider was null");
         }
 
-        OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building TracerProvider.");
+        OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building LoggerProvider.");
 
         var configureProviderBuilders = serviceProvider!.GetServices<IConfigureLoggerProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
@@ -201,7 +204,12 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     }
 
     /// <inheritdoc />
-    protected override bool TryCreateLogger(string? name, out Logger? logger)
+    protected override bool TryCreateLogger(
+        string? name,
+#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+        [NotNullWhen(true)]
+#endif
+        out Logger? logger)
     {
         logger = new LoggerSdk(this, name);
         return true;

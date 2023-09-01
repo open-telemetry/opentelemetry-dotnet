@@ -27,7 +27,7 @@ files.
 
 *While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
  stable, the [OTLP Exporter for
- Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
+ Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#enable-log-exporter)
  is still non-stable.
 
 See [Spec Compliance
@@ -39,10 +39,10 @@ repo.
 
 If you are new here, please read the getting started docs:
 
-* [logs](./docs/logs/getting-started/README.md)
-* metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
+* Logs: [Console](./docs/logs/getting-started-console/README.md)
+* Metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
   [Console](./docs/metrics/getting-started-console/README.md)
-* traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
+* Traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
   [Console](./docs/trace/getting-started-console/README.md)
 
 This repository includes multiple installable components, available on
@@ -69,7 +69,6 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 * [Console](./src/OpenTelemetry.Exporter.Console/README.md)
 * [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
-* [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
 * [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
@@ -123,13 +122,13 @@ If you have trouble accessing the doc, please get in touch on
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Alan West](https://github.com/alanwest), New Relic
-* [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
+* [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Robert Paj&#x105;k](https://github.com/pellared), Splunk
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
