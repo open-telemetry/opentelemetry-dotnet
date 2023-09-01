@@ -29,41 +29,64 @@ in the console for your application (e.g. `http://localhost:5154`). You should s
 the logs output from the console.
 
 ```text
-LogRecord.Timestamp:               2023-09-01T22:55:50.6389757Z
-LogRecord.TraceId:                 8fa0ec5519c9bd5a498978c089a78182
-LogRecord.SpanId:                  b888feebe74e9685
+LogRecord.Timestamp:               2023-09-01T23:36:24.3541759Z
+LogRecord.CategoryName:            Microsoft.Hosting.Lifetime
+LogRecord.Severity:                Info
+LogRecord.SeverityText:            Information
+LogRecord.Body:                    Content root path: {contentRoot}
+LogRecord.Attributes (Key:Value):
+    contentRoot: D:\repo\opentelemetry-dotnet\docs\logs\getting-started-aspnetcore\
+    OriginalFormat (a.k.a Body): Content root path: {contentRoot}
+
+Resource associated with LogRecord:
+service.name: getting-started-aspnetcore
+service.instance.id: d4f09b09-6613-4d09-8a2d-1508e4ce9067
+telemetry.sdk.name: opentelemetry
+telemetry.sdk.language: dotnet
+telemetry.sdk.version: 1.6.0-rc.1.16
+
+LogRecord.Timestamp:               2023-09-01T23:36:52.6956536Z
+LogRecord.TraceId:                 abb98d33a390d2773985fd3488333e14
+LogRecord.SpanId:                  46e671d30d10df22
 LogRecord.TraceFlags:              None
 LogRecord.CategoryName:            Program
 LogRecord.Severity:                Info
 LogRecord.SeverityText:            Information
-LogRecord.Body:                    Hello, world!
+LogRecord.Body:                    Food `{name}` price changed to `{price}`.
 LogRecord.Attributes (Key:Value):
-    OriginalFormat (a.k.a Body): Hello, world!
+    name: artichoke
+    price: 9.99
+    OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
 LogRecord.EventId:                 1
-LogRecord.EventName:               SayHello
+LogRecord.EventName:               FoodPriceChanged
 LogRecord.ScopeValues (Key:Value):
-[Scope.0]:SpanId: b888feebe74e9685
-[Scope.0]:TraceId: 8fa0ec5519c9bd5a498978c089a78182
+[Scope.0]:SpanId: 46e671d30d10df22
+[Scope.0]:TraceId: abb98d33a390d2773985fd3488333e14
 [Scope.0]:ParentId: 0000000000000000
-[Scope.1]:ConnectionId: 0HMTB7Q8V1EHB
-[Scope.2]:RequestId: 0HMTB7Q8V1EHB:0000000F
+[Scope.1]:ConnectionId: 0HMTB8H9151CI
+[Scope.2]:RequestId: 0HMTB8H9151CI:00000002
 [Scope.2]:RequestPath: /
 
 Resource associated with LogRecord:
 service.name: getting-started-aspnetcore
-service.instance.id: 144fa25b-b25c-4829-b8f6-d465df52fdaa
+service.instance.id: d4f09b09-6613-4d09-8a2d-1508e4ce9067
 telemetry.sdk.name: opentelemetry
 telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-rc.1.15
+telemetry.sdk.version: 1.6.0-rc.1.16
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
 
 What does the above program do?
 
-The program has configured the ASP.NET Core logging pipeline by enabling
-OpenTelemetry SDK and the `ConsoleExporter`. `ConsoleExporter` simply displays
-it on the console.
+The program has added OpenTelemetry as a [logging
+provider](https://learn.microsoft.com/dotnet/core/extensions/logging-providers)
+to the existing logging pipeline. OpenTelemetry SDK is then configured with a
+`ConsoleExporter` to export the logs to the console. In addition,
+`OpenTelemetryLoggerOptions.IncludeScopes` is enabled so the logs will include
+the [log
+scopes](https://learn.microsoft.com/aspnet/core/fundamentals/logging/#log-scopes)
+that are coming from the ASP.NET Core framework.
 
 ## Learn more
 

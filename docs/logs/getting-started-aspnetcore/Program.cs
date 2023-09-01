@@ -36,7 +36,7 @@ var app = builder.Build();
 
 app.MapGet("/", (ILogger<Program> logger) =>
 {
-    logger.SayHello();
+    logger.FoodPriceChanged("artichoke", 9.99);
 
     return "Hello from OpenTelemetry Logs!";
 });

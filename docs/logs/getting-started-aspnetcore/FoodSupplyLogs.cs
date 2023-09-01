@@ -1,4 +1,4 @@
-// <copyright file="HelloLogs.cs" company="OpenTelemetry Authors">
+// <copyright file="FoodSupplyLogs.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-public static partial class HelloLogs
+public static partial class FoodSupplyLogs
 {
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "Hello, world!")]
-    public static partial void SayHello(this ILogger logger);
+        Message = "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 }
