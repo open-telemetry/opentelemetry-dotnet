@@ -85,8 +85,10 @@ to the existing logging pipeline. OpenTelemetry SDK is then configured with a
 `ConsoleExporter` to export the logs to the console. In addition,
 `OpenTelemetryLoggerOptions.IncludeScopes` is enabled so the logs will include
 the [log
-scopes](https://learn.microsoft.com/aspnet/core/fundamentals/logging/#log-scopes)
-that are coming from the ASP.NET Core framework.
+scopes](https://learn.microsoft.com/aspnet/core/fundamentals/logging/#log-scopes).
+From the console output we can see the log scopes that are coming from the
+ASP.NET Core framework, and we can see logs from both our logger and the ASP.NET
+Core framework loggers.
 
 ## Learn more
 
