@@ -358,12 +358,12 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public
 #else
-/// <summary>
-/// Gets the exemplars associated with the metric point.
-/// </summary>
-/// <returns><see cref="Exemplar"/>.</returns>
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-internal
+    /// <summary>
+    /// Gets the exemplars associated with the metric point.
+    /// </summary>
+    /// <returns><see cref="Exemplar"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal
 #endif
         readonly Exemplar[] GetExemplars()
     {
