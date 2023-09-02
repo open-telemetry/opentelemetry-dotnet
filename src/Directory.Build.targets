@@ -1,6 +1,5 @@
 <Project>
-  <PropertyGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(RunPackageValidation)' == 'true' AND '$(RunApiCompat)' == 'true'">
-    <EnablePackageValidation>true</EnablePackageValidation>
+  <PropertyGroup Condition="'$(MinVerTagPrefix)' == 'core-'">
     <PackageValidationBaselineVersion>$(OTelLatestStableVer)</PackageValidationBaselineVersion>
   </PropertyGroup>
 

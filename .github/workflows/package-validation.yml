@@ -9,8 +9,6 @@ on:
 jobs:
   build-test-stable:
     runs-on: windows-latest
-    env:
-      RunPackageValidation: true
 
     steps:
     - uses: actions/checkout@v3
@@ -24,12 +22,10 @@ jobs:
       run: dotnet restore
 
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
+      run: dotnet pack --configuration Release --no-restore --property:EnablePackageValidation=true;ExposeExperimentalFeatures=false
 
   build-test-experimental:
     runs-on: windows-latest
-    env:
-      RunPackageValidation: true
 
     steps:
     - uses: actions/checkout@v3
@@ -43,4 +39,4 @@ jobs:
       run: dotnet restore
 
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
+      run: dotnet pack --configuration Release --no-restore --property:EnablePackageValidation=true;ExposeExperimentalFeatures=true
