@@ -6,4 +6,13 @@
     <PackageTags>$(PackageTags);semantic-conventions</PackageTags>
   </PropertyGroup>
 
+  <!--Do not run ApiCompat nor Package Baseline Validation as this package has never released a stable version.
+  Remove this property once we have released a stable version.-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <RunApiCompat>false</RunApiCompat>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DisablePackageBaselineValidation>true</DisablePackageBaselineValidation>
+  </PropertyGroup>
+
 </Project>
