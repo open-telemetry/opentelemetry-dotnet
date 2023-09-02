@@ -22,7 +22,7 @@ jobs:
       run: dotnet restore
 
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore --property:EnablePackageValidation=true;ExposeExperimentalFeatures=false
+      run: dotnet pack --configuration Release --no-restore /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false
 
   build-test-experimental:
     runs-on: windows-latest
@@ -39,4 +39,4 @@ jobs:
       run: dotnet restore
 
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore --property:EnablePackageValidation=true;ExposeExperimentalFeatures=true
+      run: dotnet pack --configuration Release --no-restore /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true
