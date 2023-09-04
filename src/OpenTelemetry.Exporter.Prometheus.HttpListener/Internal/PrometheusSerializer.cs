@@ -222,10 +222,20 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)'"');
 
         // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-        cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? string.Empty);
+        cursor = WriteLabelValue(buffer, cursor, GetLabelValueString(labelValue));
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
+
+        static string GetLabelValueString(object labelValue)
+        {
+            if (labelValue is bool b)
+            {
+                return b ? "true" : "false";
+            }
+
+            return labelValue?.ToString() ?? string.Empty;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
