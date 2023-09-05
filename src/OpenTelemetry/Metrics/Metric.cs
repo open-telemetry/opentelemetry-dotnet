@@ -38,7 +38,7 @@ public sealed class Metric
         ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration"),
         ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration"),
         ("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration"),
-        ("OpenTelemetry.Instrumentation.Http", "http.client.duration"),
+        ("OpenTelemetry.Instrumentation.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.connection.duration"),
         ("System.Net.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.time_in_queue"),
