@@ -113,9 +113,7 @@ public class MetricTests
 
                 var metric = Assert.Single(requestMetrics);
 
-                // TODO: This needs to be changed to "s" (seconds). This is blocked until we can change the default histogram.
-                // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
-                Assert.Equal("ms", metric.Unit);
+                Assert.Equal("s", metric.Unit);
                 var metricPoints = GetMetricPoints(metric);
                 Assert.Equal(2, metricPoints.Count);
 
@@ -349,11 +347,19 @@ public class MetricTests
             histogramBounds.Add(t.ExplicitBound);
         }
 
-        // TODO: This will need to test for the new histograms. This is blocked until we can change the default histogram.
-        // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
-        Assert.Equal(
-            expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
-            actual: histogramBounds);
+        if (validateNewSemConv)
+        {
+            Assert.Equal(
+                expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+                actual: histogramBounds);
+        }
+
+        if (validateOldSemConv)
+        {
+            Assert.Equal(
+                expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
+                actual: histogramBounds);
+        }
 
         return attributes;
     }

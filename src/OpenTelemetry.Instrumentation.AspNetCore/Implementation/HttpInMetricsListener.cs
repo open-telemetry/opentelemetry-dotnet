@@ -57,9 +57,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
         if (this.emitNewAttributes)
         {
-            // TODO: This needs to be changed to  "s" (seconds). This is blocked until we can change the default histogram.
-            // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
-            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "ms", "Measures the duration of inbound HTTP requests.");
+            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
         }
     }
 
@@ -215,10 +213,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             // We are relying here on ASP.NET Core to set duration before writing the stop event.
             // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
             // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-
-            // TODO: This needs to be changed to TotalSeconds. This is blocked until we can change the default histogram.
-            // See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4797
-            this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalMilliseconds, tags);
+            this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
         }
     }
 }
