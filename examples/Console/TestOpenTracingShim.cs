@@ -27,18 +27,18 @@ internal class TestOpenTracingShim
 {
     internal static object Run(OpenTracingShimOptions options)
     {
-        // Enable OpenTelemetry for the source "MyCompany.MyProduct.MyWebServer"
+        // Enable OpenTelemetry for the source "opentracing-shim"
         // and use Console exporter.
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("MyCompany.MyProduct.MyWebServer")
+                .AddSource("opentracing-shim")
                 .ConfigureResource(r => r.AddService("MyServiceName"))
                 .AddConsoleExporter()
                 .Build();
 
         // Instantiate the OpenTracing shim. The underlying OpenTelemetry tracer will create
-        // spans using the "MyCompany.MyProduct.MyWebServer" source.
+        // spans using the "opentracing-shim" source.
         var openTracingTracerShim = new TracerShim(
-            TracerProvider.Default.GetTracer("MyCompany.MyProduct.MyWebServer"),
+            TracerProvider.Default,
             Propagators.DefaultTextMapPropagator);
 
         // The OpenTracing Tracer shim instance must be registered prior to any calls
