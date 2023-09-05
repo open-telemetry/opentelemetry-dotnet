@@ -21,8 +21,8 @@ dotnet add package OpenTelemetry.Exporter.Console
 dotnet add package OpenTelemetry.Extensions.Hosting
 ```
 
-Copy the [HelloLogs.cs](./HelloLogs.cs) and [Program.cs](./Program.cs) files to
-the project folder.
+Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
+files to the project folder.
 
 Run the application again (using `dotnet run`) and then browse to the URL shown
 in the console for your application (e.g. `http://localhost:5154`). You should see
