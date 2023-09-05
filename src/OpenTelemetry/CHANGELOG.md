@@ -12,12 +12,11 @@ Released 2023-Sep-05
 * Update default size for `SimpleExemplarReservoir` to `1`.
   ([#4803](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4803))
 
-* Update Metrics SDK to override the default histogram bounds for a set of
-  well-known histogram metrics from AspNetCore and Http runtime and their
-  corresponding instrumentation libraries. These histogram metrics which have
-  their `Unit` as `s` (second) will have their default histogram buckets as `[
-  0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10
-  ]`.
+* Update Metrics SDK to override the default histogram buckets for a set of
+  well-known histogram metrics from ASP.NET Core and HttpClient runtime. These
+  histogram metrics which have their `Unit` as `s` (second) will have their
+  default histogram buckets as `[ 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25,
+  0.5, 0.75, 1, 2.5, 5, 7.5, 10 ]`.
   ([#4820](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820))
 
 ## 1.6.0-rc.1
