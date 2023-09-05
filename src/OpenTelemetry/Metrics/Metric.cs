@@ -29,6 +29,21 @@ public sealed class Metric
 
     internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
     internal static readonly double[] DefaultHistogramBoundsSeconds = new double[] { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 };
+    internal static readonly HashSet<(string, string)> DefaultHistogramBoundMappings = new()
+    {
+        ("Microsoft.AspNetCore.Hosting", "http.server.request.duration"),
+        ("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration"),
+        ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue"),
+        ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration"),
+        ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration"),
+        ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration"),
+        ("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration"),
+        ("OpenTelemetry.Instrumentation.Http", "http.client.duration"),
+        ("System.Net.Http", "http.client.connection.duration"),
+        ("System.Net.Http", "http.client.request.duration"),
+        ("System.Net.Http", "http.client.request.time_in_queue"),
+        ("System.Net.NameResolution", "dns.lookups.duration"),
+    };
 
     private readonly AggregatorStore aggStore;
 

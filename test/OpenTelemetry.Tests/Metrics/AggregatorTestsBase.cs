@@ -251,6 +251,7 @@ public abstract class AggregatorTestsBase
     [InlineData("System.Net.Http", "http.client.request.duration")]
     [InlineData("System.Net.Http", "http.client.request.time_in_queue")]
     [InlineData("System.Net.NameResolution", "dns.lookups.duration")]
+    [InlineData("General.App", "simple.alternative.counter")]
     public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName)
     {
         RunTest(meterName, instrumentName, unit: "s");
@@ -275,7 +276,8 @@ public abstract class AggregatorTestsBase
 
             Assert.NotNull(aggregatorStore.HistogramBounds);
             Assert.Equal(
-                unit == "s" ? Metric.DefaultHistogramBoundsSeconds : Metric.DefaultHistogramBounds,
+                unit == "s" && Metric.DefaultHistogramBoundMappings.Contains((meterName, instrumentName)) ?
+                    Metric.DefaultHistogramBoundsSeconds : Metric.DefaultHistogramBounds,
                 aggregatorStore.HistogramBounds);
         }
     }
