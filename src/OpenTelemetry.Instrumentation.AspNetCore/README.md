@@ -93,13 +93,13 @@ public void ConfigureServices(IServiceCollection services)
 The instrumentation is implemented based on
 [metrics semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/4bbb8c907402caa90bc077214e8a2c78807c1ab9/docs/http/http-metrics.md).
 
-Have you opt-ed into the new Http Semantic Conventions?
+Have you opt-ed into the new Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`?
 
 * If yes, the instrumentation supports the following metric.
 
     | Name  | Instrument Type | Unit | Description |
     |-------|-----------------|------|-------------|
-    | `http.server.request.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+    | `http.server.request.duration` | Histogram | `s` | Measures the duration of inbound HTTP requests. |
 
 * If no, the instrumentation supports the following metric.
 
