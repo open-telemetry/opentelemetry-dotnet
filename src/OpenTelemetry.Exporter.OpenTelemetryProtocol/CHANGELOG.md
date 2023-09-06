@@ -20,7 +20,7 @@ Released 2023-Aug-21
   and
   ([#3491](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491))
   to track progress on these. This change is temporarily done in order to
-  release **stable** version of Otlp log exporter.
+  release **stable** version of OTLP Log Exporter.
   ([#4781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4781))
 
 * Added extension method for configuring export processor options for otlp log
