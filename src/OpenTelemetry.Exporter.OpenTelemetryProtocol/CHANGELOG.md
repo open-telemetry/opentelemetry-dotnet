@@ -11,16 +11,23 @@ Released 2023-Sep-05
 Released 2023-Aug-21
 
 * **Breaking change**: Excluded attributes corresponding to `LogRecord.EventId`,
-`LogRecord.CategoryName` and `LogRecord.Exception` from the exported data.These
-  fields are specific to OpenTelemetry .NET's data model (i.e., they are not
-  reflected in the [standard OTel data
-  model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#log-and-event-record-definition)).
-  The conventions for exporting them as attributes are not yet stable. Follow
-  ([#4776](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776))
-  and
-  ([#3491](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491))
-  to track progress on these. This change is temporarily done in order to
-  release **stable** version of OTLP Log Exporter.
+`LogRecord.CategoryName` and `LogRecord.Exception` from the exported data. See
+following details for reasoning behind removing each individual property:
+  * `LogRecord.Exception`: The semantic conventions for attributes corresponding
+    to exception data are not yet stable. Track issue
+    [#4831](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4831)
+    for details.
+  * `LogRecord.EventId`: The attributes corresponding to this property is
+    specific to .NET logging data model. Track issue
+    [#4776](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776)
+    for details.
+  * `LogRecord.CategoryName`: The attribute corresponding to this property is
+    specific to .NET logging data model. Track issue
+    [#3491](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491)
+    for details.
+  
+  This change is temporarily done in order to release **stable** version of OTLP
+  Log Exporter.
   ([#4781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4781))
 
 * Added extension method for configuring export processor options for otlp log
