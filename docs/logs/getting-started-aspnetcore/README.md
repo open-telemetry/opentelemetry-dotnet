@@ -25,7 +25,7 @@ Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
 files to the project folder.
 
 Run the application again (using `dotnet run`) and then browse to the URL shown
-in the console for your application (e.g. `http://localhost:5154`). You should see
+in the console for your application (e.g. `http://localhost:5000`). You should see
 the logs output from the console.
 
 ```text
@@ -89,6 +89,40 @@ scopes](https://learn.microsoft.com/aspnet/core/fundamentals/logging/#log-scopes
 From the console output we can see the log scopes that are coming from the
 ASP.NET Core framework, and we can see logs from both our logger and the ASP.NET
 Core framework loggers.
+
+The example has demonstrated the best practice from ASP.NET Core by injecting
+generic `ILogger<T>`:
+
+```csharp
+app.MapGet("/", (ILogger<Program> logger) =>
+{
+    logger.FoodPriceChanged("artichoke", 9.99);
+
+    return "Hello from OpenTelemetry Logs!";
+});
+```
+
+To achieve structured logging and high performance, [Compile-time logging source
+generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+is used:
+
+```csharp
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Starting the app...")]
+    public static partial void StartingApp(this ILogger logger);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
+}
+```
+
+For logs that occur between `builder.Build()` and `app.Run()` when
+injecting a generic `ILogger<T>` is not an option, `app.Logger` is used instead:
+
+```csharp
+app.Logger.StartingApp();
+```
 
 ## Learn more
 

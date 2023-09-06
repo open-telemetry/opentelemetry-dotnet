@@ -17,6 +17,10 @@
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
+// What should be used for logging before DI is available?
+// Remove the comment here, mention in the doc (in the corner) that particular problems can be addressed using explicit logger factory.
+// Don't provide the actual guidance, but link to an issue so we can collect feedback from users.
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddOpenTelemetry(logging =>
@@ -41,4 +45,25 @@ app.MapGet("/", (ILogger<Program> logger) =>
     return "Hello from OpenTelemetry Logs!";
 });
 
+app.Logger.StartingApp();
+
 app.Run();
+
+// Is this even an intended scenario?
+//
+// app.Logger.LogInformation("Stopping the app..."); // change to a strongly typed, compile time version
+// if someone needs to log here, what do they do?
+// Noah: use app.Logger here
+// Reiley: something destroyed the DI logger so we cannot really do anything here besides changing our recommendation
+// use global logger?
+// Noah/Reiley: the solution should be the same as what we tell folks to use between entry point and DI readiness
+// Tarek: normally folks don't want to log here
+
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Starting the app...")]
+    public static partial void StartingApp(this ILogger logger);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
+}
