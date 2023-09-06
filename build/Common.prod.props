@@ -59,6 +59,19 @@
     <Message Importance="high" Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), MinVerMajor: $(MinVerMajor), MinVerMinor: $(MinVerMinor), MinVerPatch: $(MinVerPatch), MinVerPreRelease: $(MinVerPreRelease), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
   </Target>
 
+  <Target Name="ResolveExposeExperimentalFeatures" AfterTargets="MinVer">
+    <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
+      <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
+    </PropertyGroup>
+
+    <!--PublicApi Analyzer-->
+    <ItemGroup>
+      <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
+      <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+    </ItemGroup>
+  </Target>
+
   <PropertyGroup>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/open-telemetry/opentelemetry-dotnet</RepositoryUrl>
@@ -92,9 +105,6 @@
 
   <!--PublicApi Analyzer-->
   <ItemGroup>
-    <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
-    <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
     <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
 
