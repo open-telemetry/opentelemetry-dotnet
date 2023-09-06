@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <RunApiCompat>true</RunApiCompat>
+    <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
