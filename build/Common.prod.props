@@ -2,10 +2,7 @@
   <Import Project=".\Common.props" />
 
   <ItemGroup>
-    <PackageReference Include="MinVer"  PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-
+    <PackageReference Include="MinVer" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 
@@ -59,7 +56,7 @@
     <Message Importance="high" Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), MinVerMajor: $(MinVerMajor), MinVerMinor: $(MinVerMinor), MinVerPatch: $(MinVerPatch), MinVerPreRelease: $(MinVerPreRelease), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
   </Target>
 
-  <Target Name="ResolveExposeExperimentalFeatures" AfterTargets="MinVer">
+  <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="BeforeCompile" DependsOnTargets="AssemblyVersionTarget">
     <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
       <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
     </PropertyGroup>
