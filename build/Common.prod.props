@@ -50,8 +50,8 @@
   <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
     <!-- Note: $(BuildNumber) is typically only set for builds initiated by the
     publish workflow. The goal here is to set the assembly FileVersion and
-    resolve ExposeExperimentalFeatures based on the version of the core packages
-    -->
+    resolve ExposeExperimentalFeatures based on the version MinVer resolved from
+    the git tag -->
     <PropertyGroup>
       <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</FileVersion>
       <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' != ''">true</ExposeExperimentalFeatures>
