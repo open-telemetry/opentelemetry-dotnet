@@ -2,15 +2,13 @@
   <Import Project=".\Common.props" />
 
   <ItemGroup>
-    <PackageReference Include="MinVer"  PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-
+    <PackageReference Include="MinVer" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <PropertyGroup>
     <RunApiCompat>true</RunApiCompat>
+    <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
@@ -59,6 +57,19 @@
     <Message Importance="high" Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), MinVerMajor: $(MinVerMajor), MinVerMinor: $(MinVerMinor), MinVerPatch: $(MinVerPatch), MinVerPreRelease: $(MinVerPreRelease), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
   </Target>
 
+  <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="BeforeCompile" DependsOnTargets="AssemblyVersionTarget">
+    <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
+      <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
+    </PropertyGroup>
+
+    <!--PublicApi Analyzer-->
+    <ItemGroup>
+      <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
+      <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+    </ItemGroup>
+  </Target>
+
   <PropertyGroup>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/open-telemetry/opentelemetry-dotnet</RepositoryUrl>
@@ -92,9 +103,6 @@
 
   <!--PublicApi Analyzer-->
   <ItemGroup>
-    <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
-    <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
     <None Include=".publicApi\**\PublicAPI.*.txt" />
   </ItemGroup>
 
