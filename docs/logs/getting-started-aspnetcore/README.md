@@ -21,8 +21,7 @@ dotnet add package OpenTelemetry.Exporter.Console
 dotnet add package OpenTelemetry.Extensions.Hosting
 ```
 
-Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
-files to the project folder.
+Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and then browse to the URL shown
 in the console for your application (e.g. `http://localhost:5000`). You should see
@@ -85,7 +84,7 @@ to the existing logging pipeline. OpenTelemetry SDK is then configured with a
 `ConsoleExporter` to export the logs to the console. In addition,
 `OpenTelemetryLoggerOptions.IncludeScopes` is enabled so the logs will include
 the [log
-scopes](https://learn.microsoft.com/aspnet/core/fundamentals/logging/#log-scopes).
+scopes](https://learn.microsoft.com/dotnet/core/extensions/logging#log-scopes).
 From the console output we can see the log scopes that are coming from the
 ASP.NET Core framework, and we can see logs from both our logger and the ASP.NET
 Core framework loggers.
