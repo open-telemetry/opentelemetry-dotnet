@@ -18,9 +18,9 @@ individual property:
     to exception data are not yet stable. Track issue
     [#4831](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4831)
     for details.
-  * `LogRecord.EventId`: The attributes corresponding to this property is
+  * `LogRecord.EventId`: The attributes corresponding to this property are
     specific to .NET logging data model and there is no established convention
-    defined for it yet. Track issue
+    defined for them yet. Track issue
     [#4776](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776)
     for details.
   * `LogRecord.CategoryName`: The attribute corresponding to this property is
