@@ -22,17 +22,19 @@
     <PackageReference Include="System.Reflection.Emit.Lightweight" Condition="'$(TargetFramework)' != 'net6.0'" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
-    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" />
-  </ItemGroup>
+  <Target Name="PostResolveExposeExperimentalFeatures" AfterTargets="ResolveExposeExperimentalFeatures">
+    <ItemGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
+      <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
+      <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
