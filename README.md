@@ -19,11 +19,7 @@ files.
 
 ## Project Status
 
-| Signal  | Status     |
-| ------- | ---------- |
-| Logs    | Stable     |
-| Metrics | Stable     |
-| Traces  | Stable     |
+**Stable** across all 3 signals i.e. `logs`, `metrics` and `traces`.
 
 See [Spec Compliance
 Matrix](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spec-compliance-matrix.md)
