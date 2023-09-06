@@ -28,25 +28,44 @@ in the console for your application (e.g. `http://localhost:5000`). You should s
 the logs output from the console.
 
 ```text
-LogRecord.Timestamp:               2023-09-01T23:36:24.3541759Z
-LogRecord.CategoryName:            Microsoft.Hosting.Lifetime
+LogRecord.Timestamp:               2023-09-06T22:59:17.9787564Z
+LogRecord.CategoryName:            getting-started-aspnetcore
 LogRecord.Severity:                Info
 LogRecord.SeverityText:            Information
-LogRecord.Body:                    Content root path: {contentRoot}
+LogRecord.Body:                    Starting the app...
 LogRecord.Attributes (Key:Value):
-    contentRoot: D:\repo\opentelemetry-dotnet\docs\logs\getting-started-aspnetcore\
-    OriginalFormat (a.k.a Body): Content root path: {contentRoot}
+    OriginalFormat (a.k.a Body): Starting the app...
+LogRecord.EventId:                 1
+LogRecord.EventName:               StartingApp
 
 Resource associated with LogRecord:
 service.name: getting-started-aspnetcore
-service.instance.id: d4f09b09-6613-4d09-8a2d-1508e4ce9067
+service.instance.id: d62727d2-3e80-4780-a984-e85fc861e321
 telemetry.sdk.name: opentelemetry
 telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-rc.1.16
+telemetry.sdk.version: 1.6.0-rc.1.24
 
-LogRecord.Timestamp:               2023-09-01T23:36:52.6956536Z
-LogRecord.TraceId:                 abb98d33a390d2773985fd3488333e14
-LogRecord.SpanId:                  46e671d30d10df22
+LogRecord.Timestamp:               2023-09-06T22:59:18.0644378Z
+LogRecord.CategoryName:            Microsoft.Hosting.Lifetime
+LogRecord.Severity:                Info
+LogRecord.SeverityText:            Information
+LogRecord.Body:                    Now listening on: {address}
+LogRecord.Attributes (Key:Value):
+    address: http://localhost:5000
+    OriginalFormat (a.k.a Body): Now listening on: {address}
+LogRecord.EventId:                 14
+LogRecord.EventName:               ListeningOnAddress
+
+Resource associated with LogRecord:
+service.name: getting-started-aspnetcore
+service.instance.id: d62727d2-3e80-4780-a984-e85fc861e321
+telemetry.sdk.name: opentelemetry
+telemetry.sdk.language: dotnet
+telemetry.sdk.version: 1.6.0-rc.1.24
+
+LogRecord.Timestamp:               2023-09-06T23:00:46.1639248Z
+LogRecord.TraceId:                 3507087d60ae4b1d2f10e68f4e40784a
+LogRecord.SpanId:                  c51be9f19c598b69
 LogRecord.TraceFlags:              None
 LogRecord.CategoryName:            Program
 LogRecord.Severity:                Info
@@ -56,22 +75,22 @@ LogRecord.Attributes (Key:Value):
     name: artichoke
     price: 9.99
     OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
-LogRecord.EventId:                 1
+LogRecord.EventId:                 2
 LogRecord.EventName:               FoodPriceChanged
 LogRecord.ScopeValues (Key:Value):
-[Scope.0]:SpanId: 46e671d30d10df22
-[Scope.0]:TraceId: abb98d33a390d2773985fd3488333e14
+[Scope.0]:SpanId: c51be9f19c598b69
+[Scope.0]:TraceId: 3507087d60ae4b1d2f10e68f4e40784a
 [Scope.0]:ParentId: 0000000000000000
-[Scope.1]:ConnectionId: 0HMTB8H9151CI
-[Scope.2]:RequestId: 0HMTB8H9151CI:00000002
+[Scope.1]:ConnectionId: 0HMTF5KCP0BU9
+[Scope.2]:RequestId: 0HMTF5KCP0BU9:00000003
 [Scope.2]:RequestPath: /
 
 Resource associated with LogRecord:
 service.name: getting-started-aspnetcore
-service.instance.id: d4f09b09-6613-4d09-8a2d-1508e4ce9067
+service.instance.id: d62727d2-3e80-4780-a984-e85fc861e321
 telemetry.sdk.name: opentelemetry
 telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-rc.1.16
+telemetry.sdk.version: 1.6.0-rc.1.24
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
