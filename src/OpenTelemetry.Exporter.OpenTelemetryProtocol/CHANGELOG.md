@@ -20,7 +20,7 @@ Released 2023-Aug-21
   and
   ([#3491](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491))
   to track progress on these. This change is temporarily done in order to
-  release **stable** version of Otlp log exporter. The attributes will be
+  release **stable** version of OTLP Log Exporter. The attributes will be
   re-introduced in the follow up pre-release package as we continue to work on
   resolving the issues mentioned above.
   ([#4781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4781))
