@@ -18,11 +18,13 @@ following details for reasoning behind removing each individual property:
     [#4831](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4831)
     for details.
   * `LogRecord.EventId`: The attributes corresponding to this property is
-    specific to .NET logging data model. Track issue
+    specific to .NET logging data model and there is no established convention
+    defined for it yet. Track issue
     [#4776](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776)
     for details.
   * `LogRecord.CategoryName`: The attribute corresponding to this property is
-    specific to .NET logging data model. Track issue
+    specific to .NET logging data model and there is no established convention
+    defined for it yet. Track issue
     [#3491](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491)
     for details.
   
