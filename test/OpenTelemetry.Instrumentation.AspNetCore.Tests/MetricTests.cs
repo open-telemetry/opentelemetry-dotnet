@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
@@ -55,78 +56,74 @@ public class MetricTests
     [InlineData("http/dup", true, true, 6, 5)] // emits both old & new
     public async Task RequestMetricIsCaptured(string environmentVarValue, bool validateOldSemConv, bool validateNewSemConv, int expectedOldTagsCount, int expectedNewTagsCount)
     {
-        try
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = environmentVarValue })
+            .Build();
+
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient())
         {
-            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, environmentVarValue);
+            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
 
-            var metricItems = new List<Metric>();
-
-            this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddAspNetCoreInstrumentation()
-                .AddInMemoryExporter(metricItems)
-                .Build();
-
-            using (var client = this.factory
-                .WithWebHostBuilder(builder =>
-                {
-                    builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                })
-                .CreateClient())
-            {
-                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
-
-                response1.EnsureSuccessStatusCode();
-                response2.EnsureSuccessStatusCode();
-            }
-
-            // We need to let End callback execute as it is executed AFTER response was returned.
-            // In unit tests environment there may be a lot of parallel unit tests executed, so
-            // giving some breezing room for the End callback to complete
-            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-
-            this.meterProvider.Dispose();
-
-            if (validateOldSemConv)
-            {
-                var requestMetrics = metricItems
-                    .Where(item => item.Name == "http.server.duration")
-                    .ToArray();
-
-                var metric = Assert.Single(requestMetrics);
-                Assert.Equal("ms", metric.Unit);
-                var metricPoints = GetMetricPoints(metric);
-                Assert.Equal(2, metricPoints.Count);
-
-                AssertMetricPoints(
-                    metricPoints: metricPoints,
-                    expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-                    expectedTagsCount: expectedOldTagsCount,
-                    validateOldSemConv: true);
-            }
-
-            if (validateNewSemConv)
-            {
-                var requestMetrics = metricItems
-                    .Where(item => item.Name == "http.server.request.duration")
-                    .ToArray();
-
-                var metric = Assert.Single(requestMetrics);
-
-                Assert.Equal("s", metric.Unit);
-                var metricPoints = GetMetricPoints(metric);
-                Assert.Equal(2, metricPoints.Count);
-
-                AssertMetricPoints(
-                    metricPoints: metricPoints,
-                    expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-                    expectedTagsCount: expectedNewTagsCount,
-                    validateNewSemConv: true);
-            }
+            response1.EnsureSuccessStatusCode();
+            response2.EnsureSuccessStatusCode();
         }
-        finally
+
+        // We need to let End callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the End callback to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        if (validateOldSemConv)
         {
-            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, null);
+            var requestMetrics = metricItems
+                .Where(item => item.Name == "http.server.duration")
+                .ToArray();
+
+            var metric = Assert.Single(requestMetrics);
+            Assert.Equal("ms", metric.Unit);
+            var metricPoints = GetMetricPoints(metric);
+            Assert.Equal(2, metricPoints.Count);
+
+            AssertMetricPoints(
+                metricPoints: metricPoints,
+                expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
+                expectedTagsCount: expectedOldTagsCount,
+                validateOldSemConv: true);
+        }
+
+        if (validateNewSemConv)
+        {
+            var requestMetrics = metricItems
+                .Where(item => item.Name == "http.server.request.duration")
+                .ToArray();
+
+            var metric = Assert.Single(requestMetrics);
+
+            Assert.Equal("s", metric.Unit);
+            var metricPoints = GetMetricPoints(metric);
+            Assert.Equal(2, metricPoints.Count);
+
+            AssertMetricPoints(
+                metricPoints: metricPoints,
+                expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
+                expectedTagsCount: expectedNewTagsCount,
+                validateNewSemConv: true);
         }
     }
 
