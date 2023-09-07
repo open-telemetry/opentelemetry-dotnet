@@ -55,7 +55,7 @@ internal static class OtlpExporterOptionsExtensions
             channelCredentials = ChannelCredentials.Insecure;
         }
 
-        return new Channel(options.Endpoint.Authority, channelCredentials);
+        return new Channel(options.Endpoint.Host, options.Endpoint.Port, channelCredentials);
 #endif
     }
 
