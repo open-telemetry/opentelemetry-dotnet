@@ -22,11 +22,11 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <Target Name="PostResolveExposeExperimentalFeatures" AfterTargets="ResolveExposeExperimentalFeatures">
-    <ItemGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
-      <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
-      <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
-    </ItemGroup>
-  </Target>
+  <ItemGroup>
+    <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' this link is NOT
+    required because this project sees API internals -->
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiesExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiesExposedExperimentalFeatures="true" />
+  </ItemGroup>
 
 </Project>
