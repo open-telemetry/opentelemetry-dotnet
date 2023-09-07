@@ -25,8 +25,8 @@
   <ItemGroup>
     <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' this link is NOT
     required because this project sees API internals -->
-    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiesExposedExperimentalFeatures="true" />
-    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiesExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiresExposedExperimentalFeatures="true" />
+    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiresExposedExperimentalFeatures="true" />
   </ItemGroup>
 
 </Project>

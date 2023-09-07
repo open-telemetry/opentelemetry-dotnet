@@ -96,7 +96,7 @@
     </PropertyGroup>
 
     <ItemGroup Condition="'$(ExposeExperimentalFeatures)' != 'true'">
-      <Compile Remove="@(Compile)" Condition="'%(Compile.RequiesExposedExperimentalFeatures)' == 'true'" />
+      <Compile Remove="@(Compile)" Condition="'%(Compile.RequiresExposedExperimentalFeatures)' == 'true'" />
     </ItemGroup>
 
     <!-- Note: This selects the correct PublicApiAnalyzers files based on $(ExposeExperimentalFeatures) -->
