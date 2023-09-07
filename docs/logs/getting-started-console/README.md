@@ -34,8 +34,8 @@ dotnet add package OpenTelemetry.Exporter.Console
 Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
 files to the project folder.
 
-Run the application (using `dotnet run`) and you should see the log output on
-the console:
+Run the application again (using `dotnet run`) and you should see the log output
+on the console.
 
 ```text
 LogRecord.Timestamp:               2023-08-03T22:53:51.0194130Z

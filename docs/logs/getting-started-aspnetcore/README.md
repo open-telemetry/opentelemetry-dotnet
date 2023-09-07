@@ -23,9 +23,9 @@ dotnet add package OpenTelemetry.Extensions.Hosting
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
-Run the application again (using `dotnet run`) and then browse to the URL shown
-in the console for your application (e.g. `http://localhost:5000`). You should see
-the logs output from the console.
+Run the application (using `dotnet run`) and then browse to the URL shown in the
+console for your application (e.g. `http://localhost:5000`). You should see the
+logs output from the console:
 
 ```text
 LogRecord.Timestamp:               2023-09-06T22:59:17.9787564Z
