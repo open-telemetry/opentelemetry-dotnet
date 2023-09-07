@@ -156,6 +156,33 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void GaugeBoolDimension()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge(
+            "test_gauge",
+            () => new Measurement<long>(123, new KeyValuePair<string, object>("tagKey", true)));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        Assert.Matches(
+            ("^"
+                + "# TYPE test_gauge gauge\n"
+                + "test_gauge{tagKey='true'} 123 \\d+\n"
+                + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
     public void GaugeDoubleSubnormal()
     {
         var buffer = new byte[85000];
