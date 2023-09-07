@@ -120,7 +120,7 @@ app.MapGet("/", (ILogger<Program> logger) =>
 });
 ```
 
-To achieve structured logging and high performance, [Compile-time logging source
+To achieve structured logging and high performance, [compile-time logging source
 generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
 is used:
 
