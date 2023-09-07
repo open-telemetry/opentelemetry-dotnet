@@ -126,11 +126,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         }
 
 #if NET6_0_OR_GREATER
-            var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-            if (!string.IsNullOrEmpty(route))
-            {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
-            }
+        var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+        if (!string.IsNullOrEmpty(route))
+        {
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
+        }
 #endif
         if (this.options.Enrich != null)
         {
@@ -190,11 +190,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
 
 #if NET6_0_OR_GREATER
-            var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-            if (!string.IsNullOrEmpty(route))
-            {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
-            }
+        var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+        if (!string.IsNullOrEmpty(route))
+        {
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
+        }
 #endif
         if (this.options.Enrich != null)
         {
