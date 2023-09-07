@@ -23,7 +23,26 @@ namespace OpenTelemetry.Shims.OpenTracing;
 public class TracerShim : global::OpenTracing.ITracer
 {
     private readonly Trace.Tracer tracer;
-    private readonly TextMapPropagator propagator;
+    private readonly TextMapPropagator definedPropagator;
+
+    public TracerShim(Trace.TracerProvider tracerProvider)
+        : this(tracerProvider, null)
+    {
+    }
+
+    public TracerShim(Trace.TracerProvider tracerProvider, TextMapPropagator textFormat)
+    {
+        Guard.ThrowIfNull(tracerProvider);
+
+        var assemblyName = typeof(TracerShim).Assembly.GetName();
+        var version = assemblyName.Version;
+
+        this.tracer = tracerProvider.GetTracer("opentracing-shim", version?.ToString());
+        this.definedPropagator = textFormat;
+        this.ScopeManager = new ScopeManagerShim();
+    }
+
+    [Obsolete("Use TracerShim(TracerProvider, TextMapPropagator) or TracerShim(TracerProvider) constructor.")]
 
     public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
     {
@@ -31,15 +50,23 @@ public class TracerShim : global::OpenTracing.ITracer
         Guard.ThrowIfNull(textFormat);
 
         this.tracer = tracer;
-        this.propagator = textFormat;
+        this.definedPropagator = textFormat;
         this.ScopeManager = new ScopeManagerShim();
     }
 
     /// <inheritdoc/>
-    public global::OpenTracing.IScopeManager ScopeManager { get; private set; }
+    public global::OpenTracing.IScopeManager ScopeManager { get; }
 
     /// <inheritdoc/>
     public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
+
+    private TextMapPropagator Propagator
+    {
+        get
+        {
+            return this.definedPropagator ?? Propagators.DefaultTextMapPropagator;
+        }
+    }
 
     /// <inheritdoc/>
     public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
@@ -74,7 +101,7 @@ public class TracerShim : global::OpenTracing.ITracer
                 return value;
             }
 
-            propagationContext = this.propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
+            propagationContext = this.Propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
         }
 
         // TODO:
@@ -98,7 +125,7 @@ public class TracerShim : global::OpenTracing.ITracer
 
         if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
         {
-            this.propagator.Inject(
+            this.Propagator.Inject(
                 new PropagationContext(shim.SpanContext, Baggage.Current),
                 textMapCarrier,
                 (instrumentation, key, value) => instrumentation.Set(key, value));
