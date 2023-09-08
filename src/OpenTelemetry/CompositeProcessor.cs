@@ -21,12 +21,20 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry;
 
+/// <summary>
+/// Represents a chain of <see cref="BaseProcessor{T}"/>s.
+/// </summary>
+/// <typeparam name="T">The type of object to be processed.</typeparam>
 public class CompositeProcessor<T> : BaseProcessor<T>
 {
     internal readonly DoublyLinkedListNode Head;
     private DoublyLinkedListNode tail;
     private bool disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CompositeProcessor{T}"/> class.
+    /// </summary>
+    /// <param name="processors">Processors to add to the composite processor chain.</param>
     public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
     {
         Guard.ThrowIfNull(processors);
@@ -46,6 +54,11 @@ public class CompositeProcessor<T> : BaseProcessor<T>
         }
     }
 
+    /// <summary>
+    /// Adds a processor to the composite processor chain.
+    /// </summary>
+    /// <param name="processor"><see cref="BaseProcessor{T}"/>.</param>
+    /// <returns>The current instance to support call chaining.</returns>
     public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
     {
         Guard.ThrowIfNull(processor);

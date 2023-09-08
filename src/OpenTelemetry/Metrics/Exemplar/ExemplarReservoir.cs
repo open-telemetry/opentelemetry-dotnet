@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -27,7 +30,7 @@ internal abstract class ExemplarReservoir
     /// <param name="tags">The complete set of tags provided with the measurement.</param>
     /// <param name="index">The histogram bucket index where this measurement is going to be stored.
     /// This is optional and is only relevant for Histogram with buckets.</param>
-    public abstract void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default);
+    public abstract void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default);
 
     /// <summary>
     /// Offers measurement to the reservoir.
@@ -36,7 +39,7 @@ internal abstract class ExemplarReservoir
     /// <param name="tags">The complete set of tags provided with the measurement.</param>
     /// <param name="index">The histogram bucket index where this measurement is going to be stored.
     /// This is optional and is only relevant for Histogram with buckets.</param>
-    public abstract void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default);
+    public abstract void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default);
 
     /// <summary>
     /// Collects all the exemplars accumulated by the Reservoir.
