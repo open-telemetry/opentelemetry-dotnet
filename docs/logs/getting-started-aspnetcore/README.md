@@ -38,12 +38,7 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 1
 LogRecord.EventName:               StartingApp
 
-Resource associated with LogRecord:
-service.name: getting-started-aspnetcore
-service.instance.id: d62727d2-3e80-4780-a984-e85fc861e321
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-rc.1.24
+...
 
 LogRecord.Timestamp:               2023-09-06T22:59:18.0644378Z
 LogRecord.CategoryName:            Microsoft.Hosting.Lifetime
@@ -56,12 +51,7 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 14
 LogRecord.EventName:               ListeningOnAddress
 
-Resource associated with LogRecord:
-service.name: getting-started-aspnetcore
-service.instance.id: d62727d2-3e80-4780-a984-e85fc861e321
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-rc.1.24
+...
 
 LogRecord.Timestamp:               2023-09-06T23:00:46.1639248Z
 LogRecord.TraceId:                 3507087d60ae4b1d2f10e68f4e40784a
@@ -77,20 +67,8 @@ LogRecord.Attributes (Key:Value):
     OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
 LogRecord.EventId:                 2
 LogRecord.EventName:               FoodPriceChanged
-LogRecord.ScopeValues (Key:Value):
-[Scope.0]:SpanId: c51be9f19c598b69
-[Scope.0]:TraceId: 3507087d60ae4b1d2f10e68f4e40784a
-[Scope.0]:ParentId: 0000000000000000
-[Scope.1]:ConnectionId: 0HMTF5KCP0BU9
-[Scope.2]:RequestId: 0HMTF5KCP0BU9:00000003
-[Scope.2]:RequestPath: /
 
-Resource associated with LogRecord:
-service.name: getting-started-aspnetcore
-service.instance.id: d62727d2-3e80-4780-a984-e85fc861e321
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-rc.1.24
+...
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.

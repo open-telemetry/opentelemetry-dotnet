@@ -19,10 +19,10 @@ using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.AddOpenTelemetry(logging =>
+// Remove default providers and add OpenTelemetry logging provider
+builder.Logging.ClearProviders().AddOpenTelemetry(logging =>
 {
     logging.IncludeScopes = true;
-    logging.ParseStateValues = true;
 
     var resourceBuilder = ResourceBuilder
         .CreateDefault()
