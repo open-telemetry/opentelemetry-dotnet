@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -32,12 +34,14 @@ internal
 #endif
     sealed class AlwaysOffExemplarFilter : ExemplarFilter
 {
-    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    /// <inheritdoc/>
+    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         return false;
     }
 
-    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    /// <inheritdoc/>
+    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         return false;
     }

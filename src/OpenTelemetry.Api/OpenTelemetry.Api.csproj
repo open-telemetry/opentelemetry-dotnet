@@ -3,8 +3,6 @@
     <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
     <Description>OpenTelemetry .NET API</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
-
-    <NoWarn>$(NoWarn),CS0618</NoWarn>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
 
     <!-- this is temporary. will remove in future PR. -->
