@@ -101,10 +101,10 @@ Have you opt-ed into the new Http Semantic Conventions using `OTEL_SEMCONV_STABI
     |-------|-----------------|------|-------------|
     | `http.server.request.duration` | Histogram | `s` | Measures the duration of inbound HTTP requests. |
 
-    This metric is emitted in "seconds" as per the semantic convention. While the convention
-    [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration)
-    , this feature is not yet available in OTel .NET. However, the OTel SDK includes a
-    [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+    This metric is emitted in "seconds" as per the semantic convention. While
+    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration)
+    , this feature is not yet available in OTel .NET. However, the OTel SDK
+    includes a [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
     using the recommended buckets.
 
 * If no, the instrumentation supports the following metric.
