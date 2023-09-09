@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Fix grpc exporter connecting error port when use insecure request on port 80 (net462 and netstandard2.0 only).
+* Fix grpc exporter connecting error port when use insecure request on port 80
+  (net462 and netstandard2.0 only).
   ([#4838](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4838))
 
 ## 1.6.0
