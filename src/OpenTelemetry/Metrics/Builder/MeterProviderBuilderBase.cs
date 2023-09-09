@@ -30,6 +30,9 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     private readonly bool allowBuild;
     private readonly MeterProviderServiceCollectionBuilder innerBuilder;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MeterProviderBuilderBase"/> class.
+    /// </summary>
     public MeterProviderBuilderBase()
     {
         var services = new ServiceCollection();

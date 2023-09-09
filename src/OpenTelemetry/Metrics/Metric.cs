@@ -14,12 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// Represents a Metric stream which can contain multiple MetricPoints.
+/// Represents a metric stream which can contain multiple metric points.
 /// </summary>
 public sealed class Metric
 {
@@ -52,7 +54,7 @@ public sealed class Metric
         AggregationTemporality temporality,
         int maxMetricPointsPerMetricStream,
         bool emitOverflowAttribute,
-        ExemplarFilter exemplarFilter = null)
+        ExemplarFilter? exemplarFilter = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
 
@@ -163,41 +165,61 @@ public sealed class Metric
         this.InstrumentDisposed = false;
     }
 
+    /// <summary>
+    /// Gets the <see cref="Metrics.MetricType"/> for the metric stream.
+    /// </summary>
     public MetricType MetricType { get; private set; }
 
+    /// <summary>
+    /// Gets the <see cref="AggregationTemporality"/> for the metric stream.
+    /// </summary>
     public AggregationTemporality Temporality { get; private set; }
 
+    /// <summary>
+    /// Gets the name for the metric stream.
+    /// </summary>
     public string Name => this.InstrumentIdentity.InstrumentName;
 
+    /// <summary>
+    /// Gets the description for the metric stream.
+    /// </summary>
     public string Description => this.InstrumentIdentity.Description;
 
+    /// <summary>
+    /// Gets the unit for the metric stream.
+    /// </summary>
     public string Unit => this.InstrumentIdentity.Unit;
 
+    /// <summary>
+    /// Gets the meter name for the metric stream.
+    /// </summary>
     public string MeterName => this.InstrumentIdentity.MeterName;
 
+    /// <summary>
+    /// Gets the meter version for the metric stream.
+    /// </summary>
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
+    /// <summary>
+    /// Gets the <see cref="MetricStreamIdentity"/> for the metric stream.
+    /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
     internal bool InstrumentDisposed { get; set; }
 
+    /// <summary>
+    /// Get the metric points for the metric stream.
+    /// </summary>
+    /// <returns><see cref="MetricPointsAccessor"/>.</returns>
     public MetricPointsAccessor GetMetricPoints()
-    {
-        return this.aggStore.GetMetricPoints();
-    }
+        => this.aggStore.GetMetricPoints();
 
-    internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        this.aggStore.Update(value, tags);
-    }
+    internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.aggStore.Update(value, tags);
 
-    internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        this.aggStore.Update(value, tags);
-    }
+    internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.aggStore.Update(value, tags);
 
     internal int Snapshot()
-    {
-        return this.aggStore.Snapshot();
-    }
+        => this.aggStore.Snapshot();
 }

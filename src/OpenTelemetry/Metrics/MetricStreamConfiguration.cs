@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -21,7 +23,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricStreamConfiguration
 {
-    private string name;
+    private string? name;
 
     /// <summary>
     /// Gets the drop configuration.
@@ -38,7 +40,7 @@ public class MetricStreamConfiguration
     /// <remarks>
     /// Note: If not provided the instrument name will be used.
     /// </remarks>
-    public string Name
+    public string? Name
     {
         get => this.name;
         set
@@ -58,7 +60,7 @@ public class MetricStreamConfiguration
     /// <remarks>
     /// Note: If not provided the instrument description will be used.
     /// </remarks>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// Gets or sets the optional tag keys to include in the metric stream.
@@ -75,7 +77,7 @@ public class MetricStreamConfiguration
     /// <item>A copy is made of the provided array.</item>
     /// </list>
     /// </remarks>
-    public string[] TagKeys
+    public string[]? TagKeys
     {
         get
         {
@@ -104,7 +106,7 @@ public class MetricStreamConfiguration
         }
     }
 
-    internal string[] CopiedTagKeys { get; private set; }
+    internal string[]? CopiedTagKeys { get; private set; }
 
     internal int? ViewId { get; set; }
 
