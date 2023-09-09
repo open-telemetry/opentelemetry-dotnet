@@ -32,6 +32,7 @@ MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "s
   [`TagList`](https://learn.microsoft.com/dotnet/api/system.diagnostics.taglist?view=net-7.0#remarks)
   avoids allocating any memory for up to eight tags, thereby, reducing the
   pressure on GC to free up memory.
+- Do not use TagList for `<3 tags`, as that will have poorer performance than directly passing.
 
 ```csharp
 var tags = new TagList
