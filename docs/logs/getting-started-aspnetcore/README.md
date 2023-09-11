@@ -84,7 +84,7 @@ the [log
 scopes](https://learn.microsoft.com/dotnet/core/extensions/logging#log-scopes).
 From the console output we can see the log scopes that are coming from the
 ASP.NET Core framework, and we can see logs from both our logger and the ASP.NET
-Core framework loggers.
+Core framework loggers, as indicated by the LogRecord.CategoryName.
 
 The example has demonstrated the best practice from ASP.NET Core by injecting
 generic `ILogger<T>`:
