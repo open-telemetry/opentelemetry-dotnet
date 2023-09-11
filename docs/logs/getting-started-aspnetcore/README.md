@@ -98,9 +98,10 @@ app.MapGet("/", (ILogger<Program> logger) =>
 });
 ```
 
-To achieve structured logging and high performance, [compile-time logging source
+[Compile-time logging source
 generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
-is used:
+has been used across the example. It is highly recommended due to the
+combination of high performance, structured logging, type-checked parameters:
 
 ```csharp
 public static partial class ApplicationLogs
