@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -21,5 +23,8 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public interface IPullMetricExporter
 {
-    Func<int, bool> Collect { get; set; }
+    /// <summary>
+    /// Gets or sets the Collect delegate.
+    /// </summary>
+    Func<int, bool>? Collect { get; set; }
 }
