@@ -315,22 +315,22 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryGetHistogramMinMaxValues(out double min, out double max)
     {
-        if (this.aggType == AggregationType.HistogramWithMinMax ||
-                        this.aggType == AggregationType.HistogramWithMinMaxBuckets)
+        if (this.aggType == AggregationType.HistogramWithMinMax
+            || this.aggType == AggregationType.HistogramWithMinMaxBuckets)
         {
-            Debug.Assert(this.mpComponents!.HistogramBuckets != null, "histogramBuckets was null");
+            Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
             min = this.mpComponents!.HistogramBuckets!.SnapshotMin;
-            max = this.mpComponents!.HistogramBuckets!.SnapshotMax;
+            max = this.mpComponents.HistogramBuckets.SnapshotMax;
             return true;
         }
 
         if (this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
-            Debug.Assert(this.mpComponents!.Base2ExponentialBucketHistogram != null, "base2ExponentialBucketHistogram was null");
+            Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
             min = this.mpComponents!.Base2ExponentialBucketHistogram!.SnapshotMin;
-            max = this.mpComponents!.Base2ExponentialBucketHistogram!.SnapshotMax;
+            max = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMax;
             return true;
         }
 
@@ -443,6 +443,8 @@ public struct MetricPoint
 
     internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
     {
+        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
+
         switch (this.aggType)
         {
             case AggregationType.LongSumIncomingDelta:
@@ -646,6 +648,8 @@ public struct MetricPoint
 
     internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
     {
+        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
+
         switch (this.aggType)
         {
             case AggregationType.DoubleSumIncomingDelta:
@@ -863,9 +867,9 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -900,9 +904,9 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
                     this.snapshotValue.AsLong = this.runningValue.AsLong;
@@ -923,9 +927,9 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -963,9 +967,9 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -991,9 +995,9 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                    Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-                    Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
@@ -1017,9 +1021,9 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                    Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-                    Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
@@ -1049,6 +1053,8 @@ public struct MetricPoint
 
     internal void TakeSnapshotWithExemplar(bool outputDelta)
     {
+        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
+
         switch (this.aggType)
         {
             case AggregationType.LongSumIncomingDelta:
@@ -1129,7 +1135,7 @@ public struct MetricPoint
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -1166,7 +1172,7 @@ public struct MetricPoint
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -1191,7 +1197,7 @@ public struct MetricPoint
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -1231,7 +1237,7 @@ public struct MetricPoint
                 {
                     var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
-                    Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -1260,7 +1266,7 @@ public struct MetricPoint
                 {
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
-                    Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+                    Debug.Assert(histogram != null, "histogram was null");
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
@@ -1286,7 +1292,7 @@ public struct MetricPoint
                 {
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
-                    Debug.Assert(this.mpComponents.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+                    Debug.Assert(histogram != null, "histogram was null");
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
@@ -1330,9 +1336,9 @@ public struct MetricPoint
 
     private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
+        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-        Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+        var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
         AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -1356,9 +1362,9 @@ public struct MetricPoint
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
+        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-        Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+        var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
         AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
@@ -1384,9 +1390,9 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
+        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-        Debug.Assert(this.mpComponents.HistogramBuckets != null, "HistogramBuckets was null");
+        var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
         int i = histogramBuckets!.FindBucketIndex(number);
 
@@ -1415,9 +1421,9 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
+        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "histogramBuckets was null");
 
-        Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
+        var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
         int i = histogramBuckets!.FindBucketIndex(number);
 
@@ -1456,9 +1462,9 @@ public struct MetricPoint
             return;
         }
 
-        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-        Debug.Assert(histogram != null, "histogram was null");
+        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
         AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
@@ -1481,9 +1487,9 @@ public struct MetricPoint
             return;
         }
 
-        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-        Debug.Assert(histogram != null, "histogram was null");
+        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
 
         AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
