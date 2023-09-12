@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
@@ -39,12 +41,12 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
         this.random = new Random();
     }
 
-    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
     {
         this.Offer(value, tags);
     }
 
-    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
     {
         this.Offer(value, tags);
     }
@@ -64,7 +66,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
                 // TODO: The cost is paid irrespective of whether the
                 // Exporter supports Exemplar or not. One idea is to
                 // defer this until first exporter attempts read.
-                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags!.Except(actualTags.KeyAndValues.ToList()).ToList();
             }
 
             if (reset)
@@ -77,7 +79,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
         return this.tempExemplars;
     }
 
-    private void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (this.measurementsSeen < this.poolSize)
         {
@@ -112,7 +114,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
         this.measurementsSeen++;
     }
 
-    private void StoreTags(ref Exemplar exemplar, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void StoreTags(ref Exemplar exemplar, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (tags == default)
         {
@@ -126,7 +128,7 @@ internal sealed class SimpleExemplarReservoir : ExemplarReservoir
 
         if (exemplar.FilteredTags == null)
         {
-            exemplar.FilteredTags = new List<KeyValuePair<string, object>>(tags.Length);
+            exemplar.FilteredTags = new List<KeyValuePair<string, object?>>(tags.Length);
         }
         else
         {

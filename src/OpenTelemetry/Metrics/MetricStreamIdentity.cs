@@ -14,16 +14,18 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
 
 internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 {
-    private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
+    private static readonly StringArrayEqualityComparer StringArrayComparer = new();
     private readonly int hashCode;
 
-    public MetricStreamIdentity(Instrument instrument, MetricStreamConfiguration metricStreamConfiguration)
+    public MetricStreamIdentity(Instrument instrument, MetricStreamConfiguration? metricStreamConfiguration)
     {
         this.MeterName = instrument.Meter.Name;
         this.MeterVersion = instrument.Meter.Version ?? string.Empty;
@@ -72,8 +74,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
             hash = (hash * 31) + this.ExponentialHistogramMaxSize.GetHashCode();
             hash = (hash * 31) + this.ExponentialHistogramMaxScale.GetHashCode();
-            hash = (hash * 31) + (this.Unit?.GetHashCode() ?? 0);
-            hash = (hash * 31) + (this.Description?.GetHashCode() ?? 0);
+            hash = (hash * 31) + this.Unit.GetHashCode();
+            hash = (hash * 31) + this.Description.GetHashCode();
             hash = (hash * 31) + (this.ViewId ?? 0);
             hash = (hash * 31) + (this.TagKeys != null ? StringArrayComparer.GetHashCode(this.TagKeys) : 0);
             if (this.HistogramBucketBounds != null)
@@ -106,9 +108,9 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public string MetricStreamName { get; }
 
-    public string[] TagKeys { get; }
+    public string[]? TagKeys { get; }
 
-    public double[] HistogramBucketBounds { get; }
+    public double[]? HistogramBucketBounds { get; }
 
     public int ExponentialHistogramMaxSize { get; }
 
@@ -120,7 +122,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public static bool operator !=(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
 
-    public readonly override bool Equals(object obj)
+    public override readonly bool Equals(object? obj)
     {
         return obj is MetricStreamIdentity other && this.Equals(other);
     }
@@ -141,9 +143,9 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
     }
 
-    public readonly override int GetHashCode() => this.hashCode;
+    public override readonly int GetHashCode() => this.hashCode;
 
-    private static bool HistogramBoundsEqual(double[] bounds1, double[] bounds2)
+    private static bool HistogramBoundsEqual(double[]? bounds1, double[]? bounds2)
     {
         if (ReferenceEquals(bounds1, bounds2))
         {
