@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-beta.1
+
+Released 2023-Sep-05
+
 * Fix: Do not raise `ArgumentException` if `Activity` behind the shim span
   has an invalid context.
   ([#2787](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2787))

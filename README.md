@@ -19,16 +19,7 @@ files.
 
 ## Project Status
 
-| Signal  | Status     |
-| ------- | ---------- |
-| Logs    | Stable*    |
-| Metrics | Stable     |
-| Traces  | Stable     |
-
-*While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
- stable, the [OTLP Exporter for
- Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#enable-log-exporter)
- is still non-stable.
+**Stable** across all 3 signals i.e. `Logs`, `Metrics`, and `Traces`.
 
 See [Spec Compliance
 Matrix](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spec-compliance-matrix.md)

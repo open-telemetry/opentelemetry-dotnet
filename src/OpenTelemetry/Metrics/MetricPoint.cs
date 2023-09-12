@@ -56,7 +56,7 @@ public struct MetricPoint
     internal MetricPoint(
         AggregatorStore aggregatorStore,
         AggregationType aggType,
-        KeyValuePair<string, object>[] tagKeysAndValues,
+        KeyValuePair<string, object?>[] tagKeysAndValues,
         double[] histogramExplicitBounds,
         int exponentialHistogramMaxSize,
         int exponentialHistogramMaxScale,
@@ -323,7 +323,7 @@ public struct MetricPoint
     /// <param name="max"> The histogram maximum value.</param>
     /// <returns>True if minimum and maximum value exist, false otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetHistogramMinMaxValues(out double min, out double max)
+    public readonly bool TryGetHistogramMinMaxValues(out double min, out double max)
     {
         if (this.aggType == AggregationType.HistogramWithMinMax ||
                         this.aggType == AggregationType.HistogramWithMinMaxBuckets)
@@ -456,7 +456,7 @@ public struct MetricPoint
         }
     }
 
-    internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object>> tags, bool isSampled)
+    internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
     {
         switch (this.aggType)
         {
@@ -663,7 +663,7 @@ public struct MetricPoint
         }
     }
 
-    internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object>> tags, bool isSampled)
+    internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
     {
         switch (this.aggType)
         {
@@ -894,7 +894,9 @@ public struct MetricPoint
                         histogramBuckets.RunningSum = 0;
                     }
 
-                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
                     {
                         histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
                         if (outputDelta)
@@ -952,7 +954,9 @@ public struct MetricPoint
                         histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
 
-                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
                     {
                         histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
                         if (outputDelta)
@@ -1142,7 +1146,9 @@ public struct MetricPoint
                         histogramBuckets.RunningSum = 0;
                     }
 
-                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
                     {
                         histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
                         if (outputDelta)
@@ -1202,7 +1208,9 @@ public struct MetricPoint
                         histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
 
-                    for (int i = 0; i < histogramBuckets.RunningBucketCounts.Length; i++)
+                    Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
+
+                    for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
                     {
                         histogramBuckets.SnapshotBucketCounts[i] = histogramBuckets.RunningBucketCounts[i];
                         if (outputDelta)
@@ -1314,7 +1322,7 @@ public struct MetricPoint
         Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
     }
 
-    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
@@ -1336,7 +1344,7 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
 
@@ -1360,10 +1368,12 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
         int i = histogramBuckets.FindBucketIndex(number);
+
+        Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
 
         AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
@@ -1371,7 +1381,7 @@ public struct MetricPoint
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningBucketCounts[i]++;
+            histogramBuckets.RunningBucketCounts![i]++;
             if (reportExemplar)
             {
                 // TODO: Need to ensure that the lock is always released.
@@ -1383,18 +1393,20 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets;
         int i = histogramBuckets.FindBucketIndex(number);
 
         AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
 
+        Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
+
         unchecked
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningBucketCounts[i]++;
+            histogramBuckets.RunningBucketCounts![i]++;
             if (reportExemplar)
             {
                 // TODO: Need to ensure that the lock is always released.
@@ -1410,7 +1422,7 @@ public struct MetricPoint
     }
 
 #pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
-    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
 #pragma warning restore IDE0060 // Remove unused parameter
     {
         if (number < 0)
@@ -1433,7 +1445,7 @@ public struct MetricPoint
     }
 
 #pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
-    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object>> tags = default, bool reportExemplar = false)
+    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
 #pragma warning restore IDE0060 // Remove unused parameter
     {
         if (number < 0)

@@ -238,6 +238,50 @@ public abstract class AggregatorTestsBase
         Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
     }
 
+    [Theory]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration")]
+    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration")]
+    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration")]
+    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue")]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration")]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration")]
+    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration")]
+    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration")]
+    [InlineData("System.Net.Http", "http.client.connection.duration")]
+    [InlineData("System.Net.Http", "http.client.request.duration")]
+    [InlineData("System.Net.Http", "http.client.request.time_in_queue")]
+    [InlineData("System.Net.NameResolution", "dns.lookups.duration")]
+    [InlineData("General.App", "simple.alternative.counter")]
+    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName)
+    {
+        RunTest(meterName, instrumentName, unit: "s");
+        RunTest(meterName, instrumentName, unit: "ms");
+        RunTest(meterName, instrumentName, unit: "By");
+        RunTest(meterName, instrumentName, unit: null);
+
+        void RunTest(string meterName, string instrumentName, string unit)
+        {
+            using var meter = new Meter(meterName);
+
+            var instrument = meter.CreateHistogram<double>(instrumentName, unit);
+
+            var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
+
+            AggregatorStore aggregatorStore = new(
+                metricStreamIdentity,
+                AggregationType.Histogram,
+                AggregationTemporality.Cumulative,
+                maxMetricPoints: 1024,
+                this.emitOverflowAttribute);
+
+            Assert.NotNull(aggregatorStore.HistogramBounds);
+            Assert.Equal(
+                unit == "s" && Metric.DefaultHistogramBoundMappings.Contains((meterName, instrumentName)) ?
+                    Metric.DefaultHistogramBoundsSeconds : Metric.DefaultHistogramBounds,
+                aggregatorStore.HistogramBounds);
+        }
+    }
+
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
     {
         Assert.Equal(expectedHistogram.Scale, data.Scale);
