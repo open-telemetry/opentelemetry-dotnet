@@ -95,11 +95,10 @@ public class MetricTests
         var metricPoints = GetMetricPoints(metric);
         Assert.Equal(2, metricPoints.Count);
 
-        AssertMetricPoints(
+        AssertMetricPoints_Old(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6,
-            validateOldSemConv: true);
+            expectedTagsCount: 6);
     }
 
     [Fact]
@@ -148,11 +147,10 @@ public class MetricTests
         var metricPoints = GetMetricPoints(metric);
         Assert.Equal(2, metricPoints.Count);
 
-        AssertMetricPoints(
+        AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 5,
-            validateNewSemConv: true);
+            expectedTagsCount: 5);
     }
 
     [Fact]
@@ -201,11 +199,10 @@ public class MetricTests
         var metricPoints = GetMetricPoints(metric);
         Assert.Equal(2, metricPoints.Count);
 
-        AssertMetricPoints(
+        AssertMetricPoints_Old(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6,
-            validateOldSemConv: true);
+            expectedTagsCount: 6);
 
         // Validate New Semantic Convention
         requestMetrics = metricItems
@@ -218,11 +215,10 @@ public class MetricTests
         metricPoints = GetMetricPoints(metric);
         Assert.Equal(2, metricPoints.Count);
 
-        AssertMetricPoints(
+        AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 5,
-            validateNewSemConv: true);
+            expectedTagsCount: 5);
     }
 
     [Fact]
@@ -268,7 +264,7 @@ public class MetricTests
 
         // Assert single because we filtered out one route
         var metricPoint = Assert.Single(GetMetricPoints(metric));
-        AssertMetricPoint(metricPoint, validateOldSemConv: true);
+        AssertMetricPoint_Old(metricPoint);
     }
 
     [Fact]
@@ -322,7 +318,7 @@ public class MetricTests
         var metric = Assert.Single(requestMetrics);
         var metricPoint = Assert.Single(GetMetricPoints(metric));
 
-        var tags = AssertMetricPoint(metricPoint, expectedTagsCount: StandardTagsCount + 2, validateOldSemConv: true);
+        var tags = AssertMetricPoint_Old(metricPoint, expectedTagsCount: StandardTagsCount + 2);
 
         Assert.Contains(tagsToAdd[0], tags);
         Assert.Contains(tagsToAdd[1], tags);
@@ -347,12 +343,10 @@ public class MetricTests
         return metricPoints;
     }
 
-    private static void AssertMetricPoints(
+    private static void AssertMetricPoints_New(
         List<MetricPoint> metricPoints,
         List<string> expectedRoutes,
-        int expectedTagsCount,
-        bool validateNewSemConv = false,
-        bool validateOldSemConv = false)
+        int expectedTagsCount)
     {
         // Assert that one MetricPoint exists for each ExpectedRoute
         foreach (var expectedRoute in expectedRoutes)
@@ -372,7 +366,7 @@ public class MetricTests
 
             if (metricPoint.HasValue)
             {
-                AssertMetricPoint(metricPoint.Value, expectedRoute, expectedTagsCount, validateNewSemConv, validateOldSemConv);
+                AssertMetricPoint_New(metricPoint.Value, expectedRoute, expectedTagsCount);
             }
             else
             {
@@ -381,12 +375,42 @@ public class MetricTests
         }
     }
 
-    private static KeyValuePair<string, object>[] AssertMetricPoint(
+    private static void AssertMetricPoints_Old(
+        List<MetricPoint> metricPoints,
+        List<string> expectedRoutes,
+        int expectedTagsCount)
+    {
+        // Assert that one MetricPoint exists for each ExpectedRoute
+        foreach (var expectedRoute in expectedRoutes)
+        {
+            MetricPoint? metricPoint = null;
+
+            foreach (var mp in metricPoints)
+            {
+                foreach (var tag in mp.Tags)
+                {
+                    if (tag.Key == SemanticConventions.AttributeHttpRoute && tag.Value.ToString() == expectedRoute)
+                    {
+                        metricPoint = mp;
+                    }
+                }
+            }
+
+            if (metricPoint.HasValue)
+            {
+                AssertMetricPoint_Old(metricPoint.Value, expectedRoute, expectedTagsCount);
+            }
+            else
+            {
+                Assert.Fail($"A metric for route '{expectedRoute}' was not found");
+            }
+        }
+    }
+
+    private static KeyValuePair<string, object>[] AssertMetricPoint_New(
         MetricPoint metricPoint,
         string expectedRoute = "api/Values",
-        int expectedTagsCount = StandardTagsCount,
-        bool validateNewSemConv = false,
-        bool validateOldSemConv = false)
+        int expectedTagsCount = StandardTagsCount)
     {
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
@@ -404,35 +428,16 @@ public class MetricTests
         // Inspect Attributes
         Assert.Equal(expectedTagsCount, attributes.Length);
 
-        if (validateNewSemConv)
-        {
-            var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "GET");
-            var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
-            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
-            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
-            var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
-            Assert.Contains(method, attributes);
-            Assert.Contains(scheme, attributes);
-            Assert.Contains(statusCode, attributes);
-            Assert.Contains(flavor, attributes);
-            Assert.Contains(route, attributes);
-        }
-
-        if (validateOldSemConv)
-        {
-            var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
-            var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
-            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
-            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
-            var host = new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, "localhost");
-            var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
-            Assert.Contains(method, attributes);
-            Assert.Contains(scheme, attributes);
-            Assert.Contains(statusCode, attributes);
-            Assert.Contains(flavor, attributes);
-            Assert.Contains(host, attributes);
-            Assert.Contains(route, attributes);
-        }
+        var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "GET");
+        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
+        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
+        var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
+        var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
+        Assert.Contains(method, attributes);
+        Assert.Contains(scheme, attributes);
+        Assert.Contains(statusCode, attributes);
+        Assert.Contains(flavor, attributes);
+        Assert.Contains(route, attributes);
 
         // Inspect Histogram Bounds
         var histogramBuckets = metricPoint.GetHistogramBuckets();
@@ -442,19 +447,58 @@ public class MetricTests
             histogramBounds.Add(t.ExplicitBound);
         }
 
-        if (validateNewSemConv)
+        Assert.Equal(
+            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+            actual: histogramBounds);
+
+        return attributes;
+    }
+
+    private static KeyValuePair<string, object>[] AssertMetricPoint_Old(
+        MetricPoint metricPoint,
+        string expectedRoute = "api/Values",
+        int expectedTagsCount = StandardTagsCount)
+    {
+        var count = metricPoint.GetHistogramCount();
+        var sum = metricPoint.GetHistogramSum();
+
+        Assert.Equal(1L, count);
+        Assert.True(sum > 0);
+
+        var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+        int i = 0;
+        foreach (var tag in metricPoint.Tags)
         {
-            Assert.Equal(
-                expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-                actual: histogramBounds);
+            attributes[i++] = tag;
         }
 
-        if (validateOldSemConv)
+        // Inspect Attributes
+        Assert.Equal(expectedTagsCount, attributes.Length);
+
+        var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
+        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
+        var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
+        var host = new KeyValuePair<string, object>(SemanticConventions.AttributeNetHostName, "localhost");
+        var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
+        Assert.Contains(method, attributes);
+        Assert.Contains(scheme, attributes);
+        Assert.Contains(statusCode, attributes);
+        Assert.Contains(flavor, attributes);
+        Assert.Contains(host, attributes);
+        Assert.Contains(route, attributes);
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = metricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
         {
-            Assert.Equal(
-                expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
-                actual: histogramBounds);
+            histogramBounds.Add(t.ExplicitBound);
         }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
+            actual: histogramBounds);
 
         return attributes;
     }
