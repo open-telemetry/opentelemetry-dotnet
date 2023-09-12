@@ -9,8 +9,10 @@
   [spec](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration)
   , replacing the previous `http.server.duration metric`, which measured time in
   milliseconds.
-  * Former buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000`
-  * New buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10`
+  * Former buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
+  5000, 7500, 10000`
+  * New buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1,
+  2.5, 5, 7.5, 10`
 
 ## 1.5.1-beta.1
 
