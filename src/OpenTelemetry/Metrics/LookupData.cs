@@ -22,7 +22,7 @@ internal sealed class LookupData
     public Tags SortedTags;
     public Tags GivenTags;
 
-    public LookupData(int index, Tags sortedTags, Tags givenTags)
+    public LookupData(int index, in Tags sortedTags, in Tags givenTags)
     {
         this.Index = index;
         this.SortedTags = sortedTags;

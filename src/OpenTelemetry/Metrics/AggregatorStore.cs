@@ -109,22 +109,25 @@ internal sealed class AggregatorStore
 
         this.emitOverflowAttribute = emitOverflowAttribute;
 
+        var reservedMetricPointsCount = 1;
+
         if (emitOverflowAttribute)
         {
             // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
             // Newer attributes should be added starting at the index: 2
             this.metricPointIndex = 1;
+            reservedMetricPointsCount++;
         }
 
         if (this.OutputDelta)
         {
-            this.availableMetricPoints = new Queue<int>(maxMetricPoints - 1);
+            this.availableMetricPoints = new Queue<int>(maxMetricPoints - reservedMetricPointsCount);
 
             // There is no overload which only takes capacity as the parameter
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
-            // We expect at the most (maxMetricPoints - 1) * 2 entries- one for sorted and one for unsorted input
+            // We expect at the most (maxMetricPoints - reservedMetricPointsCount) * 2 entries- one for sorted and one for unsorted input
             this.tagsToMetricPointIndexDictionaryDelta =
-                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (maxMetricPoints - 1) * 2);
+                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: (maxMetricPoints - reservedMetricPointsCount) * 2);
 
             this.metricPointReclamationThreshold = maxMetricPoints * 3 / 4;
 
@@ -792,7 +795,7 @@ internal sealed class AggregatorStore
         // Try to remove stale entries from dictionary
         // Get the index for a new MetricPoint (it could be self-claimed or from another thread that added a fresh entry)
         // If self-claimed, then add a fresh entry to the dictionary
-        // If an available MetricPoint is found, then increment the ReferenceCount
+        // If an available MetricPoint is found, then only increment the ReferenceCount
 
         // Delete the entry for these Tags and get another MetricPoint.
         lock (this.tagsToMetricPointIndexDictionaryDelta)

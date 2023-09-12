@@ -28,8 +28,9 @@ public struct MetricPoint
 {
     // Represents the number of update threads using this MetricPoint at any given point of time.
     // If the value is equal to int.MinValue which is -2147483648, it means that this MetricPoint is available for reuse.
-    // We never increment the ReferenceCount for MetricPoint with no tags (index == 0) but we always decrement it (in the Update methods).
-    // This should be fine. ReferenceCount doesn't matter for MetricPoint with no tags as it is never reclaimed.
+    // We never increment the ReferenceCount for MetricPoint with no tags (index == 0) and the MetricPoint for overflow attribute,
+    // but we always decrement it (in the Update methods). This should be fine.
+    // ReferenceCount doesn't matter for MetricPoint with no tags and overflow attribute as they are never reclaimed.
     internal int ReferenceCount;
 
     // When the AggregatorStore is reclaiming MetricPoints, this serves the purpose of validating the a given thread is using the right
