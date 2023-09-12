@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-* TODO: UPDATE THIS
+* Added new metric `http.server.request.duration` which replaces
+  `http.server.duration` if a user opted into the new semantic convention
+  by setting the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable.
+  This new metric is emitted in seconds and has unique histogram buckets.
 
 ## 1.5.1-beta.1
 
