@@ -2,11 +2,15 @@
 
 ## Unreleased
 
-* Added new metric `http.server.request.duration` which replaces
-  `http.server.duration` if a user opted into the new semantic convention
-  by setting the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable.
-  This new metric is emitted as seconds and has unique
-  [histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration).
+* Introduced a new metric, `http.server.request.duration`, for users who opt
+  into the new semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable. This metric measures time in seconds and offers unique
+  histogram buckets as per the
+  [spec](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration)
+  , replacing the previous `http.server.duration metric`, which measured time in
+  milliseconds.
+  * Former buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000`
+  * New buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10`
 
 ## 1.5.1-beta.1
 
