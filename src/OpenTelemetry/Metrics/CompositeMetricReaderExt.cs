@@ -26,47 +26,46 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed partial class CompositeMetricReader
 {
-    internal List<Metric> AddMetricsWithNoViews(Instrument instrument)
+    internal List<Metric?> AddMetricsWithNoViews(Instrument instrument)
     {
-        var metrics = new List<Metric>(this.count);
+        var metrics = new List<Metric?>(this.count);
+
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
-            var metric = cur.Value.AddMetricWithNoViews(instrument);
-            if (metric != null)
-            {
-                metrics.Add(metric);
-            }
+            metrics.Add(cur.Value.AddMetricWithNoViews(instrument));
         }
 
         return metrics;
     }
 
-    internal void RecordSingleStreamLongMeasurements(List<Metric> metrics, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    internal void RecordSingleStreamLongMeasurements(List<Metric?> metrics, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         Debug.Assert(metrics.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
         int index = 0;
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
-            if (metrics[index] != null)
+            var metric = metrics[index];
+            if (metric != null)
             {
-                cur.Value.RecordSingleStreamLongMeasurement(metrics[index], value, tags);
+                cur.Value.RecordSingleStreamLongMeasurement(metric, value, tags);
             }
 
             index++;
         }
     }
 
-    internal void RecordSingleStreamDoubleMeasurements(List<Metric> metrics, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    internal void RecordSingleStreamDoubleMeasurements(List<Metric?> metrics, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         Debug.Assert(metrics.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
         int index = 0;
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
-            if (metrics[index] != null)
+            var metric = metrics[index];
+            if (metric != null)
             {
-                cur.Value.RecordSingleStreamDoubleMeasurement(metrics[index], value, tags);
+                cur.Value.RecordSingleStreamDoubleMeasurement(metric, value, tags);
             }
 
             index++;
@@ -117,16 +116,17 @@ internal sealed partial class CompositeMetricReader
         }
     }
 
-    internal void CompleteSingleStreamMeasurements(List<Metric> metrics)
+    internal void CompleteSingleStreamMeasurements(List<Metric?> metrics)
     {
         Debug.Assert(metrics.Count == this.count, "The count of metrics to be updated for a CompositeReader must match the number of individual readers.");
 
         int index = 0;
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
-            if (metrics[index] != null)
+            var metric = metrics[index];
+            if (metric != null)
             {
-                cur.Value.CompleteSingleStreamMeasurement(metrics[index]);
+                cur.Value.CompleteSingleStreamMeasurement(metric);
             }
 
             index++;
