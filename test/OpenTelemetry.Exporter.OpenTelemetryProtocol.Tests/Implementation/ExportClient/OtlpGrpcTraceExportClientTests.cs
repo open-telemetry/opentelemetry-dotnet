@@ -31,11 +31,13 @@ public class OtlpGrpcTraceExportClientTests
     {
         var header1 = new
         {
-            Name = "hdr1", Value = "val1"
+            Name = "hdr1",
+            Value = "val1"
         };
         var header2 = new
         {
-            Name = "hdr2", Value = "val2"
+            Name = "hdr2",
+            Value = "val2"
         };
 
         var options = new OtlpExporterOptions
