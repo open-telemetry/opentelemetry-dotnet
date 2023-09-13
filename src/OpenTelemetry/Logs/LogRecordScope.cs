@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Collections;
 
 namespace OpenTelemetry.Logs;

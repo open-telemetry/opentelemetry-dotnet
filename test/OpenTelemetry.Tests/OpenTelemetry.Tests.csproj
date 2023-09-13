@@ -26,6 +26,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\ListenerHandler.cs" Link="Includes\ListenerHandler.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Metrics\Base2ExponentialBucketHistogramHelper.cs" Link="Includes\Metrics\Base2ExponentialBucketHistogramHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PooledList.cs" Link="Includes\PooledList.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagTransformerJsonHelper.cs" Link="Includes\TagTransformerJsonHelper.cs" />

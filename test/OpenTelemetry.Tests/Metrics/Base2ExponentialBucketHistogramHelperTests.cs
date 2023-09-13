@@ -1,4 +1,4 @@
-// <copyright file="Base2ExponentialBucketHistogram.LowerBoundary.Test.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialBucketHistogramHelperTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public partial class Base2ExponentialBucketHistogramTest
+public class Base2ExponentialBucketHistogramHelperTests
 {
     private readonly ITestOutputHelper output;
 
-    public Base2ExponentialBucketHistogramTest(ITestOutputHelper output)
+    public Base2ExponentialBucketHistogramHelperTests(ITestOutputHelper output)
     {
         this.output = output;
     }
@@ -54,7 +55,7 @@ public partial class Base2ExponentialBucketHistogramTest
 
         for (var index = minIndex; index <= maxIndex; ++index)
         {
-            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
+            var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
             if (lowerBound == double.Epsilon)
@@ -86,7 +87,7 @@ public partial class Base2ExponentialBucketHistogramTest
                 // is exclusive. That is:
                 //     MapToIndex(LowerBoundary(index)) == index - 1
                 Assert.Equal(index - 1, roundTrip);
-                roundTrip = histogram.MapToIndex(BitIncrement(lowerBound));
+                roundTrip = histogram.MapToIndex(MathHelper.BitIncrement(lowerBound));
                 Assert.Equal(index, roundTrip);
             }
         }
@@ -119,7 +120,7 @@ public partial class Base2ExponentialBucketHistogramTest
 
         for (var index = -indexesPerPowerOf2; index > minIndex; index -= indexesPerPowerOf2)
         {
-            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
+            var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
             // The round trip is off by one.
@@ -144,7 +145,7 @@ public partial class Base2ExponentialBucketHistogramTest
 
         for (var index = indexesPerPowerOf2; index < maxIndex; index += indexesPerPowerOf2)
         {
-            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
+            var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(index, scale);
             var roundTrip = histogram.MapToIndex(lowerBound);
 
             // The round trip is never off by one for positive indexes near powers of two.
@@ -162,7 +163,7 @@ public partial class Base2ExponentialBucketHistogramTest
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
         var maxIndex = histogram.MapToIndex(double.MaxValue);
 
-        var lowerBoundary = Base2ExponentialBucketHistogram.LowerBoundary(maxIndex, scale);
+        var lowerBoundary = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(maxIndex, scale);
         var roundTrip = histogram.MapToIndex(lowerBoundary);
         Assert.Equal(maxIndex - 1, roundTrip);
     }
@@ -174,7 +175,7 @@ public partial class Base2ExponentialBucketHistogramTest
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
         var minIndex = histogram.MapToIndex(double.Epsilon);
 
-        var lowerBoundary = Base2ExponentialBucketHistogram.LowerBoundary(minIndex, scale);
+        var lowerBoundary = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(minIndex, scale);
         var roundTrip = histogram.MapToIndex(lowerBoundary);
         Assert.Equal(minIndex, roundTrip);
     }
@@ -198,7 +199,7 @@ public partial class Base2ExponentialBucketHistogramTest
         }
 
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
-        var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(index, scale);
+        var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(index, scale);
         var roundTrip = histogram.MapToIndex(lowerBound);
 
         Assert.True((index == roundTrip) || (index - 1 == roundTrip));
@@ -212,7 +213,7 @@ public partial class Base2ExponentialBucketHistogramTest
         {
             for (; newRoundTrip != index - 1;)
             {
-                preciseLowerBound = BitDecrement(preciseLowerBound);
+                preciseLowerBound = MathHelper.BitDecrement(preciseLowerBound);
                 newRoundTrip = histogram.MapToIndex(preciseLowerBound);
                 ++increments;
             }
@@ -221,7 +222,7 @@ public partial class Base2ExponentialBucketHistogramTest
         {
             for (; newRoundTrip < index;)
             {
-                var newLowerBound = BitIncrement(preciseLowerBound);
+                var newLowerBound = MathHelper.BitIncrement(preciseLowerBound);
                 newRoundTrip = histogram.MapToIndex(newLowerBound);
 
                 if (newRoundTrip < index)
@@ -243,70 +244,4 @@ public partial class Base2ExponentialBucketHistogramTest
         var marginOfError = lowerBoundDelta / lowerBound;
         this.output.WriteLine($"{scale},{index},{unusedIndex},{lowerBound},{roundTrip},{preciseLowerBound},{lowerBoundDelta},{marginOfError},{increments}");
     }
-
-    // Math.BitIncrement was introduced in .NET Core 3.0.
-    // This is the implementation from:
-    // https://github.com/dotnet/runtime/blob/v7.0.0/src/libraries/System.Private.CoreLib/src/System/Math.cs#L259
-#pragma warning disable SA1204 // Static members should appear before non-static members
-#pragma warning disable SA1119 // Statement should not use unnecessary parenthesis
-    private static double BitIncrement(double x)
-    {
-#if NET6_0_OR_GREATER
-        return Math.BitIncrement(x);
-#else
-        long bits = BitConverter.DoubleToInt64Bits(x);
-
-        if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
-        {
-            // NaN returns NaN
-            // -Infinity returns double.MinValue
-            // +Infinity returns +Infinity
-
-            return (bits == unchecked((long)(0xFFF00000_00000000))) ? double.MinValue : x;
-        }
-
-        if (bits == unchecked((long)(0x80000000_00000000)))
-        {
-            // -0.0 returns double.Epsilon
-            return double.Epsilon;
-        }
-
-        // Negative values need to be decremented
-        // Positive values need to be incremented
-
-        bits += ((bits < 0) ? -1 : +1);
-        return BitConverter.Int64BitsToDouble(bits);
-#endif
-    }
-
-    private static double BitDecrement(double x)
-    {
-#if NET6_0_OR_GREATER
-        return Math.BitDecrement(x);
-#else
-        long bits = BitConverter.DoubleToInt64Bits(x);
-
-        if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
-        {
-            // NaN returns NaN
-            // -Infinity returns -Infinity
-            // +Infinity returns double.MaxValue
-            return (bits == 0x7FF00000_00000000) ? double.MaxValue : x;
-        }
-
-        if (bits == 0x00000000_00000000)
-        {
-            // +0.0 returns -double.Epsilon
-            return -double.Epsilon;
-        }
-
-        // Negative values need to be incremented
-        // Positive values need to be decremented
-
-        bits += ((bits < 0) ? +1 : -1);
-        return BitConverter.Int64BitsToDouble(bits);
-#endif
-    }
-#pragma warning restore SA1119 // Statement should not use unnecessary parenthesis
-#pragma warning restore SA1204 // Static members should appear before non-static members
 }

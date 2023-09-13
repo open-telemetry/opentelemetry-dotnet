@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES

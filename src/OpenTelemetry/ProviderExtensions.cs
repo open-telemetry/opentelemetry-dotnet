@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;

@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
