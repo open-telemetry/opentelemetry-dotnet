@@ -2,17 +2,25 @@
 
 ## Unreleased
 
-* Introduced a new metric, `http.server.request.duration`, for users who opt
-  into the new semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
-  environment variable. This metric measures time in seconds and offers unique
-  histogram buckets as per the
-  [spec](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration)
-  , replacing the previous `http.server.duration metric`, which measured time in
-  milliseconds.
-  * Former buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
-  5000, 7500, 10000`
-  * New buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1,
-  2.5, 5, 7.5, 10`
+* Introduced a new metric, `http.server.request.duration`, for users who opt-in
+  to the new semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable. This metric measures time in seconds and uses unique
+  histogram buckets as defined by the semantic conventions for Http
+  [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+  While the convention recommends using custom histogram buckets, this feature
+  is not yet available via .NET Metrics API. A
+  [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+  has been included in OTel SDK starting version `1.6.0` which applies
+  recommended buckets by default for this metric.
+  ([#4802](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4802))
+  * New metric: `http.server.request.duration`
+    * Unit: `seconds`
+    * Histogram Buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5,
+    0.75, 1,  2.5, 5, 7.5, 10`
+  * Replaces old metric: `http.server.duration`
+    * Unit: `miliseconds`
+    * Histogram Buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
+    5000, 7500, 10000`
 
 ## 1.5.1-beta.1
 
