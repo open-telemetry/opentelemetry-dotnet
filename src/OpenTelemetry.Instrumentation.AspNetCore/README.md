@@ -91,28 +91,30 @@ public void ConfigureServices(IServiceCollection services)
 #### List of metrics produced
 
 The instrumentation is implemented based on
-[metrics semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/4bbb8c907402caa90bc077214e8a2c78807c1ab9/docs/http/http-metrics.md).
+[metrics semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
 
-Have you opt-ed into the new Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`?
+A different metric is emitted depending if a user opts-in to the new Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
 
-* If yes, the instrumentation supports the following metric.
+* By default, the instrumentation emits the following metric.
+
+    | Name  | Instrument Type | Unit | Description |
+    |-------|-----------------|------|-------------|
+    | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+
+* If user sets the environment variable to `http`, the instrumentation emits the following metric.
 
     | Name  | Instrument Type | Unit | Description |
     |-------|-----------------|------|-------------|
     | `http.server.request.duration` | Histogram | `s` | Measures the duration of inbound HTTP requests. |
 
     This metric is emitted in `seconds` as per the semantic convention. While
-    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserverrequestduration)
+    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
     , this feature is not yet available via .NET Metrics API.
     A [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
     has been included in OTel SDK starting version `1.6.0` which applies
     recommended buckets by default for this metric.
 
-* If no, the instrumentation supports the following metric.
-
-    | Name  | Instrument Type | Unit | Description |
-    |-------|-----------------|------|-------------|
-    | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+* If user sets the environment variable to `http/dup`, the instrumentation emits both `http.server.duration` and `http.server.request.duration`.
 
 ## Advanced configuration
 
