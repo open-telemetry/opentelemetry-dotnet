@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Metrics;
