@@ -93,7 +93,8 @@ public void ConfigureServices(IServiceCollection services)
 The instrumentation is implemented based on
 [metrics semantic conventions](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
 
-A different metric is emitted depending if a user opts-in to the new Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
+A different metric is emitted depending if a user opts-in to the new Http
+Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
 
 * By default, the instrumentation emits the following metric.
 
@@ -101,7 +102,8 @@ A different metric is emitted depending if a user opts-in to the new Http Semant
     |-------|-----------------|------|-------------|
     | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
 
-* If user sets the environment variable to `http`, the instrumentation emits the following metric.
+* If user sets the environment variable to `http`, the instrumentation emits
+  the following metric.
 
     | Name  | Instrument Type | Unit | Description |
     |-------|-----------------|------|-------------|
@@ -114,7 +116,8 @@ A different metric is emitted depending if a user opts-in to the new Http Semant
     has been included in OTel SDK starting version `1.6.0` which applies
     recommended buckets by default for this metric.
 
-* If user sets the environment variable to `http/dup`, the instrumentation emits both `http.server.duration` and `http.server.request.duration`.
+* If user sets the environment variable to `http/dup`, the instrumentation
+  emits both `http.server.duration` and `http.server.request.duration`.
 
 ## Advanced configuration
 
