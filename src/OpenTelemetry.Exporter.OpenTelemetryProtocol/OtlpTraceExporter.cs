@@ -31,6 +31,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 {
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient;
+    private readonly OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler;
 
     private OtlpResource.Resource processResource;
 
@@ -39,7 +40,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options, new(), null)
+        : this(options, new(), null, null)
     {
     }
 
@@ -49,10 +50,12 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
     /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
     /// <param name="exportClient">Client used for sending export request.</param>
+    /// <param name="transmissionHandler">Transmission handler for retrying failed requests.</param>
     internal OtlpTraceExporter(
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
-        IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
+        IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null,
+        OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest> transmissionHandler = null)
     {
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
@@ -77,6 +80,11 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             this.exportClient = exporterOptions.GetTraceExportClient();
         }
+
+        transmissionHandler ??= new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>();
+
+        transmissionHandler.ExportClient = exportClient;
+        transmissionHandler.Options = exporterOptions;
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -93,7 +101,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             request.AddBatch(this.sdkLimitOptions, this.ProcessResource, activityBatch);
 
-            if (!this.exportClient.SendExportRequest(request))
+            if (!this.transmissionHandler.SubmitRequest(request))
             {
                 return ExportResult.Failure;
             }
@@ -114,6 +122,6 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
+        return this.transmissionHandler.ExportClient?.Shutdown(timeoutMilliseconds) ?? true;
     }
 }

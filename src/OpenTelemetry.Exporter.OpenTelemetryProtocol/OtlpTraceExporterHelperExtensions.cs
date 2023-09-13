@@ -20,6 +20,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Trace;
 
@@ -115,7 +116,10 @@ public static class OtlpTraceExporterHelperExtensions
     {
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions);
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(
+            exporterOptions,
+            sdkLimitOptions,
+            transmissionHandler: serviceProvider.GetRequiredService<OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>>());
 
         if (configureExporterInstance != null)
         {
