@@ -18,6 +18,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -45,12 +46,12 @@ internal sealed class AggregatorStore
     private readonly int metricPointReclamationThreshold;
 
     // This holds the reclaimed MetricPoints that are available for reuse.
-    private readonly Queue<int> availableMetricPoints;
+    private readonly Queue<int>? availableMetricPoints;
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
         new();
 
-    private readonly ConcurrentDictionary<Tags, LookupData> tagsToMetricPointIndexDictionaryDelta;
+    private readonly ConcurrentDictionary<Tags, LookupData>? tagsToMetricPointIndexDictionaryDelta;
 
     private readonly string name;
     private readonly string metricPointCapHitMessage;
@@ -65,7 +66,7 @@ internal sealed class AggregatorStore
     private readonly int maxMetricPoints;
     private readonly bool emitOverflowAttribute;
     private readonly ExemplarFilter exemplarFilter;
-    private readonly Func<KeyValuePair<string, object>[], int, int> lookupAggregatorStore;
+    private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
     private int metricPointIndex = 0;
     private int batchSize = 0;
@@ -292,9 +293,11 @@ internal sealed class AggregatorStore
                     // value has changed and thereby confirm that the MetricPoint has been reclaimed.
                     metricPoint.LookupData = null;
 
-                    lock (this.tagsToMetricPointIndexDictionaryDelta)
+                    Debug.Assert(this.tagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+
+                    lock (this.tagsToMetricPointIndexDictionaryDelta!)
                     {
-                        LookupData dictionaryValue;
+                        LookupData? dictionaryValue;
                         if (lookupData.SortedTags != Tags.EmptyTags)
                         {
                             // Check if no other thread added a new entry for the same Tags.
@@ -315,7 +318,9 @@ internal sealed class AggregatorStore
                             }
                         }
 
-                        this.availableMetricPoints.Enqueue(i);
+                        Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
+                        this.availableMetricPoints!.Enqueue(i);
                     }
                 }
 
@@ -413,7 +418,7 @@ internal sealed class AggregatorStore
             {
                 if (!this.overflowTagMetricPointInitialized)
                 {
-                    var keyValuePairs = new KeyValuePair<string, object>[] { new("otel.metric.overflow", true) };
+                    var keyValuePairs = new KeyValuePair<string, object?>[] { new("otel.metric.overflow", true) };
                     var tags = new Tags(keyValuePairs);
 
                     if (this.OutputDelta)
@@ -558,12 +563,14 @@ internal sealed class AggregatorStore
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int LookupAggregatorStoreForDeltaWithReclaim(KeyValuePair<string, object>[] tagKeysAndValues, int length)
+    private int LookupAggregatorStoreForDeltaWithReclaim(KeyValuePair<string, object?>[] tagKeysAndValues, int length)
     {
         int index;
         var givenTags = new Tags(tagKeysAndValues);
 
-        if (!this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out var lookupData))
+        Debug.Assert(this.tagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+
+        if (!this.tagsToMetricPointIndexDictionaryDelta!.TryGetValue(givenTags, out var lookupData))
         {
             if (length > 1)
             {
@@ -582,15 +589,17 @@ internal sealed class AggregatorStore
                     // so we need to make a deep copy for Dictionary storage.
                     if (length <= ThreadStaticStorage.MaxTagCacheSize)
                     {
-                        var givenTagKeysAndValues = new KeyValuePair<string, object>[length];
+                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
                         tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
-                        var sortedTagKeysAndValues = new KeyValuePair<string, object>[length];
+                        var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
                         tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
 
                         givenTags = new Tags(givenTagKeysAndValues);
                         sortedTags = new Tags(sortedTagKeysAndValues);
                     }
+
+                    Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
                     lock (this.tagsToMetricPointIndexDictionaryDelta)
                     {
@@ -600,7 +609,7 @@ internal sealed class AggregatorStore
                             if (this.reclaimMetricPoints)
                             {
                                 // Check for an available MetricPoint
-                                if (this.availableMetricPoints.Count > 0)
+                                if (this.availableMetricPoints!.Count > 0)
                                 {
                                     index = this.availableMetricPoints.Dequeue();
                                 }
@@ -640,11 +649,13 @@ internal sealed class AggregatorStore
                 // This else block is for tag length = 1
 
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                var givenTagKeysAndValues = new KeyValuePair<string, object>[length];
+                var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
 
                 tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
                 givenTags = new Tags(givenTagKeysAndValues);
+
+                Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
                 lock (this.tagsToMetricPointIndexDictionaryDelta)
                 {
@@ -654,7 +665,7 @@ internal sealed class AggregatorStore
                         if (this.reclaimMetricPoints)
                         {
                             // Check for an available MetricPoint
-                            if (this.availableMetricPoints.Count > 0)
+                            if (this.availableMetricPoints!.Count > 0)
                             {
                                 index = this.availableMetricPoints.Dequeue();
                             }
@@ -721,17 +732,25 @@ internal sealed class AggregatorStore
 
     // This method is always called under `lock(this.tagsToMetricPointIndexDictionaryDelta)` so it's safe with other code that adds or removes
     // entries from `this.tagsToMetricPointIndexDictionaryDelta`
-    private bool TryGetAvailableMetricPointRare(Tags givenTags, Tags sortedTags, int length, out LookupData lookupData)
+    private bool TryGetAvailableMetricPointRare(
+        Tags givenTags,
+        Tags sortedTags,
+        int length,
+        [NotNullWhen(true)]
+        out LookupData? lookupData)
     {
+        Debug.Assert(this.tagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+        Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
         int index;
         if (length > 1)
         {
             // check again after acquiring lock.
-            if (!this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData) &&
+            if (!this.tagsToMetricPointIndexDictionaryDelta!.TryGetValue(givenTags, out lookupData) &&
                 !this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
             {
                 // Check for an available MetricPoint
-                if (this.availableMetricPoints.Count > 0)
+                if (this.availableMetricPoints!.Count > 0)
                 {
                     index = this.availableMetricPoints.Dequeue();
                 }
@@ -758,10 +777,10 @@ internal sealed class AggregatorStore
         else
         {
             // check again after acquiring lock.
-            if (!this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData))
+            if (!this.tagsToMetricPointIndexDictionaryDelta!.TryGetValue(givenTags, out lookupData))
             {
                 // Check for an available MetricPoint
-                if (this.availableMetricPoints.Count > 0)
+                if (this.availableMetricPoints!.Count > 0)
                 {
                     index = this.availableMetricPoints.Dequeue();
                 }
@@ -801,10 +820,12 @@ internal sealed class AggregatorStore
         // If self-claimed, then add a fresh entry to the dictionary
         // If an available MetricPoint is found, then only increment the ReferenceCount
 
+        Debug.Assert(this.tagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+
         // Delete the entry for these Tags and get another MetricPoint.
-        lock (this.tagsToMetricPointIndexDictionaryDelta)
+        lock (this.tagsToMetricPointIndexDictionaryDelta!)
         {
-            LookupData dictionaryValue;
+            LookupData? dictionaryValue;
             if (lookupData.SortedTags != Tags.EmptyTags)
             {
                 // Check if no other thread added a new entry for the same Tags.
@@ -843,9 +864,11 @@ internal sealed class AggregatorStore
                 }
             }
 
-            if (!foundMetricPoint)
+            if (!foundMetricPoint
+                && this.TryGetAvailableMetricPointRare(inputTags, sortedTags, length, out var tempLookupData))
             {
-                foundMetricPoint = this.TryGetAvailableMetricPointRare(inputTags, sortedTags, length, out lookupData);
+                foundMetricPoint = true;
+                lookupData = tempLookupData;
             }
         }
 
@@ -863,7 +886,7 @@ internal sealed class AggregatorStore
         }
     }
 
-    private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
         {
