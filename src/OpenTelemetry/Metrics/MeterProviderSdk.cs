@@ -389,7 +389,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 // TODO: log
                 return;
@@ -493,7 +493,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument!.Name, "SDK internal error occurred.", "Contact SDK owners.");
                 return;
@@ -519,7 +519,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument!.Name, "SDK internal error occurred.", "Contact SDK owners.");
                 return;
