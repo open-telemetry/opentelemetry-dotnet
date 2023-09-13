@@ -15,7 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Resources;

@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Tests;
 

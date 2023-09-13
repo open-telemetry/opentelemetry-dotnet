@@ -17,11 +17,15 @@
 using System.Diagnostics;
 using System.Net;
 using Greet;
+#if NET6_0_OR_GREATER
 using Grpc.Core;
+#endif
 using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+#if NET6_0_OR_GREATER
 using OpenTelemetry.Context.Propagation;
+#endif
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;

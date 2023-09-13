@@ -15,7 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using OpenTelemetry.Exporter.ZPages.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;

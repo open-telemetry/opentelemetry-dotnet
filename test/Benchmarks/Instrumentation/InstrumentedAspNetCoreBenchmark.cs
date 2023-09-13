@@ -15,8 +15,6 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Net.Http;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 

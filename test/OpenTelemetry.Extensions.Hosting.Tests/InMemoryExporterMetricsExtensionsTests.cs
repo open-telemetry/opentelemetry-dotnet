@@ -16,11 +16,8 @@
 
 #if NET6_0_OR_GREATER
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Net;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

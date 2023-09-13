@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -41,23 +42,27 @@ namespace OpenTelemetry.Metrics
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly int maxMetricPoints;
+        private readonly MetricStreamIdentity id;
+        private ConcurrentQueue<int> freeMetricPoints;
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
 
         internal AggregatorStore(
-            string name,
+            MetricStreamIdentity id,
             AggregationType aggType,
             AggregationTemporality temporality,
             int maxMetricPoints,
             double[] histogramBounds,
             string[] tagKeysInteresting = null)
         {
-            this.name = name;
+            this.name = id.InstrumentName;
+            this.id = id;
             this.maxMetricPoints = maxMetricPoints;
             this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
             this.metricPoints = new MetricPoint[maxMetricPoints];
+            this.freeMetricPoints = null;
             this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
             this.outputDelta = temporality == AggregationTemporality.Delta;
@@ -123,7 +128,16 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(outputDelta: true);
+                // If the point is already stale when taking its snapshot, the instrument hasn't reported a measurement
+                // during this Collect cycle. For observable instruments, this means that the point can be reclaimed.
+                if (metricPoint.MetricPointStatus == MetricPointStatus.Stale)
+                {
+                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    continue;
+                }
+
+                metricPoint.TakeSnapshot(outputDelta: true, this.id.IsObservable);
+
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -144,7 +158,16 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(outputDelta: false);
+                // If the point is already stale when taking its snapshot, the instrument hasn't reported a measurement
+                // during this Collect cycle. For observable instruments, this means that the point can be reclaimed.
+                if (metricPoint.MetricPointStatus == MetricPointStatus.Stale /* && this.id.IsObservable */)
+                {
+                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    continue;
+                }
+
+                metricPoint.TakeSnapshot(outputDelta: false, this.id.IsObservable);
+
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -152,6 +175,60 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointsAccessor GetMetricPoints()
             => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+
+        internal void ReclaimMetricPoint(ref MetricPoint metricPoint, int idx)
+        {
+            if (this.freeMetricPoints == null)
+            {
+                return; // Ignore the stale point until the free list is initialized.
+            }
+
+            // Free list is available: Mark this metric point as free and remove its tag lookup entries.
+            metricPoint.MarkAsFree();
+            this.freeMetricPoints.Enqueue(idx);
+
+            // var tempSortedTags = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            // var i = 0;
+            // foreach (var tag in metricPoint.Tags)
+            // {
+            //     tempSortedTags[i++] = tag;
+            // }
+
+            // var sortedTags = new Tags(tempSortedTags);
+
+            // FIXME(alxbl): There's no way to retrieve the given order of tags here since MetricPoint.Tags is already sorted.
+            //               This implementation works but requires one scan of the dictionary per reclaim...
+            foreach (var kv in this.tagsToMetricPointIndexDictionary)
+            {
+                if (kv.Value == idx)
+                {
+                    this.tagsToMetricPointIndexDictionary.TryRemove(kv.Key, out _);
+                }
+            }
+
+            // this.tagsToMetricPointIndexDictionary.TryRemove(givenTags, out var _);  // TODO: Lock?
+            // this.tagsToMetricPointIndexDictionary.TryRemove(sortedTags, out var _);
+        }
+
+        // Called when there are no free points left: Finds all stale points and allocates the free list.
+        private void BuildFreeListSlow()
+        {
+            this.freeMetricPoints = new();
+
+            foreach (var kv in this.tagsToMetricPointIndexDictionary)
+            {
+                ref var metricPoint = ref this.metricPoints[kv.Value];
+                if (metricPoint.MetricPointStatus == MetricPointStatus.Stale || metricPoint.MetricPointStatus == MetricPointStatus.Free)
+                {
+                    this.tagsToMetricPointIndexDictionary.TryRemove(kv.Key, out _);
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.Stale)
+                    {
+                        this.freeMetricPoints.Enqueue(kv.Value); // Avoid adding the same index twice when givenTags 1= sortedTags.
+                        metricPoint.MarkAsFree();
+                    }
+                }
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()
@@ -192,14 +269,29 @@ namespace OpenTelemetry.Metrics
                         aggregatorIndex = this.metricPointIndex;
                         if (aggregatorIndex >= this.maxMetricPoints)
                         {
-                            // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
-                            return -1;
+                            // Build the free list if it's not already built.
+                            if (this.freeMetricPoints == null)
+                            {
+                                lock (this.tagsToMetricPointIndexDictionary)
+                                {
+                                    if (this.freeMetricPoints == null)
+                                    {
+                                        this.BuildFreeListSlow();
+                                    }
+                                }
+                            }
+
+                            if (this.freeMetricPoints.IsEmpty)
+                            {
+                                // sorry! out of data points.
+                                // TODO: Once we support cleanup of
+                                // unused points (typically with delta)
+                                // we can re-claim them here.
+                                return -1;
+                            }
                         }
 
-                        // Note: We are using storage from ThreadStatic (for upto MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
+                        // Note: We are using storage from ThreadStatic (for up to MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
                         // so we need to make a deep copy for Dictionary storage.
                         if (length <= ThreadStaticStorage.MaxTagCacheSize)
                         {
@@ -221,11 +313,17 @@ namespace OpenTelemetry.Metrics
                                 aggregatorIndex = ++this.metricPointIndex;
                                 if (aggregatorIndex >= this.maxMetricPoints)
                                 {
-                                    // sorry! out of data points.
-                                    // TODO: Once we support cleanup of
-                                    // unused points (typically with delta)
-                                    // we can re-claim them here.
-                                    return -1;
+                                    int freeIdx = 0;
+                                    if (!this.freeMetricPoints?.TryDequeue(out freeIdx) ?? true)
+                                    {
+                                        // sorry! out of data points.
+                                        // TODO: Once we support cleanup of
+                                        // unused points (typically with delta)
+                                        // we can re-claim them here.
+                                        return -1;
+                                    }
+
+                                    aggregatorIndex = freeIdx; // Re-use the free slot
                                 }
 
                                 ref var metricPoint = ref this.metricPoints[aggregatorIndex];
@@ -248,11 +346,26 @@ namespace OpenTelemetry.Metrics
                     aggregatorIndex = this.metricPointIndex;
                     if (aggregatorIndex >= this.maxMetricPoints)
                     {
-                        // sorry! out of data points.
-                        // TODO: Once we support cleanup of
-                        // unused points (typically with delta)
-                        // we can re-claim them here.
-                        return -1;
+                        // Build the free list if it's not already built.
+                        if (this.freeMetricPoints == null)
+                        {
+                            lock (this.tagsToMetricPointIndexDictionary)
+                            {
+                                if (this.freeMetricPoints == null)
+                                {
+                                    this.BuildFreeListSlow();
+                                }
+                            }
+                        }
+
+                        if (this.freeMetricPoints.IsEmpty)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
                     }
 
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
@@ -270,11 +383,17 @@ namespace OpenTelemetry.Metrics
                             aggregatorIndex = ++this.metricPointIndex;
                             if (aggregatorIndex >= this.maxMetricPoints)
                             {
-                                // sorry! out of data points.
-                                // TODO: Once we support cleanup of
-                                // unused points (typically with delta)
-                                // we can re-claim them here.
-                                return -1;
+                                int freeIdx = 0;
+                                if (!this.freeMetricPoints?.TryDequeue(out freeIdx) ?? true)
+                                {
+                                    // sorry! out of data points.
+                                    // TODO: Once we support cleanup of
+                                    // unused points (typically with delta)
+                                    // we can re-claim them here.
+                                    return -1;
+                                }
+
+                                aggregatorIndex = freeIdx; // Re-use the free slot
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];

@@ -31,6 +31,7 @@ namespace OpenTelemetry.Metrics
             this.Unit = instrument.Unit ?? string.Empty;
             this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
             this.InstrumentType = instrument.GetType();
+            this.IsObservable = instrument.IsObservable; // Used to determine how to mark points as stale.
             this.ViewId = metricStreamConfiguration?.ViewId;
             this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
             this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
@@ -89,6 +90,8 @@ namespace OpenTelemetry.Metrics
         public string MeterVersion { get; }
 
         public string InstrumentName { get; }
+
+        public bool IsObservable { get; }
 
         public string Unit { get; }
 

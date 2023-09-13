@@ -14,13 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class AggregatorTest
     {
-        private readonly AggregatorStore aggregatorStore = new("test", AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+        private static readonly Meter Meter = new(nameof(AggregatorTest), "1.0");
+        private static readonly Instrument Instrument = Meter.CreateCounter<int>("test");
+
+        private readonly AggregatorStore aggregatorStore = new(new MetricStreamIdentity(Instrument, null), AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
 
         [Fact]
         public void HistogramDistributeToAllBucketsDefault()
@@ -58,7 +62,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(10000);
             histogramPoint.Update(10001);
             histogramPoint.Update(10000000);
-            histogramPoint.TakeSnapshot(true);
+            histogramPoint.TakeSnapshot(true, isObserved: false);
 
             var count = histogramPoint.GetHistogramCount();
 
@@ -89,7 +93,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(11);
             histogramPoint.Update(19);
 
-            histogramPoint.TakeSnapshot(true);
+            histogramPoint.TakeSnapshot(true, isObserved: false);
 
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
@@ -135,7 +139,7 @@ namespace OpenTelemetry.Metrics.Tests
                 histogramPoint.Update(i);
             }
 
-            histogramPoint.TakeSnapshot(true);
+            histogramPoint.TakeSnapshot(true, isObserved: false);
 
             // Assert
             var index = 0;
@@ -167,7 +171,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(11);
             histogramPoint.Update(19);
 
-            histogramPoint.TakeSnapshot(true);
+            histogramPoint.TakeSnapshot(true, isObserved: false);
 
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 using Xunit.Sdk;

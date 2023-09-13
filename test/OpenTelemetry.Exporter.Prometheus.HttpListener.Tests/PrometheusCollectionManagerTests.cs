@@ -15,9 +15,6 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
-#if NETFRAMEWORK
-using System.Linq;
-#endif
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;

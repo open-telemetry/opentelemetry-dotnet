@@ -16,9 +16,6 @@
 
 using System.Diagnostics;
 using System.Net;
-#if !NETFRAMEWORK
-using System.Net.Http;
-#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;

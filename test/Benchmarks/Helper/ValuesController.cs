@@ -15,7 +15,6 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Benchmark.Helper

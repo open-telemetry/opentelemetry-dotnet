@@ -15,12 +15,8 @@
 // </copyright>
 
 #if NET6_0_OR_GREATER
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Threading;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;

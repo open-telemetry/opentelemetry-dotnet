@@ -101,7 +101,7 @@ namespace OpenTelemetry.Metrics
             private set;
         }
 
-        internal readonly bool IsInitialized => this.aggregatorStore != null;
+        internal readonly bool IsInitialized => this.aggregatorStore != null && this.MetricPointStatus != MetricPointStatus.Free;
 
         /// <summary>
         /// Gets the sum long value associated with the metric point.
@@ -269,6 +269,18 @@ namespace OpenTelemetry.Metrics
             return copy;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void MarkAsStale() => this.MetricPointStatus = MetricPointStatus.Stale;
+
+        /// <summary>
+        /// Marks a data point as unused.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void MarkAsFree()
+        {
+            this.MetricPointStatus = MetricPointStatus.Free;
+        }
+
         internal void Update(long number)
         {
             switch (this.aggType)
@@ -409,7 +421,7 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-        internal void TakeSnapshot(bool outputDelta)
+        internal void TakeSnapshot(bool outputDelta, bool isObserved)
         {
             switch (this.aggType)
             {
@@ -653,6 +665,15 @@ namespace OpenTelemetry.Metrics
 
                         break;
                     }
+            }
+
+            // Observable instruments are marked as stale. If the value is not observed
+            // in a subsequent collect cycle, the metric point can be reclaimed.
+            // This is safe because observable gauges are always queried synchronously during the
+            // Collect cycle. This cannot be used for non-observable instruments.
+            if (isObserved)
+            {
+                this.MarkAsStale();
             }
         }
 

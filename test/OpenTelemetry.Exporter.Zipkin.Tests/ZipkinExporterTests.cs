@@ -17,7 +17,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

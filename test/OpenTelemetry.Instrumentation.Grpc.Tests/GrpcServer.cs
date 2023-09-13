@@ -15,7 +15,6 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -49,7 +48,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     this.host.StartAsync().GetAwaiter().GetResult();
                     break;
                 }
-                catch (System.IO.IOException)
+                catch (IOException)
                 {
                     retryCount--;
                     this.host.Dispose();
