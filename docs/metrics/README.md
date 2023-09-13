@@ -27,11 +27,15 @@ MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"), new("taste", "s
 MyFruitCounter.Add(7, new("color", "red"), new("name", "apple"), new("taste", "sweet")); // <--- DON'T DO THIS
 ```
 
-- When emitting metrics with more than three tags, use `TagList` for better
-  performance. Using
+For the best performance, it is highly recommended to pass in tags in certain
+ways so allocations are only happening on the stack rather than the heap,
+which eliminates pressure on the GC (garbage collector):
+
+- When reporting measurements with 3 tags or less,
+  emit the tags individually.
+- When reporting measurements with more than 3 tags, use
   [`TagList`](https://learn.microsoft.com/dotnet/api/system.diagnostics.taglist?view=net-7.0#remarks)
-  avoids allocating any memory for up to eight tags, thereby, reducing the
-  pressure on GC to free up memory.
+  for better performance.
 
 ```csharp
 var tags = new TagList
