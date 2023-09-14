@@ -14,7 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -153,7 +156,7 @@ internal sealed partial class CompositeMetricReader : MetricReader
 
     public struct Enumerator
     {
-        private DoublyLinkedListNode node;
+        private DoublyLinkedListNode? node;
 
         internal Enumerator(DoublyLinkedListNode node)
         {
@@ -161,6 +164,7 @@ internal sealed partial class CompositeMetricReader : MetricReader
             this.Current = null;
         }
 
+        [AllowNull]
         public MetricReader Current { get; private set; }
 
         public bool MoveNext()
@@ -185,8 +189,8 @@ internal sealed partial class CompositeMetricReader : MetricReader
             this.Value = value;
         }
 
-        public DoublyLinkedListNode Previous { get; set; }
+        public DoublyLinkedListNode? Previous { get; set; }
 
-        public DoublyLinkedListNode Next { get; set; }
+        public DoublyLinkedListNode? Next { get; set; }
     }
 }

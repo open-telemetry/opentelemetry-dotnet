@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 
@@ -38,7 +40,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
     internal int IsCriticalSectionOccupied = 0;
 
-    internal ExponentialHistogramData SnapshotExponentialHistogramData = new ExponentialHistogramData();
+    internal ExponentialHistogramData SnapshotExponentialHistogramData = new();
 
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
@@ -237,11 +239,13 @@ internal sealed partial class Base2ExponentialBucketHistogram
     internal Base2ExponentialBucketHistogram Copy()
     {
         Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
-        var copy = new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale);
-        copy.SnapshotSum = this.SnapshotSum;
-        copy.SnapshotMin = this.SnapshotMin;
-        copy.SnapshotMax = this.SnapshotMax;
-        copy.SnapshotExponentialHistogramData = this.SnapshotExponentialHistogramData.Copy();
-        return copy;
+
+        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale)
+        {
+            SnapshotSum = this.SnapshotSum,
+            SnapshotMin = this.SnapshotMin,
+            SnapshotMax = this.SnapshotMax,
+            SnapshotExponentialHistogramData = this.SnapshotExponentialHistogramData.Copy(),
+        };
     }
 }

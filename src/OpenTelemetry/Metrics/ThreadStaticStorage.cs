@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -24,7 +27,7 @@ internal sealed class ThreadStaticStorage
     internal const int MaxTagCacheSize = 8;
 
     [ThreadStatic]
-    private static ThreadStaticStorage storage;
+    private static ThreadStaticStorage? storage;
 
     private readonly TagStorage[] primaryTagStorage = new TagStorage[MaxTagCacheSize];
     private readonly TagStorage[] secondaryTagStorage = new TagStorage[MaxTagCacheSize];
@@ -40,17 +43,13 @@ internal sealed class ThreadStaticStorage
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ThreadStaticStorage GetStorage()
-    {
-        if (storage == null)
-        {
-            storage = new ThreadStaticStorage();
-        }
-
-        return storage;
-    }
+        => storage ??= new ThreadStaticStorage();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out KeyValuePair<string, object>[] tagKeysAndValues)
+    internal void SplitToKeysAndValues(
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        int tagLength,
+        out KeyValuePair<string, object?>[] tagKeysAndValues)
     {
         Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
 
@@ -60,14 +59,19 @@ internal sealed class ThreadStaticStorage
         }
         else
         {
-            tagKeysAndValues = new KeyValuePair<string, object>[tagLength];
+            tagKeysAndValues = new KeyValuePair<string, object?>[tagLength];
         }
 
         tags.CopyTo(tagKeysAndValues);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out KeyValuePair<string, object>[] tagKeysAndValues, out int actualLength)
+    internal void SplitToKeysAndValues(
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        int tagLength,
+        HashSet<string> tagKeysInteresting,
+        out KeyValuePair<string, object?>[]? tagKeysAndValues,
+        out int actualLength)
     {
         // We do not know ahead the actual length, so start with max possible length.
         var maxLength = Math.Min(tagKeysInteresting.Count, tagLength);
@@ -81,7 +85,7 @@ internal sealed class ThreadStaticStorage
         }
         else
         {
-            tagKeysAndValues = new KeyValuePair<string, object>[maxLength];
+            tagKeysAndValues = new KeyValuePair<string, object?>[maxLength];
         }
 
         actualLength = 0;
@@ -90,7 +94,9 @@ internal sealed class ThreadStaticStorage
             // Copy only interesting tags, and keep count.
             if (tagKeysInteresting.Contains(tags[n].Key))
             {
-                tagKeysAndValues[actualLength] = tags[n];
+                Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
+
+                tagKeysAndValues![actualLength] = tags[n];
                 actualLength++;
             }
         }
@@ -110,7 +116,10 @@ internal sealed class ThreadStaticStorage
                 tagKeysAndValues = null;
                 return;
             }
-            else if (actualLength <= MaxTagCacheSize)
+
+            Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
+
+            if (actualLength <= MaxTagCacheSize)
             {
                 var tmpTagKeysAndValues = this.primaryTagStorage[actualLength - 1].TagKeysAndValues;
 
@@ -120,7 +129,7 @@ internal sealed class ThreadStaticStorage
             }
             else
             {
-                var tmpTagKeysAndValues = new KeyValuePair<string, object>[actualLength];
+                var tmpTagKeysAndValues = new KeyValuePair<string, object?>[actualLength];
 
                 Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
 
@@ -130,7 +139,10 @@ internal sealed class ThreadStaticStorage
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void CloneKeysAndValues(KeyValuePair<string, object>[] inputTagKeysAndValues, int tagLength, out KeyValuePair<string, object>[] clonedTagKeysAndValues)
+    internal void CloneKeysAndValues(
+        KeyValuePair<string, object?>[] inputTagKeysAndValues,
+        int tagLength,
+        out KeyValuePair<string, object?>[] clonedTagKeysAndValues)
     {
         Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}", $"{nameof(tagLength)}");
 
@@ -140,7 +152,7 @@ internal sealed class ThreadStaticStorage
         }
         else
         {
-            clonedTagKeysAndValues = new KeyValuePair<string, object>[tagLength];
+            clonedTagKeysAndValues = new KeyValuePair<string, object?>[tagLength];
         }
 
         Array.Copy(inputTagKeysAndValues, 0, clonedTagKeysAndValues, 0, tagLength);
@@ -149,11 +161,11 @@ internal sealed class ThreadStaticStorage
     internal sealed class TagStorage
     {
         // Used to split into Key sequence, Value sequence.
-        internal readonly KeyValuePair<string, object>[] TagKeysAndValues;
+        internal readonly KeyValuePair<string, object?>[] TagKeysAndValues;
 
         internal TagStorage(int n)
         {
-            this.TagKeysAndValues = new KeyValuePair<string, object>[n];
+            this.TagKeysAndValues = new KeyValuePair<string, object?>[n];
         }
     }
 }
