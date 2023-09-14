@@ -3,32 +3,33 @@
 ## Unreleased
 
 * Introduced a new metric, `http.server.request.duration` measured in seconds.
-  Starting in version 1.6.0, the OTel SDK
+  The OTel SDK
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
   for this metric to comply with the
   [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
-  This new metric is only available for users who opt-in to the new new
+  This new metric is only available for users who opt-in to the new
   semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
   environment variable to either `http` (to emit only the new metric) or
-  `http/dup` (to emit both the new and old metrics). 
+  `http/dup` (to emit both the new and old metrics).
   ([#4802](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4802))
   * New metric: `http.server.request.duration`
-    * Unit: `seconds`
+    * Unit: `s` (seconds)
     * Histogram Buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5,
     0.75, 1,  2.5, 5, 7.5, 10`
-  * Replaces old metric: `http.server.duration`
-    * Unit: `miliseconds`
+  * Old metric: `http.server.duration`
+    * Unit: `ms` (milliseconds)
     * Histogram Buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
     5000, 7500, 10000`
 
    Note: the older `http.server.duration` metric will eventually be removed
    after the HTTP semantic conventions are marked stable.
    At which time this instrumentation can receive a stable release, and the old
-   HTTP and network semantic conventions will no longer be supported. Refer to
-   the specification for more information regarding the new HTTP and network
-   semantic conventions for both spans and metrics.
- 
-
+   HTTP semantic conventions will no longer be supported. Refer to
+   the specification for more information regarding the new HTTP
+   semantic conventions for both
+   [spans](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-spans.md)
+   and
+   [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
 
 ## 1.5.1-beta.1
 
