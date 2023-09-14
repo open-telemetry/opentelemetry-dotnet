@@ -2,16 +2,15 @@
 
 ## Unreleased
 
-* Introduced a new metric, `http.server.request.duration`, for users who opt-in
-  to the new semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
-  environment variable. This metric measures time in seconds and uses unique
-  histogram buckets as defined by the semantic conventions for Http
-  [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
-  While the convention recommends using custom histogram buckets, this feature
-  is not yet available via .NET Metrics API. A
-  [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
-  has been included in OTel SDK starting version `1.6.0` which applies
-  recommended buckets by default for this metric.
+* Introduced a new metric, `http.server.request.duration` measured in seconds.
+  Starting in version 1.6.0, the OTel SDK
+  [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+  for this metric to comply with the
+  [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
+  This new metric is only available for users who opt-in to the new new
+  semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable to either `http` (to emit only the new metric) or
+  `http/dup` (to emit both the new and old metrics). 
   ([#4802](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4802))
   * New metric: `http.server.request.duration`
     * Unit: `seconds`
@@ -21,6 +20,15 @@
     * Unit: `miliseconds`
     * Histogram Buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
     5000, 7500, 10000`
+
+   Note: the older `http.server.duration` metric will eventually be removed
+   after the HTTP semantic conventions are marked stable.
+   At which time this instrumentation can receive a stable release, and the old
+   HTTP and network semantic conventions will no longer be supported. Refer to
+   the specification for more information regarding the new HTTP and network
+   semantic conventions for both spans and metrics.
+ 
+
 
 ## 1.5.1-beta.1
 
