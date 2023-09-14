@@ -21,12 +21,12 @@
     * Histogram Buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
     5000, 7500, 10000`
 
-   Note: the older `http.server.duration` metric will eventually be removed
-   after the HTTP semantic conventions are marked stable.
-   At which time this instrumentation can receive a stable release, and the old
-   HTTP semantic conventions will no longer be supported. Refer to
-   the specification for more information regarding the new HTTP
-   semantic conventions for both
+   Note: the older `http.server.duration` metric and
+   `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable will eventually be
+   removed after the HTTP semantic conventions are marked stable.
+   At which time this instrumentation can publish a stable release. Refer to
+   the specification for more information regarding the new HTTP semantic
+   conventions for both
    [spans](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-spans.md)
    and
    [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
