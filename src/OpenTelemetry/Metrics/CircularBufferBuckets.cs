@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -25,7 +27,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class CircularBufferBuckets
 {
-    private long[] trait;
+    private long[]? trait;
     private int begin = 0;
     private int end = -1;
 
@@ -62,7 +64,12 @@ internal sealed class CircularBufferBuckets
     /// </remarks>
     public long this[int index]
     {
-        get => this.trait[this.ModuloIndex(index)];
+        get
+        {
+            Debug.Assert(this.trait != null, "trait was null");
+
+            return this.trait![this.ModuloIndex(index)];
+        }
     }
 
     /// <summary>

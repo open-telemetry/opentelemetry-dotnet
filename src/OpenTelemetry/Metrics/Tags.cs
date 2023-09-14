@@ -14,13 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 internal readonly struct Tags : IEquatable<Tags>
 {
     private readonly int hashCode;
 
-    public Tags(KeyValuePair<string, object>[] keyValuePairs)
+    public Tags(KeyValuePair<string, object?>[] keyValuePairs)
     {
         this.KeyValuePairs = keyValuePairs;
 
@@ -50,13 +52,13 @@ internal readonly struct Tags : IEquatable<Tags>
         this.hashCode = hash;
     }
 
-    public readonly KeyValuePair<string, object>[] KeyValuePairs { get; }
+    public readonly KeyValuePair<string, object?>[] KeyValuePairs { get; }
 
     public static bool operator ==(Tags tag1, Tags tag2) => tag1.Equals(tag2);
 
     public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
 
-    public override readonly bool Equals(object obj)
+    public override readonly bool Equals(object? obj)
     {
         return obj is Tags other && this.Equals(other);
     }
