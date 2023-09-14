@@ -90,8 +90,8 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-A different metric is emitted depending if a user opts-in to the new Http
-Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
+A different metric is emitted depending on whether a user opts-in to the new
+Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
 
 * By default, the instrumentation emits the following metric.
 
