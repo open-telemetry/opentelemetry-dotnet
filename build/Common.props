@@ -1,5 +1,7 @@
 <Project>
   <PropertyGroup>
+    <CompanyName>Genetec</CompanyName>
+    <PackageId>$(CompanyName).$(MSBuildProjectName)</PackageId>
     <LangVersion>10.0</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
