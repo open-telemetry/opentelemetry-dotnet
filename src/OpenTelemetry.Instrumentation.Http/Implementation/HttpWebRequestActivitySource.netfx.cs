@@ -17,6 +17,7 @@
 #if NETFRAMEWORK
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -39,12 +40,15 @@ internal static class HttpWebRequestActivitySource
     internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
     internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
+    internal static readonly string MeterInstrumentationName = AssemblyName.Name;
 
     internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
     internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
     private static readonly Version Version = AssemblyName.Version;
     private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+    private static readonly Meter WebRequestMeter = new Meter(MeterInstrumentationName, Version.ToString());
+    private static readonly Histogram<double> HttpClientDuration;
 
     private static HttpClientInstrumentationOptions options;
 
@@ -87,6 +91,7 @@ internal static class HttpWebRequestActivitySource
             PerformInjection();
 
             Options = new HttpClientInstrumentationOptions();
+            HttpClientDuration = WebRequestMeter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         }
         catch (Exception ex)
         {
@@ -265,17 +270,6 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessRequest(HttpWebRequest request)
     {
-        if (!WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request))
-        {
-            // No subscribers to the ActivitySource or User provider Filter is
-            // filtering this request.
-            // Propagation must still be done in such cases, to allow
-            // downstream services to continue from parent context, if any.
-            // Eg: Parent could be the Asp.Net activity.
-            InstrumentRequest(request, Activity.Current?.Context ?? default);
-            return;
-        }
-
         if (IsRequestInstrumented(request))
         {
             // This request was instrumented by previous
@@ -283,17 +277,23 @@ internal static class HttpWebRequestActivitySource
             return;
         }
 
-        var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+        // No subscribers to the ActivitySource or User provider Filter is
+        // filtering this request.
+        var skipTracing = !WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request);
+        var activity = skipTracing
+            ? new Activity("filtered")
+            : WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
         var activityContext = Activity.Current?.Context ?? default;
 
         // Propagation must still be done in all cases, to allow
         // downstream services to continue from parent context, if any.
         // Eg: Parent could be the Asp.Net activity.
         InstrumentRequest(request, activityContext);
+
+        // There is a listener but it decided not to sample the current request.
         if (activity == null)
         {
-            // There is a listener but it decided not to sample the current request.
-            return;
+            activity = new Activity("test");
         }
 
         IAsyncResult asyncContext = writeAResultAccessor(request);
@@ -340,7 +340,7 @@ internal static class HttpWebRequestActivitySource
         if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
         {
             // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true);
+            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true, request, -1);
             return;
         }
 
@@ -349,8 +349,15 @@ internal static class HttpWebRequestActivitySource
         asyncCallbackModifier(readAsyncContext, callback.AsyncCallback);
     }
 
-    private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
+    private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
+        HttpClientDuration.Record(activity.Duration.TotalMilliseconds);
+
+        if (activity.DisplayName == "detached")
+        {
+            return;
+        }
+
         // We could be executing on a different thread now so restore the activity if needed.
         if (Activity.Current != activity)
         {
@@ -1122,12 +1129,21 @@ internal static class HttpWebRequestActivitySource
 
         public AsyncCallback OriginalCallback { get; }
 
+        public long StartTimestamp { get; }
+
         public void AsyncCallback(IAsyncResult asyncResult)
         {
             object result = resultAccessor(asyncResult);
             if (result is Exception || result is HttpWebResponse)
             {
-                ProcessResult(asyncResult, this.OriginalCallback, this.Activity, result, false);
+                ProcessResult(
+                    asyncResult,
+                    this.OriginalCallback,
+                    this.Activity,
+                    result,
+                    forceResponseCopy: false,
+                    this.Request,
+                    this.StartTimestamp);
             }
 
             this.OriginalCallback?.Invoke(asyncResult);
