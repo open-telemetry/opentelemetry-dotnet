@@ -22,6 +22,29 @@ namespace OpenTelemetry.Tests.Shared;
 
 public class HttpSemanticConventionHelperTest
 {
+    public static IEnumerable<object[]> TestCases => new List<object[]>
+        {
+            new object[] { null,  HttpSemanticConvention.Old },
+            new object[] { string.Empty,  HttpSemanticConvention.Old },
+            new object[] { " ",  HttpSemanticConvention.Old },
+            new object[] { "junk",  HttpSemanticConvention.Old },
+            new object[] { "none",  HttpSemanticConvention.Old },
+            new object[] { "NONE",  HttpSemanticConvention.Old },
+            new object[] { "http",  HttpSemanticConvention.New },
+            new object[] { "HTTP",  HttpSemanticConvention.New },
+            new object[] { "http/dup",  HttpSemanticConvention.Dupe },
+            new object[] { "HTTP/DUP",  HttpSemanticConvention.Dupe },
+            new object[] { "junk,,junk",  HttpSemanticConvention.Old },
+            new object[] { "junk,JUNK",  HttpSemanticConvention.Old },
+            new object[] { "junk1,junk2",  HttpSemanticConvention.Old },
+            new object[] { "junk,http",  HttpSemanticConvention.New },
+            new object[] { "junk,http , http ,junk",  HttpSemanticConvention.New },
+            new object[] { "junk,http/dup",  HttpSemanticConvention.Dupe },
+            new object[] { "junk, http/dup ",  HttpSemanticConvention.Dupe },
+            new object[] { "http/dup,http",  HttpSemanticConvention.Dupe },
+            new object[] { "http,http/dup",  HttpSemanticConvention.Dupe },
+        };
+
     [Fact]
     public void VerifyFlags()
     {
@@ -38,40 +61,15 @@ public class HttpSemanticConventionHelperTest
         Assert.True(testValue.HasFlag(HttpSemanticConvention.New));
     }
 
-    [Fact]
-    public void VerifyGetSemanticConventionOptIn()
-    {
-        RunTestWithEnvironmentVariable(null, HttpSemanticConvention.Old);
-        RunTestWithEnvironmentVariable(string.Empty, HttpSemanticConvention.Old);
-        RunTestWithEnvironmentVariable("junk", HttpSemanticConvention.Old);
-        RunTestWithEnvironmentVariable("none", HttpSemanticConvention.Old);
-        RunTestWithEnvironmentVariable("NONE", HttpSemanticConvention.Old);
-        RunTestWithEnvironmentVariable("http", HttpSemanticConvention.New);
-        RunTestWithEnvironmentVariable("HTTP", HttpSemanticConvention.New);
-        RunTestWithEnvironmentVariable("http/dup", HttpSemanticConvention.Dupe);
-        RunTestWithEnvironmentVariable("HTTP/DUP", HttpSemanticConvention.Dupe);
-    }
-
-    [Fact]
-    public void VerifyGetSemanticConventionOptInUsingIConfiguration()
-    {
-        RunTestWithIConfiguration(null, HttpSemanticConvention.Old);
-        RunTestWithIConfiguration(string.Empty, HttpSemanticConvention.Old);
-        RunTestWithIConfiguration("junk", HttpSemanticConvention.Old);
-        RunTestWithIConfiguration("none", HttpSemanticConvention.Old);
-        RunTestWithIConfiguration("NONE", HttpSemanticConvention.Old);
-        RunTestWithIConfiguration("http", HttpSemanticConvention.New);
-        RunTestWithIConfiguration("HTTP", HttpSemanticConvention.New);
-        RunTestWithIConfiguration("http/dup", HttpSemanticConvention.Dupe);
-        RunTestWithIConfiguration("HTTP/DUP", HttpSemanticConvention.Dupe);
-    }
-
-    private static void RunTestWithEnvironmentVariable(string value, HttpSemanticConvention expected)
+    [Theory]
+    [MemberData(nameof(TestCases))]
+    public void VerifyGetSemanticConventionOptIn_UsingEnvironmentVariable(string input, string expectedValue)
     {
         try
         {
-            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, value);
+            Environment.SetEnvironmentVariable(SemanticConventionOptInKeyName, input);
 
+            var expected = Enum.Parse(typeof(HttpSemanticConvention), expectedValue);
             Assert.Equal(expected, GetSemanticConventionOptIn(new ConfigurationBuilder().AddEnvironmentVariables().Build()));
         }
         finally
@@ -80,12 +78,15 @@ public class HttpSemanticConventionHelperTest
         }
     }
 
-    private static void RunTestWithIConfiguration(string value, HttpSemanticConvention expected)
+    [Theory]
+    [MemberData(nameof(TestCases))]
+    public void VerifyGetSemanticConventionOptIn_UsingIConfiguration(string input, string expectedValue)
     {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = value })
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = input })
             .Build();
 
+        var expected = Enum.Parse(typeof(HttpSemanticConvention), expectedValue);
         Assert.Equal(expected, GetSemanticConventionOptIn(configuration));
     }
 }

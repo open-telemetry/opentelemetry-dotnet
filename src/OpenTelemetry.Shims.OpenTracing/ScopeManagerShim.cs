@@ -25,20 +25,9 @@ internal sealed class ScopeManagerShim : IScopeManager
 {
     private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new();
 
-    private readonly Tracer tracer;
-
 #if DEBUG
     private int spanScopeTableCount;
-#endif
 
-    public ScopeManagerShim(Tracer tracer)
-    {
-        Guard.ThrowIfNull(tracer);
-
-        this.tracer = tracer;
-    }
-
-#if DEBUG
     public int SpanScopeTableCount => this.spanScopeTableCount;
 #endif
 

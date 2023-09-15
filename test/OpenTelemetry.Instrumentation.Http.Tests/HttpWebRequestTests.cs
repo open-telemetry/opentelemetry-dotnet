@@ -131,7 +131,7 @@ public partial class HttpWebRequestTests
                     continue;
                 }
 
-                Assert.True(false, $"Tag {tag.Key} was not found in test data.");
+                Assert.Fail($"Tag {tag.Key} was not found in test data.");
             }
 
             Assert.Equal(value, tagValue);

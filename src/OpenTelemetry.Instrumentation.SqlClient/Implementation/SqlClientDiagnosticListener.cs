@@ -17,9 +17,15 @@
 using System.Data;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
+#if NET6_0_OR_GREATER
+[RequiresUnreferencedCode(SqlClientInstrumentation.SqlClientTrimmingUnsupportedMessage)]
+#endif
 internal sealed class SqlClientDiagnosticListener : ListenerHandler
 {
     public const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";

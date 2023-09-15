@@ -48,7 +48,7 @@ internal sealed class AspNetCoreMetrics : IDisposable
         Guard.ThrowIfNull(options);
         this.meter = new Meter(InstrumentationName, InstrumentationVersion);
         var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore", this.meter, options);
-        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(metricsListener, this.isEnabled);
+        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(metricsListener, this.isEnabled, AspNetCoreInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }
 

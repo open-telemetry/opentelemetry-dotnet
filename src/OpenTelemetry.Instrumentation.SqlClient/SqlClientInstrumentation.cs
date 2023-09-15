@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 
 namespace OpenTelemetry.Instrumentation.SqlClient;
@@ -24,7 +27,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient;
 internal sealed class SqlClientInstrumentation : IDisposable
 {
     internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
-
+#if NET6_0_OR_GREATER
+    internal const string SqlClientTrimmingUnsupportedMessage = "Trimming is not yet supported with SqlClient instrumentation.";
+#endif
 #if NETFRAMEWORK
     private readonly SqlEventSourceListener sqlEventSourceListener;
 #else
@@ -48,6 +53,9 @@ internal sealed class SqlClientInstrumentation : IDisposable
     /// Initializes a new instance of the <see cref="SqlClientInstrumentation"/> class.
     /// </summary>
     /// <param name="options">Configuration options for sql instrumentation.</param>
+#if NET6_0_OR_GREATER
+    [RequiresUnreferencedCode(SqlClientTrimmingUnsupportedMessage)]
+#endif
     public SqlClientInstrumentation(
         SqlClientInstrumentationOptions options = null)
     {
@@ -57,7 +65,8 @@ internal sealed class SqlClientInstrumentation : IDisposable
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
            name => new SqlClientDiagnosticListener(name, options),
            listener => listener.Name == SqlClientDiagnosticListenerName,
-           this.isEnabled);
+           this.isEnabled,
+           SqlClientInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
 #endif
     }

@@ -16,9 +16,6 @@
 
 using System.Diagnostics;
 using System.Net;
-#if !NETFRAMEWORK
-using System.Net.Http;
-#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -96,7 +93,7 @@ public partial class HttpWebRequestTests : IDisposable
         // Note: Back-off is part of the .NET Framework reflection only and
         // is needed to prevent issues when the same request is re-used for
         // things like redirects or SSL negotiation.
-        Assert.Equal(1, activityProcessor.Invocations.Count); // SetParentProvider called
+        Assert.Single(activityProcessor.Invocations); // SetParentProvider called
 #else
         Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
 #endif

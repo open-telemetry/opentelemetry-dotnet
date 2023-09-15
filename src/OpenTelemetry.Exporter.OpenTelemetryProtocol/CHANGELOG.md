@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## 1.6.0
+
+Released 2023-Sep-05
+
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
+* **Breaking change**: Excluded attributes corresponding to
+`LogRecord.Exception`, `LogRecord.EventId` and `LogRecord.CategoryName` from the
+exported data. See following details for reasoning behind removing each
+individual property:
+  * `LogRecord.Exception`: The semantic conventions for attributes corresponding
+    to exception data are not yet stable. Track issue
+    [#4831](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4831)
+    for details.
+  * `LogRecord.EventId`: The attributes corresponding to this property are
+    specific to .NET logging data model and there is no established convention
+    defined for them yet. Track issue
+    [#4776](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776)
+    for details.
+  * `LogRecord.CategoryName`: The attribute corresponding to this property is
+    specific to .NET logging data model and there is no established convention
+    defined for it yet. Track issue
+    [#3491](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491)
+    for details.
+
+  This change is temporarily done in order to release **stable** version of OTLP
+  Log Exporter.
+  ([#4781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4781))
+
+* Added extension method for configuring export processor options for otlp log
+exporter.
+([#4733](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4733))
+
 * Added support for configuring the metric exporter's temporality using the
   environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` as
   defined in the
@@ -20,22 +55,30 @@ Released 2023-Jul-12
   are now included in this package.
   ([#4556](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4556))
 
-* Add back support for Exemplars. See [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars)
-  for instructions to enable exemplars.
-  ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
-
 * Updated Grpc.Net.Client to `2.45.0` to fix unobserved exception
   from failed calls.
   ([#4573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4573))
-
-* Updated to support `Severity` and `SeverityText` when exporting `LogRecord`s.
-  ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 * Updated Grpc.Net.Client to `2.52.0` to address the vulnerability reported by
   CVE-2023-32731. Refer to
   [https://github.com/grpc/grpc/pull/32309](https://github.com/grpc/grpc/pull/32309)
   for more details.
   ([#4647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4647))
+
+* **Experimental (pre-release builds only):**
+
+  * Note: See
+    [#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735)
+    for the introduction of experimental api support.
+
+  * Add back support for Exemplars. See
+    [exemplars](../../docs/metrics/customizing-the-sdk/README.md#exemplars) for
+    instructions to enable exemplars.
+    ([#4553](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4553))
+
+  * Updated to support `Severity` and `SeverityText` when exporting
+    `LogRecord`s.
+    ([#4568](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4568))
 
 ## 1.5.1
 

@@ -11,7 +11,7 @@ on:
     - '**.md'
 
 jobs:
-  build-test:
+  build-test-stable:
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
@@ -23,15 +23,46 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # fetching all
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
+
+    - name: Test ${{ matrix.version }}
+      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+
+  build-test-experimental:
+    strategy:
+      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        version: [ net462, net6.0, net7.0 ]
+        exclude:
+        - os: ubuntu-latest
+          version: net462
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # fetching all
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"

@@ -4,19 +4,20 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <OTelLatestStableVer>1.5.1</OTelLatestStableVer>
+    <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
   </PropertyGroup>
 
-  <!-- prod packages -->
+  <!--
+      This section covers packages that are directly referenced by the NuGet packages published from this repository.
+      Any security vulnerability in these packages or their downstream dependencies will be considered as a security
+      vulnerability in the NuGet packages that are published from this repository.
+  -->
   <ItemGroup>
     <PackageVersion Include="Google.Protobuf" Version="[3.19.4,4.0)" />
     <PackageVersion Include="Grpc" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Grpc.Net.Client" Version="[2.52.0,3.0)" />
-    <PackageVersion Include="Grpc.Tools" Version="[2.44.0,3.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.3.3]" />
-    <PackageVersion Include="Microsoft.CodeCoverage" Version="[17.4.1]" />
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
@@ -25,13 +26,9 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="[3.1.0,)" />
-    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
-    <PackageVersion Include="MinVer" Version="[4.2.0,5.0)" />
     <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
-    <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.435,2.0)" />
 
     <!--
         Typically, the latest stable version of System.Diagnostics.DiagnosticSource should be used here because:
@@ -57,29 +54,39 @@
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
 
-  <!-- non-prod packages -->
+  <!--
+      This section covers packages that are **not** directly referenced by the NuGet packages published from this repository.
+      For example, these packages are used in the tests, examples or referenced as "PrivateAssets", but not in the NuGet packages themselves.
+  -->
   <!-- 'net7.0' is the default `TargetFramework`. Use `VersionOverride` in the project to override the package versions from a different `TargetFramework` -->
   <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="[0.13.5,0.14)" />
+    <PackageVersion Include="BenchmarkDotNet" Version="[0.13.6,0.14)" />
     <PackageVersion Include="CommandLineParser" Version="[2.9.1,3.0)" />
-    <PackageVersion Include="Grpc.AspNetCore" Version="[2.50.0,3.0)" />
-    <PackageVersion Include="Grpc.AspNetCore.Server" Version="[2.48.0, 3.0)" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.1" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="[2.55.0,3.0)" />
+    <PackageVersion Include="Grpc.AspNetCore.Server" Version="[2.55.0, 3.0)" />
+    <PackageVersion Include="Grpc.Tools" Version="[2.56.2,3.0)" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="7.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.9" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23402.2]" />
+    <PackageVersion Include="Microsoft.CodeCoverage" Version="[17.6.3]" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.2" />
     <PackageVersion Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[3.1.6,5.0)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="3.1.20" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.0,)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.4.1]" />
-    <PackageVersion Include="Moq" Version="[4.18.3,5.0)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="[1.0.0,2.0)" />
-    <PackageVersion Include="RabbitMQ.Client" Version="[6.4.0,7.0)" />
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.6.3]" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
+    <PackageVersion Include="MinVer" Version="[4.3.0,5.0)" />
+    <PackageVersion Include="Moq" Version="[4.18.4,5.0)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="[1.5.0,2.0)" />
+    <PackageVersion Include="RabbitMQ.Client" Version="[6.5.0,7.0)" />
+    <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.507,2.0)" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="[6.4.0]" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
-    <PackageVersion Include="Testcontainers.MsSql" Version="3.0.0" />
-    <PackageVersion Include="Testcontainers.SqlEdge" Version="3.0.0" />
-    <PackageVersion Include="xunit" Version="[2.4.2,3.0)" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="[2.4.5,3.0)" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="3.3.0" />
+    <PackageVersion Include="Testcontainers.SqlEdge" Version="3.3.0" />
+    <PackageVersion Include="xunit" Version="[2.5.0,3.0)" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="[2.5.0,3.0)" />
   </ItemGroup>
 </Project>

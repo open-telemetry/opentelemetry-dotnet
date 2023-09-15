@@ -48,7 +48,7 @@ internal sealed class HttpClientMetrics : IDisposable
     public HttpClientMetrics(HttpClientMetricInstrumentationOptions options)
     {
         this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter, options), this.isEnabled);
+        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", this.meter, options), this.isEnabled, HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }
 

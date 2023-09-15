@@ -30,7 +30,7 @@ internal sealed class GrpcClientInstrumentation : IDisposable
     /// <param name="options">Configuration options for Grpc client instrumentation.</param>
     public GrpcClientInstrumentation(GrpcClientInstrumentationOptions options = null)
     {
-        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(options), null);
+        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new GrpcClientDiagnosticListener(options), isEnabledFilter: null, GrpcInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }
 

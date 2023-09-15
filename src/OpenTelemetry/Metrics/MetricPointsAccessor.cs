@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Internal;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
 
@@ -30,10 +30,11 @@ public readonly struct MetricPointsAccessor
 
     internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount)
     {
-        Guard.ThrowIfNull(metricsPoints);
+        Debug.Assert(metricsPoints != null, "metricPoints was null");
+        Debug.Assert(metricPointsToProcess != null, "metricPointsToProcess was null");
 
-        this.metricsPoints = metricsPoints;
-        this.metricPointsToProcess = metricPointsToProcess;
+        this.metricsPoints = metricsPoints!;
+        this.metricPointsToProcess = metricPointsToProcess!;
         this.targetCount = targetCount;
     }
 
@@ -65,7 +66,7 @@ public readonly struct MetricPointsAccessor
         /// <summary>
         /// Gets the <see cref="MetricPoint"/> at the current position of the enumerator.
         /// </summary>
-        public ref readonly MetricPoint Current
+        public readonly ref readonly MetricPoint Current
             => ref this.metricsPoints[this.metricPointsToProcess[this.index]];
 
         /// <summary>

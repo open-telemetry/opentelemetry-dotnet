@@ -18,14 +18,23 @@ using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
 
-#pragma warning disable SA1623 // The property's documentation summary text should begin with: `Gets or sets`
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Represents an Exemplar data.
 /// </summary>
-public struct Exemplar
+/// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+public
+#else
+/// <summary>
+/// Represents an Exemplar data.
+/// </summary>
+#pragma warning disable SA1623 // The property's documentation summary text should begin with: `Gets or sets`
+internal
+#endif
+    struct Exemplar
 {
     /// <summary>
-    /// Gets the timestamp (UTC).
+    /// Gets the timestamp.
     /// </summary>
     public DateTimeOffset Timestamp { get; internal set; }
 
@@ -50,7 +59,6 @@ public struct Exemplar
     /// <summary>
     /// Gets the FilteredTags (i.e any tags that were dropped during aggregation).
     /// </summary>
-    public List<KeyValuePair<string, object>> FilteredTags { get; internal set; }
+    public List<KeyValuePair<string, object?>>? FilteredTags { get; internal set; }
 }
-#pragma warning restore SA1623
 

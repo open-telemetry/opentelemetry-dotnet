@@ -55,6 +55,7 @@ namespace System.Diagnostics.CodeAnalysis
 }
 #endif
 
+#pragma warning disable IDE0161 // Convert to file-scoped namespace
 namespace OpenTelemetry.Internal
 {
     /// <summary>

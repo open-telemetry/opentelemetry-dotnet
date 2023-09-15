@@ -48,6 +48,15 @@ internal sealed class AspNetCoreInstrumentationEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
+        }
+    }
+
     [Event(1, Message = "Payload is NULL, span will not be recorded. HandlerName: '{0}', EventName: '{1}', OperationName: '{2}'.", Level = EventLevel.Warning)]
     public void NullPayload(string handlerName, string eventName, string operationName)
     {
@@ -76,5 +85,11 @@ internal sealed class AspNetCoreInstrumentationEventSource : EventSource
     public void EnrichmentException(string handlerName, string eventName, string operationName, string exception)
     {
         this.WriteEvent(4, handlerName, eventName, operationName, exception);
+    }
+
+    [Event(5, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+    {
+        this.WriteEvent(5, handlerName, eventName, ex);
     }
 }

@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
@@ -56,12 +59,13 @@ internal class HttpInListener : ListenerHandler
     private const string UnknownHostName = "UNKNOWN-HOST";
 
     private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
+    private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
+
 #if !NET6_0_OR_GREATER
     private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
     private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
     private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
 #endif
-    private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
     private readonly AspNetCoreInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
@@ -404,7 +408,7 @@ internal class HttpInListener : ListenerHandler
         if (activity.IsAllDataRequested)
         {
             // We need to use reflection here as the payload type is not a defined public type.
-            if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
+            if (!TryFetchException(payload, out Exception exc))
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException), activity.OperationName);
                 return;
@@ -426,6 +430,15 @@ internal class HttpInListener : ListenerHandler
                 AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInListener), nameof(this.OnException), activity.OperationName, ex);
             }
         }
+
+        // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
+        // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
+        // this makes sure that top-level properties on the payload object are always preserved.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchException(object payload, out Exception exc)
+            => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
     private static string GetUri(HttpRequest request)

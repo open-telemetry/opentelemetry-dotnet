@@ -20,7 +20,7 @@ dotnet add package OpenTelemetry.Exporter.Console
 See the individual "getting started" examples depending on the signal being
 used:
 
-* [Logs](../../docs/logs/getting-started/Program.cs)
+* Logs: [Console](../../docs/logs/getting-started-console/README.md)
 * Metrics: [ASP.NET Core](../../docs/metrics/getting-started-aspnetcore/README.md)
   | [Console](../../docs/metrics/getting-started-console/README.md)
 * Traces: [ASP.NET Core](../../docs/trace/getting-started-aspnetcore/README.md)

@@ -32,8 +32,8 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     private readonly object lockObj = new();
     private readonly EventLevel logLevel;
     private readonly SelfDiagnosticsConfigRefresher configRefresher;
-    private readonly ThreadLocal<byte[]> writeBuffer = new(() => null);
-    private readonly List<EventSource> eventSourcesBeforeConstructor = new();
+    private readonly ThreadLocal<byte[]?> writeBuffer = new(() => null);
+    private readonly List<EventSource>? eventSourcesBeforeConstructor = new();
 
     private bool disposedValue = false;
 
@@ -78,14 +78,14 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     /// <param name="buffer">The byte array to contain the resulting sequence of bytes.</param>
     /// <param name="position">The position at which to start writing the resulting sequence of bytes.</param>
     /// <returns>The position of the buffer after the last byte of the resulting sequence.</returns>
-    internal static int EncodeInBuffer(string str, bool isParameter, byte[] buffer, int position)
+    internal static int EncodeInBuffer(string? str, bool isParameter, byte[] buffer, int position)
     {
         if (string.IsNullOrEmpty(str))
         {
             return position;
         }
 
-        int charCount = str.Length;
+        int charCount = str!.Length;
         int ellipses = isParameter ? "{...}\n".Length : "...\n".Length;
 
         // Ensure there is space for "{...}\n" or "...\n".
@@ -124,7 +124,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
         return position;
     }
 
-    internal void WriteEvent(string eventMessage, ReadOnlyCollection<object> payload)
+    internal void WriteEvent(string? eventMessage, ReadOnlyCollection<object?>? payload)
     {
         try
         {
@@ -143,10 +143,10 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
                 // Not using foreach because it can cause allocations
                 for (int i = 0; i < payload.Count; ++i)
                 {
-                    object obj = payload[i];
+                    object? obj = payload[i];
                     if (obj != null)
                     {
-                        pos = EncodeInBuffer(obj.ToString(), true, buffer, pos);
+                        pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
                     }
                     else
                     {
@@ -157,7 +157,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             buffer[pos++] = (byte)'\n';
             int byteCount = pos - 0;
-            if (this.configRefresher.TryGetLogStream(byteCount, out Stream stream, out int availableByteCount))
+            if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
             {
                 if (availableByteCount >= byteCount)
                 {

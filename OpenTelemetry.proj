@@ -8,7 +8,7 @@
     <SolutionProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
     <PackProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
 
-    <!-- Skip building these projects when publish packages workflow runs as these projects need to dependupon instrumentation libraries taking a project reference
+    <!-- Skip building these projects when publish packages workflow runs as these projects need to depend upon instrumentation libraries taking a project reference
     instead of  package reference on API/SDK-->
     <SolutionProjects Remove="examples\**\*.csproj" Condition="'$(RunningDotNetPack)' == 'true'"/>
     <SolutionProjects Remove="test\Benchmarks\Benchmarks.csproj" Condition="'$(RunningDotNetPack)' == 'true'"/>

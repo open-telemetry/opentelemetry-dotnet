@@ -18,7 +18,7 @@ jobs:
       matrix:
         version: [net6.0,net7.0]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run W3C Trace Context docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
@@ -30,7 +30,7 @@ jobs:
       matrix:
         version: [net6.0,net7.0]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run OTLP Exporter docker-compose.integration
-        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build

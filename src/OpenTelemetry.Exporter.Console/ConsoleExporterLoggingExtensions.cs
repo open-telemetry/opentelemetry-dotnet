@@ -48,26 +48,60 @@ public static class ConsoleExporterLoggingExtensions
         return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds Console exporter with LoggerProviderBuilder.
+    /// </summary>
+    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public
+#else
     /// <summary>
     /// Adds Console exporter with LoggerProviderBuilder.
     /// </summary>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    public static LoggerProviderBuilder AddConsoleExporter(
+    internal
+#endif
+        static LoggerProviderBuilder AddConsoleExporter(
         this LoggerProviderBuilder loggerProviderBuilder)
         => AddConsoleExporter(loggerProviderBuilder, name: null, configure: null);
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds Console exporter with LoggerProviderBuilder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddConsoleExporter(LoggerProviderBuilder)" path="/remarks"/></remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+    /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public
+#else
     /// <summary>
     /// Adds Console exporter with LoggerProviderBuilder.
     /// </summary>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    public static LoggerProviderBuilder AddConsoleExporter(
+    internal
+#endif
+        static LoggerProviderBuilder AddConsoleExporter(
         this LoggerProviderBuilder loggerProviderBuilder,
         Action<ConsoleExporterOptions> configure)
         => AddConsoleExporter(loggerProviderBuilder, name: null, configure);
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds Console exporter with LoggerProviderBuilder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddConsoleExporter(LoggerProviderBuilder)" path="/remarks"/></remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
+    /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public
+#else
     /// <summary>
     /// Adds Console exporter with LoggerProviderBuilder.
     /// </summary>
@@ -75,7 +109,9 @@ public static class ConsoleExporterLoggingExtensions
     /// <param name="name">Name which is used when retrieving options.</param>
     /// <param name="configure">Callback action for configuring <see cref="ConsoleExporterOptions"/>.</param>
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    public static LoggerProviderBuilder AddConsoleExporter(
+    internal
+#endif
+        static LoggerProviderBuilder AddConsoleExporter(
         this LoggerProviderBuilder loggerProviderBuilder,
         string name,
         Action<ConsoleExporterOptions> configure)

@@ -21,9 +21,13 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal sealed class PrometheusCollectionManager
 {
+    private const int MaxCachedMetrics = 1024;
+
     private readonly PrometheusExporter exporter;
     private readonly int scrapeResponseCacheDurationMilliseconds;
     private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
+    private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int globalLockState;
     private ArraySegment<byte> previousDataView;
@@ -37,6 +41,7 @@ internal sealed class PrometheusCollectionManager
         this.exporter = exporter;
         this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
         this.onCollectRef = this.OnCollect;
+        this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
     }
 
 #if NET6_0_OR_GREATER
@@ -143,7 +148,7 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ExitGlobalLock()
     {
-        this.globalLockState = 0;
+        Interlocked.Exchange(ref this.globalLockState, 0);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -179,11 +184,16 @@ internal sealed class PrometheusCollectionManager
         {
             foreach (var metric in metrics)
             {
+                if (!PrometheusSerializer.CanWriteMetric(metric))
+                {
+                    continue;
+                }
+
                 while (true)
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric);
+                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric));
                         break;
                     }
                     catch (IndexOutOfRangeException)
@@ -242,6 +252,24 @@ internal sealed class PrometheusCollectionManager
         this.buffer = newBuffer;
 
         return true;
+    }
+
+    private PrometheusMetric GetPrometheusMetric(Metric metric)
+    {
+        // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
+        if (!this.metricsCache.TryGetValue(metric, out var prometheusMetric))
+        {
+            prometheusMetric = PrometheusMetric.Create(metric);
+
+            // Add to the cache if there is space.
+            if (this.metricsCacheCount < MaxCachedMetrics)
+            {
+                this.metricsCache[metric] = prometheusMetric;
+                this.metricsCacheCount++;
+            }
+        }
+
+        return prometheusMetric;
     }
 
     public readonly struct CollectionResponse

@@ -20,15 +20,18 @@ jobs:
         os: [windows-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # fetching all
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
       run: dotnet restore
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
 
 #    - name: dotnet test
 #      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true

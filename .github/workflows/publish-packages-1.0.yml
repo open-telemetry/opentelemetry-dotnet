@@ -21,10 +21,13 @@ jobs:
       RunningDotNetPack: true
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # fetching all
         ref: ${{ github.ref || 'main' }}
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
       run: dotnet restore OpenTelemetry.proj

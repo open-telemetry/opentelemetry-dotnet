@@ -75,7 +75,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
 
         this.tracer = tracer;
         this.spanName = spanName;
-        this.ScopeManager = new ScopeManagerShim(this.tracer);
+        this.ScopeManager = new ScopeManagerShim();
     }
 
     private IScopeManager ScopeManager { get; }

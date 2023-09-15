@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace;
@@ -25,6 +23,9 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public abstract class Sampler
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Sampler"/> class.
+    /// </summary>
     protected Sampler()
     {
         this.Description = this.GetType().Name;

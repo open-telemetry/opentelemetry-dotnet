@@ -30,7 +30,6 @@ public class Program
     /// dotnet run --project Examples.Console.csproj -- console
     /// dotnet run --project Examples.Console.csproj -- inmemory
     /// dotnet run --project Examples.Console.csproj -- zipkin -u http://localhost:9411/api/v2/spans
-    /// dotnet run --project Examples.Console.csproj -- jaeger -h localhost -p 6831
     /// dotnet run --project Examples.Console.csproj -- prometheus -p 9464
     /// dotnet run --project Examples.Console.csproj -- otlp -e "http://localhost:4317" -p "grpc"
     /// dotnet run --project Examples.Console.csproj -- metrics --help
@@ -45,9 +44,8 @@ public class Program
     /// <param name="args">Arguments from command line.</param>
     public static void Main(string[] args)
     {
-        Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+        Parser.Default.ParseArguments<ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
             .MapResult(
-                (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                 (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                 (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port),
                 (MetricsOptions options) => TestMetrics.Run(options),
@@ -64,16 +62,6 @@ public class Program
 }
 
 #pragma warning disable SA1402 // File may only contain a single type
-
-[Verb("jaeger", HelpText = "Specify the options required to test Jaeger exporter")]
-internal class JaegerOptions
-{
-    [Option('h', "host", HelpText = "Host of the Jaeger Agent", Default = "localhost")]
-    public string Host { get; set; }
-
-    [Option('p', "port", HelpText = "Port of the Jaeger Agent", Default = 6831)]
-    public int Port { get; set; }
-}
 
 [Verb("zipkin", HelpText = "Specify the options required to test Zipkin exporter")]
 internal class ZipkinOptions
@@ -163,6 +151,12 @@ internal class LogsOptions
 
     [Option('p', "protocol", HelpText = "Transport protocol used by OTLP exporter. Supported values: grpc and http/protobuf. Only applicable if Exporter is OTLP", Default = "grpc")]
     public string Protocol { get; set; }
+
+    [Option("processorType", Default = "batch", HelpText = "export processor type. Supported values: simple and batch", Required = false)]
+    public string ProcessorType { get; set; }
+
+    [Option("scheduledDelay", Default = 5000, HelpText = "The delay interval in milliseconds between two consecutive exports.", Required = false)]
+    public int ScheduledDelayInMilliseconds { get; set; }
 }
 
 [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

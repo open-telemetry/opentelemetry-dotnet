@@ -54,6 +54,15 @@ internal sealed class HttpInstrumentationEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.UnknownErrorProcessingEvent(handlerName, eventName, ex.ToInvariantString());
+        }
+    }
+
     [Event(1, Message = "Failed to process result: '{0}'", Level = EventLevel.Error)]
     public void FailedProcessResult(string ex)
     {
@@ -97,5 +106,11 @@ internal sealed class HttpInstrumentationEventSource : EventSource
     public void RequestIsFilteredOut(string eventName)
     {
         this.WriteEvent(6, eventName);
+    }
+
+    [Event(7, Message = "Unknown error processing event '{1}' from handler '{0}', Exception: {2}", Level = EventLevel.Error)]
+    public void UnknownErrorProcessingEvent(string handlerName, string eventName, string ex)
+    {
+        this.WriteEvent(7, handlerName, eventName, ex);
     }
 }

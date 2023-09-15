@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.6.0
+
+Released 2023-Sep-05
+
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
+* **Experimental (pre-release builds only):** Added [Logs Bridge
+  API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
+  implementation (`OpenTelemetryBuilder.WithLogging`).
+  ([#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735))
+
 ## 1.6.0-alpha.1
 
 Released 2023-Jul-12

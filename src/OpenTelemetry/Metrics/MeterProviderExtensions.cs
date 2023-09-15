@@ -14,10 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Contains extension methods for the <see cref="MeterProvider"/> class.
+/// </summary>
 public static class MeterProviderExtensions
 {
     /// <summary>
@@ -111,7 +115,10 @@ public static class MeterProviderExtensions
     /// <param name="provider">The MeterProvider from which Exporter should be found.</param>
     /// <param name="exporter">The exporter instance.</param>
     /// <returns>true if the exporter of specified Type is found; otherwise false.</returns>
-    internal static bool TryFindExporter<T>(this MeterProvider provider, out T exporter)
+    internal static bool TryFindExporter<T>(
+        this MeterProvider provider,
+        [NotNullWhen(true)]
+        out T? exporter)
         where T : BaseExporter<Metric>
     {
         if (provider is MeterProviderSdk meterProviderSdk)
@@ -122,7 +129,7 @@ public static class MeterProviderExtensions
         exporter = null;
         return false;
 
-        static bool TryFindExporter(MetricReader reader, out T exporter)
+        static bool TryFindExporter(MetricReader? reader, out T? exporter)
         {
             if (reader is BaseExportingMetricReader exportingMetricReader)
             {

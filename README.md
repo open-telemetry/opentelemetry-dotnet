@@ -19,16 +19,7 @@ files.
 
 ## Project Status
 
-| Signal  | Status     |
-| ------- | ---------- |
-| Logs    | Stable*    |
-| Metrics | Stable     |
-| Traces  | Stable     |
-
-*While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
- stable, the [OTLP Exporter for
- Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#enable-log-exporter)
- is still non-stable.
+**Stable** across all 3 signals i.e. `Logs`, `Metrics`, and `Traces`.
 
 See [Spec Compliance
 Matrix](https://github.com/open-telemetry/opentelemetry-specification/blob/main/spec-compliance-matrix.md)
@@ -39,10 +30,10 @@ repo.
 
 If you are new here, please read the getting started docs:
 
-* [logs](./docs/logs/getting-started/README.md)
-* metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
+* Logs: [ASP.NET Core](./docs/logs/getting-started-aspnetcore/README.md) | [Console](./docs/logs/getting-started-console/README.md)
+* Metrics: [ASP.NET Core](./docs/metrics/getting-started-aspnetcore/README.md) |
   [Console](./docs/metrics/getting-started-console/README.md)
-* traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
+* Traces: [ASP.NET Core](./docs/trace/getting-started-aspnetcore/README.md) |
   [Console](./docs/trace/getting-started-console/README.md)
 
 This repository includes multiple installable components, available on
@@ -69,7 +60,6 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 
 * [Console](./src/OpenTelemetry.Exporter.Console/README.md)
 * [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
-* [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
 * [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)

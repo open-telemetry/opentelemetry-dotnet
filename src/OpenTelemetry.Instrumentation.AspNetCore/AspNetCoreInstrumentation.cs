@@ -39,7 +39,7 @@ internal sealed class AspNetCoreInstrumentation : IDisposable
 
     public AspNetCoreInstrumentation(HttpInListener httpInListener)
     {
-        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, this.isEnabled);
+        this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, this.isEnabled, AspNetCoreInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }
 

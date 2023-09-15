@@ -41,13 +41,25 @@ public static class InMemoryExporterLoggingExtensions
             new SimpleLogRecordExportProcessor(logExporter));
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds InMemory exporter to the LoggerProviderBuilder.
+    /// </summary>
+    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+    /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
+    /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
+    /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public
+#else
     /// <summary>
     /// Adds InMemory exporter to the LoggerProviderBuilder.
     /// </summary>
     /// <param name="loggerProviderBuilder"><see cref="LoggerProviderBuilder"/>.</param>
     /// <param name="exportedItems">Collection which will be populated with the exported <see cref="LogRecord"/>.</param>
     /// <returns>The supplied instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
-    public static LoggerProviderBuilder AddInMemoryExporter(
+    internal
+#endif
+        static LoggerProviderBuilder AddInMemoryExporter(
         this LoggerProviderBuilder loggerProviderBuilder,
         ICollection<LogRecord> exportedItems)
     {

@@ -142,7 +142,7 @@ Jaeger -->|http://localhost:16686/| JaegerUI["Browser<br/>(Jaeger UI)"]
 
 ## Final cleanup
 
-In the end, remove the Console Exporter so we only have Jaeger Exporter in the
+In the end, remove the Console Exporter so we only have OTLP Exporter in the
 final application:
 
 ```csharp

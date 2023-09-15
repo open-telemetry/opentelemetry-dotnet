@@ -150,11 +150,13 @@ public class OtlpExporterOptions
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
+    /// <remarks>Note: This only applies when exporting traces.</remarks>
     public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
     /// <summary>
     /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
     /// </summary>
+    /// <remarks>Note: This only applies when exporting traces.</remarks>
     public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
 
     /// <summary>

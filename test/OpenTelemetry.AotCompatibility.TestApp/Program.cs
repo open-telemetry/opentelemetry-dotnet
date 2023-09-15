@@ -14,4 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-Console.WriteLine("Hello, World!");
+using OpenTelemetry.AotCompatibility.TestApp;
+
+try
+{
+    PropertyFetcherAotTest.Test();
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex);
+    return -1;
+}
+
+Console.WriteLine("Passed.");
+return 0;

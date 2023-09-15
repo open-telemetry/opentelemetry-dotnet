@@ -16,9 +16,7 @@
 
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
-using OpenTelemetry.Trace;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
@@ -80,6 +78,10 @@ internal static class LogRecordExtensions
             var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
             var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
 
+            /*
+            // Removing this temporarily for stable release
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491
             // First add the generic attributes like Category, EventId and Exception,
             // so they are less likely being dropped because of AttributeCountLimit.
 
@@ -109,6 +111,7 @@ internal static class LogRecordExtensions
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
             }
+            */
 
             bool bodyPopulatedFromFormattedMessage = false;
             if (logRecord.FormattedMessage != null)

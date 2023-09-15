@@ -14,13 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace OpenTelemetry;
 
 internal static class WildcardHelper
 {
-    public static bool ContainsWildcard(string value)
+    public static bool ContainsWildcard(
+        [NotNullWhen(true)]
+        string? value)
     {
         if (value == null)
         {
@@ -30,16 +34,14 @@ internal static class WildcardHelper
         return value.Contains('*') || value.Contains('?');
     }
 
-    public static Regex GetWildcardRegex(IEnumerable<string> patterns = default)
+    public static Regex GetWildcardRegex(IEnumerable<string> patterns)
     {
-        if (patterns == null)
-        {
-            return null;
-        }
+        Debug.Assert(patterns?.Any() == true, "patterns was null or empty");
 
         var convertedPattern = string.Join(
             "|",
             from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
+
         return new Regex("^(?:" + convertedPattern + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     }
 }

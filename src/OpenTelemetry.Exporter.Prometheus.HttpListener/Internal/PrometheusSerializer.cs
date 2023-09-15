@@ -222,46 +222,32 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)'"');
 
         // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-        cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? string.Empty);
+        cursor = WriteLabelValue(buffer, cursor, GetLabelValueString(labelValue));
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
+
+        static string GetLabelValueString(object labelValue)
+        {
+            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
+            if (labelValue is bool b)
+            {
+                return b ? "true" : "false";
+            }
+
+            return labelValue?.ToString() ?? string.Empty;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteMetricName(byte[] buffer, int cursor, string metricName, string metricUnit = null)
+    public static int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric)
     {
-        Debug.Assert(!string.IsNullOrEmpty(metricName), $"{nameof(metricName)} should not be null or empty.");
-
-        for (int i = 0; i < metricName.Length; i++)
+        // Metric name has already been escaped.
+        for (int i = 0; i < metric.Name.Length; i++)
         {
-            var ordinal = (ushort)metricName[i];
-            buffer[cursor++] = ordinal switch
-            {
-                ASCII_FULL_STOP or ASCII_HYPHEN_MINUS => unchecked((byte)'_'),
-                _ => unchecked((byte)ordinal),
-            };
-        }
-
-        if (!string.IsNullOrEmpty(metricUnit))
-        {
-            buffer[cursor++] = unchecked((byte)'_');
-
-            for (int i = 0; i < metricUnit.Length; i++)
-            {
-                var ordinal = (ushort)metricUnit[i];
-
-                if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
-                    (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
-                    (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
-                {
-                    buffer[cursor++] = unchecked((byte)ordinal);
-                }
-                else
-                {
-                    buffer[cursor++] = unchecked((byte)'_');
-                }
-            }
+            var ordinal = (ushort)metric.Name[i];
+            buffer[cursor++] = unchecked((byte)ordinal);
         }
 
         return cursor;
@@ -277,7 +263,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteHelpMetadata(byte[] buffer, int cursor, string metricName, string metricUnit, string metricDescription)
+    public static int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription)
     {
         if (string.IsNullOrEmpty(metricDescription))
         {
@@ -285,7 +271,7 @@ internal static partial class PrometheusSerializer
         }
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
-        cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
+        cursor = WriteMetricName(buffer, cursor, metric);
 
         if (!string.IsNullOrEmpty(metricDescription))
         {
@@ -299,12 +285,14 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTypeMetadata(byte[] buffer, int cursor, string metricName, string metricUnit, string metricType)
+    public static int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric)
     {
+        var metricType = MapPrometheusType(metric.Type);
+
         Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
-        cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
+        cursor = WriteMetricName(buffer, cursor, metric);
         buffer[cursor++] = unchecked((byte)' ');
         cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
 
@@ -314,36 +302,39 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnitMetadata(byte[] buffer, int cursor, string metricName, string metricUnit)
+    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric)
     {
-        if (string.IsNullOrEmpty(metricUnit))
+        if (string.IsNullOrEmpty(metric.Unit))
         {
             return cursor;
         }
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "# UNIT ");
-        cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
+        cursor = WriteMetricName(buffer, cursor, metric);
 
         buffer[cursor++] = unchecked((byte)' ');
 
-        for (int i = 0; i < metricUnit.Length; i++)
+        // Unit name has already been escaped.
+        for (int i = 0; i < metric.Unit.Length; i++)
         {
-            var ordinal = (ushort)metricUnit[i];
-
-            if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
-                (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
-                (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
-            {
-                buffer[cursor++] = unchecked((byte)ordinal);
-            }
-            else
-            {
-                buffer[cursor++] = unchecked((byte)'_');
-            }
+            var ordinal = (ushort)metric.Unit[i];
+            buffer[cursor++] = unchecked((byte)ordinal);
         }
 
         buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
+    }
+
+    private static string MapPrometheusType(PrometheusType type)
+    {
+        return type switch
+        {
+            PrometheusType.Gauge => "gauge",
+            PrometheusType.Counter => "counter",
+            PrometheusType.Summary => "summary",
+            PrometheusType.Histogram => "histogram",
+            _ => "untyped",
+        };
     }
 }

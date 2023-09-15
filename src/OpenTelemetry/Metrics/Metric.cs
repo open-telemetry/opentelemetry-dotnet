@@ -19,7 +19,7 @@ using System.Diagnostics.Metrics;
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// Represents a Metric stream which can contain multiple MetricPoints.
+/// Represents a metric stream which can contain multiple metric points.
 /// </summary>
 public sealed class Metric
 {
@@ -28,6 +28,22 @@ public sealed class Metric
     internal const int DefaultExponentialHistogramMaxScale = 20;
 
     internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
+    internal static readonly double[] DefaultHistogramBoundsSeconds = new double[] { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 };
+    internal static readonly HashSet<(string, string)> DefaultHistogramBoundMappings = new()
+    {
+        ("Microsoft.AspNetCore.Hosting", "http.server.request.duration"),
+        ("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration"),
+        ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue"),
+        ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration"),
+        ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration"),
+        ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration"),
+        ("OpenTelemetry.Instrumentation.AspNetCore", "http.server.request.duration"),
+        ("OpenTelemetry.Instrumentation.Http", "http.client.request.duration"),
+        ("System.Net.Http", "http.client.connection.duration"),
+        ("System.Net.Http", "http.client.request.duration"),
+        ("System.Net.Http", "http.client.request.time_in_queue"),
+        ("System.Net.NameResolution", "dns.lookups.duration"),
+    };
 
     private readonly AggregatorStore aggStore;
 
@@ -35,7 +51,8 @@ public sealed class Metric
         MetricStreamIdentity instrumentIdentity,
         AggregationTemporality temporality,
         int maxMetricPointsPerMetricStream,
-        ExemplarFilter exemplarFilter = null)
+        bool emitOverflowAttribute,
+        ExemplarFilter? exemplarFilter = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
 
@@ -141,46 +158,66 @@ public sealed class Metric
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, exemplarFilter);
+        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, exemplarFilter);
         this.Temporality = temporality;
         this.InstrumentDisposed = false;
     }
 
+    /// <summary>
+    /// Gets the <see cref="Metrics.MetricType"/> for the metric stream.
+    /// </summary>
     public MetricType MetricType { get; private set; }
 
+    /// <summary>
+    /// Gets the <see cref="AggregationTemporality"/> for the metric stream.
+    /// </summary>
     public AggregationTemporality Temporality { get; private set; }
 
+    /// <summary>
+    /// Gets the name for the metric stream.
+    /// </summary>
     public string Name => this.InstrumentIdentity.InstrumentName;
 
+    /// <summary>
+    /// Gets the description for the metric stream.
+    /// </summary>
     public string Description => this.InstrumentIdentity.Description;
 
+    /// <summary>
+    /// Gets the unit for the metric stream.
+    /// </summary>
     public string Unit => this.InstrumentIdentity.Unit;
 
+    /// <summary>
+    /// Gets the meter name for the metric stream.
+    /// </summary>
     public string MeterName => this.InstrumentIdentity.MeterName;
 
+    /// <summary>
+    /// Gets the meter version for the metric stream.
+    /// </summary>
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
+    /// <summary>
+    /// Gets the <see cref="MetricStreamIdentity"/> for the metric stream.
+    /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
     internal bool InstrumentDisposed { get; set; }
 
+    /// <summary>
+    /// Get the metric points for the metric stream.
+    /// </summary>
+    /// <returns><see cref="MetricPointsAccessor"/>.</returns>
     public MetricPointsAccessor GetMetricPoints()
-    {
-        return this.aggStore.GetMetricPoints();
-    }
+        => this.aggStore.GetMetricPoints();
 
-    internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        this.aggStore.Update(value, tags);
-    }
+    internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.aggStore.Update(value, tags);
 
-    internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-    {
-        this.aggStore.Update(value, tags);
-    }
+    internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.aggStore.Update(value, tags);
 
     internal int Snapshot()
-    {
-        return this.aggStore.Snapshot();
-    }
+        => this.aggStore.Snapshot();
 }

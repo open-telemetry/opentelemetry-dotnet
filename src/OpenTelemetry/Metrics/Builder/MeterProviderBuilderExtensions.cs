@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -311,28 +309,6 @@ public static class MeterProviderBuilderExtensions
     }
 
     /// <summary>
-    /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
-    /// This is applied to all the metrics from this provider.
-    /// </summary>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
-    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
-    {
-        Guard.ThrowIfNull(exemplarFilter);
-
-        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
-        {
-            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
-            }
-        });
-
-        return meterProviderBuilder;
-    }
-
-    /// <summary>
     /// Run the given actions to initialize the <see cref="MeterProvider"/>.
     /// </summary>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
@@ -345,5 +321,40 @@ public static class MeterProviderBuilderExtensions
         }
 
         return null;
+    }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
+    /// This is applied to all the metrics from this provider.
+    /// </summary>
+    /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    public
+#else
+    /// <summary>
+    /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
+    /// This is applied to all the metrics from this provider.
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    internal
+#endif
+        static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+    {
+        Guard.ThrowIfNull(exemplarFilter);
+
+        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        {
+            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                meterProviderBuilderSdk.SetExemplarFilter(exemplarFilter);
+            }
+        });
+
+        return meterProviderBuilder;
     }
 }

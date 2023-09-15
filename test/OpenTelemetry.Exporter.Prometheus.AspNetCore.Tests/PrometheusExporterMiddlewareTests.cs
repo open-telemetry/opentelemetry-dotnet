@@ -298,8 +298,8 @@ public sealed class PrometheusExporterMiddlewareTests
             var matches = Regex.Matches(
                 content,
                 ("^"
-                    + "# TYPE counter_double counter\n"
-                    + "counter_double{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+                    + "# TYPE counter_double_total counter\n"
+                    + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
                     + "\n"
                     + "# EOF\n"
                     + "$").Replace('\'', '"'));

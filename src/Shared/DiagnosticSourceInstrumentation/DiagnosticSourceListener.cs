@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-#pragma warning restore IDE0005
 
 namespace OpenTelemetry.Instrumentation;
 
@@ -24,11 +23,14 @@ internal sealed class DiagnosticSourceListener : IObserver<KeyValuePair<string, 
 {
     private readonly ListenerHandler handler;
 
-    public DiagnosticSourceListener(ListenerHandler handler)
+    private readonly Action<string, string, Exception> logUnknownException;
+
+    public DiagnosticSourceListener(ListenerHandler handler, Action<string, string, Exception> logUnknownException)
     {
         Guard.ThrowIfNull(handler);
 
         this.handler = handler;
+        this.logUnknownException = logUnknownException;
     }
 
     public void OnCompleted()
@@ -52,7 +54,7 @@ internal sealed class DiagnosticSourceListener : IObserver<KeyValuePair<string, 
         }
         catch (Exception ex)
         {
-            InstrumentationEventSource.Log.UnknownErrorProcessingEvent(this.handler?.SourceName, value.Key, ex);
+            this.logUnknownException?.Invoke(this.handler?.SourceName, value.Key, ex);
         }
     }
 }

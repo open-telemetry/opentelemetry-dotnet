@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -43,9 +44,12 @@ internal sealed class SelfDiagnosticsConfigParser
     // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
     // in both main thread and the worker thread.
     // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
-    private byte[] configBuffer;
+    private byte[]? configBuffer;
 
-    public bool TryGetConfiguration(out string logDirectory, out int fileSizeInKB, out EventLevel logLevel)
+    public bool TryGetConfiguration(
+        [NotNullWhen(true)] out string? logDirectory,
+        out int fileSizeInKB,
+        out EventLevel logLevel)
     {
         logDirectory = null;
         fileSizeInKB = 0;
@@ -67,6 +71,7 @@ internal sealed class SelfDiagnosticsConfigParser
             }
 
             using FileStream file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
             var buffer = this.configBuffer;
             if (buffer == null)
             {
@@ -76,6 +81,7 @@ internal sealed class SelfDiagnosticsConfigParser
 
             file.Read(buffer, 0, buffer.Length);
             string configJson = Encoding.UTF8.GetString(buffer);
+
             if (!TryParseLogDirectory(configJson, out logDirectory))
             {
                 return false;
@@ -101,18 +107,19 @@ internal sealed class SelfDiagnosticsConfigParser
                 return false;
             }
 
-            logLevel = (EventLevel)Enum.Parse(typeof(EventLevel), logLevelString);
-            return true;
+            return Enum.TryParse(logLevelString, out logLevel);
         }
         catch (Exception)
         {
             // do nothing on failure to open/read/parse config file
+            return false;
         }
-
-        return false;
     }
 
-    internal static bool TryParseLogDirectory(string configJson, out string logDirectory)
+    internal static bool TryParseLogDirectory(
+        string configJson,
+        [NotNullWhen(true)]
+        out string logDirectory)
     {
         var logDirectoryResult = LogDirectoryRegex.Match(configJson);
         logDirectory = logDirectoryResult.Groups["LogDirectory"].Value;
@@ -126,7 +133,10 @@ internal sealed class SelfDiagnosticsConfigParser
         return fileSizeResult.Success && int.TryParse(fileSizeResult.Groups["FileSize"].Value, out fileSizeInKB);
     }
 
-    internal static bool TryParseLogLevel(string configJson, out string logLevel)
+    internal static bool TryParseLogLevel(
+        string configJson,
+        [NotNullWhen(true)]
+        out string? logLevel)
     {
         var logLevelResult = LogLevelRegex.Match(configJson);
         logLevel = logLevelResult.Groups["LogLevel"].Value;

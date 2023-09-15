@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;

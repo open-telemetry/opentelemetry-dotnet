@@ -16,7 +16,9 @@
 
 using System.Diagnostics.Metrics;
 using System.Net;
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -132,7 +134,7 @@ public class PrometheusHttpListenerTests
             Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
             Assert.Matches(
-                "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n\n# EOF\n$".Replace('\'', '"'),
+                "^# TYPE counter_double_total counter\ncounter_double_total{key1='value1',key2='value2'} 101.17 \\d+\n\n# EOF\n$".Replace('\'', '"'),
                 await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
         else
