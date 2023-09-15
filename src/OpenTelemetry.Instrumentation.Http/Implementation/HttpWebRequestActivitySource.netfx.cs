@@ -281,7 +281,7 @@ internal static class HttpWebRequestActivitySource
         // filtering this request.
         var skipTracing = !WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request);
         var activity = skipTracing
-            ? new Activity("filtered")
+            ? null
             : WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
         var activityContext = Activity.Current?.Context ?? default;
 
@@ -289,12 +289,6 @@ internal static class HttpWebRequestActivitySource
         // downstream services to continue from parent context, if any.
         // Eg: Parent could be the Asp.Net activity.
         InstrumentRequest(request, activityContext);
-
-        // There is a listener but it decided not to sample the current request.
-        if (activity == null)
-        {
-            activity = new Activity("test");
-        }
 
         IAsyncResult asyncContext = writeAResultAccessor(request);
         if (asyncContext != null)
@@ -313,7 +307,10 @@ internal static class HttpWebRequestActivitySource
             asyncCallbackModifier(asyncContext, callback.AsyncCallback);
         }
 
-        AddRequestTagsAndInstrumentRequest(request, activity);
+        if (activity != null)
+        {
+            AddRequestTagsAndInstrumentRequest(request, activity);
+        }
     }
 
     private static void HookOrProcessResult(HttpWebRequest request)
