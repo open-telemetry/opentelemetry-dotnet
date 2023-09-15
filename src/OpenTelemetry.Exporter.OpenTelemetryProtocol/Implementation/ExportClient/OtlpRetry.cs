@@ -174,7 +174,7 @@ internal static class OtlpRetry
     {
         Debug.Assert(headers != null, "headers was null");
 
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
         return statusCode == HttpStatusCode.TooManyRequests || statusCode == HttpStatusCode.ServiceUnavailable
 #else
         return statusCode == (HttpStatusCode)429 || statusCode == HttpStatusCode.ServiceUnavailable
@@ -207,7 +207,7 @@ internal static class OtlpRetry
     {
         switch (statusCode)
         {
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             case HttpStatusCode.TooManyRequests:
 #else
             case (HttpStatusCode)429:
