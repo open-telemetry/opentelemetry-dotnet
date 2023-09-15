@@ -20,7 +20,13 @@ using OpenTelemetry.Resources;
 var builder = WebApplication.CreateBuilder(args);
 
 // Remove default providers and add OpenTelemetry logging provider
-builder.Logging.ClearProviders().AddOpenTelemetry(logging =>
+// For instructional purposes only, disable the default .NET console logging provider to
+// use the verbose OpenTelemetry console exporter instead. For most development
+// and production scenarios the default console provider works well and there is no need to
+// clear these providers.
+builder.Logging.ClearProviders();
+
+builder.Logging.AddOpenTelemetry(logging =>
 {
     logging.IncludeScopes = true;
 
