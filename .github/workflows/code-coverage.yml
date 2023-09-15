@@ -39,6 +39,9 @@ jobs:
     - name: dotnet test
       run: dotnet test --collect:"Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
 
+    - name: Install coverage tool
+      run: dotnet tool install -g dotnet-coverage
+
     - name: Process code coverage
       run: .\build\process-codecoverage.ps1
       shell: powershell
