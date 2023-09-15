@@ -31,8 +31,7 @@ package:
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
-files to the project folder.
+Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and you should see the log output
 on the console.
@@ -51,11 +50,7 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 1
 LogRecord.EventName:               FoodPriceChanged
 
-Resource associated with LogRecord:
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-alpha.1.55
-service.name: unknown_service:getting-started
+...
 
 LogRecord.Timestamp:               2023-08-03T22:53:51.0403466Z
 LogRecord.CategoryName:            SourceGeneration.Program
@@ -73,11 +68,7 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 2
 LogRecord.EventName:               FoodRecallNotice
 
-Resource associated with LogRecord:
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-alpha.1.55
-service.name: unknown_service:getting-started
+...
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
