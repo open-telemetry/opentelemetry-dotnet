@@ -348,10 +348,21 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
-        HttpClientDuration.Record(activity.Duration.TotalMilliseconds);
-
-        if (activity.DisplayName == "detached")
+        // Activity may be null if we are not tracing in these cases:
+        // 1. No listeners
+        // 2. Request was filtered out
+        // 3. Request was not sampled
+        if (activity == null)
         {
+            if (HttpClientDuration.Enabled)
+            {
+                var endTimestamp = Stopwatch.GetTimestamp();
+                var duration = endTimestamp - startTimestamp;
+                var durationS = duration / Stopwatch.Frequency;
+                var durationMs = durationS * 1000;
+                HttpClientDuration.Record(durationMs);
+            }
+
             return;
         }
 
