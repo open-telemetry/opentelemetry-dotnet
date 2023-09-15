@@ -35,6 +35,7 @@ builder.Logging.AddOpenTelemetry(logging =>
         .AddService(builder.Environment.ApplicationName);
 
     logging.SetResourceBuilder(resourceBuilder)
+
         // ConsoleExporter is used for demo purpose only.
         // In production environment, ConsoleExporter should be replaced with other exporters (e.g. OTLP Exporter).
         .AddConsoleExporter();
