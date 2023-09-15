@@ -308,6 +308,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shims", "Shims", "{A0CB9A10
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Api.Tests", "test\OpenTelemetry.Api.Tests\OpenTelemetry.Api.Tests.csproj", "{777C04B8-1BD5-43D7-B3CD-D2189DFABCF3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Metrics", "Metrics", "{1C459B5B-C702-46FF-BF1A-EE795E420FFA}"
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\Metrics\Base2ExponentialBucketHistogramHelper.cs = src\Shared\Metrics\Base2ExponentialBucketHistogramHelper.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -624,6 +629,7 @@ Global
 		{6D4B4FB2-0A8A-4044-948B-C063FD340439} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{494902DD-C63F-48E0-BED3-B58EFB4051C8} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{A0CB9A10-F22D-4E66-A449-74B3D0361A9C} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
+		{1C459B5B-C702-46FF-BF1A-EE795E420FFA} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

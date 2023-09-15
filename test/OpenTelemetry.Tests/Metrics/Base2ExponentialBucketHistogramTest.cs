@@ -16,11 +16,19 @@
 
 using OpenTelemetry.Tests;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public partial class Base2ExponentialBucketHistogramTest
+public class Base2ExponentialBucketHistogramTest
 {
+    private readonly ITestOutputHelper output;
+
+    public Base2ExponentialBucketHistogramTest(ITestOutputHelper output)
+    {
+        this.output = output;
+    }
+
     [Fact]
     public void ScalingFactorCalculation()
     {
@@ -537,7 +545,7 @@ public partial class Base2ExponentialBucketHistogramTest
             // Knowing that MapToIndex is imprecise near bucket boundaries,
             // the following produces an analysis of the magnitude of imprecision.
 
-            var incremented = BitIncrement(lowerBound);
+            var incremented = MathHelper.BitIncrement(lowerBound);
 
             if (index == histogram.MapToIndex(incremented))
             {
@@ -554,7 +562,7 @@ public partial class Base2ExponentialBucketHistogramTest
                 var increments = 1;
                 while (index != histogram.MapToIndex(incremented))
                 {
-                    incremented = BitIncrement(incremented);
+                    incremented = MathHelper.BitIncrement(incremented);
                     increments++;
                 }
 
