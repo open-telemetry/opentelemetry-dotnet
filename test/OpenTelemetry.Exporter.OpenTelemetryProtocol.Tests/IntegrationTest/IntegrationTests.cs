@@ -266,17 +266,19 @@ public sealed class IntegrationTests : IDisposable
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
-        if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
+        switch (processorOptions.ExportProcessorType)
         {
-            Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
-        }
-
-        if (exportProcessorType == ExportProcessorType.Simple)
-        {
-            Assert.Single(exportResults);
-            Assert.Equal(ExportResult.Success, exportResults[0]);
+            case ExportProcessorType.Batch:
+                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
+                break;
+            case ExportProcessorType.Simple:
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
+                break;
+            default:
+                throw new NotSupportedException("Unexpected processor type encountered.");
         }
     }
 
