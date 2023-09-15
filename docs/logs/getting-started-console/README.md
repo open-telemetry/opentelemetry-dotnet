@@ -37,11 +37,10 @@ Run the application again (using `dotnet run`) and you should see the log output
 on the console.
 
 ```text
-LogRecord.Timestamp:               2023-08-03T22:53:51.0194130Z
-LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Timestamp:               2023-09-15T06:07:03.5502083Z
+LogRecord.CategoryName:            Program
 LogRecord.Severity:                Info
 LogRecord.SeverityText:            Information
-LogRecord.FormattedMessage:        Food `artichoke` price changed to `9.99`.
 LogRecord.Body:                    Food `{name}` price changed to `{price}`.
 LogRecord.Attributes (Key:Value):
     name: artichoke
@@ -52,11 +51,10 @@ LogRecord.EventName:               FoodPriceChanged
 
 ...
 
-LogRecord.Timestamp:               2023-08-03T22:53:51.0403466Z
-LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Timestamp:               2023-09-15T06:07:03.5683511Z
+LogRecord.CategoryName:            Program
 LogRecord.Severity:                Fatal
 LogRecord.SeverityText:            Critical
-LogRecord.FormattedMessage:        A `Food & Beverages` recall notice was published for `Contoso Salads` produced by `Contoso Fresh Vegetables, Inc.` (due to a possible health risk from Listeria monocytogenes).
 LogRecord.Body:                    A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
 LogRecord.Attributes (Key:Value):
     brandName: Contoso
