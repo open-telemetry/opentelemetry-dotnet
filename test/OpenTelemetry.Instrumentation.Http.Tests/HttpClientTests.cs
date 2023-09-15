@@ -159,9 +159,6 @@ public partial class HttpClientTests
             Assert.True(enrichWithExceptionCalled);
         }
 
-#if NETFRAMEWORK
-        Assert.Empty(requestMetrics);
-#else
         Assert.Single(requestMetrics);
 
         var metric = requestMetrics[0];
@@ -193,7 +190,11 @@ public partial class HttpClientTests
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
         var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
         var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+#if NETFRAMEWORK
+        var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
+#else
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
+#endif
         var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
         Assert.Contains(hostName, attributes);
@@ -211,7 +212,6 @@ public partial class HttpClientTests
             Assert.DoesNotContain(statusCode, attributes);
             Assert.Equal(5, attributes.Length);
         }
-#endif
     }
 
     [Fact]
