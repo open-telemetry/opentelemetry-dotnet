@@ -62,17 +62,6 @@ public static class OtlpLogExporterHelperExtensions
         return loggerOptions.AddProcessor(BuildOtlpLogExporter(exporterOptions, processorOptions));
     }
 
-    internal static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
-        OpenTelemetryLoggerOptions loggerOptions,
-        Action<OtlpExporterOptions> configure)
-    {
-        var exporterOptions = new OtlpExporterOptions();
-
-        configure?.Invoke(exporterOptions);
-
-        return loggerOptions.AddProcessor(BuildOtlpLogExporter(exporterOptions, new()));
-    }
-
     internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
         OtlpExporterOptions exporterOptions,
         LogRecordExportProcessorOptions processorOptions,
@@ -100,5 +89,16 @@ public static class OtlpLogExporterHelperExtensions
                 batchOptions.ExporterTimeoutMilliseconds,
                 batchOptions.MaxExportBatchSize);
         }
+    }
+
+    private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
+    OpenTelemetryLoggerOptions loggerOptions,
+    Action<OtlpExporterOptions> configure)
+    {
+        var exporterOptions = new OtlpExporterOptions();
+
+        configure?.Invoke(exporterOptions);
+
+        return loggerOptions.AddProcessor(BuildOtlpLogExporter(exporterOptions, new()));
     }
 }
