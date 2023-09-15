@@ -411,6 +411,11 @@ internal static class HttpWebRequestActivitySource
         }
 
         activity.Stop();
+
+        if (HttpClientDuration.Enabled)
+        {
+            HttpClientDuration.Record(activity.Duration.TotalMilliseconds);
+        }
     }
 
     private static void PrepareReflectionObjects()
