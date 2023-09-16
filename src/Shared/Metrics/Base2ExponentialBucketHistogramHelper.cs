@@ -1,4 +1,4 @@
-// <copyright file="Base2ExponentialBucketHistogram.LowerBoundary.cs" company="OpenTelemetry Authors">
+// <copyright file="Base2ExponentialBucketHistogramHelper.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,25 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
-/// <content>
-/// This file contains an implementation for LowerBoundary.
-/// LowerBoundary returns the lower boundary of a bucket for
-/// a Base2ExponentialBucketHistogram.
-///
-/// The LowerBoundary implementation is intentionally placed
-/// in its own file so that components like the Console exporter
-/// can include it.
-/// </content>
-internal sealed partial class Base2ExponentialBucketHistogram
+/// <summary>
+/// Contains helper methods for the Base2ExponentialBucketHistogram class.
+/// </summary>
+internal static class Base2ExponentialBucketHistogramHelper
 {
     private const double EpsilonTimes2 = double.Epsilon * 2;
     private static readonly double Ln2 = Math.Log(2);
 
-    public static double LowerBoundary(int index, int scale)
+    /// <summary>
+    /// Calculate the lower boundary for a Base2ExponentialBucketHistogram bucket.
+    /// </summary>
+    /// <param name="index">Index.</param>
+    /// <param name="scale">Scale.</param>
+    /// <returns>Calculated lower boundary.</returns>
+    public static double CalculateLowerBoundary(int index, int scale)
     {
         if (scale > 0)
         {

@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -23,11 +24,12 @@ namespace OpenTelemetry.Metrics;
 internal sealed class AggregatorStore
 {
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
-    private static readonly Comparison<KeyValuePair<string, object>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
+    private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
+    private static readonly ExemplarFilter DefaultExemplarFilter = new AlwaysOffExemplarFilter();
 
     private readonly object lockZeroTags = new();
     private readonly object lockOverflowTag = new();
-    private readonly HashSet<string> tagKeysInteresting;
+    private readonly HashSet<string>? tagKeysInteresting;
     private readonly int tagsKeysInterestingCount;
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
@@ -60,7 +62,7 @@ internal sealed class AggregatorStore
         AggregationTemporality temporality,
         int maxMetricPoints,
         bool emitOverflowAttribute,
-        ExemplarFilter exemplarFilter = null)
+        ExemplarFilter? exemplarFilter = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
         this.maxMetricPoints = maxMetricPoints;
@@ -73,7 +75,7 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
-        this.exemplarFilter = exemplarFilter ?? new AlwaysOffExemplarFilter();
+        this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         if (metricStreamIdentity.TagKeys == null)
         {
             this.updateLongCallback = this.UpdateLong;
@@ -98,9 +100,9 @@ internal sealed class AggregatorStore
         }
     }
 
-    private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+    private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
-    private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+    private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
     internal DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -115,12 +117,12 @@ internal sealed class AggregatorStore
         return this.exemplarFilter is not AlwaysOffExemplarFilter;
     }
 
-    internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         this.updateLongCallback(value, tags);
     }
 
-    internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         this.updateDoubleCallback(value, tags);
     }
@@ -234,7 +236,7 @@ internal sealed class AggregatorStore
             {
                 if (!this.overflowTagMetricPointInitialized)
                 {
-                    this.metricPoints[1] = new MetricPoint(this, this.aggType, new KeyValuePair<string, object>[] { new("otel.metric.overflow", true) }, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                    this.metricPoints[1] = new MetricPoint(this, this.aggType, new KeyValuePair<string, object?>[] { new("otel.metric.overflow", true) }, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                     this.overflowTagMetricPointInitialized = true;
                 }
             }
@@ -242,7 +244,7 @@ internal sealed class AggregatorStore
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int LookupAggregatorStore(KeyValuePair<string, object>[] tagKeysAndValues, int length)
+    private int LookupAggregatorStore(KeyValuePair<string, object?>[] tagKeysAndValues, int length)
     {
         var givenTags = new Tags(tagKeysAndValues);
 
@@ -275,10 +277,10 @@ internal sealed class AggregatorStore
                     // so we need to make a deep copy for Dictionary storage.
                     if (length <= ThreadStaticStorage.MaxTagCacheSize)
                     {
-                        var givenTagKeysAndValues = new KeyValuePair<string, object>[length];
+                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
                         tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
-                        var sortedTagKeysAndValues = new KeyValuePair<string, object>[length];
+                        var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
                         tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
 
                         givenTags = new Tags(givenTagKeysAndValues);
@@ -328,7 +330,7 @@ internal sealed class AggregatorStore
                 }
 
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                var givenTagKeysAndValues = new KeyValuePair<string, object>[length];
+                var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
 
                 tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
@@ -366,7 +368,7 @@ internal sealed class AggregatorStore
         return aggregatorIndex;
     }
 
-    private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
         {
@@ -407,7 +409,7 @@ internal sealed class AggregatorStore
         }
     }
 
-    private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
         {
@@ -448,7 +450,7 @@ internal sealed class AggregatorStore
         }
     }
 
-    private void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
         {
@@ -489,7 +491,7 @@ internal sealed class AggregatorStore
         }
     }
 
-    private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
         {
@@ -530,7 +532,7 @@ internal sealed class AggregatorStore
         }
     }
 
-    private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         int tagLength = tags.Length;
         if (tagLength == 0)
@@ -546,7 +548,7 @@ internal sealed class AggregatorStore
         return this.LookupAggregatorStore(tagKeysAndValues, tagLength);
     }
 
-    private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags)
+    private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         int tagLength = tags.Length;
         if (tagLength == 0 || this.tagsKeysInterestingCount == 0)
@@ -555,12 +557,11 @@ internal sealed class AggregatorStore
             return 0;
         }
 
-        // TODO: Get only interesting tags
-        // from the incoming tags
-
         var storage = ThreadStaticStorage.GetStorage();
 
-        storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKeysAndValues, out var actualLength);
+        Debug.Assert(this.tagKeysInteresting != null, "this.tagKeysInteresting was null");
+
+        storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
 
         // Actual number of tags depend on how many
         // of the incoming tags has user opted to
@@ -571,6 +572,8 @@ internal sealed class AggregatorStore
             return 0;
         }
 
-        return this.LookupAggregatorStore(tagKeysAndValues, actualLength);
+        Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
+
+        return this.LookupAggregatorStore(tagKeysAndValues!, actualLength);
     }
 }
