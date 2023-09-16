@@ -31,6 +31,10 @@ internal sealed class OtlpGrpcTraceExportClient : BaseOtlpGrpcExportClient<OtlpC
         {
             this.traceClient = traceServiceClient;
         }
+        else if (options.CallInvokerFactory != null)
+        {
+            this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(options.CallInvokerFactory());
+        }
         else
         {
             this.Channel = options.CreateChannel();

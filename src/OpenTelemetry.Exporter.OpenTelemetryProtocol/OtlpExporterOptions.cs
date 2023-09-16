@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Reflection;
+using Grpc.Core;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -192,11 +193,10 @@ public class OtlpExporterOptions
     /// </remarks>
     public Func<HttpClient> HttpClientFactory { get; set; }
 
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
     /// <summary>
     /// Gets or sets the factory function called to create the <see
-    /// cref="HttpMessageHandler"/> instance that will be used at runtime to
-    /// transmit telemetry over HTTP. The returned instance will be reused
+    /// cref="CallInvoker"/> instance that will be used at runtime to
+    /// transmit telemetry over GRPC. The returned instance will be reused
     /// for all export invocations.
     /// </summary>
     /// <remarks>
@@ -206,26 +206,17 @@ public class OtlpExporterOptions
     /// cref="OtlpExportProtocol.Grpc"/> protocol.</item>
     /// <item>The default behavior when using the <see
     /// cref="OtlpTraceExporterHelperExtensions.AddOtlpExporter(TracerProviderBuilder,
-    /// Action{OtlpExporterOptions})"/> extension is if an <a
-    /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpmessagehandlerfactory">IHttpMessageHandlerFactory</a>
-    /// instance can be resolved through the application <see
-    /// cref="IServiceProvider"/> then an <see cref="HttpMessageHandler"/> will be
-    /// created through the factory with the name "OtlpTraceExporter"
-    /// otherwise an <see cref="HttpMessageHandler"/> will be instantiated
+    /// Action{OtlpExporterOptions})"/> extension is if an
+    /// <see cref="CallInvoker"/> will be instantiated
     /// directly.</item>
     /// <item>The default behavior when using the <see
     /// cref="OtlpMetricExporterExtensions.AddOtlpExporter(MeterProviderBuilder,
-    /// Action{OtlpExporterOptions})"/> extension is if an <a
-    /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpmessagehandlerfactory">IHttpMessageHandlerFactory</a>
-    /// instance can be resolved through the application <see
-    /// cref="IServiceProvider"/> then an <see cref="HttpMessageHandler"/> will be
-    /// created through the factory with the name "OtlpMetricExporter"
-    /// otherwise an <see cref="HttpMessageHandler"/> will be instantiated
+    /// Action{OtlpExporterOptions})"/> extension is if an
+    /// <see cref="CallInvoker"/> will be instantiated
     /// directly.</item>
     /// </list>
     /// </remarks>
-    public Func<HttpMessageHandler> HttpHandlerFactory { get; set; }
-#endif
+    public Func<CallInvoker> CallInvokerFactory { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.

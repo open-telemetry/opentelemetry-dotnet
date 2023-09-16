@@ -9,6 +9,8 @@ OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.CallInvokerFactory.get -> System.Func<Grpc.Core.CallInvoker>
+OpenTelemetry.Exporter.OtlpExporterOptions.CallInvokerFactory.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.get -> OpenTelemetry.Exporter.OtlpExportProtocol
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.set -> void
