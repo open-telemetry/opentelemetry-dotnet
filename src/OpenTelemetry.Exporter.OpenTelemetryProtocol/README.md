@@ -82,6 +82,15 @@ Core](../../examples/AspNetCore/Program.cs) example app. Check this
 for configuring OpenTelemetry with `ILogger` for certain application types such
 as ASP.NET Core and .NET Worker.
 
+**ILogger Scopes**: OTLP Log Exporter supports exporting `ILogger` scopes as
+Attributes. Scopes must be enabled at the SDK level using
+[IncludeScopes](../../docs/logs/customizing-the-sdk/Readme.md#includescopes)
+setting on `OpenTelemetryLoggerOptions`.
+
+> **Note**
+> Scope attributes with key set as empty string or `{OriginalFormat}`
+are ignored by exporter. Duplicate keys are exported as is.
+
 ## Configuration
 
 You can configure the `OtlpExporter` through `OtlpExporterOptions`

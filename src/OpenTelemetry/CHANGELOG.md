@@ -2,11 +2,22 @@
 
 ## Unreleased
 
+## 1.6.0
+
+Released 2023-Sep-05
+
 * Increased the character limit of the Meter instrument name from 63 to 255.
   ([#4774](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4774))
 
 * Update default size for `SimpleExemplarReservoir` to `1`.
   ([#4803](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4803))
+
+* Update Metrics SDK to override the default histogram buckets for a set of
+  well-known histogram metrics from ASP.NET Core and HttpClient runtime. These
+  histogram metrics which have their `Unit` as `s` (second) will have their
+  default histogram buckets as `[ 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25,
+  0.5, 0.75, 1, 2.5, 5, 7.5, 10 ]`.
+  ([#4820](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820))
 
 ## 1.6.0-rc.1
 

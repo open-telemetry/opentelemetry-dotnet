@@ -69,7 +69,7 @@ internal sealed class AggregatorStore
         this.currentMetricPointBatch = new int[maxMetricPoints];
         this.aggType = aggType;
         this.outputDelta = temporality == AggregationTemporality.Delta;
-        this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? Metric.DefaultHistogramBounds;
+        this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
@@ -105,6 +105,8 @@ internal sealed class AggregatorStore
     internal DateTimeOffset StartTimeExclusive { get; private set; }
 
     internal DateTimeOffset EndTimeInclusive { get; private set; }
+
+    internal double[] HistogramBounds => this.histogramBounds;
 
     internal bool IsExemplarEnabled()
     {
@@ -195,6 +197,17 @@ internal sealed class AggregatorStore
 
     internal MetricPointsAccessor GetMetricPoints()
         => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+
+    private static double[] FindDefaultHistogramBounds(in MetricStreamIdentity metricStreamIdentity)
+    {
+        if (metricStreamIdentity.Unit == "s" && Metric.DefaultHistogramBoundMappings
+            .Contains((metricStreamIdentity.MeterName, metricStreamIdentity.InstrumentName)))
+        {
+            return Metric.DefaultHistogramBoundsSeconds;
+        }
+
+        return Metric.DefaultHistogramBounds;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void InitializeZeroTagPointIfNotInitialized()

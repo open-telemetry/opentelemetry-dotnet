@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -45,7 +48,7 @@ internal
     /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
     /// and will not be given to the ExemplarReservoir.
     /// </returns>
-    public abstract bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+    public abstract bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
     /// <summary>
     /// Determines if a given measurement is eligible for being
@@ -63,5 +66,5 @@ internal
     /// <c>false</c> to indicate this measurement is not eligible to become Exemplar
     /// and will not be given to the ExemplarReservoir.
     /// </returns>
-    public abstract bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+    public abstract bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 }

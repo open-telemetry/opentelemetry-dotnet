@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
@@ -23,23 +25,21 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoir
 {
-    private readonly int length;
     private readonly Exemplar[] runningExemplars;
     private readonly Exemplar[] tempExemplars;
 
     public AlignedHistogramBucketExemplarReservoir(int length)
     {
-        this.length = length;
         this.runningExemplars = new Exemplar[length + 1];
         this.tempExemplars = new Exemplar[length + 1];
     }
 
-    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    public override void Offer(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
     {
         this.OfferAtBoundary(value, tags, index);
     }
 
-    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index = default)
+    public override void Offer(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index = default)
     {
         this.OfferAtBoundary(value, tags, index);
     }
@@ -59,7 +59,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
                 // TODO: The cost is paid irrespective of whether the
                 // Exporter supports Exemplar or not. One idea is to
                 // defer this until first exporter attempts read.
-                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags.Except(actualTags.KeyAndValues.ToList()).ToList();
+                this.tempExemplars[i].FilteredTags = this.runningExemplars[i].FilteredTags!.Except(actualTags.KeyAndValues.ToList()).ToList();
             }
 
             if (reset)
@@ -71,7 +71,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
         return this.tempExemplars;
     }
 
-    private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object>> tags, int index)
+    private void OfferAtBoundary(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, int index)
     {
         ref var exemplar = ref this.runningExemplars[index];
         exemplar.Timestamp = DateTimeOffset.UtcNow;
@@ -91,7 +91,7 @@ internal sealed class AlignedHistogramBucketExemplarReservoir : ExemplarReservoi
 
         if (exemplar.FilteredTags == null)
         {
-            exemplar.FilteredTags = new List<KeyValuePair<string, object>>(tags.Length);
+            exemplar.FilteredTags = new List<KeyValuePair<string, object?>>(tags.Length);
         }
         else
         {

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fixed writing boolean values to use the JSON representation
+  ([#4823](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4823))
+
 ## 1.6.0-rc.1
 
 Released 2023-Aug-21

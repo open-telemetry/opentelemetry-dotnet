@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
@@ -34,12 +36,14 @@ internal
 #endif
     sealed class TraceBasedExemplarFilter : ExemplarFilter
 {
-    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    /// <inheritdoc/>
+    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         return Activity.Current?.Recorded ?? false;
     }
 
-    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    /// <inheritdoc/>
+    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         return Activity.Current?.Recorded ?? false;
     }

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -36,7 +38,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
     /// </list>
     /// Note: A copy is made of the provided array.
     /// </remarks>
-    public double[] Boundaries
+    public double[]? Boundaries
     {
         get
         {
@@ -70,7 +72,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
         }
     }
 
-    internal double[] CopiedBoundaries { get; private set; }
+    internal double[]? CopiedBoundaries { get; private set; }
 
     private static bool IsSortedAndDistinct(double[] values)
     {

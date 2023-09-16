@@ -1,28 +1,28 @@
 #nullable enable
 ~OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
-~OpenTelemetry.Metrics.BaseExportingMetricReader.BaseExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter) -> void
-~OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.get -> double[]
-~OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void
-~OpenTelemetry.Metrics.IPullMetricExporter.Collect.get -> System.Func<int, bool>
-~OpenTelemetry.Metrics.IPullMetricExporter.Collect.set -> void
-~OpenTelemetry.Metrics.Metric.Description.get -> string
-~OpenTelemetry.Metrics.Metric.MeterName.get -> string
-~OpenTelemetry.Metrics.Metric.MeterVersion.get -> string
-~OpenTelemetry.Metrics.Metric.Name.get -> string
-~OpenTelemetry.Metrics.Metric.Unit.get -> string
-~OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
-~OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
-~OpenTelemetry.Metrics.MetricStreamConfiguration.Name.get -> string
-~OpenTelemetry.Metrics.MetricStreamConfiguration.Name.set -> void
-~OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> string[]
-~OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
-~OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
+OpenTelemetry.Metrics.BaseExportingMetricReader.BaseExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter) -> void
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.get -> double[]?
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void
+OpenTelemetry.Metrics.IPullMetricExporter.Collect.get -> System.Func<int, bool>?
+OpenTelemetry.Metrics.IPullMetricExporter.Collect.set -> void
+OpenTelemetry.Metrics.Metric.Description.get -> string!
+OpenTelemetry.Metrics.Metric.MeterName.get -> string!
+OpenTelemetry.Metrics.Metric.MeterVersion.get -> string!
+OpenTelemetry.Metrics.Metric.Name.get -> string!
+OpenTelemetry.Metrics.Metric.Unit.get -> string!
+OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string?
+OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.Name.get -> string?
+OpenTelemetry.Metrics.MetricStreamConfiguration.Name.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> string![]?
+OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
 ~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 ~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
-~readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric>
-~static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
-~static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
-~static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
+readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>!
+static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider! provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider! provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration!
 abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T!> batch) -> OpenTelemetry.ExportResult
 abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T! data) -> void
 abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
@@ -77,6 +77,8 @@ OpenTelemetry.ExportProcessorType.Simple = 0 -> OpenTelemetry.ExportProcessorTyp
 OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Failure = 1 -> OpenTelemetry.ExportResult
 OpenTelemetry.ExportResult.Success = 0 -> OpenTelemetry.ExportResult
+OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions
+OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions.BatchExportLogRecordProcessorOptions() -> void
 OpenTelemetry.Logs.LogRecord
 OpenTelemetry.Logs.LogRecord.Attributes.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Logs.LogRecord.Attributes.set -> void
@@ -107,6 +109,12 @@ OpenTelemetry.Logs.LogRecord.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Logs.LogRecord.TraceId.set -> void
 OpenTelemetry.Logs.LogRecord.TraceState.get -> string?
 OpenTelemetry.Logs.LogRecord.TraceState.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Logs.BatchExportLogRecordProcessorOptions!
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.BatchExportProcessorOptions.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.ExportProcessorType.set -> void
+OpenTelemetry.Logs.LogRecordExportProcessorOptions.LogRecordExportProcessorOptions() -> void
 OpenTelemetry.Logs.LogRecordScope
 OpenTelemetry.Logs.LogRecordScope.Enumerator
 OpenTelemetry.Logs.LogRecordScope.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
@@ -245,7 +253,7 @@ OpenTelemetry.ProviderExtensions
 OpenTelemetry.ReadOnlyTagCollection
 OpenTelemetry.ReadOnlyTagCollection.Count.get -> int
 OpenTelemetry.ReadOnlyTagCollection.Enumerator
-OpenTelemetry.ReadOnlyTagCollection.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object!>
+OpenTelemetry.ReadOnlyTagCollection.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
 OpenTelemetry.ReadOnlyTagCollection.Enumerator.Enumerator() -> void
 OpenTelemetry.ReadOnlyTagCollection.Enumerator.MoveNext() -> bool
 OpenTelemetry.ReadOnlyTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyTagCollection.Enumerator

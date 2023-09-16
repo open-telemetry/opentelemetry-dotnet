@@ -21,6 +21,9 @@ using OpenTelemetry.Context;
 
 namespace OpenTelemetry;
 
+/// <summary>
+/// Contains methods managing instrumentation of internal operations.
+/// </summary>
 public sealed class SuppressInstrumentationScope : IDisposable
 {
     // An integer value which controls whether instrumentation should be suppressed (disabled).

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Metrics;
@@ -59,6 +61,6 @@ internal
     /// <summary>
     /// Gets the FilteredTags (i.e any tags that were dropped during aggregation).
     /// </summary>
-    public List<KeyValuePair<string, object>> FilteredTags { get; internal set; }
+    public List<KeyValuePair<string, object?>>? FilteredTags { get; internal set; }
 }
 

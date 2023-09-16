@@ -14,8 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Describes the mode of a metric exporter.
+/// </summary>
 [Flags]
 public enum ExportModes : byte
 {

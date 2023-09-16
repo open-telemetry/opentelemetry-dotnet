@@ -14,8 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Enumeration used to define the type of a <see cref="Metric"/>.
+/// </summary>
 [Flags]
 public enum MetricType : byte
 {

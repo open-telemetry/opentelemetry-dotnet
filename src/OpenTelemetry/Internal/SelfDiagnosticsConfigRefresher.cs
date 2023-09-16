@@ -14,7 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.IO.MemoryMappedFiles;
 using System.Text;
@@ -47,10 +50,10 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private bool disposedValue;
 
     // Once the configuration file is valid, an eventListener object will be created.
-    private SelfDiagnosticsEventListener eventListener;
-    private volatile FileStream underlyingFileStreamForMemoryMappedFile;
-    private volatile MemoryMappedFile memoryMappedFile;
-    private string logDirectory;  // Log directory for log files
+    private SelfDiagnosticsEventListener? eventListener;
+    private volatile FileStream? underlyingFileStreamForMemoryMappedFile;
+    private volatile MemoryMappedFile? memoryMappedFile;
+    private string? logDirectory;  // Log directory for log files
     private int logFileSize;  // Log file size in bytes
     private long logFilePosition;  // The logger will write into the byte at this position
     private EventLevel logEventLevel = (EventLevel)(-1);
@@ -77,7 +80,11 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     /// <param name="stream">When this method returns, contains the Stream object where `byteCount` of bytes can be written.</param>
     /// <param name="availableByteCount">The number of bytes that is remaining until the end of the stream.</param>
     /// <returns>Whether the logger should log in the stream.</returns>
-    public virtual bool TryGetLogStream(int byteCount, out Stream stream, out int availableByteCount)
+    public virtual bool TryGetLogStream(
+        int byteCount,
+        [NotNullWhen(true)]
+        out Stream? stream,
+        out int availableByteCount)
     {
         if (this.memoryMappedFile == null)
         {
@@ -145,7 +152,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void UpdateMemoryMappedFileFromConfiguration()
     {
-        if (this.configParser.TryGetConfiguration(out string newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
+        if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel))
         {
             int newFileSize = fileSizeInKB * 1024;
             if (!newLogDirectory.Equals(this.logDirectory) || this.logFileSize != newFileSize)
@@ -173,7 +180,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void CloseLogFile()
     {
-        MemoryMappedFile mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
+        MemoryMappedFile? mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
         if (mmf != null)
         {
             // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
@@ -190,7 +197,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
             mmf.Dispose();
         }
 
-        FileStream fs = Interlocked.CompareExchange(
+        FileStream? fs = Interlocked.CompareExchange(
             ref this.underlyingFileStreamForMemoryMappedFile,
             null,
             this.underlyingFileStreamForMemoryMappedFile);
@@ -202,7 +209,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         try
         {
             Directory.CreateDirectory(newLogDirectory);
-            var fileName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + "."
+            var fileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "OpenTelemetrySdk") + "."
                 + Process.GetCurrentProcess().Id + ".log";
             var filePath = Path.Combine(newLogDirectory, fileName);
 

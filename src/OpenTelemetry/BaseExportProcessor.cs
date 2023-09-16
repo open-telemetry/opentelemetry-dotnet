@@ -47,7 +47,11 @@ public enum ExportProcessorType
 public abstract class BaseExportProcessor<T> : BaseProcessor<T>
     where T : class
 {
+    /// <summary>
+    /// Gets the exporter used by the processor.
+    /// </summary>
     protected readonly BaseExporter<T> exporter;
+
     private readonly string friendlyTypeName;
     private bool disposed;
 
@@ -74,6 +78,7 @@ public abstract class BaseExportProcessor<T> : BaseProcessor<T>
     {
     }
 
+    /// <inheritdoc />
     public override void OnEnd(T data)
     {
         this.OnExport(data);
@@ -86,6 +91,17 @@ public abstract class BaseExportProcessor<T> : BaseProcessor<T>
         this.exporter.ParentProvider = parentProvider;
     }
 
+    /// <summary>
+    /// Called synchronously when a telemetry object is exported.
+    /// </summary>
+    /// <param name="data">
+    /// The exported telemetry object.
+    /// </param>
+    /// <remarks>
+    /// This function is called synchronously on the thread which ended
+    /// the telemetry object. This function should be thread-safe, and
+    /// should not block indefinitely or throw exceptions.
+    /// </remarks>
     protected abstract void OnExport(T data);
 
     /// <inheritdoc />

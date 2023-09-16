@@ -14,8 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Stores configuration for a histogram MetricStream.
+/// </summary>
 public class HistogramConfiguration : MetricStreamConfiguration
 {
     /// <summary>

@@ -11,11 +11,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
-    <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
-    <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
