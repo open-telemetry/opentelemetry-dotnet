@@ -33,7 +33,7 @@ internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCol
         }
         else if (options.CallInvokerFactory != null)
         {
-            this.logsClient = new OtlpCollector.LogsService.LogsServiceClient(options.CallInvokerFactory());
+            this.logsClient = new OtlpCollector.LogsService.LogsServiceClient(options.CallInvokerFactory(options.Endpoint));
         }
         else
         {

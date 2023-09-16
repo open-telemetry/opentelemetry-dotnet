@@ -216,7 +216,7 @@ public class OtlpExporterOptions
     /// directly.</item>
     /// </list>
     /// </remarks>
-    public Func<CallInvoker> CallInvokerFactory { get; set; }
+    public Func<Uri, CallInvoker> CallInvokerFactory { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.

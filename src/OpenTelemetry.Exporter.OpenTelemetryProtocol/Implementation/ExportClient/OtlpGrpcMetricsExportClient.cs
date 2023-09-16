@@ -33,7 +33,7 @@ internal sealed class OtlpGrpcMetricsExportClient : BaseOtlpGrpcExportClient<Otl
         }
         else if (options.CallInvokerFactory != null)
         {
-            this.metricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(options.CallInvokerFactory());
+            this.metricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(options.CallInvokerFactory(options.Endpoint));
         }
         else
         {

@@ -14,11 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
 using System.Reflection;
-using Grpc.Net.Client;
+using Grpc.Core;
 using Moq;
-#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 
@@ -59,29 +57,24 @@ public class OtlpGrpcTraceExportClientTests
         }
     }
 
-#if NET6_0_OR_GREATER
     [Fact]
-    public void NewOtlpGrpcTraceExportClient_UseCustomHttpClient()
+    public void NewOtlpGrpcTraceExportClient_CallInvokerFactory()
     {
-        var httpHandler = new Mock<HttpMessageHandler>();
+        var mock = new Mock<CallInvoker>();
 
         var options = new OtlpExporterOptions
         {
-            HttpHandlerFactory = () => httpHandler.Object
+            CallInvokerFactory = endpoint => mock.Object,
         };
 
         var client = new OtlpGrpcTraceExportClient(options);
 
-        var httpInvoker = Assert.IsAssignableFrom<HttpMessageInvoker>(typeof(GrpcChannel).GetProperty("HttpInvoker", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(client.Channel));
+        Assert.Null(client.Channel);
 
-        var httpMessageHandler = Assert.IsAssignableFrom<HttpMessageHandler>(typeof(HttpMessageInvoker).GetField("_handler", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(httpInvoker));
+        var clientBase = Assert.IsAssignableFrom<ClientBase>(client.GetType().GetField("traceClient", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(client));
 
-        while (httpMessageHandler is DelegatingHandler delegatingHandler)
-        {
-            httpMessageHandler = delegatingHandler.InnerHandler;
-        }
+        var callInvoker = Assert.IsAssignableFrom<CallInvoker>(typeof(ClientBase).GetField("callInvoker", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(clientBase));
 
-        Assert.Equal(httpHandler.Object, httpMessageHandler);
+        Assert.Same(mock.Object, callInvoker.GetType().GetField("invoker", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(callInvoker));
     }
-#endif
 }
