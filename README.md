@@ -121,7 +121,6 @@ If you have trouble accessing the doc, please get in touch on
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Reiley Yang](https://github.com/reyang), Microsoft
-* [Robert Paj&#x105;k](https://github.com/pellared), Splunk
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
 [Emeritus
@@ -132,6 +131,7 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 * [Liudmila Molkova](https://github.com/lmolkova)
 * [Mike Goldsmith](https://github.com/MikeGoldsmith)
 * [Paulo Janotti](https://github.com/pjanotti)
+* [Robert Paj&#x105;k](https://github.com/pellared)
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
 * [Victor Lu](https://github.com/victlu)
 
