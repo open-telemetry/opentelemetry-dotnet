@@ -295,7 +295,7 @@ internal static class HttpWebRequestActivitySource
         {
             // Flow here is for [Begin]GetRequestStream[Async].
 
-            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext), Stopwatch.GetTimestamp());
             asyncCallbackModifier(asyncContext, callback.AsyncCallback);
         }
         else
@@ -303,7 +303,7 @@ internal static class HttpWebRequestActivitySource
             // Flow here is for [Begin]GetResponse[Async] without a prior call to [Begin]GetRequestStream[Async].
 
             asyncContext = readAResultAccessor(request);
-            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext));
+            AsyncCallbackWrapper callback = new AsyncCallbackWrapper(request, activity, asyncCallbackAccessor(asyncContext), Stopwatch.GetTimestamp());
             asyncCallbackModifier(asyncContext, callback.AsyncCallback);
         }
 
@@ -342,7 +342,7 @@ internal static class HttpWebRequestActivitySource
         }
 
         // Hook into the result callback if it hasn't already fired.
-        AsyncCallbackWrapper callback = new AsyncCallbackWrapper(writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, asyncCallbackAccessor(readAsyncContext));
+        AsyncCallbackWrapper callback = new AsyncCallbackWrapper(writeAsyncContextCallback.Request, writeAsyncContextCallback.Activity, asyncCallbackAccessor(readAsyncContext), Stopwatch.GetTimestamp());
         asyncCallbackModifier(readAsyncContext, callback.AsyncCallback);
     }
 
@@ -1154,11 +1154,12 @@ internal static class HttpWebRequestActivitySource
     /// </summary>
     private sealed class AsyncCallbackWrapper
     {
-        public AsyncCallbackWrapper(HttpWebRequest request, Activity activity, AsyncCallback originalCallback)
+        public AsyncCallbackWrapper(HttpWebRequest request, Activity activity, AsyncCallback originalCallback, long startTimestamp)
         {
             this.Request = request;
             this.Activity = activity;
             this.OriginalCallback = originalCallback;
+            this.StartTimestamp = startTimestamp;
         }
 
         public HttpWebRequest Request { get; }
