@@ -19,9 +19,9 @@ using OpenTelemetry.Logs;
 
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddOpenTelemetry(options =>
+    builder.AddOpenTelemetry(logging =>
     {
-        options.AddConsoleExporter();
+        logging.AddConsoleExporter();
     });
 });
 
