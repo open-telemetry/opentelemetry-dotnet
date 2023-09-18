@@ -17,33 +17,38 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
-namespace SourceGeneration;
-
-public class Program
+using var loggerFactory = LoggerFactory.Create(builder =>
 {
-    public static void Main()
+    builder.AddOpenTelemetry(logging =>
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.IncludeScopes = true;
-                options.ParseStateValues = true;
-                options.IncludeFormattedMessage = true;
-                options.AddConsoleExporter();
-            });
-        });
+        logging.AddConsoleExporter();
+    });
+});
 
-        var logger = loggerFactory.CreateLogger<Program>();
+var logger = loggerFactory.CreateLogger<Program>();
 
-        logger.FoodPriceChanged("artichoke", 9.99);
+logger.FoodPriceChanged("artichoke", 9.99);
 
-        logger.FoodRecallNotice(
-            logLevel: LogLevel.Critical,
-            brandName: "Contoso",
-            productDescription: "Salads",
-            productType: "Food & Beverages",
-            recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
-            companyName: "Contoso Fresh Vegetables, Inc.");
-    }
+logger.FoodRecallNotice(
+    logLevel: LogLevel.Critical,
+    brandName: "Contoso",
+    productDescription: "Salads",
+    productType: "Food & Beverages",
+    recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
+    companyName: "Contoso Fresh Vegetables, Inc.");
+
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
+
+    [LoggerMessage(EventId = 2, Message = "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
+    public static partial void FoodRecallNotice(
+        this ILogger logger,
+        LogLevel logLevel,
+        string brandName,
+        string productDescription,
+        string productType,
+        string recallReasonDescription,
+        string companyName);
 }
