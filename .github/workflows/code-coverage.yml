@@ -33,9 +33,6 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
 
-#    - name: dotnet test
-#      run: dotnet test --collect:"XPlat Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
-
     - name: Test
       run: dotnet test --collect:"Code Coverage" --results-directory:"TestResults" --configuration Release --no-build -- RunConfiguration.DisableAppDomain=true
 
