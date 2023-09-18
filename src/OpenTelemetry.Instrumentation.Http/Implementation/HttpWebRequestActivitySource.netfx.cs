@@ -369,9 +369,8 @@ internal static class HttpWebRequestActivitySource
             else
             {
                 HttpWebResponse response = (HttpWebResponse)result;
-                bool copyResponse = forceResponseCopy || (asyncCallback == null && isContextAwareResultChecker(asyncResult));
 
-                if (copyResponse)
+                if (forceResponseCopy || (asyncCallback == null && isContextAwareResultChecker(asyncResult)))
                 {
                     // For async calls (where asyncResult is ContextAwareResult)...
                     // If no callback was set assume the user is manually calling BeginGetResponse & EndGetResponse
