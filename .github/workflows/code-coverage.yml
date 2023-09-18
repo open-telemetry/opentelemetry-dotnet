@@ -42,15 +42,8 @@ jobs:
     - name: Install coverage tool
       run: dotnet tool install -g dotnet-coverage
 
-    - name: Process code coverage
-      run: .\build\process-codecoverage.ps1
-      shell: powershell
-
-    - name: Install report tool
-      run: dotnet tool install -g dotnet-reportgenerator-globaltool
-
     - name: Merging test results
-      run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -assemblyFilters:"-microsoft.data.sqlclient*;-grpc.core*;-opentracing*"
+      run: dotnet-coverage merge -r -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/*.coverage
 
     - uses: codecov/codecov-action@v3.1.4
       with:
