@@ -36,3 +36,6 @@ service:
     metrics:
       receivers: [otlp, otlp/tls]
       exporters: [logging]
+    logs:
+      receivers: [otlp, otlp/tls]
+      exporters: [logging]
