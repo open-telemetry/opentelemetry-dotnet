@@ -212,7 +212,7 @@ get access to `HttpRequest` and `HttpResponse`.
 ### RecordException
 
 This instrumentation automatically sets Activity Status to Error if an unhandled
-exception is thrown, which is not catched by any middleware or application.
+exception is thrown, which is not caught by any middleware or application.
 Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
 
