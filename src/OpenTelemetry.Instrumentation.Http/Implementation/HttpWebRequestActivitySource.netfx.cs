@@ -421,7 +421,6 @@ internal static class HttpWebRequestActivitySource
             tags.Add(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
             tags.Add(SemanticConventions.AttributeHttpMethod, request.Method);
             tags.Add(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-            tags.Add(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
             tags.Add(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
             tags.Add(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
 
