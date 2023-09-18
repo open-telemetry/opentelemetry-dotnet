@@ -400,7 +400,7 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
-        activity.Stop();
+        activity?.Stop();
 
         if (HttpClientDuration.Enabled)
         {
