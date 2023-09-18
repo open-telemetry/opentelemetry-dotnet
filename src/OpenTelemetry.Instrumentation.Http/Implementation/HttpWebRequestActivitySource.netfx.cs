@@ -348,26 +348,14 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
+        HttpStatusCode? httpStatusCode = null;
+
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
         // 2. Request was filtered out
         // 3. Request was not sampled
-        if (activity == null)
-        {
-            if (HttpClientDuration.Enabled)
-            {
-                var endTimestamp = Stopwatch.GetTimestamp();
-                var duration = endTimestamp - startTimestamp;
-                var durationS = duration / Stopwatch.Frequency;
-                var durationMs = durationS * 1000;
-                HttpClientDuration.Record(durationMs);
-            }
-
-            return;
-        }
-
         // We could be executing on a different thread now so restore the activity if needed.
-        if (Activity.Current != activity)
+        if (activity != null && Activity.Current != activity)
         {
             Activity.Current = activity;
         }
@@ -381,8 +369,9 @@ internal static class HttpWebRequestActivitySource
             else
             {
                 HttpWebResponse response = (HttpWebResponse)result;
+                bool copyResponse = forceResponseCopy || (asyncCallback == null && isContextAwareResultChecker(asyncResult));
 
-                if (forceResponseCopy || (asyncCallback == null && isContextAwareResultChecker(asyncResult)))
+                if (copyResponse)
                 {
                     // For async calls (where asyncResult is ContextAwareResult)...
                     // If no callback was set assume the user is manually calling BeginGetResponse & EndGetResponse
@@ -398,10 +387,12 @@ internal static class HttpWebRequestActivitySource
                         });
 
                     AddResponseTags(responseCopy, activity);
+                    httpStatusCode = responseCopy.StatusCode;
                 }
                 else
                 {
                     AddResponseTags(response, activity);
+                    httpStatusCode = response.StatusCode;
                 }
             }
         }
@@ -414,7 +405,29 @@ internal static class HttpWebRequestActivitySource
 
         if (HttpClientDuration.Enabled)
         {
-            HttpClientDuration.Record(activity.Duration.TotalMilliseconds);
+            if (httpStatusCode.HasValue)
+            {
+                HttpClientDuration.Record(
+                    activity.Duration.TotalMilliseconds,
+                    new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
+                    new(SemanticConventions.AttributeHttpMethod, request.Method),
+                    new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
+                    new(SemanticConventions.AttributeHttpStatusCode, httpStatusCode.Value),
+                    new(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri)),
+                    new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
+                    new(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+            }
+            else
+            {
+                HttpClientDuration.Record(
+                    activity.Duration.TotalMilliseconds,
+                    new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
+                    new(SemanticConventions.AttributeHttpMethod, request.Method),
+                    new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
+                    new(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri)),
+                    new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
+                    new(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+            }
         }
     }
 
