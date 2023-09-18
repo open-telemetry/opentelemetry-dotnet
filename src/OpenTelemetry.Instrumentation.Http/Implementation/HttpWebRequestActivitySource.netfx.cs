@@ -404,10 +404,24 @@ internal static class HttpWebRequestActivitySource
 
         if (HttpClientDuration.Enabled)
         {
+            double duration = 0;
+
+            if (activity != null)
+            {
+                duration = activity.Duration.TotalMilliseconds;
+            }
+            else
+            {
+                var endTimestamp = Stopwatch.GetTimestamp();
+                var durationS = (endTimestamp - startTimestamp) / Stopwatch.Frequency;
+                var durationMs = durationS * 1000;
+                duration = durationMs;
+            }
+
             if (httpStatusCode.HasValue)
             {
                 HttpClientDuration.Record(
-                    activity.Duration.TotalMilliseconds,
+                    duration,
                     new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
                     new(SemanticConventions.AttributeHttpMethod, request.Method),
                     new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
