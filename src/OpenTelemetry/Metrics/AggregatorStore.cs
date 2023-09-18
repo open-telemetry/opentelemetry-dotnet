@@ -709,7 +709,7 @@ internal sealed class AggregatorStore
         {
             if (referenceCount < 0)
             {
-                // Rare case: TakeSnapsot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle.
+                // Rare case: TakeSnapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle.
 
                 index = this.RemoveStaleEntriesAndGetAvailableMetricPointRare(lookupData, length);
             }
@@ -717,7 +717,7 @@ internal sealed class AggregatorStore
             {
                 if (metricPointAtIndex.LookupData != lookupData)
                 {
-                    // Rare case: Another thread with different input tags could have reclaimed this MetricPoint if it was freed up by TakeSnapsot method.
+                    // Rare case: Another thread with different input tags could have reclaimed this MetricPoint if it was freed up by TakeSnapshot method.
 
                     // Remove reference since its not the right MetricPoint.
                     Interlocked.Decrement(ref metricPointAtIndex.ReferenceCount);
