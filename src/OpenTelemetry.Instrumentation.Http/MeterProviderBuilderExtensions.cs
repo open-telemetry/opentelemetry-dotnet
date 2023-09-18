@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#if NETFRAMEWORK
+#else
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+#endif
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Internal;
