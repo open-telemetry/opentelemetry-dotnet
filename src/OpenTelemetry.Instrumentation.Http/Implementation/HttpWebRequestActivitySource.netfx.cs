@@ -417,29 +417,20 @@ internal static class HttpWebRequestActivitySource
                 durationMs = durationS * 1000;
             }
 
+            TagList tags = default;
+            tags.Add(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+            tags.Add(SemanticConventions.AttributeHttpMethod, request.Method);
+            tags.Add(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
+            tags.Add(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
+            tags.Add(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+            tags.Add(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+
             if (httpStatusCode.HasValue)
             {
-                HttpClientDuration.Record(
-                    durationMs,
-                    new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
-                    new(SemanticConventions.AttributeHttpMethod, request.Method),
-                    new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                    new(SemanticConventions.AttributeHttpStatusCode, httpStatusCode.Value),
-                    new(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri)),
-                    new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
-                    new(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
+                tags.Add(SemanticConventions.AttributeHttpStatusCode, httpStatusCode.Value);
             }
-            else
-            {
-                HttpClientDuration.Record(
-                    durationMs,
-                    new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
-                    new(SemanticConventions.AttributeHttpMethod, request.Method),
-                    new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                    new(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri)),
-                    new(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host),
-                    new(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
-            }
+
+            HttpClientDuration.Record(durationMs, tags);
         }
     }
 
