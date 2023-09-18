@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Remove obsolete `TracerShim(Tracer, TextMapPropagator)` constructor.
+  Use `TracerShim(TracerProvider)`
+  or `TracerShim(TracerProvider, TextMapPropagator)` constructors.
+  ([#4862](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4862))
+
 ## 1.6.0-beta.1
 
 Released 2023-Sep-05
