@@ -426,7 +426,7 @@ internal static class HttpWebRequestActivitySource
 
             if (httpStatusCode.HasValue)
             {
-                tags.Add(SemanticConventions.AttributeHttpStatusCode, httpStatusCode.Value);
+                tags.Add(SemanticConventions.AttributeHttpStatusCode, (int)httpStatusCode.Value);
             }
 
             HttpClientDuration.Record(durationMs, tags);
