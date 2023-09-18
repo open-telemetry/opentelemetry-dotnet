@@ -404,24 +404,23 @@ internal static class HttpWebRequestActivitySource
 
         if (HttpClientDuration.Enabled)
         {
-            double duration = 0;
+            double durationMs = 0;
 
             if (activity != null)
             {
-                duration = activity.Duration.TotalMilliseconds;
+                durationMs = activity.Duration.TotalMilliseconds;
             }
             else
             {
                 var endTimestamp = Stopwatch.GetTimestamp();
                 var durationS = (endTimestamp - startTimestamp) / Stopwatch.Frequency;
-                var durationMs = durationS * 1000;
-                duration = durationMs;
+                durationMs = durationS * 1000;
             }
 
             if (httpStatusCode.HasValue)
             {
                 HttpClientDuration.Record(
-                    duration,
+                    durationMs,
                     new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
                     new(SemanticConventions.AttributeHttpMethod, request.Method),
                     new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
@@ -433,7 +432,7 @@ internal static class HttpWebRequestActivitySource
             else
             {
                 HttpClientDuration.Record(
-                    duration,
+                    durationMs,
                     new(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion)),
                     new(SemanticConventions.AttributeHttpMethod, request.Method),
                     new(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
