@@ -585,7 +585,7 @@ internal sealed class AggregatorStore
 
                 if (!this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                 {
-                    // Note: We are using storage from ThreadStatic (for upto MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
+                    // Note: We are using storage from ThreadStatic (for up to MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
                     // so we need to make a deep copy for Dictionary storage.
                     if (length <= ThreadStaticStorage.MaxTagCacheSize)
                     {
