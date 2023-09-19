@@ -717,7 +717,7 @@ internal sealed class AggregatorStore
             {
                 if (metricPointAtIndex.LookupData != lookupData)
                 {
-                    // Rare case: Another thread with different input tags could have reclaimed this MetricPoint if it was freed up by TakeSnapshot method.
+                    // Rare case: Another thread with different input tags could have reclaimed this MetricPoint if it was freed up by Snapshot method.
 
                     // Remove reference since its not the right MetricPoint.
                     Interlocked.Decrement(ref metricPointAtIndex.ReferenceCount);
