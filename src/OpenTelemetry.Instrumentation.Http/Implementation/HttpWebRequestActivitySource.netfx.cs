@@ -294,7 +294,7 @@ internal static class HttpWebRequestActivitySource
 
         Activity activity = null;
 
-        if (!skipTracing)
+        if (enableTracing)
         {
             activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
         }
