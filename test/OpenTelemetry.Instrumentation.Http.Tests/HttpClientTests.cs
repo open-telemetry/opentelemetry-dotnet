@@ -35,6 +35,14 @@ public partial class HttpClientTests
     [MemberData(nameof(TestData))]
     public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
     {
+        await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, true, true).ConfigureAwait(false);
+        await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, true, false).ConfigureAwait(false);
+        await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, false, true).ConfigureAwait(false);
+        await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, false, false).ConfigureAwait(false);
+    }
+
+    private async Task HttpOutCallsAreCollectedSuccessfullyBodyAsync(HttpTestData.HttpOutTestCase tc, bool enableTracing, bool enableMetrics)
+    {
         bool enrichWithHttpWebRequestCalled = false;
         bool enrichWithHttpWebResponseCalled = false;
         bool enrichWithHttpRequestMessageCalled = false;
@@ -55,13 +63,21 @@ public partial class HttpClientTests
         var metrics = new List<Metric>();
         var activities = new List<Activity>();
 
-        var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddHttpClientInstrumentation()
+        var meterProviderBuilder = Sdk.CreateMeterProviderBuilder();
+
+        if (enableMetrics)
+        {
+            meterProviderBuilder.AddHttpClientInstrumentation();
+        }
+
+        var meterProvider = meterProviderBuilder
             .AddInMemoryExporter(metrics)
             .Build();
+        var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
-        using (Sdk.CreateTracerProviderBuilder()
-            .AddHttpClientInstrumentation((opt) =>
+        if (enableTracing)
+        {
+            tracerProviderBuilder.AddHttpClientInstrumentation((opt) =>
             {
                 opt.EnrichWithHttpWebRequest = (activity, httpRequestMessage) => { enrichWithHttpWebRequestCalled = true; };
                 opt.EnrichWithHttpWebResponse = (activity, httpResponseMessage) => { enrichWithHttpWebResponseCalled = true; };
@@ -69,9 +85,14 @@ public partial class HttpClientTests
                 opt.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                 opt.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
                 opt.RecordException = tc.RecordException ?? false;
-            })
+            });
+        }
+
+        var tracerProvider = tracerProviderBuilder
             .AddInMemoryExporter(activities)
-            .Build())
+            .Build();
+
+        using (tracerProvider)
         {
             try
             {
@@ -109,19 +130,25 @@ public partial class HttpClientTests
             .Where(metric => metric.Name == "http.client.duration")
             .ToArray();
 
-        var activity = Assert.Single(activities);
+        if (!enableTracing)
+        {
+            Assert.Empty(activities);
+        }
+        else
+        {
+            var activity = Assert.Single(activities);
 
-        Assert.Equal(ActivityKind.Client, activity.Kind);
-        Assert.Equal(tc.SpanName, activity.DisplayName);
+            Assert.Equal(ActivityKind.Client, activity.Kind);
+            Assert.Equal(tc.SpanName, activity.DisplayName);
 
 #if NETFRAMEWORK
-        Assert.True(enrichWithHttpWebRequestCalled);
-        Assert.False(enrichWithHttpRequestMessageCalled);
-        if (tc.ResponseExpected)
-        {
-            Assert.True(enrichWithHttpWebResponseCalled);
-            Assert.False(enrichWithHttpResponseMessageCalled);
-        }
+            Assert.True(enrichWithHttpWebRequestCalled);
+            Assert.False(enrichWithHttpRequestMessageCalled);
+            if (tc.ResponseExpected)
+            {
+                Assert.True(enrichWithHttpWebResponseCalled);
+                Assert.False(enrichWithHttpResponseMessageCalled);
+            }
 #else
         Assert.False(enrichWithHttpWebRequestCalled);
         Assert.True(enrichWithHttpRequestMessageCalled);
@@ -132,29 +159,36 @@ public partial class HttpClientTests
         }
 #endif
 
-        // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
-        Assert.Equal(tc.SpanStatus, activity.Status.ToString());
+            // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
+            Assert.Equal(tc.SpanStatus, activity.Status.ToString());
 
-        if (tc.SpanStatusHasDescription.HasValue)
-        {
-            var desc = activity.StatusDescription;
-            Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
+            if (tc.SpanStatusHasDescription.HasValue)
+            {
+                var desc = activity.StatusDescription;
+                Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
+            }
+
+            var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
+            var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
+
+            Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
+
+            foreach (var kv in normalizedAttributesTestCase)
+            {
+                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (tc.RecordException.HasValue && tc.RecordException.Value)
+            {
+                Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
+                Assert.True(enrichWithExceptionCalled);
+            }
         }
 
-        var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
-
-        Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
-
-        foreach (var kv in normalizedAttributesTestCase)
+        if (!enableMetrics)
         {
-            Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (tc.RecordException.HasValue && tc.RecordException.Value)
-        {
-            Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
-            Assert.True(enrichWithExceptionCalled);
+            Assert.Empty(requestMetrics);
+            return;
         }
 
         Assert.Single(requestMetrics);
@@ -176,7 +210,12 @@ public partial class HttpClientTests
         var sum = metricPoint.GetHistogramSum();
 
         Assert.Equal(1L, count);
-        Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+
+        if (enableTracing)
+        {
+            var activity = Assert.Single(activities);
+            Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+        }
 
         var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
         int i = 0;
