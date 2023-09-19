@@ -299,7 +299,7 @@ internal static class HttpWebRequestActivitySource
             activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
         }
 
-        var activityContext = activity?.Context ?? default;
+        var activityContext = Activity.Current?.Context ?? default;
 
         // Propagation must still be done in all cases, to allow
         // downstream services to continue from parent context, if any.
