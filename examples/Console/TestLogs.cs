@@ -79,7 +79,7 @@ internal class TestLogs
                     {
                         processorType = ExportProcessorType.Batch;
                     }
-                    else if (options.Protocol.Trim().ToLower().Equals("simple"))
+                    else if (options.ProcessorType.Trim().ToLower().Equals("simple"))
                     {
                         processorType = ExportProcessorType.Simple;
                     }

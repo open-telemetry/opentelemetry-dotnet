@@ -59,49 +59,46 @@ public static class OtlpLogExporterHelperExtensions
 
         configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
-        return AddOtlpLogExporterInternal(
-             loggerOptions,
-             exporterOptions: exporterOptions,
-             processorOptions: processorOptions);
+        return loggerOptions.AddProcessor(BuildOtlpLogExporter(exporterOptions, processorOptions));
     }
 
-    private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
-        OpenTelemetryLoggerOptions loggerOptions,
-        Action<OtlpExporterOptions> configure)
-    {
-        var exporterOptions = new OtlpExporterOptions();
-
-        configure?.Invoke(exporterOptions);
-
-        return AddOtlpLogExporterInternal(
-            loggerOptions,
-            exporterOptions: exporterOptions,
-            processorOptions: new());
-    }
-
-    private static OpenTelemetryLoggerOptions AddOtlpLogExporterInternal(
-        OpenTelemetryLoggerOptions loggerOptions,
+    internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
         OtlpExporterOptions exporterOptions,
-        LogRecordExportProcessorOptions processorOptions)
+        LogRecordExportProcessorOptions processorOptions,
+        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>> configureExporterInstance = null)
     {
-        var otlpExporter = new OtlpLogExporter(exporterOptions);
+        BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(exporterOptions);
+
+        if (configureExporterInstance != null)
+        {
+            otlpExporter = configureExporterInstance(otlpExporter);
+        }
 
         if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
         {
-            loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
+            return new SimpleLogRecordExportProcessor(otlpExporter);
         }
         else
         {
             var batchOptions = processorOptions.BatchExportProcessorOptions;
 
-            loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+            return new BatchLogRecordExportProcessor(
                 otlpExporter,
                 batchOptions.MaxQueueSize,
                 batchOptions.ScheduledDelayMilliseconds,
                 batchOptions.ExporterTimeoutMilliseconds,
-                batchOptions.MaxExportBatchSize));
+                batchOptions.MaxExportBatchSize);
         }
+    }
 
-        return loggerOptions;
+    private static OpenTelemetryLoggerOptions AddOtlpExporterInternal(
+    OpenTelemetryLoggerOptions loggerOptions,
+    Action<OtlpExporterOptions> configure)
+    {
+        var exporterOptions = new OtlpExporterOptions();
+
+        configure?.Invoke(exporterOptions);
+
+        return loggerOptions.AddProcessor(BuildOtlpLogExporter(exporterOptions, new()));
     }
 }

@@ -17,7 +17,10 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -207,6 +210,75 @@ public sealed class IntegrationTests : IDisposable
         {
             Assert.Single(exportResults);
             Assert.Equal(ExportResult.Success, exportResults[0]);
+        }
+    }
+
+    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Batch)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/logs", ExportProcessorType.Batch)]
+    [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/logs", ExportProcessorType.Simple)]
+    [InlineData(OtlpExportProtocol.Grpc, ":5317", ExportProcessorType.Simple, "https")]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, ":5318/v1/logs", ExportProcessorType.Simple, "https")]
+    [Trait("CategoryName", "CollectorIntegrationTests")]
+    [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
+    public void LogExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, string scheme = "http")
+    {
+        using EventWaitHandle handle = new ManualResetEvent(false);
+
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"{scheme}://{CollectorHostname}{endpoint}"),
+            Protocol = protocol,
+        };
+
+        DelegatingExporter<LogRecord> delegatingExporter = null;
+        var exportResults = new List<ExportResult>();
+        var processorOptions = new LogRecordExportProcessorOptions();
+        processorOptions.ExportProcessorType = exportProcessorType;
+        processorOptions.BatchExportProcessorOptions = new()
+        {
+            ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+        };
+
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder
+                .AddOpenTelemetry(options => options
+                    .AddProcessor(OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                        exporterOptions,
+                        processorOptions,
+                        configureExporterInstance: otlpExporter =>
+                        {
+                            delegatingExporter = new DelegatingExporter<LogRecord>
+                            {
+                                OnExportFunc = (batch) =>
+                                {
+                                    var result = otlpExporter.Export(batch);
+                                    exportResults.Add(result);
+                                    handle.Set();
+                                    return result;
+                                },
+                            };
+                            return delegatingExporter;
+                        })));
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+
+        switch (processorOptions.ExportProcessorType)
+        {
+            case ExportProcessorType.Batch:
+                Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
+                break;
+            case ExportProcessorType.Simple:
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
+                break;
+            default:
+                throw new NotSupportedException("Unexpected processor type encountered.");
         }
     }
 

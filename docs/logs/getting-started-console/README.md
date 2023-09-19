@@ -31,18 +31,16 @@ package:
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
-files to the project folder.
+Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and you should see the log output
 on the console.
 
 ```text
-LogRecord.Timestamp:               2023-08-03T22:53:51.0194130Z
-LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Timestamp:               2023-09-15T06:07:03.5502083Z
+LogRecord.CategoryName:            Program
 LogRecord.Severity:                Info
 LogRecord.SeverityText:            Information
-LogRecord.FormattedMessage:        Food `artichoke` price changed to `9.99`.
 LogRecord.Body:                    Food `{name}` price changed to `{price}`.
 LogRecord.Attributes (Key:Value):
     name: artichoke
@@ -51,17 +49,12 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 1
 LogRecord.EventName:               FoodPriceChanged
 
-Resource associated with LogRecord:
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-alpha.1.55
-service.name: unknown_service:getting-started
+...
 
-LogRecord.Timestamp:               2023-08-03T22:53:51.0403466Z
-LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Timestamp:               2023-09-15T06:07:03.5683511Z
+LogRecord.CategoryName:            Program
 LogRecord.Severity:                Fatal
 LogRecord.SeverityText:            Critical
-LogRecord.FormattedMessage:        A `Food & Beverages` recall notice was published for `Contoso Salads` produced by `Contoso Fresh Vegetables, Inc.` (due to a possible health risk from Listeria monocytogenes).
 LogRecord.Body:                    A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
 LogRecord.Attributes (Key:Value):
     brandName: Contoso
@@ -73,11 +66,7 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 2
 LogRecord.EventName:               FoodRecallNotice
 
-Resource associated with LogRecord:
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-alpha.1.55
-service.name: unknown_service:getting-started
+...
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
