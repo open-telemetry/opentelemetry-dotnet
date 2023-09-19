@@ -270,11 +270,11 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessRequest(HttpWebRequest request)
     {
-        // No subscribers to the ActivitySource or User provider Filter is
+        // There are subscribers to the ActivitySource and no user-provided filter is
         // filtering this request.
-        var skipTracing = !WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request);
+        var enableTracing = WebRequestActivitySource.HasListeners() && Options.EventFilterHttpWebRequest(request);
 
-        if (skipTracing && !HttpClientDuration.Enabled)
+        if (!enableTracing && !HttpClientDuration.Enabled)
         {
             // Tracing and metrics are not enabled, so we can skip generating signals
             // Propagation must still be done in such cases, to allow
