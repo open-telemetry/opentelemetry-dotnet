@@ -270,6 +270,21 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessRequest(HttpWebRequest request)
     {
+        // No subscribers to the ActivitySource or User provider Filter is
+        // filtering this request.
+        var skipTracing = !WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request);
+
+        if (skipTracing && !HttpClientDuration.Enabled)
+        {
+            // Tracing and metrics are not enabled, so we can skip generating signals
+            // Propagation must still be done in such cases, to allow
+            // downstream services to continue from parent context, if any.
+            // Eg: Parent could be the Asp.Net activity.
+            InstrumentRequest(request, Activity.Current?.Context ?? default);
+            return;
+        }
+
+
         if (IsRequestInstrumented(request))
         {
             // This request was instrumented by previous
