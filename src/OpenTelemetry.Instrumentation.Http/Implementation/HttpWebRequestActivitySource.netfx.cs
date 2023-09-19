@@ -277,12 +277,13 @@ internal static class HttpWebRequestActivitySource
             return;
         }
 
-        // No subscribers to the ActivitySource or User provider Filter is
-        // filtering this request.
-        var skipTracing = !WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request);
-        var activity = skipTracing
-            ? null
-            : WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+        Activity activity = null;
+
+        if (!skipTracing)
+        {
+            WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+        }
+
         var activityContext = Activity.Current?.Context ?? default;
 
         // Propagation must still be done in all cases, to allow
