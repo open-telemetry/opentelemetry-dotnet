@@ -29,7 +29,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
-    <PackageReference Include="Microsoft.CodeCoverage" PrivateAssets="All" Condition="'$(Configuration)'=='Release'" />
     <!--
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
     -->
