@@ -296,7 +296,7 @@ internal static class HttpWebRequestActivitySource
 
         if (!skipTracing)
         {
-            WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
+            activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
         }
 
         var activityContext = Activity.Current?.Context ?? default;
