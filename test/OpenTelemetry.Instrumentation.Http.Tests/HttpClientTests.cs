@@ -20,7 +20,6 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using System.Text.Json;
-using Moq;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -51,10 +50,10 @@ public partial class HttpClientTests
             out var host,
             out var port);
 
-        var processor = new Mock<BaseProcessor<Activity>>();
         tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
         var metrics = new List<Metric>();
+        var activities = new List<Activity>();
 
         var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddHttpClientInstrumentation()
@@ -71,7 +70,7 @@ public partial class HttpClientTests
                 opt.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
                 opt.RecordException = tc.RecordException ?? false;
             })
-            .AddProcessor(processor.Object)
+            .AddInMemoryExporter(activities)
             .Build())
         {
             try
@@ -110,8 +109,7 @@ public partial class HttpClientTests
             .Where(metric => metric.Name == "http.client.duration")
             .ToArray();
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-        var activity = (Activity)processor.Invocations[2].Arguments[0];
+        var activity = Assert.Single(activities);
 
         Assert.Equal(ActivityKind.Client, activity.Kind);
         Assert.Equal(tc.SpanName, activity.DisplayName);
@@ -262,7 +260,6 @@ public partial class HttpClientTests
         bool enrichWithHttpRequestMessageCalled = false;
         bool enrichWithHttpResponseMessageCalled = false;
 
-        var processor = new Mock<BaseProcessor<Activity>>();
         using (Sdk.CreateTracerProviderBuilder()
             .SetSampler(sampler)
             .AddHttpClientInstrumentation(options =>
@@ -273,7 +270,6 @@ public partial class HttpClientTests
                 options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
                 options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
             })
-            .AddProcessor(processor.Object)
             .Build())
         {
             using var c = new HttpClient();
