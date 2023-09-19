@@ -284,7 +284,6 @@ internal static class HttpWebRequestActivitySource
             return;
         }
 
-
         if (IsRequestInstrumented(request))
         {
             // This request was instrumented by previous
