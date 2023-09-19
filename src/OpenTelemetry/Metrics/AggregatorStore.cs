@@ -709,7 +709,7 @@ internal sealed class AggregatorStore
         {
             if (referenceCount < 0)
             {
-                // Rare case: TakeSnapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle.
+                // Rare case: Snapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle.
 
                 index = this.RemoveStaleEntriesAndGetAvailableMetricPointRare(lookupData, length);
             }
