@@ -353,7 +353,7 @@ internal static class HttpWebRequestActivitySource
         if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
         {
             // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true, request, -1);
+            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true, request, writeAsyncContextCallback.StartTimestamp);
             return;
         }
 
