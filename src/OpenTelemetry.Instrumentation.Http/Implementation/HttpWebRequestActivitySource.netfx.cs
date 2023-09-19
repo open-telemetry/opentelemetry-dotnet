@@ -270,11 +270,11 @@ internal static class HttpWebRequestActivitySource
 
     private static void ProcessRequest(HttpWebRequest request)
     {
-        // No subscribers to the ActivitySource or User provider Filter is
+        // There are subscribers to the ActivitySource and no user-provided filter is
         // filtering this request.
-        var skipTracing = !WebRequestActivitySource.HasListeners() || !Options.EventFilterHttpWebRequest(request);
+        var enableTracing = WebRequestActivitySource.HasListeners() && Options.EventFilterHttpWebRequest(request);
 
-        if (skipTracing && !HttpClientDuration.Enabled)
+        if (!enableTracing && !HttpClientDuration.Enabled)
         {
             // Tracing and metrics are not enabled, so we can skip generating signals
             // Propagation must still be done in such cases, to allow
@@ -353,7 +353,7 @@ internal static class HttpWebRequestActivitySource
         if (endCalledAccessor.Invoke(readAsyncContext) || readAsyncContext.CompletedSynchronously)
         {
             // We need to process the result directly because the read callback has already fired. Force a copy because response has likely already been disposed.
-            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true, request, -1);
+            ProcessResult(readAsyncContext, null, writeAsyncContextCallback.Activity, resultAccessor(readAsyncContext), true, request, writeAsyncContextCallback.StartTimestamp);
             return;
         }
 
