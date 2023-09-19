@@ -162,7 +162,7 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddResponseTags(HttpWebResponse response, Activity activity)
     {
-        if (activity.IsAllDataRequested)
+        if (activity != null && activity.IsAllDataRequested)
         {
             if (emitOldAttributes)
             {
