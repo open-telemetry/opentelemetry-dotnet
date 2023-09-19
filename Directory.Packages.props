@@ -41,9 +41,6 @@
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="7.0.2" />
 
-    <!-- A conservative version of System.Reflection.Emit.Lightweight must be used here since there is no backward compatibility guarantee during major version bumps. -->
-    <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-
     <!-- A conservative version of System.Text.Encodings.Web must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
 
