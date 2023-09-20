@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Obsolete `ActivityExtensions.SetStatus` method. Call `Activity.SetStatus` instead.
+  ([#4864](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4864))
+
 ## 1.6.0
 
 Released 2023-Sep-05
