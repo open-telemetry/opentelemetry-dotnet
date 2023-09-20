@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if !NET6_0_OR_GREATER
+using System.Net.Http;
+#endif
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -39,7 +42,7 @@ public class Program
 
         using var parent = MyActivitySource.StartActivity("JaegerDemo");
 
-        using (var client = new System.Net.Http.HttpClient())
+        using (var client = new HttpClient())
         {
             using (var slow = MyActivitySource.StartActivity("SomethingSlow"))
             {
