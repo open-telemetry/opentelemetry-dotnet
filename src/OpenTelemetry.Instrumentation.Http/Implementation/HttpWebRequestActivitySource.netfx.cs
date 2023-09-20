@@ -190,7 +190,7 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddExceptionTags(Exception exception, Activity activity)
     {
-        if (!activity.IsAllDataRequested)
+        if (activity == null || !activity.IsAllDataRequested)
         {
             return;
         }
