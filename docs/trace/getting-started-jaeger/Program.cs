@@ -39,7 +39,7 @@ public class Program
 
         using var parent = MyActivitySource.StartActivity("JaegerDemo");
 
-        using (var client = new HttpClient())
+        using (var client = new System.Net.Http.HttpClient())
         {
             using (var slow = MyActivitySource.StartActivity("SomethingSlow"))
             {
