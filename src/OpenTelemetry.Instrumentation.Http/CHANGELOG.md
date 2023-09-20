@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added support for publishing `http.client.duration` metric on .NET Framework
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20
