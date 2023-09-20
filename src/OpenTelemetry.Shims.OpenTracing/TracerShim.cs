@@ -42,18 +42,6 @@ public class TracerShim : global::OpenTracing.ITracer
         this.ScopeManager = new ScopeManagerShim();
     }
 
-    [Obsolete("Use TracerShim(TracerProvider, TextMapPropagator) or TracerShim(TracerProvider) constructor.")]
-
-    public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
-    {
-        Guard.ThrowIfNull(tracer);
-        Guard.ThrowIfNull(textFormat);
-
-        this.tracer = tracer;
-        this.definedPropagator = textFormat;
-        this.ScopeManager = new ScopeManagerShim();
-    }
-
     /// <inheritdoc/>
     public global::OpenTracing.IScopeManager ScopeManager { get; }
 
