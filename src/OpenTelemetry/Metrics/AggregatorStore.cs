@@ -747,7 +747,7 @@ internal sealed class AggregatorStore
                 // With the reclaim behavior, Snapshot method reclaims the index 100 as the MetricPoint for the index has NoCollectPending and has a ReferenceCount of 0.
                 // Snapshot thread sets the ReferenceCount to int.MinValue.
                 // An update thread T3 wants to record a measurement for (k2,v2).
-                // Thread T3 looks for an avialable index from the queue and finds index 100.
+                // Thread T3 looks for an available index from the queue and finds index 100.
                 // Thread T3 creates a new MetricPoint at index 100 and adds an entry for (k2,v2) in the dictionary with the LookupData value for (k2,v2). ReferenceCount of the MetricPoint is 1 at this point.
                 // The update thread T2 wakes up and increments the ReferenceCount and finds the value to be positive but the LookupData value does not match the one for (k1,v1).
 
