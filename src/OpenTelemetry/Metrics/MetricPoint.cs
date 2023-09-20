@@ -77,7 +77,7 @@ public struct MetricPoint
         this.snapshotValue = default;
         this.deltaLastValue = default;
         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-        this.ReferenceCount = 0;
+        this.ReferenceCount = 1;
         this.LookupData = lookupData;
 
         ExemplarReservoir? reservoir = null;
