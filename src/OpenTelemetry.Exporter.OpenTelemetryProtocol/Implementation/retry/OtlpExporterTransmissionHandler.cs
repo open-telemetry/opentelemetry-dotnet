@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
-namespace OpenTelemetry.Exporter;
+namespace OpenTelemetry.ExporterOpenTelemetryProtocol.Implementation.Retry;
 
 internal class OtlpExporterTransmissionHandler<T>
 {
