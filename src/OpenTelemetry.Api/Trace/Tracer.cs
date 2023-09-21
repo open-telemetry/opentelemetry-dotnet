@@ -28,10 +28,9 @@ namespace OpenTelemetry.Trace;
 /// <remarks>Tracer is a wrapper around <see cref="System.Diagnostics.ActivitySource"/> class.</remarks>
 public class Tracer
 {
-    internal static readonly Tracer NoopInstance = new(null);
-    internal readonly ActivitySource? ActivitySource;
+    internal readonly ActivitySource ActivitySource;
 
-    internal Tracer(ActivitySource? activitySource)
+    internal Tracer(ActivitySource activitySource)
     {
         this.ActivitySource = activitySource;
     }
@@ -206,7 +205,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        if (!(this.ActivitySource?.HasListeners() ?? false))
+        if (!this.ActivitySource.HasListeners())
         {
             return TelemetrySpan.NoopInstance;
         }
