@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Span represents a single operation within a trace.
 /// </summary>
-/// <remarks>TelemetrySpan is a wrapper around <see cref="Activity"/> class.</remarks>
+/// <remarks>TelemetrySpan is a wrapper around <see cref="System.Diagnostics.Activity"/> class.</remarks>
 public class TelemetrySpan : IDisposable
 {
     internal static readonly TelemetrySpan NoopInstance = new(null);

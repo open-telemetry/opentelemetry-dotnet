@@ -25,7 +25,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Tracer is the class responsible for creating <see cref="TelemetrySpan"/>.
 /// </summary>
-/// <remarks>Tracer is a wrapper around <see cref="ActivitySource"/> class.</remarks>
+/// <remarks>Tracer is a wrapper around <see cref="System.Diagnostics.ActivitySource"/> class.</remarks>
 public class Tracer
 {
     internal static readonly Tracer NoopInstance = new(null);

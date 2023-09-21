@@ -44,12 +44,5 @@ public class TracerProvider : BaseProvider
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
     public Tracer GetTracer(string name, string? version = null)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            return Tracer.NoopInstance;
-        }
-
-        return new(new ActivitySource(name, version));
-    }
+        => new(new ActivitySource(name ?? string.Empty, version));
 }
