@@ -63,7 +63,8 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
     LoggerProvider? ILoggerProviderBuilder.Provider => null;
 
     /// <inheritdoc />
-    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
+        where TInstrumentation : class
     {
         this.innerBuilder.AddInstrumentation(instrumentationFactory);
 

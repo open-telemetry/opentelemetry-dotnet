@@ -33,7 +33,8 @@ internal sealed class MeterProviderServiceCollectionBuilder : MeterProviderBuild
     public MeterProvider? Provider => null;
 
     /// <inheritdoc />
-    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
+        where TInstrumentation : class
     {
         Guard.ThrowIfNull(instrumentationFactory);
 

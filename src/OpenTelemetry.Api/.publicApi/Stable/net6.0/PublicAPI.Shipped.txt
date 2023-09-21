@@ -2,9 +2,9 @@
 ~abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 ~abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> System.Collections.Generic.ISet<string>
 ~abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
-~abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
-abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation!>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation?>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddMeter(params string![]! names) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation?>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string! operationName) -> OpenTelemetry.Trace.TracerProviderBuilder!
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string![]! names) -> OpenTelemetry.Trace.TracerProviderBuilder!
 ~OpenTelemetry.Baggage.GetBaggage() -> System.Collections.Generic.IReadOnlyDictionary<string, string>

@@ -96,7 +96,11 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         foreach (var instrumentation in state.Instrumentation)
         {
-            this.instrumentations.Add(instrumentation.Instance);
+            if (instrumentation.Instance != null)
+            {
+                this.instrumentations.Add(instrumentation.Instance);
+            }
+
             instrumentationFactoriesAdded.Append(instrumentation.Name);
             instrumentationFactoriesAdded.Append(';');
         }

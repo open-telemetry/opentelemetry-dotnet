@@ -63,7 +63,8 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     TracerProvider? ITracerProviderBuilder.Provider => null;
 
     /// <inheritdoc />
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
+        where TInstrumentation : class
     {
         this.innerBuilder.AddInstrumentation(instrumentationFactory);
 
@@ -115,7 +116,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     protected TracerProviderBuilder AddInstrumentation(
         string instrumentationName,
         string instrumentationVersion,
-        Func<object> instrumentationFactory)
+        Func<object?> instrumentationFactory)
     {
         Guard.ThrowIfNullOrWhitespace(instrumentationName);
         Guard.ThrowIfNullOrWhitespace(instrumentationVersion);
@@ -128,7 +129,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
                 tracerProviderBuilderState.AddInstrumentation(
                     instrumentationName,
                     instrumentationVersion,
-                    instrumentationFactory);
+                    instrumentationFactory());
             }
         });
 

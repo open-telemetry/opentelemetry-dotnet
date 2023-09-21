@@ -39,7 +39,7 @@ public abstract class TracerProviderBuilder
     /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public abstract TracerProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation> instrumentationFactory)
+        Func<TInstrumentation?> instrumentationFactory)
         where TInstrumentation : class;
 
     /// <summary>

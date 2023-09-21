@@ -33,7 +33,8 @@ internal sealed class TracerProviderServiceCollectionBuilder : TracerProviderBui
     public TracerProvider? Provider => null;
 
     /// <inheritdoc />
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
+        where TInstrumentation : class
     {
         Guard.ThrowIfNull(instrumentationFactory);
 
