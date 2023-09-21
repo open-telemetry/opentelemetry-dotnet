@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Grpc.Core;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
