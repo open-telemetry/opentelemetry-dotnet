@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace;
@@ -40,7 +43,7 @@ public abstract class TracerProviderBuilder
         where TInstrumentation : class;
 
     /// <summary>
-    /// Adds given activitysource names to the list of subscribed sources.
+    /// Adds the given <see cref="ActivitySource"/> names to the list of subscribed sources.
     /// </summary>
     /// <param name="names">Activity source names.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
