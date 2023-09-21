@@ -86,6 +86,7 @@ public sealed class IntegrationTests : IDisposable
             exporterOptions,
             DefaultSdkLimitOptions,
             serviceProvider: null,
+            new ExporterOpenTelemetryProtocol.Implementation.Retry.OtlpExporterTransmissionHandler<Proto.Collector.Trace.V1.ExportTraceServiceRequest>(),
             configureExporterInstance: otlpExporter =>
             {
                 delegatingExporter = new DelegatingExporter<Activity>
