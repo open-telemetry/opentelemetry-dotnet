@@ -29,7 +29,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddPrometheusHttpListener()
+            .AddOtlpExporter(options => { options.Endpoint = new Uri("http://localhost:9090/api/v1/otlp/v1/metrics"); })
             .Build();
 
         Console.WriteLine("Press any key to exit");

@@ -120,13 +120,19 @@ and named the new file as `otel.yml` for this exercise. Then, copy and paste the
 entire content below into the `otel.yml` file we have created just now.
 
 ```yaml
-global:
-  scrape_interval: 10s
-  evaluation_interval: 10s
-scrape_configs:
-  - job_name: "otel"
-    static_configs:
-      - targets: ["localhost:9464"]
+storage:
+  tsdb:
+    out_of_order_time_window: 10m
+
+remote_write:
+  - url: http://localhost:9090/api/v1/otlp/v1/metrics
+    queue_config:
+      capacity: 1000000
+      batch_send_deadline: 10s
+      max_samples_per_send: 1000
+      max_shards: 3
+    remote_timeout: "30s"
+    follow_redirects: true
 ```
 
 ### Start Prometheus
@@ -138,7 +144,7 @@ to start the Prometheus server and verify it has been started successfully.
 Please note that we will need pass in `otel.yml` file as the argument:
 
 ```console
-./prometheus --config.file=otel.yml
+./prometheus --config.file=otel.yml --enable-feature=otlp-write-receiver
 ```
 
 ### View results in Prometheus
