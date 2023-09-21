@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Bumped the version of `Google.Protobuf` used by the project to `3.22.5` so
+  that consuming applications can be published as NativeAOT successfully. Also,
+  a new performance feature can be used instead of reflection emit, which is
+  not AOT-compatible. Removed the dependency on `System.Reflection.Emit.Lightweight`.
+  ([#4859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4859))
+
 ## 1.6.0
 
 Released 2023-Sep-05
