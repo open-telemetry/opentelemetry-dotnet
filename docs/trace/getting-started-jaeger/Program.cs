@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if !NET6_0_OR_GREATER
+using System.Net.Http;
+#endif
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
