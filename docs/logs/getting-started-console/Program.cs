@@ -38,7 +38,7 @@ logger.FoodRecallNotice(
     companyName: "Contoso Fresh Vegetables, Inc.");
 
 // Dispose logger factory before the application ends.
-// This will flush any remaining logs and shutdown the logging pipeline.
+// This will flush the remaining logs and shutdown the logging pipeline.
 loggerFactory.Dispose();
 
 public static partial class ApplicationLogs
