@@ -105,7 +105,7 @@ public class Tracer
     public TelemetrySpan StartSpan(
         string name,
         SpanKind kind,
-        TelemetrySpan? parentSpan,
+        in TelemetrySpan? parentSpan, // <- TODO: Clean this up if we ever do a major release w/ breaking changes. The "in" here was probably a copy/paste mistake. Removing would be source compatible but binary breaking.
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
@@ -151,7 +151,7 @@ public class Tracer
     public TelemetrySpan StartActiveSpan(
         string name,
         SpanKind kind,
-        TelemetrySpan? parentSpan,
+        in TelemetrySpan? parentSpan, // <- TODO: Clean this up if we ever do a major release w/ breaking changes. The "in" here was probably a copy/paste mistake. Removing would be source compatible but binary breaking.
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
