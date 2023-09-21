@@ -83,8 +83,10 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         transmissionHandler ??= new OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>();
 
-        transmissionHandler.ExportClient = exportClient;
+        transmissionHandler.ExportClient = this.exportClient;
         transmissionHandler.Options = exporterOptions;
+
+        this.transmissionHandler = transmissionHandler;
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

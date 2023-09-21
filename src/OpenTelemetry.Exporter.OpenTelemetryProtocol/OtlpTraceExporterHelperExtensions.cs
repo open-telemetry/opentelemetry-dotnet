@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -73,6 +74,9 @@ public static class OtlpTraceExporterHelperExtensions
 
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
             services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+            services.TryAddSingleton<
+                OtlpExporterTransmissionHandler<OtlpCollector.ExportTraceServiceRequest>,
+                TracePersistentStorageTransmissionHandler>();
         });
 
         return builder.AddProcessor(sp =>

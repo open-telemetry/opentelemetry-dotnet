@@ -43,16 +43,7 @@ internal sealed class OtlpGrpcTraceExportClient : BaseOtlpGrpcExportClient<OtlpC
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
-        try
-        {
-            this.traceClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
-        }
-        catch (RpcException ex)
-        {
-            OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
-
-            return false;
-        }
+        this.traceClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
 
         return true;
     }
