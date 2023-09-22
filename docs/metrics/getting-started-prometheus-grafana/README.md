@@ -140,8 +140,8 @@ enabled:
 
 To use the graphical interface for viewing our metrics with Prometheus, navigate
 to [http://localhost:9090/graph](http://localhost:9090/graph), and type
-`MyFruitCounter` in the expression bar of the UI; finally, click the execute
-button.
+`MyFruitCounter_total` in the expression bar of the UI; finally, click the
+execute button.
 
 We should be able to see the following chart from the browser:
 
@@ -183,7 +183,7 @@ Feel free to find some handy PromQL
 [here](https://promlabs.com/promql-cheat-sheet/).
 
 In the below example, the query targets to find out what is the per-second rate
-of increase of myFruitCounter over the past 5 minutes:
+of increase of `MyFruitCounter_total` over the past 5 minutes:
 
 ![Grafana
 UI](https://user-images.githubusercontent.com/17327289/151636769-138ecb4f-b44f-477b-88eb-247fc4340252.png)
