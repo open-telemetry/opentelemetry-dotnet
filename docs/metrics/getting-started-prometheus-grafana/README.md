@@ -73,7 +73,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-When we run the application, the `ConsoleExporter` was printing the metrics on
+When we ran the application, the `ConsoleExporter` was printing the metrics on
 console, and the `OtlpExporter` was attempting to send the metrics to
 `http://localhost:9090/api/v1/otlp/v1/metrics`.
 
