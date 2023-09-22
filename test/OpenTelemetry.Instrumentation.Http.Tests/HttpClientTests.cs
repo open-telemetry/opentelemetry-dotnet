@@ -36,8 +36,26 @@ public partial class HttpClientTests
     public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
     {
         await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, true, true).ConfigureAwait(false);
+    }
+
+    [Theory]
+    [MemberData(nameof(TestData))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyTracesOnlyAsync(HttpTestData.HttpOutTestCase tc)
+    {
         await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, true, false).ConfigureAwait(false);
+    }
+
+    [Theory]
+    [MemberData(nameof(TestData))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyMetricsOnlyAsync(HttpTestData.HttpOutTestCase tc)
+    {
         await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, false, true).ConfigureAwait(false);
+    }
+
+    [Theory]
+    [MemberData(nameof(TestData))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyNoSignalsAsync(HttpTestData.HttpOutTestCase tc)
+    {
         await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, false, false).ConfigureAwait(false);
     }
 
