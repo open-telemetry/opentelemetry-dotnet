@@ -150,13 +150,13 @@ public partial class HttpClientTests
                 Assert.False(enrichWithHttpResponseMessageCalled);
             }
 #else
-        Assert.False(enrichWithHttpWebRequestCalled);
-        Assert.True(enrichWithHttpRequestMessageCalled);
-        if (tc.ResponseExpected)
-        {
-            Assert.False(enrichWithHttpWebResponseCalled);
-            Assert.True(enrichWithHttpResponseMessageCalled);
-        }
+            Assert.False(enrichWithHttpWebRequestCalled);
+            Assert.True(enrichWithHttpRequestMessageCalled);
+            if (tc.ResponseExpected)
+            {
+                Assert.False(enrichWithHttpWebResponseCalled);
+                Assert.True(enrichWithHttpResponseMessageCalled);
+            }
 #endif
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
