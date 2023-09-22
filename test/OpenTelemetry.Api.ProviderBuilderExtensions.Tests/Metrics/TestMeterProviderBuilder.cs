@@ -36,8 +36,7 @@ public sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterProvi
 
     public MeterProvider? Provider { get; private set; }
 
-    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         if (this.Services != null)
         {
@@ -46,7 +45,7 @@ public sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterProvi
         else
         {
             var instrumentation = instrumentationFactory();
-            if (instrumentation != null)
+            if (instrumentation is not null)
             {
                 this.Instrumentation.Add(instrumentation);
             }

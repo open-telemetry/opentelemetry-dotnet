@@ -34,8 +34,7 @@ internal sealed class TestLoggerProviderBuilder : LoggerProviderBuilder, ILogger
 
     public LoggerProvider? Provider { get; private set; }
 
-    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
-         where TInstrumentation : class
+    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         if (this.Services != null)
         {
@@ -44,7 +43,7 @@ internal sealed class TestLoggerProviderBuilder : LoggerProviderBuilder, ILogger
         else
         {
             var instrumentation = instrumentationFactory();
-            if (instrumentation != null)
+            if (instrumentation is not null)
             {
                 this.Instrumentation.Add(instrumentation);
             }
