@@ -1,12 +1,10 @@
 # Getting Started with Prometheus and Grafana
 
 - [Export metrics from the application](#export-metrics-from-the-application)
-  - [Check results in the console](#check-results-in-the-console)
 - [Collect metrics using Prometheus](#collect-metrics-using-prometheus)
   - [Install and run Prometheus](#install-and-run-prometheus)
   - [View results in Prometheus](#view-results-in-prometheus)
 - [Explore metrics using Grafana](#explore-metrics-using-grafana)
-- [Final cleanup](#final-cleanup)
 - [Learn more](#learn-more)
 
 ## Export metrics from the application
@@ -18,68 +16,25 @@ this document.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-prometheus
-cd getting-started-prometheus
+dotnet new console --output getting-started-prometheus-grafana
+cd getting-started-prometheus-grafana
 dotnet run
 ```
 
-Add reference to [Console
-Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md) and [OTLP
+Add reference to [OTLP
 Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md):
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console
 dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 ```
 
-Now copy the code from [Program.cs](./Program.cs).
+Now copy the code from [Program.cs](./Program.cs) and run the application again.
 
-### Check results in the console
-
-Run the application again and we should see the metrics output from the console:
-
-```text
-> dotnet run
-Press any key to exit
-
-Resource associated with Metric:
-    telemetry.sdk.name: opentelemetry
-    telemetry.sdk.language: dotnet
-    telemetry.sdk.version: 1.6.1-alpha.0.23
-    service.name: unknown_service:getting-started-prometheus-grafana
-
-Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2023-09-22T20:40:22.2586791Z, 2023-09-22T20:40:31.1582923Z] color: red name: apple LongSum
-Value: 54
-(2023-09-22T20:40:22.2586791Z, 2023-09-22T20:40:31.1582923Z] color: yellow name: lemon LongSum
-Value: 63
-(2023-09-22T20:40:22.2586791Z, 2023-09-22T20:40:31.1582923Z] color: green name: apple LongSum
-Value: 18
-
-...
-```
-
-Note that we have configured two exporters in the code:
-
-```csharp
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    ...
-    .AddConsoleExporter()
-    .AddOtlpExporter(options =>
-    {
-        options.Endpoint = new Uri("http://localhost:9090/api/v1/otlp/v1/metrics");
-        options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
-    })
-    .Build();
-```
-
-When we ran the application, the `ConsoleExporter` was printing the metrics on
-console, and the `OtlpExporter` was attempting to send the metrics to
-`http://localhost:9090/api/v1/otlp/v1/metrics`.
-
-Since we didn't have Prometheus server running, the metrics received by
-`OtlpExporter` were simply dropped on the floor. In the next step, we are going
-to learn about how to use Prometheus to collect and visualize the metrics.
+When we ran the application, the OTLP Exporter was attempting to export the
+metrics to `http://localhost:9090/api/v1/otlp/v1/metrics`. Since Prometheus
+server was not running, the metrics received by `OtlpExporter` were simply
+dropped on the floor. In the next step, we are going to learn about how to use
+Prometheus to collect and visualize the metrics.
 
 ```mermaid
 graph LR
@@ -87,8 +42,6 @@ graph LR
 subgraph SDK
   MeterProvider
   MetricReader[BaseExportingMetricReader]
-  MetricReader2[BaseExportingMetricReader]
-  ConsoleExporter
   OtlpExporter
 end
 
@@ -98,9 +51,7 @@ end
 
 Instrument --> | Measurements | MeterProvider
 
-MeterProvider --> | Metrics | MetricReader --> | Push | OtlpExporter
-
-MeterProvider --> | Metrics | MetricReader2 --> | Push | ConsoleExporter
+MeterProvider --> | Metrics | MetricReader --> | Push | OtlpExporter --> | HTTP/protobuf | PrometheusServer[Prometheus server]
 ```
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
@@ -114,8 +65,6 @@ while (!Console.KeyAvailable)
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
-    ...
-    ...
     ...
 }
 ```
@@ -188,48 +137,10 @@ of increase of `MyFruitCounter_total` over the past 5 minutes:
 ![Grafana
 UI](https://user-images.githubusercontent.com/17327289/151636769-138ecb4f-b44f-477b-88eb-247fc4340252.png)
 
-## Final cleanup
-
-In the end, remove the Console Exporter so we only have OTLP Exporter in the
-final application:
-
-```csharp
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    ...
-    // Remove Console Exporter from the final application
-    // .AddConsoleExporter()
-    .AddOtlpExporter(options =>
-    {
-        options.Endpoint = new Uri("http://localhost:9090/api/v1/otlp/v1/metrics");
-        options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
-    })
-    .Build();
-```
-
-```sh
-dotnet remove package OpenTelemetry.Exporter.Console
-```
-
-```mermaid
-
-graph LR
-subgraph SDK
-  MeterProvider
-  MetricReader[BaseExportingMetricReader]
-  OtlpExporter
-end
-
-subgraph API
-  Instrument["Meter(#quot;MyCompany.MyProduct.MyLibrary#quot;, #quot;1.0#quot;)<br/>Counter(#quot;MyFruitCounter#quot;)"]
-end
-
-Instrument --> | Measurements | MeterProvider
-
-MeterProvider --> | Metrics | MetricReader --> | Push | OtlpExporter
-```
-
 ## Learn more
 
 - [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
+- [Prometheus Now Supports OpenTelemetry
+  Metrics](https://horovits.medium.com/prometheus-now-supports-opentelemetry-metrics-83f85878e46a)
 - [Grafana support for
   Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)

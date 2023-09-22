@@ -16,6 +16,7 @@
 
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 
 namespace GettingStartedPrometheusGrafana;
@@ -29,15 +30,15 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri("http://localhost:9090/api/v1/otlp/v1/metrics");
-                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                options.Protocol = OtlpExportProtocol.HttpProtobuf;
             })
             .Build();
 
         Console.WriteLine("Press any key to exit");
+
         while (!Console.KeyAvailable)
         {
             Thread.Sleep(1000);
