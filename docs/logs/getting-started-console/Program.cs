@@ -17,7 +17,7 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
-using var loggerFactory = LoggerFactory.Create(builder =>
+var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddOpenTelemetry(logging =>
     {
@@ -36,6 +36,10 @@ logger.FoodRecallNotice(
     productType: "Food & Beverages",
     recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
     companyName: "Contoso Fresh Vegetables, Inc.");
+
+// Dispose logger factory before the application ends.
+// This will flush the remaining logs and shutdown the logging pipeline.
+loggerFactory.Dispose();
 
 public static partial class ApplicationLogs
 {
