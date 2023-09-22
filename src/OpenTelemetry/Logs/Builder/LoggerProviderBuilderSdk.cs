@@ -55,9 +55,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
         this.loggerProvider = loggerProvider;
     }
 
-    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
 

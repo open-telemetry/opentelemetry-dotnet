@@ -111,9 +111,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
         this.meterProvider = meterProvider;
     }
 
-    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
 

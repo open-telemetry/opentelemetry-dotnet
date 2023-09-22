@@ -37,8 +37,8 @@ public abstract class MeterProviderBuilder
     /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
     /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public abstract MeterProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class;
+        Func<TInstrumentation> instrumentationFactory)
+        where TInstrumentation : class?;
 
     /// <summary>
     /// Adds given Meter names to the list of subscribed meters.

@@ -17,8 +17,8 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.Name.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> string![]?
 OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
-override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation?>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation?>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>!
 static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider! provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider! provider, int timeoutMilliseconds = -1) -> bool

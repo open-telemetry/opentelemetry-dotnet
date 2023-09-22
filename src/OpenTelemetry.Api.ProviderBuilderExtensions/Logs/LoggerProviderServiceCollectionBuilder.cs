@@ -33,8 +33,7 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
     public LoggerProvider? Provider => null;
 
     /// <inheritdoc />
-    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Guard.ThrowIfNull(instrumentationFactory);
 

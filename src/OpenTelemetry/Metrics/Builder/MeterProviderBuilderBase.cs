@@ -63,8 +63,7 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
     MeterProvider? IMeterProviderBuilder.Provider => null;
 
     /// <inheritdoc />
-    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         this.innerBuilder.AddInstrumentation(instrumentationFactory);
 

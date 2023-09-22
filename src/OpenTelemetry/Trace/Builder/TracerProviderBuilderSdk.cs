@@ -64,9 +64,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         this.tracerProvider = tracerProvider;
     }
 
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
 

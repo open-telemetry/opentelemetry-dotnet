@@ -63,8 +63,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     TracerProvider? ITracerProviderBuilder.Provider => null;
 
     /// <inheritdoc />
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         this.innerBuilder.AddInstrumentation(instrumentationFactory);
 

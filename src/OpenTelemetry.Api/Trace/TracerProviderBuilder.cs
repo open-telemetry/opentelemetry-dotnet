@@ -39,8 +39,8 @@ public abstract class TracerProviderBuilder
     /// <param name="instrumentationFactory">Function that builds instrumentation.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public abstract TracerProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation?> instrumentationFactory)
-        where TInstrumentation : class;
+        Func<TInstrumentation> instrumentationFactory)
+        where TInstrumentation : class?;
 
     /// <summary>
     /// Adds the given <see cref="ActivitySource"/> names to the list of subscribed sources.
