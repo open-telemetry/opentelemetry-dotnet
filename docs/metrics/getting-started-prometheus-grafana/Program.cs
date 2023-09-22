@@ -29,7 +29,11 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddOtlpExporter(options => { options.Endpoint = new Uri("http://localhost:9090/api/v1/otlp/v1/metrics"); })
+            .AddOtlpExporter(options =>
+            {
+                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                options.Endpoint = new Uri("http://localhost:9090/api/v1/otlp/v1/metrics");
+            })
             .Build();
 
         Console.WriteLine("Press any key to exit");
