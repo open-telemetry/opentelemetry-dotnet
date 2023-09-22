@@ -1,0 +1,5 @@
+cd c:\repos\opentelemetry-dotnet\test\OpenTelemetry.Tests
+dotnet build OpenTelemetry.Tests.csproj
+coyote rewrite coyote.json
+pushd C:\repos\opentelemetry-dotnet\test\OpenTelemetry.Tests\bin\Debug\net7.0
+dotnet test OpenTelemetry.Tests.dll --filter MultithreadedLongHistogramTest_Coyote

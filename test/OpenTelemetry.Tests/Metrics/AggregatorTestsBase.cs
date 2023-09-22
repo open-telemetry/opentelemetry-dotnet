@@ -15,6 +15,8 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
+using Microsoft.Coyote;
+using Microsoft.Coyote.SystematicTesting;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
@@ -200,6 +202,44 @@ public abstract class AggregatorTestsBase
         // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
         var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
         Assert.False(enumerator.MoveNext());
+    }
+
+    [Fact]
+    public void MultithreadedLongHistogramTest_Coyote()
+    {
+        var config = Configuration.Create()
+            .WithTestingIterations(100)
+            .WithMemoryAccessRaceCheckingEnabled(true);
+
+        // .WithVerbosityEnabled(VerbosityLevel.Debug)
+        // .WithConsoleLoggingEnabled();
+        // .WithPartiallyControlledConcurrencyAllowed(false);
+
+        var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
+
+        test.Run();
+        Console.WriteLine(test.GetReport());
+        Console.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
+
+        var dir = Directory.GetCurrentDirectory();
+
+        if (test.TryEmitReports(dir, "MultithreadedLongHistogramTest_Coyote", out IEnumerable<string> reportPaths))
+        {
+            foreach (var reportPath in reportPaths)
+            {
+                Console.WriteLine($"Execution Report: {reportPath}");
+            }
+        }
+
+        if (test.TryEmitCoverageReports(dir, "MultithreadedLongHistogramTest_Coyote", out reportPaths))
+        {
+            foreach (var reportPath in reportPaths)
+            {
+                Console.WriteLine($"Coverage report: {reportPath}");
+            }
+        }
+
+        Assert.Equal(0, test.TestReport.NumOfFoundBugs);
     }
 
     [Fact]

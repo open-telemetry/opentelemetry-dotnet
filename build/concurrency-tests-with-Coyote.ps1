@@ -1,0 +1,5 @@
+Write-Host "Test running coyote"
+Write-Host "1. Install Coyote CLI"
+Write-Host "2. run Coyote rewrite"
+Write-Host "3. Execute re-written binary"
+Write-Host "4. Verify test pass"
