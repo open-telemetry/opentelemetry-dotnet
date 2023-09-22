@@ -86,7 +86,7 @@ graph LR
 
 subgraph SDK
   MeterProvider
-  MetricReader1[BaseExportingMetricReader]
+  MetricReader[BaseExportingMetricReader]
   MetricReader2[BaseExportingMetricReader]
   ConsoleExporter
   OtlpExporter
@@ -98,9 +98,9 @@ end
 
 Instrument --> | Measurements | MeterProvider
 
-MeterProvider --> | Metrics | MetricReader1 --> | Push | ConsoleExporter
+MeterProvider --> | Metrics | MetricReader --> | Push | OtlpExporter
 
-MeterProvider --> | Metrics | MetricReader2 --> | Push | OtlpExporter
+MeterProvider --> | Metrics | MetricReader2 --> | Push | ConsoleExporter
 ```
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
@@ -211,8 +211,8 @@ dotnet remove package OpenTelemetry.Exporter.Console
 ```
 
 ```mermaid
-graph LR
 
+graph LR
 subgraph SDK
   MeterProvider
   MetricReader[BaseExportingMetricReader]
@@ -226,16 +226,6 @@ end
 Instrument --> | Measurements | MeterProvider
 
 MeterProvider --> | Metrics | MetricReader --> | Push | OtlpExporter
-```
-
-```mermaid
-graph TD
-
-
-OtlpExporter -->|HTTP POST http://localhost:9090/api/v1/otlp/v1/metrics| PrometheusServer
-PrometheusServer -->|http://localhost:9090/graph| PrometheusUI["Browser<br/>(Prometheus Dashboard)"]
-PrometheusServer -->|http://localhost:9090/api/| Grafana[Grafana Server]
-Grafana -->|http://localhost:3000/dashboard| GrafanaUI["Browser<br/>(Grafana Dashboard)"]
 ```
 
 ## Learn more
