@@ -28,7 +28,7 @@ abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string![]! n
 ~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
 ~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
 ~OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
-~OpenTelemetry.Metrics.IDeferredMeterProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Metrics.MeterProviderBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.IDeferredMeterProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Trace.Link.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Trace.Link.Link(in OpenTelemetry.Trace.SpanContext spanContext, OpenTelemetry.Trace.SpanAttributes? attributes) -> void
