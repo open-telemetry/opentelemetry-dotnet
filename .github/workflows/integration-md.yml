@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [net6.0,net7.0]
+        version: [ net6.0, net7.0, net8.0 ]
     steps:
       - run: 'echo "No build required"'
 
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [net6.0,net7.0]
+        version: [ net6.0, net7.0, net8.0 ]
     steps:
       - run: 'echo "No build required"'
 
@@ -34,6 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [net6.0,net7.0]
+        version: [ net6.0, net7.0 , net8.0 ]
     steps:
       - run: 'echo "No build required"'
