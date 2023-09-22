@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fixed a bug where `TracerProviderBuilderBase` was not invoking the
+  `instrumentationFactory` delegate passed to the `protected`
+  `AddInstrumentation` method.
+  ([#4873](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4873))
+
 ## 1.6.0
 
 Released 2023-Sep-05
