@@ -15,7 +15,7 @@ foreach ($line in $($publishOutput -split "`r`n"))
     }
 }
 
-pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Debug/$targetNetFramework/linux-x64
+pushd $rootDirectory/test/OpenTelemetry.AotCompatibility.TestApp/bin/Release/$targetNetFramework/linux-x64
 
 Write-Host "Executing test App..."
 ./OpenTelemetry.AotCompatibility.TestApp
@@ -29,7 +29,7 @@ if ($LastExitCode -ne 0)
 popd
 
 Write-Host "Actual warning count is:", $actualWarningCount
-$expectedWarningCount = 16
+$expectedWarningCount = 0
 
 $testPassed = 0
 if ($actualWarningCount -ne $expectedWarningCount)
