@@ -181,6 +181,7 @@ public class TracerProviderBuilderExtensionsTest
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
             .AddInstrumentation(new MyInstrumentation())
+            .AddInstrumentation(() => (object)null)
             .Build() as TracerProviderSdk)
         {
             Assert.NotNull(provider);
