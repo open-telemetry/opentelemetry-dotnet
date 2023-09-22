@@ -41,6 +41,46 @@ public partial class HttpClientTests
         await this.HttpOutCallsAreCollectedSuccessfullyBodyAsync(tc, false, false).ConfigureAwait(false);
     }
 
+    [Fact]
+    public async Task DebugIndividualTestAsync()
+    {
+        var input = JsonSerializer.Deserialize<HttpTestData.HttpOutTestCase[]>(
+            @"
+                [
+                  {
+                    ""name"": ""Response code: 399"",
+                    ""method"": ""GET"",
+                    ""url"": ""http://{host}:{port}/"",
+                    ""responseCode"": 399,
+                    ""responseExpected"": true,
+                    ""spanName"": ""HTTP GET"",
+                    ""spanStatus"": ""Unset"",
+                    ""spanKind"": ""Client"",
+                    ""spanAttributes"": {
+                      ""http.scheme"": ""http"",
+                      ""http.method"": ""GET"",
+                      ""net.peer.name"": ""{host}"",
+                      ""net.peer.port"": ""{port}"",
+                      ""http.status_code"": ""399"",
+                      ""http.flavor"": ""{flavor}"",
+                      ""http.url"": ""http://{host}:{port}/""
+                    }
+                  }
+                ]
+                ",
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+        var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
+        await t.ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task CheckEnrichmentWhenSampling()
+    {
+        await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
+        await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
+    }
+
     private async Task HttpOutCallsAreCollectedSuccessfullyBodyAsync(HttpTestData.HttpOutTestCase tc, bool enableTracing, bool enableMetrics)
     {
         bool enrichWithHttpWebRequestCalled = false;
@@ -249,46 +289,6 @@ public partial class HttpClientTests
             Assert.DoesNotContain(statusCode, attributes);
             Assert.Equal(5, attributes.Length);
         }
-    }
-
-    [Fact]
-    public async Task DebugIndividualTestAsync()
-    {
-        var input = JsonSerializer.Deserialize<HttpTestData.HttpOutTestCase[]>(
-            @"
-                [
-                  {
-                    ""name"": ""Response code: 399"",
-                    ""method"": ""GET"",
-                    ""url"": ""http://{host}:{port}/"",
-                    ""responseCode"": 399,
-                    ""responseExpected"": true,
-                    ""spanName"": ""HTTP GET"",
-                    ""spanStatus"": ""Unset"",
-                    ""spanKind"": ""Client"",
-                    ""spanAttributes"": {
-                      ""http.scheme"": ""http"",
-                      ""http.method"": ""GET"",
-                      ""net.peer.name"": ""{host}"",
-                      ""net.peer.port"": ""{port}"",
-                      ""http.status_code"": ""399"",
-                      ""http.flavor"": ""{flavor}"",
-                      ""http.url"": ""http://{host}:{port}/""
-                    }
-                  }
-                ]
-                ",
-            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
-        var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
-        await t.ConfigureAwait(false);
-    }
-
-    [Fact]
-    public async Task CheckEnrichmentWhenSampling()
-    {
-        await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
-        await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
     }
 
     private static async Task CheckEnrichment(Sampler sampler, bool enrichExpected, string url)
