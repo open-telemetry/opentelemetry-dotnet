@@ -8,6 +8,9 @@
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="http-out-test-cases_New.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="/Includes/SkipUnlessEnvVarFoundTheoryAttribute.cs" />
@@ -29,7 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="http-out-test-cases.json">
+    <EmbeddedResource Include="http-out-test-cases_New.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="http-out-test-cases_Old.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

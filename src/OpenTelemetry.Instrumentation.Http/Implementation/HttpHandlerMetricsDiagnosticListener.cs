@@ -29,11 +29,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
 internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 {
+    internal const string HttpClientDurationMetricName = "http.client.duration";
+    internal const string HttpClientRequestDurationMetricName = "http.client.request.duration";
+
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
     private readonly Histogram<double> httpClientDuration;
+    private readonly Histogram<double> httpClientRequestDuration;
     private readonly HttpClientMetricInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
@@ -41,12 +45,21 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     public HttpHandlerMetricsDiagnosticListener(string name, Meter meter, HttpClientMetricInstrumentationOptions options)
         : base(name)
     {
-        this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         this.options = options;
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
 
         this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
+
+        if (this.emitOldAttributes)
+        {
+            this.httpClientDuration = meter.CreateHistogram<double>(HttpClientDurationMetricName, "ms", "Measures the duration of outbound HTTP requests.");
+        }
+
+        if (this.emitNewAttributes)
+        {
+            this.httpClientRequestDuration = meter.CreateHistogram<double>(HttpClientRequestDurationMetricName, "s", "Measures the duration of outbound HTTP requests.");
+        }
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -80,6 +93,11 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
+
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+                    this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
                 }
 
                 // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
@@ -98,12 +116,12 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
-                }
 
-                // We are relying here on HttpClient library to set duration before writing the stop event.
-                // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
-                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-                this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+                    this.httpClientRequestDuration.Record(activity.Duration.TotalSeconds, tags);
+                }
             }
         }
 

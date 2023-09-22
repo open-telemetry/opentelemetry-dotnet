@@ -26,16 +26,19 @@ using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests;
 
 public partial class HttpClientTests : IDisposable
 {
+    public readonly ITestOutputHelper TestOutputHelper;
     private readonly IDisposable serverLifeTime;
     private readonly string url;
 
-    public HttpClientTests()
+    public HttpClientTests(ITestOutputHelper testOutputHelper)
     {
+        this.TestOutputHelper = testOutputHelper;
         this.serverLifeTime = TestHttpServer.RunServer(
             (ctx) =>
             {
@@ -68,6 +71,9 @@ public partial class HttpClientTests : IDisposable
 
         this.url = $"http://{host}:{port}/";
     }
+
+    public static IEnumerable<object[]> TestData_Old => HttpTestData.ReadTestCases("http-out-test-cases_Old.json");
+    public static IEnumerable<object[]> TestData_New => HttpTestData.ReadTestCases("http-out-test-cases_New.json");
 
     [Fact]
     public void AddHttpClientInstrumentation_NamedOptions()

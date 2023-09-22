@@ -28,10 +28,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests;
 
 public partial class HttpWebRequestTests
 {
-    public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
+    public static IEnumerable<object[]> TestData_Old => HttpTestData.ReadTestCases("http-out-test-cases_Old.json");
 
     [Theory]
-    [MemberData(nameof(TestData))]
+    [MemberData(nameof(TestData_Old))]
     public void HttpOutCallsAreCollectedSuccessfully(HttpTestData.HttpOutTestCase tc)
     {
         using var serverLifeTime = TestHttpServer.RunServer(

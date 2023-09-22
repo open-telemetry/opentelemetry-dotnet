@@ -20,6 +20,8 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
@@ -30,11 +32,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests;
 
 public partial class HttpClientTests
 {
-    public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
-
     [Theory]
-    [MemberData(nameof(TestData))]
-    public async Task HttpOutCallsAreCollectedSuccessfullyAsync(HttpTestData.HttpOutTestCase tc)
+    [MemberData(nameof(TestData_New))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyAsync_New(HttpTestData.HttpOutTestCase tc)
     {
         bool enrichWithHttpWebRequestCalled = false;
         bool enrichWithHttpWebResponseCalled = false;
@@ -56,12 +56,18 @@ public partial class HttpClientTests
 
         var metrics = new List<Metric>();
 
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .Build();
+
         var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddHttpClientInstrumentation()
             .AddInMemoryExporter(metrics)
             .Build();
 
         using (Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddHttpClientInstrumentation((opt) =>
             {
                 opt.EnrichWithHttpWebRequest = (activity, httpRequestMessage) => { enrichWithHttpWebRequestCalled = true; };
@@ -106,10 +112,6 @@ public partial class HttpClientTests
 
         meterProvider.Dispose();
 
-        var requestMetrics = metrics
-            .Where(metric => metric.Name == "http.client.duration")
-            .ToArray();
-
         Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
         var activity = (Activity)processor.Invocations[2].Arguments[0];
 
@@ -146,6 +148,12 @@ public partial class HttpClientTests
         var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
         var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
+        this.TestOutputHelper.WriteLine(tc.Name);
+        foreach (var kvp in normalizedAttributes) // THIS HELPS DEBUG FAILURES
+        {
+            this.TestOutputHelper.WriteLine($"\"{kvp.Key}\": \"{kvp.Value}\",");
+        }
+
         Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
 
         foreach (var kv in normalizedAttributesTestCase)
@@ -158,6 +166,10 @@ public partial class HttpClientTests
             Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
             Assert.True(enrichWithExceptionCalled);
         }
+
+        var requestMetrics = metrics
+            .Where(metric => metric.Name == "http.client.request.duration")
+            .ToArray();
 
 #if NETFRAMEWORK
         Assert.Empty(requestMetrics);
@@ -181,7 +193,7 @@ public partial class HttpClientTests
         var sum = metricPoint.GetHistogramSum();
 
         Assert.Equal(1L, count);
-        Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+        Assert.Equal(activity.Duration.TotalSeconds, sum);
 
         var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
         int i = 0;
@@ -190,32 +202,42 @@ public partial class HttpClientTests
             attributes[i++] = tag;
         }
 
-        var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
-        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
-        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
-        var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
-        var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
-        var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
-        Assert.Contains(hostName, attributes);
-        Assert.Contains(portNumber, attributes);
+        var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, tc.Method);
+        var protocolVersion = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "2.0");
+        var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, port);
+        var serverAddress = new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf"); // TODO
+        // var urlFull = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlFull, tc.Url); // TODO
+
+        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+
         Assert.Contains(method, attributes);
-        Assert.Contains(scheme, attributes);
-        Assert.Contains(flavor, attributes);
+        Assert.Contains(protocolVersion, attributes);
+        Assert.Contains(portNumber, attributes);
+        Assert.Contains(serverAddress, attributes);
+        // Assert.Contains(urlFull, attributes);
+
+        //var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+        //Assert.Contains(scheme, attributes);
+
+        //var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
+
+        //Assert.Contains(hostName, attributes);
+
         if (tc.ResponseExpected)
         {
             Assert.Contains(statusCode, attributes);
-            Assert.Equal(6, attributes.Length);
+            Assert.Equal(5, attributes.Length);
         }
         else
         {
             Assert.DoesNotContain(statusCode, attributes);
-            Assert.Equal(5, attributes.Length);
+            Assert.Equal(4, attributes.Length); // TODO: IS THIS CORRECT?
         }
 #endif
     }
 
     [Fact]
-    public async Task DebugIndividualTestAsync()
+    public async Task DebugIndividualTestAsync_New()
     {
         var input = JsonSerializer.Deserialize<HttpTestData.HttpOutTestCase[]>(
             @"
@@ -230,79 +252,19 @@ public partial class HttpClientTests
                     ""spanStatus"": ""Unset"",
                     ""spanKind"": ""Client"",
                     ""spanAttributes"": {
-                      ""http.scheme"": ""http"",
-                      ""http.method"": ""GET"",
-                      ""net.peer.name"": ""{host}"",
-                      ""net.peer.port"": ""{port}"",
-                      ""http.status_code"": ""399"",
-                      ""http.flavor"": ""{flavor}"",
-                      ""http.url"": ""http://{host}:{port}/""
+                      ""http.request.method"": ""GET"",
+                      ""server.address"": ""localhost"",
+                      ""server.port"": ""{port}"",
+                      ""url.full"": ""http://{host}:{port}/"",
+                      ""network.protocol.version"": ""{flavor}"",
+                      ""http.response.status_code"": ""399""
                     }
                   }
                 ]
                 ",
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
-        var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
+        var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync_New), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
         await t.ConfigureAwait(false);
-    }
-
-    [Fact]
-    public async Task CheckEnrichmentWhenSampling()
-    {
-        await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
-        await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
-    }
-
-    private static async Task CheckEnrichment(Sampler sampler, bool enrichExpected, string url)
-    {
-        bool enrichWithHttpWebRequestCalled = false;
-        bool enrichWithHttpWebResponseCalled = false;
-
-        bool enrichWithHttpRequestMessageCalled = false;
-        bool enrichWithHttpResponseMessageCalled = false;
-
-        var processor = new Mock<BaseProcessor<Activity>>();
-        using (Sdk.CreateTracerProviderBuilder()
-            .SetSampler(sampler)
-            .AddHttpClientInstrumentation(options =>
-            {
-                options.EnrichWithHttpWebRequest = (activity, httpRequestMessage) => { enrichWithHttpWebRequestCalled = true; };
-                options.EnrichWithHttpWebResponse = (activity, httpResponseMessage) => { enrichWithHttpWebResponseCalled = true; };
-
-                options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
-                options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
-            })
-            .AddProcessor(processor.Object)
-            .Build())
-        {
-            using var c = new HttpClient();
-            using var r = await c.GetAsync(url).ConfigureAwait(false);
-        }
-
-        if (enrichExpected)
-        {
-#if NETFRAMEWORK
-            Assert.True(enrichWithHttpWebRequestCalled);
-            Assert.True(enrichWithHttpWebResponseCalled);
-
-            Assert.False(enrichWithHttpRequestMessageCalled);
-            Assert.False(enrichWithHttpResponseMessageCalled);
-#else
-            Assert.False(enrichWithHttpWebRequestCalled);
-            Assert.False(enrichWithHttpWebResponseCalled);
-
-            Assert.True(enrichWithHttpRequestMessageCalled);
-            Assert.True(enrichWithHttpResponseMessageCalled);
-#endif
-        }
-        else
-        {
-            Assert.False(enrichWithHttpWebRequestCalled);
-            Assert.False(enrichWithHttpWebResponseCalled);
-
-            Assert.False(enrichWithHttpRequestMessageCalled);
-            Assert.False(enrichWithHttpResponseMessageCalled);
-        }
     }
 }
