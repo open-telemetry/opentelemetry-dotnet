@@ -38,7 +38,8 @@ public sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerPr
 
     public TracerProvider? Provider { get; private set; }
 
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation?> instrumentationFactory)
+        where TInstrumentation : class
     {
         if (this.Services != null)
         {
@@ -46,7 +47,11 @@ public sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerPr
         }
         else
         {
-            this.Instrumentation.Add(instrumentationFactory());
+            var instrumentation = instrumentationFactory();
+            if (instrumentation != null)
+            {
+                this.Instrumentation.Add(instrumentation);
+            }
         }
 
         return this;
