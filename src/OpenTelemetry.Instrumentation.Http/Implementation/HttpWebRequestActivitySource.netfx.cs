@@ -162,7 +162,9 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddResponseTags(HttpWebResponse response, Activity activity)
     {
-        if (activity != null && activity.IsAllDataRequested)
+        Debug.Assert(activity != null, "Activity must not be null");
+
+        if (activity.IsAllDataRequested)
         {
             if (emitOldAttributes)
             {
@@ -190,7 +192,9 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddExceptionTags(Exception exception, Activity activity)
     {
-        if (activity == null || !activity.IsAllDataRequested)
+        Debug.Assert(activity != null, "Activity must not be null");
+
+        if (!activity.IsAllDataRequested)
         {
             return;
         }
