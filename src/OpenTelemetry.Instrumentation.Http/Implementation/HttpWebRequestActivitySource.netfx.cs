@@ -377,7 +377,7 @@ internal static class HttpWebRequestActivitySource
 
         try
         {
-            if (result is Exception ex)
+            if (activity != null && result is Exception ex)
             {
                 AddExceptionTags(ex, activity);
             }
@@ -400,12 +400,20 @@ internal static class HttpWebRequestActivitySource
                             isWebSocketResponseAccessor(response), connectionGroupNameAccessor(response),
                         });
 
-                    AddResponseTags(responseCopy, activity);
+                    if (activity != null)
+                    {
+                        AddResponseTags(responseCopy, activity);
+                    }
+
                     httpStatusCode = responseCopy.StatusCode;
                 }
                 else
                 {
-                    AddResponseTags(response, activity);
+                    if (activity != null)
+                    {
+                        AddResponseTags(response, activity);
+                    }
+
                     httpStatusCode = response.StatusCode;
                 }
             }
