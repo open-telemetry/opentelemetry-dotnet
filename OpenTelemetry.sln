@@ -40,7 +40,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
-		build\PreBuild.ps1 = build\PreBuild.ps1
 		build\process-codecoverage.ps1 = build\process-codecoverage.ps1
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
@@ -91,7 +90,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\apicompatibility.yml = .github\workflows\apicompatibility.yml
 		.github\workflows\ci-aot.yml = .github\workflows\ci-aot.yml
 		.github\workflows\ci-instrumentation-libraries-md.yml = .github\workflows\ci-instrumentation-libraries-md.yml
 		.github\workflows\ci-instrumentation-libraries.yml = .github\workflows\ci-instrumentation-libraries.yml
