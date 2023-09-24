@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -47,8 +46,10 @@ public static class OpenTelemetryServicesExtensions
     {
         Guard.ThrowIfNull(services);
 
-        services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+        if (!services.Any((ServiceDescriptor d) => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(TelemetryHostedService)))
+        {
+            services.Insert(0, ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+        }
 
         return new(services);
     }
