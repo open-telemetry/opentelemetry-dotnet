@@ -83,9 +83,9 @@ public static class TracerProviderBuilderExtensions
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder SetSampler<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this TracerProviderBuilder tracerProviderBuilder)
+    T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : Sampler
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
@@ -203,9 +203,9 @@ public static class TracerProviderBuilderExtensions
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddProcessor<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this TracerProviderBuilder tracerProviderBuilder)
+    T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : BaseProcessor<Activity>
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());

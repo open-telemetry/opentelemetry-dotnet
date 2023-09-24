@@ -165,9 +165,9 @@ internal
 #endif
     public static LoggerProviderBuilder AddProcessor<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this LoggerProviderBuilder loggerProviderBuilder)
+    T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : BaseProcessor<LogRecord>
     {
         loggerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());

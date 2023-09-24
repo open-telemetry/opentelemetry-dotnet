@@ -23,8 +23,5 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install format tool
-      run: dotnet tool install -g dotnet-format
-
     - name: dotnet format
-      run: dotnet-format --folder --check
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes

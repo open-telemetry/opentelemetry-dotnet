@@ -27,11 +27,11 @@ namespace OpenTelemetry.Logs;
 /// Contains extension methods for the <see cref="LoggerProviderBuilder"/> class.
 /// </summary>
 #if EXPOSE_EXPERIMENTAL_FEATURES
-    public
+public
 #else
     internal
 #endif
-    static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
+static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
 {
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -59,9 +59,9 @@ namespace OpenTelemetry.Logs;
 #endif
     public static LoggerProviderBuilder AddInstrumentation<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this LoggerProviderBuilder loggerProviderBuilder)
+    T>(this LoggerProviderBuilder loggerProviderBuilder)
         where T : class
     {
         loggerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
