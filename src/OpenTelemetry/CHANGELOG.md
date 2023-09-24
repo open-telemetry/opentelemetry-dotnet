@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Allowed metric instrument names to contain `/` characters. ([#4887](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4877))
+
 ## 1.6.0
 
 Released 2023-Sep-05
