@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 
@@ -55,6 +58,9 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource
         this.WriteEvent(3, className, methodName);
     }
 
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
     [Event(4, Message = "Unknown error in export method. Message: '{0}'. IsRetry: {1}", Level = EventLevel.Error)]
     public void ExportMethodException(string ex, bool isRetry)
     {
