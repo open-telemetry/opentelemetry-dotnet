@@ -237,6 +237,8 @@ internal
             return loggerProviderBuilderBase.Build();
         }
 
+        OpenTelemetrySdkEventSource.Log.ProviderBuildCalledOnUnknownBuilder("Logging", loggerProviderBuilder?.GetType());
+
         return new LoggerProvider();
     }
 }

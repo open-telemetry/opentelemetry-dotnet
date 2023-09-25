@@ -256,6 +256,8 @@ public static class TracerProviderBuilderExtensions
             return tracerProviderBuilderBase.InvokeBuild();
         }
 
+        OpenTelemetrySdkEventSource.Log.ProviderBuildCalledOnUnknownBuilder("Tracing", tracerProviderBuilder?.GetType());
+
         return new NoopTracerProvider();
     }
 

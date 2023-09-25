@@ -320,6 +320,8 @@ public static class MeterProviderBuilderExtensions
             return meterProviderBuilderBase.InvokeBuild();
         }
 
+        OpenTelemetrySdkEventSource.Log.ProviderBuildCalledOnUnknownBuilder("Metrics", meterProviderBuilder?.GetType());
+
         return new NoopMeterProvider();
     }
 
