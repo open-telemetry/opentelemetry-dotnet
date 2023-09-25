@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Allowed metric instrument names to contain `/` characters. ([#4887](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4877))
+* Allowed metric instrument names to contain `/` characters. ([#4882](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4882))
 
 ## 1.6.0
 
