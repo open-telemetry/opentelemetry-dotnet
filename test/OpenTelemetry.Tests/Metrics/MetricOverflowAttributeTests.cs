@@ -175,6 +175,8 @@ public class MetricOverflowAttributeTests
             // 1. For zero tags
             // 2. For metric overflow attribute when user opts-in for this feature
 
+            counter.Add(10); // Record measurement for zero tags
+
             // Max number for MetricPoints available for use when emitted with tags
             int maxMetricPointsForUse = MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault - 2;
 
@@ -199,12 +201,12 @@ public class MetricOverflowAttributeTests
             MetricPoint overflowMetricPoint;
 
             // We still have not exceeded the max MetricPoint limit
-            Assert.DoesNotContain(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+            Assert.DoesNotContain(metricPoints, mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
 
             exportedItems.Clear();
             metricPoints.Clear();
 
-            counter.Add(5, new KeyValuePair<string, object>("Key", 9999)); // Emit a metric to exceed the max MetricPoint limit
+            counter.Add(5, new KeyValuePair<string, object>("Key", 1998)); // Emit a metric to exceed the max MetricPoint limit
 
             meterProvider.ForceFlush();
             metric = exportedItems[0];
@@ -213,7 +215,16 @@ public class MetricOverflowAttributeTests
                 metricPoints.Add(mp);
             }
 
-            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+            MetricPoint zeroTagsMetricPoint;
+            if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+            {
+                // Check metric point for zero tags
+                zeroTagsMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 0);
+                Assert.Equal(10, zeroTagsMetricPoint.GetSumLong());
+            }
+
+            // Check metric point for overflow
+            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
             Assert.Equal(true, overflowMetricPoint.Tags.KeyAndValues[0].Value);
             Assert.Equal(1, overflowMetricPoint.Tags.Count);
             Assert.Equal(5, overflowMetricPoint.GetSumLong());
@@ -221,8 +232,10 @@ public class MetricOverflowAttributeTests
             exportedItems.Clear();
             metricPoints.Clear();
 
-            // Emit 50 more newer MetricPoints with distinct dimension combinations
-            for (int i = 10000; i < 10050; i++)
+            counter.Add(15); // Record another measurement for zero tags
+
+            // Emit 2500 more newer MetricPoints with distinct dimension combinations
+            for (int i = 2000; i < 4500; i++)
             {
                 counter.Add(5, new KeyValuePair<string, object>("Key", i));
             }
@@ -234,21 +247,28 @@ public class MetricOverflowAttributeTests
                 metricPoints.Add(mp);
             }
 
-            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+            zeroTagsMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 0);
+            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+
             if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
             {
-                Assert.Equal(250, overflowMetricPoint.GetSumLong()); // 50 * 5
+                Assert.Equal(15, zeroTagsMetricPoint.GetSumLong());
+
+                // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints) - 2 (reserved for zero tags and overflow) = 1998
+                // Number of metric points dropped = 2500 - 1998 = 502
+                Assert.Equal(2510, overflowMetricPoint.GetSumLong()); // 502 * 5
             }
             else
             {
-                Assert.Equal(255, overflowMetricPoint.GetSumLong()); // 5 + (50 * 5)
+                Assert.Equal(25, zeroTagsMetricPoint.GetSumLong());
+                Assert.Equal(12505, overflowMetricPoint.GetSumLong()); // 5 + (2500 * 5)
             }
 
             exportedItems.Clear();
             metricPoints.Clear();
 
             // Test that the SDK continues to correctly aggregate the previously registered measurements even after overflow has occurred
-            counter.Add(15, new KeyValuePair<string, object>("Key", 0));
+            counter.Add(25);
 
             meterProvider.ForceFlush();
             metric = exportedItems[0];
@@ -257,18 +277,18 @@ public class MetricOverflowAttributeTests
                 metricPoints.Add(mp);
             }
 
-            var metricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "Key" && (int)mp.Tags.KeyAndValues[0].Value == 0);
+            zeroTagsMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 0);
 
             if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
             {
-                Assert.Equal(15, metricPoint.GetSumLong());
+                Assert.Equal(25, zeroTagsMetricPoint.GetSumLong());
             }
             else
             {
-                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
 
-                Assert.Equal(25, metricPoint.GetSumLong()); // 10 + 15
-                Assert.Equal(255, overflowMetricPoint.GetSumLong());
+                Assert.Equal(50, zeroTagsMetricPoint.GetSumLong());
+                Assert.Equal(12505, overflowMetricPoint.GetSumLong());
             }
         }
         finally
@@ -300,6 +320,8 @@ public class MetricOverflowAttributeTests
             // 1. For zero tags
             // 2. For metric overflow attribute when user opts-in for this feature
 
+            histogram.Record(10); // Record measurement for zero tags
+
             // Max number for MetricPoints available for use when emitted with tags
             int maxMetricPointsForUse = MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault - 2;
 
@@ -324,12 +346,12 @@ public class MetricOverflowAttributeTests
             MetricPoint overflowMetricPoint;
 
             // We still have not exceeded the max MetricPoint limit
-            Assert.DoesNotContain(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+            Assert.DoesNotContain(metricPoints, mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
 
             exportedItems.Clear();
             metricPoints.Clear();
 
-            histogram.Record(5, new KeyValuePair<string, object>("Key", 9999)); // Emit a metric to exceed the max MetricPoint limit
+            histogram.Record(5, new KeyValuePair<string, object>("Key", 1998)); // Emit a metric to exceed the max MetricPoint limit
 
             meterProvider.ForceFlush();
             metric = exportedItems[0];
@@ -338,16 +360,27 @@ public class MetricOverflowAttributeTests
                 metricPoints.Add(mp);
             }
 
-            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+            MetricPoint zeroTagsMetricPoint;
+            if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+            {
+                // Check metric point for zero tags
+                zeroTagsMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 0);
+                Assert.Equal(10, zeroTagsMetricPoint.GetHistogramSum());
+            }
+
+            // Check metric point for overflow
+            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
             Assert.Equal(true, overflowMetricPoint.Tags.KeyAndValues[0].Value);
-            Assert.Equal(1, overflowMetricPoint.GetHistogramCount());
+            Assert.Equal(1, overflowMetricPoint.Tags.Count);
             Assert.Equal(5, overflowMetricPoint.GetHistogramSum());
 
             exportedItems.Clear();
             metricPoints.Clear();
 
-            // Emit 50 more newer MetricPoints with distinct dimension combinations
-            for (int i = 10000; i < 10050; i++)
+            histogram.Record(15); // Record another measurement for zero tags
+
+            // Emit 2500 more newer MetricPoints with distinct dimension combinations
+            for (int i = 2000; i < 4500; i++)
             {
                 histogram.Record(5, new KeyValuePair<string, object>("Key", i));
             }
@@ -359,23 +392,31 @@ public class MetricOverflowAttributeTests
                 metricPoints.Add(mp);
             }
 
-            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+            zeroTagsMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 0);
+            overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+
             if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
             {
-                Assert.Equal(50, overflowMetricPoint.GetHistogramCount());
-                Assert.Equal(250, overflowMetricPoint.GetHistogramSum()); // 50 * 5
+                Assert.Equal(15, zeroTagsMetricPoint.GetHistogramSum());
+
+                // Number of metric points that were available before the 2500 measurements were made = 2000 (max MetricPoints) - 2 (reserved for zero tags and overflow) = 1998
+                // Number of metric points dropped = 2500 - 1998 = 502
+                Assert.Equal(502, overflowMetricPoint.GetHistogramCount());
+                Assert.Equal(2510, overflowMetricPoint.GetHistogramSum()); // 502 * 5
             }
             else
             {
-                Assert.Equal(51, overflowMetricPoint.GetHistogramCount());
-                Assert.Equal(255, overflowMetricPoint.GetHistogramSum()); // 5 + (50 * 5)
+                Assert.Equal(25, zeroTagsMetricPoint.GetHistogramSum());
+
+                Assert.Equal(2501, overflowMetricPoint.GetHistogramCount());
+                Assert.Equal(12505, overflowMetricPoint.GetHistogramSum()); // 5 + (2500 * 5)
             }
 
             exportedItems.Clear();
             metricPoints.Clear();
 
             // Test that the SDK continues to correctly aggregate the previously registered measurements even after overflow has occurred
-            histogram.Record(15, new KeyValuePair<string, object>("Key", 0));
+            histogram.Record(25);
 
             meterProvider.ForceFlush();
             metric = exportedItems[0];
@@ -384,21 +425,18 @@ public class MetricOverflowAttributeTests
                 metricPoints.Add(mp);
             }
 
-            var metricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "Key" && (int)mp.Tags.KeyAndValues[0].Value == 0);
+            zeroTagsMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 0);
 
             if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
             {
-                Assert.Equal(1, metricPoint.GetHistogramCount());
-                Assert.Equal(15, metricPoint.GetHistogramSum());
+                Assert.Equal(25, zeroTagsMetricPoint.GetHistogramSum());
             }
             else
             {
-                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+                overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
 
-                Assert.Equal(2, metricPoint.GetHistogramCount());
-                Assert.Equal(25, metricPoint.GetHistogramSum()); // 10 + 15
-
-                Assert.Equal(255, overflowMetricPoint.GetHistogramSum());
+                Assert.Equal(50, zeroTagsMetricPoint.GetHistogramSum());
+                Assert.Equal(12505, overflowMetricPoint.GetHistogramSum());
             }
         }
         finally
