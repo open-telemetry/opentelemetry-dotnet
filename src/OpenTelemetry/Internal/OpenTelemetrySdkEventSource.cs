@@ -347,7 +347,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(51, type, reason);
     }
 
-    [Event(52, Message = "Build was invoked on an unknown builder of '{1}' type. {2} will remain disabled.", Level = EventLevel.Warning)]
+    [Event(52, Message = "Build was invoked on an unknown builder of '{1}' type. {0} will remain disabled.", Level = EventLevel.Warning)]
     public void ProviderBuildCalledOnUnknownBuilder(string signalType, Type? providerBuilderType)
     {
         this.WriteEvent(52, signalType, providerBuilderType?.FullName ?? "null");
