@@ -2,11 +2,11 @@
 
 ## Unreleased
 
-* Allowed metric instrument names to contain `/` characters. ([#4882](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4882))
-
 * Update `AggregatorStore` to reclaim unused MetricPoints for Delta aggregation
   temporality.
   ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4486))
+
+* Allowed metric instrument names to contain `/` characters. ([#4882](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4882))
 
 ## 1.6.0
 
