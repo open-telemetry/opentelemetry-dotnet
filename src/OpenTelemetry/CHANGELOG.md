@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Update `AggregatorStore` to reclaim unused MetricPoints for Delta aggregation
+  temporality.
+  ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4486))
+
 * Fixed a bug where `TracerProviderBuilderBase` was not invoking the
   `instrumentationFactory` delegate passed to the `protected`
   `AddInstrumentation` method.

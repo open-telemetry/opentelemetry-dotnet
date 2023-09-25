@@ -70,7 +70,7 @@ internal sealed class MeterProviderServiceCollectionBuilder : MeterProviderBuild
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         => this.ConfigureBuilderInternal(configure);
 
-    private MeterProviderBuilder ConfigureBuilderInternal(Action<IServiceProvider, MeterProviderBuilder> configure)
+    private MeterProviderServiceCollectionBuilder ConfigureBuilderInternal(Action<IServiceProvider, MeterProviderBuilder> configure)
     {
         var services = this.Services
             ?? throw new NotSupportedException("Builder cannot be configured during MeterProvider construction.");
@@ -80,7 +80,7 @@ internal sealed class MeterProviderServiceCollectionBuilder : MeterProviderBuild
         return this;
     }
 
-    private MeterProviderBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
+    private MeterProviderServiceCollectionBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
     {
         Guard.ThrowIfNull(configure);
 
