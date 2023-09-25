@@ -249,13 +249,17 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns><see cref="TracerProvider"/>.</returns>
-    public static TracerProvider? Build(this TracerProviderBuilder tracerProviderBuilder)
+    public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
     {
         if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
         {
             return tracerProviderBuilderBase.InvokeBuild();
         }
 
-        return null;
+        return new NoopTracerProvider();
+    }
+
+    private sealed class NoopTracerProvider : TracerProvider
+    {
     }
 }

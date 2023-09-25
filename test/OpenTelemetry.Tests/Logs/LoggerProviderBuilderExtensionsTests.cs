@@ -178,6 +178,17 @@ public sealed class LoggerProviderBuilderExtensionsTests
         }
     }
 
+    [Fact]
+    public void LoggerProviderBuilderCustomImplementationBuildTest()
+    {
+        var builder = new CustomLoggerProviderBuilder();
+
+        var provider = builder.Build();
+
+        Assert.NotNull(provider);
+        Assert.True(provider is not LoggerProviderSdk);
+    }
+
     private sealed class CustomInstrumentation : IDisposable
     {
         public bool Disposed;
@@ -206,6 +217,14 @@ public sealed class LoggerProviderBuilderExtensionsTests
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class CustomLoggerProviderBuilder : LoggerProviderBuilder
+    {
+        public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            throw new NotImplementedException();
         }
     }
 }

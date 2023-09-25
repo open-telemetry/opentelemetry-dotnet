@@ -313,14 +313,14 @@ public static class MeterProviderBuilderExtensions
     /// </summary>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns><see cref="MeterProvider"/>.</returns>
-    public static MeterProvider? Build(this MeterProviderBuilder meterProviderBuilder)
+    public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
     {
         if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
         {
             return meterProviderBuilderBase.InvokeBuild();
         }
 
-        return null;
+        return new NoopMeterProvider();
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -356,5 +356,9 @@ public static class MeterProviderBuilderExtensions
         });
 
         return meterProviderBuilder;
+    }
+
+    private sealed class NoopMeterProvider : MeterProvider
+    {
     }
 }
