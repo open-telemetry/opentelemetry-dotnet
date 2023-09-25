@@ -34,10 +34,16 @@ public static class OpenTelemetryServicesExtensions
     /// cref="IServiceCollection"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> and/or <see
     /// cref="MeterProvider"/> will be created for a given <see
-    /// cref="IServiceCollection"/>.
+    /// cref="IServiceCollection"/>.</item>
+    /// <item>OpenTelemetry SDK services are inserted at the beginning of the
+    /// <see cref="IServiceCollection"/> in an attempt to provide a better
+    /// experience for end users capturing telemetry in hosted services.</item>
+    /// </list>
     /// </remarks>
     /// <param name="services"><see cref="IServiceCollection"/>.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
