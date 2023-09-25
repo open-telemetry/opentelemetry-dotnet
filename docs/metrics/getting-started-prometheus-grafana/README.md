@@ -59,13 +59,14 @@ value until any key is pressed.
 
 ```csharp
 Console.WriteLine("Press any key to exit");
+
 while (!Console.KeyAvailable)
 {
-    Thread.Sleep(1000);
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
-    MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
     ...
+
+    Thread.Sleep(300);
 }
 ```
 
