@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -22,9 +24,9 @@ namespace OpenTelemetry.ExporterOpenTelemetryProtocol.Implementation.Retry;
 
 internal class OtlpExporterTransmissionHandler<T>
 {
-    internal IExportClient<T> ExportClient;
+    internal IExportClient<T>? ExportClient;
 
-    public OtlpExporterOptions Options { get; internal set; }
+    public OtlpExporterOptions? Options { get; internal set; }
 
     /// <summary>
     /// Sends export request to the server.
@@ -35,7 +37,7 @@ internal class OtlpExporterTransmissionHandler<T>
     {
         try
         {
-            return this.ExportClient.SendExportRequest(request);
+            return this.ExportClient == null ? false : this.ExportClient.SendExportRequest(request);
         }
         catch (Exception ex)
         {
@@ -50,11 +52,11 @@ internal class OtlpExporterTransmissionHandler<T>
     /// <param name="request">The request to send to the server.</param>
     /// <param name="exception">Exception encountered when trying to send request.</param>
     /// <returns>True if the request is sent successfully or else false.</returns>
-    protected virtual bool RetryRequest(T request, out Exception exception)
+    protected virtual bool RetryRequest(T request, out Exception? exception)
     {
         try
         {
-            var result = this.ExportClient.SendExportRequest(request);
+            var result = this.ExportClient == null ? false : this.ExportClient.SendExportRequest(request);
             exception = null;
             return result;
         }
