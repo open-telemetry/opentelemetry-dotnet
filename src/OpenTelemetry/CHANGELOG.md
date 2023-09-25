@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Update `AggregatorStore` to reclaim unused MetricPoints for Delta aggregation
+  temporality.
+  ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4486))
+
 ## 1.6.0
 
 Released 2023-Sep-05
