@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added support for publishing `http.client.duration` metric on .NET Framework
+  ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
 
 ## 1.5.1-beta.1
 
