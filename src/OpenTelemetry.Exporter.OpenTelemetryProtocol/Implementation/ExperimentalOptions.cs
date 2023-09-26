@@ -1,4 +1,4 @@
-// <copyright file="ExperimentalFeatures.cs" company="OpenTelemetry Authors">
+// <copyright file="ExperimentalOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,16 +21,16 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
-internal sealed class ExperimentalFeatures
+internal sealed class ExperimentalOptions
 {
-    public const string EMITLOGEXCEPTIONATTRIBUTES = "OTEL_DOTNET_EMIT_EXCEPTION_LOG_ATTRIBUTES";
+    public const string EMITLOGEXCEPTIONATTRIBUTES = "OTEL_DOTNET_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES";
 
-    public ExperimentalFeatures()
+    public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
     }
 
-    public ExperimentalFeatures(IConfiguration configuration)
+    public ExperimentalOptions(IConfiguration configuration)
     {
         if (configuration.TryGetBoolValue(EMITLOGEXCEPTIONATTRIBUTES, out var emitLogExceptionAttributes))
         {

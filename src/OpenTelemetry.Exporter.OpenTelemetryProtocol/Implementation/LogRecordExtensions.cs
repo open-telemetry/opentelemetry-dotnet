@@ -31,9 +31,9 @@ internal static class LogRecordExtensions
     internal static void AddBatch(
         this OtlpCollector.ExportLogsServiceRequest request,
         SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
         OtlpResource.Resource processResource,
-        in Batch<LogRecord> logRecordBatch,
-        ExperimentalFeatures experimentalFeatures)
+        in Batch<LogRecord> logRecordBatch)
     {
         var resourceLogs = new OtlpLogs.ResourceLogs
         {
@@ -46,7 +46,7 @@ internal static class LogRecordExtensions
 
         foreach (var logRecord in logRecordBatch)
         {
-            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions, experimentalFeatures);
+            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions, experimentalOptions);
             if (otlpLogRecord != null)
             {
                 scopeLogs.LogRecords.Add(otlpLogRecord);
@@ -55,7 +55,7 @@ internal static class LogRecordExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions, ExperimentalFeatures experimentalFeatures)
+    internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions)
     {
         OtlpLogs.LogRecord otlpLogRecord = null;
 
@@ -109,7 +109,7 @@ internal static class LogRecordExtensions
             }
             */
 
-            if (experimentalFeatures.EmitLogExceptionAttributes && logRecord.Exception != null)
+            if (experimentalOptions.EmitLogExceptionAttributes && logRecord.Exception != null)
             {
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);

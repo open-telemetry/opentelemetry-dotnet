@@ -511,7 +511,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalFeatures.EMITLOGEXCEPTIONATTRIBUTES] = emitExceptionAttributes })
+            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGEXCEPTIONATTRIBUTES] = emitExceptionAttributes })
             .Build();
 
         var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions, new(configuration));
