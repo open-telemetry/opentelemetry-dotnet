@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 
@@ -37,12 +39,12 @@ public class SpanAttributes
     /// Initializes a new instance of the <see cref="SpanAttributes"/> class.
     /// </summary>
     /// <param name="attributes">Initial attributes to store in the collection.</param>
-    public SpanAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
+    public SpanAttributes(IEnumerable<KeyValuePair<string, object?>> attributes)
         : this()
     {
         Guard.ThrowIfNull(attributes);
 
-        foreach (KeyValuePair<string, object> kvp in attributes)
+        foreach (KeyValuePair<string, object?> kvp in attributes)
         {
             this.AddInternal(kvp.Key, kvp.Value);
         }
@@ -65,7 +67,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="value">Entry value.</param>
-    public void Add(string key, string value)
+    public void Add(string key, string? value)
     {
         this.AddInternal(key, value);
     }
@@ -95,7 +97,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, long[] values)
+    public void Add(string key, long[]? values)
     {
         this.AddInternal(key, values);
     }
@@ -105,7 +107,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, string[] values)
+    public void Add(string key, string?[]? values)
     {
         this.AddInternal(key, values);
     }
@@ -115,7 +117,7 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, bool[] values)
+    public void Add(string key, bool[]? values)
     {
         this.AddInternal(key, values);
     }
@@ -125,12 +127,12 @@ public class SpanAttributes
     /// </summary>
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
-    public void Add(string key, double[] values)
+    public void Add(string key, double[]? values)
     {
         this.AddInternal(key, values);
     }
 
-    private void AddInternal(string key, object value)
+    private void AddInternal(string key, object? value)
     {
         Guard.ThrowIfNull(key);
 

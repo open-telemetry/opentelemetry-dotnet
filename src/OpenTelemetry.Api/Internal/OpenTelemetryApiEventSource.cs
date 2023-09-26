@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal;
