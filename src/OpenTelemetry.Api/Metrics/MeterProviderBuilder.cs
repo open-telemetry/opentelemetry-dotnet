@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -36,7 +38,7 @@ public abstract class MeterProviderBuilder
     /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public abstract MeterProviderBuilder AddInstrumentation<TInstrumentation>(
         Func<TInstrumentation> instrumentationFactory)
-        where TInstrumentation : class;
+        where TInstrumentation : class?;
 
     /// <summary>
     /// Adds given Meter names to the list of subscribed meters.

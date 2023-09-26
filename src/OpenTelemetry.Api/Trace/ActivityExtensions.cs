@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -41,10 +43,11 @@ public static class ActivityExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetStatus(this Activity activity, Status status)
     {
-        Debug.Assert(activity != null, "Activity should not be null");
-
-        activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
-        activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+        if (activity != null)
+        {
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);
+        }
     }
 
     /// <summary>
@@ -57,7 +60,8 @@ public static class ActivityExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Status GetStatus(this Activity activity)
     {
-        if (!activity.TryGetStatus(out StatusCode statusCode, out string statusDescription))
+        if (activity == null
+            || !activity.TryGetStatus(out var statusCode, out var statusDescription))
         {
             return Status.Unset;
         }
@@ -71,10 +75,8 @@ public static class ActivityExtensions
     /// <param name="activity">Activity instance.</param>
     /// <param name="ex">Exception to be recorded.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception ex)
-    {
-        activity?.RecordException(ex, default);
-    }
+    public static void RecordException(this Activity activity, Exception? ex)
+        => RecordException(activity, ex, default);
 
     /// <summary>
     /// Adds an activity event containing information from the specified exception and additional tags.
@@ -83,7 +85,7 @@ public static class ActivityExtensions
     /// <param name="ex">Exception to be recorded.</param>
     /// <param name="tags">Additional tags to record on the event.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RecordException(this Activity activity, Exception ex, in TagList tags)
+    public static void RecordException(this Activity activity, Exception? ex, in TagList tags)
     {
         if (ex == null || activity == null)
         {

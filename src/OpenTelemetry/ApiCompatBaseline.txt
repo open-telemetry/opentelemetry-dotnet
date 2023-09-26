@@ -1,0 +1,4 @@
+Compat issues with assembly OpenTelemetry:
+CannotChangeAttribute : Attribute 'System.Runtime.CompilerServices.NullableAttribute' on generic param 'TInstrumentation' on member 'OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>)' changed from '[NullableAttribute((byte)0)]' in the contract to '[NullableAttribute((byte)2)]' in the implementation.
+CannotChangeAttribute : Attribute 'System.Runtime.CompilerServices.NullableAttribute' on generic param 'TInstrumentation' on member 'OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>)' changed from '[NullableAttribute((byte)0)]' in the contract to '[NullableAttribute((byte)2)]' in the implementation.
+Total Issues: 2

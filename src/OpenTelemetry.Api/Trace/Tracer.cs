@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -23,7 +25,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Tracer is the class responsible for creating <see cref="TelemetrySpan"/>.
 /// </summary>
-/// <remarks>Tracer is a wrapper around <see cref="ActivitySource"/> class.</remarks>
+/// <remarks>Tracer is a wrapper around <see cref="System.Diagnostics.ActivitySource"/> class.</remarks>
 public class Tracer
 {
     internal readonly ActivitySource ActivitySource;
@@ -53,12 +55,15 @@ public class Tracer
     }
 
     /// <summary>
-    /// Makes the given span as the current one.
+    /// Sets the given span as the current one in the context.
     /// </summary>
     /// <param name="span">The span to be made current.</param>
-    /// <returns>The current span.</returns>
+    /// <returns>The supplied span for call chaining.</returns>
+#if NET6_0_OR_GREATER
+    [return: NotNullIfNotNull(nameof(span))]
+#endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TelemetrySpan WithSpan(TelemetrySpan span)
+    public static TelemetrySpan? WithSpan(TelemetrySpan? span)
     {
         span?.Activate();
         return span;
@@ -74,7 +79,12 @@ public class Tracer
     /// <param name="startTime"> Start time for the span.</param>
     /// <returns>Span instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan StartRootSpan(string name, SpanKind kind = SpanKind.Internal, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+    public TelemetrySpan StartRootSpan(
+        string name,
+        SpanKind kind = SpanKind.Internal,
+        SpanAttributes? initialAttributes = null,
+        IEnumerable<Link>? links = null,
+        DateTimeOffset startTime = default)
     {
         return this.StartSpanHelper(false, name, kind, default, initialAttributes, links, startTime);
     }
@@ -91,7 +101,13 @@ public class Tracer
     /// <returns>Span instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public TelemetrySpan StartSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+    public TelemetrySpan StartSpan(
+        string name,
+        SpanKind kind,
+        in TelemetrySpan? parentSpan, // <- TODO: Clean this up if we ever do a major release w/ breaking changes. The "in" here was probably a copy/paste mistake. Removing would be source compatible but binary breaking.
+        SpanAttributes? initialAttributes = null,
+        IEnumerable<Link>? links = null,
+        DateTimeOffset startTime = default)
     {
         return this.StartSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
     }
@@ -108,9 +124,15 @@ public class Tracer
     /// <returns>Span instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public TelemetrySpan StartSpan(string name, SpanKind kind = SpanKind.Internal, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+    public TelemetrySpan StartSpan(
+        string name,
+        SpanKind kind = SpanKind.Internal,
+        in SpanContext parentContext = default,
+        SpanAttributes? initialAttributes = null,
+        IEnumerable<Link>? links = null,
+        DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(false, name, kind, parentContext, initialAttributes, links, startTime);
+        return this.StartSpanHelper(false, name, kind, in parentContext, initialAttributes, links, startTime);
     }
 
     /// <summary>
@@ -125,7 +147,13 @@ public class Tracer
     /// <returns>Span instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public TelemetrySpan StartActiveSpan(string name, SpanKind kind, in TelemetrySpan parentSpan, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+    public TelemetrySpan StartActiveSpan(
+        string name,
+        SpanKind kind,
+        in TelemetrySpan? parentSpan, // <- TODO: Clean this up if we ever do a major release w/ breaking changes. The "in" here was probably a copy/paste mistake. Removing would be source compatible but binary breaking.
+        SpanAttributes? initialAttributes = null,
+        IEnumerable<Link>? links = null,
+        DateTimeOffset startTime = default)
     {
         return this.StartActiveSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
     }
@@ -142,9 +170,15 @@ public class Tracer
     /// <returns>Span instance.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
-    public TelemetrySpan StartActiveSpan(string name, SpanKind kind = SpanKind.Internal, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+    public TelemetrySpan StartActiveSpan(
+        string name,
+        SpanKind kind = SpanKind.Internal,
+        in SpanContext parentContext = default,
+        SpanAttributes? initialAttributes = null,
+        IEnumerable<Link>? links = null,
+        DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(true, name, kind, parentContext, initialAttributes, links, startTime);
+        return this.StartSpanHelper(true, name, kind, in parentContext, initialAttributes, links, startTime);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -162,7 +196,14 @@ public class Tracer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private TelemetrySpan StartSpanHelper(bool isActiveSpan, string name, SpanKind kind, in SpanContext parentContext = default, SpanAttributes initialAttributes = null, IEnumerable<Link> links = null, DateTimeOffset startTime = default)
+    private TelemetrySpan StartSpanHelper(
+        bool isActiveSpan,
+        string name,
+        SpanKind kind,
+        in SpanContext parentContext = default,
+        SpanAttributes? initialAttributes = null,
+        IEnumerable<Link>? links = null,
+        DateTimeOffset startTime = default)
     {
         if (!this.ActivitySource.HasListeners())
         {
@@ -171,12 +212,7 @@ public class Tracer
 
         var activityKind = ConvertToActivityKind(kind);
         var activityLinks = links?.Select(l => l.ActivityLink);
-
-        Activity previousActivity = null;
-        if (!isActiveSpan)
-        {
-            previousActivity = Activity.Current;
-        }
+        var previousActivity = !isActiveSpan ? Activity.Current : null;
 
         var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
         if (activity == null)
