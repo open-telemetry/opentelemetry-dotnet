@@ -38,7 +38,6 @@ public partial class HttpClientTests
     [MemberData(nameof(TestData_Old))]
     public async Task HttpOutCallsAreCollectedSuccessfullyAsync_Old(HttpTestData.HttpOutTestCase tc)
     {
-
         bool enrichWithHttpWebRequestCalled = false;
         bool enrichWithHttpWebResponseCalled = false;
         bool enrichWithHttpRequestMessageCalled = false;
@@ -139,7 +138,6 @@ public partial class HttpClientTests
         }
 #endif
 
-        // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
         Assert.Equal(tc.SpanStatus, activity.Status.ToString());
 
         if (tc.SpanStatusHasDescription.HasValue)
@@ -148,12 +146,12 @@ public partial class HttpClientTests
             Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
         }
 
-        var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
+        var activityAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
+        var testCaseAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
-        Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
+        Assert.Equal(testCaseAttributes.Count, activityAttributes.Count);
 
-        foreach (var kv in normalizedAttributesTestCase)
+        foreach (var kv in testCaseAttributes)
         {
             Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
         }
@@ -192,11 +190,11 @@ public partial class HttpClientTests
         Assert.Equal(1L, count);
         Assert.Equal(activity.Duration.TotalMilliseconds, sum);
 
-        var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+        var metricAttributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
         int i = 0;
         foreach (var tag in metricPoint.Tags)
         {
-            attributes[i++] = tag;
+            metricAttributes[i++] = tag;
         }
 
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
@@ -205,20 +203,20 @@ public partial class HttpClientTests
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
         var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
-        Assert.Contains(hostName, attributes);
-        Assert.Contains(portNumber, attributes);
-        Assert.Contains(method, attributes);
-        Assert.Contains(scheme, attributes);
-        Assert.Contains(flavor, attributes);
+        Assert.Contains(hostName, metricAttributes);
+        Assert.Contains(portNumber, metricAttributes);
+        Assert.Contains(method, metricAttributes);
+        Assert.Contains(scheme, metricAttributes);
+        Assert.Contains(flavor, metricAttributes);
         if (tc.ResponseExpected)
         {
-            Assert.Contains(statusCode, attributes);
-            Assert.Equal(6, attributes.Length);
+            Assert.Contains(statusCode, metricAttributes);
+            Assert.Equal(6, metricAttributes.Length);
         }
         else
         {
-            Assert.DoesNotContain(statusCode, attributes);
-            Assert.Equal(5, attributes.Length);
+            Assert.DoesNotContain(statusCode, metricAttributes);
+            Assert.Equal(5, metricAttributes.Length);
         }
 #endif
     }

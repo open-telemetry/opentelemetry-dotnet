@@ -136,7 +136,6 @@ public partial class HttpClientTests
         }
 #endif
 
-        // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
         Assert.Equal(tc.SpanStatus, activity.Status.ToString());
 
         if (tc.SpanStatusHasDescription.HasValue)
@@ -145,27 +144,12 @@ public partial class HttpClientTests
             Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
         }
 
-        var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
+        var activityAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
+        var testCaseAttributes = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, host, port));
 
-        this.TestOutputHelper.WriteLine(tc.Name);
-        this.TestOutputHelper.WriteLine(string.Empty);
-        this.TestOutputHelper.WriteLine("Activity Tags:");
-        foreach (var kvp in normalizedAttributes) // THIS HELPS DEBUG FAILURES
-        {
-            this.TestOutputHelper.WriteLine($"\"{kvp.Key}\": \"{kvp.Value}\",");
-        }
+        Assert.Equal(testCaseAttributes.Count, activityAttributes.Count);
 
-        //this.TestOutputHelper.WriteLine(string.Empty);
-        //this.TestOutputHelper.WriteLine("Expected Tags:");
-        //foreach (var kvp in normalizedAttributesTestCase) // THIS HELPS DEBUG FAILURES
-        //{
-        //    this.TestOutputHelper.WriteLine($"\"{kvp.Key}\": \"{kvp.Value}\",");
-        //}
-
-        Assert.Equal(normalizedAttributesTestCase.Count, normalizedAttributes.Count);
-
-        foreach (var kv in normalizedAttributesTestCase)
+        foreach (var kv in testCaseAttributes)
         {
             Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
         }
@@ -175,7 +159,7 @@ public partial class HttpClientTests
             Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
             Assert.True(enrichWithExceptionCalled);
         }
-
+// TODO: NEED TO CHECK BOTH METRICS
         var requestMetrics = metrics
             .Where(metric => metric.Name == "http.client.request.duration")
             .ToArray();
@@ -204,43 +188,31 @@ public partial class HttpClientTests
         Assert.Equal(1L, count);
         Assert.Equal(activity.Duration.TotalSeconds, sum);
 
-        var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+        var metricAttributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
         int i = 0;
         foreach (var tag in metricPoint.Tags)
         {
-            attributes[i++] = tag;
+            metricAttributes[i++] = tag;
         }
 
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, tc.Method);
         var protocolVersion = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "2.0");
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, port);
         var serverAddress = new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf"); // TODO
-        // var urlFull = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlFull, tc.Url); // TODO
-
         var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
-
-        Assert.Contains(method, attributes);
-        Assert.Contains(protocolVersion, attributes);
-        Assert.Contains(portNumber, attributes);
-        Assert.Contains(serverAddress, attributes);
-        // Assert.Contains(urlFull, attributes);
-
-        //var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
-        //Assert.Contains(scheme, attributes);
-
-        //var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
-
-        //Assert.Contains(hostName, attributes);
-
+        Assert.Contains(method, metricAttributes);
+        Assert.Contains(protocolVersion, metricAttributes);
+        Assert.Contains(portNumber, metricAttributes);
+        Assert.Contains(serverAddress, metricAttributes);
         if (tc.ResponseExpected)
         {
-            Assert.Contains(statusCode, attributes);
-            Assert.Equal(11, attributes.Length);
+            Assert.Contains(statusCode, metricAttributes);
+            Assert.Equal(11, metricAttributes.Length);
         }
         else
         {
-            Assert.DoesNotContain(statusCode, attributes);
-            Assert.Equal(9, attributes.Length); // TODO: IS THIS CORRECT?
+            Assert.DoesNotContain(statusCode, metricAttributes);
+            Assert.Equal(9, metricAttributes.Length);
         }
 #endif
     }
