@@ -46,7 +46,11 @@ public sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracerPr
         }
         else
         {
-            this.Instrumentation.Add(instrumentationFactory());
+            var instrumentation = instrumentationFactory();
+            if (instrumentation is not null)
+            {
+                this.Instrumentation.Add(instrumentation);
+            }
         }
 
         return this;
