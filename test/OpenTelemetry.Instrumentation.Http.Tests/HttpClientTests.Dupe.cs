@@ -159,7 +159,8 @@ public partial class HttpClientTests
             Assert.Single(activity.Events.Where(evt => evt.Name.Equals("exception")));
             Assert.True(enrichWithExceptionCalled);
         }
-// TODO: NEED TO CHECK BOTH METRICS
+
+        // VERIFY NEW METRIC
         var requestMetrics = metrics
             .Where(metric => metric.Name == "http.client.request.duration")
             .ToArray();
@@ -213,6 +214,65 @@ public partial class HttpClientTests
         {
             Assert.DoesNotContain(statusCode, metricAttributes);
             Assert.Equal(9, metricAttributes.Length);
+        }
+#endif
+
+        // VERIFY OLD METRIC
+        requestMetrics = metrics
+            .Where(metric => metric.Name == "http.client.duration")
+            .ToArray();
+
+#if NETFRAMEWORK
+        Assert.Empty(requestMetrics);
+#else
+        Assert.Single(requestMetrics);
+
+        metric = requestMetrics[0];
+        Assert.NotNull(metric);
+        Assert.True(metric.MetricType == MetricType.Histogram);
+
+        metricPoints = new List<MetricPoint>();
+        foreach (var p in metric.GetMetricPoints())
+        {
+            metricPoints.Add(p);
+        }
+
+        Assert.Single(metricPoints);
+        metricPoint = metricPoints[0];
+
+        count = metricPoint.GetHistogramCount();
+        sum = metricPoint.GetHistogramSum();
+
+        Assert.Equal(1L, count);
+        Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+
+        metricAttributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+        i = 0;
+        foreach (var tag in metricPoint.Tags)
+        {
+            metricAttributes[i++] = tag;
+        }
+
+        method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
+        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+        statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+        var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
+        var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
+        portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
+        Assert.Contains(hostName, metricAttributes);
+        Assert.Contains(portNumber, metricAttributes);
+        Assert.Contains(method, metricAttributes);
+        Assert.Contains(scheme, metricAttributes);
+        Assert.Contains(flavor, metricAttributes);
+        if (tc.ResponseExpected)
+        {
+            Assert.Contains(statusCode, metricAttributes);
+            Assert.Equal(6, metricAttributes.Length);
+        }
+        else
+        {
+            Assert.DoesNotContain(statusCode, metricAttributes);
+            Assert.Equal(5, metricAttributes.Length);
         }
 #endif
     }
