@@ -173,6 +173,7 @@ public partial class HttpClientTests
 
         var metric = requestMetrics[0];
         Assert.NotNull(metric);
+        Assert.Equal("ms", metric.Unit);
         Assert.True(metric.MetricType == MetricType.Histogram);
 
         var metricPoints = new List<MetricPoint>();
@@ -197,6 +198,7 @@ public partial class HttpClientTests
             metricAttributes[i++] = tag;
         }
 
+        // Inspect Metric Attributes
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
         var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
         var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
@@ -218,6 +220,18 @@ public partial class HttpClientTests
             Assert.DoesNotContain(statusCode, metricAttributes);
             Assert.Equal(5, metricAttributes.Length);
         }
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = metricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
+            actual: histogramBounds);
 #endif
     }
 

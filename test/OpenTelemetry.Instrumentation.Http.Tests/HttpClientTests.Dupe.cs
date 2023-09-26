@@ -172,6 +172,7 @@ public partial class HttpClientTests
 
         var metric = requestMetrics[0];
         Assert.NotNull(metric);
+        Assert.Equal("s", metric.Unit);
         Assert.True(metric.MetricType == MetricType.Histogram);
 
         var metricPoints = new List<MetricPoint>();
@@ -196,6 +197,7 @@ public partial class HttpClientTests
             metricAttributes[i++] = tag;
         }
 
+        // Inspect Metric Attributes
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, tc.Method);
         var protocolVersion = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "2.0");
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, port);
@@ -215,6 +217,18 @@ public partial class HttpClientTests
             Assert.DoesNotContain(statusCode, metricAttributes);
             Assert.Equal(9, metricAttributes.Length);
         }
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = metricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+            actual: histogramBounds);
 #endif
 
         // VERIFY OLD METRIC
@@ -229,6 +243,7 @@ public partial class HttpClientTests
 
         metric = requestMetrics[0];
         Assert.NotNull(metric);
+        Assert.Equal("ms", metric.Unit);
         Assert.True(metric.MetricType == MetricType.Histogram);
 
         metricPoints = new List<MetricPoint>();
@@ -274,6 +289,18 @@ public partial class HttpClientTests
             Assert.DoesNotContain(statusCode, metricAttributes);
             Assert.Equal(5, metricAttributes.Length);
         }
+
+        // Inspect Histogram Bounds
+        histogramBuckets = metricPoint.GetHistogramBuckets();
+        histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
+            actual: histogramBounds);
 #endif
     }
 
