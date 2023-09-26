@@ -16,7 +16,9 @@
 
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Trace;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
@@ -30,7 +32,8 @@ internal static class LogRecordExtensions
         this OtlpCollector.ExportLogsServiceRequest request,
         SdkLimitOptions sdkLimitOptions,
         OtlpResource.Resource processResource,
-        in Batch<LogRecord> logRecordBatch)
+        in Batch<LogRecord> logRecordBatch,
+        ExperimentalFeatures experimentalFeatures)
     {
         var resourceLogs = new OtlpLogs.ResourceLogs
         {
@@ -43,7 +46,7 @@ internal static class LogRecordExtensions
 
         foreach (var logRecord in logRecordBatch)
         {
-            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
+            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions, experimentalFeatures);
             if (otlpLogRecord != null)
             {
                 scopeLogs.LogRecords.Add(otlpLogRecord);
@@ -52,7 +55,7 @@ internal static class LogRecordExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions)
+    internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions, ExperimentalFeatures experimentalFeatures)
     {
         OtlpLogs.LogRecord otlpLogRecord = null;
 
@@ -104,14 +107,14 @@ internal static class LogRecordExtensions
             {
                 otlpLogRecord.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
             }
+            */
 
-            if (logRecord.Exception != null)
+            if (experimentalFeatures.EmitLogExceptionAttributes && logRecord.Exception != null)
             {
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
                 otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
             }
-            */
 
             bool bodyPopulatedFromFormattedMessage = false;
             if (logRecord.FormattedMessage != null)
