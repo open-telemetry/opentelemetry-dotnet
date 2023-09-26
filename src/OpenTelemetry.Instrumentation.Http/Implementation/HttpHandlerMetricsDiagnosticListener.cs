@@ -30,6 +30,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation;
 internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 {
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+    internal const string EventName = "OnStopActivity";
+    private const string HttpClientDurationMetricName = "http.client.duration";
 
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
@@ -41,7 +43,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     public HttpHandlerMetricsDiagnosticListener(string name, Meter meter, HttpClientMetricInstrumentationOptions options)
         : base(name)
     {
-        this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+        this.httpClientDuration = meter.CreateHistogram<double>(HttpClientDurationMetricName, "ms", "Measures the duration of outbound HTTP requests.");
         this.options = options;
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
@@ -62,6 +64,23 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             if (TryFetchRequest(payload, out HttpRequestMessage request))
             {
                 TagList tags = default;
+                HttpResponseMessage response = null;
+
+#if NETSTANDARD2_0 || NET6_0_OR_GREATER
+                try
+                {
+                    if (this.options.Filter?.Invoke(HttpClientDurationMetricName, request) == false)
+                    {
+                        HttpInstrumentationEventSource.Log.RequestIsFilteredOut(EventName);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    HttpInstrumentationEventSource.Log.RequestFilterException(ex);
+                    return;
+                }
+#endif
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
                 if (this.emitOldAttributes)
@@ -76,7 +95,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port));
                     }
 
-                    if (TryFetchResponse(payload, out HttpResponseMessage response))
+                    if (TryFetchResponse(payload, out response))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
@@ -94,11 +113,25 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, request.RequestUri.Port));
                     }
 
-                    if (TryFetchResponse(payload, out HttpResponseMessage response))
+                    if (TryFetchResponse(payload, out response))
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
                 }
+
+#if NETSTANDARD2_0 || NET6_0_OR_GREATER
+                if (this.options.Enrich != null)
+                {
+                    try
+                    {
+                        this.options.Enrich(HttpClientDurationMetricName, request, response, ref tags);
+                    }
+                    catch (Exception ex)
+                    {
+                        HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                    }
+                }
+#endif
 
                 // We are relying here on HttpClient library to set duration before writing the stop event.
                 // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178

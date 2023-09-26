@@ -79,5 +79,7 @@ public static class HttpTestData
         public bool? SpanStatusHasDescription { get; set; }
 
         public Dictionary<string, string> SpanAttributes { get; set; }
+
+        public override string ToString() => this.Name;
     }
 }

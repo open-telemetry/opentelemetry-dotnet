@@ -31,9 +31,10 @@ public static class MeterProviderBuilderExtensions
     /// Enables HttpClient instrumentation.
     /// </summary>
     /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+    /// <param name="configure">Callback action for configuring <see cref="HttpClientMetricInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddHttpClientInstrumentation(
-        this MeterProviderBuilder builder)
+        this MeterProviderBuilder builder, Action<HttpClientMetricInstrumentationOptions> configure = null)
     {
         Guard.ThrowIfNull(builder);
 
@@ -43,6 +44,11 @@ public static class MeterProviderBuilderExtensions
         builder.ConfigureServices(services =>
         {
             services.RegisterOptionsFactory(configuration => new HttpClientMetricInstrumentationOptions(configuration));
+
+            if (configure != null)
+            {
+                services.Configure(configure);
+            }
         });
 
         // TODO: Implement an IDeferredMeterProviderBuilder

@@ -42,6 +42,8 @@ public partial class HttpClientTests
         bool enrichWithHttpResponseMessageCalled = false;
         bool enrichWithExceptionCalled = false;
 
+        bool clientFilterCalled = false;
+
         using var serverLifeTime = TestHttpServer.RunServer(
             (ctx) =>
             {
@@ -57,9 +59,18 @@ public partial class HttpClientTests
         var metrics = new List<Metric>();
 
         var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddHttpClientInstrumentation()
+            .AddHttpClientInstrumentation(o =>
+            {
+                o.Filter = (_, _) => { return clientFilterCalled = true; };
+                o.Enrich = Enrich;
+            })
             .AddInMemoryExporter(metrics)
             .Build();
+
+        static void Enrich(string name, HttpRequestMessage req, HttpResponseMessage res, ref TagList tags)
+        {
+            tags.Add("custom.label", 123);
+        }
 
         using (Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation((opt) =>
@@ -162,11 +173,12 @@ public partial class HttpClientTests
 #if NETFRAMEWORK
         Assert.Empty(requestMetrics);
 #else
-        Assert.Single(requestMetrics);
+        var metric = Assert.Single(requestMetrics);
 
-        var metric = requestMetrics[0];
         Assert.NotNull(metric);
         Assert.True(metric.MetricType == MetricType.Histogram);
+
+        Assert.True(clientFilterCalled);
 
         var metricPoints = new List<MetricPoint>();
         foreach (var p in metric.GetMetricPoints())
@@ -196,20 +208,22 @@ public partial class HttpClientTests
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
         var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerPort, port);
+        var customLabel = new KeyValuePair<string, object>("custom.label", 123);
         Assert.Contains(hostName, attributes);
         Assert.Contains(portNumber, attributes);
         Assert.Contains(method, attributes);
         Assert.Contains(scheme, attributes);
         Assert.Contains(flavor, attributes);
+        Assert.Contains(customLabel, attributes);
         if (tc.ResponseExpected)
         {
             Assert.Contains(statusCode, attributes);
-            Assert.Equal(6, attributes.Length);
+            Assert.Equal(7, attributes.Length);
         }
         else
         {
             Assert.DoesNotContain(statusCode, attributes);
-            Assert.Equal(5, attributes.Length);
+            Assert.Equal(6, attributes.Length);
         }
 #endif
     }
