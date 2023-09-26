@@ -274,6 +274,10 @@ public partial class HttpClientTests
             var activity = Assert.Single(activities);
             Assert.Equal(activity.Duration.TotalMilliseconds, sum);
         }
+        else
+        {
+            Assert.True(sum > 0);
+        }
 
         var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
         int i = 0;
