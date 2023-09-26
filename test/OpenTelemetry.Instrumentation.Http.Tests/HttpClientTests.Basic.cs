@@ -74,6 +74,7 @@ public partial class HttpClientTests : IDisposable
 
     public static IEnumerable<object[]> TestData_Old => HttpTestData.ReadTestCases("http-out-test-cases_Old.json");
     public static IEnumerable<object[]> TestData_New => HttpTestData.ReadTestCases("http-out-test-cases_New.json");
+    public static IEnumerable<object[]> TestData_Dupe => HttpTestData.ReadTestCases("http-out-test-cases_Dupe.json");
 
     [Fact]
     public void AddHttpClientInstrumentation_NamedOptions()

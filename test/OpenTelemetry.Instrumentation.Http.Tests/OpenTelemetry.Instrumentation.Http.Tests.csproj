@@ -9,6 +9,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="http-out-test-cases_Dupe.json" />
     <None Remove="http-out-test-cases_New.json" />
   </ItemGroup>
 
@@ -33,6 +34,9 @@
 
   <ItemGroup>
     <EmbeddedResource Include="http-out-test-cases_New.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="http-out-test-cases_Dupe.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="http-out-test-cases_Old.json">
