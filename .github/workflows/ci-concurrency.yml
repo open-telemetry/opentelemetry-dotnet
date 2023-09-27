@@ -1,4 +1,4 @@
-name: Build
+name: Coyote
 
 on:
   push:
@@ -35,4 +35,4 @@ jobs:
 
     - name: Coyote Test
       shell: pwsh
-      run: .\build\concurrency-tests-with-Coyote.ps1
+      run: .\build\test-threadSafety.ps1

@@ -6,7 +6,7 @@ Write-Host "Install Coyote CLI"
 dotnet tool install --global Microsoft.Coyote.CLI
 
 Write-Host "Build OpenTelemetry.Tests proj"
-dotnet build $rootDirectory/test/OpenTelemetry.Tests.csproj
+dotnet build $rootDirectory/test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
 
 Write-Host "Run Coyote rewrite"
 coyote rewrite $rootDirectory/test/OpenTelemetry.Tests/coyote.json
@@ -17,6 +17,7 @@ $Output = dotnet test $rootDirectory/test/OpenTelemetry.Tests/bin/Debug/net7.0/O
 Write-Host "Verify test pass"
 foreach ($line in $($Output -split "`r`n"))
 {
+    Write-Host $line
     if ($line -contains "*pass*")
     {
         Write-Host "PASSED!"

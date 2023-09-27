@@ -67,6 +67,3 @@ jobs:
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
 
-    - name: Concurrency test
-      shell: pwsh
-      run: .\build\concurrency-tests-with-Coyote.ps1
