@@ -23,7 +23,6 @@ namespace OpenTelemetry.Tests.Concurrency;
 
 public class MetricsConcurrencyTests : AggregatorTestsBase
 {
-
     public MetricsConcurrencyTests()
         : base(false)
     {
