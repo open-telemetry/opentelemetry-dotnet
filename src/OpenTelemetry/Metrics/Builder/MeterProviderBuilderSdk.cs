@@ -46,7 +46,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     // Customers: This is not guaranteed to work forever. We may change this
     // mechanism in the future do this at your own risk.
     public static Regex InstrumentNameRegex { get; set; } = new(
-        @"^[a-z][a-z0-9-._]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        @"^[a-z][a-z0-9-._/]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public List<InstrumentationRegistration> Instrumentation { get; } = new();
 
