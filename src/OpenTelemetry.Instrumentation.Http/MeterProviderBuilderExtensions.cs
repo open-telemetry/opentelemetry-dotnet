@@ -27,7 +27,6 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public static class MeterProviderBuilderExtensions
 {
-#if NETFRAMEWORK
     /// <summary>
     /// Enables HttpClient instrumentation.
     /// </summary>
@@ -37,7 +36,7 @@ public static class MeterProviderBuilderExtensions
     {
         return builder.AddHttpClientInstrumentationCore(configure: null);
     }
-#else
+#if !NETFRAMEWORK
     /// <summary>
     /// Enables HttpClient instrumentation.
     /// </summary>
