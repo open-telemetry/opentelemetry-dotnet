@@ -78,8 +78,8 @@ internal static class LogRecordExtensions
                 otlpLogRecord.SeverityText = logRecord.Severity.Value.ToShortName();
             }
 
-            var attributeValueLengthLimit = sdkLimitOptions.AttributeValueLengthLimit;
-            var attributeCountLimit = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
+            var attributeValueLengthLimit = sdkLimitOptions.LogRecordAttributeValueLengthLimit;
+            var attributeCountLimit = sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
 
             /*
             // Removing this temporarily for stable release
