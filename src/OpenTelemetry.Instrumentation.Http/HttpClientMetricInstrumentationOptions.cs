@@ -20,10 +20,15 @@ using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
+#if NETFRAMEWORK
+internal sealed
+#else
 /// <summary>
 /// Options for HttpClient instrumentation.
 /// </summary>
-public class HttpClientMetricInstrumentationOptions
+public
+#endif
+class HttpClientMetricInstrumentationOptions
 {
     internal readonly HttpSemanticConvention HttpSemanticConvention;
 

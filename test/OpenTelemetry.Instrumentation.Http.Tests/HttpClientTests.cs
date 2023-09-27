@@ -42,7 +42,9 @@ public partial class HttpClientTests
         bool enrichWithHttpResponseMessageCalled = false;
         bool enrichWithExceptionCalled = false;
 
+#if !NETFRAMEWORK
         bool clientFilterCalled = false;
+#endif
 
         using var serverLifeTime = TestHttpServer.RunServer(
             (ctx) =>
@@ -59,11 +61,15 @@ public partial class HttpClientTests
         var metrics = new List<Metric>();
 
         var meterProvider = Sdk.CreateMeterProviderBuilder()
+#if NETFRAMEWORK
+            .AddHttpClientInstrumentation()
+#else
             .AddHttpClientInstrumentation(o =>
             {
                 o.Filter = (_, _) => { return clientFilterCalled = true; };
                 o.Enrich = Enrich;
             })
+#endif
             .AddInMemoryExporter(metrics)
             .Build();
 

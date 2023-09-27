@@ -27,6 +27,17 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public static class MeterProviderBuilderExtensions
 {
+#if NETFRAMEWORK
+    /// <summary>
+    /// Enables HttpClient instrumentation.
+    /// </summary>
+    /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+    /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+    public static MeterProviderBuilder AddHttpClientInstrumentation(this MeterProviderBuilder builder)
+    {
+        return builder.AddHttpClientInstrumentationCore(configure: null);
+    }
+#else
     /// <summary>
     /// Enables HttpClient instrumentation.
     /// </summary>
@@ -34,7 +45,20 @@ public static class MeterProviderBuilderExtensions
     /// <param name="configure">Callback action for configuring <see cref="HttpClientMetricInstrumentationOptions"/>.</param>
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddHttpClientInstrumentation(
-        this MeterProviderBuilder builder, Action<HttpClientMetricInstrumentationOptions> configure = null)
+        this MeterProviderBuilder builder, Action<HttpClientMetricInstrumentationOptions> configure)
+    {
+        return builder.AddHttpClientInstrumentationCore(configure);
+    }
+#endif
+
+    /// <summary>
+    /// Enables HttpClient instrumentation.
+    /// </summary>
+    /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+    /// <param name="configure">Callback action for configuring <see cref="HttpClientMetricInstrumentationOptions"/>.</param>
+    /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+    private static MeterProviderBuilder AddHttpClientInstrumentationCore(
+        this MeterProviderBuilder builder, Action<HttpClientMetricInstrumentationOptions> configure)
     {
         Guard.ThrowIfNull(builder);
 
@@ -44,7 +68,6 @@ public static class MeterProviderBuilderExtensions
         builder.ConfigureServices(services =>
         {
             services.RegisterOptionsFactory(configuration => new HttpClientMetricInstrumentationOptions(configuration));
-
             if (configure != null)
             {
                 services.Configure(configure);
