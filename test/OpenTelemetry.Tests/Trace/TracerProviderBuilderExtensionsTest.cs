@@ -406,10 +406,7 @@ public class TracerProviderBuilderExtensionsTest
     {
         var builder = new MyTracerProviderBuilder();
 
-        var provider = builder.Build();
-
-        Assert.NotNull(provider);
-        Assert.True(provider is not TracerProviderSdk);
+        Assert.Throws<NotSupportedException>(() => builder.Build());
     }
 
     private static void RunBuilderServiceLifecycleTest(

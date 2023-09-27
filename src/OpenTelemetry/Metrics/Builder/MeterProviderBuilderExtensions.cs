@@ -320,9 +320,7 @@ public static class MeterProviderBuilderExtensions
             return meterProviderBuilderBase.InvokeBuild();
         }
 
-        OpenTelemetrySdkEventSource.Log.ProviderBuildCalledOnUnknownBuilder("Metrics", meterProviderBuilder?.GetType());
-
-        return new NoopMeterProvider();
+        throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -358,9 +356,5 @@ public static class MeterProviderBuilderExtensions
         });
 
         return meterProviderBuilder;
-    }
-
-    private sealed class NoopMeterProvider : MeterProvider
-    {
     }
 }

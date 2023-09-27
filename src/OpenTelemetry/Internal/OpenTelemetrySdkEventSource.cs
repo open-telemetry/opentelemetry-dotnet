@@ -170,15 +170,6 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         }
     }
 
-    [NonEvent]
-    public void ProviderBuildCalledOnUnknownBuilder(string signalType, Type? providerBuilderType)
-    {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-        {
-            this.ProviderBuildCalledOnUnknownBuilder(signalType, providerBuilderType?.FullName ?? "null");
-        }
-    }
-
     [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
     public void SpanProcessorException(string evnt, string ex)
     {
@@ -354,12 +345,6 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
     public void LoggerProcessStateSkipped(string type, string reason)
     {
         this.WriteEvent(51, type, reason);
-    }
-
-    [Event(52, Message = "Build was invoked on an unknown builder of '{1}' type. {0} will remain disabled.", Level = EventLevel.Warning)]
-    public void ProviderBuildCalledOnUnknownBuilder(string signalType, string providerBuilderType)
-    {
-        this.WriteEvent(52, signalType, providerBuilderType);
     }
 
 #if DEBUG

@@ -294,10 +294,7 @@ public class MeterProviderBuilderExtensionsTests
     {
         var builder = new MyMeterProviderBuilder();
 
-        var provider = builder.Build();
-
-        Assert.NotNull(provider);
-        Assert.True(provider is not MeterProviderSdk);
+        Assert.Throws<NotSupportedException>(() => builder.Build());
     }
 
     private static void RunBuilderServiceLifecycleTest(

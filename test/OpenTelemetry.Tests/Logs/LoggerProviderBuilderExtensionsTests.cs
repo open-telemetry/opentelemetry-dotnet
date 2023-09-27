@@ -183,10 +183,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
     {
         var builder = new CustomLoggerProviderBuilder();
 
-        var provider = builder.Build();
-
-        Assert.NotNull(provider);
-        Assert.True(provider is not LoggerProviderSdk);
+        Assert.Throws<NotSupportedException>(() => builder.Build());
     }
 
     private sealed class CustomInstrumentation : IDisposable
