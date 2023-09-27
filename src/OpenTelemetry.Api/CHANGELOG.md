@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix `TraceContextPropagator` behavior when trace parent flags contains
+  illegal characters.
+  ([#4893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4893))
+
 ## 1.6.0
 
 Released 2023-Sep-05
