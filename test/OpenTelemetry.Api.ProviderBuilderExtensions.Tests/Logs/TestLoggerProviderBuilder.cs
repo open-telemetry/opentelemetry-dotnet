@@ -42,7 +42,11 @@ internal sealed class TestLoggerProviderBuilder : LoggerProviderBuilder, ILogger
         }
         else
         {
-            this.Instrumentation.Add(instrumentationFactory());
+            var instrumentation = instrumentationFactory();
+            if (instrumentation is not null)
+            {
+                this.Instrumentation.Add(instrumentation);
+            }
         }
 
         return this;

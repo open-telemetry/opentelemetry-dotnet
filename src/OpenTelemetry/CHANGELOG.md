@@ -4,17 +4,24 @@
 
 * Update `AggregatorStore` to reclaim unused MetricPoints for Delta aggregation
   temporality.
-  ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4486))
+  ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4486))
+
+* Fixed a bug where `TracerProviderBuilderBase` was not invoking the
+  `instrumentationFactory` delegate passed to the `protected`
+  `AddInstrumentation` method.
+  ([#4873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4873))
+
+* Allowed metric instrument names to contain `/` characters. ([#4882](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4882))
 
 ## 1.6.0
 
 Released 2023-Sep-05
 
 * Increased the character limit of the Meter instrument name from 63 to 255.
-  ([#4774](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4774))
+  ([#4798](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4798))
 
 * Update default size for `SimpleExemplarReservoir` to `1`.
-  ([#4803](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4803))
+  ([#4803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4803))
 
 * Update Metrics SDK to override the default histogram buckets for a set of
   well-known histogram metrics from ASP.NET Core and HttpClient runtime. These

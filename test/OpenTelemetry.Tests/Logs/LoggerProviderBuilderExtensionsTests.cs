@@ -33,6 +33,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
             .AddInstrumentation<CustomInstrumentation>()
             .AddInstrumentation((sp, provider) => new CustomInstrumentation() { Provider = provider })
             .AddInstrumentation(new CustomInstrumentation())
+            .AddInstrumentation(() => (object?)null)
             .Build() as LoggerProviderSdk)
         {
             Assert.NotNull(provider);

@@ -91,6 +91,7 @@ public class MeterProviderBuilderExtensionsTests
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
             .AddInstrumentation(new MyInstrumentation())
+            .AddInstrumentation(() => (object)null)
             .Build() as MeterProviderSdk)
         {
             Assert.NotNull(provider);
