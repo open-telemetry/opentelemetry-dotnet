@@ -40,20 +40,23 @@ internal static class HttpWebRequestActivitySource
     internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
     internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
     internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
-    internal static readonly string MeterInstrumentationName = AssemblyName.Name;
+    internal static readonly string MeterName = AssemblyName.Name;
 
     internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
     internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
-    private static readonly Version Version = AssemblyName.Version;
-    private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
-    private static readonly Meter WebRequestMeter = new Meter(MeterInstrumentationName, Version.ToString());
-    private static readonly Histogram<double> HttpClientDuration;
+    private static readonly string Version = AssemblyName.Version.ToString();
+    private static readonly ActivitySource WebRequestActivitySource = new(ActivitySourceName, Version);
+    private static readonly Meter WebRequestMeter = new(MeterName, Version);
+    private static readonly Histogram<double> HttpClientDuration = WebRequestMeter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
 
-    private static HttpClientInstrumentationOptions options;
+    private static HttpClientInstrumentationOptions tracingOptions;
+    private static HttpClientMetricInstrumentationOptions metricsOptions;
 
-    private static bool emitOldAttributes;
-    private static bool emitNewAttributes;
+    private static bool tracingEmitOldAttributes;
+    private static bool tracingEmitNewAttributes;
+    private static bool metricsEmitOldAttributes;
+    private static bool metricsEmitNewAttributes;
 
     // Fields for reflection
     private static FieldInfo connectionGroupListField;
@@ -90,8 +93,8 @@ internal static class HttpWebRequestActivitySource
             PrepareReflectionObjects();
             PerformInjection();
 
-            Options = new HttpClientInstrumentationOptions();
-            HttpClientDuration = WebRequestMeter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+            TracingOptions = new HttpClientInstrumentationOptions();
+            MetricsOptions = new HttpClientMetricInstrumentationOptions();
         }
         catch (Exception ex)
         {
@@ -100,15 +103,27 @@ internal static class HttpWebRequestActivitySource
         }
     }
 
-    internal static HttpClientInstrumentationOptions Options
+    internal static HttpClientInstrumentationOptions TracingOptions
     {
-        get => options;
+        get => tracingOptions;
         set
         {
-            options = value;
+            tracingOptions = value;
 
-            emitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-            emitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
+            tracingEmitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+            tracingEmitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
+        }
+    }
+
+    internal static HttpClientMetricInstrumentationOptions MetricsOptions
+    {
+        get => metricsOptions;
+        set
+        {
+            metricsOptions = value;
+
+            metricsEmitOldAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
+            metricsEmitNewAttributes = value.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
         }
     }
 
@@ -120,7 +135,7 @@ internal static class HttpWebRequestActivitySource
         if (activity.IsAllDataRequested)
         {
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (emitOldAttributes)
+            if (tracingEmitOldAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
@@ -135,7 +150,7 @@ internal static class HttpWebRequestActivitySource
             }
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (emitNewAttributes)
+            if (tracingEmitNewAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
@@ -150,7 +165,7 @@ internal static class HttpWebRequestActivitySource
 
             try
             {
-                Options.EnrichWithHttpWebRequest?.Invoke(activity, request);
+                TracingOptions.EnrichWithHttpWebRequest?.Invoke(activity, request);
             }
             catch (Exception ex)
             {
@@ -166,12 +181,12 @@ internal static class HttpWebRequestActivitySource
 
         if (activity.IsAllDataRequested)
         {
-            if (emitOldAttributes)
+            if (tracingEmitOldAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
             }
 
-            if (emitNewAttributes)
+            if (tracingEmitNewAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
             }
@@ -180,7 +195,7 @@ internal static class HttpWebRequestActivitySource
 
             try
             {
-                Options.EnrichWithHttpWebResponse?.Invoke(activity, response);
+                TracingOptions.EnrichWithHttpWebResponse?.Invoke(activity, response);
             }
             catch (Exception ex)
             {
@@ -190,9 +205,11 @@ internal static class HttpWebRequestActivitySource
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddExceptionTags(Exception exception, Activity activity)
+    private static void AddExceptionTags(Exception exception, Activity activity, out HttpStatusCode? statusCode)
     {
         Debug.Assert(activity != null, "Activity must not be null");
+
+        statusCode = null;
 
         if (!activity.IsAllDataRequested)
         {
@@ -206,17 +223,19 @@ internal static class HttpWebRequestActivitySource
         {
             if (wexc.Response is HttpWebResponse response)
             {
-                if (emitOldAttributes)
+                statusCode = response.StatusCode;
+
+                if (tracingEmitOldAttributes)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)statusCode);
                 }
 
-                if (emitNewAttributes)
+                if (tracingEmitNewAttributes)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)response.StatusCode);
+                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)statusCode);
                 }
 
-                status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode);
+                status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)statusCode);
             }
             else
             {
@@ -249,14 +268,14 @@ internal static class HttpWebRequestActivitySource
         }
 
         activity.SetStatus(status, exceptionMessage);
-        if (Options.RecordException)
+        if (TracingOptions.RecordException)
         {
             activity.RecordException(exception);
         }
 
         try
         {
-            Options.EnrichWithException?.Invoke(activity, exception);
+            TracingOptions.EnrichWithException?.Invoke(activity, exception);
         }
         catch (Exception ex)
         {
@@ -276,7 +295,8 @@ internal static class HttpWebRequestActivitySource
     {
         // There are subscribers to the ActivitySource and no user-provided filter is
         // filtering this request.
-        var enableTracing = WebRequestActivitySource.HasListeners() && Options.EventFilterHttpWebRequest(request);
+        var enableTracing = WebRequestActivitySource.HasListeners()
+            && TracingOptions.EventFilterHttpWebRequest(request);
 
         if (!enableTracing && !HttpClientDuration.Enabled)
         {
@@ -295,12 +315,9 @@ internal static class HttpWebRequestActivitySource
             return;
         }
 
-        Activity activity = null;
-
-        if (enableTracing)
-        {
-            activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
-        }
+        Activity activity = enableTracing
+            ? WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client)
+            : null;
 
         var activityContext = Activity.Current?.Context ?? default;
 
@@ -335,7 +352,7 @@ internal static class HttpWebRequestActivitySource
     private static void HookOrProcessResult(HttpWebRequest request)
     {
         IAsyncResult writeAsyncContext = writeAResultAccessor(request);
-        if (writeAsyncContext == null || !(asyncCallbackAccessor(writeAsyncContext)?.Target is AsyncCallbackWrapper writeAsyncContextCallback))
+        if (writeAsyncContext == null || asyncCallbackAccessor(writeAsyncContext)?.Target is not AsyncCallbackWrapper writeAsyncContextCallback)
         {
             // If we already hooked into the read result during ProcessRequest or we hooked up after the fact already we don't need to do anything here.
             return;
@@ -381,9 +398,16 @@ internal static class HttpWebRequestActivitySource
 
         try
         {
-            if (activity != null && result is Exception ex)
+            if (result is Exception ex)
             {
-                AddExceptionTags(ex, activity);
+                if (activity != null)
+                {
+                    AddExceptionTags(ex, activity, out httpStatusCode);
+                }
+                else if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
+                {
+                    httpStatusCode = response.StatusCode;
+                }
             }
             else
             {
@@ -431,8 +455,7 @@ internal static class HttpWebRequestActivitySource
 
         if (HttpClientDuration.Enabled)
         {
-            double durationMs = 0;
-
+            double durationMs;
             if (activity != null)
             {
                 durationMs = activity.Duration.TotalMilliseconds;
@@ -440,20 +463,46 @@ internal static class HttpWebRequestActivitySource
             else
             {
                 var endTimestamp = Stopwatch.GetTimestamp();
-                var durationS = (endTimestamp - startTimestamp) / Stopwatch.Frequency;
+                var durationS = (endTimestamp - startTimestamp) / (double)Stopwatch.Frequency;
                 durationMs = durationS * 1000;
             }
 
             TagList tags = default;
-            tags.Add(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
-            tags.Add(SemanticConventions.AttributeHttpMethod, request.Method);
-            tags.Add(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-            tags.Add(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-            tags.Add(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+
+            if (metricsEmitOldAttributes)
+            {
+                tags.Add(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                tags.Add(SemanticConventions.AttributeHttpMethod, request.Method);
+                tags.Add(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
+                tags.Add(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
+                if (!request.RequestUri.IsDefaultPort)
+                {
+                    tags.Add(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
+                }
+            }
+
+            if (metricsEmitNewAttributes)
+            {
+                tags.Add(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                if (!request.RequestUri.IsDefaultPort)
+                {
+                    tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
+                }
+            }
 
             if (httpStatusCode.HasValue)
             {
-                tags.Add(SemanticConventions.AttributeHttpStatusCode, (int)httpStatusCode.Value);
+                if (metricsEmitOldAttributes)
+                {
+                    tags.Add(SemanticConventions.AttributeHttpStatusCode, (int)httpStatusCode.Value);
+                }
+
+                if (metricsEmitNewAttributes)
+                {
+                    tags.Add(SemanticConventions.AttributeHttpResponseStatusCode, (int)httpStatusCode.Value);
+                }
             }
 
             HttpClientDuration.Record(durationMs, tags);
@@ -565,12 +614,8 @@ internal static class HttpWebRequestActivitySource
 
     private static void PerformInjection()
     {
-        FieldInfo servicePointTableField = typeof(ServicePointManager).GetField("s_ServicePointTable", BindingFlags.Static | BindingFlags.NonPublic);
-        if (servicePointTableField == null)
-        {
-            // If anything went wrong here, just return false. There is nothing we can do.
-            throw new InvalidOperationException("Unable to access the ServicePointTable field");
-        }
+        FieldInfo servicePointTableField = typeof(ServicePointManager).GetField("s_ServicePointTable", BindingFlags.Static | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Unable to access the ServicePointTable field");
 
         Hashtable originalTable = servicePointTableField.GetValue(null) as Hashtable;
         ServicePointHashtable newTable = new ServicePointHashtable(originalTable ?? new Hashtable());

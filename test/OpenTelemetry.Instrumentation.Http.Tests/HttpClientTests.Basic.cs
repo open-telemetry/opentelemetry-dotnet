@@ -26,23 +26,32 @@ using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests;
 
 public partial class HttpClientTests : IDisposable
 {
+    private readonly ITestOutputHelper output;
     private readonly IDisposable serverLifeTime;
+    private readonly string host;
+    private readonly int port;
     private readonly string url;
 
-    public HttpClientTests()
+    public HttpClientTests(ITestOutputHelper output)
     {
+        this.output = output;
+
         this.serverLifeTime = TestHttpServer.RunServer(
             (ctx) =>
             {
                 string traceparent = ctx.Request.Headers["traceparent"];
                 string custom_traceparent = ctx.Request.Headers["custom_traceparent"];
-                if (string.IsNullOrWhiteSpace(traceparent)
-                    && string.IsNullOrWhiteSpace(custom_traceparent))
+                if ((ctx.Request.Headers["contextRequired"] == null
+                    || bool.Parse(ctx.Request.Headers["contextRequired"]))
+                    &&
+                    (string.IsNullOrWhiteSpace(traceparent)
+                        && string.IsNullOrWhiteSpace(custom_traceparent)))
                 {
                     ctx.Response.StatusCode = 500;
                     ctx.Response.StatusDescription = "Missing trace context";
@@ -56,6 +65,10 @@ public partial class HttpClientTests : IDisposable
                     ctx.Response.RedirectLocation = "/";
                     ctx.Response.StatusCode = 302;
                 }
+                else if (ctx.Request.Headers["responseCode"] != null)
+                {
+                    ctx.Response.StatusCode = int.Parse(ctx.Request.Headers["responseCode"]);
+                }
                 else
                 {
                     ctx.Response.StatusCode = 200;
@@ -66,7 +79,11 @@ public partial class HttpClientTests : IDisposable
             out var host,
             out var port);
 
+        this.host = host;
+        this.port = port;
         this.url = $"http://{host}:{port}/";
+
+        this.output.WriteLine($"HttpServer started: {this.url}");
     }
 
     [Fact]
@@ -631,6 +648,7 @@ public partial class HttpClientTests : IDisposable
     public void Dispose()
     {
         this.serverLifeTime?.Dispose();
+        this.output.WriteLine($"HttpServer stopped: {this.url}");
         Activity.Current = null;
         GC.SuppressFinalize(this);
     }

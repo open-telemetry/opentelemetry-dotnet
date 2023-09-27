@@ -22,6 +22,7 @@ using System.Diagnostics.Metrics;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Reflection;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
@@ -31,21 +32,24 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 {
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
 
+    internal static readonly AssemblyName AssemblyName = typeof(HttpClientMetrics).Assembly.GetName();
+    internal static readonly string MeterName = AssemblyName.Name;
+    internal static readonly string MeterVersion = AssemblyName.Version.ToString();
+    internal static readonly Meter Meter = new(MeterName, MeterVersion);
+    private static readonly Histogram<double> HttpClientDuration = Meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
-    private readonly Histogram<double> httpClientDuration;
     private readonly HttpClientMetricInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
 
-    public HttpHandlerMetricsDiagnosticListener(string name, Meter meter, HttpClientMetricInstrumentationOptions options)
+    public HttpHandlerMetricsDiagnosticListener(string name, HttpClientMetricInstrumentationOptions options)
         : base(name)
     {
-        this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
         this.options = options;
 
         this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-
         this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
     }
 
@@ -103,7 +107,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                 // We are relying here on HttpClient library to set duration before writing the stop event.
                 // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
                 // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-                this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
             }
         }
 
