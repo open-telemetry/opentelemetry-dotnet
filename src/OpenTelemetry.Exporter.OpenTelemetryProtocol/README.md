@@ -197,14 +197,14 @@ specification](https://github.com/open-telemetry/opentelemetry-specification/blo
 
 The following environment variables can be used to override the default
 values of the attribute limits
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.15.0/specification/sdk-environment-variables.md#attribute-limits)).
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#attribute-limits)).
 
 * `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_ATTRIBUTE_COUNT_LIMIT`
 
 The following environment variables can be used to override the default
 values of the span limits
-(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.15.0/specification/sdk-environment-variables.md#span-limits)).
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#span-limits)).
 
 * `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`
@@ -212,6 +212,13 @@ values of the span limits
 * `OTEL_SPAN_LINK_COUNT_LIMIT`
 * `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT`
 * `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`
+
+The following environment variables can be used to override the default
+values of the log record limits
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#logrecord-limits)).
+
+* `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
+* `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
 
 ## Configure HttpClient
 
