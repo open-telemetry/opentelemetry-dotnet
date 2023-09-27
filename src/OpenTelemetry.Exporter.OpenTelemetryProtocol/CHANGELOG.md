@@ -8,6 +8,10 @@
   not AOT-compatible. Removed the dependency on `System.Reflection.Emit.Lightweight`.
   ([#4859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4859))
 
+* Added support for `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
+  and `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`.
+  ([#4887](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4887))
+
 ## 1.6.0
 
 Released 2023-Sep-05
