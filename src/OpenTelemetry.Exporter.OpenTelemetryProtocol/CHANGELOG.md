@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Added ability to export attributes corresponding to `LogRecord.Exception` i.e.
+`exception.type`, `exception.message` and `exception.stacktrace`. These
+attributes will be exported when
+`OTEL_DOTNET_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES` environment variable will be
+set to `true`.
+([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
+
 * Bumped the version of `Google.Protobuf` used by the project to `3.22.5` so
   that consuming applications can be published as NativeAOT successfully. Also,
   a new performance feature can be used instead of reflection emit, which is
