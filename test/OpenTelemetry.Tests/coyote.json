@@ -1,10 +1,10 @@
 {
-    "AssembliesPath": ".\\bin\\Debug\\net7.0",
-     "Assemblies": [
-       "OpenTelemetry.Api.dll",
-       "OpenTelemetry.Api.ProviderBuilderExtensions.dll",
-       "OpenTelemetry.dll",
-       "OpenTelemetry.Exporter.InMemory.dll",
-       "OpenTelemetry.Tests.dll"
-   ]
+  "AssembliesPath": ".\\bin\\Debug\\net7.0",
+  "Assemblies": [
+    "OpenTelemetry.Api.dll",
+    "OpenTelemetry.Api.ProviderBuilderExtensions.dll",
+    "OpenTelemetry.dll",
+    "OpenTelemetry.Exporter.InMemory.dll",
+    "OpenTelemetry.Tests.dll"
+  ]
 }
