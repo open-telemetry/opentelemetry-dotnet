@@ -402,6 +402,14 @@ public class TracerProviderBuilderExtensionsTest
         Assert.True(tracerProvider.Processor is MyProcessor);
     }
 
+    [Fact]
+    public void TracerProviderBuilderCustomImplementationBuildTest()
+    {
+        var builder = new MyTracerProviderBuilder();
+
+        Assert.Throws<NotSupportedException>(() => builder.Build());
+    }
+
     private static void RunBuilderServiceLifecycleTest(
         TracerProviderBuilder builder,
         Func<TracerProviderSdk> buildFunc,
@@ -509,6 +517,24 @@ public class TracerProviderBuilderExtensionsTest
         public override ExportResult Export(in Batch<Activity> batch)
         {
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class MyTracerProviderBuilder : TracerProviderBuilder
+    {
+        public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override TracerProviderBuilder AddLegacySource(string operationName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override TracerProviderBuilder AddSource(params string[] names)
+        {
+            throw new NotImplementedException();
         }
     }
 }
