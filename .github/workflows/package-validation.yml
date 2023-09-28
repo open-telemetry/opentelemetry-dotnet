@@ -18,11 +18,8 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dependencies
-      run: dotnet restore
-
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false
+      run: dotnet pack --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false
 
   build-test-experimental:
     runs-on: windows-latest
@@ -35,8 +32,5 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dependencies
-      run: dotnet restore
-
     - name: Pack
-      run: dotnet pack --configuration Release --no-restore /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true
+      run: dotnet pack --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=true
