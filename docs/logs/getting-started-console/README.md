@@ -85,19 +85,19 @@ is used to achieve structured logging and better performance. The logs are sent 
 the `OpenTelemetryLoggerProvider`, which is configured to export logs to
 `ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
 
-## Note for different application types
-
-Certain types of applications (e.g. [ASP.NET
-Core](https://learn.microsoft.com/aspnet/core) and [.NET
-Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)) have an
-`ILogger` based logging pipeline set up by default. In such apps, enabling
-OpenTelemetry should be done by adding OpenTelemetry as a provider to the
-*existing* logging pipeline, and users should not create a new `LoggerFactory`
-(which sets up a totally new logging pipeline). Also, obtaining `ILogger`
-instance could be done differently as well. See [Example ASP.NET Core
-application](../../../examples/AspNetCore/Program.cs) for an example which shows
-how to add OpenTelemetry to the logging pipeline already setup by the
-application.
+> **Note**
+> For applications which use `ILogger` with [dependency injection
+(DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+(e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
+Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), the common
+practice is to add OpenTelemetry as a [logging
+provider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers)
+to the DI logging pipeline, rather than set up a completely new logging pipeline
+by creating a new `LoggerFactory` instance.
+>
+> Refer to the [Getting Started with OpenTelemetry .NET Logs in 5 Minutes -
+ASP.NET Core Application](../getting-started-aspnetcore/README.md) tutorial to
+learn more.
 
 ## Learn more
 
