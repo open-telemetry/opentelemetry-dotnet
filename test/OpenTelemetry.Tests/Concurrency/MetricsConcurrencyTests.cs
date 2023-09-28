@@ -42,7 +42,6 @@ public class MetricsConcurrencyTests : AggregatorTestsBase
         Console.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
-
         if (test.TryEmitReports(dir, "MultithreadedLongHistogramTest_Coyote", out IEnumerable<string> reportPaths))
         {
             foreach (var reportPath in reportPaths)
