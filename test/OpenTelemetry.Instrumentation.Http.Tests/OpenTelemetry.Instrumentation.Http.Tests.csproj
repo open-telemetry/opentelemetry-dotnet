@@ -8,10 +8,6 @@
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="http-out-test-cases_Dupe.json" />
-    <None Remove="http-out-test-cases_New.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="/Includes/SkipUnlessEnvVarFoundTheoryAttribute.cs" />
