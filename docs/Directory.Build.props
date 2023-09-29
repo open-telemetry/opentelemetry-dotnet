@@ -6,6 +6,9 @@
     <!-- https://dotnet.microsoft.com/download/dotnet-core -->
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net8.0;net7.0;net6.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UsingMicrosoftNETSdkWeb)' == 'False'">
     <!-- https://dotnet.microsoft.com/download/dotnet-framework -->
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462;net47;net471;net472;net48</TargetFrameworks>
   </PropertyGroup>
