@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed a bug which caused `Tracer.StartRootSpan` to generate a child span if a
+  trace was running (`Activity.Current != null`).
+  ([#4890](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4890))
+
 ## 1.6.0
 
 Released 2023-Sep-05
