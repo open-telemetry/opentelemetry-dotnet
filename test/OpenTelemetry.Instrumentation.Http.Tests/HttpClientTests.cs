@@ -168,58 +168,28 @@ public partial class HttpClientTests
 
         if (enableMetrics)
         {
-            meterProviderBuilder.AddHttpClientInstrumentation();
-
-            if (semanticConvention.HasValue)
-            {
-                meterProviderBuilder.ConfigureServices(s =>
-                {
-                    s.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-                        .AddInMemoryCollection(
-                        new Dictionary<string, string>
-                        {
-                            ["OTEL_SEMCONV_STABILITY_OPT_IN"] = semanticConvention == HttpSemanticConvention.Dupe
-                                ? "http/dup"
-                                : semanticConvention == HttpSemanticConvention.New
-                                    ? "http"
-                                    : "_invalid",
-                        })
-                        .Build());
-                });
-            }
+            meterProviderBuilder
+                .AddHttpClientInstrumentation()
+                .ConfigureServices(
+                    s => s.AddSingleton(BuildConfigurationWithSemanticConventionOptIn(semanticConvention)));
         }
 
         var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
         if (enableTracing)
         {
-            tracerProviderBuilder.AddHttpClientInstrumentation((opt) =>
-            {
-                opt.EnrichWithHttpWebRequest = (activity, httpRequestMessage) => { enrichWithHttpWebRequestCalled = true; };
-                opt.EnrichWithHttpWebResponse = (activity, httpResponseMessage) => { enrichWithHttpWebResponseCalled = true; };
-                opt.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
-                opt.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
-                opt.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
-                opt.RecordException = tc.RecordException ?? false;
-            });
-
-            if (semanticConvention.HasValue)
-            {
-                tracerProviderBuilder.ConfigureServices(s =>
+            tracerProviderBuilder
+                .AddHttpClientInstrumentation((opt) =>
                 {
-                    s.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-                        .AddInMemoryCollection(
-                        new Dictionary<string, string>
-                        {
-                            ["OTEL_SEMCONV_STABILITY_OPT_IN"] = semanticConvention == HttpSemanticConvention.Dupe
-                                ? "http/dup"
-                                : semanticConvention == HttpSemanticConvention.New
-                                    ? "http"
-                                    : "_invalid",
-                        })
-                        .Build());
-                });
-            }
+                    opt.EnrichWithHttpWebRequest = (activity, httpRequestMessage) => { enrichWithHttpWebRequestCalled = true; };
+                    opt.EnrichWithHttpWebResponse = (activity, httpResponseMessage) => { enrichWithHttpWebResponseCalled = true; };
+                    opt.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) => { enrichWithHttpRequestMessageCalled = true; };
+                    opt.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
+                    opt.EnrichWithException = (activity, exception) => { enrichWithExceptionCalled = true; };
+                    opt.RecordException = tc.RecordException ?? false;
+                })
+                .ConfigureServices(
+                    s => s.AddSingleton(BuildConfigurationWithSemanticConventionOptIn(semanticConvention)));
         }
 
         var metrics = new List<Metric>();
@@ -449,6 +419,25 @@ public partial class HttpClientTests
                 }
             }
         }
+    }
+
+    private static IConfiguration BuildConfigurationWithSemanticConventionOptIn(
+        HttpSemanticConvention? semanticConvention)
+    {
+        var builder = new ConfigurationBuilder();
+
+        if (semanticConvention != null && semanticConvention != HttpSemanticConvention.Old)
+        {
+            builder.AddInMemoryCollection(
+                new Dictionary<string, string>
+                {
+                    ["OTEL_SEMCONV_STABILITY_OPT_IN"] = semanticConvention == HttpSemanticConvention.Dupe
+                        ? "http/dup"
+                        : "http",
+                });
+        }
+
+        return builder.Build();
     }
 
     private static async Task CheckEnrichment(Sampler sampler, bool enrichExpected, string url)
