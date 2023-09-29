@@ -58,7 +58,7 @@ public class PrometheusSerializerBenchmarks
     public void GlobalCleanup()
     {
         this.meter?.Dispose();
-        this.meterProvider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     // TODO: this has a dependency on https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361

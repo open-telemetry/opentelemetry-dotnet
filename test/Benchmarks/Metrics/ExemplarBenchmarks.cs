@@ -49,7 +49,7 @@ public class ExemplarBenchmarks
 
     private Histogram<long> histogramWithTagReduction;
 
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
@@ -81,7 +81,7 @@ public class ExemplarBenchmarks
             exemplarFilter = new HighValueExemplarFilter();
         }
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .SetExemplarFilter(exemplarFilter)
             .AddView("HistogramWithTagReduction", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
@@ -96,7 +96,7 @@ public class ExemplarBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

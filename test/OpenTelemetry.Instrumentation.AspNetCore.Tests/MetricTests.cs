@@ -326,7 +326,7 @@ public class MetricTests
 
     public void Dispose()
     {
-        this.meterProvider?.Dispose();
+        this.meterProvider.Dispose();
         GC.SuppressFinalize(this);
     }
 
