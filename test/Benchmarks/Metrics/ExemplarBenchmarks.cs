@@ -53,15 +53,15 @@ public class ExemplarBenchmarks
     private Meter meter;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "Test only.")]
-    public enum ExemplarFilterTouse
+    public enum ExemplarFilterToUse
     {
         AlwaysOff,
         AlwaysOn,
         HighValueOnly,
     }
 
-    [Params(ExemplarFilterTouse.AlwaysOn, ExemplarFilterTouse.AlwaysOff, ExemplarFilterTouse.HighValueOnly)]
-    public ExemplarFilterTouse ExemplarFilter { get; set; }
+    [Params(ExemplarFilterToUse.AlwaysOn, ExemplarFilterToUse.AlwaysOff, ExemplarFilterToUse.HighValueOnly)]
+    public ExemplarFilterToUse ExemplarFilter { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -72,11 +72,11 @@ public class ExemplarBenchmarks
         var exportedItems = new List<Metric>();
 
         ExemplarFilter exemplarFilter = new AlwaysOffExemplarFilter();
-        if (this.ExemplarFilter == ExemplarFilterTouse.AlwaysOn)
+        if (this.ExemplarFilter == ExemplarFilterToUse.AlwaysOn)
         {
             exemplarFilter = new AlwaysOnExemplarFilter();
         }
-        else if (this.ExemplarFilter == ExemplarFilterTouse.HighValueOnly)
+        else if (this.ExemplarFilter == ExemplarFilterToUse.HighValueOnly)
         {
             exemplarFilter = new HighValueExemplarFilter();
         }
