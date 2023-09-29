@@ -43,10 +43,10 @@ loggerFactory.Dispose();
 
 public static partial class ApplicationLogs
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 
-    [LoggerMessage(EventId = 2, Message = "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
+    [LoggerMessage(Message = "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
     public static partial void FoodRecallNotice(
         this ILogger logger,
         LogLevel logLevel,
