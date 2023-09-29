@@ -17,17 +17,14 @@ You should see the following output:
 Hello World!
 ```
 
-Install the latest `Microsoft.Extensions.Logging` package:
-
-  ```sh
-  dotnet add package Microsoft.Extensions.Logging
-  ```
-
-Install the
+Install the latest version of
+[Microsoft.Extensions.Logging](https://www.nuget.org/packages/Microsoft.Extensions.Logging/)
+package and
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
 ```sh
+dotnet add package Microsoft.Extensions.Logging
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
