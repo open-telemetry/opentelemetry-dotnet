@@ -16,7 +16,7 @@
 
 #nullable enable
 
-using System.Diagnostics;
+using System.Collections;
 
 namespace OpenTelemetry.Trace;
 
@@ -25,6 +25,8 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public class TracerProvider : BaseProvider
 {
+    private Hashtable? tracers = new();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TracerProvider"/> class.
     /// </summary>
@@ -44,5 +46,64 @@ public class TracerProvider : BaseProvider
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
     public Tracer GetTracer(string name, string? version = null)
-        => new(new ActivitySource(name ?? string.Empty, version));
+    {
+        var tracers = this.tracers
+            ?? throw new ObjectDisposedException(nameof(TracerProvider));
+
+        var key = new TracerKey(name, version);
+
+        if (tracers[key] is not Tracer tracer)
+        {
+            lock (tracers)
+            {
+                tracer = (tracers[key] as Tracer)!;
+                if (tracer == null)
+                {
+                    tracer = new(new(key.Name, key.Version));
+                    tracers[key] = tracer;
+                }
+            }
+        }
+
+        return tracer;
+    }
+
+    /// <inheritdoc/>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            var tracers = Interlocked.CompareExchange(ref this.tracers, null, this.tracers);
+            if (tracers != null)
+            {
+                lock (tracers)
+                {
+                    foreach (DictionaryEntry entry in tracers)
+                    {
+                        var tracer = (Tracer)entry.Value!;
+                        var activitySource = tracer.ActivitySource;
+                        tracer.ActivitySource = null;
+                        activitySource?.Dispose();
+                    }
+
+                    tracers.Clear();
+                }
+            }
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private sealed record class TracerKey
+    {
+        public TracerKey(string? name, string? version)
+        {
+            this.Name = name ?? string.Empty;
+            this.Version = version;
+        }
+
+        public string Name { get; }
+
+        public string? Version { get; }
+    }
 }
