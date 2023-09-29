@@ -1056,7 +1056,7 @@ public sealed class BasicTests
 
     public void Dispose()
     {
-        this.tracerProvider.Dispose();
+        this.tracerProvider?.Dispose();
     }
 
     private static void WaitForActivityExport(List<Activity> exportedItems, int count)
