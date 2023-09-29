@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
+#if NET6_0 || NET7_0
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
@@ -47,7 +47,6 @@ public sealed class InProcServerTests : IDisposable
         this.client = new HttpClient();
     }
 
-#if !NET8_0
     [Fact]
     public async void ExampleTest()
     {
@@ -78,7 +77,6 @@ public sealed class InProcServerTests : IDisposable
         Assert.True(activity.Status == ActivityStatusCode.Unset);
         Assert.True(activity.StatusDescription is null);
     }
-#endif
 
     public async void Dispose()
     {

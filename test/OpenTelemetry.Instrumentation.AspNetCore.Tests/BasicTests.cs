@@ -16,7 +16,9 @@
 
 using System.Diagnostics;
 using System.Text.Json;
+#if !NET8_0
 using Microsoft.AspNetCore.Builder;
+#endif
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
