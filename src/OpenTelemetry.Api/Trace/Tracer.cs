@@ -38,9 +38,9 @@ public class Tracer
     [Flags]
     private enum StartSpanBehaviors
     {
-        Active = 0b1,
-        Inactive = 0b10,
-        Root = 0b100,
+        ActivateNewSpan = 0b1,
+        DeactivateNewSpan = 0b10,
+        NewSpanAsRoot = 0b100,
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(StartSpanBehaviors.Root | StartSpanBehaviors.Inactive, name, kind, default, initialAttributes, links, startTime);
+        return this.StartSpanHelper(StartSpanBehaviors.NewSpanAsRoot | StartSpanBehaviors.DeactivateNewSpan, name, kind, default, initialAttributes, links, startTime);
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(StartSpanBehaviors.Inactive, name, kind, in parentContext, initialAttributes, links, startTime);
+        return this.StartSpanHelper(StartSpanBehaviors.DeactivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(StartSpanBehaviors.Active, name, kind, in parentContext, initialAttributes, links, startTime);
+        return this.StartSpanHelper(StartSpanBehaviors.ActivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -222,7 +222,7 @@ public class Tracer
         var activityLinks = links?.Select(l => l.ActivityLink);
         var previousActivity = Activity.Current;
 
-        if (startSpanBehavior.HasFlag(StartSpanBehaviors.Root)
+        if (startSpanBehavior.HasFlag(StartSpanBehaviors.NewSpanAsRoot)
             && previousActivity != null)
         {
             Activity.Current = null;
@@ -237,7 +237,7 @@ public class Tracer
         }
         finally
         {
-            if (startSpanBehavior.HasFlag(StartSpanBehaviors.Inactive)
+            if (startSpanBehavior.HasFlag(StartSpanBehaviors.DeactivateNewSpan)
                 && Activity.Current != previousActivity)
             {
                 Activity.Current = previousActivity;
