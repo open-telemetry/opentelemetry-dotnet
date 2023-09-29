@@ -70,17 +70,35 @@ Congratulations! You are now collecting logs using OpenTelemetry.
 
 What does the above program do?
 
-The program has a
+The program has created a logging pipeline by instantiating a
 [`LoggerFactory`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.iloggerfactory)
-with OpenTelemetry added as a
-[LoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
-This `LoggerFactory` is used to create an
+instance, with OpenTelemetry added as a [logging
+provider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
+OpenTelemetry SDK is then configured with a
+[ConsoleExporter](../../../src/OpenTelemetry.Exporter.Console/README.md) to
+export the logs to the console for demonstration purpose (note: ConsoleExporter
+is not intended for production usage, other exporters such as [OTLP
+Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+should be used instead).
+
+The `LoggerFactory` instance is used to create an
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-instance, which is then used to do the logging. [Compile-time logging source
-  generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
-is used to achieve structured logging and better performance. The logs are sent to
-the `OpenTelemetryLoggerProvider`, which is configured to export logs to
-`ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
+instance, which is used to do the actual logging.
+
+Following the .NET logging best practice, [compile-time logging source
+generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+has been used across the example, which delivers high performance, structured
+logging, and type-checked parameters:
+
+```csharp
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
+
+    ...
+}
+```
 
 > **Note**
 > For applications which use `ILogger` with [dependency injection
