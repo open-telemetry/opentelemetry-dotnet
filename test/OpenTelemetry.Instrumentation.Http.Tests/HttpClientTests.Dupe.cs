@@ -203,19 +203,21 @@ public partial class HttpClientTests
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, port);
         var serverAddress = new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf"); // TODO
         var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
         Assert.Contains(method, metricAttributes);
         Assert.Contains(protocolVersion, metricAttributes);
         Assert.Contains(portNumber, metricAttributes);
         Assert.Contains(serverAddress, metricAttributes);
+        Assert.Contains(scheme, metricAttributes);
         if (tc.ResponseExpected)
         {
             Assert.Contains(statusCode, metricAttributes);
-            Assert.Equal(11, metricAttributes.Length);
+            Assert.Equal(12, metricAttributes.Length);
         }
         else
         {
             Assert.DoesNotContain(statusCode, metricAttributes);
-            Assert.Equal(9, metricAttributes.Length);
+            Assert.Equal(10, metricAttributes.Length);
         }
 
         // Inspect Histogram Bounds
@@ -269,7 +271,7 @@ public partial class HttpClientTests
         }
 
         method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
-        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+        scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
         statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
         var hostName = new KeyValuePair<string, object>(SemanticConventions.AttributeNetPeerName, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf");

@@ -202,19 +202,21 @@ public partial class HttpClientTests
         var portNumber = new KeyValuePair<string, object>(SemanticConventions.AttributeServerPort, port);
         var serverAddress = new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, tc.ResponseExpected ? host : "sdlfaldfjalkdfjlkajdflkajlsdjf"); // TODO
         var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
+        var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
         Assert.Contains(method, metricAttributes);
         Assert.Contains(protocolVersion, metricAttributes);
         Assert.Contains(portNumber, metricAttributes);
         Assert.Contains(serverAddress, metricAttributes);
+        Assert.Contains(scheme, metricAttributes);
         if (tc.ResponseExpected)
         {
             Assert.Contains(statusCode, metricAttributes);
-            Assert.Equal(5, metricAttributes.Length);
+            Assert.Equal(6, metricAttributes.Length);
         }
         else
         {
             Assert.DoesNotContain(statusCode, metricAttributes);
-            Assert.Equal(4, metricAttributes.Length);
+            Assert.Equal(5, metricAttributes.Length);
         }
 
         // Inspect Histogram Bounds
