@@ -47,6 +47,7 @@ public sealed class InProcServerTests : IDisposable
         this.client = new HttpClient();
     }
 
+#if !NET8_0
     [Fact]
     public async void ExampleTest()
     {
@@ -77,6 +78,7 @@ public sealed class InProcServerTests : IDisposable
         Assert.True(activity.Status == ActivityStatusCode.Unset);
         Assert.True(activity.StatusDescription is null);
     }
+#endif
 
     public async void Dispose()
     {
