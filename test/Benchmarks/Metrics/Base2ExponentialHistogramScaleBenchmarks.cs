@@ -42,7 +42,7 @@ public class Base2ExponentialHistogramScaleBenchmarks
     private const int MaxValue = 10000;
     private readonly Random random = new();
     private Histogram<long> histogram;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     // This is a simple benchmark that records values in the range [0, 10000].
@@ -65,7 +65,7 @@ public class Base2ExponentialHistogramScaleBenchmarks
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -79,7 +79,7 @@ public class Base2ExponentialHistogramScaleBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

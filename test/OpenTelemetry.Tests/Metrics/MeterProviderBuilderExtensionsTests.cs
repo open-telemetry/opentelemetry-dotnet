@@ -91,6 +91,7 @@ public class MeterProviderBuilderExtensionsTests
             .AddInstrumentation<MyInstrumentation>()
             .AddInstrumentation((sp, provider) => new MyInstrumentation() { Provider = provider })
             .AddInstrumentation(new MyInstrumentation())
+            .AddInstrumentation(() => (object)null)
             .Build() as MeterProviderSdk)
         {
             Assert.NotNull(provider);
@@ -289,6 +290,14 @@ public class MeterProviderBuilderExtensionsTests
         Assert.True(meterProvider.Reader is MyReader);
     }
 
+    [Fact]
+    public void MeterProviderBuilderCustomImplementationBuildTest()
+    {
+        var builder = new MyMeterProviderBuilder();
+
+        Assert.Throws<NotSupportedException>(() => builder.Build());
+    }
+
     private static void RunBuilderServiceLifecycleTest(
         MeterProviderBuilder builder,
         Func<MeterProviderSdk> buildFunc,
@@ -380,6 +389,19 @@ public class MeterProviderBuilderExtensionsTests
         public override ExportResult Export(in Batch<Metric> batch)
         {
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class MyMeterProviderBuilder : MeterProviderBuilder
+    {
+        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override MeterProviderBuilder AddMeter(params string[] names)
+        {
+            throw new NotImplementedException();
         }
     }
 }

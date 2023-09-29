@@ -47,7 +47,7 @@ public class MetricsViewBenchmarks
     private static readonly int DimensionsValuesLength = DimensionValues.Length;
     private List<Metric> metrics;
     private Counter<long> counter;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     public enum ViewConfiguration
@@ -100,14 +100,14 @@ public class MetricsViewBenchmarks
 
         if (this.ViewConfig == ViewConfiguration.NoView)
         {
-            this.provider = Sdk.CreateMeterProviderBuilder()
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
                 .AddInMemoryExporter(this.metrics)
                 .Build();
         }
         else if (this.ViewConfig == ViewConfiguration.ViewNA)
         {
-            this.provider = Sdk.CreateMeterProviderBuilder()
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
                 .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                 .AddInMemoryExporter(this.metrics)
@@ -115,7 +115,7 @@ public class MetricsViewBenchmarks
         }
         else if (this.ViewConfig == ViewConfiguration.ViewApplied)
         {
-            this.provider = Sdk.CreateMeterProviderBuilder()
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
                 .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                 .AddInMemoryExporter(this.metrics)
@@ -123,7 +123,7 @@ public class MetricsViewBenchmarks
         }
         else if (this.ViewConfig == ViewConfiguration.ViewToRename)
         {
-            this.provider = Sdk.CreateMeterProviderBuilder()
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
                 .AddView(this.counter.Name, "newname")
                 .AddInMemoryExporter(this.metrics)
@@ -131,7 +131,7 @@ public class MetricsViewBenchmarks
         }
         else if (this.ViewConfig == ViewConfiguration.ViewZeroTag)
         {
-            this.provider = Sdk.CreateMeterProviderBuilder()
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
                 .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() })
                 .AddInMemoryExporter(this.metrics)
@@ -143,7 +143,7 @@ public class MetricsViewBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]

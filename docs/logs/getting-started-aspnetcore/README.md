@@ -125,6 +125,18 @@ generic `ILogger<T>` is not an option, `app.Logger` is used instead:
 app.Logger.StartingApp();
 ```
 
+> **Note**
+> There are cases where logging is needed before the [dependency injection
+(DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+logging pipeline is available (e.g. before `builder.Build()`) or after the DI
+logging pipeline is disposed (e.g. after `app.Run()`). The common practice is to
+use a separate logging pipeline by creating a `LoggerFactory` instance.
+>
+> Refer to the [Getting Started with OpenTelemetry .NET Logs in 5 Minutes -
+Console Application](../getting-started-console/README.md) tutorial to learn
+more about how to create a `LoggerFactory` instance and configure OpenTelemetry
+to work with it.
+
 ## Learn more
 
 * [Compile-time logging source

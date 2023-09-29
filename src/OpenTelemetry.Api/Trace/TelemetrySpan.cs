@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -23,13 +25,13 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Span represents a single operation within a trace.
 /// </summary>
-/// <remarks>TelemetrySpan is a wrapper around <see cref="Activity"/> class.</remarks>
+/// <remarks>TelemetrySpan is a wrapper around <see cref="System.Diagnostics.Activity"/> class.</remarks>
 public class TelemetrySpan : IDisposable
 {
     internal static readonly TelemetrySpan NoopInstance = new(null);
-    internal readonly Activity Activity;
+    internal readonly Activity? Activity;
 
-    internal TelemetrySpan(Activity activity)
+    internal TelemetrySpan(Activity? activity)
     {
         this.Activity = activity;
     }
@@ -38,48 +40,19 @@ public class TelemetrySpan : IDisposable
     /// Gets the span context.
     /// </summary>
     public SpanContext Context
-    {
-        get
-        {
-            if (this.Activity == null)
-            {
-                return default;
-            }
-            else
-            {
-                return new SpanContext(this.Activity.Context);
-            }
-        }
-    }
+        => this.Activity == null ? default : new SpanContext(this.Activity.Context);
 
     /// <summary>
     /// Gets a value indicating whether this span will be recorded.
     /// </summary>
     public bool IsRecording
-    {
-        get
-        {
-            return this.Activity != null && this.Activity.IsAllDataRequested;
-        }
-    }
+        => this.Activity?.IsAllDataRequested == true;
 
     /// <summary>
     /// Gets the identity of the parent span id, if any.
     /// </summary>
     public ActivitySpanId ParentSpanId
-    {
-        get
-        {
-            if (this.Activity == null)
-            {
-                return default;
-            }
-            else
-            {
-                return this.Activity.ParentSpanId;
-            }
-        }
-    }
+        => this.Activity?.ParentSpanId ?? default;
 
     /// <summary>
     /// Sets the status of the span execution.
@@ -117,7 +90,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="value">Attribute value.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan SetAttribute(string key, string value)
+    public TelemetrySpan SetAttribute(string key, string? value)
     {
         this.SetAttributeInternal(key, value);
         return this;
@@ -169,7 +142,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="values">Attribute values.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan SetAttribute(string key, string[] values)
+    public TelemetrySpan SetAttribute(string key, string?[]? values)
     {
         this.SetAttributeInternal(key, values);
         return this;
@@ -182,7 +155,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="values">Attribute values.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan SetAttribute(string key, int[] values)
+    public TelemetrySpan SetAttribute(string key, int[]? values)
     {
         this.SetAttributeInternal(key, values);
         return this;
@@ -195,7 +168,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="values">Attribute values.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan SetAttribute(string key, bool[] values)
+    public TelemetrySpan SetAttribute(string key, bool[]? values)
     {
         this.SetAttributeInternal(key, values);
         return this;
@@ -208,7 +181,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="values">Attribute values.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan SetAttribute(string key, double[] values)
+    public TelemetrySpan SetAttribute(string key, double[]? values)
     {
         this.SetAttributeInternal(key, values);
         return this;
@@ -246,7 +219,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="attributes">Attributes for the event.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan AddEvent(string name, SpanAttributes attributes)
+    public TelemetrySpan AddEvent(string name, SpanAttributes? attributes)
     {
         this.AddEventInternal(name, default, attributes?.Attributes);
         return this;
@@ -260,7 +233,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="attributes">Attributes for the event.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes attributes)
+    public TelemetrySpan AddEvent(string name, DateTimeOffset timestamp, SpanAttributes? attributes)
     {
         this.AddEventInternal(name, timestamp, attributes?.Attributes);
         return this;
@@ -282,8 +255,12 @@ public class TelemetrySpan : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void End(DateTimeOffset endTimestamp)
     {
-        this.Activity?.SetEndTime(endTimestamp.UtcDateTime);
-        this.Activity?.Stop();
+        var activity = this.Activity;
+        if (activity != null)
+        {
+            activity.SetEndTime(endTimestamp.UtcDateTime);
+            activity.Stop();
+        }
     }
 
     /// <summary>
@@ -292,7 +269,7 @@ public class TelemetrySpan : IDisposable
     /// <param name="ex">Exception to be recorded.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TelemetrySpan RecordException(Exception ex)
+    public TelemetrySpan RecordException(Exception? ex)
     {
         if (ex == null)
         {
@@ -309,9 +286,10 @@ public class TelemetrySpan : IDisposable
     /// <param name="message">Message of the exception to be recorded.</param>
     /// <param name="stacktrace">Stacktrace of the exception to be recorded.</param>
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
-    public TelemetrySpan RecordException(string type, string message, string stacktrace)
+    public TelemetrySpan RecordException(string? type, string? message, string? stacktrace)
     {
         SpanAttributes attributes = new SpanAttributes();
+
         if (!string.IsNullOrWhiteSpace(type))
         {
             attributes.Add(SemanticConventions.AttributeExceptionType, type);
@@ -348,9 +326,7 @@ public class TelemetrySpan : IDisposable
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Activate()
-    {
-        Activity.Current = this.Activity;
-    }
+        => Activity.Current = this.Activity;
 
     /// <summary>
     /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
@@ -358,22 +334,25 @@ public class TelemetrySpan : IDisposable
     /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
     protected virtual void Dispose(bool disposing)
     {
-        this.Activity?.Dispose();
-    }
-
-    private void SetAttributeInternal(string key, object value)
-    {
-        if (this.IsRecording)
+        if (disposing)
         {
-            this.Activity.SetTag(key, value);
+            this.Activity?.Dispose();
         }
     }
 
-    private void AddEventInternal(string name, DateTimeOffset timestamp = default, ActivityTagsCollection tags = null)
+    private void SetAttributeInternal(string key, object? value)
     {
         if (this.IsRecording)
         {
-            this.Activity.AddEvent(new ActivityEvent(name, timestamp, tags));
+            this.Activity!.SetTag(key, value);
+        }
+    }
+
+    private void AddEventInternal(string name, DateTimeOffset timestamp = default, ActivityTagsCollection? tags = null)
+    {
+        if (this.IsRecording)
+        {
+            this.Activity!.AddEvent(new ActivityEvent(name, timestamp, tags));
         }
     }
 }
