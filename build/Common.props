@@ -13,6 +13,14 @@
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- https://dotnet.microsoft.com/download/dotnet-core -->
+    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
+    <TargetFrameworksForDocs>net7.0;net6.0</TargetFrameworksForDocs>
+    <!-- https://dotnet.microsoft.com/download/dotnet-framework -->
+    <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' == 'False'">$(TargetFrameworksForDocs);net462;net47;net471;net472;net48</TargetFrameworksForDocs>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
