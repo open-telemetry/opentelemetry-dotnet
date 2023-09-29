@@ -24,7 +24,7 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.AspNetCore\OpenTelemetry.Exporter.Prometheus.AspNetCore.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0' or '$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
   </ItemGroup>
 
