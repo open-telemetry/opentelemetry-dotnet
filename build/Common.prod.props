@@ -2,13 +2,6 @@
   <Import Project=".\Common.props" />
 
   <PropertyGroup>
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworksForLibraries>net6.0;netstandard2.0;net462</TargetFrameworksForLibraries>
-    <TargetFrameworksForLibrariesExtended>net6.0;netstandard2.1;netstandard2.0;net462</TargetFrameworksForLibrariesExtended>
-    <TargetFrameworksForAspNetCoreInstrumentation>net7.0;net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForAspNetCoreInstrumentation>
-    <TargetFrameworksForGrpcNetClientInstrumentation>net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForGrpcNetClientInstrumentation>
-    <TargetFrameworksForPrometheusAspNetCore>net6.0</TargetFrameworksForPrometheusAspNetCore>
-
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
     <RunApiCompat>true</RunApiCompat>
     <ApiCompatExcludeAttributeList>$(RepoRoot)\build\GlobalAttrExclusions.txt</ApiCompatExcludeAttributeList>
