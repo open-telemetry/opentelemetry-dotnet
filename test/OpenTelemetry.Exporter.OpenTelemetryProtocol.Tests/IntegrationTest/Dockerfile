@@ -7,7 +7,7 @@ ARG TEST_SDK_VERSION=8.0
 
 FROM mcr.microsoft.com/dotnet/sdk:${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net7.0
+ARG PUBLISH_FRAMEWORK=net8.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests"
