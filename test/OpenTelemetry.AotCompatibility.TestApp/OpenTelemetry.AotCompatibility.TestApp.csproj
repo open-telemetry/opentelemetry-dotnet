@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>$(TargetFrameworksForAotCompatibilityTests)</TargetFrameworks>
+    <TargetFramework>$(TargetFrameworksForAotCompatibilityTests)</TargetFramework>
     <PublishAot>true</PublishAot>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <SelfContained>true</SelfContained>

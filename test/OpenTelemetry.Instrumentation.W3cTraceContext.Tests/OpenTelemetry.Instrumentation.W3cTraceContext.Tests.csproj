@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry ASP.NET Core instrumentation for W3C Trace Context Trace</Description>
-    <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
   </PropertyGroup>
