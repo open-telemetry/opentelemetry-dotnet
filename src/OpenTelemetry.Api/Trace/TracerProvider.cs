@@ -59,8 +59,15 @@ public class TracerProvider : BaseProvider
                 tracer = (tracers[key] as Tracer)!;
                 if (tracer == null)
                 {
-                    tracer = new(new(key.Name, key.Version));
-                    tracers[key] = tracer;
+                    if (this.tracers != null)
+                    {
+                        tracer = new(new(key.Name, key.Version));
+                        tracers[key] = tracer;
+                    }
+                    else
+                    {
+                        tracer = new(activitySource: null);
+                    }
                 }
             }
         }

@@ -30,7 +30,7 @@ public class Tracer
 {
     internal ActivitySource? ActivitySource;
 
-    internal Tracer(ActivitySource activitySource)
+    internal Tracer(ActivitySource? activitySource)
     {
         this.ActivitySource = activitySource;
     }
