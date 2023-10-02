@@ -49,6 +49,7 @@ internal static class HttpWebRequestActivitySource
     private static readonly ActivitySource WebRequestActivitySource = new(ActivitySourceName, Version);
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
     private static readonly Histogram<double> HttpClientDuration = WebRequestMeter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+    private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
     private static HttpClientInstrumentationOptions tracingOptions;
     private static HttpClientMetricInstrumentationOptions metricsOptions;
@@ -298,7 +299,7 @@ internal static class HttpWebRequestActivitySource
         var enableTracing = WebRequestActivitySource.HasListeners()
             && TracingOptions.EventFilterHttpWebRequest(request);
 
-        if (!enableTracing && !HttpClientDuration.Enabled)
+        if (!enableTracing && !HttpClientDuration.Enabled && !HttpClientRequestDuration.Enabled)
         {
             // Tracing and metrics are not enabled, so we can skip generating signals
             // Propagation must still be done in such cases, to allow
@@ -453,24 +454,26 @@ internal static class HttpWebRequestActivitySource
 
         activity?.Stop();
 
-        if (HttpClientDuration.Enabled)
+        if (HttpClientDuration.Enabled || HttpClientRequestDuration.Enabled)
         {
+            double durationS;
             double durationMs;
             if (activity != null)
             {
+                durationS = activity.Duration.TotalSeconds;
                 durationMs = activity.Duration.TotalMilliseconds;
             }
             else
             {
                 var endTimestamp = Stopwatch.GetTimestamp();
-                var durationS = (endTimestamp - startTimestamp) / (double)Stopwatch.Frequency;
+                durationS = (endTimestamp - startTimestamp) / (double)Stopwatch.Frequency;
                 durationMs = durationS * 1000;
             }
 
-            TagList tags = default;
-
             if (metricsEmitOldAttributes)
             {
+                TagList tags = default;
+
                 tags.Add(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 tags.Add(SemanticConventions.AttributeHttpMethod, request.Method);
                 tags.Add(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
@@ -479,10 +482,19 @@ internal static class HttpWebRequestActivitySource
                 {
                     tags.Add(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
                 }
+
+                if (httpStatusCode.HasValue)
+                {
+                    tags.Add(SemanticConventions.AttributeHttpStatusCode, (int)httpStatusCode.Value);
+                }
+
+                HttpClientDuration.Record(durationMs, tags);
             }
 
             if (metricsEmitNewAttributes)
             {
+                TagList tags = default;
+
                 tags.Add(SemanticConventions.AttributeHttpRequestMethod, request.Method);
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
@@ -490,22 +502,14 @@ internal static class HttpWebRequestActivitySource
                 {
                     tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
                 }
-            }
 
-            if (httpStatusCode.HasValue)
-            {
-                if (metricsEmitOldAttributes)
-                {
-                    tags.Add(SemanticConventions.AttributeHttpStatusCode, (int)httpStatusCode.Value);
-                }
-
-                if (metricsEmitNewAttributes)
+                if (httpStatusCode.HasValue)
                 {
                     tags.Add(SemanticConventions.AttributeHttpResponseStatusCode, (int)httpStatusCode.Value);
                 }
-            }
 
-            HttpClientDuration.Record(durationMs, tags);
+                HttpClientRequestDuration.Record(durationS, tags);
+            }
         }
     }
 

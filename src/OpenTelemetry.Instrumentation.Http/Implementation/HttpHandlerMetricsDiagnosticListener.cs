@@ -37,6 +37,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     internal static readonly string MeterVersion = AssemblyName.Version.ToString();
     internal static readonly Meter Meter = new(MeterName, MeterVersion);
     private static readonly Histogram<double> HttpClientDuration = Meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
+    private static readonly Histogram<double> HttpClientRequestDuration = Meter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
@@ -65,11 +66,11 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             var activity = Activity.Current;
             if (TryFetchRequest(payload, out HttpRequestMessage request))
             {
-                TagList tags = default;
-
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
                 if (this.emitOldAttributes)
                 {
+                    TagList tags = default;
+
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
@@ -84,11 +85,18 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
+
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+                    HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
                 }
 
                 // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
                 if (this.emitNewAttributes)
                 {
+                    TagList tags = default;
+
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
@@ -102,12 +110,12 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
-                }
 
-                // We are relying here on HttpClient library to set duration before writing the stop event.
-                // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
-                // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-                HttpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                    // We are relying here on HttpClient library to set duration before writing the stop event.
+                    // https://github.com/dotnet/runtime/blob/90603686d314147017c8bbe1fa8965776ce607d0/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L178
+                    // TODO: Follow up with .NET team if we can continue to rely on this behavior.
+                    HttpClientRequestDuration.Record(activity.Duration.TotalMilliseconds, tags);
+                }
             }
         }
 
