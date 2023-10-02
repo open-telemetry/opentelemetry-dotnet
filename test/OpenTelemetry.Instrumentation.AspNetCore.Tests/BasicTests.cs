@@ -16,9 +16,7 @@
 
 using System.Diagnostics;
 using System.Text.Json;
-#if !NET8_0
 using Microsoft.AspNetCore.Builder;
-#endif
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -914,7 +912,6 @@ public sealed class BasicTests
         Assert.Equal(4, numberofSubscribedEvents);
     }
 
-#if !NET8_0
     [Fact]
     public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
     {
@@ -1056,7 +1053,6 @@ public sealed class BasicTests
 
         await app.DisposeAsync().ConfigureAwait(false);
     }
-#endif
 
     public void Dispose()
     {

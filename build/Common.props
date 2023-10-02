@@ -21,10 +21,9 @@
     <TargetFrameworksForAspNetCoreInstrumentation>net7.0;net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForAspNetCoreInstrumentation>
     <TargetFrameworksForGrpcNetClientInstrumentation>net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForGrpcNetClientInstrumentation>
     <TargetFrameworksForPrometheusAspNetCore>net6.0</TargetFrameworksForPrometheusAspNetCore>
-    <TargetFrameworksForTests>net8.0;net7.0;net6.0</TargetFrameworksForTests>
 
     <!-- non-production TFMs -->
-    <TargetFrameworksForAspNetCoreTests>net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
+    <TargetFrameworksForAspNetCoreTests>net8.0;net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
     <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
     <TargetFrameworksForDocs>net7.0;net6.0</TargetFrameworksForDocs>
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' == 'False'">
