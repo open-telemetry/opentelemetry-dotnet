@@ -11,7 +11,13 @@
   `AddInstrumentation` method.
   ([#4873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4873))
 
-* Allowed metric instrument names to contain `/` characters. ([#4882](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4882))
+* Allowed metric instrument names to contain `/` characters.
+  ([#4882](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4882))
+
+* **Breaking Change** `[Tracer|Meter|Logger]ProviderBuilder.Build` extension
+  will now throw a `NotSupportedException` if invoked on a non-SDK builder type.
+  Previously it would return `null`.
+  ([#4885](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4885))
 
 ## 1.6.0
 
