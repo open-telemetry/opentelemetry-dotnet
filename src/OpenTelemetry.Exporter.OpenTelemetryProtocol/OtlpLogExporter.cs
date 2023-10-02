@@ -33,6 +33,7 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
+    private readonly OtlpLogRecordProcessor otlpLogRecordProcessor;
 
     private OtlpResource.Resource processResource;
 
@@ -82,6 +83,8 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             this.exportClient = exporterOptions.GetLogExportClient();
         }
+
+        this.otlpLogRecordProcessor = new OtlpLogRecordProcessor(this.sdkLimitOptions, this.experimentalOptions);
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -92,11 +95,9 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        var request = new OtlpCollector.ExportLogsServiceRequest();
-
         try
         {
-            request.AddBatch(this.sdkLimitOptions, this.experimentalOptions, this.ProcessResource, logRecordBatch);
+            var request = this.otlpLogRecordProcessor.BuildExportRequest(this.ProcessResource, logRecordBatch);
 
             if (!this.exportClient.SendExportRequest(request))
             {
