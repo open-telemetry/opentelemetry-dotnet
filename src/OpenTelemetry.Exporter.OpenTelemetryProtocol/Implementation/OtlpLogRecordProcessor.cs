@@ -26,7 +26,7 @@ using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
-internal class OtlpLogRecordProcessor
+internal sealed class OtlpLogRecordProcessor
 {
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;

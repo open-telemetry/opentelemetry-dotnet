@@ -30,8 +30,6 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
-    private readonly SdkLimitOptions sdkLimitOptions;
-    private readonly ExperimentalOptions experimentalOptions;
     private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
     private readonly OtlpLogRecordProcessor otlpLogRecordProcessor;
 
@@ -60,9 +58,6 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-        this.sdkLimitOptions = sdkLimitOptions;
-        this.experimentalOptions = new();
-
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
         // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
         OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
@@ -84,7 +79,7 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
             this.exportClient = exporterOptions.GetLogExportClient();
         }
 
-        this.otlpLogRecordProcessor = new OtlpLogRecordProcessor(this.sdkLimitOptions, this.experimentalOptions);
+        this.otlpLogRecordProcessor = new OtlpLogRecordProcessor(sdkLimitOptions, new());
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
