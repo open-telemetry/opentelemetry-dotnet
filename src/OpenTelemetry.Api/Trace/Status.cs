@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 namespace OpenTelemetry.Trace;
 
 /// <summary>
@@ -36,7 +38,7 @@ public readonly struct Status : IEquatable<Status>
     /// </summary>
     public static readonly Status Error = new(StatusCode.Error);
 
-    internal Status(StatusCode statusCode, string description = null)
+    internal Status(StatusCode statusCode, string? description = null)
     {
         this.StatusCode = statusCode;
         this.Description = description;
@@ -50,7 +52,7 @@ public readonly struct Status : IEquatable<Status>
     /// <summary>
     /// Gets the status description.
     /// </summary>
-    public string Description { get; }
+    public string? Description { get; }
 
     /// <summary>
     /// Compare two <see cref="Status"/> for equality.
@@ -78,7 +80,7 @@ public readonly struct Status : IEquatable<Status>
     /// </remarks>
     /// <param name="description">Description of the status.</param>
     /// <returns>New instance of the status class with the description populated.</returns>
-    public Status WithDescription(string description)
+    public Status WithDescription(string? description)
     {
         if (this.StatusCode != StatusCode.Error || this.Description == description)
         {
@@ -89,16 +91,8 @@ public readonly struct Status : IEquatable<Status>
     }
 
     /// <inheritdoc/>
-    public override bool Equals(object obj)
-    {
-        if (obj is not Status)
-        {
-            return false;
-        }
-
-        var that = (Status)obj;
-        return this.StatusCode == that.StatusCode && this.Description == that.Description;
-    }
+    public override bool Equals(object? obj)
+        => obj is Status status && this.Equals(status);
 
     /// <inheritdoc/>
     public override int GetHashCode()
@@ -125,7 +119,5 @@ public readonly struct Status : IEquatable<Status>
 
     /// <inheritdoc/>
     public bool Equals(Status other)
-    {
-        return this.StatusCode == other.StatusCode && this.Description == other.Description;
-    }
+        => this.StatusCode == other.StatusCode && this.Description == other.Description;
 }

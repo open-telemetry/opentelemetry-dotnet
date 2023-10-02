@@ -64,8 +64,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         this.tracerProvider = tracerProvider;
     }
 
-    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation> instrumentationFactory)
+    public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
 
@@ -78,17 +77,16 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
     public TracerProviderBuilder AddInstrumentation(
         string instrumentationName,
         string instrumentationVersion,
-        object instrumentation)
+        object? instrumentation)
     {
         Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationName), "instrumentationName was null or whitespace");
         Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationVersion), "instrumentationVersion was null or whitespace");
-        Debug.Assert(instrumentation != null, "instrumentation was null");
 
         this.Instrumentation.Add(
             new InstrumentationRegistration(
                 instrumentationName,
                 instrumentationVersion,
-                instrumentation!));
+                instrumentation));
 
         return this;
     }
@@ -199,9 +197,9 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
     {
         public readonly string Name;
         public readonly string Version;
-        public readonly object Instance;
+        public readonly object? Instance;
 
-        internal InstrumentationRegistration(string name, string version, object instance)
+        internal InstrumentationRegistration(string name, string version, object? instance)
         {
             this.Name = name;
             this.Version = version;

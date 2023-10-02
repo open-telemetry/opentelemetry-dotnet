@@ -129,7 +129,11 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             foreach (var instrumentation in state.Instrumentation)
             {
-                this.instrumentations.Add(instrumentation.Instance);
+                if (instrumentation.Instance is not null)
+                {
+                    this.instrumentations.Add(instrumentation.Instance);
+                }
+
                 instrumentationFactoriesAdded.Append(instrumentation.Name);
                 instrumentationFactoriesAdded.Append(';');
             }
