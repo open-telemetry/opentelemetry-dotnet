@@ -230,7 +230,6 @@ When set to `true`, it enables export of attributes corresponding to
 `LogRecord.Exception`. The attributes are `exception.type`, `exception.message`
 and `exception.stacktrace`.
 
-
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `OtlpExporterOptions` for users
