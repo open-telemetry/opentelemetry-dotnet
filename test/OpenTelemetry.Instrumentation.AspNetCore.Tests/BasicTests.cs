@@ -912,6 +912,7 @@ public sealed class BasicTests
         Assert.Equal(4, numberofSubscribedEvents);
     }
 
+#if !OSX || !NET8_0
     [Fact]
     public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
     {
@@ -1053,6 +1054,7 @@ public sealed class BasicTests
 
         await app.DisposeAsync().ConfigureAwait(false);
     }
+#endif
 
     public void Dispose()
     {

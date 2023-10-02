@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !OSX || !NET8_0
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
@@ -84,3 +85,4 @@ public sealed class InProcServerTests : IDisposable
         await this.app.DisposeAsync().ConfigureAwait(false);
     }
 }
+#endif

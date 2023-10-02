@@ -23,10 +23,7 @@
     <TargetFrameworksForPrometheusAspNetCore>net6.0</TargetFrameworksForPrometheusAspNetCore>
 
     <!-- non-production TFMs -->
-    <TargetFrameworksForAspNetCoreTests>net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
-      <TargetFrameworksForAspNetCoreTests Condition="$(OS) == 'Windows_NT'">
-        $(TargetFrameworksForAspNetCoreTests);net8.0
-      </TargetFrameworksForAspNetCoreTests>
+    <TargetFrameworksForAspNetCoreTests>net8.0;net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
     <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
     <TargetFrameworksForDocs>net7.0;net6.0</TargetFrameworksForDocs>
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' == 'False'">
