@@ -29,7 +29,7 @@
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' == 'False'">
       $(TargetFrameworksForDocs);net481;net48;net472;net471;net47;net462
     </TargetFrameworksForDocs>
-    <TargetFrameworksForTests>net7.0;net6.0</TargetFrameworksForTests>
+    <TargetFrameworksForTests>net8.0;net7.0;net6.0</TargetFrameworksForTests>
     <TargetFrameworksForTests Condition="$(OS) == 'Windows_NT'">
       $(TargetFrameworksForTests);net462
     </TargetFrameworksForTests>
