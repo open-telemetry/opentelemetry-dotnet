@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for Prometheus Exporter AspNetCore for OpenTelemetry</Description>
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
 
     <!-- this is temporary. will remove in future PR. -->

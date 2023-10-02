@@ -1,10 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry HTTP instrumentations</Description>
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
-
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
   </PropertyGroup>
