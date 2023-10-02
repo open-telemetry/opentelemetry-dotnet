@@ -237,6 +237,6 @@ internal
             return loggerProviderBuilderBase.Build();
         }
 
-        return new LoggerProvider();
+        throw new NotSupportedException($"Build is not supported on '{loggerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 }

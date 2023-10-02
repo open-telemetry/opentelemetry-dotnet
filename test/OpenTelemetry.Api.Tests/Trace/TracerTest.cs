@@ -71,7 +71,7 @@ public class TracerTest : IDisposable
         Assert.Null(span3.Activity.DisplayName);
     }
 
-    [Fact(Skip = "See https://github.com/open-telemetry/opentelemetry-dotnet/issues/2803")]
+    [Fact]
     public async Task Tracer_StartRootSpan_StartsNewTrace()
     {
         var exportedItems = new List<Activity>();

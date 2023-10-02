@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>In-memory exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags)</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
