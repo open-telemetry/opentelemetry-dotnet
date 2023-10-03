@@ -26,7 +26,7 @@
     <TargetFrameworksForAspNetCoreTests>net8.0;net7.0;net6.0</TargetFrameworksForAspNetCoreTests>
     <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
     <TargetFrameworksForDocs>net7.0;net6.0</TargetFrameworksForDocs>
-    <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' == 'False'">
+    <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' != 'True'">
       $(TargetFrameworksForDocs);net481;net48;net472;net471;net47;net462
     </TargetFrameworksForDocs>
     <TargetFrameworksForTests>net8.0;net7.0;net6.0</TargetFrameworksForTests>
