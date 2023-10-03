@@ -6,6 +6,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="System.Net.Http" Condition="$(TargetFramework.StartsWith('net4'))" />
+    <Reference Include="System.Net.Http" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
 </Project>
