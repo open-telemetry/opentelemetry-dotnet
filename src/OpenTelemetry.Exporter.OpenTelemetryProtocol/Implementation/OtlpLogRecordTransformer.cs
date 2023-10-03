@@ -1,4 +1,4 @@
-// <copyright file="LogRecordExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpLogRecordTransformer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,9 @@
 
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Trace;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
@@ -24,14 +26,23 @@ using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
-internal static class LogRecordExtensions
+internal sealed class OtlpLogRecordTransformer
 {
-    internal static void AddBatch(
-        this OtlpCollector.ExportLogsServiceRequest request,
-        SdkLimitOptions sdkLimitOptions,
+    private readonly SdkLimitOptions sdkLimitOptions;
+    private readonly ExperimentalOptions experimentalOptions;
+
+    public OtlpLogRecordTransformer(SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions)
+    {
+        this.sdkLimitOptions = sdkLimitOptions;
+        this.experimentalOptions = experimentalOptions;
+    }
+
+    internal OtlpCollector.ExportLogsServiceRequest BuildExportRequest(
         OtlpResource.Resource processResource,
         in Batch<LogRecord> logRecordBatch)
     {
+        var request = new OtlpCollector.ExportLogsServiceRequest();
+
         var resourceLogs = new OtlpLogs.ResourceLogs
         {
             Resource = processResource,
@@ -43,16 +54,18 @@ internal static class LogRecordExtensions
 
         foreach (var logRecord in logRecordBatch)
         {
-            var otlpLogRecord = logRecord.ToOtlpLog(sdkLimitOptions);
+            var otlpLogRecord = this.ToOtlpLog(logRecord);
             if (otlpLogRecord != null)
             {
                 scopeLogs.LogRecords.Add(otlpLogRecord);
             }
         }
+
+        return request;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord, SdkLimitOptions sdkLimitOptions)
+    internal OtlpLogs.LogRecord ToOtlpLog(LogRecord logRecord)
     {
         OtlpLogs.LogRecord otlpLogRecord = null;
 
@@ -75,8 +88,8 @@ internal static class LogRecordExtensions
                 otlpLogRecord.SeverityText = logRecord.Severity.Value.ToShortName();
             }
 
-            var attributeValueLengthLimit = sdkLimitOptions.LogRecordAttributeValueLengthLimit;
-            var attributeCountLimit = sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
+            var attributeValueLengthLimit = this.sdkLimitOptions.LogRecordAttributeValueLengthLimit;
+            var attributeCountLimit = this.sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
 
             /*
             // Removing this temporarily for stable release
@@ -104,14 +117,14 @@ internal static class LogRecordExtensions
             {
                 otlpLogRecord.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
             }
-
-            if (logRecord.Exception != null)
-            {
-                otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
-                otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
-                otlpLogRecord.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
-            }
             */
+
+            if (this.experimentalOptions.EmitLogExceptionAttributes && logRecord.Exception != null)
+            {
+                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name, attributeValueLengthLimit, attributeCountLimit);
+                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message, attributeValueLengthLimit, attributeCountLimit);
+                AddStringAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString(), attributeValueLengthLimit, attributeCountLimit);
+            }
 
             bool bodyPopulatedFromFormattedMessage = false;
             if (logRecord.FormattedMessage != null)
@@ -133,7 +146,7 @@ internal static class LogRecordExtensions
                     }
                     else if (OtlpKeyValueTransformer.Instance.TryTransformTag(attribute, out var result, attributeValueLengthLimit))
                     {
-                        otlpLogRecord.AddAttribute(result, attributeCountLimit);
+                        AddAttribute(otlpLogRecord, result, attributeCountLimit);
                     }
                 }
             }
@@ -183,7 +196,7 @@ internal static class LogRecordExtensions
                     {
                         if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItem, out var result, attributeValueLengthLimit))
                         {
-                            otlpLog.AddAttribute(result, attributeCountLimit);
+                            AddAttribute(otlpLog, result, attributeCountLimit);
                         }
                     }
                 }
@@ -198,7 +211,7 @@ internal static class LogRecordExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddAttribute(this OtlpLogs.LogRecord logRecord, OtlpCommon.KeyValue attribute, int maxAttributeCount)
+    private static void AddAttribute(OtlpLogs.LogRecord logRecord, OtlpCommon.KeyValue attribute, int maxAttributeCount)
     {
         if (logRecord.Attributes.Count < maxAttributeCount)
         {
@@ -211,22 +224,22 @@ internal static class LogRecordExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddStringAttribute(this OtlpLogs.LogRecord logRecord, string key, string value, int? maxValueLength, int maxAttributeCount)
+    private static void AddStringAttribute(OtlpLogs.LogRecord logRecord, string key, string value, int? maxValueLength, int maxAttributeCount)
     {
         var attributeItem = new KeyValuePair<string, object>(key, value);
         if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result, maxValueLength))
         {
-            logRecord.AddAttribute(result, maxAttributeCount);
+            AddAttribute(logRecord, result, maxAttributeCount);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddIntAttribute(this OtlpLogs.LogRecord logRecord, string key, int value, int maxAttributeCount)
+    private static void AddIntAttribute(OtlpLogs.LogRecord logRecord, string key, int value, int maxAttributeCount)
     {
         var attributeItem = new KeyValuePair<string, object>(key, value);
         if (OtlpKeyValueTransformer.Instance.TryTransformTag(attributeItem, out var result))
         {
-            logRecord.AddAttribute(result, maxAttributeCount);
+            AddAttribute(logRecord, result, maxAttributeCount);
         }
     }
 
