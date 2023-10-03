@@ -55,10 +55,14 @@ public static class OpenTelemetryLoggingExtensions
 
         builder.AddConfiguration();
 
-        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        RegisterLoggerProviderOptions(builder.Services);
+        var services = builder.Services;
 
-        new LoggerProviderBuilderBase(builder.Services).ConfigureBuilder(
+        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
+        RegisterLoggerProviderOptions(services);
+
+        services.AddOpenTelemetrySharedProviderBuilderServices();
+
+        new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
@@ -78,7 +82,7 @@ public static class OpenTelemetryLoggingExtensions
                 options.ProcessorFactories.Clear();
             });
 
-        builder.Services.TryAddEnumerable(
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
                 sp => new OpenTelemetryLoggerProvider(
                     sp.GetRequiredService<LoggerProvider>(),
