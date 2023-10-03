@@ -39,8 +39,15 @@ internal class TestHttpServer
             }
             catch (HttpListenerException)
             {
+                server?.Dispose();
+                server = null;
                 retryCount--;
             }
+        }
+
+        if (server == null)
+        {
+            throw new InvalidOperationException("Server could not be started.");
         }
 
         return server;
