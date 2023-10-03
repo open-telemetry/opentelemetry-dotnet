@@ -70,12 +70,12 @@ public static class OpenTelemetryLoggingExtensions
                     options.ResourceBuilder = null;
                 }
 
-                foreach (var processor in options.Processors)
+                foreach (var processorFactory in options.ProcessorFactories)
                 {
-                    logging.AddProcessor(processor);
+                    logging.AddProcessor(processorFactory);
                 }
 
-                options.Processors.Clear();
+                options.ProcessorFactories.Clear();
             });
 
         builder.Services.TryAddEnumerable(

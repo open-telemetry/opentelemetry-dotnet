@@ -244,23 +244,25 @@ public sealed class IntegrationTests : IDisposable
         {
             builder
                 .AddOpenTelemetry(options => options
-                    .AddProcessor(OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
-                        exporterOptions,
-                        processorOptions,
-                        configureExporterInstance: otlpExporter =>
-                        {
-                            delegatingExporter = new DelegatingExporter<LogRecord>
+                    .AddProcessor(sp =>
+                        OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                            sp,
+                            exporterOptions,
+                            processorOptions,
+                            configureExporterInstance: otlpExporter =>
                             {
-                                OnExportFunc = (batch) =>
+                                delegatingExporter = new DelegatingExporter<LogRecord>
                                 {
-                                    var result = otlpExporter.Export(batch);
-                                    exportResults.Add(result);
-                                    handle.Set();
-                                    return result;
-                                },
-                            };
-                            return delegatingExporter;
-                        })));
+                                    OnExportFunc = (batch) =>
+                                    {
+                                        var result = otlpExporter.Export(batch);
+                                        exportResults.Add(result);
+                                        handle.Set();
+                                        return result;
+                                    },
+                                };
+                                return delegatingExporter;
+                            })));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");

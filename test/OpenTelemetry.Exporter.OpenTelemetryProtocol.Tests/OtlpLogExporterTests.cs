@@ -611,9 +611,10 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
-                        new OtlpExporterOptions(),
-                        new SdkLimitOptions(),
-                        fakeExportClient.Object);
+            new OtlpExporterOptions(),
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            fakeExportClient.Object);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -633,9 +634,10 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
             .Throws(new Exception("Test Exception"));
         var sut = new OtlpLogExporter(
-                        new OtlpExporterOptions(),
-                        new SdkLimitOptions(),
-                        fakeExportClient.Object);
+            new OtlpExporterOptions(),
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            fakeExportClient.Object);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -655,9 +657,10 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
             .Returns(true);
         var sut = new OtlpLogExporter(
-                        new OtlpExporterOptions(),
-                        new SdkLimitOptions(),
-                        fakeExportClient.Object);
+            new OtlpExporterOptions(),
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            fakeExportClient.Object);
 
         // Act.
         var result = sut.Export(emptyBatch);
