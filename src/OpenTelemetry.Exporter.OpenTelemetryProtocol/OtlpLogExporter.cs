@@ -30,8 +30,8 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
-    private readonly SdkLimitOptions sdkLimitOptions;
     private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
+    private readonly OtlpLogRecordTransformer otlpLogRecordTransformer;
 
     private OtlpResource.Resource processResource;
 
@@ -58,8 +58,6 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
 
-        this.sdkLimitOptions = sdkLimitOptions;
-
         // Each of the Otlp exporters: Traces, Metrics, and Logs set the same value for `OtlpKeyValueTransformer.LogUnsupportedAttributeType`
         // and `ConfigurationExtensions.LogInvalidEnvironmentVariable` so it should be fine even if these exporters are used together.
         OtlpKeyValueTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
@@ -80,6 +78,8 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             this.exportClient = exporterOptions.GetLogExportClient();
         }
+
+        this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions, new());
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -90,11 +90,9 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        var request = new OtlpCollector.ExportLogsServiceRequest();
-
         try
         {
-            request.AddBatch(this.sdkLimitOptions, this.ProcessResource, logRecordBatch);
+            var request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
 
             if (!this.exportClient.SendExportRequest(request))
             {

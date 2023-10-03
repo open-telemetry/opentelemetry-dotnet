@@ -67,9 +67,6 @@ public class Program
 
 #### Metrics
 
-> **Note**
-> Metrics are not available for .NET Framework.
-
 The following example demonstrates adding `HttpClient` instrumentation with the
 extension method `.AddHttpClientInstrumentation()` on `MeterProviderBuilder` to
 a console application. This example also sets up the OpenTelemetry Console
