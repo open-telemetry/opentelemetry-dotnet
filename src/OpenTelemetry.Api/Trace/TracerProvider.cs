@@ -47,8 +47,12 @@ public class TracerProvider : BaseProvider
     /// <returns>Tracer instance.</returns>
     public Tracer GetTracer(string name, string? version = null)
     {
-        var tracers = this.tracers
-            ?? throw new ObjectDisposedException(nameof(TracerProvider));
+        var tracers = this.tracers;
+        if (tracers == null)
+        {
+            // Note: Returns a no-op Tracer once dispose has been called.
+            return new(activitySource: null);
+        }
 
         var key = new TracerKey(name, version);
 
@@ -64,15 +68,11 @@ public class TracerProvider : BaseProvider
                         tracer = new(new(key.Name, key.Version));
                         tracers[key] = tracer;
                     }
-                    else
-                    {
-                        tracer = new(activitySource: null);
-                    }
                 }
             }
         }
 
-        return tracer;
+        return tracer ?? new(activitySource: null);
     }
 
     /// <inheritdoc/>

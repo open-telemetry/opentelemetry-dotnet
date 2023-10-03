@@ -303,8 +303,10 @@ public class TracerTest : IDisposable
         var span2 = tracer.StartSpan("foo");
         Assert.False(span2.IsRecording);
 
-        Assert.Throws<ObjectDisposedException>(
-            () => provider.GetTracer("mytracer"));
+        var tracer2 = provider.GetTracer("mytracer");
+
+        var span3 = tracer2.StartSpan("foo");
+        Assert.False(span3.IsRecording);
     }
 
     public void Dispose()
