@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter;
 internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
-    private readonly OtlpLogRecordProcessor otlpLogRecordProcessor;
+    private readonly OtlpLogRecordTransformer otlpLogRecordTransformer;
 
     private OtlpResource.Resource processResource;
 
@@ -79,7 +79,7 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
             this.exportClient = exporterOptions.GetLogExportClient();
         }
 
-        this.otlpLogRecordProcessor = new OtlpLogRecordProcessor(sdkLimitOptions, new());
+        this.otlpLogRecordTransformer = new OtlpLogRecordTransformer(sdkLimitOptions, new());
     }
 
     internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
@@ -92,7 +92,7 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         try
         {
-            var request = this.otlpLogRecordProcessor.BuildExportRequest(this.ProcessResource, logRecordBatch);
+            var request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
 
             if (!this.exportClient.SendExportRequest(request))
             {
