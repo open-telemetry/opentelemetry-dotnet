@@ -1,0 +1,1 @@
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor(System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
