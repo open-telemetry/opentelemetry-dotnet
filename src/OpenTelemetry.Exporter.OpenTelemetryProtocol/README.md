@@ -222,11 +222,12 @@ values of the log record limits
 
 ### Otlp Log Exporter
 
-* `OTEL_DOTNET_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES`
+* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES`
 
 When set to `true`, it enables export of attributes corresponding to
-`LogRecord.Exception`. The attributes are `exception.type`, `exception.message`
-and `exception.stacktrace`.
+`LogRecord.Exception`. The attributes `exception.type`, `exception.message` and
+`exception.stacktrace` are defined in
+[specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
 
 ## Configure HttpClient
 

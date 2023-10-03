@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 internal sealed class ExperimentalOptions
 {
-    public const string EMITLOGEXCEPTIONATTRIBUTES = "OTEL_DOTNET_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES";
+    public const string EMITLOGEXCEPTIONATTRIBUTES = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES";
 
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
