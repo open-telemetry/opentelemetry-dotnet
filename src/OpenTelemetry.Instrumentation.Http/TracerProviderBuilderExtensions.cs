@@ -84,7 +84,7 @@ public static class TracerProviderBuilderExtensions
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
 
-                HttpWebRequestActivitySource.Options = options;
+                HttpWebRequestActivitySource.TracingOptions = options;
             });
         }
 #else
