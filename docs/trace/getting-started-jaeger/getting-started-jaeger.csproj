@@ -5,6 +5,6 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Net.Http" Condition="$(TargetFramework) == 'net472' or $(TargetFramework) == 'net48'"/>
+    <Reference Include="System.Net.Http" Condition="$(TargetFramework.StartsWith('net4'))" />
   </ItemGroup>
 </Project>
