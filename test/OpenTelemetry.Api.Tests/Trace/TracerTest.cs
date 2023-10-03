@@ -286,12 +286,14 @@ public class TracerTest : IDisposable
     [Fact]
     public void Tracer_Disposed_Becomes_Noop()
     {
+        TracerProvider provider = null;
         Tracer tracer = null;
 
         using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("mytracer")
             .Build())
         {
+            provider = tracerProvider;
             tracer = tracerProvider.GetTracer("mytracer");
 
             var span1 = tracer.StartSpan("foo");
@@ -300,6 +302,9 @@ public class TracerTest : IDisposable
 
         var span2 = tracer.StartSpan("foo");
         Assert.False(span2.IsRecording);
+
+        Assert.Throws<ObjectDisposedException>(
+            () => provider.GetTracer("mytracer"));
     }
 
     public void Dispose()
