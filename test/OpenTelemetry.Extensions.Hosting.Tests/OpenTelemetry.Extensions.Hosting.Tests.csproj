@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Condition="'$(MSBuildRuntimeType)' == 'Core'" Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Condition="'$(TargetFramework)' != 'net462'" Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
