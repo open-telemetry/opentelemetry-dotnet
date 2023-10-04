@@ -14,6 +14,9 @@
   `trace-flags` field of the `traceparent` header.
   ([#4893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4893))
 
+* Fix `TraceContextPropagator` by propagating duplicated `tracestate` entries.
+  ([#4937](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4937))
+
 ## 1.6.0
 
 Released 2023-Sep-05

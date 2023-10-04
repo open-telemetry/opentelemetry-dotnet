@@ -193,10 +193,10 @@ public class TraceContextPropagatorTest
     public void DuplicateKeys()
     {
         // test_tracestate_duplicated_keys
-        Assert.Empty(CallTraceContextPropagator("foo=1,foo=1"));
-        Assert.Empty(CallTraceContextPropagator("foo=1,foo=2"));
-        Assert.Empty(CallTraceContextPropagator(new[] { "foo=1", "foo=1" }));
-        Assert.Empty(CallTraceContextPropagator(new[] { "foo=1", "foo=2" }));
+        Assert.Equal("foo=1,foo=1", CallTraceContextPropagator("foo=1,foo=1"));
+        Assert.Equal("foo=1,foo=2", CallTraceContextPropagator("foo=1,foo=2"));
+        Assert.Equal("foo=1,foo=1", CallTraceContextPropagator(new[] { "foo=1", "foo=1" }));
+        Assert.Equal("foo=1,foo=2", CallTraceContextPropagator(new[] { "foo=1", "foo=2" }));
     }
 
     [Fact]
