@@ -691,7 +691,7 @@ public sealed class BasicTests
         // tag http.route should not be added on activity started by asp.net core as it will not be found during OnEventWritten event
         Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
-        Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
+        Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
     }
 
 #if NET7_0_OR_GREATER
@@ -1048,8 +1048,7 @@ public sealed class BasicTests
         Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
 
-        // After fix this should be /custom/{name:alpha}
-        Assert.Equal("/custom/abc", activity.DisplayName);
+        Assert.Equal("/custom/{name:alpha}", activity.DisplayName);
 
         await app.DisposeAsync().ConfigureAwait(false);
     }

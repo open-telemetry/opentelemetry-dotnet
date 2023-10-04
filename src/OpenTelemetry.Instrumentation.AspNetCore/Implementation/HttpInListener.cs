@@ -289,6 +289,15 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
+#if NET6_0_OR_GREATER
+            var endpoint = context.GetEndpoint() as RouteEndpoint;
+            var route = endpoint?.RoutePattern.RawText;
+            if (!string.IsNullOrWhiteSpace(route))
+            {
+                activity.DisplayName = route;
+            }
+#endif
+
             var response = context.Response;
 
             if (this.emitOldAttributes)
