@@ -284,7 +284,7 @@ public class TracerTest : IDisposable
     }
 
     [Fact]
-    public void Tracer_Disposed_Becomes_Noop()
+    public void TracerBecomesNoopWhenParentProviderIsDisposedTest()
     {
         TracerProvider provider = null;
         Tracer tracer = null;
