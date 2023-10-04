@@ -16,7 +16,7 @@
 
 #nullable enable
 
-using System.Collections;
+using System.Collections.Concurrent;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -28,9 +28,7 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public class TracerProvider : BaseProvider
 {
-    [ThreadStatic]
-    private static TracerKey? threadTracerKey;
-    private Hashtable? tracers = new();
+    private ConcurrentDictionary<TracerKey, Tracer>? tracers = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TracerProvider"/> class.
@@ -50,7 +48,12 @@ public class TracerProvider : BaseProvider
     /// <param name="name">Name identifying the instrumentation library.</param>
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
-    public Tracer GetTracer(string name, string? version = null)
+    public Tracer GetTracer(
+#if NET6_0_OR_GREATER
+        [AllowNull]
+#endif
+        string name,
+        string? version = null)
     {
         var tracers = this.tracers;
         if (tracers == null)
@@ -59,30 +62,32 @@ public class TracerProvider : BaseProvider
             return new(activitySource: null);
         }
 
-        var key = threadTracerKey == null
-            ? (threadTracerKey = new TracerKey(name, version))
-            : threadTracerKey.Update(name, version);
+        var key = new TracerKey(name, version);
 
-        if (tracers[key] is not Tracer tracer)
+Retry:
+        if (!tracers.TryGetValue(key, out var tracer))
         {
             lock (tracers)
             {
-                tracer = (tracers[key] as Tracer)!;
-                if (tracer == null)
+                if (this.tracers == null)
                 {
-                    if (this.tracers != null)
-                    {
-                        tracer = new(new(key.Name, key.Version));
+                    // Note: We check here for a race with Dispose and return a
+                    // no-op Tracer in that case.
+                    return new(activitySource: null);
+                }
 
-                        // Note: key is copied if we write into the hashtable
-                        // because it must hold onto something immutable.
-                        tracers[key.Copy()] = tracer;
-                    }
+                tracer = new(new(key.Name, key.Version));
+                if (!tracers.TryAdd(key, tracer))
+                {
+                    // Note: This should really never happen due to the
+                    // outer lock.
+                    tracer.ActivitySource!.Dispose();
+                    goto Retry;
                 }
             }
         }
 
-        return tracer ?? new(activitySource: null);
+        return tracer;
     }
 
     /// <inheritdoc/>
@@ -95,9 +100,9 @@ public class TracerProvider : BaseProvider
             {
                 lock (tracers)
                 {
-                    foreach (DictionaryEntry entry in tracers)
+                    foreach (var kvp in tracers)
                     {
-                        var tracer = (Tracer)entry.Value!;
+                        var tracer = kvp.Value;
                         var activitySource = tracer.ActivitySource;
                         tracer.ActivitySource = null;
                         activitySource?.Dispose();
@@ -111,32 +116,15 @@ public class TracerProvider : BaseProvider
         base.Dispose(disposing);
     }
 
-    private sealed record class TracerKey
+    private readonly record struct TracerKey
     {
+        public readonly string Name;
+        public readonly string? Version;
+
         public TracerKey(string? name, string? version)
-        {
-            this.Update(name, version);
-        }
-
-        public string Name { get; private set; }
-#if !NET6_0_OR_GREATER
-            = string.Empty;
-#endif
-
-        public string? Version { get; private set; }
-
-#if NET6_0_OR_GREATER
-        [MemberNotNull(nameof(Name))]
-#endif
-        public TracerKey Update(string? name, string? version)
         {
             this.Name = name ?? string.Empty;
             this.Version = version;
-
-            return this;
         }
-
-        public TracerKey Copy()
-            => new(this.Name, this.Version);
     }
 }
