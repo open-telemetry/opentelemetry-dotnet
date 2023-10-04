@@ -64,7 +64,6 @@ public class TracerProvider : BaseProvider
 
         var key = new TracerKey(name, version);
 
-Retry:
         if (!tracers.TryGetValue(key, out var tracer))
         {
             lock (tracers)
@@ -77,13 +76,12 @@ Retry:
                 }
 
                 tracer = new(new(key.Name, key.Version));
-                if (!tracers.TryAdd(key, tracer))
-                {
-                    // Note: This should really never happen due to the
-                    // outer lock.
-                    tracer.ActivitySource!.Dispose();
-                    goto Retry;
-                }
+#if DEBUG
+                bool result = tracers.TryAdd(key, tracer);
+                System.Diagnostics.Debug.Assert(result, "Write into tracers cache failed");
+#else
+                tracers.TryAdd(key, tracer);
+#endif
             }
         }
 
