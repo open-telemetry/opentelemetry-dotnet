@@ -41,8 +41,9 @@ public static class OpenTelemetryServicesExtensions
     /// cref="MeterProvider"/> will be created for a given <see
     /// cref="IServiceCollection"/>.</item>
     /// <item>OpenTelemetry SDK services are inserted at the beginning of the
-    /// <see cref="IServiceCollection"/> in an attempt to provide a better
-    /// experience for end users capturing telemetry in hosted services.</item>
+    /// <see cref="IServiceCollection"/> and started with the host. For details
+    /// about the ordering of events and capturing telemetry in
+    /// <see cref="IHostedService" />s see: <see href="https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Extensions.Hosting/README.md#hosted-service-ordering-and-telemetry-capture" />.</item>
     /// </list>
     /// </remarks>
     /// <param name="services"><see cref="IServiceCollection"/>.</param>

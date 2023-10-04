@@ -141,6 +141,10 @@ and
 [new](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore)
 versions of the example application to assist you in your migration.
 
+## Hosted Service Ordering and Telemetry Capture
+
+TBD
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
