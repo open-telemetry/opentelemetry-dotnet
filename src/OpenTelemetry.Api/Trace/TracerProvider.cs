@@ -17,6 +17,9 @@
 #nullable enable
 
 using System.Collections;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace OpenTelemetry.Trace;
 
@@ -25,6 +28,8 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public class TracerProvider : BaseProvider
 {
+    [ThreadStatic]
+    private static TracerKey? threadTracerKey;
     private Hashtable? tracers = new();
 
     /// <summary>
@@ -54,7 +59,9 @@ public class TracerProvider : BaseProvider
             return new(activitySource: null);
         }
 
-        var key = new TracerKey(name, version);
+        var key = threadTracerKey == null
+            ? (threadTracerKey = new TracerKey(name, version))
+            : threadTracerKey.Update(name, version);
 
         if (tracers[key] is not Tracer tracer)
         {
@@ -66,7 +73,10 @@ public class TracerProvider : BaseProvider
                     if (this.tracers != null)
                     {
                         tracer = new(new(key.Name, key.Version));
-                        tracers[key] = tracer;
+
+                        // Note: key is copied if we write into the hashtable
+                        // because it must hold onto something immutable.
+                        tracers[key.Copy()] = tracer;
                     }
                 }
             }
@@ -105,12 +115,28 @@ public class TracerProvider : BaseProvider
     {
         public TracerKey(string? name, string? version)
         {
-            this.Name = name ?? string.Empty;
-            this.Version = version;
+            this.Update(name, version);
         }
 
-        public string Name { get; }
+        public string Name { get; private set; }
+#if !NET6_0_OR_GREATER
+            = string.Empty;
+#endif
 
-        public string? Version { get; }
+        public string? Version { get; private set; }
+
+#if NET6_0_OR_GREATER
+        [MemberNotNull(nameof(Name))]
+#endif
+        public TracerKey Update(string? name, string? version)
+        {
+            this.Name = name ?? string.Empty;
+            this.Version = version;
+
+            return this;
+        }
+
+        public TracerKey Copy()
+            => new(this.Name, this.Version);
     }
 }
