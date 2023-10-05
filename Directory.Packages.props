@@ -19,13 +19,18 @@
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="[2.1.1,6.0)" />
     <PackageVersion Include="Microsoft.CSharp" Version="[4.7.0]" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="[3.1.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
+
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0-rc.1.23419.4" />
+
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-rc.1.23419.4" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0-rc.1.23419.4" />
+
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[2.1.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="[3.1.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="[3.1.0,)" />
+
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.1.23419.4" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0-rc.1.23419.4" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.0-rc.1.23419.4" />
+
     <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
@@ -67,7 +72,7 @@
     <PackageVersion Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[3.1.6,5.0)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="3.1.20" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0-rc.1.23419.4" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="[1.0.3,2.0)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="[17.7.2,18.0.0)" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="[1.1.1,2.0)" />
