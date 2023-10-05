@@ -128,8 +128,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         return logLevel != LogLevel.None;
     }
 
-    public IDisposable BeginScope<TState>(TState state)
-        where TState : notnull => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
+    public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
     internal static void SetLogRecordSeverityFields(ref LogRecordData logRecordData, LogLevel logLevel)
     {

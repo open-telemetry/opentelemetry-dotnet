@@ -60,12 +60,6 @@ public partial class Program
             description: "The rate of `Run()` invocations based on a small sliding window of few hundreds of milliseconds.");
         var dCpuCyclesPerLoop = 0D;
 
-#if NETFRAMEWORK
-        meter.CreateObservableGauge(
-            "OpenTelemetry.Tests.Stress.CpuCyclesPerLoop",
-            () => dCpuCyclesPerLoop,
-            description: "The average CPU cycles for each `Run()` invocation, based on a small sliding window of few hundreds of milliseconds.");
-#else
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             meter.CreateObservableGauge(
@@ -73,7 +67,6 @@ public partial class Program
                 () => dCpuCyclesPerLoop,
                 description: "The average CPU cycles for each `Run()` invocation, based on a small sliding window of few hundreds of milliseconds.");
         }
-#endif
 
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
@@ -177,12 +170,10 @@ public partial class Program
 
     private static ulong GetCpuCycles()
     {
-#if !NETFRAMEWORK
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return 0;
         }
-#endif
 
         if (!QueryProcessCycleTime((IntPtr)(-1), out var cycles))
         {

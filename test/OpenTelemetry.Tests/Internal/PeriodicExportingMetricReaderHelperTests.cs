@@ -112,7 +112,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     [Fact]
     public void CreatePeriodicExportingMetricReader_FromIConfiguration()
     {
-        var values = new Dictionary<string, string?>()
+        var values = new Dictionary<string, string>()
         {
             [PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey] = "18",
             [PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey] = "19",
