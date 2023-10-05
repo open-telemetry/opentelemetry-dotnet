@@ -39,6 +39,6 @@ public class Program
 
         // Dispose tracer provider before the application ends.
         // This will flush the remaining spans and shutdown the tracing pipeline.
-        tracerProvider?.Dispose();
+        tracerProvider.Dispose();
     }
 }

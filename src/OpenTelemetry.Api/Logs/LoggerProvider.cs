@@ -39,6 +39,13 @@ internal
     private static readonly NoopLogger NoopLogger = new();
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="LoggerProvider"/> class.
+    /// </summary>
+    protected LoggerProvider()
+    {
+    }
+
+    /// <summary>
     /// Gets a logger.
     /// </summary>
     /// <returns><see cref="Logger"/> instance.</returns>

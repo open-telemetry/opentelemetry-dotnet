@@ -52,7 +52,7 @@ public class MetricsBenchmarks
     private readonly Random random = new();
     private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private Counter<long> counter;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
 
     [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
@@ -64,7 +64,7 @@ public class MetricsBenchmarks
         this.meter = new Meter(Utils.GetCurrentMethodName());
 
         var exportedItems = new List<Metric>();
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -80,7 +80,7 @@ public class MetricsBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]
