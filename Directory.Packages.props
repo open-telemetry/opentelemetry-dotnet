@@ -4,9 +4,9 @@
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
   </PropertyGroup>
 
-  <Target Name="PreparePackageValidation" BeforeTargets="Pack">
+  <Target Name="PreparePackageValidation" BeforeTargets="Restore">
     <PropertyGroup>
-      <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">false</EnablePackageValidation>
+      <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
       <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
     </PropertyGroup>
   </Target>
