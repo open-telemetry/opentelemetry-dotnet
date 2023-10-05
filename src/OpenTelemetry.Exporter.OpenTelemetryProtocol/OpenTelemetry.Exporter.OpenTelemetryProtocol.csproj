@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net462'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeerServiceResolver.cs" Link="Includes\PeerServiceResolver.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagAndValueTransformer.cs" Link="Includes\TagAndValueTransformer.cs" />
