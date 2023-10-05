@@ -218,6 +218,17 @@ values of the log record limits
 * `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
 
+## Environment Variables for Experimental Features
+
+### Otlp Log Exporter
+
+* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES`
+
+When set to `true`, it enables export of attributes corresponding to
+`LogRecord.Exception`. The attributes `exception.type`, `exception.message` and
+`exception.stacktrace` are defined in
+[specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
+
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `OtlpExporterOptions` for users

@@ -12,6 +12,13 @@
   and `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`.
   ([#4887](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4887))
 
+* Added ability to export attributes corresponding to `LogRecord.Exception` i.e.
+`exception.type`, `exception.message` and `exception.stacktrace`. These
+attributes will be exported when
+`OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES` environment
+variable will be set to `true`.
+([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
+
 ## 1.6.0
 
 Released 2023-Sep-05
