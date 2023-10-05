@@ -156,7 +156,6 @@ namespace OpenTelemetry.Metrics.Tests
             var config = Configuration.Create()
                         .WithTestingIterations(100)
                         .WithVerbosityEnabled(VerbosityLevel.Debug)
-                        .WithConsoleLoggingEnabled()
                         .WithControlFlowRaceCheckingEnabled()
                         .WithPartiallyControlledConcurrencyAllowed(false)
                         .WithPartiallyControlledDataNondeterminismAllowed(false);
