@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Introduced a new metric, `http.client.request.duration` measured in seconds.
-  The OTel SDK
+* Introduced a new metric for `HttpClient`, `http.client.request.duration`
+  measured in seconds. The OTel SDK
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
   for this metric to comply with the
   [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
@@ -31,8 +31,7 @@
   * [http-metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
 
 * Added support for publishing `http.client.duration` &
-  `http.client.request.duration` metrics on .NET Framework.
-  This supports `HttpClient` and `HttpWebRequest`.
+  `http.client.request.duration` metrics on .NET Framework for `HttpWebRequest`.
   ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
 
 ## 1.5.1-beta.1
