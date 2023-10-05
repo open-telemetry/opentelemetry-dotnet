@@ -29,7 +29,7 @@
         1) Each major version bump will have some new API capabilities (e.g. .NET 6 introduced compile-time logging
           source generation, .NET 8 introduced automatic event id generation).
         2) Each minor version bump is normally security hotfixes or critical bug fixes.
-        3) Since version 3.1.0, the .NET runtime team provides extra backward compatibility guarantee to
+        3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           Microsoft.Extensions.Logging even during major version bumps, so compatibility is not a concern here.
     -->
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.1.23419.4" />
