@@ -1,0 +1,1 @@
+override OpenTelemetry.Trace.TracerProvider.Dispose(bool disposing) -> void
