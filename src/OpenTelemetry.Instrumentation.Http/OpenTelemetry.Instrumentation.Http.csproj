@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>Http instrumentation for OpenTelemetry .NET</Description>
@@ -27,4 +26,7 @@
     <PackageReference Include="OpenTelemetry" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net462'" />
+  </ItemGroup>
 </Project>
