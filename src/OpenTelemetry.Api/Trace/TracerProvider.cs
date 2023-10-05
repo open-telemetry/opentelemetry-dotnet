@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 
 namespace OpenTelemetry.Trace;
@@ -41,13 +43,6 @@ public class TracerProvider : BaseProvider
     /// <param name="name">Name identifying the instrumentation library.</param>
     /// <param name="version">Version of the instrumentation library.</param>
     /// <returns>Tracer instance.</returns>
-    public Tracer GetTracer(string name, string version = null)
-    {
-        if (name == null)
-        {
-            name = string.Empty;
-        }
-
-        return new Tracer(new ActivitySource(name, version));
-    }
+    public Tracer GetTracer(string name, string? version = null)
+        => new(new ActivitySource(name ?? string.Empty, version));
 }

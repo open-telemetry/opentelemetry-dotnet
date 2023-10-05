@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -239,6 +237,6 @@ internal
             return loggerProviderBuilderBase.Build();
         }
 
-        return new LoggerProvider();
+        throw new NotSupportedException($"Build is not supported on '{loggerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 }

@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
@@ -51,7 +49,14 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         hashCode.Add(this.Unit);
         hashCode.Add(this.Description);
         hashCode.Add(this.ViewId);
-        hashCode.Add(this.TagKeys, StringArrayComparer);
+
+        // Note: The this.TagKeys! here is strange but it is fine for the value
+        // to be null. HashCode.Add is coded to handle the value being null. We
+        // are essentially suppressing a false positive due to an issue/quirk
+        // with the annotations. See:
+        // https://github.com/dotnet/runtime/pull/91905.
+        hashCode.Add(this.TagKeys!, StringArrayComparer);
+
         hashCode.Add(this.ExponentialHistogramMaxSize);
         hashCode.Add(this.ExponentialHistogramMaxScale);
         if (this.HistogramBucketBounds != null)

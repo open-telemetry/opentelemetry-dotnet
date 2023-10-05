@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>Console exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Console;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\Metrics\Base2ExponentialBucketHistogramHelper.cs" Link="Includes\Metrics\Base2ExponentialBucketHistogramHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagTransformerJsonHelper.cs" Link="Includes\TagTransformerJsonHelper.cs" />
@@ -33,7 +34,6 @@
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiresExposedExperimentalFeatures="true" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" RequiresExposedExperimentalFeatures="true" />
     <Compile Include="$(RepoRoot)\src\Shared\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" RequiresExposedExperimentalFeatures="true" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Metrics\Base2ExponentialBucketHistogram.LowerBoundary.cs" Link="Includes\Base2ExponentialBucketHistogram.LowerBoundary.cs" RequiresExposedExperimentalFeatures="true" />
   </ItemGroup>
 
 </Project>

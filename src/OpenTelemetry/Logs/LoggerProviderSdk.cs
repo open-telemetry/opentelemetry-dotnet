@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -78,7 +76,11 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
         foreach (var instrumentation in state.Instrumentation)
         {
-            this.instrumentations.Add(instrumentation.Instance);
+            if (instrumentation.Instance is not null)
+            {
+                this.instrumentations.Add(instrumentation.Instance);
+            }
+
             instrumentationFactoriesAdded.Append(instrumentation.Name);
             instrumentationFactoriesAdded.Append(';');
         }

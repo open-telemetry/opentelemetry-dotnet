@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
@@ -131,7 +129,11 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             foreach (var instrumentation in state.Instrumentation)
             {
-                this.instrumentations.Add(instrumentation.Instance);
+                if (instrumentation.Instance is not null)
+                {
+                    this.instrumentations.Add(instrumentation.Instance);
+                }
+
                 instrumentationFactoriesAdded.Append(instrumentation.Name);
                 instrumentationFactoriesAdded.Append(';');
             }
@@ -389,7 +391,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 // TODO: log
                 return;
@@ -493,7 +495,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument!.Name, "SDK internal error occurred.", "Contact SDK owners.");
                 return;
@@ -519,7 +521,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument!.Name, "SDK internal error occurred.", "Contact SDK owners.");
                 return;

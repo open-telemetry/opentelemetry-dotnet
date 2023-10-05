@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -315,14 +313,14 @@ public static class MeterProviderBuilderExtensions
     /// </summary>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns><see cref="MeterProvider"/>.</returns>
-    public static MeterProvider? Build(this MeterProviderBuilder meterProviderBuilder)
+    public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
     {
         if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
         {
             return meterProviderBuilderBase.InvokeBuild();
         }
 
-        return null;
+        throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES

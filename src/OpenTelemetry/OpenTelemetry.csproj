@@ -1,11 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks);netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibrariesExtended)</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-
-    <!-- this is temporary. will remove in future PR. -->
-    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

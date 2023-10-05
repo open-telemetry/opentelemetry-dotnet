@@ -30,6 +30,10 @@ internal sealed class SdkLimitOptions
     private bool spanEventAttributeCountLimitSet;
     private int? spanLinkAttributeCountLimit;
     private bool spanLinkAttributeCountLimitSet;
+    private int? logRecordAttributeValueLengthLimit;
+    private bool logRecordAttributeValueLengthLimitSet;
+    private int? logRecordAttributeCountLimit;
+    private bool logRecordAttributeCountLimitSet;
 
     public SdkLimitOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
@@ -38,17 +42,21 @@ internal sealed class SdkLimitOptions
 
     internal SdkLimitOptions(IConfiguration configuration)
     {
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#attribute-limits
         SetIntConfigValue(configuration, "OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", value => this.AttributeValueLengthLimit = value, null);
         SetIntConfigValue(configuration, "OTEL_ATTRIBUTE_COUNT_LIMIT", value => this.AttributeCountLimit = value, DefaultSdkLimit);
 
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#span-limits
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#span-limits
         SetIntConfigValue(configuration, "OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", value => this.SpanAttributeValueLengthLimit = value, null);
         SetIntConfigValue(configuration, "OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", value => this.SpanAttributeCountLimit = value, null);
         SetIntConfigValue(configuration, "OTEL_SPAN_EVENT_COUNT_LIMIT", value => this.SpanEventCountLimit = value, DefaultSdkLimit);
         SetIntConfigValue(configuration, "OTEL_SPAN_LINK_COUNT_LIMIT", value => this.SpanLinkCountLimit = value, DefaultSdkLimit);
         SetIntConfigValue(configuration, "OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", value => this.SpanEventAttributeCountLimit = value, null);
         SetIntConfigValue(configuration, "OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", value => this.SpanLinkAttributeCountLimit = value, null);
+
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.25.0/specification/configuration/sdk-environment-variables.md#logrecord-limits
+        SetIntConfigValue(configuration, "OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT", value => this.LogRecordAttributeValueLengthLimit = value, null);
+        SetIntConfigValue(configuration, "OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT", value => this.LogRecordAttributeCountLimit = value, null);
     }
 
     /// <summary>
@@ -132,6 +140,38 @@ internal sealed class SdkLimitOptions
         {
             this.spanLinkAttributeCountLimitSet = true;
             this.spanLinkAttributeCountLimit = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum allowed log record attribute value size.
+    /// </summary>
+    /// <remarks>
+    /// Note: Overrides the <see cref="AttributeValueLengthLimit"/> setting for log records if specified.
+    /// </remarks>
+    public int? LogRecordAttributeValueLengthLimit
+    {
+        get => this.logRecordAttributeValueLengthLimitSet ? this.logRecordAttributeValueLengthLimit : this.AttributeValueLengthLimit;
+        set
+        {
+            this.logRecordAttributeValueLengthLimitSet = true;
+            this.logRecordAttributeValueLengthLimit = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum allowed log record attribute count.
+    /// </summary>
+    /// <remarks>
+    /// Note: Overrides the <see cref="AttributeCountLimit"/> setting for log records if specified.
+    /// </remarks>
+    public int? LogRecordAttributeCountLimit
+    {
+        get => this.logRecordAttributeCountLimitSet ? this.logRecordAttributeCountLimit : this.AttributeCountLimit;
+        set
+        {
+            this.logRecordAttributeCountLimitSet = true;
+            this.logRecordAttributeCountLimit = value;
         }
     }
 

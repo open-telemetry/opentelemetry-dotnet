@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -98,7 +96,11 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         foreach (var instrumentation in state.Instrumentation)
         {
-            this.instrumentations.Add(instrumentation.Instance);
+            if (instrumentation.Instance is not null)
+            {
+                this.instrumentations.Add(instrumentation.Instance);
+            }
+
             instrumentationFactoriesAdded.Append(instrumentation.Name);
             instrumentationFactoriesAdded.Append(';');
         }

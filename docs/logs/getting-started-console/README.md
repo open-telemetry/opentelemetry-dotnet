@@ -17,32 +17,27 @@ You should see the following output:
 Hello World!
 ```
 
-Install the latest `Microsoft.Extensions.Logging` package:
-
-  ```sh
-  dotnet add package Microsoft.Extensions.Logging
-  ```
-
-Install the
+Install the latest version of
+[Microsoft.Extensions.Logging](https://www.nuget.org/packages/Microsoft.Extensions.Logging/)
+package and
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
 ```sh
+dotnet add package Microsoft.Extensions.Logging
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-Copy the [FoodSupplyLogs.cs](./FoodSupplyLogs.cs) and [Program.cs](./Program.cs)
-files to the project folder.
+Update the `Program.cs` file with the code from [Program.cs](./Program.cs).
 
 Run the application again (using `dotnet run`) and you should see the log output
 on the console.
 
 ```text
-LogRecord.Timestamp:               2023-08-03T22:53:51.0194130Z
-LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Timestamp:               2023-09-15T06:07:03.5502083Z
+LogRecord.CategoryName:            Program
 LogRecord.Severity:                Info
 LogRecord.SeverityText:            Information
-LogRecord.FormattedMessage:        Food `artichoke` price changed to `9.99`.
 LogRecord.Body:                    Food `{name}` price changed to `{price}`.
 LogRecord.Attributes (Key:Value):
     name: artichoke
@@ -51,17 +46,12 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 1
 LogRecord.EventName:               FoodPriceChanged
 
-Resource associated with LogRecord:
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-alpha.1.55
-service.name: unknown_service:getting-started
+...
 
-LogRecord.Timestamp:               2023-08-03T22:53:51.0403466Z
-LogRecord.CategoryName:            SourceGeneration.Program
+LogRecord.Timestamp:               2023-09-15T06:07:03.5683511Z
+LogRecord.CategoryName:            Program
 LogRecord.Severity:                Fatal
 LogRecord.SeverityText:            Critical
-LogRecord.FormattedMessage:        A `Food & Beverages` recall notice was published for `Contoso Salads` produced by `Contoso Fresh Vegetables, Inc.` (due to a possible health risk from Listeria monocytogenes).
 LogRecord.Body:                    A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
 LogRecord.Attributes (Key:Value):
     brandName: Contoso
@@ -73,42 +63,56 @@ LogRecord.Attributes (Key:Value):
 LogRecord.EventId:                 2
 LogRecord.EventName:               FoodRecallNotice
 
-Resource associated with LogRecord:
-telemetry.sdk.name: opentelemetry
-telemetry.sdk.language: dotnet
-telemetry.sdk.version: 1.6.0-alpha.1.55
-service.name: unknown_service:getting-started
+...
 ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
 
 What does the above program do?
 
-The program has a
+The program has created a logging pipeline by instantiating a
 [`LoggerFactory`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.iloggerfactory)
-with OpenTelemetry added as a
-[LoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
-This `LoggerFactory` is used to create an
+instance, with OpenTelemetry added as a [logging
+provider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
+OpenTelemetry SDK is then configured with a
+[ConsoleExporter](../../../src/OpenTelemetry.Exporter.Console/README.md) to
+export the logs to the console for demonstration purpose (note: ConsoleExporter
+is not intended for production usage, other exporters such as [OTLP
+Exporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+should be used instead).
+
+The `LoggerFactory` instance is used to create an
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-instance, which is then used to do the logging. [Compile-time logging source
-  generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
-is used to achieve structured logging and better performance. The logs are sent to
-the `OpenTelemetryLoggerProvider`, which is configured to export logs to
-`ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
+instance, which is used to do the actual logging.
 
-## Note for different application types
+Following the .NET logging best practice, [compile-time logging source
+generation](https://docs.microsoft.com/dotnet/core/extensions/logger-message-generator)
+has been used across the example, which delivers high performance, structured
+logging, and type-checked parameters:
 
-Certain types of applications (e.g. [ASP.NET
-Core](https://learn.microsoft.com/aspnet/core) and [.NET
-Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)) have an
-`ILogger` based logging pipeline set up by default. In such apps, enabling
-OpenTelemetry should be done by adding OpenTelemetry as a provider to the
-*existing* logging pipeline, and users should not create a new `LoggerFactory`
-(which sets up a totally new logging pipeline). Also, obtaining `ILogger`
-instance could be done differently as well. See [Example ASP.NET Core
-application](../../../examples/AspNetCore/Program.cs) for an example which shows
-how to add OpenTelemetry to the logging pipeline already setup by the
-application.
+```csharp
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
+
+    ...
+}
+```
+
+> **Note**
+> For applications which use `ILogger` with [dependency injection
+(DI)](https://learn.microsoft.com/dotnet/core/extensions/dependency-injection)
+(e.g. [ASP.NET Core](https://learn.microsoft.com/aspnet/core) and [.NET
+Worker](https://learn.microsoft.com/dotnet/core/extensions/workers)), the common
+practice is to add OpenTelemetry as a [logging
+provider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers)
+to the DI logging pipeline, rather than set up a completely new logging pipeline
+by creating a new `LoggerFactory` instance.
+>
+> Refer to the [Getting Started with OpenTelemetry .NET Logs in 5 Minutes -
+ASP.NET Core Application](../getting-started-aspnetcore/README.md) tutorial to
+learn more.
 
 ## Learn more
 

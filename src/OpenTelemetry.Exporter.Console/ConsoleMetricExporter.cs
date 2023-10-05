@@ -157,8 +157,8 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                         var offset = exponentialHistogramData.PositiveBuckets.Offset;
                         foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
                         {
-                            var lowerBound = Base2ExponentialBucketHistogram.LowerBoundary(offset, scale).ToString(CultureInfo.InvariantCulture);
-                            var upperBound = Base2ExponentialBucketHistogram.LowerBoundary(++offset, scale).ToString(CultureInfo.InvariantCulture);
+                            var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(offset, scale).ToString(CultureInfo.InvariantCulture);
+                            var upperBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(++offset, scale).ToString(CultureInfo.InvariantCulture);
                             bucketsBuilder.AppendLine($"({lowerBound}, {upperBound}]:{bucketCount}");
                         }
                     }

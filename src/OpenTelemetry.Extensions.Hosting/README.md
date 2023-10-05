@@ -87,8 +87,8 @@ A fully functional example can be found
 
 To dynamically add resources at startup from the dependency injection you can
 provide an `IResourceDetector`.
-To make use of it add it to the dependency injection and they you can use the
-`ISerivceProvider` add it to OpenTelemetry:
+To make use of it add it to the dependency injection and then you can use the
+`IServiceProvider` to add it to OpenTelemetry:
 
 ```csharp
 public class MyResourceDetector : IResourceDetector

@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -251,13 +249,13 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns><see cref="TracerProvider"/>.</returns>
-    public static TracerProvider? Build(this TracerProviderBuilder tracerProviderBuilder)
+    public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
     {
         if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
         {
             return tracerProviderBuilderBase.InvokeBuild();
         }
 
-        return null;
+        throw new NotSupportedException($"Build is not supported on '{tracerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
     }
 }

@@ -17,8 +17,8 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.Name.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> string![]?
 OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
-~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>!
 static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider! provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider! provider, int timeoutMilliseconds = -1) -> bool
@@ -319,7 +319,7 @@ OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string?
 OpenTelemetry.Trace.TraceIdRatioBasedSampler
 OpenTelemetry.Trace.TraceIdRatioBasedSampler.TraceIdRatioBasedSampler(double probability) -> void
 OpenTelemetry.Trace.TracerProviderBuilderBase
-OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string! instrumentationName, string! instrumentationVersion, System.Func<object!>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string! instrumentationName, string! instrumentationVersion, System.Func<object?>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider!
 OpenTelemetry.Trace.TracerProviderBuilderBase.TracerProviderBuilderBase() -> void
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
@@ -368,7 +368,7 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this Op
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, string! instrumentName, OpenTelemetry.Metrics.MetricStreamConfiguration! metricStreamConfiguration) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, string! instrumentName, string! name) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Func<System.Diagnostics.Metrics.Instrument!, OpenTelemetry.Metrics.MetricStreamConfiguration?>! viewConfig) -> OpenTelemetry.Metrics.MeterProviderBuilder!
-static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProvider?
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProvider!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricPointsPerMetricStream(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, int maxMetricPointsPerMetricStream) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricStreams(this OpenTelemetry.Metrics.MeterProviderBuilder! meterProviderBuilder, int maxMetricStreams) -> OpenTelemetry.Metrics.MeterProviderBuilder!
@@ -398,7 +398,7 @@ static OpenTelemetry.Trace.SamplingResult.operator ==(OpenTelemetry.Trace.Sampli
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>! processor) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>!>! implementationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor<T>(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
-static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider?
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!

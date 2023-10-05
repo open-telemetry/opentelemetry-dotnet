@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+* Bumped the version of `Google.Protobuf` used by the project to `3.22.5` so
+  that consuming applications can be published as NativeAOT successfully. Also,
+  a new performance feature can be used instead of reflection emit, which is
+  not AOT-compatible. Removed the dependency on `System.Reflection.Emit.Lightweight`.
+  ([#4859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4859))
+
+* Added support for `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
+  and `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`.
+  ([#4887](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4887))
+
+* Added ability to export attributes corresponding to `LogRecord.Exception` i.e.
+`exception.type`, `exception.message` and `exception.stacktrace`. These
+attributes will be exported when
+`OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES` environment
+variable will be set to `true`.
+([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
+
 ## 1.6.0
 
 Released 2023-Sep-05
