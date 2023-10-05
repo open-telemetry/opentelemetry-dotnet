@@ -18,9 +18,6 @@
     <PackageReference Include="Microsoft.Coyote.Test" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.CSharp" Condition="'$(TargetFramework)' == 'net462'" />
-    <PackageReference Include="System.Text.Json">
-      <NoWarn>NU1605</NoWarn>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
