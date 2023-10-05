@@ -1,4 +1,4 @@
-// <copyright file="MeterProvider.cs" company="OpenTelemetry Authors">
+// <copyright file="LookupData.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics;
 
-/// <summary>
-/// MeterProvider base class.
-/// </summary>
-public class MeterProvider : BaseProvider
+internal sealed class LookupData
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MeterProvider"/> class.
-    /// </summary>
-    protected MeterProvider()
+    public int Index;
+    public Tags SortedTags;
+    public Tags GivenTags;
+
+    public LookupData(int index, in Tags sortedTags, in Tags givenTags)
     {
+        this.Index = index;
+        this.SortedTags = sortedTags;
+        this.GivenTags = givenTags;
     }
 }

@@ -32,16 +32,30 @@ public static class MeterProviderBuilderExtensions
             services.RegisterOptionsFactory(configuration => new HttpClientMetricInstrumentationOptions(configuration));
         });
 
-        // TODO: Implement an IDeferredMeterProviderBuilder
-
-        // TODO: Handle HttpClientInstrumentationOptions
+        // TODO: Handle HttpClientMetricInstrumentationOptions
         //   SetHttpFlavor - seems like this would be handled by views
         //   Filter - makes sense for metric instrumentation
         //   Enrich - do we want a similar kind of functionality for metrics?
         //   RecordException - probably doesn't make sense for metric instrumentation
 
-        builder.AddMeter(HttpClientMetrics.InstrumentationName);
-        return builder.AddInstrumentation(sp => new HttpClientMetrics(
-            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().CurrentValue));
+#if NETFRAMEWORK
+        builder.AddMeter(HttpWebRequestActivitySource.MeterName);
+
+        if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+        {
+            deferredMeterProviderBuilder.Configure((sp, builder) =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName);
+
+                HttpWebRequestActivitySource.MetricsOptions = options;
+            });
+        }
+#else
+        builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
+
+        builder.AddInstrumentation(sp => new HttpClientMetrics(
+            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
+#endif
+        return builder;
     }
 }

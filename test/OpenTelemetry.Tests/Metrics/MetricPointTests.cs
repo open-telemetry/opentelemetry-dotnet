@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Tests;
 public sealed class MetricPointTests : IDisposable
 {
     private readonly Meter meter;
-    private readonly MeterProvider provider;
+    private readonly MeterProvider meterProvider;
     private readonly Metric metric;
     private readonly Histogram<long> histogram;
     private readonly double[] bounds;
@@ -43,7 +43,7 @@ public sealed class MetricPointTests : IDisposable
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems)
             .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
@@ -51,7 +51,7 @@ public sealed class MetricPointTests : IDisposable
 
         this.histogram.Record(500);
 
-        this.provider.ForceFlush();
+        this.meterProvider.ForceFlush();
 
         this.metric = exportedItems[0];
         var metricPointsEnumerator = this.metric.GetMetricPoints().GetEnumerator();
@@ -62,7 +62,7 @@ public sealed class MetricPointTests : IDisposable
     public void Dispose()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Fact]
