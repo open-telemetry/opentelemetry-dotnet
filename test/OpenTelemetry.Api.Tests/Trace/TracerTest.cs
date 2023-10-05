@@ -283,6 +283,32 @@ public class TracerTest : IDisposable
         Assert.False(span.IsRecording);
     }
 
+    [Fact]
+    public void TracerBecomesNoopWhenParentProviderIsDisposedTest()
+    {
+        TracerProvider provider = null;
+        Tracer tracer = null;
+
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("mytracer")
+            .Build())
+        {
+            provider = tracerProvider;
+            tracer = tracerProvider.GetTracer("mytracer");
+
+            var span1 = tracer.StartSpan("foo");
+            Assert.True(span1.IsRecording);
+        }
+
+        var span2 = tracer.StartSpan("foo");
+        Assert.False(span2.IsRecording);
+
+        var tracer2 = provider.GetTracer("mytracer");
+
+        var span3 = tracer2.StartSpan("foo");
+        Assert.False(span3.IsRecording);
+    }
+
     public void Dispose()
     {
         Activity.Current = null;
