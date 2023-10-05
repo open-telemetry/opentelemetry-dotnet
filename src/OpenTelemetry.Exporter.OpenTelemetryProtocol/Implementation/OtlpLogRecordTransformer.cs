@@ -91,33 +91,28 @@ internal sealed class OtlpLogRecordTransformer
             var attributeValueLengthLimit = this.sdkLimitOptions.LogRecordAttributeValueLengthLimit;
             var attributeCountLimit = this.sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
 
-            /*
-            // Removing this temporarily for stable release
-            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776
-            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491
-            // First add the generic attributes like Category, EventId and Exception,
-            // so they are less likely being dropped because of AttributeCountLimit.
-
-            if (!string.IsNullOrEmpty(logRecord.CategoryName))
+            if (this.experimentalOptions.EmitLogEventAndCategoryAttributes)
             {
-                // TODO:
-                // 1. Track the following issue, and map CategoryName to Name
-                // if it makes it to log data model.
-                // https://github.com/open-telemetry/opentelemetry-specification/issues/2398
-                // 2. Confirm if this name for attribute is good.
-                otlpLogRecord.AddStringAttribute("dotnet.ilogger.category", logRecord.CategoryName, attributeValueLengthLimit, attributeCountLimit);
-            }
+                if (!string.IsNullOrEmpty(logRecord.CategoryName))
+                {
+                    // TODO:
+                    // 1. Track the following issue, and map CategoryName to Name
+                    // if it makes it to log data model.
+                    // https://github.com/open-telemetry/opentelemetry-specification/issues/2398
+                    // 2. Confirm if this name for attribute is good.
+                    AddStringAttribute(otlpLogRecord, "dotnet.ilogger.category", logRecord.CategoryName, attributeValueLengthLimit, attributeCountLimit);
+                }
 
-            if (logRecord.EventId.Id != default)
-            {
-                otlpLogRecord.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id, attributeCountLimit);
-            }
+                if (logRecord.EventId.Id != default)
+                {
+                    AddIntAttribute(otlpLogRecord, "event.id", logRecord.EventId.Id, attributeCountLimit);
+                }
 
-            if (!string.IsNullOrEmpty(logRecord.EventId.Name))
-            {
-                otlpLogRecord.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                if (!string.IsNullOrEmpty(logRecord.EventId.Name))
+                {
+                    AddStringAttribute(otlpLogRecord, "event.name", logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                }
             }
-            */
 
             if (this.experimentalOptions.EmitLogExceptionAttributes && logRecord.Exception != null)
             {

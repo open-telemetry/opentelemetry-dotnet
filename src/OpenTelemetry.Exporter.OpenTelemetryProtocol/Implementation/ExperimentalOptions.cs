@@ -25,6 +25,8 @@ internal sealed class ExperimentalOptions
 {
     public const string EMITLOGEXCEPTIONATTRIBUTES = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES";
 
+    public const string EMITCATEGORYANDEVENTATTRIBUTES = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_AND_EVENT_LOG_ATTRIBUTES";
+
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
     {
@@ -36,10 +38,20 @@ internal sealed class ExperimentalOptions
         {
             this.EmitLogExceptionAttributes = emitLogExceptionAttributes;
         }
+
+        if (configuration.TryGetBoolValue(EMITCATEGORYANDEVENTATTRIBUTES, out var emitLogEventAndCategoryAttributes))
+        {
+            this.EmitLogEventAndCategoryAttributes = emitLogEventAndCategoryAttributes;
+        }
     }
 
     /// <summary>
     /// Gets or sets a value indicating whether log exception attributes should be exported.
     /// </summary>
     public bool EmitLogExceptionAttributes { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether log event and category attributes should be exported.
+    /// </summary>
+    public bool EmitLogEventAndCategoryAttributes { get; set; } = false;
 }
