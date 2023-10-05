@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Changed the behavior of the `OpenTelemetryBuilder.AddOpenTelemetry` extension
+  to INSERT OpenTelemetry services at the beginning of the `IServiceCollection`
+  in an attempt to provide a better experience for end users capturing telemetry
+  in hosted services. Note that this does not guarantee that OpenTelemetry
+  services will be initialized while other hosted services start, so it is
+  possible to miss telemetry until OpenTelemetry services are fully initialized.
+  ([#4883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4883))
+
 ## 1.6.0
 
 Released 2023-Sep-05
