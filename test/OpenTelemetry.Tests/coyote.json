@@ -1,5 +1,5 @@
 {
-  "AssembliesPath": ".\\bin\\Debug\\net7.0",
+  "AssembliesPath": ".\\bin\\Debug\\net8.0",
   "Assemblies": [
     "OpenTelemetry.Api.dll",
     "OpenTelemetry.Api.ProviderBuilderExtensions.dll",

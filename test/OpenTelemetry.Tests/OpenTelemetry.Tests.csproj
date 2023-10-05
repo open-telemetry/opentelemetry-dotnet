@@ -1,9 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <NoWarn>$(NoWarn),CS0618</NoWarn>
 
     <!-- this is temporary. will remove in future PR. -->
@@ -20,9 +18,6 @@
     <PackageReference Include="Microsoft.Coyote.Test" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.CSharp" Condition="'$(TargetFramework)' == 'net462'" />
-    <PackageReference Include="System.Text.Json">
-      <NoWarn>NU1605</NoWarn>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

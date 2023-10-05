@@ -35,6 +35,14 @@ public class Tracer
         this.ActivitySource = activitySource;
     }
 
+    [Flags]
+    private enum StartSpanBehaviors
+    {
+        ActivateNewSpan = 0b1,
+        DeactivateNewSpan = 0b10,
+        NewSpanAsRoot = 0b100,
+    }
+
     /// <summary>
     /// Gets the current span from the context.
     /// </summary>
@@ -86,7 +94,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(false, name, kind, default, initialAttributes, links, startTime);
+        return this.StartSpanHelper(StartSpanBehaviors.NewSpanAsRoot | StartSpanBehaviors.DeactivateNewSpan, name, kind, default, initialAttributes, links, startTime);
     }
 
     /// <summary>
@@ -132,7 +140,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(false, name, kind, in parentContext, initialAttributes, links, startTime);
+        return this.StartSpanHelper(StartSpanBehaviors.DeactivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
     }
 
     /// <summary>
@@ -178,7 +186,7 @@ public class Tracer
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
     {
-        return this.StartSpanHelper(true, name, kind, in parentContext, initialAttributes, links, startTime);
+        return this.StartSpanHelper(StartSpanBehaviors.ActivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -197,7 +205,7 @@ public class Tracer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private TelemetrySpan StartSpanHelper(
-        bool isActiveSpan,
+        StartSpanBehaviors startSpanBehavior,
         string name,
         SpanKind kind,
         in SpanContext parentContext = default,
@@ -212,19 +220,28 @@ public class Tracer
 
         var activityKind = ConvertToActivityKind(kind);
         var activityLinks = links?.Select(l => l.ActivityLink);
-        var previousActivity = !isActiveSpan ? Activity.Current : null;
+        var previousActivity = Activity.Current;
 
-        var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
-        if (activity == null)
+        if (startSpanBehavior.HasFlag(StartSpanBehaviors.NewSpanAsRoot)
+            && previousActivity != null)
         {
-            return TelemetrySpan.NoopInstance;
+            Activity.Current = null;
         }
 
-        if (!isActiveSpan)
+        try
         {
-            Activity.Current = previousActivity;
+            var activity = this.ActivitySource.StartActivity(name, activityKind, parentContext.ActivityContext, initialAttributes?.Attributes ?? null, activityLinks, startTime);
+            return activity == null
+                ? TelemetrySpan.NoopInstance
+                : new TelemetrySpan(activity);
         }
-
-        return new TelemetrySpan(activity);
+        finally
+        {
+            if (startSpanBehavior.HasFlag(StartSpanBehaviors.DeactivateNewSpan)
+                && Activity.Current != previousActivity)
+            {
+                Activity.Current = previousActivity;
+            }
+        }
     }
 }

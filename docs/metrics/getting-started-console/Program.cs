@@ -39,6 +39,6 @@ public class Program
 
         // Dispose meter provider before the application ends.
         // This will flush the remaining metrics and shutdown the metrics pipeline.
-        meterProvider?.Dispose();
+        meterProvider.Dispose();
     }
 }

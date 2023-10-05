@@ -20,6 +20,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -112,7 +113,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 path: "/metrics_path",
                 configureBranchedPipeline: branch => branch.Use((context, next) =>
                 {
-                    context.Response.Headers.Add("X-MiddlewareExecuted", "true");
+                    context.Response.Headers.Append("X-MiddlewareExecuted", "true");
                     return next();
                 }),
                 optionsName: null),
@@ -139,7 +140,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 path: "/metrics_path",
                 configureBranchedPipeline: branch => branch.Use((context, next) =>
                 {
-                    context.Response.Headers.Add("X-MiddlewareExecuted", "true");
+                    context.Response.Headers.Append("X-MiddlewareExecuted", "true");
                     return next();
                 }),
                 optionsName: null),
