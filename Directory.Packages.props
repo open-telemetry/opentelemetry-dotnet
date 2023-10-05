@@ -26,7 +26,7 @@
 
     <!--
         Typically, the latest stable version of Microsoft.Extensions.Logging should be used here because:
-        1) Each major version bump will have some new API capabilities (e.g. .NET 6 introduced Compile-time logging
+        1) Each major version bump will have some new API capabilities (e.g. .NET 6 introduced compile-time logging
           source generation, .NET 8 introduced automatic event id generation).
         2) Each minor version bump is normally security hotfixes or critical bug fixes.
         3) Since version 3.1.0, the .NET runtime team provides extra backward compatibility guarantee to
