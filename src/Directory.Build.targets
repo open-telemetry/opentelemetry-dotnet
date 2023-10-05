@@ -1,7 +1,4 @@
 <Project>
-  <PropertyGroup Condition="'$(MinVerTagPrefix)' == 'core-'">
-    <PackageValidationBaselineVersion>$(OTelLatestStableVer)</PackageValidationBaselineVersion>
-  </PropertyGroup>
 
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
