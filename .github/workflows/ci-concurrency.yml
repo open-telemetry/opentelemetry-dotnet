@@ -16,7 +16,7 @@ jobs:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ windows-latest ]
-        version: [ net8.0 ]
+        version: [ net7.0 ]
         coyote-version: [ 1.7.10 ]
 
     runs-on: ${{ matrix.os }}

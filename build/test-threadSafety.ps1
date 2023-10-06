@@ -32,7 +32,6 @@ Write-Host "Rewritten Json file:", $RewriteOptionsJson
 
 Write-Host "Run Coyote rewrite."
 coyote rewrite $rootDirectory/test/OpenTelemetry.Tests/rewrite.coyote.json
-
 Write-Host "done re-written"
 
 Write-Host "Execute re-written binary."
