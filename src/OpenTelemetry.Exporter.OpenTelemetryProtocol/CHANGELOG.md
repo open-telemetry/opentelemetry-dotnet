@@ -19,6 +19,13 @@ attributes will be exported when
 variable will be set to `true`.
 ([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
 
+* Added ability to export attributes corresponding to `LogRecord.EventId` as
+`event.id` and `event.name` and `LogRecord.Category` as
+`dotnet.ilogger.category`. These attributes will be exported when
+`OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_AND_EVENT_LOG_ATTRIBUTES` will be
+set to `true`.
+([#]())
+
 ## 1.6.0
 
 Released 2023-Sep-05
