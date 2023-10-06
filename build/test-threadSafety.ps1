@@ -3,7 +3,7 @@ param(
   [Parameter(Mandatory=$true)][string]$targetFramework
 )
 
-Write-Host "Test running coyote"
+Write-Host "Test running Coyote."
 $rootDirectory = Split-Path $PSScriptRoot -Parent
 
 Write-Host "Install Coyote CLI."
@@ -15,13 +15,7 @@ dotnet build $rootDirectory/test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
 $artifactsPath = Join-Path $rootDirectory "test/OpenTelemetry.Tests/bin/Debug/$targetNetFramework"
 
 Write-Host "Generating Coyote rewriting options JSON file."
-$dlls = Get-ChildItem $artifactsPath -Filter *.dll
-$assemblies = New-Object System.Collections.ArrayList
-
-foreach ($dll in $dlls)
-{
-    $assemblies.Add("Assemblies", $dll)
-}
+$assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-Object {$_.Name}
 
 $RewriteOptionsJson = @{}
 [void]$RewriteOptionsJson.Add("AssembliesPath", $artifactsPath)
@@ -32,13 +26,13 @@ Write-Host "Rewritten Json file:", $RewriteOptionsJson
 
 Write-Host "Run Coyote rewrite."
 coyote rewrite $rootDirectory/test/OpenTelemetry.Tests/rewrite.coyote.json
-Write-Host "done re-written"
+Write-Host "Done re-written."
 
 Write-Host "Execute re-written binary."
 # test name can be passed in
 $Output = dotnet test $artifactsPath/OpenTelemetry.Tests.dll --filter MultithreadedLongHistogramTest_Coyote
 
-Write-Host "Verify test pass"
+Write-Host "Verify test pass."
 foreach ($line in $($Output -split "`r`n"))
 {
     Write-Host $line
