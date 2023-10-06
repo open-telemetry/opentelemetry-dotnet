@@ -17,14 +17,28 @@
 attributes will be exported when
 `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES` environment
 variable will be set to `true`.
-([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
 
-* Added ability to export attributes corresponding to `LogRecord.EventId` as
-`event.id` and `event.name` and `LogRecord.CategoryName` as
-`dotnet.ilogger.category`. These attributes will be exported when
-`OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_AND_EVENT_LOG_ATTRIBUTES` will be
-set to `true`.
-([#4925](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4925))
+  **NOTE**: These attributes were removed in [1.6.0-rc.1](#160-rc1) release in
+  order to support stable release of OTLP Log Exporter. The attributes will now be
+  available via environment variable mentioned above.
+  ([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
+
+* Added ability to export attributes corresponding to `LogRecord.EventId.Id` as
+`event.id`, `LogRecord.EventId.Name` as `event.name` and
+`LogRecord.CategoryName` as `dotnet.ilogger.category`.
+
+  * The attributes for `LogRecord.EventId.Id` and  `LogRecord.EventId.Name` will
+be exported when `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES` will
+be set to `true`.
+
+  * The attribute for `LogRecord.CategoryName` will be exported when
+`OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_LOG_ATTRIBUTE` will be set to
+`true`.
+
+  **NOTE**: These attributes were removed in [1.6.0-rc.1](#160-rc1) release in
+  order to support stable release of OTLP Log Exporter. The attributes will now be
+  available via environment variables mentioned above.
+  ([#4925](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4925))
 
 ## 1.6.0
 

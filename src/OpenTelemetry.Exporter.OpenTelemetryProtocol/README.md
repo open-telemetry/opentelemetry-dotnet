@@ -229,10 +229,15 @@ When set to `true`, it enables export of attributes corresponding to
 `exception.stacktrace` are defined in
 [specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
 
-* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_AND_EVENT_LOG_ATTRIBUTES`
+* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_LOG_ATTRIBUTE`
 
-When set to `true`, it enables export of `LogRecord.EventId` as `event.id` and
-`event.name` and `LogRecord.CategoryName` as `dotnet.ilogger.category`.
+When set to `true`, it enables export `LogRecord.CategoryName` as
+`dotnet.ilogger.category`.
+
+* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_EVENT_ATTRIBUTES
+
+When set to `true`, it enables export of `LogRecord.EventId.Id` as `event.id`
+and `LogRecord.EventId.Name` to `event.name`.
 
 ## Configure HttpClient
 

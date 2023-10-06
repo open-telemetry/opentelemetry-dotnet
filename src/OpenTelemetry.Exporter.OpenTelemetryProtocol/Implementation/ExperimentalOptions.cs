@@ -25,7 +25,9 @@ internal sealed class ExperimentalOptions
 {
     public const string EMITLOGEXCEPTIONATTRIBUTES = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES";
 
-    public const string EMITCATEGORYANDEVENTATTRIBUTES = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_AND_EVENT_LOG_ATTRIBUTES";
+    public const string EMITLOGCATEGORYATTRIBUTE = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_LOG_ATTRIBUTE";
+
+    public const string EMITLOGEVENTATTRIBUTES = "OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES";
 
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
@@ -39,9 +41,14 @@ internal sealed class ExperimentalOptions
             this.EmitLogExceptionAttributes = emitLogExceptionAttributes;
         }
 
-        if (configuration.TryGetBoolValue(EMITCATEGORYANDEVENTATTRIBUTES, out var emitLogEventAndCategoryAttributes))
+        if (configuration.TryGetBoolValue(EMITLOGCATEGORYATTRIBUTE, out var emitLogCategoryAttribute))
         {
-            this.EmitLogEventAndCategoryAttributes = emitLogEventAndCategoryAttributes;
+            this.EmitLogCategoryAttribute = emitLogCategoryAttribute;
+        }
+
+        if (configuration.TryGetBoolValue(EMITLOGEVENTATTRIBUTES, out var emitLogEventAttributes))
+        {
+            this.EmitLogEventAttributes = emitLogEventAttributes;
         }
     }
 
@@ -51,7 +58,12 @@ internal sealed class ExperimentalOptions
     public bool EmitLogExceptionAttributes { get; set; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether log event and category attributes should be exported.
+    /// Gets or sets a value indicating whether log category attribute should be exported.
     /// </summary>
-    public bool EmitLogEventAndCategoryAttributes { get; set; } = false;
+    public bool EmitLogCategoryAttribute { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether log event attributes should be exported.
+    /// </summary>
+    public bool EmitLogEventAttributes { get; set; } = false;
 }

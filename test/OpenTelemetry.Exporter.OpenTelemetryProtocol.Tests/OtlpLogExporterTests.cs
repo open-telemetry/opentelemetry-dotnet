@@ -213,7 +213,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [InlineData("true")]
     [InlineData("false")]
     [InlineData(null)]
-    public void CheckToOtlpLogRecordLoggerCategory(string emitLogEventAndCategoryAttributes)
+    public void CheckToOtlpLogRecordLoggerCategory(string emitLogCategoryAttribute)
     {
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -231,14 +231,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var logRecord = logRecords[0];
 
         var configuration = new ConfigurationBuilder()
-           .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITCATEGORYANDEVENTATTRIBUTES] = emitLogEventAndCategoryAttributes })
+           .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGCATEGORYATTRIBUTE] = emitLogCategoryAttribute })
            .Build();
 
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));
 
         var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecord);
 
-        if (emitLogEventAndCategoryAttributes == "true")
+        if (emitLogCategoryAttribute == "true")
         {
             Assert.NotNull(otlpLogRecord);
             Assert.Single(otlpLogRecord.Attributes);
@@ -268,7 +268,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [InlineData("true")]
     [InlineData("false")]
     [InlineData(null)]
-    public void CheckToOtlpLogRecordEventId(string emitLogEventAndCategoryAttributes)
+    public void CheckToOtlpLogRecordEventId(string emitLogEventAttributes)
     {
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -286,7 +286,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Single(logRecords);
 
         var configuration = new ConfigurationBuilder()
-          .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITCATEGORYANDEVENTATTRIBUTES] = emitLogEventAndCategoryAttributes })
+          .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGEVENTATTRIBUTES] = emitLogEventAttributes })
           .Build();
 
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));
@@ -300,7 +300,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         // Event
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
-        if (emitLogEventAndCategoryAttributes == "true")
+        if (emitLogEventAttributes == "true")
         {
             Assert.Contains("event.id", otlpLogRecordAttributes);
             Assert.Contains("10", otlpLogRecordAttributes);
@@ -322,7 +322,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         // Event
         otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
-        if (emitLogEventAndCategoryAttributes == "true")
+        if (emitLogEventAttributes == "true")
         {
             Assert.Contains("event.id", otlpLogRecordAttributes);
             Assert.Contains("10", otlpLogRecordAttributes);
