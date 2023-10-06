@@ -24,7 +24,7 @@ variable will be set to `true`.
 `dotnet.ilogger.category`. These attributes will be exported when
 `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_AND_EVENT_LOG_ATTRIBUTES` will be
 set to `true`.
-([#]())
+([#4925](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4925))
 
 ## 1.6.0
 
