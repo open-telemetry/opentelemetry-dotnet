@@ -1,7 +1,7 @@
 param(
   [Parameter(Mandatory=$true)][string]$coyoteVersion="",
   [Parameter(Mandatory=$true)][string]$targetFramework,
-  [Parameter(Mandatory=$true)][string]$methodNames,
+  [Parameter(Mandatory=$true)][string]$methodNames
 )
 
 $rootDirectory = Split-Path $PSScriptRoot -Parent
