@@ -1,4 +1,4 @@
-name: Coyote
+name: Concurrency tests
 
 on:
   push:
@@ -17,6 +17,7 @@ jobs:
       matrix:
         os: [ windows-latest ]
         version: [ net8.0 ]
+        coyote-version: [ 1.7.10 ]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -31,8 +32,8 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore --framework ${{ matrix.version }}
 
     - name: Coyote Test
       shell: pwsh
-      run: .\build\test-threadSafety.ps1
+      run: .\build\test-threadSafety.ps1 ${{ matrix.coyote-version }} ${{ matrix.version }}
