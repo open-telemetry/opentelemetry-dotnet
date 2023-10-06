@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -450,9 +451,48 @@ public class OpenTelemetryServicesExtensionsTests
         Assert.True(innerTestExecuted);
     }
 
+    [Fact]
+    public async Task AddOpenTelemetry_HostedServiceOrder_DoesNotMatter()
+    {
+        var exportedItems = new List<Activity>();
+
+        var builder = new HostBuilder().ConfigureServices(services =>
+        {
+            services.AddHostedService<TestHostedService>();
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
+                {
+                    builder.SetSampler(new AlwaysOnSampler());
+                    builder.AddSource(nameof(TestHostedService));
+                    builder.AddInMemoryExporter(exportedItems);
+                });
+        });
+
+        var host = builder.Build();
+        await host.StartAsync().ConfigureAwait(false);
+        await host.StopAsync().ConfigureAwait(false);
+        host.Dispose();
+
+        Assert.Single(exportedItems);
+    }
+
     private sealed class MySampler : Sampler
     {
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             => new(SamplingDecision.RecordAndSample);
+    }
+
+    private sealed class TestHostedService : BackgroundService
+    {
+        private readonly ActivitySource activitySource = new ActivitySource(nameof(TestHostedService));
+
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            using (var activity = this.activitySource.StartActivity("test"))
+            {
+            }
+
+            return Task.CompletedTask;
+        }
     }
 }
