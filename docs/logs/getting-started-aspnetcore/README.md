@@ -110,10 +110,10 @@ logging, and type-checked parameters:
 ```csharp
 public static partial class ApplicationLogs
 {
-    [LoggerMessage(Level = LogLevel.Information, Message = "Starting the app...")]
+    [LoggerMessage(LogLevel.Information, "Starting the app...")]
     public static partial void StartingApp(this ILogger logger);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 }
 ```
