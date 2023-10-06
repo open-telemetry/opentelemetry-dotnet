@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
