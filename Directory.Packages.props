@@ -4,13 +4,6 @@
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
   </PropertyGroup>
 
-  <Target Name="PreparePackageValidation" BeforeTargets="Restore">
-    <PropertyGroup>
-      <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
-      <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
-    </PropertyGroup>
-  </Target>
-
   <!--
       This section covers packages that are directly referenced by the NuGet packages published from this repository.
       Any security vulnerability in these packages or their downstream dependencies will be considered as a security
@@ -68,7 +61,6 @@
     <PackageVersion Include="Grpc.Tools" Version="[2.56.2,3.0)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23402.2]" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.2" />
-    <PackageVersion Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[3.1.6,5.0)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="3.1.20" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.0,)" />
