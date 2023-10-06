@@ -1,11 +1,15 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
   </PropertyGroup>
+
+  <Target Name="PreparePackageValidation" BeforeTargets="Restore">
+    <PropertyGroup>
+      <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
+      <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
+    </PropertyGroup>
+  </Target>
 
   <!--
       This section covers packages that are directly referenced by the NuGet packages published from this repository.
@@ -23,7 +27,17 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[2.1.0,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="[3.1.0,)" />
+
+    <!--
+        Typically, the latest stable version of Microsoft.Extensions.Logging should be used here because:
+        1) Each major version bump will have some new API capabilities (e.g. .NET 6 introduced compile-time logging
+          source generation, .NET 8 introduced automatic event id generation).
+        2) Each minor version bump is normally security hotfixes or critical bug fixes.
+        3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
+          Microsoft.Extensions.Logging even during major version bumps, so compatibility is not a concern here.
+    -->
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.1.23419.4" />
+
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="[3.1.0,)" />
     <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
@@ -77,7 +91,6 @@
     <PackageVersion Include="RabbitMQ.Client" Version="[6.5.0,7.0)" />
     <PackageVersion Include="StyleCop.Analyzers" Version="[1.2.0-beta.507,2.0)" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="[6.4.0]" />
-    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="Testcontainers.MsSql" Version="3.3.0" />
     <PackageVersion Include="Testcontainers.SqlEdge" Version="3.3.0" />
     <PackageVersion Include="xunit" Version="[2.5.0,3.0)" />
