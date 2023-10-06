@@ -355,6 +355,7 @@ public partial class HttpClientTests
             {
                 var metric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.duration");
                 Assert.NotNull(metric);
+                Assert.Equal("ms", metric.Unit);
                 Assert.True(metric.MetricType == MetricType.Histogram);
 
                 var metricPoints = new List<MetricPoint>();
@@ -381,6 +382,7 @@ public partial class HttpClientTests
                     Assert.True(sum > 0);
                 }
 
+                // Inspect Metric Attributes
                 var attributes = new Dictionary<string, object>();
                 foreach (var tag in metricPoint.Tags)
                 {
@@ -391,28 +393,38 @@ public partial class HttpClientTests
 
                 Assert.Equal(expectedAttributeCount, attributes.Count);
 
-                if (semanticConvention == null || semanticConvention.Value.HasFlag(HttpSemanticConvention.Old))
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetPeerName && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpFlavor && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
+                if (tc.ResponseExpected)
                 {
-                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
-                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetPeerName && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetPeerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpFlavor && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-                    if (tc.ResponseExpected)
-                    {
-                        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
-                    }
-                    else
-                    {
-                        Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpStatusCode);
-                    }
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
                 }
+                else
+                {
+                    Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpStatusCode);
+                }
+
+                // Inspect Histogram Bounds
+                var histogramBuckets = metricPoint.GetHistogramBuckets();
+                var histogramBounds = new List<double>();
+                foreach (var t in histogramBuckets)
+                {
+                    histogramBounds.Add(t.ExplicitBound);
+                }
+
+                Assert.Equal(
+                    expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
+                    actual: histogramBounds);
             }
 
             if (semanticConvention != null && semanticConvention.Value.HasFlag(HttpSemanticConvention.New))
             {
                 var metric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.request.duration");
                 Assert.NotNull(metric);
+                Assert.Equal("s", metric.Unit);
                 Assert.True(metric.MetricType == MetricType.Histogram);
 
                 var metricPoints = new List<MetricPoint>();
@@ -439,6 +451,7 @@ public partial class HttpClientTests
                     Assert.True(sum > 0);
                 }
 
+                // Inspect Metric Attributes
                 var attributes = new Dictionary<string, object>();
                 foreach (var tag in metricPoint.Tags)
                 {
@@ -461,6 +474,18 @@ public partial class HttpClientTests
                 {
                     Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
                 }
+
+                // Inspect Histogram Bounds
+                var histogramBuckets = metricPoint.GetHistogramBuckets();
+                var histogramBounds = new List<double>();
+                foreach (var t in histogramBuckets)
+                {
+                    histogramBounds.Add(t.ExplicitBound);
+                }
+
+                Assert.Equal(
+                    expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+                    actual: histogramBounds);
             }
         }
     }

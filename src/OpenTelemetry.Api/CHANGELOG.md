@@ -6,6 +6,10 @@
   trace was running (`Activity.Current != null`).
   ([#4890](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4890))
 
+* Added a `Tracer` cache inside of `TracerProvider` to prevent repeated calls to
+  `GetTracer` from leaking memory.
+  ([#4906](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4906))
+
 * Fix `TraceContextPropagator` behavior when trace parent flags contains
   illegal characters.
   ([#4893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4893))

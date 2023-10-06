@@ -1,11 +1,15 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
   </PropertyGroup>
+
+  <Target Name="PreparePackageValidation" BeforeTargets="Restore">
+    <PropertyGroup>
+      <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
+      <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
+    </PropertyGroup>
+  </Target>
 
   <!--
       This section covers packages that are directly referenced by the NuGet packages published from this repository.
