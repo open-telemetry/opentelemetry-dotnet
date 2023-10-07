@@ -18,7 +18,7 @@ using System.Diagnostics;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-#if !NET8_0
+#if !NET8_0_OR_GREATER
 using System.Reflection;
 using System.Text.Json;
 #endif
@@ -35,7 +35,7 @@ public partial class HttpClientTests
 {
     public static readonly IEnumerable<object[]> TestData = HttpTestData.ReadTestCases();
 
-#if !NET8_0
+#if !NET8_0_OR_GREATER
     [Theory]
     [MemberData(nameof(TestData))]
     public async Task HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsOldSemanticConventionsAsync(HttpTestData.HttpOutTestCase tc)
@@ -74,21 +74,7 @@ public partial class HttpClientTests
             enableMetrics: true,
             semanticConvention: HttpSemanticConvention.Dupe).ConfigureAwait(false);
     }
-#endif
 
-    [Theory]
-    [MemberData(nameof(TestData))]
-    public async Task HttpOutCallsAreCollectedSuccessfullyTracesOnlyAsync(HttpTestData.HttpOutTestCase tc)
-    {
-        await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
-            this.host,
-            this.port,
-            tc,
-            enableTracing: true,
-            enableMetrics: false).ConfigureAwait(false);
-    }
-
-#if !NET8_0
     [Theory]
     [MemberData(nameof(TestData))]
     public async Task HttpOutCallsAreCollectedSuccessfullyMetricsOnlyAsync(HttpTestData.HttpOutTestCase tc)
@@ -104,6 +90,18 @@ public partial class HttpClientTests
 
     [Theory]
     [MemberData(nameof(TestData))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyTracesOnlyAsync(HttpTestData.HttpOutTestCase tc)
+    {
+        await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
+            this.host,
+            this.port,
+            tc,
+            enableTracing: true,
+            enableMetrics: false).ConfigureAwait(false);
+    }
+
+    [Theory]
+    [MemberData(nameof(TestData))]
     public async Task HttpOutCallsAreCollectedSuccessfullyNoSignalsAsync(HttpTestData.HttpOutTestCase tc)
     {
         await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
@@ -114,7 +112,7 @@ public partial class HttpClientTests
             enableMetrics: false).ConfigureAwait(false);
     }
 
-#if !NET8_0
+#if !NET8_0_OR_GREATER
     [Fact]
     public async Task DebugIndividualTestAsync()
     {
@@ -156,7 +154,7 @@ public partial class HttpClientTests
         await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
     }
 
-#if NET8_0
+#if NET8_0_OR_GREATER
     [Theory]
     [MemberData(nameof(TestData))]
     public async Task ValidateNet8MetricsAsync(HttpTestData.HttpOutTestCase tc)
@@ -445,7 +443,7 @@ public partial class HttpClientTests
                 Assert.Single(requestMetrics);
             }
 
-#if !NET8_0
+#if !NET8_0_OR_GREATER
             if (semanticConvention == null || semanticConvention.Value.HasFlag(HttpSemanticConvention.Old))
             {
                 var metric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.duration");
@@ -764,6 +762,18 @@ public partial class HttpClientTests
 
         // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
         // Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = clientConnectionDurationMetricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+            actual: histogramBounds);
     }
 
     private void ValidateDnsLookUpDurationMetric(Metric dnsLookUpDurationMetric, HttpTestData.HttpOutTestCase tc)
@@ -798,6 +808,18 @@ public partial class HttpClientTests
         Assert.Single(dnsLookUpDurationAttributes);
 
         Assert.Contains(dnsLookUpDurationAttributes, kvp => kvp.Key == "dns.question.name" && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = dnsLookUpDurationMetricMetricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+            actual: histogramBounds);
     }
 
     private void ValidateRequestTimeInQueueMetric(Metric requestTimeInQueueMetric, HttpTestData.HttpOutTestCase tc)
@@ -838,6 +860,18 @@ public partial class HttpClientTests
 
         // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
         // Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
+
+        // Inspect Histogram Bounds
+        var histogramBuckets = requestTimeInQueueMetricPoint.GetHistogramBuckets();
+        var histogramBounds = new List<double>();
+        foreach (var t in histogramBuckets)
+        {
+            histogramBounds.Add(t.ExplicitBound);
+        }
+
+        Assert.Equal(
+            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
+            actual: histogramBounds);
     }
 
     private void ValidateRequestDurationMetric(Metric requestDurationMetric, HttpTestData.HttpOutTestCase tc)
