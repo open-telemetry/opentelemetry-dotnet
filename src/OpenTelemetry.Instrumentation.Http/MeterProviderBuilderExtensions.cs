@@ -64,10 +64,18 @@ public static class MeterProviderBuilderExtensions
             });
         }
 #else
-        builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
+        if (HttpHandlerMetricsDiagnosticListener.IsNet8OrGreater)
+        {
+            builder.AddMeter("System.Net.Http");
+            builder.AddMeter("System.Net.NameResolution");
+        }
+        else
+        {
+            builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
 
-        builder.AddInstrumentation(sp => new HttpClientMetrics(
-            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
+            builder.AddInstrumentation(sp => new HttpClientMetrics(
+                sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
+        }
 #endif
         return builder;
     }

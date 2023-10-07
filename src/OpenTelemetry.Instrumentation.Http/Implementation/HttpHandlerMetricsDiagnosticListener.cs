@@ -31,6 +31,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation;
 internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 {
     internal const string OnStopEvent = "System.Net.Http.HttpRequestOut.Stop";
+    internal static readonly bool IsNet8OrGreater;
 
     internal static readonly AssemblyName AssemblyName = typeof(HttpClientMetrics).Assembly.GetName();
     internal static readonly string MeterName = AssemblyName.Name;
@@ -44,6 +45,18 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private readonly HttpClientMetricInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
+
+    static HttpHandlerMetricsDiagnosticListener()
+    {
+        try
+        {
+            IsNet8OrGreater = typeof(HttpClient).Assembly.GetName().Version.Major >= 8;
+        }
+        catch (Exception)
+        {
+            IsNet8OrGreater = false;
+        }
+    }
 
     public HttpHandlerMetricsDiagnosticListener(string name, HttpClientMetricInstrumentationOptions options)
         : base(name)
