@@ -652,7 +652,7 @@ public partial class HttpClientTests
         }
     }
 
-#if NET8_0
+#if NET8_0_OR_GREATER
     private void ValidateClientActiveRequests(Metric clientActiveRequests, HttpTestData.HttpOutTestCase tc)
     {
         var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
