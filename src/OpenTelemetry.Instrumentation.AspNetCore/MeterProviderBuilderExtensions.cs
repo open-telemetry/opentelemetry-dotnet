@@ -14,10 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET8_0_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Internal;
+#endif
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -34,8 +38,23 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddAspNetCoreInstrumentation(
         this MeterProviderBuilder builder)
-        => AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
+    {
+        Guard.ThrowIfNull(builder);
 
+#if !NET8_0_OR_GREATER
+        return AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
+#else
+        return builder
+             .AddMeter("Microsoft.AspNetCore.Hosting")
+             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+             .AddMeter("Microsoft.AspNetCore.Http.Connections")
+             .AddMeter("Microsoft.AspNetCore.Routing")
+             .AddMeter("Microsoft.AspNetCore.Diagnostics")
+             .AddMeter("Microsoft.AspNetCore.RateLimiting");
+#endif
+    }
+
+#if !NET8_0_OR_GREATER
     /// <summary>
     /// Enables the incoming requests automatic data collection for ASP.NET Core.
     /// </summary>
@@ -91,4 +110,5 @@ public static class MeterProviderBuilderExtensions
 
         return builder;
     }
+#endif
 }

@@ -32,6 +32,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
+    private const string NetworkProtocolName = "http";
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -184,6 +185,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         TagList tags = default;
 
         // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolName, NetworkProtocolName));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
