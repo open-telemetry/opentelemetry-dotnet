@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <!-- Note: PackageValidationBaselineVersion is defined in targets because $(MinVerTagPrefix) is not available to props as they apply before csproj. -->
     <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
