@@ -2,10 +2,66 @@
 
 ## Unreleased
 
-* Updated [Http Semantic Conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.21.0/specification/trace/semantic_conventions/http.md).
-  This library can emit either old, new, or both attributes. Users can control
-  which attributes are emitted by setting the environment variable
-  `OTEL_SEMCONV_STABILITY_OPT_IN`.
+* Introduced a new metric for `HttpClient`, `http.client.request.duration`
+  measured in seconds. The OTel SDK
+  [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+  for this metric to comply with the
+  [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
+  This new metric is only available for users who opt-in to the new
+  semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable to either `http` (to emit only the new metric) or
+  `http/dup` (to emit both the new and old metrics).
+  ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
+
+  * New metric: `http.client.request.duration`
+    * Unit: `s` (seconds)
+    * Histogram Buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5,
+    0.75, 1,  2.5, 5, 7.5, 10`
+  * Old metric: `http.client.duration`
+    * Unit: `ms` (milliseconds)
+    * Histogram Buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
+    5000, 7500, 10000`
+
+  Note: The older `http.client.duration` metric and
+  `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable will eventually be
+  removed after the HTTP semantic conventions are marked stable. At which time
+  this instrumentation can publish a stable release. Refer to the specification
+  for more information regarding the new HTTP semantic conventions:
+  * [http-spans](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-spans.md)
+  * [http-metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+
+* Added support for publishing `http.client.duration` &
+  `http.client.request.duration` metrics on .NET Framework for `HttpWebRequest`.
+  ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
+
+## 1.5.1-beta.1
+
+Released 2023-Jul-20
+
+* The new HTTP and network semantic conventions can be opted in to by setting
+  the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. This allows for a
+  transition period for users to experiment with the new semantic conventions
+  and adapt as necessary. The environment variable supports the following
+  values:
+  * `http` - emit the new, frozen (proposed for stable) HTTP and networking
+  attributes, and stop emitting the old experimental HTTP and networking
+  attributes that the instrumentation emitted previously.
+  * `http/dup` - emit both the old and the frozen (proposed for stable) HTTP
+  and networking attributes, allowing for a more seamless transition.
+  * The default behavior (in the absence of one of these values) is to continue
+  emitting the same HTTP and network semantic conventions that were emitted in
+  `1.5.0-beta.1`.
+  * Note: this option will eventually be removed after the new HTTP and
+  network semantic conventions are marked stable. At which time this
+  instrumentation can receive a stable release, and the old HTTP and
+  network semantic conventions will no longer be supported. Refer to the
+  specification for more information regarding the new HTTP and network
+  semantic conventions for both
+  [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md)
+  and
+  [metrics](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-metrics.md).
+  ([#4538](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4538),
+  [#4639](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4639))
 
 ## 1.5.0-beta.1
 

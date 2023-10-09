@@ -18,14 +18,13 @@ using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Extensions.Hosting.Tests
+namespace OpenTelemetry.Extensions.Hosting.Tests;
+
+public class EventSourceTest
 {
-    public class EventSourceTest
+    [Fact]
+    public void EventSourceTest_HostingExtensionsEventSource()
     {
-        [Fact]
-        public void EventSourceTest_HostingExtensionsEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(HostingExtensionsEventSource.Log);
-        }
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(HostingExtensionsEventSource.Log);
     }
 }

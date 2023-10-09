@@ -18,7 +18,10 @@ jobs:
 
     steps:
     - name: check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
 
     - name: Install format tool
       run: dotnet tool install -g dotnet-format

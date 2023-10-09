@@ -17,28 +17,27 @@
 using OpenTelemetry.Exporter;
 using Xunit;
 
-namespace OpenTelemetry.Metrics.Tests
+namespace OpenTelemetry.Metrics.Tests;
+
+public class MeterProviderTests
 {
-    public class MeterProviderTests
+    [Fact]
+    public void MeterProviderFindExporterTest()
     {
-        [Fact]
-        public void MeterProviderFindExporterTest()
-        {
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddInMemoryExporter(exportedItems)
-                .Build();
+        var exportedItems = new List<Metric>();
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
 
-            Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric> inMemoryExporter));
-            Assert.False(meterProvider.TryFindExporter(out MyExporter myExporter));
-        }
+        Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric> inMemoryExporter));
+        Assert.False(meterProvider.TryFindExporter(out MyExporter myExporter));
+    }
 
-        private class MyExporter : BaseExporter<Metric>
+    private class MyExporter : BaseExporter<Metric>
+    {
+        public override ExportResult Export(in Batch<Metric> batch)
         {
-            public override ExportResult Export(in Batch<Metric> batch)
-            {
-                return ExportResult.Success;
-            }
+            return ExportResult.Success;
         }
     }
 }

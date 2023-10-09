@@ -15,95 +15,101 @@
 // </copyright>
 using System.Net;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+internal class TestHttpServer
 {
-    internal class TestHttpServer
+    private static readonly Random GlobalRandom = new();
+
+    public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
     {
-        private static readonly Random GlobalRandom = new();
+        host = "localhost";
+        port = 0;
+        RunningServer server = null;
 
-        public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
+        var retryCount = 5;
+        while (retryCount > 0)
         {
-            host = "localhost";
-            port = 0;
-            RunningServer server = null;
-
-            var retryCount = 5;
-            while (retryCount > 0)
+            try
             {
-                try
-                {
-                    port = GlobalRandom.Next(2000, 5000);
-                    server = new RunningServer(action, host, port);
-                    server.Start();
-                    break;
-                }
-                catch (HttpListenerException)
-                {
-                    retryCount--;
-                }
+                port = GlobalRandom.Next(2000, 5000);
+                server = new RunningServer(action, host, port);
+                server.Start();
+                break;
             }
-
-            return server;
+            catch (HttpListenerException)
+            {
+                server?.Dispose();
+                server = null;
+                retryCount--;
+            }
         }
 
-        private class RunningServer : IDisposable
+        if (server == null)
         {
-            private readonly Task httpListenerTask;
-            private readonly HttpListener listener;
-            private readonly AutoResetEvent initialized = new(false);
+            throw new InvalidOperationException("Server could not be started.");
+        }
 
-            public RunningServer(Action<HttpListenerContext> action, string host, int port)
+        return server;
+    }
+
+    private class RunningServer : IDisposable
+    {
+        private readonly Task httpListenerTask;
+        private readonly HttpListener listener;
+        private readonly AutoResetEvent initialized = new(false);
+
+        public RunningServer(Action<HttpListenerContext> action, string host, int port)
+        {
+            this.listener = new HttpListener();
+
+            this.listener.Prefixes.Add($"http://{host}:{port}/");
+            this.listener.Start();
+
+            this.httpListenerTask = new Task(async () =>
             {
-                this.listener = new HttpListener();
-
-                this.listener.Prefixes.Add($"http://{host}:{port}/");
-                this.listener.Start();
-
-                this.httpListenerTask = new Task(async () =>
+                while (true)
                 {
-                    while (true)
+                    try
                     {
-                        try
-                        {
-                            var ctxTask = this.listener.GetContextAsync();
+                        var ctxTask = this.listener.GetContextAsync();
 
-                            this.initialized.Set();
+                        this.initialized.Set();
 
-                            action(await ctxTask.ConfigureAwait(false));
-                        }
-                        catch (Exception ex)
-                        {
-                            if (ex is ObjectDisposedException
-                                || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995))
-                            {
-                                // Listener was closed before we got into GetContextAsync or
-                                // Listener was closed while we were in GetContextAsync.
-                                break;
-                            }
-
-                            throw;
-                        }
+                        action(await ctxTask.ConfigureAwait(false));
                     }
-                });
-            }
+                    catch (Exception ex)
+                    {
+                        if (ex is ObjectDisposedException
+                            || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995))
+                        {
+                            // Listener was closed before we got into GetContextAsync or
+                            // Listener was closed while we were in GetContextAsync.
+                            break;
+                        }
 
-            public void Start()
-            {
-                this.httpListenerTask.Start();
-                this.initialized.WaitOne();
-            }
+                        throw;
+                    }
+                }
+            });
+        }
 
-            public void Dispose()
+        public void Start()
+        {
+            this.httpListenerTask.Start();
+            this.initialized.WaitOne();
+        }
+
+        public void Dispose()
+        {
+            try
             {
-                try
-                {
-                    this.listener.Close();
-                    this.httpListenerTask?.Wait();
-                }
-                catch (ObjectDisposedException)
-                {
-                    // swallow this exception just in case
-                }
+                this.listener.Close();
+                this.httpListenerTask?.Wait();
+            }
+            catch (ObjectDisposedException)
+            {
+                // swallow this exception just in case
             }
         }
     }

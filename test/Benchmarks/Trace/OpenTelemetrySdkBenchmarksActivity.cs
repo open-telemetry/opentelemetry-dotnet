@@ -39,43 +39,42 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 |                    CreateActiviti_WithKind_NoopProcessor | 437.5 ns | 2.05 ns | 1.92 ns | 0.0992 |     416 B |
 */
 
-namespace Benchmarks.Trace
+namespace Benchmarks.Trace;
+
+public class OpenTelemetrySdkBenchmarksActivity
 {
-    public class OpenTelemetrySdkBenchmarksActivity
+    private readonly ActivitySource benchmarkSource = new("Benchmark");
+    private readonly ActivityContext parentCtx = new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+    private readonly string parentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
+    private TracerProvider tracerProvider;
+
+    [GlobalSetup]
+    public void GlobalSetup()
     {
-        private readonly ActivitySource benchmarkSource = new("Benchmark");
-        private readonly ActivityContext parentCtx = new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
-        private readonly string parentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
-        private TracerProvider tracerProvider;
-
-        [GlobalSetup]
-        public void GlobalSetup()
-        {
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource("BenchMark")
-                .Build();
-        }
-
-        [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-            this.tracerProvider.Dispose();
-            this.benchmarkSource.Dispose();
-        }
-
-        [Benchmark]
-        public void CreateActivity_NoopProcessor() => ActivityCreationScenarios.CreateActivity(this.benchmarkSource);
-
-        [Benchmark]
-        public void CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
-
-        [Benchmark]
-        public void CreateActivity_WithParentId_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.benchmarkSource, this.parentId);
-
-        [Benchmark]
-        public void CreateActivity_WithAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
-
-        [Benchmark]
-        public void CreateActiviti_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("BenchMark")
+            .Build();
     }
+
+    [GlobalCleanup]
+    public void GlobalCleanup()
+    {
+        this.tracerProvider.Dispose();
+        this.benchmarkSource.Dispose();
+    }
+
+    [Benchmark]
+    public void CreateActivity_NoopProcessor() => ActivityCreationScenarios.CreateActivity(this.benchmarkSource);
+
+    [Benchmark]
+    public void CreateActivity_WithParentContext_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentContext(this.benchmarkSource, this.parentCtx);
+
+    [Benchmark]
+    public void CreateActivity_WithParentId_NoopProcessor() => ActivityCreationScenarios.CreateActivityFromParentId(this.benchmarkSource, this.parentId);
+
+    [Benchmark]
+    public void CreateActivity_WithAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
+
+    [Benchmark]
+    public void CreateActiviti_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
 }

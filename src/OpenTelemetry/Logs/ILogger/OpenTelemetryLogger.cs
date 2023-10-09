@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -263,7 +261,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         }
 
         public static LoggerInstrumentationScope Instance { get; }
-            = new("OpenTelemetry", typeof(OpenTelemetryLogger).Assembly.GetName().Version?.ToString() ?? "1.0.0");
+            = new("OpenTelemetry", Sdk.InformationalVersion);
 
         public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
             => throw new NotSupportedException();

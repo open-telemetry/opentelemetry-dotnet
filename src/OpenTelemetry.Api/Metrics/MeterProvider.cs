@@ -14,18 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+#nullable enable
+
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// MeterProvider base class.
+/// </summary>
+public class MeterProvider : BaseProvider
 {
     /// <summary>
-    /// MeterProvider base class.
+    /// Initializes a new instance of the <see cref="MeterProvider"/> class.
     /// </summary>
-    public class MeterProvider : BaseProvider
+    protected MeterProvider()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MeterProvider"/> class.
-        /// </summary>
-        protected MeterProvider()
-        {
-        }
     }
 }

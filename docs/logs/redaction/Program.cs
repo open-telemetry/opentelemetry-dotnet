@@ -17,22 +17,26 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
-namespace Redaction;
-
-public class Program
+var loggerFactory = LoggerFactory.Create(builder =>
 {
-    public static void Main()
+    builder.AddOpenTelemetry(logging =>
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddProcessor(new MyRedactionProcessor());
-                options.AddConsoleExporter();
-            }));
+        logging.AddProcessor(new MyRedactionProcessor());
+        logging.AddConsoleExporter();
+    });
+});
 
-        var logger = loggerFactory.CreateLogger<Program>();
+var logger = loggerFactory.CreateLogger<Program>();
 
-        // message will be redacted by MyRedactionProcessor
-        logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
-    }
+// Message will be redacted by MyRedactionProcessor
+logger.FoodPriceChanged("<secret>", 9.99);
+
+// Dispose logger factory before the application ends.
+// This will flush the remaining logs and shutdown the logging pipeline.
+loggerFactory.Dispose();
+
+public static partial class ApplicationLogs
+{
+    [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
+    public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 }

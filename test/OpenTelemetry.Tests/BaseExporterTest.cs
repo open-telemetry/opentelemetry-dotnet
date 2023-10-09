@@ -16,45 +16,44 @@
 
 using Xunit;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+public class BaseExporterTest
 {
-    public class BaseExporterTest
+    [Fact]
+    public void Verify_ForceFlush_HandlesException()
     {
-        [Fact]
-        public void Verify_ForceFlush_HandlesException()
+        // By default, ForceFlush should return true.
+        var testExporter = new DelegatingExporter<object>();
+        Assert.True(testExporter.ForceFlush());
+
+        // BaseExporter should catch any exceptions and return false.
+        var exceptionTestExporter = new DelegatingExporter<object>
         {
-            // By default, ForceFlush should return true.
-            var testExporter = new DelegatingExporter<object>();
-            Assert.True(testExporter.ForceFlush());
+            OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
+        };
+        Assert.False(exceptionTestExporter.ForceFlush());
+    }
 
-            // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new DelegatingExporter<object>
-            {
-                OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
-            };
-            Assert.False(exceptionTestExporter.ForceFlush());
-        }
+    [Fact]
+    public void Verify_Shutdown_HandlesSecond()
+    {
+        // By default, ForceFlush should return true.
+        var testExporter = new DelegatingExporter<object>();
+        Assert.True(testExporter.Shutdown());
 
-        [Fact]
-        public void Verify_Shutdown_HandlesSecond()
+        // A second Shutdown should return false.
+        Assert.False(testExporter.Shutdown());
+    }
+
+    [Fact]
+    public void Verify_Shutdown_HandlesException()
+    {
+        // BaseExporter should catch any exceptions and return false.
+        var exceptionTestExporter = new DelegatingExporter<object>
         {
-            // By default, ForceFlush should return true.
-            var testExporter = new DelegatingExporter<object>();
-            Assert.True(testExporter.Shutdown());
-
-            // A second Shutdown should return false.
-            Assert.False(testExporter.Shutdown());
-        }
-
-        [Fact]
-        public void Verify_Shutdown_HandlesException()
-        {
-            // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new DelegatingExporter<object>
-            {
-                OnShutdownFunc = (timeout) => throw new Exception("test exception"),
-            };
-            Assert.False(exceptionTestExporter.Shutdown());
-        }
+            OnShutdownFunc = (timeout) => throw new Exception("test exception"),
+        };
+        Assert.False(exceptionTestExporter.Shutdown());
     }
 }

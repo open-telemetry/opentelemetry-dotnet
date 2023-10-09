@@ -14,10 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Contains the buckets of an exponential histogram.
+/// </summary>
+// Note: Does not implement IEnumerable<> to prevent accidental boxing.
 public sealed class ExponentialHistogramBuckets
 {
     private long[] buckets = Array.Empty<long>();
@@ -27,8 +29,15 @@ public sealed class ExponentialHistogramBuckets
     {
     }
 
+    /// <summary>
+    /// Gets the exponential histogram offset.
+    /// </summary>
     public int Offset { get; private set; }
 
+    /// <summary>
+    /// Returns an enumerator that iterates through the <see cref="ExponentialHistogramBuckets"/>.
+    /// </summary>
+    /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator() => new(this.buckets, this.size);
 
     internal void SnapshotBuckets(CircularBufferBuckets buckets)
@@ -45,10 +54,12 @@ public sealed class ExponentialHistogramBuckets
 
     internal ExponentialHistogramBuckets Copy()
     {
-        var copy = new ExponentialHistogramBuckets();
-        copy.size = this.size;
-        copy.Offset = this.Offset;
-        copy.buckets = new long[this.buckets.Length];
+        var copy = new ExponentialHistogramBuckets
+        {
+            size = this.size,
+            Offset = this.Offset,
+            buckets = new long[this.buckets.Length],
+        };
         Array.Copy(this.buckets, copy.buckets, this.buckets.Length);
         return copy;
     }

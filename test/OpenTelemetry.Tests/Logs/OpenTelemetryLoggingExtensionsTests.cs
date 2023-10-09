@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -112,6 +113,20 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             }
 
             optionsCallbackInvocations++;
+        }
+    }
+
+    // This test validates that the OpenTelemetryLoggerOptions contains only primitive type properties.
+    // This is necessary to ensure trim correctness since that class is effectively deserialized from
+    // configuration. The top level properties are ensured via annotation on the RegisterProviderOptions API
+    // but if there was any complex type property, members of the complex type would not be preserved
+    // and could lead to incompatibilities with trimming.
+    [Fact]
+    public void TestTrimmingCorrectnessOfOpenTelemetryLoggerOptions()
+    {
+        foreach (var prop in typeof(OpenTelemetryLoggerOptions).GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        {
+            Assert.True(prop.PropertyType.IsPrimitive, $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive type. This is potentially a trim compatibility issue.");
         }
     }
 }

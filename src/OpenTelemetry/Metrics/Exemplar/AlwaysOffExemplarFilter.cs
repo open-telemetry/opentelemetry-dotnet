@@ -16,18 +16,30 @@
 
 namespace OpenTelemetry.Metrics;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// An ExemplarFilter which makes no measurements eligible for being an Exemplar.
 /// Using this ExemplarFilter is as good as disabling Exemplar feature.
 /// </summary>
-public sealed class AlwaysOffExemplarFilter : ExemplarFilter
+/// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// An ExemplarFilter which makes no measurements eligible for being an Exemplar.
+/// Using this ExemplarFilter is as good as disabling Exemplar feature.
+/// </summary>
+internal
+#endif
+    sealed class AlwaysOffExemplarFilter : ExemplarFilter
 {
-    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    /// <inheritdoc/>
+    public override bool ShouldSample(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         return false;
     }
 
-    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    /// <inheritdoc/>
+    public override bool ShouldSample(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         return false;
     }

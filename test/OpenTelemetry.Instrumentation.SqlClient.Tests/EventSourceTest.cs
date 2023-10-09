@@ -18,14 +18,13 @@ using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.SqlClient.Tests
+namespace OpenTelemetry.Instrumentation.SqlClient.Tests;
+
+public class EventSourceTest
 {
-    public class EventSourceTest
+    [Fact]
+    public void EventSourceTest_SqlClientInstrumentationEventSource()
     {
-        [Fact]
-        public void EventSourceTest_SqlClientInstrumentationEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(SqlClientInstrumentationEventSource.Log);
-        }
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(SqlClientInstrumentationEventSource.Log);
     }
 }

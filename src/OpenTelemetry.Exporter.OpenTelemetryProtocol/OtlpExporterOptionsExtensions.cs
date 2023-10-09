@@ -27,167 +27,166 @@ using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+internal static class OtlpExporterOptionsExtensions
 {
-    internal static class OtlpExporterOptionsExtensions
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+    public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
+#else
+    public static Channel CreateChannel(this OtlpExporterOptions options)
+#endif
     {
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
-        public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
-#else
-        public static Channel CreateChannel(this OtlpExporterOptions options)
-#endif
+        if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
         {
-            if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
-            {
-                throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
-            }
+            throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
+        }
 
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
-            return GrpcChannel.ForAddress(options.Endpoint);
+        return GrpcChannel.ForAddress(options.Endpoint);
 #else
-            ChannelCredentials channelCredentials;
-            if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
-            {
-                channelCredentials = new SslCredentials();
-            }
-            else
-            {
-                channelCredentials = ChannelCredentials.Insecure;
-            }
+        ChannelCredentials channelCredentials;
+        if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
+        {
+            channelCredentials = new SslCredentials();
+        }
+        else
+        {
+            channelCredentials = ChannelCredentials.Insecure;
+        }
 
-            return new Channel(options.Endpoint.Authority, channelCredentials);
+        return new Channel(options.Endpoint.Authority, channelCredentials);
 #endif
-        }
+    }
 
-        public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
+    public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
+    {
+        return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
+    }
+
+    public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+        where THeaders : new()
+    {
+        var optionHeaders = options.Headers;
+        var headers = new THeaders();
+        if (!string.IsNullOrEmpty(optionHeaders))
         {
-            return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
-        }
-
-        public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
-            where THeaders : new()
-        {
-            var optionHeaders = options.Headers;
-            var headers = new THeaders();
-            if (!string.IsNullOrEmpty(optionHeaders))
-            {
-                Array.ForEach(
-                    optionHeaders.Split(','),
-                    (pair) =>
-                    {
-                        // Specify the maximum number of substrings to return to 2
-                        // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
-                        var keyValueData = pair.Split(new char[] { '=' }, 2);
-                        if (keyValueData.Length != 2)
-                        {
-                            throw new ArgumentException("Headers provided in an invalid format.");
-                        }
-
-                        var key = keyValueData[0].Trim();
-                        var value = keyValueData[1].Trim();
-                        addHeader(headers, key, value);
-                    });
-            }
-
-            foreach (var header in OtlpExporterOptions.StandardHeaders)
-            {
-                addHeader(headers, header.Key, header.Value);
-            }
-
-            return headers;
-        }
-
-        public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
-            options.Protocol switch
-            {
-                OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
-                    options,
-                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-            };
-
-        public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
-            options.Protocol switch
-            {
-                OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
-                    options,
-                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-            };
-
-        public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
-            options.Protocol switch
-            {
-                OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
-                    options,
-                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
-            };
-
-        public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
-        {
-            if (serviceProvider != null
-                && options.Protocol == OtlpExportProtocol.HttpProtobuf
-                && options.HttpClientFactory == options.DefaultHttpClientFactory)
-            {
-                options.HttpClientFactory = () =>
+            Array.ForEach(
+                optionHeaders.Split(','),
+                (pair) =>
                 {
-                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
-                    if (httpClientFactoryType != null)
+                    // Specify the maximum number of substrings to return to 2
+                    // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
+                    var keyValueData = pair.Split(new char[] { '=' }, 2);
+                    if (keyValueData.Length != 2)
                     {
-                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
-                        if (httpClientFactory != null)
-                        {
-                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
-                                "CreateClient",
-                                BindingFlags.Public | BindingFlags.Instance,
-                                binder: null,
-                                new Type[] { typeof(string) },
-                                modifiers: null);
-                            if (createClientMethod != null)
-                            {
-                                HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
-
-                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
-
-                                return client;
-                            }
-                        }
+                        throw new ArgumentException("Headers provided in an invalid format.");
                     }
 
-                    return options.DefaultHttpClientFactory();
-                };
-            }
+                    var key = keyValueData[0].Trim();
+                    var value = keyValueData[1].Trim();
+                    addHeader(headers, key, value);
+                });
         }
 
-        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
+        foreach (var header in OtlpExporterOptions.StandardHeaders)
         {
-            var absoluteUri = uri.AbsoluteUri;
-            var separator = string.Empty;
-
-            if (absoluteUri.EndsWith("/"))
-            {
-                // Endpoint already ends with 'path/'
-                if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
-                {
-                    return uri;
-                }
-            }
-            else
-            {
-                // Endpoint already ends with 'path'
-                if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
-                {
-                    return uri;
-                }
-
-                separator = "/";
-            }
-
-            return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
+            addHeader(headers, header.Key, header.Value);
         }
+
+        return headers;
+    }
+
+    public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
+        options.Protocol switch
+        {
+            OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
+            OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
+                options,
+                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+        };
+
+    public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
+        options.Protocol switch
+        {
+            OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
+            OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
+                options,
+                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+        };
+
+    public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
+        options.Protocol switch
+        {
+            OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
+            OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
+                options,
+                options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+            _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+        };
+
+    public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
+    {
+        if (serviceProvider != null
+            && options.Protocol == OtlpExportProtocol.HttpProtobuf
+            && options.HttpClientFactory == options.DefaultHttpClientFactory)
+        {
+            options.HttpClientFactory = () =>
+            {
+                Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                if (httpClientFactoryType != null)
+                {
+                    object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    if (httpClientFactory != null)
+                    {
+                        MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                            "CreateClient",
+                            BindingFlags.Public | BindingFlags.Instance,
+                            binder: null,
+                            new Type[] { typeof(string) },
+                            modifiers: null);
+                        if (createClientMethod != null)
+                        {
+                            HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
+
+                            client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+
+                            return client;
+                        }
+                    }
+                }
+
+                return options.DefaultHttpClientFactory();
+            };
+        }
+    }
+
+    internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
+    {
+        var absoluteUri = uri.AbsoluteUri;
+        var separator = string.Empty;
+
+        if (absoluteUri.EndsWith("/"))
+        {
+            // Endpoint already ends with 'path/'
+            if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
+            {
+                return uri;
+            }
+        }
+        else
+        {
+            // Endpoint already ends with 'path'
+            if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
+            {
+                return uri;
+            }
+
+            separator = "/";
+        }
+
+        return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
     }
 }

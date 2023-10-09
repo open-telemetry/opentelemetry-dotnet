@@ -16,7 +16,6 @@ OpenTelemetry .NET SDK has provided the following built-in trace exporters:
 
 * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
-* [Jaeger](../../../src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
 * [Zipkin](../../../src/OpenTelemetry.Exporter.Zipkin/README.md)
 

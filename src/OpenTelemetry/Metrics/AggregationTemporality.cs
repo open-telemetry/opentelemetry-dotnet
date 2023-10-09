@@ -14,18 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
-{
-    public enum AggregationTemporality : byte
-    {
-        /// <summary>
-        /// Cumulative.
-        /// </summary>
-        Cumulative = 0b1,
+namespace OpenTelemetry.Metrics;
 
-        /// <summary>
-        /// Delta.
-        /// </summary>
-        Delta = 0b10,
-    }
+/// <summary>
+/// Enumeration used to define the aggregation temporality for a <see
+/// cref="Metric"/>.
+/// </summary>
+public enum AggregationTemporality : byte
+{
+    /// <summary>
+    /// Cumulative.
+    /// </summary>
+    Cumulative = 0b1,
+
+    /// <summary>
+    /// Delta.
+    /// </summary>
+    Delta = 0b10,
 }

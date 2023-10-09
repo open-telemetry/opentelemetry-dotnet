@@ -18,91 +18,105 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTracing.Propagation;
 
-namespace OpenTelemetry.Shims.OpenTracing
+namespace OpenTelemetry.Shims.OpenTracing;
+
+public class TracerShim : global::OpenTracing.ITracer
 {
-    public class TracerShim : global::OpenTracing.ITracer
+    private readonly Trace.Tracer tracer;
+    private readonly TextMapPropagator definedPropagator;
+
+    public TracerShim(Trace.TracerProvider tracerProvider)
+        : this(tracerProvider, null)
     {
-        private readonly Trace.Tracer tracer;
-        private readonly TextMapPropagator propagator;
+    }
 
-        public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
+    public TracerShim(Trace.TracerProvider tracerProvider, TextMapPropagator textFormat)
+    {
+        Guard.ThrowIfNull(tracerProvider);
+
+        var assemblyName = typeof(TracerShim).Assembly.GetName();
+        var version = assemblyName.Version;
+
+        this.tracer = tracerProvider.GetTracer("opentracing-shim", version?.ToString());
+        this.definedPropagator = textFormat;
+        this.ScopeManager = new ScopeManagerShim();
+    }
+
+    /// <inheritdoc/>
+    public global::OpenTracing.IScopeManager ScopeManager { get; }
+
+    /// <inheritdoc/>
+    public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
+
+    private TextMapPropagator Propagator
+    {
+        get
         {
-            Guard.ThrowIfNull(tracer);
-            Guard.ThrowIfNull(textFormat);
-
-            this.tracer = tracer;
-            this.propagator = textFormat;
-            this.ScopeManager = new ScopeManagerShim(this.tracer);
+            return this.definedPropagator ?? Propagators.DefaultTextMapPropagator;
         }
+    }
 
-        /// <inheritdoc/>
-        public global::OpenTracing.IScopeManager ScopeManager { get; private set; }
+    /// <inheritdoc/>
+    public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
+    {
+        return new SpanBuilderShim(this.tracer, operationName);
+    }
 
-        /// <inheritdoc/>
-        public global::OpenTracing.ISpan ActiveSpan => this.ScopeManager.Active?.Span;
+    /// <inheritdoc/>
+    public global::OpenTracing.ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
+    {
+        Guard.ThrowIfNull(format);
+        Guard.ThrowIfNull(carrier);
 
-        /// <inheritdoc/>
-        public global::OpenTracing.ISpanBuilder BuildSpan(string operationName)
+        PropagationContext propagationContext = default;
+
+        if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
         {
-            return new SpanBuilderShim(this.tracer, operationName);
-        }
+            var carrierMap = new Dictionary<string, IEnumerable<string>>();
 
-        /// <inheritdoc/>
-        public global::OpenTracing.ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
-        {
-            Guard.ThrowIfNull(format);
-            Guard.ThrowIfNull(carrier);
-
-            PropagationContext propagationContext = default;
-
-            if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
+            foreach (var entry in textMapCarrier)
             {
-                var carrierMap = new Dictionary<string, IEnumerable<string>>();
-
-                foreach (var entry in textMapCarrier)
-                {
-                    carrierMap.Add(entry.Key, new[] { entry.Value });
-                }
-
-                static IEnumerable<string> GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)
-                {
-                    if (key == null || !source.TryGetValue(key, out var value))
-                    {
-                        return null;
-                    }
-
-                    return value;
-                }
-
-                propagationContext = this.propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
+                carrierMap.Add(entry.Key, new[] { entry.Value });
             }
 
-            // TODO:
-            //  Not sure what to do here. Really, Baggage should be returned and not set until this ISpanContext is turned into a live Span.
-            //  But that code doesn't seem to exist.
-            // Baggage.Current = propagationContext.Baggage;
+            static IEnumerable<string> GetCarrierKeyValue(Dictionary<string, IEnumerable<string>> source, string key)
+            {
+                if (key == null || !source.TryGetValue(key, out var value))
+                {
+                    return null;
+                }
 
-            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
+                return value;
+            }
+
+            propagationContext = this.Propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
         }
 
-        /// <inheritdoc/>
-        public void Inject<TCarrier>(
-            global::OpenTracing.ISpanContext spanContext,
-            IFormat<TCarrier> format,
-            TCarrier carrier)
-        {
-            Guard.ThrowIfNull(spanContext);
-            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext);
-            Guard.ThrowIfNull(format);
-            Guard.ThrowIfNull(carrier);
+        // TODO:
+        //  Not sure what to do here. Really, Baggage should be returned and not set until this ISpanContext is turned into a live Span.
+        //  But that code doesn't seem to exist.
+        // Baggage.Current = propagationContext.Baggage;
 
-            if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
-            {
-                this.propagator.Inject(
-                    new PropagationContext(shim.SpanContext, Baggage.Current),
-                    textMapCarrier,
-                    (instrumentation, key, value) => instrumentation.Set(key, value));
-            }
+        return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
+    }
+
+    /// <inheritdoc/>
+    public void Inject<TCarrier>(
+        global::OpenTracing.ISpanContext spanContext,
+        IFormat<TCarrier> format,
+        TCarrier carrier)
+    {
+        Guard.ThrowIfNull(spanContext);
+        var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext);
+        Guard.ThrowIfNull(format);
+        Guard.ThrowIfNull(carrier);
+
+        if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
+        {
+            this.Propagator.Inject(
+                new PropagationContext(shim.SpanContext, Baggage.Current),
+                textMapCarrier,
+                (instrumentation, key, value) => instrumentation.Set(key, value));
         }
     }
 }

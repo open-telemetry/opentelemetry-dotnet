@@ -53,104 +53,103 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 | HistogramWith7LabelsHotPath |       1000 | 760.85 ns |  6.220 ns |  5.514 ns | 761.68 ns |         - |
 */
 
-namespace Benchmarks.Metrics
+namespace Benchmarks.Metrics;
+
+public class HistogramBenchmarks
 {
-    public class HistogramBenchmarks
+    private const int MaxValue = 10000;
+    private readonly Random random = new();
+    private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+    private Histogram<long> histogram;
+    private MeterProvider meterProvider;
+    private Meter meter;
+    private double[] bounds;
+
+    // Note: Values related to `HistogramBuckets.DefaultHistogramCountForBinarySearch`
+    [Params(10, 49, 50, 1000)]
+    public int BoundCount { get; set; }
+
+    [GlobalSetup]
+    public void Setup()
     {
-        private const int MaxValue = 10000;
-        private readonly Random random = new();
-        private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
-        private Histogram<long> histogram;
-        private MeterProvider provider;
-        private Meter meter;
-        private double[] bounds;
+        this.meter = new Meter(Utils.GetCurrentMethodName());
+        this.histogram = this.meter.CreateHistogram<long>("histogram");
 
-        // Note: Values related to `HistogramBuckets.DefaultHistogramCountForBinarySearch`
-        [Params(10, 49, 50, 1000)]
-        public int BoundCount { get; set; }
-
-        [GlobalSetup]
-        public void Setup()
+        // Evenly distribute the bound values over the range [0, MaxValue)
+        this.bounds = new double[this.BoundCount];
+        for (int i = 0; i < this.bounds.Length; i++)
         {
-            this.meter = new Meter(Utils.GetCurrentMethodName());
-            this.histogram = this.meter.CreateHistogram<long>("histogram");
+            this.bounds[i] = i * MaxValue / this.bounds.Length;
+        }
 
-            // Evenly distribute the bound values over the range [0, MaxValue)
-            this.bounds = new double[this.BoundCount];
-            for (int i = 0; i < this.bounds.Length; i++)
+        var exportedItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(this.meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
-                this.bounds[i] = i * MaxValue / this.bounds.Length;
-            }
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+            })
+            .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
+            .Build();
+    }
 
-            var exportedItems = new List<Metric>();
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        this.meter?.Dispose();
+        this.meterProvider.Dispose();
+    }
 
-            this.provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(this.meter.Name)
-                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
-                {
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-                })
-                .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
-                .Build();
-        }
+    [Benchmark]
+    public void HistogramHotPath()
+    {
+        this.histogram.Record(this.random.Next(MaxValue));
+    }
 
-        [GlobalCleanup]
-        public void Cleanup()
+    [Benchmark]
+    public void HistogramWith1LabelHotPath()
+    {
+        var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
+        this.histogram.Record(this.random.Next(MaxValue), tag1);
+    }
+
+    [Benchmark]
+    public void HistogramWith3LabelsHotPath()
+    {
+        var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
+        var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
+        var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+        this.histogram.Record(this.random.Next(MaxValue), tag1, tag2, tag3);
+    }
+
+    [Benchmark]
+    public void HistogramWith5LabelsHotPath()
+    {
+        var tags = new TagList
         {
-            this.meter?.Dispose();
-            this.provider?.Dispose();
-        }
+            { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+        };
+        this.histogram.Record(this.random.Next(MaxValue), tags);
+    }
 
-        [Benchmark]
-        public void HistogramHotPath()
+    [Benchmark]
+    public void HistogramWith7LabelsHotPath()
+    {
+        var tags = new TagList
         {
-            this.histogram.Record(this.random.Next(MaxValue));
-        }
-
-        [Benchmark]
-        public void HistogramWith1LabelHotPath()
-        {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            this.histogram.Record(this.random.Next(MaxValue), tag1);
-        }
-
-        [Benchmark]
-        public void HistogramWith3LabelsHotPath()
-        {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
-            this.histogram.Record(this.random.Next(MaxValue), tag1, tag2, tag3);
-        }
-
-        [Benchmark]
-        public void HistogramWith5LabelsHotPath()
-        {
-            var tags = new TagList
-            {
-                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
-            };
-            this.histogram.Record(this.random.Next(MaxValue), tags);
-        }
-
-        [Benchmark]
-        public void HistogramWith7LabelsHotPath()
-        {
-            var tags = new TagList
-            {
-                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
-                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
-                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
-            };
-            this.histogram.Record(this.random.Next(MaxValue), tags);
-        }
+            { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+            { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+            { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+        };
+        this.histogram.Record(this.random.Next(MaxValue), tags);
     }
 }

@@ -57,7 +57,7 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
     LoggerProviderBuilder IDeferredLoggerProviderBuilder.Configure(Action<IServiceProvider, LoggerProviderBuilder> configure)
         => this.ConfigureBuilderInternal(configure);
 
-    private LoggerProviderBuilder ConfigureBuilderInternal(Action<IServiceProvider, LoggerProviderBuilder> configure)
+    private LoggerProviderServiceCollectionBuilder ConfigureBuilderInternal(Action<IServiceProvider, LoggerProviderBuilder> configure)
     {
         var services = this.Services
             ?? throw new NotSupportedException("Builder cannot be configured during LoggerProvider construction.");
@@ -67,7 +67,7 @@ internal sealed class LoggerProviderServiceCollectionBuilder : LoggerProviderBui
         return this;
     }
 
-    private LoggerProviderBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
+    private LoggerProviderServiceCollectionBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
     {
         Guard.ThrowIfNull(configure);
 

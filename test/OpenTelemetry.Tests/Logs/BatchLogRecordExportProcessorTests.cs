@@ -19,93 +19,92 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using Xunit;
 
-namespace OpenTelemetry.Logs.Tests
+namespace OpenTelemetry.Logs.Tests;
+
+public sealed class BatchLogRecordExportProcessorTests
 {
-    public sealed class BatchLogRecordExportProcessorTests
+    [Fact]
+    public void StateValuesAndScopeBufferingTest()
     {
-        [Fact]
-        public void StateValuesAndScopeBufferingTest()
-        {
-            var scopeProvider = new LoggerExternalScopeProvider();
+        var scopeProvider = new LoggerExternalScopeProvider();
 
-            List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = new();
 
-            using var processor = new BatchLogRecordExportProcessor(
-                new InMemoryExporter<LogRecord>(exportedItems),
-                scheduledDelayMilliseconds: int.MaxValue);
+        using var processor = new BatchLogRecordExportProcessor(
+            new InMemoryExporter<LogRecord>(exportedItems),
+            scheduledDelayMilliseconds: int.MaxValue);
 
-            using var scope = scopeProvider.Push(exportedItems);
+        using var scope = scopeProvider.Push(exportedItems);
 
-            var logRecord = new LogRecord();
+        var logRecord = new LogRecord();
 
-            var state = new LogRecordTest.DisposingState("Hello world");
+        var state = new LogRecordTest.DisposingState("Hello world");
 
-            logRecord.ILoggerData.ScopeProvider = scopeProvider;
-            logRecord.StateValues = state;
+        logRecord.ILoggerData.ScopeProvider = scopeProvider;
+        logRecord.StateValues = state;
 
-            processor.OnEnd(logRecord);
+        processor.OnEnd(logRecord);
 
-            state.Dispose();
+        state.Dispose();
 
-            Assert.Empty(exportedItems);
+        Assert.Empty(exportedItems);
 
-            Assert.Null(logRecord.ILoggerData.ScopeProvider);
-            Assert.False(ReferenceEquals(state, logRecord.StateValues));
-            Assert.NotNull(logRecord.AttributeStorage);
-            Assert.NotNull(logRecord.ILoggerData.BufferedScopes);
+        Assert.Null(logRecord.ILoggerData.ScopeProvider);
+        Assert.False(ReferenceEquals(state, logRecord.StateValues));
+        Assert.NotNull(logRecord.AttributeStorage);
+        Assert.NotNull(logRecord.ILoggerData.BufferedScopes);
 
-            KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+        KeyValuePair<string, object> actualState = logRecord.StateValues[0];
 
-            Assert.Same("Value", actualState.Key);
-            Assert.Same("Hello world", actualState.Value);
+        Assert.Same("Value", actualState.Key);
+        Assert.Same("Hello world", actualState.Value);
 
-            bool foundScope = false;
+        bool foundScope = false;
 
-            logRecord.ForEachScope<object>(
-                (s, o) =>
-                {
-                    foundScope = ReferenceEquals(s.Scope, exportedItems);
-                },
-                null);
-
-            Assert.True(foundScope);
-
-            processor.Shutdown();
-
-            Assert.Single(exportedItems);
-        }
-
-        [Fact]
-        public void StateBufferingTest()
-        {
-            // LogRecord.State is never inspected or buffered. Accessing it
-            // after OnEnd may throw. This test verifies that behavior. TODO:
-            // Investigate this. Potentially obsolete logRecord.State and force
-            // StateValues/ParseStateValues behavior.
-            List<LogRecord> exportedItems = new();
-
-            using var processor = new BatchLogRecordExportProcessor(
-                new InMemoryExporter<LogRecord>(exportedItems));
-
-            var logRecord = new LogRecord();
-
-            var state = new LogRecordTest.DisposingState("Hello world");
-            logRecord.State = state;
-
-            processor.OnEnd(logRecord);
-            processor.Shutdown();
-
-            state.Dispose();
-
-            Assert.Throws<ObjectDisposedException>(() =>
+        logRecord.ForEachScope<object>(
+            (s, o) =>
             {
-                IReadOnlyList<KeyValuePair<string, object>> state = (IReadOnlyList<KeyValuePair<string, object>>)logRecord.State;
+                foundScope = ReferenceEquals(s.Scope, exportedItems);
+            },
+            null);
 
-                foreach (var kvp in state)
-                {
-                }
-            });
-        }
+        Assert.True(foundScope);
+
+        processor.Shutdown();
+
+        Assert.Single(exportedItems);
+    }
+
+    [Fact]
+    public void StateBufferingTest()
+    {
+        // LogRecord.State is never inspected or buffered. Accessing it
+        // after OnEnd may throw. This test verifies that behavior. TODO:
+        // Investigate this. Potentially obsolete logRecord.State and force
+        // StateValues/ParseStateValues behavior.
+        List<LogRecord> exportedItems = new();
+
+        using var processor = new BatchLogRecordExportProcessor(
+            new InMemoryExporter<LogRecord>(exportedItems));
+
+        var logRecord = new LogRecord();
+
+        var state = new LogRecordTest.DisposingState("Hello world");
+        logRecord.State = state;
+
+        processor.OnEnd(logRecord);
+        processor.Shutdown();
+
+        state.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() =>
+        {
+            IReadOnlyList<KeyValuePair<string, object>> state = (IReadOnlyList<KeyValuePair<string, object>>)logRecord.State;
+
+            foreach (var kvp in state)
+            {
+            }
+        });
     }
 }
 #endif

@@ -14,78 +14,75 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
+namespace OpenTelemetry;
 
-namespace OpenTelemetry
+/// <summary>
+/// A read-only collection of tag key/value pairs.
+/// </summary>
+// Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
+// prevent accidental boxing.
+public readonly struct ReadOnlyTagCollection
 {
-    /// <summary>
-    /// A read-only collection of tag key/value pairs.
-    /// </summary>
-    // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
-    // prevent accidental boxing.
-    public readonly struct ReadOnlyTagCollection
-    {
-        internal readonly KeyValuePair<string, object>[] KeyAndValues;
+    internal readonly KeyValuePair<string, object?>[] KeyAndValues;
 
-        internal ReadOnlyTagCollection(KeyValuePair<string, object>[]? keyAndValues)
+    internal ReadOnlyTagCollection(KeyValuePair<string, object?>[]? keyAndValues)
+    {
+        this.KeyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object?>>();
+    }
+
+    /// <summary>
+    /// Gets the number of tags in the collection.
+    /// </summary>
+    public int Count => this.KeyAndValues.Length;
+
+    /// <summary>
+    /// Returns an enumerator that iterates through the tags.
+    /// </summary>
+    /// <returns><see cref="Enumerator"/>.</returns>
+    public Enumerator GetEnumerator() => new(this);
+
+    /// <summary>
+    /// Enumerates the elements of a <see cref="ReadOnlyTagCollection"/>.
+    /// </summary>
+    // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+    public struct Enumerator
+    {
+        private readonly ReadOnlyTagCollection source;
+        private int index;
+
+        internal Enumerator(ReadOnlyTagCollection source)
         {
-            this.KeyAndValues = keyAndValues ?? Array.Empty<KeyValuePair<string, object>>();
+            this.source = source;
+            this.index = 0;
+            this.Current = default;
         }
 
         /// <summary>
-        /// Gets the number of tags in the collection.
+        /// Gets the tag at the current position of the enumerator.
         /// </summary>
-        public int Count => this.KeyAndValues.Length;
+        public KeyValuePair<string, object?> Current { get; private set; }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the tags.
+        /// Advances the enumerator to the next element of the <see
+        /// cref="ReadOnlyTagCollection"/>.
         /// </summary>
-        /// <returns><see cref="Enumerator"/>.</returns>
-        public Enumerator GetEnumerator() => new(this);
-
-        /// <summary>
-        /// Enumerates the elements of a <see cref="ReadOnlyTagCollection"/>.
-        /// </summary>
-        // Note: Does not implement IEnumerator<> to prevent accidental boxing.
-        public struct Enumerator
+        /// <returns><see langword="true"/> if the enumerator was
+        /// successfully advanced to the next element; <see
+        /// langword="false"/> if the enumerator has passed the end of the
+        /// collection.</returns>
+        public bool MoveNext()
         {
-            private readonly ReadOnlyTagCollection source;
-            private int index;
+            int index = this.index;
 
-            internal Enumerator(ReadOnlyTagCollection source)
+            if (index < this.source.Count)
             {
-                this.source = source;
-                this.index = 0;
-                this.Current = default;
+                this.Current = this.source.KeyAndValues[index];
+
+                this.index++;
+                return true;
             }
 
-            /// <summary>
-            /// Gets the tag at the current position of the enumerator.
-            /// </summary>
-            public KeyValuePair<string, object> Current { get; private set; }
-
-            /// <summary>
-            /// Advances the enumerator to the next element of the <see
-            /// cref="ReadOnlyTagCollection"/>.
-            /// </summary>
-            /// <returns><see langword="true"/> if the enumerator was
-            /// successfully advanced to the next element; <see
-            /// langword="false"/> if the enumerator has passed the end of the
-            /// collection.</returns>
-            public bool MoveNext()
-            {
-                int index = this.index;
-
-                if (index < this.source.Count)
-                {
-                    this.Current = this.source.KeyAndValues[index];
-
-                    this.index++;
-                    return true;
-                }
-
-                return false;
-            }
+            return false;
         }
     }
 }

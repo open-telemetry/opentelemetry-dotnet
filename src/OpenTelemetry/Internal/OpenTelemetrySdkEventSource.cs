@@ -14,370 +14,380 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics.Tracing;
 
-namespace OpenTelemetry.Internal
+namespace OpenTelemetry.Internal;
+
+/// <summary>
+/// EventSource implementation for OpenTelemetry SDK implementation.
+/// </summary>
+[EventSource(Name = "OpenTelemetry-Sdk")]
+internal sealed class OpenTelemetrySdkEventSource : EventSource
 {
-    /// <summary>
-    /// EventSource implementation for OpenTelemetry SDK implementation.
-    /// </summary>
-    [EventSource(Name = "OpenTelemetry-Sdk")]
-    internal sealed class OpenTelemetrySdkEventSource : EventSource
-    {
-        public static OpenTelemetrySdkEventSource Log = new();
+    public static OpenTelemetrySdkEventSource Log = new();
 #if DEBUG
-        public static OpenTelemetryEventListener Listener = new();
+    public static OpenTelemetryEventListener Listener = new();
 #endif
 
-        [NonEvent]
-        public void SpanProcessorException(string evnt, Exception ex)
+    [NonEvent]
+    public void SpanProcessorException(string evnt, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.SpanProcessorException(evnt, ex.ToInvariantString());
-            }
+            this.SpanProcessorException(evnt, ex.ToInvariantString());
         }
+    }
 
-        [NonEvent]
-        public void MetricObserverCallbackException(Exception exception)
+    [NonEvent]
+    public void MetricObserverCallbackException(Exception exception)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            if (exception is AggregateException aggregateException)
             {
-                if (exception is AggregateException aggregateException)
+                foreach (var ex in aggregateException.InnerExceptions)
                 {
-                    foreach (var ex in aggregateException.InnerExceptions)
-                    {
-                        this.ObservableInstrumentCallbackException(ex.ToInvariantString());
-                    }
-                }
-                else
-                {
-                    this.ObservableInstrumentCallbackException(exception.ToInvariantString());
-                }
-            }
-        }
-
-        [NonEvent]
-        public void MetricReaderException(string methodName, Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.MetricReaderException(methodName, ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void ActivityStarted(Activity activity)
-        {
-            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
-            {
-                // Accessing activity.Id here will cause the Id to be initialized
-                // before the sampler runs in case where the activity is created using legacy way
-                // i.e. new Activity("Operation name"). This will result in Id not reflecting the
-                // correct sampling flags
-                // https://github.com/dotnet/runtime/issues/61857
-                var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
-                activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
-                this.ActivityStarted(activity.DisplayName, activityId);
-            }
-        }
-
-        [NonEvent]
-        public void ActivityStopped(Activity activity)
-        {
-            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
-            {
-                this.ActivityStopped(activity.DisplayName, activity.Id);
-            }
-        }
-
-        [NonEvent]
-        public void SelfDiagnosticsFileCreateException(string logDirectory, Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.SelfDiagnosticsFileCreateException(logDirectory, ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void TracerProviderException(string evnt, Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.TracerProviderException(evnt, ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void MeterProviderException(string methodName, Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.MeterProviderException(methodName, ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void DroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
-        {
-            if (droppedCount > 0)
-            {
-                if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-                {
-                    this.ExistsDroppedExportProcessorItems(exportProcessorName, exporterName, droppedCount);
+                    this.ObservableInstrumentCallbackException(ex.ToInvariantString());
                 }
             }
             else
             {
-                if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
-                {
-                    this.NoDroppedExportProcessorItems(exportProcessorName, exporterName);
-                }
+                this.ObservableInstrumentCallbackException(exception.ToInvariantString());
             }
         }
+    }
 
-        [NonEvent]
-        public void LoggerParseStateException<TState>(Exception exception)
+    [NonEvent]
+    public void MetricReaderException(string methodName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MetricReaderException(methodName, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void ActivityStarted(Activity activity)
+    {
+        if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            // Accessing activity.Id here will cause the Id to be initialized
+            // before the sampler runs in case where the activity is created using legacy way
+            // i.e. new Activity("Operation name"). This will result in Id not reflecting the
+            // correct sampling flags
+            // https://github.com/dotnet/runtime/issues/61857
+            var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
+            activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
+            this.ActivityStarted(activity.DisplayName, activityId);
+        }
+    }
+
+    [NonEvent]
+    public void ActivityStopped(Activity activity)
+    {
+        if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            this.ActivityStopped(activity.DisplayName, activity.Id);
+        }
+    }
+
+    [NonEvent]
+    public void SelfDiagnosticsFileCreateException(string logDirectory, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.SelfDiagnosticsFileCreateException(logDirectory, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void TracerProviderException(string evnt, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.TracerProviderException(evnt, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void MeterProviderException(string methodName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.MeterProviderException(methodName, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void DroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
+    {
+        if (droppedCount > 0)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.LoggerParseStateException(typeof(TState).FullName!, exception.ToInvariantString());
+                this.ExistsDroppedExportProcessorItems(exportProcessorName, exporterName, droppedCount);
             }
         }
-
-        [NonEvent]
-        public void LoggerProviderException(string methodName, Exception ex)
+        else
         {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
             {
-                this.LoggerProviderException(methodName, ex.ToInvariantString());
+                this.NoDroppedExportProcessorItems(exportProcessorName, exporterName);
             }
         }
+    }
 
-        [NonEvent]
-        public void LoggerProcessStateSkipped<TState>()
+    [NonEvent]
+    public void LoggerParseStateException<TState>(Exception exception)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.LoggerProcessStateSkipped(
-                    typeof(TState).FullName!,
-                    "because it does not implement a supported interface (either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>)");
-            }
+            this.LoggerParseStateException(typeof(TState).FullName!, exception.ToInvariantString());
         }
+    }
 
-        [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void SpanProcessorException(string evnt, string ex)
+    [NonEvent]
+    public void LoggerProviderException(string methodName, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            this.WriteEvent(4, evnt, ex);
+            this.LoggerProviderException(methodName, ex.ToInvariantString());
         }
+    }
 
-        [Event(8, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
-        public void InvalidArgument(string methodName, string argumentName, string issue)
+    [NonEvent]
+    public void LoggerProcessStateSkipped<TState>()
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
-            this.WriteEvent(8, methodName, argumentName, issue);
+            this.LoggerProcessStateSkipped(
+                typeof(TState).FullName!,
+                "because it does not implement a supported interface (either IReadOnlyList<KeyValuePair<string, object>> or IEnumerable<KeyValuePair<string, object>>)");
         }
+    }
 
-        [Event(16, Message = "Exception occurred while invoking Observable instrument callback. Exception: '{0}'", Level = EventLevel.Warning)]
-        public void ObservableInstrumentCallbackException(string exception)
-        {
-            this.WriteEvent(16, exception);
-        }
+    [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
+    public void SpanProcessorException(string evnt, string ex)
+    {
+        this.WriteEvent(4, evnt, ex);
+    }
 
-        [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-        public void ActivityStarted(string name, string id)
-        {
-            this.WriteEvent(24, name, id);
-        }
+    [Event(8, Message = "Calling method '{0}' with invalid argument '{1}', issue '{2}'.", Level = EventLevel.Warning)]
+    public void InvalidArgument(string methodName, string argumentName, string issue)
+    {
+        this.WriteEvent(8, methodName, argumentName, issue);
+    }
 
-        [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
-        public void ActivityStopped(string name, string? id)
-        {
-            this.WriteEvent(25, name, id);
-        }
+    [Event(16, Message = "Exception occurred while invoking Observable instrument callback. Exception: '{0}'", Level = EventLevel.Warning)]
+    public void ObservableInstrumentCallbackException(string exception)
+    {
+        this.WriteEvent(16, exception);
+    }
 
-        [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
-        public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
-        {
-            this.WriteEvent(26, logDirectory, exception);
-        }
+    [Event(24, Message = "Activity started. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+    public void ActivityStarted(string name, string id)
+    {
+        this.WriteEvent(24, name, id);
+    }
 
-        [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void TracerProviderException(string evnt, string ex)
-        {
-            this.WriteEvent(28, evnt, ex);
-        }
+    [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
+    public void ActivityStopped(string name, string? id)
+    {
+        this.WriteEvent(25, name, id);
+    }
 
-        [Event(31, Message = "'{0}' exporting to '{1}' dropped '0' items.", Level = EventLevel.Informational)]
-        public void NoDroppedExportProcessorItems(string exportProcessorName, string exporterName)
-        {
-            this.WriteEvent(31, exportProcessorName, exporterName);
-        }
+    [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
+    public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
+    {
+        this.WriteEvent(26, logDirectory, exception);
+    }
 
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
-        [Event(32, Message = "'{0}' exporting to '{1}' dropped '{2}' item(s) due to buffer full.", Level = EventLevel.Warning)]
-        public void ExistsDroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
-        {
-            this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
-        }
+    [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+    public void TracerProviderException(string evnt, string ex)
+    {
+        this.WriteEvent(28, evnt, ex);
+    }
 
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
-        [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
-        public void MetricInstrumentIgnored(string instrumentName, string meterName, string reason, string fix)
-        {
-            this.WriteEvent(33, instrumentName, meterName, reason, fix);
-        }
+    [Event(31, Message = "'{0}' exporting to '{1}' dropped '0' items.", Level = EventLevel.Informational)]
+    public void NoDroppedExportProcessorItems(string exportProcessorName, string exporterName)
+    {
+        this.WriteEvent(31, exportProcessorName, exporterName);
+    }
 
-        [Event(34, Message = "Unknown error in MetricReader event '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void MetricReaderException(string methodName, string ex)
-        {
-            this.WriteEvent(34, methodName, ex);
-        }
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(32, Message = "'{0}' exporting to '{1}' dropped '{2}' item(s) due to buffer full.", Level = EventLevel.Warning)]
+    public void ExistsDroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
+    {
+        this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
+    }
 
-        [Event(35, Message = "Unknown error in MeterProvider '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void MeterProviderException(string methodName, string ex)
-        {
-            this.WriteEvent(35, methodName, ex);
-        }
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
+    public void MetricInstrumentIgnored(string instrumentName, string meterName, string reason, string fix)
+    {
+        this.WriteEvent(33, instrumentName, meterName, reason, fix);
+    }
 
-        [Event(36, Message = "Measurement dropped from Instrument Name/Metric Stream Name '{0}'. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
-        public void MeasurementDropped(string instrumentName, string reason, string fix)
-        {
-            this.WriteEvent(36, instrumentName, reason, fix);
-        }
+    [Event(34, Message = "Unknown error in MetricReader event '{0}': '{1}'.", Level = EventLevel.Error)]
+    public void MetricReaderException(string methodName, string ex)
+    {
+        this.WriteEvent(34, methodName, ex);
+    }
 
-        [Event(37, Message = "'{0}' Disposed.", Level = EventLevel.Informational)]
-        public void ProviderDisposed(string providerName)
-        {
-            this.WriteEvent(37, providerName);
-        }
+    [Event(35, Message = "Unknown error in MeterProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+    public void MeterProviderException(string methodName, string ex)
+    {
+        this.WriteEvent(35, methodName, ex);
+    }
 
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
-        [Event(38, Message = "Duplicate Instrument '{0}', Meter '{1}' encountered. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
-        public void DuplicateMetricInstrument(string instrumentName, string meterName, string reason, string fix)
-        {
-            this.WriteEvent(38, instrumentName, meterName, reason, fix);
-        }
+    [Event(36, Message = "Measurement dropped from Instrument Name/Metric Stream Name '{0}'. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
+    public void MeasurementDropped(string instrumentName, string reason, string fix)
+    {
+        this.WriteEvent(36, instrumentName, reason, fix);
+    }
 
-        [Event(39, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
-        public void MeterProviderSdkEvent(string message)
-        {
-            this.WriteEvent(39, message);
-        }
+    [Event(37, Message = "'{0}' Disposed.", Level = EventLevel.Informational)]
+    public void ProviderDisposed(string providerName)
+    {
+        this.WriteEvent(37, providerName);
+    }
 
-        [Event(40, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
-        public void MetricReaderEvent(string message)
-        {
-            this.WriteEvent(40, message);
-        }
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(38, Message = "Duplicate Instrument '{0}', Meter '{1}' encountered. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
+    public void DuplicateMetricInstrument(string instrumentName, string meterName, string reason, string fix)
+    {
+        this.WriteEvent(38, instrumentName, meterName, reason, fix);
+    }
 
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
-        [Event(41, Message = "View Configuration ignored for Instrument '{0}', Meter '{1}'. Reason: '{2}'. Measurements from the instrument will use default configuration for Aggregation. Suggested action: '{3}'", Level = EventLevel.Warning)]
-        public void MetricViewIgnored(string instrumentName, string meterName, string reason, string fix)
-        {
-            this.WriteEvent(41, instrumentName, meterName, reason, fix);
-        }
+    [Event(39, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+    public void MeterProviderSdkEvent(string message)
+    {
+        this.WriteEvent(39, message);
+    }
 
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
-        [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
-        public void ProcessorForceFlushInvoked(string processorType, bool result)
-        {
-            this.WriteEvent(43, processorType, result);
-        }
+    [Event(40, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
+    public void MetricReaderEvent(string message)
+    {
+        this.WriteEvent(40, message);
+    }
 
-        [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
-        public void OpenTelemetryLoggerProviderEvent(string message)
-        {
-            this.WriteEvent(44, message);
-        }
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(41, Message = "View Configuration ignored for Instrument '{0}', Meter '{1}'. Reason: '{2}'. Measurements from the instrument will use default configuration for Aggregation. Suggested action: '{3}'", Level = EventLevel.Warning)]
+    public void MetricViewIgnored(string instrumentName, string meterName, string reason, string fix)
+    {
+        this.WriteEvent(41, instrumentName, meterName, reason, fix);
+    }
 
-        [Event(45, Message = "ForceFlush invoked for OpenTelemetryLoggerProvider with timeoutMilliseconds = '{0}'.", Level = EventLevel.Verbose)]
-        public void OpenTelemetryLoggerProviderForceFlushInvoked(int timeoutMilliseconds)
-        {
-            this.WriteEvent(45, timeoutMilliseconds);
-        }
+#if NET6_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Parameters to this method are primitive and are trimmer safe.")]
+#endif
+    [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
+    public void ProcessorForceFlushInvoked(string processorType, bool result)
+    {
+        this.WriteEvent(43, processorType, result);
+    }
 
-        [Event(46, Message = "TracerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
-        public void TracerProviderSdkEvent(string message)
-        {
-            this.WriteEvent(46, message);
-        }
+    [Event(44, Message = "OpenTelemetryLoggerProvider event: '{0}'", Level = EventLevel.Verbose)]
+    public void OpenTelemetryLoggerProviderEvent(string message)
+    {
+        this.WriteEvent(44, message);
+    }
 
-        [Event(47, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
-        public void InvalidEnvironmentVariable(string key, string? value)
-        {
-            this.WriteEvent(47, key, value);
-        }
+    [Event(45, Message = "ForceFlush invoked for OpenTelemetryLoggerProvider with timeoutMilliseconds = '{0}'.", Level = EventLevel.Verbose)]
+    public void OpenTelemetryLoggerProviderForceFlushInvoked(int timeoutMilliseconds)
+    {
+        this.WriteEvent(45, timeoutMilliseconds);
+    }
 
-        [Event(48, Message = "Exception thrown parsing log state of type '{0}'. Exception: '{1}'", Level = EventLevel.Warning)]
-        public void LoggerParseStateException(string type, string error)
-        {
-            this.WriteEvent(48, type, error);
-        }
+    [Event(46, Message = "TracerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+    public void TracerProviderSdkEvent(string message)
+    {
+        this.WriteEvent(46, message);
+    }
 
-        [Event(49, Message = "LoggerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
-        public void LoggerProviderSdkEvent(string message)
-        {
-            this.WriteEvent(49, message);
-        }
+    [Event(47, Message = "{0} environment variable has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidEnvironmentVariable(string key, string? value)
+    {
+        this.WriteEvent(47, key, value);
+    }
 
-        [Event(50, Message = "Unknown error in LoggerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void LoggerProviderException(string methodName, string ex)
-        {
-            this.WriteEvent(50, methodName, ex);
-        }
+    [Event(48, Message = "Exception thrown parsing log state of type '{0}'. Exception: '{1}'", Level = EventLevel.Warning)]
+    public void LoggerParseStateException(string type, string error)
+    {
+        this.WriteEvent(48, type, error);
+    }
 
-        [Event(51, Message = "Skipped processing log state of type '{0}' {1}.", Level = EventLevel.Warning)]
-        public void LoggerProcessStateSkipped(string type, string reason)
-        {
-            this.WriteEvent(51, type, reason);
-        }
+    [Event(49, Message = "LoggerProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+    public void LoggerProviderSdkEvent(string message)
+    {
+        this.WriteEvent(49, message);
+    }
+
+    [Event(50, Message = "Unknown error in LoggerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+    public void LoggerProviderException(string methodName, string ex)
+    {
+        this.WriteEvent(50, methodName, ex);
+    }
+
+    [Event(51, Message = "Skipped processing log state of type '{0}' {1}.", Level = EventLevel.Warning)]
+    public void LoggerProcessStateSkipped(string type, string reason)
+    {
+        this.WriteEvent(51, type, reason);
+    }
 
 #if DEBUG
-        public class OpenTelemetryEventListener : EventListener
+    public class OpenTelemetryEventListener : EventListener
+    {
+        private readonly List<EventSource> eventSources = new();
+
+        public override void Dispose()
         {
-            private readonly List<EventSource> eventSources = new();
-
-            public override void Dispose()
+            foreach (EventSource eventSource in this.eventSources)
             {
-                foreach (EventSource eventSource in this.eventSources)
-                {
-                    this.DisableEvents(eventSource);
-                }
-
-                base.Dispose();
-                GC.SuppressFinalize(this);
+                this.DisableEvents(eventSource);
             }
 
-            protected override void OnEventSourceCreated(EventSource eventSource)
-            {
-                if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
-                {
-                    this.eventSources.Add(eventSource);
-                    this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
-                }
-
-                base.OnEventSourceCreated(eventSource);
-            }
-
-            protected override void OnEventWritten(EventWrittenEventArgs e)
-            {
-                string? message;
-                if (e.Message != null && e.Payload != null && e.Payload.Count > 0)
-                {
-                    message = string.Format(e.Message, e.Payload.ToArray());
-                }
-                else
-                {
-                    message = e.Message;
-                }
-
-                Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
-            }
+            base.Dispose();
+            GC.SuppressFinalize(this);
         }
-#endif
+
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
+            {
+                this.eventSources.Add(eventSource);
+                this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
+            }
+
+            base.OnEventSourceCreated(eventSource);
+        }
+
+        protected override void OnEventWritten(EventWrittenEventArgs e)
+        {
+            string? message;
+            if (e.Message != null && e.Payload != null && e.Payload.Count > 0)
+            {
+                message = string.Format(e.Message, e.Payload.ToArray());
+            }
+            else
+            {
+                message = e.Message;
+            }
+
+            Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
+        }
     }
+#endif
 }

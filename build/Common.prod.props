@@ -1,98 +1,92 @@
 <Project>
   <Import Project=".\Common.props" />
 
-  <ItemGroup>
-    <PackageReference Include="MinVer" Condition="'$(IntegrationBuild)' != 'true'">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Condition=" $(OS) == 'Windows_NT'">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <PropertyGroup>
-    <RunApiCompat>true</RunApiCompat>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
-    <PackageReference Include="Microsoft.DotNet.ApiCompat" PrivateAssets="All" />
-    <ResolvedMatchingContract Include="$(RepoRoot)\build\LastMajorVersionBinaries\$(AssemblyName)\$(OTelPreviousStableVer)\lib\$(TargetFramework)\$(AssemblyName).dll" />
-  </ItemGroup>
-
-  <Target Name="PreBuild" BeforeTargets="DispatchToInnerBuilds;ValidateApiCompatForSrc" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
-    <!-- Note: DispatchToInnerBuilds is called for projects with multiple
-    targets defined to spawn a build process for each target framework being
-    compiled. Executing BEFORE that step means this runs once for a project
-    instead of in parallel for each target framework defined. If we ever have a
-    project with only a single target, this will NOT run and an alternative
-    solution will be needed. -->
-    <Message Text="ApiCompat: Running the powershell script to download the package for $(MSBuildProjectName)." Importance="High"/>
-    <Exec Command="powershell -ExecutionPolicy Unrestricted -File &quot;$(RepoRoot)\build\PreBuild.ps1&quot; -package $(AssemblyName) -version &quot;$(OTelPreviousStableVer)&quot; -workDir &quot;$(RepoRoot)\build\LastMajorVersionBinaries&quot;" />
-  </Target>
-
-  <Target Name="FindContractDependencyPaths" BeforeTargets="ValidateApiCompatForSrc" AfterTargets="ResolveAssemblyReferences" Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true' AND '$(RunApiCompat)' == 'true'">
-    <Message Text="ApiCompat: Finding the contract dependency path for $(MSBuildProjectName)." Importance="High"/>
-    <ItemGroup>
-      <_ReferencePathDirectories Include="@(ReferencePath -> '%(RootDir)%(Directory)')" />
-    </ItemGroup>
-    <PropertyGroup>
-      <ContractDependencyPaths>@(_ReferencePathDirectories->Distinct())</ContractDependencyPaths>
-    </PropertyGroup>
-  </Target>
-
   <PropertyGroup>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
-    <NoWarn>$(NoWarn),1573,1712</NoWarn>
-    <PackageOutputPath Condition="$(Build_ArtifactStagingDirectory) != ''">$(Build_ArtifactStagingDirectory)</PackageOutputPath>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!--<MinVerVerbosity>detailed</MinVerVerbosity>-->
-    <ApiCompatExcludeAttributeList>$(RepoRoot)\build\GlobalAttrExclusions.txt</ApiCompatExcludeAttributeList>
+    <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
   </PropertyGroup>
 
-  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
-    <PropertyGroup>
-      <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</FileVersion>
-    </PropertyGroup>
-  </Target>
-
-  <PropertyGroup>
+  <PropertyGroup Label="PackageProperties">
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/open-telemetry/opentelemetry-dotnet</RepositoryUrl>
-    <PackageTags>Observability;OpenTelemetry;Monitoring;Telemetry;Tracing</PackageTags>
+    <PackageTags>Observability;OpenTelemetry;Monitoring;Telemetry;Tracing;Metrics;Logging</PackageTags>
     <PackageIcon>opentelemetry-icon-color.png</PackageIcon>
     <PackageProjectUrl>https://opentelemetry.io</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Authors>OpenTelemetry Authors</Authors>
+    <Copyright>Copyright The OpenTelemetry Authors</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
-
-  <PropertyGroup Label="SourceLink">
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PackageOutputPath Condition="$(Build_ArtifactStagingDirectory) != ''">$(Build_ArtifactStagingDirectory)</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(Deterministic)'=='true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
-  </ItemGroup>
-
-  <PropertyGroup Condition="'$(Deterministic)'=='true'">
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  <PropertyGroup Label="SourceLinkProperties">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(Deterministic)'=='true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
-  <!--PublicApi Analyzer-->
   <ItemGroup>
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-    <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
-    <None Include=".publicApi\*\PublicAPI.Shipped.txt" />
-    <None Include=".publicApi\*\PublicAPI.Unshipped.txt" />
+    <PackageReference Include="MinVer" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Condition="'$(IntegrationBuild)' != 'true'" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\" />
+    <SourceRoot Condition="'$(Deterministic)'=='true'" Include="$(MSBuildThisFileDirectory)/" />
+    <!-- Note: This includes all the PublicApiAnalyzers files in projects to make editing easier in the IDE -->
+    <None Include=".publicApi\**\PublicAPI.*.txt" />
+  </ItemGroup>
+
+  <Target Name="AssemblyVersionTarget" AfterTargets="MinVer" Condition="'$(MinVerVersion)'!='' AND '$(BuildNumber)' != ''">
+    <!-- Note: $(BuildNumber) is typically only set for builds initiated by the
+    publish workflow. The goal here is to set the assembly FileVersion and
+    resolve ExposeExperimentalFeatures based on the version MinVer resolved from
+    the git tag -->
+    <PropertyGroup>
+      <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</FileVersion>
+      <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' != ''">true</ExposeExperimentalFeatures>
+      <ExposeExperimentalFeatures Condition="'$(MinVerPreRelease)' == ''">false</ExposeExperimentalFeatures>
+    </PropertyGroup>
+
+    <!-- Note: The '$(TargetFramework)' != '' check here is to reduce log spam
+    in builds like dotnet pack which fire MinVer but don't resolve the actual
+    TargetFramework -->
+    <Message
+      Condition="'$(TargetFramework)' != ''"
+      Importance="high"
+      Text="**AssemblyVersionDebug** TargetFramework: $(TargetFramework), MinVerVersion: $(MinVerVersion), BuildNumber: $(BuildNumber), FileVersion: $(FileVersion), ExposeExperimentalFeatures: $(ExposeExperimentalFeatures)" />
+  </Target>
+
+  <Target Name="ResolveExposeExperimentalFeatures" BeforeTargets="CoreCompile" DependsOnTargets="AssemblyVersionTarget">
+    <!-- Note: This runs for all builds. The goal here is to set the
+    EXPOSE_EXPERIMENTAL_FEATURES compiler constant if
+    $(ExposeExperimentalFeatures) is enabled and then select the correct api
+    files for the analyzer -->
+    <PropertyGroup Condition="'$(ExposeExperimentalFeatures)' == 'true'">
+      <DefineConstants>$(DefineConstants);EXPOSE_EXPERIMENTAL_FEATURES</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(ExposeExperimentalFeatures)' != 'true'">
+      <Compile Remove="@(Compile)" Condition="'%(Compile.RequiresExposedExperimentalFeatures)' == 'true'" />
+    </ItemGroup>
+
+    <!-- Note: This selects the correct PublicApiAnalyzers files based on $(ExposeExperimentalFeatures) -->
+    <ItemGroup>
+      <AdditionalFiles Include=".publicApi\Stable\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
+      <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+    </ItemGroup>
+
+    <!-- Note: The '$(BuildNumber)' != '' check here is to reduce log spam in
+    local and CI builds. We only want to log this for the publish workflows
+    where official builds are generated -->
+    <Message
+      Condition="'$(BuildNumber)' != ''"
+      Importance="high"
+      Text="**ResolveExposeExperimentalFeaturesDebug** TargetFramework: $(TargetFramework), DefineConstants: $(DefineConstants)" />
+  </Target>
 
 </Project>

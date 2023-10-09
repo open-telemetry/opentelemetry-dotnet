@@ -7,8 +7,11 @@
     <!-- Not pack SemanticConventions project for now -->
     <SolutionProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
     <PackProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
-    <SolutionProjects Remove="src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.csproj" />
-    <PackProjects Remove="src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc\OpenTelemetry.Exporter.OpenTelemetryProtocol.Grpc.csproj" />
+
+    <!-- Skip building these projects when publish packages workflow runs as these projects need to depend upon instrumentation libraries taking a project reference
+    instead of  package reference on API/SDK-->
+    <SolutionProjects Remove="examples\**\*.csproj" Condition="'$(RunningDotNetPack)' == 'true'"/>
+    <SolutionProjects Remove="test\Benchmarks\Benchmarks.csproj" Condition="'$(RunningDotNetPack)' == 'true'"/>
 
   </ItemGroup>
 

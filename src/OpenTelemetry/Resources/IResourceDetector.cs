@@ -14,19 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
+namespace OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Resources
+/// <summary>
+/// An interface for Resource detectors.
+/// </summary>
+public interface IResourceDetector
 {
     /// <summary>
-    /// An interface for Resource detectors.
+    /// Called to get a resource with attributes from detector.
     /// </summary>
-    public interface IResourceDetector
-    {
-        /// <summary>
-        /// Called to get a resource with attributes from detector.
-        /// </summary>
-        /// <returns>An instance of <see cref="Resource"/>.</returns>
-        Resource Detect();
-    }
+    /// <returns>An instance of <see cref="Resource"/>.</returns>
+    Resource Detect();
 }

@@ -22,12 +22,28 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace OpenTelemetry.Logs;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// LoggerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Logger"/>.
 /// </summary>
-public class LoggerProvider : BaseProvider
+/// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+public
+#else
+/// <summary>
+/// LoggerProvider is the entry point of the OpenTelemetry API. It provides access to <see cref="Logger"/>.
+/// </summary>
+internal
+#endif
+    class LoggerProvider : BaseProvider
 {
     private static readonly NoopLogger NoopLogger = new();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LoggerProvider"/> class.
+    /// </summary>
+    protected LoggerProvider()
+    {
+    }
 
     /// <summary>
     /// Gets a logger.

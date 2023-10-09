@@ -14,33 +14,32 @@
 // limitations under the License.
 // </copyright>
 
-namespace TestApp.AspNetCore
+namespace TestApp.AspNetCore;
+
+public class CallbackMiddleware
 {
-    public class CallbackMiddleware
+    private readonly CallbackMiddlewareImpl impl;
+    private readonly RequestDelegate next;
+
+    public CallbackMiddleware(RequestDelegate next, CallbackMiddlewareImpl impl)
     {
-        private readonly CallbackMiddlewareImpl impl;
-        private readonly RequestDelegate next;
+        this.next = next;
+        this.impl = impl;
+    }
 
-        public CallbackMiddleware(RequestDelegate next, CallbackMiddlewareImpl impl)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (this.impl == null || await this.impl.ProcessAsync(context).ConfigureAwait(false))
         {
-            this.next = next;
-            this.impl = impl;
+            await this.next(context).ConfigureAwait(false);
         }
+    }
 
-        public async Task InvokeAsync(HttpContext context)
+    public class CallbackMiddlewareImpl
+    {
+        public virtual async Task<bool> ProcessAsync(HttpContext context)
         {
-            if (this.impl == null || await this.impl.ProcessAsync(context).ConfigureAwait(false))
-            {
-                await this.next(context).ConfigureAwait(false);
-            }
-        }
-
-        public class CallbackMiddlewareImpl
-        {
-            public virtual async Task<bool> ProcessAsync(HttpContext context)
-            {
-                return await Task.FromResult(true).ConfigureAwait(false);
-            }
+            return await Task.FromResult(true).ConfigureAwait(false);
         }
     }
 }

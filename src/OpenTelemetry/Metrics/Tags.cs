@@ -14,83 +14,84 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
-{
-    internal readonly struct Tags : IEquatable<Tags>
-    {
-        private readonly int hashCode;
+namespace OpenTelemetry.Metrics;
 
-        public Tags(KeyValuePair<string, object>[] keyValuePairs)
-        {
-            this.KeyValuePairs = keyValuePairs;
+internal readonly struct Tags : IEquatable<Tags>
+{
+    public static readonly Tags EmptyTags = new(Array.Empty<KeyValuePair<string, object?>>());
+
+    private readonly int hashCode;
+
+    public Tags(KeyValuePair<string, object?>[] keyValuePairs)
+    {
+        this.KeyValuePairs = keyValuePairs;
 
 #if NET6_0_OR_GREATER
-            HashCode hashCode = default;
-            for (int i = 0; i < this.KeyValuePairs.Length; i++)
-            {
-                ref var item = ref this.KeyValuePairs[i];
-                hashCode.Add(item.Key);
-                hashCode.Add(item.Value);
-            }
+        HashCode hashCode = default;
+        for (int i = 0; i < this.KeyValuePairs.Length; i++)
+        {
+            ref var item = ref this.KeyValuePairs[i];
+            hashCode.Add(item.Key);
+            hashCode.Add(item.Value);
+        }
 
-            var hash = hashCode.ToHashCode();
+        var hash = hashCode.ToHashCode();
 #else
-            var hash = 17;
-            for (int i = 0; i < this.KeyValuePairs.Length; i++)
+        var hash = 17;
+        for (int i = 0; i < this.KeyValuePairs.Length; i++)
+        {
+            ref var item = ref this.KeyValuePairs[i];
+            unchecked
             {
-                ref var item = ref this.KeyValuePairs[i];
-                unchecked
-                {
-                    hash = (hash * 31) + (item.Key?.GetHashCode() ?? 0);
-                    hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
-                }
+                hash = (hash * 31) + (item.Key?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
             }
+        }
 #endif
 
-            this.hashCode = hash;
+        this.hashCode = hash;
+    }
+
+    public readonly KeyValuePair<string, object?>[] KeyValuePairs { get; }
+
+    public static bool operator ==(Tags tag1, Tags tag2) => tag1.Equals(tag2);
+
+    public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
+
+    public override readonly bool Equals(object? obj)
+    {
+        return obj is Tags other && this.Equals(other);
+    }
+
+    public readonly bool Equals(Tags other)
+    {
+        var length = this.KeyValuePairs.Length;
+
+        if (length != other.KeyValuePairs.Length)
+        {
+            return false;
         }
 
-        public readonly KeyValuePair<string, object>[] KeyValuePairs { get; }
-
-        public static bool operator ==(Tags tag1, Tags tag2) => tag1.Equals(tag2);
-
-        public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
-
-        public override readonly bool Equals(object obj)
+        for (int i = 0; i < length; i++)
         {
-            return obj is Tags other && this.Equals(other);
-        }
+            ref var left = ref this.KeyValuePairs[i];
+            ref var right = ref other.KeyValuePairs[i];
 
-        public readonly bool Equals(Tags other)
-        {
-            var length = this.KeyValuePairs.Length;
-
-            if (length != other.KeyValuePairs.Length)
+            // Equality check for Keys
+            if (!left.Key.Equals(right.Key, StringComparison.Ordinal))
             {
                 return false;
             }
 
-            for (int i = 0; i < length; i++)
+            // Equality check for Values
+            if (!left.Value?.Equals(right.Value) ?? right.Value != null)
             {
-                ref var left = ref this.KeyValuePairs[i];
-                ref var right = ref other.KeyValuePairs[i];
-
-                // Equality check for Keys
-                if (!left.Key.Equals(right.Key, StringComparison.Ordinal))
-                {
-                    return false;
-                }
-
-                // Equality check for Values
-                if (!left.Value?.Equals(right.Value) ?? right.Value != null)
-                {
-                    return false;
-                }
+                return false;
             }
-
-            return true;
         }
 
-        public override readonly int GetHashCode() => this.hashCode;
+        return true;
     }
+
+    public override readonly int GetHashCode() => this.hashCode;
 }

@@ -16,38 +16,37 @@
 
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+/// <summary>
+/// <see cref="PrometheusHttpListener"/> options.
+/// </summary>
+public class PrometheusHttpListenerOptions
 {
+    private IReadOnlyCollection<string> uriPrefixes = new[] { "http://localhost:9464/" };
+
     /// <summary>
-    /// <see cref="PrometheusHttpListener"/> options.
+    /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
     /// </summary>
-    public class PrometheusHttpListenerOptions
+    public string ScrapeEndpointPath { get; set; } = "/metrics";
+
+    /// <summary>
+    /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
+    /// Default value: <c>["http://localhost:9464/"]</c>.
+    /// </summary>
+    public IReadOnlyCollection<string> UriPrefixes
     {
-        private IReadOnlyCollection<string> uriPrefixes = new[] { "http://localhost:9464/" };
-
-        /// <summary>
-        /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
-        /// </summary>
-        public string ScrapeEndpointPath { get; set; } = "/metrics";
-
-        /// <summary>
-        /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
-        /// Default value: <c>["http://localhost:9464/"]</c>.
-        /// </summary>
-        public IReadOnlyCollection<string> UriPrefixes
+        get => this.uriPrefixes;
+        set
         {
-            get => this.uriPrefixes;
-            set
+            Guard.ThrowIfNull(value);
+
+            if (value.Count == 0)
             {
-                Guard.ThrowIfNull(value);
-
-                if (value.Count == 0)
-                {
-                    throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
-                }
-
-                this.uriPrefixes = value;
+                throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
             }
+
+            this.uriPrefixes = value;
         }
     }
 }

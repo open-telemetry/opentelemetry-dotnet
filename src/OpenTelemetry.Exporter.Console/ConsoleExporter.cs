@@ -14,33 +14,32 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter
-{
-    public abstract class ConsoleExporter<T> : BaseExporter<T>
-        where T : class
-    {
-        private readonly ConsoleExporterOptions options;
+namespace OpenTelemetry.Exporter;
 
-        protected ConsoleExporter(ConsoleExporterOptions options)
+public abstract class ConsoleExporter<T> : BaseExporter<T>
+    where T : class
+{
+    private readonly ConsoleExporterOptions options;
+
+    protected ConsoleExporter(ConsoleExporterOptions options)
+    {
+        this.options = options ?? new ConsoleExporterOptions();
+        ConsoleTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
         {
-            this.options = options ?? new ConsoleExporterOptions();
-            ConsoleTagTransformer.LogUnsupportedAttributeType = (string tagValueType, string tagKey) =>
-            {
-                this.WriteLine($"Unsupported attribute type {tagValueType} for {tagKey}.");
-            };
+            this.WriteLine($"Unsupported attribute type {tagValueType} for {tagKey}.");
+        };
+    }
+
+    protected void WriteLine(string message)
+    {
+        if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
+        {
+            Console.WriteLine(message);
         }
 
-        protected void WriteLine(string message)
+        if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
         {
-            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
-            {
-                Console.WriteLine(message);
-            }
-
-            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
-            {
-                System.Diagnostics.Trace.WriteLine(message);
-            }
+            System.Diagnostics.Trace.WriteLine(message);
         }
     }
 }

@@ -1,8 +1,6 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
   <ItemGroup>
-    <PackageVersion Update="Grpc.Tools" Version="[2.44.0,3.0)" />
-    <PackageVersion Update="Microsoft.Extensions.Logging" Version="[6.0.0,)" />
     <PackageVersion Update="System.Text.Json" Version="6.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics" Version="8.0.0-metrics.preview.3" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Configuration" Version="8.0.0-metrics.preview.3" />

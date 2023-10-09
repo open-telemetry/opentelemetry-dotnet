@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -35,7 +38,11 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
     /// <typeparam name="T">Instrumentation type.</typeparam>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-    public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
+    public static TracerProviderBuilder AddInstrumentation<
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : class
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
