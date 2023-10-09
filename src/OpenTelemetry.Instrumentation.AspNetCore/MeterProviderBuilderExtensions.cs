@@ -20,9 +20,9 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
-#endif
-
+#else
 using OpenTelemetry.Internal;
+#endif
 
 namespace OpenTelemetry.Metrics;
 
