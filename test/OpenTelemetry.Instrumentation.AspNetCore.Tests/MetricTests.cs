@@ -17,6 +17,9 @@
 #if !NET8_0_OR_GREATER
 using System.Diagnostics;
 #endif
+#if NET8_0_OR_GREATER
+using Microsoft.AspNetCore.Builder;
+#endif
 using Microsoft.AspNetCore.Hosting;
 #if !NET8_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
@@ -55,6 +58,67 @@ public class MetricTests
         MeterProviderBuilder builder = null;
         Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
     }
+
+#if NET8_0_OR_GREATER
+    [Fact]
+    public async Task ValidateNet8MetricsAsync()
+    {
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
+
+        app.MapGet("/", () => "Hello");
+
+        _ = app.RunAsync();
+
+        using var client = new HttpClient();
+        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        Assert.NotNull(res);
+
+        this.meterProvider.Dispose();
+
+        var requestDurationMetric = metricItems
+            .Where(item => item.Name == "http.server.request.duration")
+            .ToArray();
+
+        var activeRequestsMetric = metricItems.
+            Where(item => item.Name == "http.server.active_requests")
+            .ToArray();
+
+        var routeMatchingMetric = metricItems.
+            Where(item => item.Name == "aspnetcore.routing.match_attempts")
+            .ToArray();
+
+        var kestrelActiveConnectionsMetric = metricItems.
+            Where(item => item.Name == "kestrel.active_connections")
+            .ToArray();
+        var kestrelQueuedConnectionMetric = metricItems.
+            Where(item => item.Name == "kestrel.queued_connections")
+            .ToArray();
+
+        Assert.Single(requestDurationMetric);
+        Assert.Single(activeRequestsMetric);
+        Assert.Single(routeMatchingMetric);
+        Assert.Single(kestrelActiveConnectionsMetric);
+        Assert.Single(kestrelQueuedConnectionMetric);
+
+        // TODO
+        // kestrel.queued_requests
+        // kestrel.upgraded_connections
+        // kestrel.rejected_connections
+        // kestrel.tls_handshake.duration
+        // kestrel.active_tls_handshakes
+
+        await app.DisposeAsync();
+    }
+#endif
 
     [Fact]
     public async Task RequestMetricIsCaptured_New()
