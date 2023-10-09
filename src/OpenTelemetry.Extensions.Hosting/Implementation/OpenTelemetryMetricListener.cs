@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics;
 internal sealed class OpenTelemetryMetricListener : IMetricsListener
 {
     private readonly MeterProviderSdk meterProviderSdk;
-    private IMetricsSource? metricsSource;
+    private IObservableInstrumentsSource? observableInstrumentsSource;
 
     public OpenTelemetryMetricListener(MeterProvider meterProvider)
     {
@@ -35,54 +35,33 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
 
         this.meterProviderSdk.OnCollectObservableInstruments += () =>
         {
-            this.metricsSource?.RecordObservableInstruments();
+            this.observableInstrumentsSource?.RecordObservableInstruments();
         };
     }
 
     public string Name => "OpenTelemetry";
 
-    public MeasurementCallback<T> GetMeasurementHandler<T>()
-        where T : struct
+    public MeasurementHandlers GetMeasurementHandlers()
     {
-        if (typeof(T) == typeof(byte))
+        return new MeasurementHandlers()
         {
-            return (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, (byte)(object)value, tags, state);
-        }
-        else if (typeof(T) == typeof(short))
-        {
-            return (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, (short)(object)value, tags, state);
-        }
-        else if (typeof(T) == typeof(int))
-        {
-            return (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, (int)(object)value, tags, state);
-        }
-        else if (typeof(T) == typeof(long))
-        {
-            return (instrument, value, tags, state)
-                => this.MeasurementRecordedLong(instrument, (long)(object)value, tags, state);
-        }
-        else if (typeof(T) == typeof(float))
-        {
-            return (instrument, value, tags, state)
-                => this.MeasurementRecordedDouble(instrument, (float)(object)value, tags, state);
-        }
-        else if (typeof(T) == typeof(double))
-        {
-            return (instrument, value, tags, state)
-                => this.MeasurementRecordedDouble(instrument, (double)(object)value, tags, state);
-        }
-        else
-        {
-            return MeasurementRecordedUnknown;
-        }
+            ByteHandler = (instrument, value, tags, state)
+                => this.MeasurementRecordedLong(instrument, value, tags, state),
+            ShortHandler = (instrument, value, tags, state)
+                => this.MeasurementRecordedLong(instrument, value, tags, state),
+            IntHandler = (instrument, value, tags, state)
+                => this.MeasurementRecordedLong(instrument, value, tags, state),
+            LongHandler = this.MeasurementRecordedLong,
+            FloatHandler = (instrument, value, tags, state)
+                => this.MeasurementRecordedDouble(instrument, value, tags, state),
+            DoubleHandler = this.MeasurementRecordedDouble,
+        };
     }
 
-    public object? InstrumentPublished(Instrument instrument)
+    public bool InstrumentPublished(Instrument instrument, out object? userState)
     {
-        return this.meterProviderSdk.InstrumentPublished(instrument, skipShouldListenToCheck: true);
+        userState = this.meterProviderSdk.InstrumentPublished(instrument, skipShouldListenToCheck: true);
+        return userState != null;
     }
 
     public void MeasurementsCompleted(Instrument instrument, object? userState)
@@ -90,14 +69,9 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
         this.meterProviderSdk.MeasurementsCompleted(instrument, userState);
     }
 
-    public void SetSource(IMetricsSource source)
+    public void Initialize(IObservableInstrumentsSource source)
     {
-        this.metricsSource = source;
-    }
-
-    private static void MeasurementRecordedUnknown<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
-    {
-        // todo: Log dropped metric
+        this.observableInstrumentsSource = source;
     }
 
     private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
