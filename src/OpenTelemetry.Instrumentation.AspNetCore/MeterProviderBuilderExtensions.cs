@@ -17,12 +17,12 @@
 #if !NET8_0_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using OpenTelemetry.Instrumentation.AspNetCore;
-using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-using OpenTelemetry.Internal;
-#else
-using OpenTelemetry.Internal;
 #endif
+using OpenTelemetry.Instrumentation.AspNetCore;
+#if !NET8_0_OR_GREATER
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+#endif
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
@@ -41,9 +41,7 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
-#if !NET8_0_OR_GREATER
-        return AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
-#else
+#if NET8_0_OR_GREATER
         return builder
              .AddMeter("Microsoft.AspNetCore.Hosting")
              .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
@@ -51,10 +49,11 @@ public static class MeterProviderBuilderExtensions
              .AddMeter("Microsoft.AspNetCore.Routing")
              .AddMeter("Microsoft.AspNetCore.Diagnostics")
              .AddMeter("Microsoft.AspNetCore.RateLimiting");
+#else
+        return AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
 #endif
     }
 
-#if !NET8_0_OR_GREATER
     /// <summary>
     /// Enables the incoming requests automatic data collection for ASP.NET Core.
     /// </summary>
@@ -79,6 +78,16 @@ public static class MeterProviderBuilderExtensions
         Action<AspNetCoreMetricsInstrumentationOptions> configureAspNetCoreInstrumentationOptions)
     {
         Guard.ThrowIfNull(builder);
+
+#if NET8_0_OR_GREATER
+        return builder
+             .AddMeter("Microsoft.AspNetCore.Hosting")
+             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+             .AddMeter("Microsoft.AspNetCore.Http.Connections")
+             .AddMeter("Microsoft.AspNetCore.Routing")
+             .AddMeter("Microsoft.AspNetCore.Diagnostics")
+             .AddMeter("Microsoft.AspNetCore.RateLimiting");
+#else
 
         // Note: Warm-up the status code mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
@@ -109,6 +118,6 @@ public static class MeterProviderBuilderExtensions
         });
 
         return builder;
-    }
 #endif
+    }
 }

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -77,4 +76,4 @@ public class AspNetCoreMetricsInstrumentationOptions
     /// </summary>
     public AspNetCoreMetricEnrichmentFunc Enrich { get; set; }
 }
-#endif
+
