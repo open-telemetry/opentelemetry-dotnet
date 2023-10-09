@@ -6,6 +6,14 @@
 
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+  </ItemGroup>
+
+  <!-- Instrumentation packages when published should take a dependency only on the latest stable version of the API/SDK. -->
+  <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
     <PackageReference Include="OpenTelemetry" />
   </ItemGroup>
 
