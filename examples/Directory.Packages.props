@@ -2,7 +2,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
   <ItemGroup>
     <PackageVersion Update="System.Text.Json" Version="6.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics" Version="8.0.0-metrics.preview.3" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Configuration" Version="8.0.0-metrics.preview.3" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics" Version="8.0.0-rc.1.23419.4" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Configuration" Version="8.0.0-rc.1.23419.4" />
   </ItemGroup>
 </Project>
