@@ -22,13 +22,13 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj"  />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj"  />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
-    <PackageReference Include="OpenTelemetry.Exporter.InMemory"  />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting"  />
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
   </ItemGroup>
 
   <ItemGroup>

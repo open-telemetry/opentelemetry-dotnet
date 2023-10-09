@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.AspNetCore.Server" Condition="'$(TargetFramework)' != 'net462'" />
-    <PackageReference Include="Grpc.Net.Client"  />
+    <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
@@ -39,11 +39,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj"  />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
-    <PackageReference Include="OpenTelemetry.Exporter.InMemory"  />
+    <PackageReference Include="OpenTelemetry.Api" />
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
   </ItemGroup>
 
   <ItemGroup>
