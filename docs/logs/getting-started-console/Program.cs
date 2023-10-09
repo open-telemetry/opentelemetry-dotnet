@@ -30,7 +30,6 @@ var logger = loggerFactory.CreateLogger<Program>();
 logger.FoodPriceChanged("artichoke", 9.99);
 
 logger.FoodRecallNotice(
-    logLevel: LogLevel.Critical,
     brandName: "Contoso",
     productDescription: "Salads",
     productType: "Food & Beverages",
@@ -43,13 +42,12 @@ loggerFactory.Dispose();
 
 public static partial class ApplicationLogs
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 
-    [LoggerMessage(EventId = 2, Message = "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
+    [LoggerMessage(LogLevel.Critical, "A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).")]
     public static partial void FoodRecallNotice(
         this ILogger logger,
-        LogLevel logLevel,
         string brandName,
         string productDescription,
         string productType,
