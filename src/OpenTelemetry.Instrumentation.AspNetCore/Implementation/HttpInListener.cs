@@ -25,6 +25,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Http;
 #if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Mvc.Diagnostics;
+using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
 #if !NETSTANDARD2_0
