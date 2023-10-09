@@ -219,7 +219,7 @@ public class MetricTests
         AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 5);
+            expectedTagsCount: 6);
     }
 
     [Fact]
