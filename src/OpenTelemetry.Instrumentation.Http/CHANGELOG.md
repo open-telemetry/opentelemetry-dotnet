@@ -45,7 +45,7 @@
     * `http.client.request.time_in_queue`
 
   * **Meter** : `System.Net.NameResolution`
-    * `dns.lookup.duration`
+    * `dns.lookups.duration`
 
   **NOTE**: Users can opt-out of metrics that are not required using
   [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#view).
