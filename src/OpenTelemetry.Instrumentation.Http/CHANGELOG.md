@@ -35,7 +35,7 @@
   ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
 
 * Following `HttpClient` metrics will now be enabled by default when targeting
-  `.NET8.0` framework.
+  `.NET8.0` framework or newer.
 
   * **Meter** : `System.Net.Http`
     * `http.client.request.duration`
