@@ -35,7 +35,7 @@ public class W3CTraceContextTests : IDisposable
      */
     private const string W3cTraceContextEnvVarName = "OTEL_W3CTRACECONTEXT";
     private static readonly Version AspNetCoreHostingVersion = typeof(Microsoft.AspNetCore.Hosting.Builder.IApplicationBuilderFactory).Assembly.GetName().Version;
-    private readonly HttpClient httpClient = new HttpClient();
+    private readonly HttpClient httpClient = new();
     private readonly ITestOutputHelper output;
 
     public W3CTraceContextTests(ITestOutputHelper output)
@@ -107,7 +107,7 @@ public class W3CTraceContextTests : IDisposable
         }
         else
         {
-            Assert.StartsWith("FAILED (failures=3)", lastLine);
+            Assert.StartsWith("FAILED (failures=2)", lastLine);
         }
     }
 
