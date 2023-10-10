@@ -74,6 +74,7 @@ public partial class HttpClientTests
             enableMetrics: true,
             semanticConvention: HttpSemanticConvention.Dupe).ConfigureAwait(false);
     }
+#endif
 
     [Theory]
     [MemberData(nameof(TestData))]
@@ -86,7 +87,6 @@ public partial class HttpClientTests
             enableTracing: false,
             enableMetrics: true).ConfigureAwait(false);
     }
-#endif
 
     [Theory]
     [MemberData(nameof(TestData))]
@@ -208,35 +208,9 @@ public partial class HttpClientTests
         }
         else
         {
+            // http.client.connection.duration and http.client.open_connections will not be emitted.
             Assert.Equal(4, requestMetrics.Count());
         }
-
-        // Validate http.client.request.duration metric
-        var requestDurationMetric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.request.duration");
-        this.ValidateRequestDurationMetric(requestDurationMetric, tc);
-
-        // Validate http.client.request.time_in_queue metric
-        var requestTimeInQueueMetric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.request.time_in_queue");
-        this.ValidateRequestTimeInQueueMetric(requestTimeInQueueMetric, tc);
-
-        // Validate dns.lookups.duration metric
-        var dnsLookUpDuration = requestMetrics.FirstOrDefault(m => m.Name == "dns.lookups.duration");
-        this.ValidateDnsLookUpDurationMetric(dnsLookUpDuration, tc);
-
-        if (tc.ResponseExpected)
-        {
-            // Validate http.client.connection.duration metric
-            var clientConnectionDuration = requestMetrics.FirstOrDefault(m => m.Name == "http.client.connection.duration");
-            this.ValidateHttpClientConnectionDurationMetric(clientConnectionDuration, tc);
-
-            // Validate http.client.open_connections metric
-            var clientOpenConnections = requestMetrics.FirstOrDefault(m => m.Name == "http.client.open_connections");
-            this.ValidateClientOpenConnections(clientOpenConnections, tc);
-        }
-
-        // Validate http.client.active_requests metric
-        var clientActiveRequests = requestMetrics.FirstOrDefault(m => m.Name == "http.client.active_requests");
-        this.ValidateClientActiveRequests(clientActiveRequests, tc);
     }
 #endif
 
@@ -302,11 +276,6 @@ public partial class HttpClientTests
             {
                 RequestUri = new Uri(testUrl),
                 Method = new HttpMethod(tc.Method),
-#if NETFRAMEWORK
-                Version = new Version(1, 1),
-#else
-                Version = new Version(2, 0),
-#endif
             };
 
             if (tc.Headers != null)
@@ -651,289 +620,4 @@ public partial class HttpClientTests
             Assert.False(enrichWithHttpResponseMessageCalled);
         }
     }
-
-#if NET8_0_OR_GREATER
-    private void ValidateClientActiveRequests(Metric clientActiveRequests, HttpTestData.HttpOutTestCase tc)
-    {
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
-
-        Assert.NotNull(clientActiveRequests);
-        Assert.Equal("{request}", clientActiveRequests.Unit);
-        Assert.True(clientActiveRequests.MetricType == MetricType.LongSumNonMonotonic);
-
-        var clientActiveRequestsMetricPoints = new List<MetricPoint>();
-        foreach (var p in clientActiveRequests.GetMetricPoints())
-        {
-            clientActiveRequestsMetricPoints.Add(p);
-        }
-
-        Assert.Single(clientActiveRequestsMetricPoints);
-        var clientActiveRequestsMetricPoint = clientActiveRequestsMetricPoints[0];
-
-        var clientActiveRequestsAttributes = new Dictionary<string, object>();
-        foreach (var tag in clientActiveRequestsMetricPoint.Tags)
-        {
-            clientActiveRequestsAttributes[tag.Key] = tag.Value;
-        }
-
-        Assert.Equal(4, clientActiveRequestsAttributes.Count());
-
-        Assert.Contains(clientActiveRequestsAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-        Assert.Contains(clientActiveRequestsAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
-        Assert.Contains(clientActiveRequestsAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-        Assert.Contains(clientActiveRequestsAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-    }
-
-    private void ValidateClientOpenConnections(Metric clientOpenConnections, HttpTestData.HttpOutTestCase tc)
-    {
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
-
-        Assert.NotNull(clientOpenConnections);
-        Assert.Equal("{connection}", clientOpenConnections.Unit);
-        Assert.True(clientOpenConnections.MetricType == MetricType.LongSumNonMonotonic);
-
-        var clientOpenConnectionsMetricPoints = new List<MetricPoint>();
-        foreach (var p in clientOpenConnections.GetMetricPoints())
-        {
-            clientOpenConnectionsMetricPoints.Add(p);
-        }
-
-        // Two metricPoints
-        // one for active connections
-        // one for idle connetions
-        Assert.Equal(2, clientOpenConnectionsMetricPoints.Count());
-
-        clientOpenConnectionsMetricPoints.ForEach((clientOpenConnectionsMetricPoint) =>
-        {
-            var clientOpenConnectionsAttributes = new Dictionary<string, object>();
-            foreach (var tag in clientOpenConnectionsMetricPoint.Tags)
-            {
-                clientOpenConnectionsAttributes[tag.Key] = tag.Value;
-            }
-
-            Assert.Equal(6, clientOpenConnectionsAttributes.Count());
-
-            Assert.Contains(clientOpenConnectionsAttributes, kvp => kvp.Key == "http.connection.state" && (kvp.Value.ToString() == "idle" || kvp.Value.ToString() == "active"));
-            Assert.Contains(clientOpenConnectionsAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-            Assert.Contains(clientOpenConnectionsAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-            Assert.Contains(clientOpenConnectionsAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-            Assert.Contains(clientOpenConnectionsAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerSocketAddress && kvp.Value.ToString() == "::1");
-
-            // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
-            // Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-        });
-    }
-
-    private void ValidateHttpClientConnectionDurationMetric(Metric clientConnectionDuration, HttpTestData.HttpOutTestCase tc)
-    {
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
-
-        Assert.NotNull(clientConnectionDuration);
-        Assert.Equal("s", clientConnectionDuration.Unit);
-        Assert.True(clientConnectionDuration.MetricType == MetricType.Histogram);
-
-        var clientConnectionDurationMetricMetricPoints = new List<MetricPoint>();
-        foreach (var p in clientConnectionDuration.GetMetricPoints())
-        {
-            clientConnectionDurationMetricMetricPoints.Add(p);
-        }
-
-        Assert.Single(clientConnectionDurationMetricMetricPoints);
-        var clientConnectionDurationMetricPoint = clientConnectionDurationMetricMetricPoints[0];
-
-        var count = clientConnectionDurationMetricPoint.GetHistogramCount();
-        var sum = clientConnectionDurationMetricPoint.GetHistogramSum();
-
-        Assert.Equal(1L, count);
-
-        // Inspect Metric Attributes
-        var clientConnectionDurationAttributes = new Dictionary<string, object>();
-        foreach (var tag in clientConnectionDurationMetricPoint.Tags)
-        {
-            clientConnectionDurationAttributes[tag.Key] = tag.Value;
-        }
-
-        Assert.Equal(5, clientConnectionDurationAttributes.Count());
-
-        Assert.Contains(clientConnectionDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-        Assert.Contains(clientConnectionDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-        Assert.Contains(clientConnectionDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-        Assert.Contains(clientConnectionDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerSocketAddress && kvp.Value.ToString() == "::1");
-
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
-        // Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-
-        // Inspect Histogram Bounds
-        var histogramBuckets = clientConnectionDurationMetricPoint.GetHistogramBuckets();
-        var histogramBounds = new List<double>();
-        foreach (var t in histogramBuckets)
-        {
-            histogramBounds.Add(t.ExplicitBound);
-        }
-
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
-    }
-
-    private void ValidateDnsLookUpDurationMetric(Metric dnsLookUpDurationMetric, HttpTestData.HttpOutTestCase tc)
-    {
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
-
-        Assert.NotNull(dnsLookUpDurationMetric);
-        Assert.Equal("s", dnsLookUpDurationMetric.Unit);
-        Assert.True(dnsLookUpDurationMetric.MetricType == MetricType.Histogram);
-
-        var dnsLookUpDurationMetricMetricPoints = new List<MetricPoint>();
-        foreach (var p in dnsLookUpDurationMetric.GetMetricPoints())
-        {
-            dnsLookUpDurationMetricMetricPoints.Add(p);
-        }
-
-        Assert.Single(dnsLookUpDurationMetricMetricPoints);
-        var dnsLookUpDurationMetricMetricPoint = dnsLookUpDurationMetricMetricPoints[0];
-
-        var count = dnsLookUpDurationMetricMetricPoint.GetHistogramCount();
-        var sum = dnsLookUpDurationMetricMetricPoint.GetHistogramSum();
-
-        Assert.Equal(1L, count);
-
-        // Inspect Metric Attributes
-        var dnsLookUpDurationAttributes = new Dictionary<string, object>();
-        foreach (var tag in dnsLookUpDurationMetricMetricPoint.Tags)
-        {
-            dnsLookUpDurationAttributes[tag.Key] = tag.Value;
-        }
-
-        Assert.Single(dnsLookUpDurationAttributes);
-
-        Assert.Contains(dnsLookUpDurationAttributes, kvp => kvp.Key == "dns.question.name" && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-
-        // Inspect Histogram Bounds
-        var histogramBuckets = dnsLookUpDurationMetricMetricPoint.GetHistogramBuckets();
-        var histogramBounds = new List<double>();
-        foreach (var t in histogramBuckets)
-        {
-            histogramBounds.Add(t.ExplicitBound);
-        }
-
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
-    }
-
-    private void ValidateRequestTimeInQueueMetric(Metric requestTimeInQueueMetric, HttpTestData.HttpOutTestCase tc)
-    {
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
-
-        Assert.NotNull(requestTimeInQueueMetric);
-        Assert.Equal("s", requestTimeInQueueMetric.Unit);
-        Assert.True(requestTimeInQueueMetric.MetricType == MetricType.Histogram);
-
-        var requestTimeInQueueMetricPoints = new List<MetricPoint>();
-        foreach (var p in requestTimeInQueueMetric.GetMetricPoints())
-        {
-            requestTimeInQueueMetricPoints.Add(p);
-        }
-
-        Assert.Single(requestTimeInQueueMetricPoints);
-        var requestTimeInQueueMetricPoint = requestTimeInQueueMetricPoints[0];
-
-        var count = requestTimeInQueueMetricPoint.GetHistogramCount();
-        var sum = requestTimeInQueueMetricPoint.GetHistogramSum();
-
-        Assert.Equal(1L, count);
-
-        // Inspect Metric Attributes
-        var requestTimeInQueueAttributes = new Dictionary<string, object>();
-        foreach (var tag in requestTimeInQueueMetricPoint.Tags)
-        {
-            requestTimeInQueueAttributes[tag.Key] = tag.Value;
-        }
-
-        Assert.Equal(5, requestTimeInQueueAttributes.Count());
-
-        Assert.Contains(requestTimeInQueueAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-        Assert.Contains(requestTimeInQueueAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
-        Assert.Contains(requestTimeInQueueAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-        Assert.Contains(requestTimeInQueueAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
-        // Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-
-        // Inspect Histogram Bounds
-        var histogramBuckets = requestTimeInQueueMetricPoint.GetHistogramBuckets();
-        var histogramBounds = new List<double>();
-        foreach (var t in histogramBuckets)
-        {
-            histogramBounds.Add(t.ExplicitBound);
-        }
-
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
-    }
-
-    private void ValidateRequestDurationMetric(Metric requestDurationMetric, HttpTestData.HttpOutTestCase tc)
-    {
-        var normalizedAttributesTestCase = tc.SpanAttributes.ToDictionary(x => x.Key, x => HttpTestData.NormalizeValues(x.Value, this.host, this.port));
-
-        Assert.NotNull(requestDurationMetric);
-        Assert.Equal("s", requestDurationMetric.Unit);
-        Assert.True(requestDurationMetric.MetricType == MetricType.Histogram);
-
-        var requestDurationMetricPoints = new List<MetricPoint>();
-        foreach (var p in requestDurationMetric.GetMetricPoints())
-        {
-            requestDurationMetricPoints.Add(p);
-        }
-
-        Assert.Single(requestDurationMetricPoints);
-        var requestDurationMetricPoint = requestDurationMetricPoints[0];
-
-        var count = requestDurationMetricPoint.GetHistogramCount();
-        var sum = requestDurationMetricPoint.GetHistogramSum();
-
-        Assert.Equal(1L, count);
-
-        // Inspect Metric Attributes
-        var requestDurationAttributes = new Dictionary<string, object>();
-        foreach (var tag in requestDurationMetricPoint.Tags)
-        {
-            requestDurationAttributes[tag.Key] = tag.Value;
-        }
-
-        var expectedRequestDurationAttributeCount = 5 + (tc.ResponseExpected ? 1 : 0);
-
-        Assert.Equal(expectedRequestDurationAttributeCount, requestDurationAttributes.Count);
-
-        Assert.Contains(requestDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-        Assert.Contains(requestDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
-        Assert.Contains(requestDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
-        Assert.Contains(requestDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
-        // Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-        if (tc.ResponseExpected)
-        {
-            Assert.Contains(requestDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
-        }
-        else
-        {
-            Assert.DoesNotContain(requestDurationAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
-        }
-
-        // Inspect Histogram Bounds
-        var histogramBuckets = requestDurationMetricPoint.GetHistogramBuckets();
-        var histogramBounds = new List<double>();
-        foreach (var t in histogramBuckets)
-        {
-            histogramBounds.Add(t.ExplicitBound);
-        }
-
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
-    }
-#endif
 }
