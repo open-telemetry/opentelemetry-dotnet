@@ -33,7 +33,7 @@
 
 * Following metrics will now be enabled by default when targeting
   `.NET8.0` framework.
-  
+
   * **Meter** : `Microsoft.AspNetCore.Hosting`
     * `http.server.request.duration`
     * `http.server.active_requests`
