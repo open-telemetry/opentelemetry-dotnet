@@ -18,13 +18,15 @@
 using System.Diagnostics;
 #endif
 #if NET8_0_OR_GREATER
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 #endif
 using Microsoft.AspNetCore.Hosting;
-#if !NET8_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
-#endif
 using Microsoft.AspNetCore.Mvc.Testing;
+#if NET8_0_OR_GREATER
+using Microsoft.AspNetCore.RateLimiting;
+#endif
 #if !NET8_0_OR_GREATER
 using Microsoft.AspNetCore.TestHost;
 #endif
@@ -115,6 +117,67 @@ public class MetricTests
         // kestrel.rejected_connections
         // kestrel.tls_handshake.duration
         // kestrel.active_tls_handshakes
+
+        await app.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task ValidateNet8RateLimitingMetricsAsync()
+    {
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.AddRateLimiter(_ => _
+        .AddFixedWindowLimiter(policyName: "fixed", options =>
+        {
+            options.PermitLimit = 4;
+            options.Window = TimeSpan.FromSeconds(12);
+            options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            options.QueueLimit = 2;
+        }));
+
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
+
+        app.UseRateLimiter();
+
+        static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
+
+        app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
+                                   .RequireRateLimiting("fixed");
+
+        _ = app.RunAsync();
+
+        using var client = new HttpClient();
+        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        Assert.NotNull(res);
+
+        this.meterProvider.Dispose();
+
+        var activeRequestleasesMetric = metricItems
+            .Where(item => item.Name == "aspnetcore.rate_limiting.active_request_leases")
+            .ToArray();
+
+        var requestLeaseDurationMetric = metricItems.
+            Where(item => item.Name == "aspnetcore.rate_limiting.request_lease.duration")
+            .ToArray();
+
+        var limitingRequestsMetric = metricItems.
+            Where(item => item.Name == "aspnetcore.rate_limiting.requests")
+            .ToArray();
+
+        Assert.Single(activeRequestleasesMetric);
+        Assert.Single(requestLeaseDurationMetric);
+        Assert.Single(limitingRequestsMetric);
+
+        // TODO
+        // aspnetcore.rate_limiting.request.time_in_queue
+        // aspnetcore.rate_limiting.queued_requests
 
         await app.DisposeAsync();
     }
