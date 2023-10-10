@@ -20,12 +20,43 @@ using OpenTelemetry.Metrics;
 
 namespace Microsoft.Extensions.Diagnostics.Metrics;
 
+/// <summary>
+/// Contains extension methods for registering OpenTelemetry metrics with an
+/// <see cref="IMetricsBuilder"/> instance.
+/// </summary>
 public static class OpenTelemetryMetricsBuilderExtensions
 {
-    public static IMetricsBuilder AddOpenTelemetry(this IMetricsBuilder metricsBuilder)
+    /// <summary>
+    /// Adds OpenTelemetry metric services into the builder.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="MeterProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="metricsBuilder"><see cref="IMetricsBuilder"/>.</param>
+    /// <returns>The supplied <see cref="IMetricsBuilder"/> for chaining
+    /// calls.</returns>
+    public static IMetricsBuilder AddOpenTelemetry(
+        this IMetricsBuilder metricsBuilder)
         => AddOpenTelemetry(metricsBuilder, b => { });
 
-    public static IMetricsBuilder AddOpenTelemetry(this IMetricsBuilder metricsBuilder, Action<MeterProviderBuilder> configure)
+    /// <summary>
+    /// Adds OpenTelemetry metric services into the builder.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="MeterProvider"/> will be created for a given
+    /// <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="metricsBuilder"><see cref="IMetricsBuilder"/>.</param>
+    /// <param name="configure"><see cref="MeterProviderBuilder"/>
+    /// configuration callback.</param>
+    /// <returns>The supplied <see cref="IMetricsBuilder"/> for chaining
+    /// calls.</returns>
+    public static IMetricsBuilder AddOpenTelemetry(
+        this IMetricsBuilder metricsBuilder,
+        Action<MeterProviderBuilder> configure)
     {
         Guard.ThrowIfNull(metricsBuilder);
 

@@ -101,7 +101,8 @@ public sealed class OpenTelemetryBuilder
 
         var builder = new MeterProviderBuilderBase(this.Services);
 
-        this.Services.TryAddSingleton<IMetricsListener, OpenTelemetryMetricListener>();
+        this.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricListener>());
 
         configure(builder);
 
