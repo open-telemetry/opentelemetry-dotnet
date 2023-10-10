@@ -21,6 +21,6 @@ jobs:
         os: [ ubuntu-latest ]
         version: [ net8.0 ]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - run: 'echo "No build required"'
