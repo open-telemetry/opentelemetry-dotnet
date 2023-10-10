@@ -2,7 +2,7 @@
 
 The getting started docs for [logs](../getting-started-console/README.md) and
 [traces](../../trace/getting-started-console/README.md) showed how to emit logs
-and traces independently, and export them to console exporter. Testing!
+and traces independently, and export them to console exporter.
 
 This doc explains how logs can be correlated to traces.
 
