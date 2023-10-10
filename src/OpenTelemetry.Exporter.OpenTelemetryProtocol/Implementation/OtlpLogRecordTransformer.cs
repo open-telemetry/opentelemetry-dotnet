@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using OpenTelemetry.Internal;
@@ -28,13 +29,33 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 internal sealed class OtlpLogRecordTransformer
 {
+    private static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
+
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
+    private readonly Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory;
 
     public OtlpLogRecordTransformer(SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions)
     {
         this.sdkLimitOptions = sdkLimitOptions;
         this.experimentalOptions = experimentalOptions;
+        this.logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Return(OtlpCollector.ExportLogsServiceRequest request)
+    {
+        var resourceLogs = request.ResourceLogs.FirstOrDefault();
+        if (resourceLogs == null)
+        {
+            return;
+        }
+
+        foreach (var scope in resourceLogs.ScopeLogs)
+        {
+            scope.LogRecords.Clear();
+            LogListPool.Add(scope);
+        }
     }
 
     internal OtlpCollector.ExportLogsServiceRequest BuildExportRequest(
@@ -49,19 +70,51 @@ internal sealed class OtlpLogRecordTransformer
         };
         request.ResourceLogs.Add(resourceLogs);
 
-        var scopeLogs = new OtlpLogs.ScopeLogs();
-        resourceLogs.ScopeLogs.Add(scopeLogs);
+        this.logsByCategory.Clear();
 
         foreach (var logRecord in logRecordBatch)
         {
             var otlpLogRecord = this.ToOtlpLog(logRecord);
             if (otlpLogRecord != null)
             {
-                scopeLogs.LogRecords.Add(otlpLogRecord);
+                if (!this.logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
+                {
+                    scopeLogs = this.GetLogListFromPool(logRecord.CategoryName);
+                    scopeLogs.LogRecords.Add(otlpLogRecord);
+                    this.logsByCategory.Add(logRecord.CategoryName, scopeLogs);
+                    resourceLogs.ScopeLogs.Add(scopeLogs);
+                }
+                else
+                {
+                    scopeLogs.LogRecords.Add(otlpLogRecord);
+                }
             }
         }
 
         return request;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal OtlpLogs.ScopeLogs GetLogListFromPool(string name)
+    {
+        if (!LogListPool.TryTake(out var logs))
+        {
+            logs = new OtlpLogs.ScopeLogs
+            {
+                Scope = new OtlpCommon.InstrumentationScope
+                {
+                    Name = name, // Name is enforced to not be null, but it can be empty.
+                    Version = string.Empty, // NRE throw by proto
+                },
+            };
+        }
+        else
+        {
+            logs.Scope.Name = name;
+            logs.Scope.Version = string.Empty;
+        }
+
+        return logs;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

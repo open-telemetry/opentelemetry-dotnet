@@ -90,10 +90,10 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        var request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
+
         try
         {
-            var request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
-
             if (!this.exportClient.SendExportRequest(request))
             {
                 return ExportResult.Failure;
@@ -103,6 +103,10 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             return ExportResult.Failure;
+        }
+        finally
+        {
+            this.otlpLogRecordTransformer.Return(request);
         }
 
         return ExportResult.Success;

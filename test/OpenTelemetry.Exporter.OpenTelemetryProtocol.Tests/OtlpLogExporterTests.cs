@@ -26,6 +26,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -1240,6 +1241,45 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
             Assert.NotNull(simpleProcesor);
         }
+    }
+
+    [Fact]
+    public void ValidateInstrumentationScope()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder
+                .AddOpenTelemetry(options => options
+                    .AddInMemoryExporter(logRecords));
+        });
+
+        var logger1 = loggerFactory.CreateLogger("OtlpLogExporterTests-A");
+        logger1.LogInformation("Hello from {name} {price}.", "red-tomato", 2.99);
+
+        var logger2 = loggerFactory.CreateLogger("OtlpLogExporterTests-B");
+        logger2.LogInformation("Hello from {name} {price}.", "green-tomato", 2.99);
+
+        Assert.Equal(2, logRecords.Count);
+
+        var batch = new Batch<LogRecord>(logRecords.ToArray(), logRecords.Count);
+        var logRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var resourceBuilder = ResourceBuilder.CreateEmpty();
+        var processResource = resourceBuilder.Build().ToOtlpResource();
+
+        var request = logRecordTransformer.BuildExportRequest(processResource, batch);
+
+        Assert.Single(request.ResourceLogs);
+
+        Assert.Equal("OtlpLogExporterTests-A", request.ResourceLogs[0].ScopeLogs.First().Scope.Name);
+        Assert.Equal("OtlpLogExporterTests-B", request.ResourceLogs[0].ScopeLogs.Last().Scope.Name);
+
+        //Assert.Single(resourceMetric.ScopeMetrics);
+        //var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
+        //Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
+        //Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
+        //Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
     }
 
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
