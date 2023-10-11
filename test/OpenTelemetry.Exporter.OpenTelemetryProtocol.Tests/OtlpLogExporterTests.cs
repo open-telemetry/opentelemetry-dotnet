@@ -1275,11 +1275,17 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("OtlpLogExporterTests-A", request.ResourceLogs[0].ScopeLogs.First().Scope.Name);
         Assert.Equal("OtlpLogExporterTests-B", request.ResourceLogs[0].ScopeLogs.Last().Scope.Name);
 
-        //Assert.Single(resourceMetric.ScopeMetrics);
-        //var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
-        //Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-        //Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
-        //Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
+        // Validate LogListPool
+        Assert.Empty(OtlpLogRecordTransformer.LogListPool);
+        logRecordTransformer.Return(request);
+        Assert.Equal(2, OtlpLogRecordTransformer.LogListPool.Count);
+
+        request = logRecordTransformer.BuildExportRequest(processResource, batch);
+
+        Assert.Single(request.ResourceLogs);
+
+        // ScopeLogs will be reused.
+        Assert.Empty(OtlpLogRecordTransformer.LogListPool);
     }
 
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)

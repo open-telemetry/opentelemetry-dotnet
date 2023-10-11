@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 internal sealed class OtlpLogRecordTransformer
 {
-    private static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
+    internal static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
 
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
@@ -40,22 +40,6 @@ internal sealed class OtlpLogRecordTransformer
         this.sdkLimitOptions = sdkLimitOptions;
         this.experimentalOptions = experimentalOptions;
         this.logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Return(OtlpCollector.ExportLogsServiceRequest request)
-    {
-        var resourceLogs = request.ResourceLogs.FirstOrDefault();
-        if (resourceLogs == null)
-        {
-            return;
-        }
-
-        foreach (var scope in resourceLogs.ScopeLogs)
-        {
-            scope.LogRecords.Clear();
-            LogListPool.Add(scope);
-        }
     }
 
     internal OtlpCollector.ExportLogsServiceRequest BuildExportRequest(
@@ -92,6 +76,22 @@ internal sealed class OtlpLogRecordTransformer
         }
 
         return request;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Return(OtlpCollector.ExportLogsServiceRequest request)
+    {
+        var resourceLogs = request.ResourceLogs.FirstOrDefault();
+        if (resourceLogs == null)
+        {
+            return;
+        }
+
+        foreach (var scope in resourceLogs.ScopeLogs)
+        {
+            scope.LogRecords.Clear();
+            LogListPool.Add(scope);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
