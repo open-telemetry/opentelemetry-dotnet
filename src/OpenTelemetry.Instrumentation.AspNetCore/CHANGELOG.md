@@ -32,7 +32,7 @@
    [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
 
 * Following metrics will now be enabled by default when targeting
-  `.NET8.0` framework.
+  `.NET8.0` or newer framework.
 
   * **Meter** : `Microsoft.AspNetCore.Hosting`
     * `http.server.request.duration`
@@ -65,9 +65,16 @@
     * `aspnetcore.rate_limiting.request.time_in_queue`
     * `aspnetcore.rate_limiting.requests`
 
-  **NOTE**: Users can opt-out of metrics that are not required using
+  **NOTE**: `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable for these
+  metrics is not supported. Users can opt-out of metrics that are not required
+  using
   [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#view).
-  [#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934)
+  ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
+
+* Added `network.protocol.name` dimension to `http.server.request.duration`
+metric. This change only affects users setting `OTEL_SEMCONV_STABILITY_OPT_IN`
+to `http` or `http/dup`.
+([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
 
 ## 1.5.1-beta.1
 
