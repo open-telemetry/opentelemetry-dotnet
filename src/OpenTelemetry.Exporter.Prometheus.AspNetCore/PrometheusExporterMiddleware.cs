@@ -70,7 +70,7 @@ internal sealed class PrometheusExporterMiddleware
                 if (collectionResponse.View.Count > 0)
                 {
                     response.StatusCode = 200;
-#if NET8_0
+#if NET8_0_OR_GREATER
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 #else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
