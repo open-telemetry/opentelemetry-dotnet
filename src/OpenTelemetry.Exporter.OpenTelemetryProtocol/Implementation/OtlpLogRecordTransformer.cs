@@ -44,8 +44,7 @@ internal sealed class OtlpLogRecordTransformer
         OtlpResource.Resource processResource,
         in Batch<LogRecord> logRecordBatch)
     {
-        // TODO: Update this to threadlocal
-        // Update span and metrics as well.
+        // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943
         Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
 
         var request = new OtlpCollector.ExportLogsServiceRequest();
