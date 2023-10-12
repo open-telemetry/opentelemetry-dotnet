@@ -33,19 +33,21 @@ internal sealed class OtlpLogRecordTransformer
 
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
-    private readonly Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory;
 
     public OtlpLogRecordTransformer(SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions)
     {
         this.sdkLimitOptions = sdkLimitOptions;
         this.experimentalOptions = experimentalOptions;
-        this.logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
     }
 
     internal OtlpCollector.ExportLogsServiceRequest BuildExportRequest(
         OtlpResource.Resource processResource,
         in Batch<LogRecord> logRecordBatch)
     {
+        // TODO: Update this to threadlocal
+        // Update span and metrics as well.
+        Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
+
         var request = new OtlpCollector.ExportLogsServiceRequest();
 
         var resourceLogs = new OtlpLogs.ResourceLogs
@@ -54,18 +56,18 @@ internal sealed class OtlpLogRecordTransformer
         };
         request.ResourceLogs.Add(resourceLogs);
 
-        this.logsByCategory.Clear();
+        logsByCategory.Clear();
 
         foreach (var logRecord in logRecordBatch)
         {
             var otlpLogRecord = this.ToOtlpLog(logRecord);
             if (otlpLogRecord != null)
             {
-                if (!this.logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
+                if (!logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
                 {
                     scopeLogs = this.GetLogListFromPool(logRecord.CategoryName);
                     scopeLogs.LogRecords.Add(otlpLogRecord);
-                    this.logsByCategory.Add(logRecord.CategoryName, scopeLogs);
+                    logsByCategory.Add(logRecord.CategoryName, scopeLogs);
                     resourceLogs.ScopeLogs.Add(scopeLogs);
                 }
                 else
@@ -104,7 +106,7 @@ internal sealed class OtlpLogRecordTransformer
                 Scope = new OtlpCommon.InstrumentationScope
                 {
                     Name = name, // Name is enforced to not be null, but it can be empty.
-                    Version = string.Empty, // NRE throw by proto
+                    Version = string.Empty, // proto requires this to be non-null.
                 },
             };
         }
