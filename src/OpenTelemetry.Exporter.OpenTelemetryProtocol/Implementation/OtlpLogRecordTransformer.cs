@@ -44,7 +44,7 @@ internal sealed class OtlpLogRecordTransformer
         OtlpResource.Resource processResource,
         in Batch<LogRecord> logRecordBatch)
     {
-        // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943
+        // TODO: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943
         Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
 
         var request = new OtlpCollector.ExportLogsServiceRequest();
@@ -54,8 +54,6 @@ internal sealed class OtlpLogRecordTransformer
             Resource = processResource,
         };
         request.ResourceLogs.Add(resourceLogs);
-
-        logsByCategory.Clear();
 
         foreach (var logRecord in logRecordBatch)
         {
