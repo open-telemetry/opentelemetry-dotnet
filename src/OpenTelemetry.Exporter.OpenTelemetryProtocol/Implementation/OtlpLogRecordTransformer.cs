@@ -66,14 +66,11 @@ internal sealed class OtlpLogRecordTransformer
                 if (!logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
                 {
                     scopeLogs = this.GetLogListFromPool(logRecord.CategoryName);
-                    scopeLogs.LogRecords.Add(otlpLogRecord);
                     logsByCategory.Add(logRecord.CategoryName, scopeLogs);
                     resourceLogs.ScopeLogs.Add(scopeLogs);
                 }
-                else
-                {
-                    scopeLogs.LogRecords.Add(otlpLogRecord);
-                }
+
+                scopeLogs.LogRecords.Add(otlpLogRecord);
             }
         }
 
