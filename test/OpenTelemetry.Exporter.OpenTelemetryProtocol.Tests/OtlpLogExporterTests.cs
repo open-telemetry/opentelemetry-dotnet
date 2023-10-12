@@ -191,12 +191,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
 
-        /*
-        Assert.Equal("dotnet.ilogger.category", attribute.Key);
-        Assert.Equal("OtlpLogExporterTests", attribute.Value.StringValue);
-        attribute = otlpLogRecord.Attributes[++index];
-        */
-
         Assert.Equal("name", attribute.Key);
         Assert.Equal("tomato", attribute.Value.StringValue);
 
@@ -207,61 +201,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         attribute = otlpLogRecord.Attributes[++index];
         Assert.Equal("{OriginalFormat}", attribute.Key);
         Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
-    }
-
-    [Theory]
-    [InlineData("true")]
-    [InlineData("false")]
-    [InlineData(null)]
-    public void CheckToOtlpLogRecordLoggerCategory(string emitLogCategoryAttribute)
-    {
-        var logRecords = new List<LogRecord>();
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
-        });
-
-        var logger1 = loggerFactory.CreateLogger("CategoryA");
-        logger1.LogInformation("Hello");
-        Assert.Single(logRecords);
-
-        var logRecord = logRecords[0];
-
-        var configuration = new ConfigurationBuilder()
-           .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGCATEGORYATTRIBUTE] = emitLogCategoryAttribute })
-           .Build();
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecord);
-
-        if (emitLogCategoryAttribute == "true")
-        {
-            Assert.NotNull(otlpLogRecord);
-            Assert.Single(otlpLogRecord.Attributes);
-
-            var attribute = otlpLogRecord.Attributes[0];
-            Assert.Equal("dotnet.ilogger.category", attribute.Key);
-            Assert.Equal("CategoryA", attribute.Value.StringValue);
-        }
-        else
-        {
-            Assert.NotNull(otlpLogRecord);
-            Assert.Empty(otlpLogRecord.Attributes);
-        }
-
-        logRecords.Clear();
-        var logger2 = loggerFactory.CreateLogger(string.Empty);
-        logger2.LogInformation("Hello");
-        Assert.Single(logRecords);
-
-        logRecord = logRecords[0];
-        otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecord);
-        Assert.NotNull(otlpLogRecord);
-        Assert.Empty(otlpLogRecord.Attributes);
     }
 
     [Theory]
@@ -286,7 +225,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Single(logRecords);
 
         var configuration = new ConfigurationBuilder()
-          .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGEVENTATTRIBUTES] = emitLogEventAttributes })
+          .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EmitLogEventEnvVar] = emitLogEventAttributes })
           .Build();
 
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));
@@ -302,12 +241,12 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
         if (emitLogEventAttributes == "true")
         {
-            Assert.Contains("event.id", otlpLogRecordAttributes);
+            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
             Assert.Contains("10", otlpLogRecordAttributes);
         }
         else
         {
-            Assert.DoesNotContain("event.id", otlpLogRecordAttributes);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
         }
 
         logRecords.Clear();
@@ -324,15 +263,15 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
         if (emitLogEventAttributes == "true")
         {
-            Assert.Contains("event.id", otlpLogRecordAttributes);
+            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
             Assert.Contains("10", otlpLogRecordAttributes);
-            Assert.Contains("event.name", otlpLogRecordAttributes);
+            Assert.Contains(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes);
             Assert.Contains("MyEvent10", otlpLogRecordAttributes);
         }
         else
         {
-            Assert.DoesNotContain("event.id", otlpLogRecordAttributes);
-            Assert.DoesNotContain("event.name", otlpLogRecordAttributes);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes);
         }
     }
 
@@ -547,6 +486,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [Theory]
     [InlineData("true")]
     [InlineData("false")]
+    [InlineData(null)]
     public void CheckToOtlpLogRecordExceptionAttributes(string emitExceptionAttributes)
     {
         var logRecords = new List<LogRecord>();
@@ -564,7 +504,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGEXCEPTIONATTRIBUTES] = emitExceptionAttributes })
+            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EmitLogExceptionEnvVar] = emitExceptionAttributes })
             .Build();
 
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));

@@ -91,27 +91,16 @@ internal sealed class OtlpLogRecordTransformer
             var attributeValueLengthLimit = this.sdkLimitOptions.LogRecordAttributeValueLengthLimit;
             var attributeCountLimit = this.sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
 
-            if (this.experimentalOptions.EmitLogCategoryAttribute)
-            {
-                if (!string.IsNullOrEmpty(logRecord.CategoryName))
-                {
-                    // TODO:
-                    // Decide how to handle CategoryName
-                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491
-                    AddStringAttribute(otlpLogRecord, "dotnet.ilogger.category", logRecord.CategoryName, attributeValueLengthLimit, attributeCountLimit);
-                }
-            }
-
             if (this.experimentalOptions.EmitLogEventAttributes)
             {
                 if (logRecord.EventId.Id != default)
                 {
-                    AddIntAttribute(otlpLogRecord, "event.id", logRecord.EventId.Id, attributeCountLimit);
+                    AddIntAttribute(otlpLogRecord, ExperimentalOptions.LogRecordEventIdAttribute, logRecord.EventId.Id, attributeCountLimit);
                 }
 
                 if (!string.IsNullOrEmpty(logRecord.EventId.Name))
                 {
-                    AddStringAttribute(otlpLogRecord, "event.name", logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                    AddStringAttribute(otlpLogRecord, ExperimentalOptions.LogRecordEventNameAttribute, logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
                 }
             }
 
