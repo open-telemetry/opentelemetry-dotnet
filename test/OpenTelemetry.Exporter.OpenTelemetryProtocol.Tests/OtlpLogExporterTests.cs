@@ -1255,10 +1255,10 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         });
 
         var logger1 = loggerFactory.CreateLogger("OtlpLogExporterTests-A");
-        logger1.LogInformation("Hello from {name} {price}.", "red-tomato", 2.99);
+        logger1.LogInformation("Hello from red-tomato");
 
         var logger2 = loggerFactory.CreateLogger("OtlpLogExporterTests-B");
-        logger2.LogInformation("Hello from {name} {price}.", "green-tomato", 2.99);
+        logger2.LogInformation("Hello from green-tomato");
 
         Assert.Equal(2, logRecords.Count);
 
@@ -1272,8 +1272,21 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         Assert.Single(request.ResourceLogs);
 
-        Assert.Equal("OtlpLogExporterTests-A", request.ResourceLogs[0].ScopeLogs.First().Scope.Name);
-        Assert.Equal("OtlpLogExporterTests-B", request.ResourceLogs[0].ScopeLogs.Last().Scope.Name);
+        var scope1 = request.ResourceLogs[0].ScopeLogs.First();
+        var scope2 = request.ResourceLogs[0].ScopeLogs.Last();
+
+        Assert.Equal("OtlpLogExporterTests-A", scope1.Scope.Name);
+        Assert.Equal("OtlpLogExporterTests-B", scope2.Scope.Name);
+
+        Assert.Single(scope1.LogRecords);
+        Assert.Single(scope2.LogRecords);
+
+        var logrecord1 = scope1.LogRecords[0];
+        var logrecord2 = scope2.LogRecords[0];
+
+        Assert.Equal("Hello from red-tomato", logrecord1.Body.StringValue);
+
+        Assert.Equal("Hello from green-tomato", logrecord2.Body.StringValue);
 
         // Validate LogListPool
         Assert.Empty(OtlpLogRecordTransformer.LogListPool);
