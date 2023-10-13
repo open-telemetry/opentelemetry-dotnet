@@ -19,6 +19,11 @@
   Previously it would return `null`.
   ([#4885](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4885))
 
+* Updated `Microsoft.Extensions.Logging` package version to
+  `8.0.0-rc.1.23419.4`.
+  ([#4920](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4920),
+  [#4933](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4933))
+
 ## 1.6.0
 
 Released 2023-Sep-05

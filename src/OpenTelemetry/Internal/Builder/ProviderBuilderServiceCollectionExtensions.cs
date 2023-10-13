@@ -76,7 +76,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // which sets default Propagators and default Activity Id format
         _ = Sdk.SuppressInstrumentation;
 
-        services.AddOptions();
+        services!.AddOptions();
 
         // Note: When using a host builder IConfiguration is automatically
         // registered and this registration will no-op. This only runs for
