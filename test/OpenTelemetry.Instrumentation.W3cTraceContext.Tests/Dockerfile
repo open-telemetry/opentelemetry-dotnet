@@ -2,8 +2,8 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG BUILD_SDK_VERSION=7.0
-ARG TEST_SDK_VERSION=7.0
+ARG BUILD_SDK_VERSION=8.0
+ARG TEST_SDK_VERSION=8.0
 
 FROM ubuntu AS w3c
 #Install git
@@ -13,7 +13,7 @@ RUN git clone https://github.com/w3c/trace-context.git
 
 FROM mcr.microsoft.com/dotnet/sdk:${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net7.0
+ARG PUBLISH_FRAMEWORK=net8.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
@@ -23,10 +23,10 @@ FROM mcr.microsoft.com/dotnet/sdk:${TEST_SDK_VERSION} AS final
 WORKDIR /test
 COPY --from=build /drop .
 COPY --from=w3c /w3c .
-RUN apt-get update \
-  && apt-get install -y python3-pip python3-dev \
-  && cd /usr/local/bin \
-  && ln -s /usr/bin/python3 python \
-  && pip3 install --upgrade pip \
-  && pip3 install aiohttp
+RUN apt-get update
+RUN apt-get install -y python3-pip python3-dev
+RUN cd /usr/local/bin
+RUN ln -s /usr/bin/python3 python
+RUN pip3 install --upgrade pip
+RUN pip3 install aiohttp
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
