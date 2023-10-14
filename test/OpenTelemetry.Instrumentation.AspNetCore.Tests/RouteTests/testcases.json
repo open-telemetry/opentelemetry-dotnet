@@ -1,0 +1,142 @@
+[
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "ConventionalRoute/Default/{id?}"
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/ConventionalRoute/ActionWithStringParameter/2?num=3",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "ConventionalRoute/ActionWithStringParameter/{id?}"
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/ConventionalRoute/ActionWithStringParameter?num=3",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "ConventionalRoute/ActionWithStringParameter/{id?}"
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/ConventionalRoute/NotFound",
+        "expectedStatusCode": 404,
+        "expectedHttpRoute": ""
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/SomePath/SomeString/2",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "SomePath/{id}/{num:int}"
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/SomePath/SomeString/NotAnInt",
+        "expectedStatusCode": 404,
+        "expectedHttpRoute": ""
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/MyArea",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "{area:exists}/ControllerForMyArea/Default/{id?}"
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/MyArea/ControllerForMyArea/NonDefault",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "{area:exists}/ControllerForMyArea/NonDefault/{id?}"
+    },
+    {
+        "testApplicationScenario": "ConventionalRouting",
+        "httpMethod": "GET",
+        "path": "/SomePrefix",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "SomePrefix/AnotherArea/Index/{id?}"
+    },
+    {
+        "testApplicationScenario": "AttributeRouting",
+        "httpMethod": "GET",
+        "path": "/AttributeRoute",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "AttributeRoute"
+    },
+    {
+        "testApplicationScenario": "AttributeRouting",
+        "httpMethod": "GET",
+        "path": "/AttributeRoute/Get",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "AttributeRoute/Get"
+    },
+    {
+        "testApplicationScenario": "AttributeRouting",
+        "httpMethod": "GET",
+        "path": "/AttributeRoute/Get/12",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "AttributeRoute/Get/{id}"
+    },
+    {
+        "testApplicationScenario": "AttributeRouting",
+        "httpMethod": "GET",
+        "path": "/AttributeRoute/12/GetWithActionNameInDifferentSpotInTemplate",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate"
+    },
+    {
+        "testApplicationScenario": "AttributeRouting",
+        "httpMethod": "GET",
+        "path": "/AttributeRoute/NotAnInt/GetWithActionNameInDifferentSpotInTemplate",
+        "expectedStatusCode": 400,
+        "expectedHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate"
+    },
+    {
+        "testApplicationScenario": "RazorPages",
+        "httpMethod": "GET",
+        "path": "/",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "/Index"
+    },
+    {
+        "testApplicationScenario": "RazorPages",
+        "httpMethod": "GET",
+        "path": "/Index",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "/Index"
+    },
+    {
+        "testApplicationScenario": "RazorPages",
+        "httpMethod": "GET",
+        "path": "/PageThatThrowsException",
+        "expectedStatusCode": 500,
+        "expectedHttpRoute": "/PageThatThrowsException"
+    },
+    {
+        "testApplicationScenario": "RazorPages",
+        "httpMethod": "GET",
+        "path": "/js/site.js",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": ""
+    },
+    {
+        "testApplicationScenario": "MinimalApi",
+        "httpMethod": "GET",
+        "path": "/MinimalApi",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "TBD"
+    },
+    {
+        "testApplicationScenario": "MinimalApi",
+        "httpMethod": "GET",
+        "path": "/MinimalApi/123",
+        "expectedStatusCode": 200,
+        "expectedHttpRoute": "TBD"
+    }
+]
