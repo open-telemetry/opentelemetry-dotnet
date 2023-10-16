@@ -17,7 +17,7 @@ You should see the following output:
 Hello World!
 ```
 
-Install the latest version of
+Install the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
