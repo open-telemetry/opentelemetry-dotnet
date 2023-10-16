@@ -192,12 +192,6 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
 
-        /*
-        Assert.Equal("dotnet.ilogger.category", attribute.Key);
-        Assert.Equal("OtlpLogExporterTests", attribute.Value.StringValue);
-        attribute = otlpLogRecord.Attributes[++index];
-        */
-
         Assert.Equal("name", attribute.Key);
         Assert.Equal("tomato", attribute.Value.StringValue);
 
@@ -210,45 +204,11 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
     }
 
-    /*
-    [Fact]
-    public void CheckToOtlpLogRecordLoggerCategory()
-    {
-        var logRecords = new List<LogRecord>();
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddInMemoryExporter(logRecords);
-            });
-        });
-
-        var logger1 = loggerFactory.CreateLogger("CategoryA");
-        logger1.LogInformation("Hello");
-        Assert.Single(logRecords);
-
-        var logRecord = logRecords[0];
-        var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions, new());
-        Assert.NotNull(otlpLogRecord);
-        Assert.Single(otlpLogRecord.Attributes);
-
-        var attribute = otlpLogRecord.Attributes[0];
-        Assert.Equal("dotnet.ilogger.category", attribute.Key);
-        Assert.Equal("CategoryA", attribute.Value.StringValue);
-
-        logRecords.Clear();
-        var logger2 = loggerFactory.CreateLogger(string.Empty);
-        logger2.LogInformation("Hello");
-        Assert.Single(logRecords);
-
-        logRecord = logRecords[0];
-        otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions, new());
-        Assert.NotNull(otlpLogRecord);
-        Assert.Empty(otlpLogRecord.Attributes);
-    }
-
-    [Fact]
-    public void CheckToOtlpLogRecordEventId()
+    [Theory]
+    [InlineData("true")]
+    [InlineData("false")]
+    [InlineData(null)]
+    public void CheckToOtlpLogRecordEventId(string emitLogEventAttributes)
     {
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -265,17 +225,30 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         logger.LogInformation(new EventId(10, null), "Hello from {name} {price}.", "tomato", 2.99);
         Assert.Single(logRecords);
 
+        var configuration = new ConfigurationBuilder()
+          .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EmitLogEventEnvVar] = emitLogEventAttributes })
+          .Build();
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));
+
         var logRecord = logRecords[0];
-        var otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions, new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
-        var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
-
         // Event
-        Assert.Contains("Id", otlpLogRecordAttributes);
-        Assert.Contains("10", otlpLogRecordAttributes);
+        var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
+        if (emitLogEventAttributes == "true")
+        {
+            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
+            Assert.Contains("10", otlpLogRecordAttributes);
+        }
+        else
+        {
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
+        }
 
         logRecords.Clear();
 
@@ -283,19 +256,25 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Single(logRecords);
 
         logRecord = logRecords[0];
-        otlpLogRecord = logRecord.ToOtlpLog(DefaultSdkLimitOptions, new());
+        otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(logRecord);
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
 
-        otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
-
         // Event
-        Assert.Contains("Id", otlpLogRecordAttributes);
-        Assert.Contains("10", otlpLogRecordAttributes);
-        Assert.Contains("Name", otlpLogRecordAttributes);
-        Assert.Contains("MyEvent10", otlpLogRecordAttributes);
+        otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
+        if (emitLogEventAttributes == "true")
+        {
+            Assert.Contains(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
+            Assert.Contains("10", otlpLogRecordAttributes);
+            Assert.Contains(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes);
+            Assert.Contains("MyEvent10", otlpLogRecordAttributes);
+        }
+        else
+        {
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventIdAttribute, otlpLogRecordAttributes);
+            Assert.DoesNotContain(ExperimentalOptions.LogRecordEventNameAttribute, otlpLogRecordAttributes);
+        }
     }
-    */
 
     [Fact]
     public void CheckToOtlpLogRecordTimestamps()
@@ -508,6 +487,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     [Theory]
     [InlineData("true")]
     [InlineData("false")]
+    [InlineData(null)]
     public void CheckToOtlpLogRecordExceptionAttributes(string emitExceptionAttributes)
     {
         var logRecords = new List<LogRecord>();
@@ -525,7 +505,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EMITLOGEXCEPTIONATTRIBUTES] = emitExceptionAttributes })
+            .AddInMemoryCollection(new Dictionary<string, string> { [ExperimentalOptions.EmitLogExceptionEnvVar] = emitExceptionAttributes })
             .Build();
 
         var otlpLogRecordTransformer = new OtlpLogRecordTransformer(DefaultSdkLimitOptions, new(configuration));

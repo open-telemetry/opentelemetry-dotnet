@@ -229,6 +229,11 @@ When set to `true`, it enables export of attributes corresponding to
 `exception.stacktrace` are defined in
 [specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-logs.md#attributes).
 
+* `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_CATEGORY_EVENT_ATTRIBUTES`
+
+When set to `true`, it enables export of `LogRecord.EventId.Id` as
+`logrecord.event.id` and `LogRecord.EventId.Name` to `logrecord.event.name`.
+
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `OtlpExporterOptions` for users
