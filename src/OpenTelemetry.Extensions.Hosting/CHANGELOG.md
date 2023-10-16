@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
 * Changed the behavior of the `OpenTelemetryBuilder.AddOpenTelemetry` extension
   to INSERT OpenTelemetry services at the beginning of the `IServiceCollection`
   in an attempt to provide a better experience for end users capturing telemetry
