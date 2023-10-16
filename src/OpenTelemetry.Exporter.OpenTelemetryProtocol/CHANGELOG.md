@@ -19,6 +19,12 @@ attributes will be exported when
 variable will be set to `true`.
 ([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
 
+* `LogRecord.CategoryName` will now be exported as
+[InstrumentationScope](https://github.com/open-telemetry/opentelemetry-dotnet/blob/3c2bb7c93dd2e697636479a1882f49bb0c4a362e/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/opentelemetry/proto/common/v1/common.proto#L71-L81)
+`name` field under
+[ScopeLogs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/3c2bb7c93dd2e697636479a1882f49bb0c4a362e/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/opentelemetry/proto/logs/v1/logs.proto#L64-L75).
+([#4941](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4941))
+
 ## 1.6.0
 
 Released 2023-Sep-05
