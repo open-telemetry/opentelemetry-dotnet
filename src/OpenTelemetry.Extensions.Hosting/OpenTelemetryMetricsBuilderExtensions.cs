@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
@@ -37,9 +38,9 @@ public static class OpenTelemetryMetricsBuilderExtensions
     /// <param name="metricsBuilder"><see cref="IMetricsBuilder"/>.</param>
     /// <returns>The supplied <see cref="IMetricsBuilder"/> for chaining
     /// calls.</returns>
-    public static IMetricsBuilder AddOpenTelemetry(
+    public static IMetricsBuilder AddOpenTelemetryMetrics(
         this IMetricsBuilder metricsBuilder)
-        => AddOpenTelemetry(metricsBuilder, b => { });
+        => AddOpenTelemetryMetrics(metricsBuilder, b => { });
 
     /// <summary>
     /// Adds OpenTelemetry metric services into the builder.
@@ -54,11 +55,14 @@ public static class OpenTelemetryMetricsBuilderExtensions
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="IMetricsBuilder"/> for chaining
     /// calls.</returns>
-    public static IMetricsBuilder AddOpenTelemetry(
+    public static IMetricsBuilder AddOpenTelemetryMetrics(
         this IMetricsBuilder metricsBuilder,
         Action<MeterProviderBuilder> configure)
     {
         Guard.ThrowIfNull(metricsBuilder);
+
+        metricsBuilder.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricListener>());
 
         metricsBuilder.Services.AddOpenTelemetry().WithMetrics(configure);
 

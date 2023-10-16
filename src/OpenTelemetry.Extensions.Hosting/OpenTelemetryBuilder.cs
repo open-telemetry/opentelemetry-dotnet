@@ -15,8 +15,6 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -100,9 +98,6 @@ public sealed class OpenTelemetryBuilder
         Guard.ThrowIfNull(configure);
 
         var builder = new MeterProviderBuilderBase(this.Services);
-
-        this.Services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricListener>());
 
         configure(builder);
 

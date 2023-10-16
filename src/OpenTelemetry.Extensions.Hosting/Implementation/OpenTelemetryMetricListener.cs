@@ -78,6 +78,8 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
     {
         var meterProvider = this.meterProviderSdk;
 
+        // todo: Refactor SDK so we don't double-check the state
+
         if (state is List<Metric> || state is List<List<Metric>>)
         {
             meterProvider.MeasurementRecordedDouble(instrument, value, tagsRos, state);
@@ -95,6 +97,8 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
     private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
     {
         var meterProvider = this.meterProviderSdk;
+
+        // todo: Refactor SDK so we don't double-check the state
 
         if (state is List<Metric> || state is List<List<Metric>>)
         {
