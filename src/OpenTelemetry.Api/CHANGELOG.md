@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fix `TraceContextPropagator` by propagating duplicated `tracestate` entries.
+  ([#4937](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4937))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
@@ -17,9 +20,6 @@ Released 2023-Oct-16
 * Fix `TraceContextPropagator` by validating the first digit of the hex-encoded
   `trace-flags` field of the `traceparent` header.
   ([#4893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4893))
-
-* Fix `TraceContextPropagator` by propagating duplicated `tracestate` entries.
-  ([#4937](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4937))
 
 ## 1.6.0
 
