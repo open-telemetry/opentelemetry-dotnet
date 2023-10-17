@@ -28,8 +28,8 @@ of the fanned out operations and link them to the original activity.
 
 ## References
 
-- https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities
-- https://opentelemetry.io/docs/instrumentation/net/manual/#adding-links
+- [Creating new root activities](https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities).
+- [Adding links](https://opentelemetry.io/docs/instrumentation/net/manual/#adding-links).
 
 ## Sample Output
 
