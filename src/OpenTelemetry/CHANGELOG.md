@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
 * Update `AggregatorStore` to reclaim unused MetricPoints for Delta aggregation
   temporality.
   ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4486))
@@ -18,6 +22,11 @@
   will now throw a `NotSupportedException` if invoked on a non-SDK builder type.
   Previously it would return `null`.
   ([#4885](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4885))
+
+* Updated `Microsoft.Extensions.Logging` package version to
+  `8.0.0-rc.1.23419.4`.
+  ([#4920](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4920),
+  [#4933](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4933))
 
 ## 1.6.0
 
