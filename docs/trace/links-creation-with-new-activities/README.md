@@ -1,6 +1,7 @@
 # Creating new root activities that link to an existing activity: A Sample
 
-This sample shows how to create new root activities that [link](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans)
+This sample shows how to create new root activities that
+[link](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans)
 to an existing activity. This can be useful in a fan-out or batched operation
 situation when you want to create a new trace with a new root activity
 BEFORE invoking each of the fanned out operations, and at the same time
