@@ -66,7 +66,16 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
 
     public void MeasurementsCompleted(Instrument instrument, object? userState)
     {
-        this.meterProviderSdk.MeasurementsCompleted(instrument, userState);
+        var meterProvider = this.meterProviderSdk;
+
+        if (meterProvider.ViewCount > 0)
+        {
+            meterProvider.MeasurementsCompleted(instrument, userState);
+        }
+        else
+        {
+            meterProvider.MeasurementsCompletedSingleStream(instrument, userState);
+        }
     }
 
     public void Initialize(IObservableInstrumentsSource source)
@@ -74,43 +83,31 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
         this.observableInstrumentsSource = source;
     }
 
-    private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
+    private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
     {
         var meterProvider = this.meterProviderSdk;
 
-        // todo: Refactor SDK so we don't double-check the state
-
-        if (state is List<Metric> || state is List<List<Metric>>)
+        if (meterProvider.ViewCount > 0)
         {
-            meterProvider.MeasurementRecordedDouble(instrument, value, tagsRos, state);
-        }
-        else if (state is Metric)
-        {
-            meterProvider.MeasurementRecordedDoubleSingleStream(instrument, value, tagsRos, state);
+            meterProvider.MeasurementRecordedDouble(instrument, value, tagsRos, userState);
         }
         else
         {
-            // todo: Log dropped metric
+            meterProvider.MeasurementRecordedDoubleSingleStream(instrument, value, tagsRos, userState);
         }
     }
 
-    private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
+    private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
     {
         var meterProvider = this.meterProviderSdk;
 
-        // todo: Refactor SDK so we don't double-check the state
-
-        if (state is List<Metric> || state is List<List<Metric>>)
+        if (meterProvider.ViewCount > 0)
         {
-            meterProvider.MeasurementRecordedLong(instrument, value, tagsRos, state);
-        }
-        else if (state is Metric)
-        {
-            meterProvider.MeasurementRecordedLongSingleStream(instrument, value, tagsRos, state);
+            meterProvider.MeasurementRecordedLong(instrument, value, tagsRos, userState);
         }
         else
         {
-            // todo: Log dropped metric
+            meterProvider.MeasurementRecordedLongSingleStream(instrument, value, tagsRos, userState);
         }
     }
 }

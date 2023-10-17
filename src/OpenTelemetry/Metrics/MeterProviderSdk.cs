@@ -217,6 +217,8 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     internal MetricReader? Reader => this.reader;
 
+    internal int ViewCount => this.viewConfigs.Count;
+
     internal object? InstrumentPublished(Instrument instrument, bool skipShouldListenToCheck)
     {
         if (!skipShouldListenToCheck && !this.shouldListenTo(instrument))
