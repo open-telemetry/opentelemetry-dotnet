@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
-    <DiagnosticsSourceVer>8.0.0-rc.1.23419.4</DiagnosticsSourceVer>
+    <DiagnosticsSourceVer>8.0.0-rc.2.23479.6</DiagnosticsSourceVer>
     <MicrosoftExtensionsVer>$(DiagnosticsSourceVer)</MicrosoftExtensionsVer>
   </PropertyGroup>
 
