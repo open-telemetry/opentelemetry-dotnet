@@ -2,6 +2,8 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
+    <DiagnosticsSourceVer>8.0.0-rc.1.23419.4</DiagnosticsSourceVer>
+    <MicrosoftExtensionsVer>$(DiagnosticsSourceVer)</MicrosoftExtensionsVer>
   </PropertyGroup>
 
   <!--
@@ -29,7 +31,7 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           Microsoft.Extensions.Logging even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.1.23419.4" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsVer)" />
 
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="[3.1.0,)" />
@@ -49,7 +51,7 @@
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
           even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="7.0.2" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="$(DiagnosticsSourceVer)" />
 
     <!-- A conservative version of System.Text.Encodings.Web must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
