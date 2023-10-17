@@ -1,12 +1,32 @@
-# Creating new root activities that link to an existing activity: An Example
+# Creating new root activities that link to an existing activity: A Sample
 
-This example shows how to create new root activities that link to an existing
-activity. This can be useful in a fan-out or batched operation situation when
-you want to create a new trace with a new root activity before invoking each
-of the fanned out operations.
+This sample shows how to create new root activities that [link](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans)
+to an existing activity. This can be useful in a fan-out or batched operation
+situation when you want to create a new trace with a new root activity
+BEFORE invoking each of the fanned out operations, and at the same time
+you want each of these new traces to be linked to the original activity.
 
-This example shows how to create the new root activities and how to link each
-of them to the original activity.
+To give an example, let's say you have a:
+- Service A that receives a request for an operation that impacts 1000s of
+resources.
+- Let's say Service A fans out calls to Service B for each of these resource
+operations.
+
+If you used the same trace for the entire flow, then you would likely end up
+with a single very large trace with several 1000s or tens of 1000s of spans.
+This can make visualizing and understanding the trace difficult.
+
+Further, it may make it difficult to do programmatic analytics at the
+*individual* resource operation level (for each of the 1000s of resources)
+as there would be no single trace that corresponds to each of the individual
+resource operations.
+
+Instead, by creating a new trace with a new root activity before the fanout
+call, you get a separate trace for each of the resource operations. In
+addition, by using the "span links" functionality in OpenTelemetry, we link
+each of these new root activities to the original activity.
+
+This enables more granular visualization and analytics.
 
 ## How does this example work?
 
@@ -22,18 +42,23 @@ in the context of the original activity.
 
 ## When should you consider such an option?  What are the tradeoffs?
 
-This is a good option to consider for operations that involve several batched
-or fanout operations. Using this approach, you can create a new trace for each
+This is a good option to consider for operations that involve batched or
+fanout operations. Using this approach, you can create a new trace for each
 of the fanned out operations and link them to the original activity.
 
 ## References
 
-- [Creating new root activities](https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities).
-- [Adding links](https://opentelemetry.io/docs/instrumentation/net/manual/#adding-links).
+- [Links between spans](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans)
+- [Creating new root activities](https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities)
+- [Activity Creation Options](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#activity-creation-options)
 
 ## Sample Output
 
-You should see output such as the below when you run this example.
+You should see output such as the below when you run this example. You can see
+that EACH of the "fanned out activities" have:
+
+- a new trace ID
+- an activity link to the original activity
 
 ```text
 Activity.TraceId:            5ce4d8ad4926ecdd0084681f46fa38d9

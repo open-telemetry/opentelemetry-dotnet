@@ -50,7 +50,7 @@ internal class Program
         var activityContext = Activity.Current!.Context;
         var links = new List<ActivityLink>
         {
-                new ActivityLink(activityContext),
+            new ActivityLink(activityContext),
         };
 
         // Fanning out to 10 different operations.
@@ -64,6 +64,7 @@ internal class Program
             // this step helps us "de-parent" it from the current activity.
             Activity.Current = null;
 
+            // Reference: https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#activity-creation-options
             // Reference: https://opentelemetry.io/docs/instrumentation/net/manual/#adding-links
             // We create a new root activity for each of the fanned out operations and link it to the outer activity.
             using var newRootActivityForFannedOutOperation = MyActivitySource.StartActivity(
@@ -75,7 +76,7 @@ internal class Program
         }
 
         // Reset to the previous activity now that we are done with the fanout
-        // This will ensure that the rest of the code executes in the context of that activity.
+        // This will ensure that the rest of the code executes in the context of the original activity.
         Activity.Current = previous;
     }
 }
