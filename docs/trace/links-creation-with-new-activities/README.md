@@ -7,10 +7,11 @@ situation when you want to create a new trace with a new root activity
 BEFORE invoking each of the fanned out operations, and at the same time
 you want each of these new traces to be linked to the original activity.
 
-To give an example, let's say you have a:
-- Service A that receives a request for an operation that impacts 1000s of
+To give an example, let's say:
+
+- Service A receives a request for an operation that impacts 1000s of
 resources.
-- Let's say Service A fans out calls to Service B for each of these resource
+- Service A then fans out calls to Service B for each of these resource
 operations.
 
 If you used the same trace for the entire flow, then you would likely end up
@@ -18,9 +19,9 @@ with a single very large trace with several 1000s or tens of 1000s of spans.
 This can make visualizing and understanding the trace difficult.
 
 Further, it may make it difficult to do programmatic analytics at the
-*individual* resource operation level (for each of the 1000s of resources)
-as there would be no single trace that corresponds to each of the individual
-resource operations.
+*individual* resource operation level (for each of the 1000s of resource
+operations) as there would be no single trace that corresponds to each
+of the individual resource operations.
 
 Instead, by creating a new trace with a new root activity before the fanout
 call, you get a separate trace for each of the resource operations. In
