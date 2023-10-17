@@ -5,8 +5,8 @@ activity. This can be useful in a fan-out or batched operation situation when
 you want to create a new trace with a new root activity before invoking each
 of the fanned out operations.
 
-This example shows to create the new root activities and link each of them to
-the original activity.
+This example shows how to create the new root activities and how to link each
+of them to the original activity.
 
 ## How does this example work?
 
@@ -27,6 +27,7 @@ or fanout operations. Using this approach, you can create a new trace for each
 of the fanned out operations and link them to the original activity.
 
 ## References
+
 - https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities
 - https://opentelemetry.io/docs/instrumentation/net/manual/#adding-links
 
