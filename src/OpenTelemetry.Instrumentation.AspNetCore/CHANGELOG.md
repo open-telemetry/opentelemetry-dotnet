@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Introduced a new metric, `http.server.request.duration` measured in seconds.
-  The OTel SDK
+  The OTel SDK versions starting 1.6.0
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
   for this metric to comply with the
   [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
