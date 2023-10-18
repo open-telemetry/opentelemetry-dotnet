@@ -7,16 +7,18 @@ situation when you want to create a new trace with a new root activity
 BEFORE invoking each of the fanned out operations, and at the same time
 you want each of these new traces to be linked to the original activity.
 
-To give an example, let's say:
+To give an example, let's say that:
 
 - Service A receives a request for an operation that impacts 1000s of
 resources.
-- Service A then fans out calls to Service B for each of these resource
-operations.
+- Service A orchestrates this overall operation by fanning out multiple
+calls to Service B, with one call for EACH of the impacted resources.
+- Let's say the number of spans generated for a single resource operation
+is in the order of several thousands of spans.
 
-If you used the same trace for the entire flow, then you would likely end up
-with a single very large trace with several 1000s or tens of 1000s of spans.
-This can make visualizing and understanding the trace difficult.
+In the above example, if you used the same trace for the entire flow, then
+you would end up with a huge trace with more than million spans. This will
+make visualizing and understanding the trace difficult.
 
 Further, it may make it difficult to do programmatic analytics at the
 *individual* resource operation level (for each of the 1000s of resource
@@ -45,8 +47,16 @@ in the context of the original activity.
 ## When should you consider such an option?  What are the tradeoffs?
 
 This is a good option to consider for operations that involve batched or
-fanout operations. Using this approach, you can create a new trace for each
-of the fanned out operations and link them to the original activity.
+fanout operations if using the same trace causes it to become huge.
+Using this approach, you can create a new trace for each of the fanned out
+operations and link them to the original activity.
+
+A tradeoff is that now we will have multiple traces instead of a single trace.
+However, many Observability tools have the ability to visualize linked traces
+together, and hence it is not necessarily a concern from that perspective.
+However, this model has the potential to add some complexity to any
+programmatic analysis since now it has to understand the concept of linked
+traces.
 
 ## References
 
