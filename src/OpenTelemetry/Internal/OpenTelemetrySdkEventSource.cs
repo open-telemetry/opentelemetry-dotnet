@@ -350,13 +350,13 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
 #if DEBUG
     public class OpenTelemetryEventListener : EventListener
     {
-        private readonly List<EventSource> eventSources = new();
+        private readonly Dictionary<string, EventSource> eventSources = new();
 
         public override void Dispose()
         {
-            foreach (EventSource eventSource in this.eventSources)
+            foreach (var kvp in this.eventSources)
             {
-                this.DisableEvents(eventSource);
+                this.DisableEvents(kvp.Value);
             }
 
             base.Dispose();
@@ -367,7 +367,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         {
             if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
             {
-                this.eventSources.Add(eventSource);
+                this.eventSources.Add(eventSource.Name, eventSource);
                 this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
             }
 
@@ -376,6 +376,11 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
 
         protected override void OnEventWritten(EventWrittenEventArgs e)
         {
+            if (!this.eventSources.ContainsKey(e.EventSource.Name))
+            {
+                return;
+            }
+
             string? message;
             if (e.Message != null && e.Payload != null && e.Payload.Count > 0)
             {

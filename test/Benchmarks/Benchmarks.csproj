@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
-    <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Moq" />
   </ItemGroup>
 

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using OpenTelemetry.Internal;
@@ -28,6 +29,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 internal sealed class OtlpLogRecordTransformer
 {
+    internal static readonly ConcurrentBag<OtlpLogs.ScopeLogs> LogListPool = new();
+
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
 
@@ -41,6 +44,9 @@ internal sealed class OtlpLogRecordTransformer
         OtlpResource.Resource processResource,
         in Batch<LogRecord> logRecordBatch)
     {
+        // TODO: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4943
+        Dictionary<string, OtlpLogs.ScopeLogs> logsByCategory = new Dictionary<string, OtlpLogs.ScopeLogs>();
+
         var request = new OtlpCollector.ExportLogsServiceRequest();
 
         var resourceLogs = new OtlpLogs.ResourceLogs
@@ -49,19 +55,62 @@ internal sealed class OtlpLogRecordTransformer
         };
         request.ResourceLogs.Add(resourceLogs);
 
-        var scopeLogs = new OtlpLogs.ScopeLogs();
-        resourceLogs.ScopeLogs.Add(scopeLogs);
-
         foreach (var logRecord in logRecordBatch)
         {
             var otlpLogRecord = this.ToOtlpLog(logRecord);
             if (otlpLogRecord != null)
             {
+                if (!logsByCategory.TryGetValue(logRecord.CategoryName, out var scopeLogs))
+                {
+                    scopeLogs = this.GetLogListFromPool(logRecord.CategoryName);
+                    logsByCategory.Add(logRecord.CategoryName, scopeLogs);
+                    resourceLogs.ScopeLogs.Add(scopeLogs);
+                }
+
                 scopeLogs.LogRecords.Add(otlpLogRecord);
             }
         }
 
         return request;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Return(OtlpCollector.ExportLogsServiceRequest request)
+    {
+        var resourceLogs = request.ResourceLogs.FirstOrDefault();
+        if (resourceLogs == null)
+        {
+            return;
+        }
+
+        foreach (var scope in resourceLogs.ScopeLogs)
+        {
+            scope.LogRecords.Clear();
+            LogListPool.Add(scope);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal OtlpLogs.ScopeLogs GetLogListFromPool(string name)
+    {
+        if (!LogListPool.TryTake(out var logs))
+        {
+            logs = new OtlpLogs.ScopeLogs
+            {
+                Scope = new OtlpCommon.InstrumentationScope
+                {
+                    Name = name, // Name is enforced to not be null, but it can be empty.
+                    Version = string.Empty, // proto requires this to be non-null.
+                },
+            };
+        }
+        else
+        {
+            logs.Scope.Name = name;
+            logs.Scope.Version = string.Empty;
+        }
+
+        return logs;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,33 +140,18 @@ internal sealed class OtlpLogRecordTransformer
             var attributeValueLengthLimit = this.sdkLimitOptions.LogRecordAttributeValueLengthLimit;
             var attributeCountLimit = this.sdkLimitOptions.LogRecordAttributeCountLimit ?? int.MaxValue;
 
-            /*
-            // Removing this temporarily for stable release
-            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4776
-            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/3491
-            // First add the generic attributes like Category, EventId and Exception,
-            // so they are less likely being dropped because of AttributeCountLimit.
-
-            if (!string.IsNullOrEmpty(logRecord.CategoryName))
+            if (this.experimentalOptions.EmitLogEventAttributes)
             {
-                // TODO:
-                // 1. Track the following issue, and map CategoryName to Name
-                // if it makes it to log data model.
-                // https://github.com/open-telemetry/opentelemetry-specification/issues/2398
-                // 2. Confirm if this name for attribute is good.
-                otlpLogRecord.AddStringAttribute("dotnet.ilogger.category", logRecord.CategoryName, attributeValueLengthLimit, attributeCountLimit);
-            }
+                if (logRecord.EventId.Id != default)
+                {
+                    AddIntAttribute(otlpLogRecord, ExperimentalOptions.LogRecordEventIdAttribute, logRecord.EventId.Id, attributeCountLimit);
+                }
 
-            if (logRecord.EventId.Id != default)
-            {
-                otlpLogRecord.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id, attributeCountLimit);
+                if (!string.IsNullOrEmpty(logRecord.EventId.Name))
+                {
+                    AddStringAttribute(otlpLogRecord, ExperimentalOptions.LogRecordEventNameAttribute, logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
+                }
             }
-
-            if (!string.IsNullOrEmpty(logRecord.EventId.Name))
-            {
-                otlpLogRecord.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name, attributeValueLengthLimit, attributeCountLimit);
-            }
-            */
 
             if (this.experimentalOptions.EmitLogExceptionAttributes && logRecord.Exception != null)
             {
