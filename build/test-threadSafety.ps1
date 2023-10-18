@@ -10,7 +10,7 @@ Write-Host "Install Coyote CLI."
 dotnet tool install --global Microsoft.Coyote.CLI
 
 Write-Host "Build OpenTelemetry.Tests project."
-dotnet build $rootDirectory\test\OpenTelemetry.Tests\OpenTelemetry.Tests.csproj
+dotnet build --no-restore $rootDirectory\test\OpenTelemetry.Tests\OpenTelemetry.Tests.csproj 
 
 $artifactsPath = Join-Path $rootDirectory "test\OpenTelemetry.Tests\bin\Debug\$targetFramework"
 

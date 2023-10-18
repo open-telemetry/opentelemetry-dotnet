@@ -33,7 +33,7 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore -property:ExposeExperimentalFeatures=false
+      run: dotnet build --configuration Release --no-restore /p:CheckEolTargetFramework=false
 
     - name: Coyote Test
       shell: pwsh
