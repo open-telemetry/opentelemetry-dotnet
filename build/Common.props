@@ -9,6 +9,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Suppress warnings for repo code using experimental features -->
+    <NoWarn>$(NoWarn);OT1000;OT1001</NoWarn>
     <!--temporarily disable. See 3958-->
     <!--<AnalysisLevel>latest-All</AnalysisLevel>-->
   </PropertyGroup>

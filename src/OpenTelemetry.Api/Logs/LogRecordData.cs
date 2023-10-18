@@ -17,6 +17,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace OpenTelemetry.Logs;
 
@@ -25,6 +28,9 @@ namespace OpenTelemetry.Logs;
 /// Stores details about a log message.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+[Experimental("OT1001", UrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/{0}.md")]
+#endif
 public
 #else
 /// <summary>

@@ -16,6 +16,10 @@
 
 #nullable enable
 
+#if NET8_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+
 namespace OpenTelemetry.Logs;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -25,6 +29,9 @@ namespace OpenTelemetry.Logs;
 /// dependency injection.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
+#if NET8_0_OR_GREATER
+[Experimental("OT1000", UrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/{0}.md")]
+#endif
 public
 #else
 /// <summary>
@@ -34,7 +41,7 @@ public
 /// </summary>
 internal
 #endif
-    interface IDeferredLoggerProviderBuilder
+interface IDeferredLoggerProviderBuilder
 {
     /// <summary>
     /// Register a callback action to configure the <see
