@@ -24,9 +24,7 @@ WORKDIR /test
 COPY --from=build /drop .
 COPY --from=w3c /w3c .
 RUN apt-get update
-RUN apt-get install -y python3-pip python3-dev
 RUN cd /usr/local/bin
 RUN ln -s /usr/bin/python3 python
-RUN pip3 install --upgrade pip
-RUN pip3 install aiohttp
+RUN apt install -y python3-aiohttp
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
