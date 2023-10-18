@@ -174,7 +174,6 @@ public partial class HttpClientTests
             {
                 RequestUri = new Uri(testUrl),
                 Method = new HttpMethod(tc.Method),
-                Version = new Version(2, 0),
             };
 
             request.Headers.Add("contextRequired", "false");

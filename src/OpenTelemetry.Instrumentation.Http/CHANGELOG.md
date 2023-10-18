@@ -47,9 +47,17 @@
   * **Meter** : `System.Net.NameResolution`
     * `dns.lookups.duration`
 
-  **NOTE**: Users can opt-out of metrics that are not required using
-  [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#view).
-  [#4931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4931)
+  **NOTES**:
+  * When targeting `.NET8.0` framework, `http.client.request.duration` metric
+    will only follow
+    [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
+    semantic conventions specification. Ability to switch behavior to older
+    conventions using  `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is
+    not available.
+  * Users can opt-out of metrics that are not required using
+    [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
+
+  ([#4931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4931))
 
 ## 1.5.1-beta.1
 
