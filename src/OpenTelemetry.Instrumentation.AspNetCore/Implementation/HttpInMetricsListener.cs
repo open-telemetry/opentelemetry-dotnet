@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
 #if NET6_0_OR_GREATER
@@ -30,8 +31,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     internal const string HttpServerDurationMetricName = "http.server.duration";
     internal const string HttpServerRequestDurationMetricName = "http.server.request.duration";
 
+    internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
+    internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
+    private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -63,6 +67,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     public override void OnEventWritten(string name, object payload)
     {
+        if (name == OnUnHandledDiagnosticsExceptionEvent || name == OnUnhandledHostingExceptionEvent)
+        {
+            this.OnExceptionEventWritten(name, payload);
+        }
+
         if (name == OnStopEvent)
         {
             if (this.emitOldAttributes)
@@ -75,6 +84,32 @@ internal sealed class HttpInMetricsListener : ListenerHandler
                 this.OnEventWritten_New(name, payload);
             }
         }
+    }
+
+    public void OnExceptionEventWritten(string name, object payload)
+    {
+        var activity = Activity.Current;
+
+        // We need to use reflection here as the payload type is not a defined public type.
+        if (!TryFetchException(payload, out Exception exc))
+        {
+            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnExceptionEventWritten), activity.OperationName);
+            return;
+        }
+
+        if (activity != null)
+        {
+            activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+        }
+
+        // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
+        // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
+        // this makes sure that top-level properties on the payload object are always preserved.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchException(object payload, out Exception exc)
+            => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
     public void OnEventWritten_Old(string name, object payload)
@@ -152,6 +187,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     public void OnEventWritten_New(string name, object payload)
     {
+        var activity = Activity.Current;
         var context = payload as HttpContext;
         if (context == null)
         {
@@ -196,6 +232,19 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
+        if (SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, context.Response.StatusCode) == ActivityStatusCode.Error)
+        {
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
+        }
+        else
+        {
+            var errorType = activity.GetTagValue(SemanticConventions.AttributeErrorType);
+            if (errorType != null)
+            {
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
+            }
+        }
+
         if (this.options.Enrich != null)
         {
             try
