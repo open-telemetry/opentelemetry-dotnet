@@ -65,10 +65,16 @@
     * `aspnetcore.rate_limiting.request.time_in_queue`
     * `aspnetcore.rate_limiting.requests`
 
-  **NOTE**: `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable for these
-  metrics is not supported. Users can opt-out of metrics that are not required
-  using
-  [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#view).
+  **NOTES**:
+  * When targeting `.NET8.0` framework, `http.server.request.duration` metric
+    will only follow
+    [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
+    semantic conventions specification. Ability to switch behavior to older
+    conventions using `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is
+    not available.
+  * Users can opt-out of metrics that are not required using
+    [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
+
   ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
 
 * Added `network.protocol.name` dimension to `http.server.request.duration`

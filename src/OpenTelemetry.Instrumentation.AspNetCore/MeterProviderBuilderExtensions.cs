@@ -19,9 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 #endif
 using OpenTelemetry.Instrumentation.AspNetCore;
-#if !NET8_0_OR_GREATER
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -42,13 +40,7 @@ public static class MeterProviderBuilderExtensions
         Guard.ThrowIfNull(builder);
 
 #if NET8_0_OR_GREATER
-        return builder
-             .AddMeter("Microsoft.AspNetCore.Hosting")
-             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
-             .AddMeter("Microsoft.AspNetCore.Http.Connections")
-             .AddMeter("Microsoft.AspNetCore.Routing")
-             .AddMeter("Microsoft.AspNetCore.Diagnostics")
-             .AddMeter("Microsoft.AspNetCore.RateLimiting");
+        return builder.ConfigureMeters();
 #else
         return AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
 #endif
@@ -80,13 +72,8 @@ public static class MeterProviderBuilderExtensions
         Guard.ThrowIfNull(builder);
 
 #if NET8_0_OR_GREATER
-        return builder
-             .AddMeter("Microsoft.AspNetCore.Hosting")
-             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
-             .AddMeter("Microsoft.AspNetCore.Http.Connections")
-             .AddMeter("Microsoft.AspNetCore.Routing")
-             .AddMeter("Microsoft.AspNetCore.Diagnostics")
-             .AddMeter("Microsoft.AspNetCore.RateLimiting");
+        AspNetCoreInstrumentationEventSource.Log.UnSupportedOption(nameof(AspNetCoreMetricsInstrumentationOptions));
+        return builder.ConfigureMeters();
 #else
 
         // Note: Warm-up the status code mapping.
@@ -119,5 +106,16 @@ public static class MeterProviderBuilderExtensions
 
         return builder;
 #endif
+    }
+
+    internal static MeterProviderBuilder ConfigureMeters(this MeterProviderBuilder builder)
+    {
+        return builder
+             .AddMeter("Microsoft.AspNetCore.Hosting")
+             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+             .AddMeter("Microsoft.AspNetCore.Http.Connections")
+             .AddMeter("Microsoft.AspNetCore.Routing")
+             .AddMeter("Microsoft.AspNetCore.Diagnostics")
+             .AddMeter("Microsoft.AspNetCore.RateLimiting");
     }
 }
