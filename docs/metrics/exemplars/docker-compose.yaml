@@ -3,7 +3,7 @@ services:
 
   # OTEL Collector to receive logs, metrics and traces from the application
   otel-collector:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector:0.70.0
     command: [ "--config=/etc/otel-collector.yaml" ]
     volumes:
       - ./otel-collector.yaml:/etc/otel-collector.yaml
@@ -31,7 +31,6 @@ services:
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver
       - --enable-feature=exemplar-storage
-      - --log.level=debug
     volumes:
       - ./prometheus.yaml:/etc/prometheus.yaml
     ports:
@@ -39,7 +38,7 @@ services:
 
 # UI to query traces and metrics
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:9.3.2
     volumes:
       - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
@@ -49,4 +48,3 @@ services:
       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
     ports:
       - "3000:3000"
-
