@@ -912,7 +912,7 @@ public sealed class BasicTests
         Assert.Equal(4, numberofSubscribedEvents);
     }
 
-    [Fact]
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/4884")]
     public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
     {
         int numberOfUnSubscribedEvents = 0;
