@@ -93,7 +93,7 @@ internal sealed class AspNetCoreInstrumentationEventSource : EventSource
         this.WriteEvent(5, handlerName, eventName, ex);
     }
 
-    [Event(6, Message = "'{0}' is not supported for .NET8.0 and above targets", Level = EventLevel.Verbose)]
+    [Event(6, Message = "'{0}' is not supported for .NET8.0 and above targets", Level = EventLevel.Warning)]
     public void UnsupportedOption(string optionName)
     {
         this.WriteEvent(6, optionName);
