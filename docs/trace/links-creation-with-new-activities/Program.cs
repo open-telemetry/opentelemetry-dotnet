@@ -62,6 +62,10 @@ internal class Program
             // Reference: https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities
             // Since we want to create a new root activity for each of the fanned out operations,
             // this step helps us "de-parent" it from the current activity.
+            // Note: At least as of Oct 2023, this is the only mechanism to create a new root
+            // activity in the presence of an existing activity. This might change in the future
+            // if/when issue https://github.com/open-telemetry/opentelemetry-dotnet/issues/984
+            // is addressed.
             Activity.Current = null;
 
             // Reference: https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#activity-creation-options

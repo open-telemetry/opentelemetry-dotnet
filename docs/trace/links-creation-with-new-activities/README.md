@@ -63,6 +63,7 @@ traces.
 - [Links between spans](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#links-between-spans)
 - [Creating new root activities](https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities)
 - [Activity Creation Options](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Api#activity-creation-options)
+- [A sample where links are used in a fan-in scenario](https://github.com/PacktPublishing/Modern-Distributed-Tracing-in-.NET/tree/main/chapter6/links)
 
 ## Sample Output
 
