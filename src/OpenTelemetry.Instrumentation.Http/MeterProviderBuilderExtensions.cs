@@ -39,6 +39,11 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
+#if NET8_0_OR_GREATER
+        return builder
+        .AddMeter("System.Net.Http");
+        .AddMeter("System.Net.NameResolution");
+#else
         // Note: Warm-up the status code mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
 
@@ -65,9 +70,6 @@ public static class MeterProviderBuilderExtensions
                 HttpWebRequestActivitySource.MetricsOptions = options;
             });
         }
-#elif NET8_0_OR_GREATER
-        builder.AddMeter("System.Net.Http");
-        builder.AddMeter("System.Net.NameResolution");
 #else
         builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
 
@@ -75,5 +77,6 @@ public static class MeterProviderBuilderExtensions
             sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
 #endif
         return builder;
+#endif
     }
 }
