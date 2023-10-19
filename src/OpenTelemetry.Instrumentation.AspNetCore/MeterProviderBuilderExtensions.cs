@@ -72,7 +72,7 @@ public static class MeterProviderBuilderExtensions
         Guard.ThrowIfNull(builder);
 
 #if NET8_0_OR_GREATER
-        AspNetCoreInstrumentationEventSource.Log.UnSupportedOption(nameof(AspNetCoreMetricsInstrumentationOptions));
+        AspNetCoreInstrumentationEventSource.Log.UnsupportedOption(nameof(AspNetCoreMetricsInstrumentationOptions));
         return builder.ConfigureMeters();
 #else
 
