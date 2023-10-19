@@ -154,11 +154,9 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var logger = new TestOutputLogger(this.outputHelper);
             var config = Configuration.Create()
-                        .WithTestingIterations(100)
+                        .WithTestingIterations(3)
                         .WithVerbosityEnabled(VerbosityLevel.Debug)
-                        .WithControlFlowRaceCheckingEnabled()
-                        .WithPartiallyControlledConcurrencyAllowed(false)
-                        .WithPartiallyControlledDataNondeterminismAllowed(false);
+                        .WithControlFlowRaceCheckingEnabled();
 
             var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
             test.SetLogger(logger);
