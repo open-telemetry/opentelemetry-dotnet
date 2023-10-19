@@ -38,4 +38,4 @@ jobs:
       run: dotnet build ./build/InstrumentationLibraries.proj --configuration Release --no-restore -p:RunningDotNetPack=true
 
     - name: dotnet test
-      run: dotnet test ./build/InstrumentationLibraries.proj --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed"
+      run: dotnet test **/bin/Release/${{ matrix.version }}/OpenTelemetry.Instrumentation*.Tests.dll --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed"
