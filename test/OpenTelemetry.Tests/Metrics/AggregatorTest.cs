@@ -154,7 +154,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var logger = new TestOutputLogger(this.outputHelper);
             var config = Configuration.Create()
-                        .WithTestingIterations(3)
+                        .WithTestingIterations(100)
                         .WithVerbosityEnabled(VerbosityLevel.Debug)
                         .WithControlFlowRaceCheckingEnabled()
                         .WithPartiallyControlledConcurrencyAllowed(false)
