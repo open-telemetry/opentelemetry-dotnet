@@ -1,0 +1,3 @@
+Microsoft.Extensions.Diagnostics.Metrics.OpenTelemetryMetricsBuilderExtensions
+static Microsoft.Extensions.Diagnostics.Metrics.OpenTelemetryMetricsBuilderExtensions.AddOpenTelemetryMetrics(this Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder! metricsBuilder) -> Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder!
+static Microsoft.Extensions.Diagnostics.Metrics.OpenTelemetryMetricsBuilderExtensions.AddOpenTelemetryMetrics(this Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder! metricsBuilder, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder!
