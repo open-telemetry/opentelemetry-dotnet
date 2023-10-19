@@ -84,32 +84,33 @@ public class MetricTests
         var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
         Assert.NotNull(res);
 
+        // We need to let metric callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the callbacks to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
         this.meterProvider.Dispose();
 
         var requestDurationMetric = metricItems
-            .Where(item => item.Name == "http.server.request.duration")
-            .ToArray();
+            .Count(item => item.Name == "http.server.request.duration");
 
         var activeRequestsMetric = metricItems.
-            Where(item => item.Name == "http.server.active_requests")
-            .ToArray();
+            Count(item => item.Name == "http.server.active_requests");
 
         var routeMatchingMetric = metricItems.
-            Where(item => item.Name == "aspnetcore.routing.match_attempts")
-            .ToArray();
+            Count(item => item.Name == "aspnetcore.routing.match_attempts");
 
         var kestrelActiveConnectionsMetric = metricItems.
-            Where(item => item.Name == "kestrel.active_connections")
-            .ToArray();
-        var kestrelQueuedConnectionMetric = metricItems.
-            Where(item => item.Name == "kestrel.queued_connections")
-            .ToArray();
+            Count(item => item.Name == "kestrel.active_connections");
 
-        Assert.Single(requestDurationMetric);
-        Assert.Single(activeRequestsMetric);
-        Assert.Single(routeMatchingMetric);
-        Assert.Single(kestrelActiveConnectionsMetric);
-        Assert.Single(kestrelQueuedConnectionMetric);
+        var kestrelQueuedConnectionMetric = metricItems.
+            Count(item => item.Name == "kestrel.queued_connections");
+
+        Assert.Equal(1, requestDurationMetric);
+        Assert.Equal(1, activeRequestsMetric);
+        Assert.Equal(1, routeMatchingMetric);
+        Assert.Equal(1, kestrelActiveConnectionsMetric);
+        Assert.Equal(1, kestrelQueuedConnectionMetric);
 
         // TODO
         // kestrel.queued_requests
@@ -156,6 +157,11 @@ public class MetricTests
         using var client = new HttpClient();
         var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
         Assert.NotNull(res);
+
+        // We need to let metric callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the callbacks to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
         this.meterProvider.Dispose();
 
