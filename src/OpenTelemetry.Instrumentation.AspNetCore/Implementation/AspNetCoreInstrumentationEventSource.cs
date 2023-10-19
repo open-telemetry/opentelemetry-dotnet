@@ -94,7 +94,7 @@ internal sealed class AspNetCoreInstrumentationEventSource : EventSource
     }
 
     [Event(6, Message = "'{0}' is not supported for .NET8.0 and above targets", Level = EventLevel.Verbose)]
-    public void UnSupportedOption(string optionName)
+    public void UnsupportedOption(string optionName)
     {
         this.WriteEvent(6, optionName);
     }
