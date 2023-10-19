@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET8_0_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+#endif
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Internal;
@@ -63,19 +65,14 @@ public static class MeterProviderBuilderExtensions
                 HttpWebRequestActivitySource.MetricsOptions = options;
             });
         }
+#elif NET8_0_OR_GREATER
+        builder.AddMeter("System.Net.Http");
+        builder.AddMeter("System.Net.NameResolution");
 #else
-        if (HttpHandlerMetricsDiagnosticListener.IsNet8OrGreater)
-        {
-            builder.AddMeter("System.Net.Http");
-            builder.AddMeter("System.Net.NameResolution");
-        }
-        else
-        {
-            builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
+        builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
 
-            builder.AddInstrumentation(sp => new HttpClientMetrics(
+        builder.AddInstrumentation(sp => new HttpClientMetrics(
                 sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
-        }
 #endif
         return builder;
     }
