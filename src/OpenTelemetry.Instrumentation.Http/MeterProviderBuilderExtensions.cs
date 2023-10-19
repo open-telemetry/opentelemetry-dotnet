@@ -72,7 +72,7 @@ public static class MeterProviderBuilderExtensions
         builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
 
         builder.AddInstrumentation(sp => new HttpClientMetrics(
-                sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
+            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
 #endif
         return builder;
     }
