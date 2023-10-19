@@ -81,6 +81,7 @@
       <AdditionalFiles Include=".publicApi\Experimental\$(TargetFramework)\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
       <AdditionalFiles Include=".publicApi\Experimental\PublicAPI.*.txt" Condition="'$(ExposeExperimentalFeatures)' == 'true'" />
       <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.*.txt" />
+      <AdditionalFiles Include=".publicApi\PublicAPI.*.txt" />
     </ItemGroup>
 
     <!-- Note: The '$(BuildNumber)' != '' check here is to reduce log spam in
