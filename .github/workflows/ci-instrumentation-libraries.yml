@@ -31,11 +31,11 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dependencies
+    - name: dotnet restore
       run: dotnet restore ./build/InstrumentationLibraries.proj -p:RunningDotNetPack=true
 
-    - name: Build
+    - name: dotnet build
       run: dotnet build ./build/InstrumentationLibraries.proj --configuration Release --no-restore -p:RunningDotNetPack=true
 
-    - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/Release/${{ matrix.version }}/OpenTelemetry.Instrumentation*.Tests.dll --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed"
+    - name: dotnet test
+      run: dotnet test ./build/InstrumentationLibraries.proj --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed"

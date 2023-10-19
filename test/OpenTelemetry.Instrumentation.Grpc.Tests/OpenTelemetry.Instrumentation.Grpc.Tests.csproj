@@ -45,6 +45,7 @@
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
     <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
   </ItemGroup>
 
   <ItemGroup>
