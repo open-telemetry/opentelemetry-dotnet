@@ -15,7 +15,7 @@ dotnet build --no-restore $rootDirectory\test\OpenTelemetry.Tests\OpenTelemetry.
 $artifactsPath = Join-Path $rootDirectory "test\OpenTelemetry.Tests\bin\Debug\$targetFramework"
 
 Write-Host "Generate Coyote rewriting options JSON file."
-$assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-Object {$_.Name}
+$assemblies = Get-ChildItem $artifactsPath | ForEach-Object {$_.Name}
 
 $RewriteOptionsJson = @{}
 [void]$RewriteOptionsJson.Add("AssembliesPath", $artifactsPath)
