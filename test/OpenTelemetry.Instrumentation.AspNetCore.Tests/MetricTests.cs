@@ -14,11 +14,22 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET8_0_OR_GREATER
 using System.Diagnostics;
+#endif
+#if NET8_0_OR_GREATER
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Builder;
+#endif
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
+#if NET8_0_OR_GREATER
+using Microsoft.AspNetCore.RateLimiting;
+#endif
+#if !NET8_0_OR_GREATER
 using Microsoft.AspNetCore.TestHost;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -50,56 +61,133 @@ public class MetricTests
         Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
     }
 
+#if NET8_0_OR_GREATER
     [Fact]
-    public async Task RequestMetricIsCaptured_Old()
+    public async Task ValidateNet8MetricsAsync()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = null })
-            .Build();
-
         var metricItems = new List<Metric>();
 
         this.meterProvider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddAspNetCoreInstrumentation()
             .AddInMemoryExporter(metricItems)
             .Build();
 
-        using (var client = this.factory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-            })
-            .CreateClient())
-        {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
 
-            response1.EnsureSuccessStatusCode();
-            response2.EnsureSuccessStatusCode();
-        }
+        app.MapGet("/", () => "Hello");
 
-        // We need to let End callback execute as it is executed AFTER response was returned.
+        _ = app.RunAsync();
+
+        using var client = new HttpClient();
+        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        Assert.NotNull(res);
+
+        // We need to let metric callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the End callback to complete
+        // giving some breezing room for the callbacks to complete
         await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
         this.meterProvider.Dispose();
 
-        var requestMetrics = metricItems
-            .Where(item => item.Name == "http.server.duration")
+        var requestDurationMetric = metricItems
+            .Count(item => item.Name == "http.server.request.duration");
+
+        var activeRequestsMetric = metricItems.
+            Count(item => item.Name == "http.server.active_requests");
+
+        var routeMatchingMetric = metricItems.
+            Count(item => item.Name == "aspnetcore.routing.match_attempts");
+
+        var kestrelActiveConnectionsMetric = metricItems.
+            Count(item => item.Name == "kestrel.active_connections");
+
+        var kestrelQueuedConnectionMetric = metricItems.
+            Count(item => item.Name == "kestrel.queued_connections");
+
+        Assert.Equal(1, requestDurationMetric);
+        Assert.Equal(1, activeRequestsMetric);
+        Assert.Equal(1, routeMatchingMetric);
+        Assert.Equal(1, kestrelActiveConnectionsMetric);
+        Assert.Equal(1, kestrelQueuedConnectionMetric);
+
+        // TODO
+        // kestrel.queued_requests
+        // kestrel.upgraded_connections
+        // kestrel.rejected_connections
+        // kestrel.tls_handshake.duration
+        // kestrel.active_tls_handshakes
+
+        await app.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task ValidateNet8RateLimitingMetricsAsync()
+    {
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.AddRateLimiter(_ => _
+        .AddFixedWindowLimiter(policyName: "fixed", options =>
+        {
+            options.PermitLimit = 4;
+            options.Window = TimeSpan.FromSeconds(12);
+            options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            options.QueueLimit = 2;
+        }));
+
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
+
+        app.UseRateLimiter();
+
+        static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
+
+        app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
+                                   .RequireRateLimiting("fixed");
+
+        _ = app.RunAsync();
+
+        using var client = new HttpClient();
+        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        Assert.NotNull(res);
+
+        // We need to let metric callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the callbacks to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        var activeRequestleasesMetric = metricItems
+            .Where(item => item.Name == "aspnetcore.rate_limiting.active_request_leases")
             .ToArray();
 
-        var metric = Assert.Single(requestMetrics);
-        Assert.Equal("ms", metric.Unit);
-        var metricPoints = GetMetricPoints(metric);
-        Assert.Equal(2, metricPoints.Count);
+        var requestLeaseDurationMetric = metricItems.
+            Where(item => item.Name == "aspnetcore.rate_limiting.request_lease.duration")
+            .ToArray();
 
-        AssertMetricPoints_Old(
-            metricPoints: metricPoints,
-            expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6);
+        var limitingRequestsMetric = metricItems.
+            Where(item => item.Name == "aspnetcore.rate_limiting.requests")
+            .ToArray();
+
+        Assert.Single(activeRequestleasesMetric);
+        Assert.Single(requestLeaseDurationMetric);
+        Assert.Single(limitingRequestsMetric);
+
+        // TODO
+        // aspnetcore.rate_limiting.request.time_in_queue
+        // aspnetcore.rate_limiting.queued_requests
+
+        await app.DisposeAsync();
     }
+#endif
 
     [Fact]
     public async Task RequestMetricIsCaptured_New()
@@ -150,7 +238,59 @@ public class MetricTests
         AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 5);
+            expectedTagsCount: 6);
+    }
+
+#if !NET8_0_OR_GREATER
+    [Fact]
+    public async Task RequestMetricIsCaptured_Old()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = null })
+            .Build();
+
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient())
+        {
+            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
+            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+
+            response1.EnsureSuccessStatusCode();
+            response2.EnsureSuccessStatusCode();
+        }
+
+        // We need to let End callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the End callback to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        var requestMetrics = metricItems
+            .Where(item => item.Name == "http.server.duration")
+            .ToArray();
+
+        var metric = Assert.Single(requestMetrics);
+        Assert.Equal("ms", metric.Unit);
+        var metricPoints = GetMetricPoints(metric);
+        Assert.Equal(2, metricPoints.Count);
+
+        AssertMetricPoints_Old(
+            metricPoints: metricPoints,
+            expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
+            expectedTagsCount: 6);
     }
 
     [Fact]
@@ -218,7 +358,7 @@ public class MetricTests
         AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 5);
+            expectedTagsCount: 6);
     }
 
     [Fact]
@@ -323,6 +463,7 @@ public class MetricTests
         Assert.Contains(tagsToAdd[0], tags);
         Assert.Contains(tagsToAdd[1], tags);
     }
+#endif
 
     public void Dispose()
     {
