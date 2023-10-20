@@ -1,19 +1,10 @@
-name: dotnet format
+name: Lint - dotnet format
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths:
-    - '**.cs'
-    - '.editorconfig'
-  pull_request:
-    branches: [ 'main*' ]
-    paths:
-    - '**.cs'
-    - '.editorconfig'
+  workflow_call:
 
 jobs:
-  check-format:
+  run-dotnet-format:
     runs-on: windows-latest
 
     steps:
@@ -23,7 +14,7 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install format tool
+    - name: Install dotnet-format
       run: dotnet tool install -g dotnet-format
 
     - name: dotnet format

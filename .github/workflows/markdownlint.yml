@@ -1,17 +1,10 @@
-name: markdownlint
+name: Lint - Markdown
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths:
-    - '**.md'
-  pull_request:
-    branches: [ 'main*' ]
-    paths:
-    - '**.md'
+  workflow_call:
 
 jobs:
-  build:
+  run-markdownlint:
     runs-on: ubuntu-latest
 
     steps:

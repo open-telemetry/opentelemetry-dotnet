@@ -1,17 +1,44 @@
 name: Build
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
   pull_request:
     branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
 
 jobs:
-  build-test-stable:
+  lint-misspell-sanitycheck:
+    uses: ./.github/workflows/sanitycheck.yml
+
+  detect-changes:
+    runs-on: windows-latest
+    outputs:
+      changes: ${{ steps.changes.outputs.changes }}
+    steps:
+    - uses: AurorNZ/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          md: ['**.md']
+          build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
+          shared: ['src/Shared/**']
+          code: ['**.cs', '.editorconfig']
+
+  lint-md:
+    needs: detect-changes
+    if: contains(needs.detect-changes.outputs.changes, 'md')
+    uses: ./.github/workflows/markdownlint.yml
+
+  lint-dotnet-format:
+    needs: detect-changes
+    if: contains(needs.detect-changes.outputs.changes, 'code')
+    uses: ./.github/workflows/dotnet-format.yml
+
+  build-test-solution-stable:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
@@ -39,7 +66,13 @@ jobs:
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
 
-  build-test-experimental:
+  build-test-solution-experimental:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
@@ -66,3 +99,17 @@ jobs:
 
     - name: Test ${{ matrix.version }}
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+
+  build-test:
+    needs: [
+      lint-misspell-sanitycheck,
+      detect-changes,
+      lint-md,
+      lint-dotnet-format,
+      build-test-solution-stable,
+      build-test-solution-experimental,
+      ]
+    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+    runs-on: windows-latest
+    steps:
+    - run: echo 'build complete ✓'
