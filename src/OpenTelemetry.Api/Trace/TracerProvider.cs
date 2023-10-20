@@ -68,12 +68,12 @@ public class TracerProvider : BaseProvider
         {
             lock (tracers)
             {
-                /*if (this.Tracers == null)
+                if (this.Tracers == null)
                 {
                     // Note: We check here for a race with Dispose and return a
                     // no-op Tracer in that case.
                     return new(activitySource: null);
-                }*/
+                }
 
                 tracer = new(new(key.Name, key.Version));
 #if DEBUG
