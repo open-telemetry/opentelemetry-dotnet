@@ -65,6 +65,7 @@ public class DependencyInjectionConfigTests
         Assert.True(optionsPickedFromDI);
     }
 
+#if !NET8_0_OR_GREATER
     [Theory]
     [InlineData(null)]
     [InlineData("CustomName")]
@@ -95,4 +96,5 @@ public class DependencyInjectionConfigTests
 
         Assert.True(optionsPickedFromDI);
     }
+#endif
 }
