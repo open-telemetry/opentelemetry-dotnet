@@ -27,7 +27,7 @@ $RewriteOptionsJson = @{}
 $RewriteOptionsJson | ConvertTo-Json -Compress | Set-Content -Path "$rootDirectory\test\$testProjectName\rewrite.coyote.json" -Verbose
 
 Write-Host "Run Coyote rewrite."
-coyote rewrite "$rootDirectory\test\$testProjectName\rewrite.coyote.json"
+coyote rewrite "$rootDirectory/test/$testProjectName/rewrite.coyote.json"
 
 Write-Host "Execute re-written binary."
 $Output = dotnet test "$artifactsPath\$testProjectName.dll" --framework $targetFramework --filter CategoryName=$categoryName
