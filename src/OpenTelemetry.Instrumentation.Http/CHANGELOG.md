@@ -47,6 +47,10 @@
   * **Meter** : `System.Net.NameResolution`
     * `dns.lookups.duration`
 
+  For details about each individual metric check [System.Net metrics
+  docs
+  page](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
+
   **NOTES**:
   * When targeting `.NET8.0` framework or newer, `http.client.request.duration` metric
     will only follow

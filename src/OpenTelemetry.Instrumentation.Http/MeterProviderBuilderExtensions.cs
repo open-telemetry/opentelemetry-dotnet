@@ -42,8 +42,8 @@ public static class MeterProviderBuilderExtensions
 
 #if NET8_0_OR_GREATER
         return builder
-        .AddMeter("System.Net.Http")
-        .AddMeter("System.Net.NameResolution");
+            .AddMeter("System.Net.Http")
+            .AddMeter("System.Net.NameResolution");
 #else
         // Note: Warm-up the status code mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
