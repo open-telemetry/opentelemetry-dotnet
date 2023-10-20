@@ -31,8 +31,8 @@
    and
    [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
 
-* Following metrics will now be enabled by default when targeting
-  `.NET8.0` or newer framework.
+* Following metrics will now be enabled by default when targeting `.NET8.0` or
+  newer framework:
 
   * **Meter** : `Microsoft.AspNetCore.Hosting`
     * `http.server.request.duration`
@@ -64,6 +64,10 @@
     * `aspnetcore.rate_limiting.queued_requests`
     * `aspnetcore.rate_limiting.request.time_in_queue`
     * `aspnetcore.rate_limiting.requests`
+
+  For details about each individual metric check [ASP.NET Core
+  docs
+  page](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
 
   **NOTES**:
   * When targeting `.NET8.0` framework or newer, `http.server.request.duration` metric
