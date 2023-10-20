@@ -18,8 +18,10 @@ using System.Diagnostics;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+#if !NET8_0_OR_GREATER
 using System.Reflection;
 using System.Text.Json;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
@@ -33,6 +35,7 @@ public partial class HttpClientTests
 {
     public static readonly IEnumerable<object[]> TestData = HttpTestData.ReadTestCases();
 
+#if !NET8_0_OR_GREATER
     [Theory]
     [MemberData(nameof(TestData))]
     public async Task HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsOldSemanticConventionsAsync(HttpTestData.HttpOutTestCase tc)
@@ -71,18 +74,7 @@ public partial class HttpClientTests
             enableMetrics: true,
             semanticConvention: HttpSemanticConvention.Dupe).ConfigureAwait(false);
     }
-
-    [Theory]
-    [MemberData(nameof(TestData))]
-    public async Task HttpOutCallsAreCollectedSuccessfullyTracesOnlyAsync(HttpTestData.HttpOutTestCase tc)
-    {
-        await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
-            this.host,
-            this.port,
-            tc,
-            enableTracing: true,
-            enableMetrics: false).ConfigureAwait(false);
-    }
+#endif
 
     [Theory]
     [MemberData(nameof(TestData))]
@@ -98,6 +90,18 @@ public partial class HttpClientTests
 
     [Theory]
     [MemberData(nameof(TestData))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyTracesOnlyAsync(HttpTestData.HttpOutTestCase tc)
+    {
+        await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
+            this.host,
+            this.port,
+            tc,
+            enableTracing: true,
+            enableMetrics: false).ConfigureAwait(false);
+    }
+
+    [Theory]
+    [MemberData(nameof(TestData))]
     public async Task HttpOutCallsAreCollectedSuccessfullyNoSignalsAsync(HttpTestData.HttpOutTestCase tc)
     {
         await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
@@ -108,6 +112,7 @@ public partial class HttpClientTests
             enableMetrics: false).ConfigureAwait(false);
     }
 
+#if !NET8_0_OR_GREATER
     [Fact]
     public async Task DebugIndividualTestAsync()
     {
@@ -140,6 +145,7 @@ public partial class HttpClientTests
         var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsOldSemanticConventionsAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
         await t.ConfigureAwait(false);
     }
+#endif
 
     [Fact]
     public async Task CheckEnrichmentWhenSampling()
@@ -147,6 +153,65 @@ public partial class HttpClientTests
         await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
         await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
     }
+
+#if NET8_0_OR_GREATER
+    [Theory]
+    [MemberData(nameof(TestData))]
+    public async Task ValidateNet8MetricsAsync(HttpTestData.HttpOutTestCase tc)
+    {
+        var metrics = new List<Metric>();
+        var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var testUrl = HttpTestData.NormalizeValues(tc.Url, this.host, this.port);
+
+        try
+        {
+            using var c = new HttpClient();
+            using var request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(testUrl),
+                Method = new HttpMethod(tc.Method),
+            };
+
+            request.Headers.Add("contextRequired", "false");
+            request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
+            await c.SendAsync(request).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // test case can intentionally send request that will result in exception
+        }
+        finally
+        {
+            meterProvider.Dispose();
+        }
+
+        // dns.lookups.duration is a typo
+        // https://github.com/dotnet/runtime/issues/92917
+        var requestMetrics = metrics
+            .Where(metric =>
+            metric.Name == "http.client.request.duration" ||
+            metric.Name == "http.client.active_requests" ||
+            metric.Name == "http.client.request.time_in_queue" ||
+            metric.Name == "http.client.connection.duration" ||
+            metric.Name == "http.client.open_connections" ||
+            metric.Name == "dns.lookups.duration")
+            .ToArray();
+
+        if (tc.ResponseExpected)
+        {
+            Assert.Equal(6, requestMetrics.Count());
+        }
+        else
+        {
+            // http.client.connection.duration and http.client.open_connections will not be emitted.
+            Assert.Equal(4, requestMetrics.Count());
+        }
+    }
+#endif
 
     private static async Task HttpOutCallsAreCollectedSuccessfullyBodyAsync(
         string host,
@@ -210,11 +275,6 @@ public partial class HttpClientTests
             {
                 RequestUri = new Uri(testUrl),
                 Method = new HttpMethod(tc.Method),
-#if NETFRAMEWORK
-                Version = new Version(1, 1),
-#else
-                Version = new Version(2, 0),
-#endif
             };
 
             if (tc.Headers != null)
@@ -351,6 +411,7 @@ public partial class HttpClientTests
                 Assert.Single(requestMetrics);
             }
 
+#if !NET8_0_OR_GREATER
             if (semanticConvention == null || semanticConvention.Value.HasFlag(HttpSemanticConvention.Old))
             {
                 var metric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.duration");
@@ -419,7 +480,7 @@ public partial class HttpClientTests
                     expected: new List<double> { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000, double.PositiveInfinity },
                     actual: histogramBounds);
             }
-
+#endif
             if (semanticConvention != null && semanticConvention.Value.HasFlag(HttpSemanticConvention.New))
             {
                 var metric = requestMetrics.FirstOrDefault(m => m.Name == "http.client.request.duration");
