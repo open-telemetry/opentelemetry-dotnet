@@ -24,7 +24,7 @@ $assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-
 $RewriteOptionsJson = @{}
 [void]$RewriteOptionsJson.Add("AssembliesPath", $artifactsPath)
 [void]$RewriteOptionsJson.Add("Assemblies", $assemblies)
-$RewriteOptionsJson | ConvertTo-Json -Compress | Set-Content -Path "$rootDirectory\test\$testProjectName\rewrite.coyote.json"
+$RewriteOptionsJson | ConvertTo-Json -Compress | Set-Content -Path "$rootDirectory\test\$testProjectName\rewrite.coyote.json" -Verbose
 
 Write-Host "Run Coyote rewrite."
 coyote rewrite "$rootDirectory\test\$testProjectName\rewrite.coyote.json"
