@@ -66,7 +66,7 @@
     * `aspnetcore.rate_limiting.requests`
 
   **NOTES**:
-  * When targeting `.NET8.0` framework, `http.server.request.duration` metric
+  * When targeting `.NET8.0` framework or newer, `http.server.request.duration` metric
     will only follow
     [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
     semantic conventions specification. Ability to switch behavior to older
