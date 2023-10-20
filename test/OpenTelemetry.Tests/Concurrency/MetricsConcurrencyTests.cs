@@ -18,17 +18,22 @@ using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Metrics.Tests;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Concurrency;
 
 public class MetricsConcurrencyTests : AggregatorTestsBase
 {
-    public MetricsConcurrencyTests()
+    private readonly ITestOutputHelper output;
+
+    public MetricsConcurrencyTests(ITestOutputHelper output)
         : base(false)
     {
+        this.output = output;
     }
 
-    [Fact]
+    [SkipUnlessEnvVarFoundFact("OTEL_RUN_COYOTE_TESTS")]
+    [Trait("CategoryName", "CoyoteConcurrencyTests")]
     public void MultithreadedLongHistogramTest_Coyote()
     {
         var config = Configuration.Create()
@@ -38,15 +43,16 @@ public class MetricsConcurrencyTests : AggregatorTestsBase
         var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
 
         test.Run();
-        Console.WriteLine(test.GetReport());
-        Console.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
+
+        this.output.WriteLine(test.GetReport());
+        this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
         if (test.TryEmitReports(dir, "MultithreadedLongHistogramTest_Coyote", out IEnumerable<string> reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
-                Console.WriteLine($"Execution Report: {reportPath}");
+                this.output.WriteLine($"Execution Report: {reportPath}");
             }
         }
 
@@ -54,7 +60,7 @@ public class MetricsConcurrencyTests : AggregatorTestsBase
         {
             foreach (var reportPath in reportPaths)
             {
-                Console.WriteLine($"Coverage report: {reportPath}");
+                this.output.WriteLine($"Coverage report: {reportPath}");
             }
         }
 

@@ -1,4 +1,4 @@
-name: Concurrency Tests
+name: Coyote Concurrency Tests
 
 on:
   push:
@@ -11,14 +11,14 @@ on:
     - '**.md'
 
 jobs:
-  build-test-stable:
+  coyote-concurrency-tests:
+
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
-        os: [ windows-latest ]
+        os: [ windows-latest, ubuntu-latest ]
         version: [ net8.0 ]
-        coyote-version: [ 1.7.10 ]
-        methodsToTest: [ MultithreadedLongHistogramTest_Coyote ]
+        project: [ OpenTelemetry.Tests, OpenTelemetry.Api.Tests ]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -29,12 +29,6 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dependencies
-      run: dotnet restore
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore -property:ExposeExperimentalFeatures=false
-
-    - name: Coyote Test
+    - name: Run Coyote Tests
       shell: pwsh
-      run: .\build\test-threadSafety.ps1 ${{ matrix.coyote-version }} ${{ matrix.version }} ${{ matrix.methodsToTest }}
+      run: .\build\test-threadSafety.ps1 -testProjectName ${{ matrix.project }} -targetFramework ${{ matrix.version }}

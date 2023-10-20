@@ -3,6 +3,5 @@
   <ItemGroup>
     <PackageVersion Update="System.Text.Json" Version="6.0.5" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.10" />
-    <PackageVersion Include="Microsoft.Coyote.Test" Version="1.7.10" />
   </ItemGroup>
 </Project>
