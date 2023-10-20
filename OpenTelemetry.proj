@@ -1,8 +1,8 @@
 <Project>
   <ItemGroup>
     <SolutionProjects Include="**\*.csproj" />
-
     <PackProjects Include="src\**\*.csproj" />
+    <TestProjects Include="test\**\*.csproj" />
 
     <!-- Not pack SemanticConventions project for now -->
     <SolutionProjects Remove="src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj" />
@@ -10,16 +10,24 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
-    <!-- Skip building these projects when publish packages workflow runs as these projects need to depend upon instrumentation libraries taking a project reference
-    instead of  package reference on API/SDK-->
+    <!-- Skip building these projects when publish packages workflow runs as
+    these projects need to depend upon instrumentation libraries taking a
+    project reference instead of package reference on API/SDK -->
     <SolutionProjects Remove="docs\**\**\*.csproj" />
     <SolutionProjects Remove="examples\**\*.csproj" />
-    <SolutionProjects Remove="test\Benchmarks\Benchmarks.csproj" />
-    <SolutionProjects Remove="test\OpenTelemetry.Exporter.Zipkin.Tests\OpenTelemetry.Exporter.Zipkin.Tests.csproj" />
+    <SolutionProjects Remove="@(TestProjects)" />
   </ItemGroup>
 
   <Target Name="Build">
-    <MSBuild Projects="@(SolutionProjects)" Targets="Restore;Build" ContinueOnError="ErrorAndStop" />
+    <MSBuild Projects="@(SolutionProjects)" Targets="Build" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="Restore">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="VSTest">
+    <MSBuild Projects="@(TestProjects)" Targets="VSTest" ContinueOnError="ErrorAndStop" />
   </Target>
 
   <Target Name="Pack">
