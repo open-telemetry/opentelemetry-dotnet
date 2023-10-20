@@ -33,18 +33,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\OpenTelemetry.Instrumentation.GrpcNetClient.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
     <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
+    <PackageReference Include="OpenTelemetry.Extensions.Propagators" />
   </ItemGroup>
 
   <ItemGroup>
