@@ -32,3 +32,9 @@ jobs:
     - name: Run Coyote Tests
       shell: pwsh
       run: .\build\test-threadSafety.ps1 -testProjectName ${{ matrix.project }} -targetFramework ${{ matrix.version }}
+
+    - name: Publish Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-${{ matrix.project }}-${{ matrix.version }}-coyoteoutput
+        path: '**/*_CoyoteOutput.*'

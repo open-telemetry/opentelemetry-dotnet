@@ -34,7 +34,7 @@ public class MetricsConcurrencyTests : AggregatorTestsBase
 
     [SkipUnlessEnvVarFoundFact("OTEL_RUN_COYOTE_TESTS")]
     [Trait("CategoryName", "CoyoteConcurrencyTests")]
-    public void MultithreadedLongHistogramTest_Coyote()
+    public void MultithreadedLongHistogramTestConcurrencyTest()
     {
         var config = Configuration.Create()
             .WithTestingIterations(100)
@@ -48,7 +48,7 @@ public class MetricsConcurrencyTests : AggregatorTestsBase
         this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
-        if (test.TryEmitReports(dir, "MultithreadedLongHistogramTest_Coyote", out IEnumerable<string> reportPaths))
+        if (test.TryEmitReports(dir, $"{nameof(this.MultithreadedLongHistogramTestConcurrencyTest)}_CoyoteOutput", out IEnumerable<string> reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
@@ -56,7 +56,7 @@ public class MetricsConcurrencyTests : AggregatorTestsBase
             }
         }
 
-        if (test.TryEmitCoverageReports(dir, "MultithreadedLongHistogramTest_Coyote", out reportPaths))
+        if (test.TryEmitCoverageReports(dir, $"{nameof(this.MultithreadedLongHistogramTestConcurrencyTest)}_CoyoteOutput", out reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {

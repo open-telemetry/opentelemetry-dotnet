@@ -330,7 +330,7 @@ public class TracerTest : IDisposable
         this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
-        if (test.TryEmitReports(dir, "MultithreadedLongHistogramTest_Coyote", out IEnumerable<string> reportPaths))
+        if (test.TryEmitReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out IEnumerable<string> reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
@@ -338,7 +338,7 @@ public class TracerTest : IDisposable
             }
         }
 
-        if (test.TryEmitCoverageReports(dir, "MultithreadedLongHistogramTest_Coyote", out reportPaths))
+        if (test.TryEmitCoverageReports(dir, $"{nameof(this.TracerConcurrencyTest)}_CoyoteOutput", out reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
