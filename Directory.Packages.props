@@ -4,13 +4,6 @@
     <OTelLatestStableVer>1.6.0</OTelLatestStableVer>
   </PropertyGroup>
 
-  <Target Name="PreparePackageValidation" BeforeTargets="Restore">
-    <PropertyGroup>
-      <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
-      <PackageValidationBaselineVersion Condition="'$(MinVerTagPrefix)' == 'core-'">$(OTelLatestStableVer)</PackageValidationBaselineVersion>
-    </PropertyGroup>
-  </Target>
-
   <!--
       This section covers packages that are directly referenced by the NuGet packages published from this repository.
       Any security vulnerability in these packages or their downstream dependencies will be considered as a security
@@ -36,12 +29,16 @@
         3) Since version 3.1.0, the .NET runtime team is holding a high bar for backward compatibility on
           Microsoft.Extensions.Logging even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.1.23419.4" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.2.23479.6" />
 
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="[3.1.0,)" />
     <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OTelLatestStableVer)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTracing" Version="[0.12.1,0.13)" />
 
     <!--
@@ -53,7 +50,7 @@
         3) The .NET runtime team provides extra backward compatibility guarantee to System.Diagnostics.DiagnosticSource
           even during major version bumps, so compatibility is not a concern here.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="7.0.2" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.0-rc.2.23479.6" />
 
     <!-- A conservative version of System.Text.Encodings.Web must be used here since there is no backward compatibility guarantee during major version bumps. -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
@@ -78,7 +75,6 @@
     <PackageVersion Include="Grpc.Tools" Version="[2.56.2,3.0)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23402.2]" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.2" />
-    <PackageVersion Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[3.1.6,5.0)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="3.1.20" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.0,)" />

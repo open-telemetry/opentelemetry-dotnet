@@ -76,3 +76,4 @@ public class AspNetCoreMetricsInstrumentationOptions
     /// </summary>
     public AspNetCoreMetricEnrichmentFunc Enrich { get; set; }
 }
+

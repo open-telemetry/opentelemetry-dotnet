@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET8_0_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+#endif
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
@@ -34,7 +36,15 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
     public static MeterProviderBuilder AddAspNetCoreInstrumentation(
         this MeterProviderBuilder builder)
-        => AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
+    {
+        Guard.ThrowIfNull(builder);
+
+#if NET8_0_OR_GREATER
+        return builder.ConfigureMeters();
+#else
+        return AddAspNetCoreInstrumentation(builder, name: null, configureAspNetCoreInstrumentationOptions: null);
+#endif
+    }
 
     /// <summary>
     /// Enables the incoming requests automatic data collection for ASP.NET Core.
@@ -60,6 +70,11 @@ public static class MeterProviderBuilderExtensions
         Action<AspNetCoreMetricsInstrumentationOptions> configureAspNetCoreInstrumentationOptions)
     {
         Guard.ThrowIfNull(builder);
+
+#if NET8_0_OR_GREATER
+        AspNetCoreInstrumentationEventSource.Log.UnsupportedOption(nameof(AspNetCoreMetricsInstrumentationOptions));
+        return builder.ConfigureMeters();
+#else
 
         // Note: Warm-up the status code mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
@@ -90,5 +105,17 @@ public static class MeterProviderBuilderExtensions
         });
 
         return builder;
+#endif
+    }
+
+    internal static MeterProviderBuilder ConfigureMeters(this MeterProviderBuilder builder)
+    {
+        return builder
+             .AddMeter("Microsoft.AspNetCore.Hosting")
+             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+             .AddMeter("Microsoft.AspNetCore.Http.Connections")
+             .AddMeter("Microsoft.AspNetCore.Routing")
+             .AddMeter("Microsoft.AspNetCore.Diagnostics")
+             .AddMeter("Microsoft.AspNetCore.RateLimiting");
     }
 }

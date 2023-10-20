@@ -16,7 +16,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Coyote" />
     <PackageReference Include="Microsoft.Coyote.Test" />
-    <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.CSharp" Condition="'$(TargetFramework)' == 'net462'" />
   </ItemGroup>
 

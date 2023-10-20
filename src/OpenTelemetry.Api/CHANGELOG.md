@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Updated `System.Diagnostics.DiagnosticSource` package version to
+  `8.0.0-rc.2.23479.6`.
+  ([#4959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4959))
+
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
 * Fixed a bug which caused `Tracer.StartRootSpan` to generate a child span if a
   trace was running (`Activity.Current != null`).
   ([#4890](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4890))
@@ -9,6 +17,10 @@
 * Added a `Tracer` cache inside of `TracerProvider` to prevent repeated calls to
   `GetTracer` from leaking memory.
   ([#4906](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4906))
+
+* Fix `TraceContextPropagator` by validating the first digit of the hex-encoded
+  `trace-flags` field of the `traceparent` header.
+  ([#4893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4893))
 
 ## 1.6.0
 
