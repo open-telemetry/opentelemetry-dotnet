@@ -34,6 +34,7 @@ jobs:
       run: .\build\test-threadSafety.ps1 -testProjectName ${{ matrix.project }} -targetFramework ${{ matrix.version }}
 
     - name: Publish Artifacts
+      if: always() && !cancelled()
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os }}-${{ matrix.project }}-${{ matrix.version }}-coyoteoutput
