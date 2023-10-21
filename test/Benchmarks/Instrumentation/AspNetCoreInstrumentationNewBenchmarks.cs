@@ -139,9 +139,14 @@ public class AspNetCoreInstrumentationNewBenchmarks
             this.StartWebApplication();
             this.httpClient = new HttpClient();
 
+            var exportedItems = new List<Metric>();
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
                 .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+                })
                 .Build();
         }
         else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
