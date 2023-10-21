@@ -70,7 +70,11 @@ internal sealed class PrometheusExporterMiddleware
                 if (collectionResponse.View.Count > 0)
                 {
                     response.StatusCode = 200;
+#if NET8_0_OR_GREATER
+                    response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+#else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+#endif
                     response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
