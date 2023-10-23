@@ -97,7 +97,7 @@ to `http` or `http/dup`.
     inside AspNetCore for users targeting .NET 8.0 (or newer). For details see:
     [Enrich the ASP.NET Core request
     metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
-  
+
   * `Filter` migration:
 
     There is no comparable filter mechanism currently available for any .NET
@@ -105,9 +105,8 @@ to `http` or `http/dup`.
     feedback](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982)
     if you are impacted by this feature gap.
 
-    > **Note**
-    > The [View
-    API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
+    > **Note** The [View
+    > API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
     may be used to drop dimensions.
 
 ## 1.5.1-beta.1
