@@ -87,10 +87,11 @@ to `http` or `http/dup`.
 ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
 
 * **Breaking**: Removed `Enrich` and `Filter` support for **metrics**
-  instrumentation. An `Enrich` API for `http.server.request.duration` will be
-  available for users targeting `.NET8.0` or newer frameworks. For details see
-  [Enrich the ASP.NET Core request
-  metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
+  instrumentation. With this change, `AspNetCoreMetricsInstrumentationOptions`
+  is no longer available. An `Enrich` API for `http.server.request.duration`
+  will be available for users targeting `.NET8.0` or newer frameworks. For
+  details see [Enrich the ASP.NET Core request
+  metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric)
 
   `Filter` capability is not available for any .NET versions. Please [share your
   feedback
