@@ -31,6 +31,61 @@
    and
    [metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
 
+* Following metrics will now be enabled by default when targeting `.NET8.0` or
+  newer framework:
+
+  * **Meter** : `Microsoft.AspNetCore.Hosting`
+    * `http.server.request.duration`
+    * `http.server.active_requests`
+
+  * **Meter** : `Microsoft.AspNetCore.Server.Kestrel`
+    * `kestrel.active_connections`
+    * `kestrel.connection.duration`
+    * `kestrel.rejected_connections`
+    * `kestrel.queued_connections`
+    * `kestrel.queued_requests`
+    * `kestrel.upgraded_connections`
+    * `kestrel.tls_handshake.duration`
+    * `kestrel.active_tls_handshakes`
+
+  * **Meter** : `Microsoft.AspNetCore.Http.Connections`
+    * `signalr.server.connection.duration`
+    * `signalr.server.active_connections`
+
+  * **Meter** : `Microsoft.AspNetCore.Routing`
+    * `aspnetcore.routing.match_attempts`
+
+  * **Meter** : `Microsoft.AspNetCore.Diagnostics`
+    * `aspnetcore.diagnostics.exceptions`
+
+  * **Meter** : `Microsoft.AspNetCore.RateLimiting`
+    * `aspnetcore.rate_limiting.active_request_leases`
+    * `aspnetcore.rate_limiting.request_lease.duration`
+    * `aspnetcore.rate_limiting.queued_requests`
+    * `aspnetcore.rate_limiting.request.time_in_queue`
+    * `aspnetcore.rate_limiting.requests`
+
+  For details about each individual metric check [ASP.NET Core
+  docs
+  page](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
+
+  **NOTES**:
+  * When targeting `.NET8.0` framework or newer, `http.server.request.duration` metric
+    will only follow
+    [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
+    semantic conventions specification. Ability to switch behavior to older
+    conventions using `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is
+    not available.
+  * Users can opt-out of metrics that are not required using
+    [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
+
+  ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
+
+* Added `network.protocol.name` dimension to `http.server.request.duration`
+metric. This change only affects users setting `OTEL_SEMCONV_STABILITY_OPT_IN`
+to `http` or `http/dup`.
+([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20

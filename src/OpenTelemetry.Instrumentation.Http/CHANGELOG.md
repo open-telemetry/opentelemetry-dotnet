@@ -34,6 +34,35 @@
   `http.client.request.duration` metrics on .NET Framework for `HttpWebRequest`.
   ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
 
+* Following `HttpClient` metrics will now be enabled by default when targeting
+  `.NET8.0` framework or newer.
+
+  * **Meter** : `System.Net.Http`
+    * `http.client.request.duration`
+    * `http.client.active_requests`
+    * `http.client.open_connections`
+    * `http.client.connection.duration`
+    * `http.client.request.time_in_queue`
+
+  * **Meter** : `System.Net.NameResolution`
+    * `dns.lookups.duration`
+
+  For details about each individual metric check [System.Net metrics
+  docs
+  page](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
+
+  **NOTES**:
+  * When targeting `.NET8.0` framework or newer, `http.client.request.duration` metric
+    will only follow
+    [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
+    semantic conventions specification. Ability to switch behavior to older
+    conventions using  `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is
+    not available.
+  * Users can opt-out of metrics that are not required using
+    [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
+
+  ([#4931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4931))
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20
