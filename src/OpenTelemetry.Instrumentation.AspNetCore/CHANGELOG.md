@@ -86,6 +86,15 @@ metric. This change only affects users setting `OTEL_SEMCONV_STABILITY_OPT_IN`
 to `http` or `http/dup`.
 ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
 
+* **Breaking**: Removed `Enrich` and `Filter` support for **metrics**
+  instrumentation. The `Enrich` API for `http.server.request.duration` will be
+  available for users targeting `.NET8.0` or newer frameworks. For details see
+  [Enrich the ASP.NET Core request
+  metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
+  `Filter` capability will not be available for any of the targeted .NET
+  versions.
+  ([]())
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20
