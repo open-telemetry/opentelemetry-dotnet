@@ -105,8 +105,8 @@ to `http` or `http/dup`.
     feedback](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982)
     if you are impacted by this feature gap.
 
-    > **Note** The [View
-    > API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
+      > **Note**
+    > The [View API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
     may be used to drop dimensions.
 
 ## 1.5.1-beta.1
