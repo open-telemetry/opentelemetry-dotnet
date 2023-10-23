@@ -1,2 +1,0 @@
-OpenTelemetry.OpenTelemetryBuilder.WithLogging() -> OpenTelemetry.OpenTelemetryBuilder!
-OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
