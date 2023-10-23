@@ -92,9 +92,10 @@ to `http` or `http/dup`.
   [Enrich the ASP.NET Core request
   metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
 
-  `Filter` capability is not available for any .NET versions. Please share your
-  feedback on issue:
-  [#4982](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982)
+  `Filter` capability is not available for any .NET versions. Please [share your
+  feedback
+  here](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982) if
+  you are affected.
   ([#4981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4981))
 
 ## 1.5.1-beta.1
