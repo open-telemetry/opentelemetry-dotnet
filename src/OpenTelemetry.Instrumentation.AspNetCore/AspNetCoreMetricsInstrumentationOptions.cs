@@ -23,7 +23,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore;
 /// <summary>
 /// Options for metrics requests instrumentation.
 /// </summary>
-internal class AspNetCoreMetricsInstrumentationOptions
+internal sealed class AspNetCoreMetricsInstrumentationOptions
 {
     internal readonly HttpSemanticConvention HttpSemanticConvention;
 
