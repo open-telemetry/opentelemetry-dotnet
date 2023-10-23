@@ -72,6 +72,7 @@ jobs:
       code-cov-name: 'Instrumentation'
 
   integration-test:
+    needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api')
       || contains(needs.detect-changes.outputs.changes, 'otlp')
