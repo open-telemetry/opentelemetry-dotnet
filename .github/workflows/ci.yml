@@ -20,7 +20,11 @@ jobs:
           md: ['**.md']
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props']
           shared: ['src/Shared/**']
-          code: ['**.cs', '.editorconfig']
+          code: ['**.cs', '**.csproj', '.editorconfig']
+          packaged-code: ['src/**', '!**/*.md']
+          instrumentation: ['*/OpenTelemetry.Instrumentation*/**', '!**/*.md']
+          api: ['*/OpenTelemetry.Api*/**', '!**/*.md']
+          otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-md:
     needs: detect-changes
@@ -38,33 +42,10 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-
-    strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
-        version: [ net462, net6.0, net7.0, net8.0 ]
-        exclude:
-        - os: ubuntu-latest
-          version: net462
-
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # fetching all
-
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
-
-    - name: Install dependencies
-      run: dotnet restore
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
-
-    - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: 'OpenTelemetry.sln'
+      code-cov-name: 'Solution-Stable'
 
   build-test-solution-experimental:
     needs: detect-changes
@@ -72,33 +53,55 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: 'OpenTelemetry.sln'
+      project-build-commands: '-p:ExposeExperimentalFeatures=true'
+      code-cov-name: 'Solution-Experimental'
 
-    strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
-        version: [ net462, net6.0, net7.0, net8.0 ]
-        exclude:
-        - os: ubuntu-latest
-          version: net462
+  build-test-instrumentation:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'instrumentation')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: './build/InstrumentationLibraries.proj'
+      project-build-commands: '-p:RunningDotNetPack=true'
+      code-cov-name: 'Instrumentation'
 
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # fetching all
+  integration-test:
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'api')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/integration.yml
 
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+  validate-packages:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/package-validation.yml
 
-    - name: Install dependencies
-      run: dotnet restore
+  generate-docs:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/docfx.yml
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
-
-    - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+  verify-aot-compat:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/verifyaotcompat.yml
 
   build-test:
     needs: [
@@ -108,6 +111,11 @@ jobs:
       lint-dotnet-format,
       build-test-solution-stable,
       build-test-solution-experimental,
+      build-test-instrumentation,
+      integration-test,
+      validate-packages,
+      generate-docs,
+      verify-aot-compat
       ]
     if: always() && !cancelled() && !contains(needs.*.result, 'failure')
     runs-on: windows-latest

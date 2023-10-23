@@ -1,13 +1,10 @@
 name: Package Validation
 
 on:
-  pull_request:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
+  workflow_call:
 
 jobs:
-  build-test-stable:
+  run-package-validation-stable:
     runs-on: windows-latest
 
     steps:
@@ -21,7 +18,7 @@ jobs:
     - name: Pack
       run: dotnet pack --configuration Release /p:EnablePackageValidation=true /p:ExposeExperimentalFeatures=false
 
-  build-test-experimental:
+  run-package-validation-experimental:
     runs-on: windows-latest
 
     steps:

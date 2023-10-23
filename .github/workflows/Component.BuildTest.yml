@@ -1,0 +1,73 @@
+name: Build Component
+
+on:
+  workflow_call:
+    inputs:
+      project-name:
+        required: true
+        type: string
+      project-build-commands:
+        default: ''
+        required: false
+        type: string
+      code-cov-name:
+        required: true
+        type: string
+      code-cov-prefix:
+        default: 'unittests'
+        required: false
+        type: string
+      os-list:
+        default: '[ "windows-latest", "ubuntu-latest" ]'
+        required: false
+        type: string
+      tfm-list:
+        default: '[ "net462", "net6.0", "net7.0", "net8.0" ]'
+        required: false
+        type: string
+
+jobs:
+  build-test:
+
+    strategy:
+      fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
+      matrix:
+        os: ${{ fromJSON(inputs.os-list) }}
+        version: ${{ fromJSON(inputs.tfm-list) }}
+        exclude:
+        - os: ubuntu-latest
+          version: net462
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: dotnet restore ${{ inputs.project-name }}
+      run: dotnet restore ${{ inputs.project-name }} ${{ inputs.project-build-commands }}
+
+    - name: dotnet build ${{ inputs.project-name }}
+      run: dotnet build ${{ inputs.project-name }} --configuration Release --no-restore ${{ inputs.project-build-commands }}
+
+    - name: dotnet test ${{ inputs.project-name }}
+      run: dotnet test ${{ inputs.project-name }} --collect:"Code Coverage" --results-directory:TestResults --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed" -- RunConfiguration.DisableAppDomain=true
+
+    - name: Install coverage tool
+      run: dotnet tool install -g dotnet-coverage
+
+    - name: Merging test results
+      run: dotnet-coverage merge -r -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/*.coverage
+
+    - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
+      uses: codecov/codecov-action@v3.1.4
+      continue-on-error: true # Note: Don't fail for upload failures
+      env:
+        OS: ${{ matrix.os }}
+        TFM: ${{ matrix.version }}
+      with:
+        file: TestResults/Cobertura.xml
+        env_vars: OS,TFM
+        flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
+        name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]

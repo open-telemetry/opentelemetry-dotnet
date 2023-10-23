@@ -1,17 +1,10 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
-  pull_request:
-    branches: [ 'main*' ]
-    paths-ignore:
-    - '**.md'
+  workflow_call:
 
 jobs:
-  w3c-trace-context-test:
+  run-w3c-trace-context-integration-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -20,10 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run W3C Trace Context docker-compose.integration
+      - name: Run W3C Trace Context docker-compose
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
-  otlp-exporter-test:
+  run-otlp-exporter-integration-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -32,5 +25,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run OTLP Exporter docker-compose.integration
+      - name: Run OTLP Exporter docker-compose
         run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
