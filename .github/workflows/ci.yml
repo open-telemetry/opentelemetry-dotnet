@@ -45,6 +45,7 @@ jobs:
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
       project-name: 'OpenTelemetry.sln'
+      project-build-commands: '-p:ExposeExperimentalFeatures=false'
       code-cov-name: 'Solution-Stable'
 
   build-test-solution-experimental:
