@@ -14,21 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
-using System.Diagnostics;
-#endif
 #if NET8_0_OR_GREATER
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 #endif
 using Microsoft.AspNetCore.Hosting;
+#if NET8_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 using Microsoft.AspNetCore.Mvc.Testing;
 #if NET8_0_OR_GREATER
 using Microsoft.AspNetCore.RateLimiting;
-#endif
-#if !NET8_0_OR_GREATER
-using Microsoft.AspNetCore.TestHost;
 #endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
