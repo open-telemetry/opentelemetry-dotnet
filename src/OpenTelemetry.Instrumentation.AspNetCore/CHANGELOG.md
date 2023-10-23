@@ -88,16 +88,27 @@ to `http` or `http/dup`.
 
 * **Breaking**: Removed `Enrich` and `Filter` support for **metrics**
   instrumentation. With this change, `AspNetCoreMetricsInstrumentationOptions`
-  is no longer available. An `Enrich` API for `http.server.request.duration`
-  will be available for users targeting `.NET8.0` or newer frameworks. For
-  details see [Enrich the ASP.NET Core request
-  metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric)
-
-  `Filter` capability is not available for any .NET versions. Please [share your
-  feedback
-  here](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982) if
-  you are affected.
+  is no longer available.
   ([#4981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4981))
+
+  * `Enrich` migration:
+
+    An enrichment API for the `http.server.request.duration` metric is available
+    inside AspNetCore for users targeting .NET 8.0 (or newer). For details see:
+    [Enrich the ASP.NET Core request
+    metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
+  
+  * `Filter` migration:
+
+    There is no comparable filter mechanism currently available for any .NET
+    version. Please [share your
+    feedback](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982)
+    if you are impacted by this feature gap.
+
+    > **Note**
+    > The [View
+    API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
+    may be used to drop dimensions.
 
 ## 1.5.1-beta.1
 
