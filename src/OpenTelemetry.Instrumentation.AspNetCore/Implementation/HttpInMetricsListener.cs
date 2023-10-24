@@ -16,10 +16,10 @@
 
 #if !NET8_0_OR_GREATER
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
 #if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Trace;
