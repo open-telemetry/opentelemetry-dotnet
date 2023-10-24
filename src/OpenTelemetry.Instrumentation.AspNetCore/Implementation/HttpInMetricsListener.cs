@@ -33,11 +33,11 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     internal const string HttpServerRequestDurationMetricName = "http.server.request.duration";
 
     internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
-    internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
+    internal const string OnUnhandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
-    private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
     private const string NetworkProtocolName = "http";
+    private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -69,22 +69,32 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     public override void OnEventWritten(string name, object payload)
     {
-        if (name == OnUnHandledDiagnosticsExceptionEvent || name == OnUnhandledHostingExceptionEvent)
+        switch (name)
         {
-            this.OnExceptionEventWritten(name, payload);
-        }
+            case OnUnhandledDiagnosticsExceptionEvent:
+            case OnUnhandledHostingExceptionEvent:
+                {
+                    if (this.emitNewAttributes)
+                    {
+                        this.OnExceptionEventWritten(name, payload);
+                    }
+                }
 
-        if (name == OnStopEvent)
-        {
-            if (this.emitOldAttributes)
-            {
-                this.OnEventWritten_Old(name, payload);
-            }
+                break;
+            case OnStopEvent:
+                {
+                    if (this.emitOldAttributes)
+                    {
+                        this.OnEventWritten_Old(name, payload);
+                    }
 
-            if (this.emitNewAttributes)
-            {
-                this.OnEventWritten_New(name, payload);
-            }
+                    if (this.emitNewAttributes)
+                    {
+                        this.OnEventWritten_New(name, payload);
+                    }
+                }
+
+                break;
         }
     }
 
@@ -99,10 +109,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             return;
         }
 
-        if (activity != null)
-        {
-            activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
-        }
+        activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
 
         // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
         // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
@@ -196,17 +203,13 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, context.Response.StatusCode) == ActivityStatusCode.Error)
+
+        // check for error.type on activity
+        // TODO: check to see if this can be optimized by first checking the status code
+        var errorType = activity.GetTagValue(SemanticConventions.AttributeErrorType);
+        if (errorType != null)
         {
-            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
-        }
-        else
-        {
-            var errorType = activity.GetTagValue(SemanticConventions.AttributeErrorType);
-            if (errorType != null)
-            {
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
-            }
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
         }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.

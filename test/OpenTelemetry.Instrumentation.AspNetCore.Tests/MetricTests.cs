@@ -185,8 +185,10 @@ public class MetricTests
     }
 #endif
 
-    [Fact]
-    public async Task RequestMetricIsCaptured_New()
+    [Theory]
+    [InlineData("/api/values/2", "api/Values/{id}", null, 200)]
+    [InlineData("/api/Error", "api/Error", "System.Exception", 500)]
+    public async Task RequestMetricIsCaptured_New(string api, string expectedRoute, string expectedErrorType, int expectedStatusCode)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
@@ -207,11 +209,15 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
-
-            response1.EnsureSuccessStatusCode();
-            response2.EnsureSuccessStatusCode();
+            try
+            {
+                using var response = await client.GetAsync(api).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+            }
+            catch
+            {
+                // ignore error.
+            }
         }
 
         // We need to let End callback execute as it is executed AFTER response was returned.
@@ -229,12 +235,14 @@ public class MetricTests
 
         Assert.Equal("s", metric.Unit);
         var metricPoints = GetMetricPoints(metric);
-        Assert.Equal(2, metricPoints.Count);
+        Assert.Single(metricPoints);
 
         AssertMetricPoints_New(
             metricPoints: metricPoints,
-            expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6);
+            expectedRoutes: new List<string> { expectedRoute },
+            expectedErrorType,
+            expectedStatusCode,
+            expectedTagsCount: expectedErrorType == null ? 6 : 7);
     }
 
 #if !NET8_0_OR_GREATER
@@ -354,6 +362,8 @@ public class MetricTests
         AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
+            null,
+            200,
             expectedTagsCount: 6);
     }
 #endif
@@ -380,6 +390,8 @@ public class MetricTests
     private static void AssertMetricPoints_New(
         List<MetricPoint> metricPoints,
         List<string> expectedRoutes,
+        string expectedErrorType,
+        int expectedStatusCode,
         int expectedTagsCount)
     {
         // Assert that one MetricPoint exists for each ExpectedRoute
@@ -400,7 +412,7 @@ public class MetricTests
 
             if (metricPoint.HasValue)
             {
-                AssertMetricPoint_New(metricPoint.Value, expectedRoute, expectedTagsCount);
+                AssertMetricPoint_New(metricPoint.Value, expectedRoute, expectedStatusCode, expectedErrorType, expectedTagsCount);
             }
             else
             {
@@ -444,6 +456,8 @@ public class MetricTests
     private static KeyValuePair<string, object>[] AssertMetricPoint_New(
         MetricPoint metricPoint,
         string expectedRoute = "api/Values",
+        int expectedStatusCode = 200,
+        string expectedErrorType = null,
         int expectedTagsCount = StandardTagsCount)
     {
         var count = metricPoint.GetHistogramCount();
@@ -464,7 +478,7 @@ public class MetricTests
 
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "GET");
         var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
-        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
+        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, expectedStatusCode);
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
         var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
         Assert.Contains(method, attributes);
@@ -472,6 +486,17 @@ public class MetricTests
         Assert.Contains(statusCode, attributes);
         Assert.Contains(flavor, attributes);
         Assert.Contains(route, attributes);
+
+        if (expectedErrorType != null)
+        {
+#if NET8_0_OR_GREATER
+            // Expected to change in next release
+            // https://github.com/dotnet/aspnetcore/issues/51029
+            var errorType = new KeyValuePair<string, object>("exception.type", expectedErrorType);
+#else
+            var errorType = new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, expectedErrorType);
+#endif
+        }
 
         // Inspect Histogram Bounds
         var histogramBuckets = metricPoint.GetHistogramBuckets();
