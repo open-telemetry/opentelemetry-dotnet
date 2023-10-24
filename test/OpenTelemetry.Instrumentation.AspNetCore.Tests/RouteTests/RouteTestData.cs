@@ -73,7 +73,7 @@ public static class RouteTestData
 
         public string? HttpMethod { get; set; }
 
-        public string? Path { get; set; }
+        public string Path { get; set; } = string.Empty;
 
         public int ExpectedStatusCode { get; set; }
 

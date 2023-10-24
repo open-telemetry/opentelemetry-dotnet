@@ -82,7 +82,8 @@ internal class TestApplicationFactory
             .AddApplicationPart(typeof(RoutingTests).Assembly);
 
         var app = builder.Build();
-        app.UseExceptionHandler(RouteInfoMiddleware.ConfigureExceptionHandler);
+        app.Urls.Clear();
+        app.Urls.Add("http://[::1]:0");
         app.UseMiddleware<RouteInfoMiddleware>();
         app.UseStaticFiles();
         app.UseRouting();
@@ -116,7 +117,8 @@ internal class TestApplicationFactory
             .AddApplicationPart(typeof(RoutingTests).Assembly);
 
         var app = builder.Build();
-        app.UseExceptionHandler(RouteInfoMiddleware.ConfigureExceptionHandler);
+        app.Urls.Clear();
+        app.Urls.Add("http://[::1]:0");
         app.UseMiddleware<RouteInfoMiddleware>();
         app.MapControllers();
 
@@ -128,7 +130,8 @@ internal class TestApplicationFactory
         var builder = WebApplication.CreateBuilder(); // WebApplication.CreateSlimBuilder();
 
         var app = builder.Build();
-        app.UseExceptionHandler(RouteInfoMiddleware.ConfigureExceptionHandler);
+        app.Urls.Clear();
+        app.Urls.Add("http://[::1]:0");
         app.UseMiddleware<RouteInfoMiddleware>();
 
 #if NET7_0_OR_GREATER
@@ -152,7 +155,8 @@ internal class TestApplicationFactory
             .AddApplicationPart(typeof(RoutingTests).Assembly);
 
         var app = builder.Build();
-        app.UseExceptionHandler(RouteInfoMiddleware.ConfigureExceptionHandler);
+        app.Urls.Clear();
+        app.Urls.Add("http://[::1]:0");
         app.UseMiddleware<RouteInfoMiddleware>();
         app.UseStaticFiles();
         app.UseRouting();

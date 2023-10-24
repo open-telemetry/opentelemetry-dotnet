@@ -507,12 +507,12 @@
 {
   "HttpMethod": "GET",
   "Path": "/MinimalApi",
-  "HttpRouteByRawText": null,
+  "HttpRouteByRawText": "/MinimalApi/",
   "HttpRouteByControllerActionAndParameters": "",
   "HttpRouteByActionDescriptor": "",
   "DebugInfo": {
-    "RawText": null,
-    "RouteDiagnosticMetadata": null,
+    "RawText": "/MinimalApi/",
+    "RouteDiagnosticMetadata": "/MinimalApi/",
     "RouteData": {},
     "AttributeRouteInfo": null,
     "ActionParameters": null,
@@ -530,13 +530,15 @@
 {
   "HttpMethod": "GET",
   "Path": "/MinimalApi/123",
-  "HttpRouteByRawText": null,
+  "HttpRouteByRawText": "/MinimalApi/{id}",
   "HttpRouteByControllerActionAndParameters": "",
   "HttpRouteByActionDescriptor": "",
   "DebugInfo": {
-    "RawText": null,
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {},
+    "RawText": "/MinimalApi/{id}",
+    "RouteDiagnosticMetadata": "/MinimalApi/{id}",
+    "RouteData": {
+      "id": "123"
+    },
     "AttributeRouteInfo": null,
     "ActionParameters": null,
     "PageActionDescriptorRelativePath": null,

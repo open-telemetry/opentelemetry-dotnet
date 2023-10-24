@@ -17,8 +17,6 @@
 #nullable enable
 
 using System.Diagnostics;
-using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -26,27 +24,22 @@ using Xunit;
 
 namespace RouteTests;
 
-public class RoutingTests : IDisposable
+public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
 {
+    // TODO: This test currently uses the old conventions. Update it to use the new conventions.
     private const string HttpStatusCode = "http.status_code";
     private const string HttpMethod = "http.method";
     private const string HttpRoute = "http.route";
 
-    private TracerProvider tracerProvider;
-    private MeterProvider meterProvider;
-    private WebApplication? app;
-    private HttpClient client;
-    private List<Activity> exportedActivities;
-    private List<Metric> exportedMetrics;
-    private AspNetCoreDiagnosticObserver diagnostics;
+    private readonly RoutingTestFixture fixture;
+    private readonly TracerProvider tracerProvider;
+    private readonly MeterProvider meterProvider;
+    private readonly List<Activity> exportedActivities = new();
+    private readonly List<Metric> exportedMetrics = new();
 
-    public RoutingTests()
+    public RoutingTests(RoutingTestFixture fixture)
     {
-        this.diagnostics = new AspNetCoreDiagnosticObserver();
-        this.client = new HttpClient { BaseAddress = new Uri("http://localhost:5000") };
-
-        this.exportedActivities = new List<Activity>();
-        this.exportedMetrics = new List<Metric>();
+        this.fixture = fixture;
 
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetCoreInstrumentation()
@@ -61,18 +54,11 @@ public class RoutingTests : IDisposable
 
     public static IEnumerable<object[]> TestData => RouteTestData.GetTestCases();
 
-#pragma warning disable xUnit1028
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task<TestResult> TestRoutes(RouteTestData.RouteTestCase testCase, bool skipAsserts = true)
+    public async Task TestRoutes(RouteTestData.RouteTestCase testCase, bool skipAsserts = true)
     {
-        this.app = TestApplicationFactory.CreateApplication(testCase.TestApplicationScenario);
-        var appTask = this.app.RunAsync();
-
-        var responseMessage = await this.client.GetAsync(testCase.Path).ConfigureAwait(false);
-        var response = await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-        var info = JsonSerializer.Deserialize<RouteInfo>(response);
+        await this.fixture.MakeRequest(testCase.TestApplicationScenario, testCase.Path);
 
         for (var i = 0; i < 10; i++)
         {
@@ -119,28 +105,23 @@ public class RoutingTests : IDisposable
             Assert.Equal(expectedActivityDisplayName, activity.DisplayName);
         }
 
-        return new TestResult
+        var testResult = new TestResult
         {
             ActivityDisplayName = activity.DisplayName,
             HttpStatusCode = activityHttpStatusCode,
             HttpMethod = activityHttpMethod,
             HttpRoute = activityHttpRoute,
-            RouteInfo = info!,
+            RouteInfo = null,
             TestCase = testCase,
         };
-    }
-#pragma warning restore xUnit1028
 
-    public async void Dispose()
+        this.fixture.AddTestResult(testResult);
+    }
+
+    public void Dispose()
     {
         this.tracerProvider.Dispose();
         this.meterProvider.Dispose();
-        this.diagnostics.Dispose();
-        this.client.Dispose();
-        if (this.app != null)
-        {
-            await this.app.DisposeAsync().ConfigureAwait(false);
-        }
     }
 
     private void GetTagsFromActivity(Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)

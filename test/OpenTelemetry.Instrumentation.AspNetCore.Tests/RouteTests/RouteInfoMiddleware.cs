@@ -18,14 +18,13 @@
 
 using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace RouteTests;
 
 public class RouteInfoMiddleware
 {
+    public static readonly List<RouteInfo> RouteInfos = new();
     private readonly RequestDelegate next;
 
     public RouteInfoMiddleware(RequestDelegate next)
@@ -33,51 +32,21 @@ public class RouteInfoMiddleware
         this.next = next;
     }
 
-    public static void ConfigureExceptionHandler(IApplicationBuilder builder)
+    public async Task InvokeAsync(HttpContext context)
     {
-        builder.Run(async context =>
+        if (context.Request.Path.ToString().Contains("GetLastRouteInfo"))
         {
-            context.Response.Body = (context.Items["originBody"] as Stream)!;
-
-            context.Response.ContentType = Application.Json;
-
-            var info = context.Items["RouteInfo"] as RouteInfo;
+            var response = context.Response;
+            var info = RouteInfos.Last();
             Debug.Assert(info != null, "RouteInfo object not present in context.Items");
             var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
             string modifiedResponse = JsonSerializer.Serialize(info, jsonOptions);
-            await context.Response.WriteAsync(modifiedResponse);
-        });
-    }
-
-    public async Task InvokeAsync(HttpContext context)
-    {
-        var response = context.Response;
-
-        var originBody = response.Body;
-        context.Items["originBody"] = originBody;
-        using var newBody = new MemoryStream();
-        response.Body = newBody;
-
-        await this.next(context);
-
-        var stream = response.Body;
-        using var reader = new StreamReader(stream, leaveOpen: true);
-        var originalResponse = await reader.ReadToEndAsync();
-
-        var info = context.Items["RouteInfo"] as RouteInfo;
-        Debug.Assert(info != null, "RouteInfo object not present in context.Items");
-        var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
-        string modifiedResponse = JsonSerializer.Serialize(info, jsonOptions);
-
-        stream.SetLength(0);
-        using var writer = new StreamWriter(stream, leaveOpen: true);
-        await writer.WriteAsync(modifiedResponse);
-        await writer.FlushAsync();
-        response.ContentLength = stream.Length;
-        response.ContentType = "application/json";
-
-        newBody.Seek(0, SeekOrigin.Begin);
-        await newBody.CopyToAsync(originBody);
-        response.Body = originBody;
+            response.ContentType = "application/json";
+            await response.WriteAsync(modifiedResponse);
+        }
+        else
+        {
+            await this.next(context);
+        }
     }
 }
