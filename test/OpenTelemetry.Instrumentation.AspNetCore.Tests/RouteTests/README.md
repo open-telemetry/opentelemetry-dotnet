@@ -18,8 +18,8 @@
 | :broken_heart: | [16](#16) | Index | /Index | RazorPages | GET /Index | Index |
 | :broken_heart: | [17](#17) | PageThatThrowsException | /PageThatThrowsException | RazorPages | GET /PageThatThrowsException | PageThatThrowsException |
 | :broken_heart: | [18](#18) | /js/site.js |  | RazorPages | GET /js/site.js | /js/site.js |
-| :broken_heart: | [19](#19) | /MinimalApi | TBD | MinimalApi | GET /MinimalApi | /MinimalApi |
-| :broken_heart: | [20](#20) | /MinimalApi/123 | TBD | MinimalApi | GET /MinimalApi/123 | /MinimalApi/123 |
+| :broken_heart: | [19](#19) | /MinimalApi | /MinimalApi/ | MinimalApi | GET /MinimalApi | /MinimalApi |
+| :broken_heart: | [20](#20) | /MinimalApi/123 | /MinimalApi/{id} | MinimalApi | GET /MinimalApi/123 | /MinimalApi/123 |
 
 #### 1
 
@@ -32,7 +32,7 @@
   "HttpRouteByActionDescriptor": "ConventionalRoute/Default/{id?}",
   "DebugInfo": {
     "RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "controller": "ConventionalRoute",
       "action": "Default"
@@ -58,7 +58,7 @@
   "HttpRouteByActionDescriptor": "ConventionalRoute/ActionWithStringParameter/{id?}",
   "DebugInfo": {
     "RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "controller": "ConventionalRoute",
       "action": "ActionWithStringParameter",
@@ -88,7 +88,7 @@
   "HttpRouteByActionDescriptor": "ConventionalRoute/ActionWithStringParameter/{id?}",
   "DebugInfo": {
     "RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "controller": "ConventionalRoute",
       "action": "ActionWithStringParameter"
@@ -140,7 +140,7 @@
   "HttpRouteByActionDescriptor": "SomePath/{id}/{num:int}",
   "DebugInfo": {
     "RawText": "SomePath/{id}/{num:int}",
-    "RouteDiagnosticMetadata": "SomePath/{id}/{num:int}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "controller": "ConventionalRoute",
       "action": "ActionWithStringParameter",
@@ -194,7 +194,7 @@
   "HttpRouteByActionDescriptor": "{area:exists}/ControllerForMyArea/Default/{id?}",
   "DebugInfo": {
     "RawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "controller": "ControllerForMyArea",
       "action": "Default",
@@ -221,7 +221,7 @@
   "HttpRouteByActionDescriptor": "{area:exists}/ControllerForMyArea/NonDefault/{id?}",
   "DebugInfo": {
     "RawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "controller": "ControllerForMyArea",
       "area": "MyArea",
@@ -248,7 +248,7 @@
   "HttpRouteByActionDescriptor": "SomePrefix/AnotherArea/Index/{id?}",
   "DebugInfo": {
     "RawText": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
-    "RouteDiagnosticMetadata": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "area": "AnotherArea",
       "controller": "AnotherArea",
@@ -275,7 +275,7 @@
   "HttpRouteByActionDescriptor": "AttributeRoute",
   "DebugInfo": {
     "RawText": "AttributeRoute",
-    "RouteDiagnosticMetadata": "AttributeRoute",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "action": "Get",
       "controller": "AttributeRoute"
@@ -301,7 +301,7 @@
   "HttpRouteByActionDescriptor": "AttributeRoute/Get",
   "DebugInfo": {
     "RawText": "AttributeRoute/Get",
-    "RouteDiagnosticMetadata": "AttributeRoute/Get",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "action": "Get",
       "controller": "AttributeRoute"
@@ -327,7 +327,7 @@
   "HttpRouteByActionDescriptor": "AttributeRoute/Get/{id}",
   "DebugInfo": {
     "RawText": "AttributeRoute/Get/{id}",
-    "RouteDiagnosticMetadata": "AttributeRoute/Get/{id}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "action": "Get",
       "controller": "AttributeRoute",
@@ -356,7 +356,7 @@
   "HttpRouteByActionDescriptor": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "DebugInfo": {
     "RawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-    "RouteDiagnosticMetadata": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "action": "GetWithActionNameInDifferentSpotInTemplate",
       "controller": "AttributeRoute",
@@ -385,7 +385,7 @@
   "HttpRouteByActionDescriptor": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "DebugInfo": {
     "RawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-    "RouteDiagnosticMetadata": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "action": "GetWithActionNameInDifferentSpotInTemplate",
       "controller": "AttributeRoute",
@@ -414,7 +414,7 @@
   "HttpRouteByActionDescriptor": "/Index",
   "DebugInfo": {
     "RawText": "",
-    "RouteDiagnosticMetadata": "",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "page": "/Index"
     },
@@ -439,7 +439,7 @@
   "HttpRouteByActionDescriptor": "/Index",
   "DebugInfo": {
     "RawText": "Index",
-    "RouteDiagnosticMetadata": "Index",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "page": "/Index"
     },
@@ -464,7 +464,7 @@
   "HttpRouteByActionDescriptor": "/PageThatThrowsException",
   "DebugInfo": {
     "RawText": "PageThatThrowsException",
-    "RouteDiagnosticMetadata": "PageThatThrowsException",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "page": "/PageThatThrowsException"
     },
@@ -512,7 +512,7 @@
   "HttpRouteByActionDescriptor": "",
   "DebugInfo": {
     "RawText": "/MinimalApi/",
-    "RouteDiagnosticMetadata": "/MinimalApi/",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {},
     "AttributeRouteInfo": null,
     "ActionParameters": null,
@@ -535,7 +535,7 @@
   "HttpRouteByActionDescriptor": "",
   "DebugInfo": {
     "RawText": "/MinimalApi/{id}",
-    "RouteDiagnosticMetadata": "/MinimalApi/{id}",
+    "RouteDiagnosticMetadata": null,
     "RouteData": {
       "id": "123"
     },
