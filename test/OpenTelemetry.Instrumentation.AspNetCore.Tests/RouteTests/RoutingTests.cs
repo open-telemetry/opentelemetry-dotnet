@@ -26,9 +26,10 @@ namespace RouteTests;
 
 public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
 {
-    // TODO: This test currently uses the old conventions. Update it to use the new conventions.
-    private const string HttpStatusCode = "http.status_code";
-    private const string HttpMethod = "http.method";
+    private const string OldHttpStatusCode = "http.status_code";
+    private const string OldHttpMethod = "http.method";
+    private const string HttpStatusCode = "http.response.status_code";
+    private const string HttpMethod = "http.request.method";
     private const string HttpRoute = "http.route";
 
     private readonly RoutingTestFixture fixture;
@@ -56,7 +57,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task TestRoutes(RouteTestData.RouteTestCase testCase, bool skipAsserts = true)
+    public async Task TestRoutes(RouteTestData.RouteTestCase testCase, bool skipAsserts = true, bool useLegacyConventions = true)
     {
         await this.fixture.MakeRequest(testCase.TestApplicationScenario, testCase.Path);
 
@@ -73,10 +74,10 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
         this.meterProvider.ForceFlush();
 
         Assert.Single(this.exportedActivities);
-        Assert.Single(this.exportedMetrics);
+        var durationMetric = this.exportedMetrics.Single(x => x.Name == "http.server.request.duration" || x.Name == "http.server.duration");
 
         var metricPoints = new List<MetricPoint>();
-        foreach (var mp in this.exportedMetrics[0].GetMetricPoints())
+        foreach (var mp in durationMetric.GetMetricPoints())
         {
             metricPoints.Add(mp);
         }
@@ -86,8 +87,8 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
         var activity = this.exportedActivities[0];
         var metricPoint = metricPoints.First();
 
-        this.GetTagsFromActivity(activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
-        this.GetTagsFromMetricPoint(metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
+        this.GetTagsFromActivity(useLegacyConventions, activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
+        this.GetTagsFromMetricPoint(useLegacyConventions && Environment.Version.Major < 8, metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
 
         Assert.Equal(testCase.ExpectedStatusCode, activityHttpStatusCode);
         Assert.Equal(testCase.ExpectedStatusCode, metricHttpStatusCode);
@@ -124,26 +125,31 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
         this.meterProvider.Dispose();
     }
 
-    private void GetTagsFromActivity(Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
+    private void GetTagsFromActivity(bool useLegacyConventions, Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
     {
-        httpStatusCode = Convert.ToInt32(activity.GetTagItem(HttpStatusCode));
-        httpMethod = (activity.GetTagItem(HttpMethod) as string)!;
+        var expectedStatusCodeKey = useLegacyConventions ? OldHttpStatusCode : HttpStatusCode;
+        var expectedHttpMethodKey = useLegacyConventions ? OldHttpMethod : HttpMethod;
+        httpStatusCode = Convert.ToInt32(activity.GetTagItem(expectedStatusCodeKey));
+        httpMethod = (activity.GetTagItem(expectedHttpMethodKey) as string)!;
         httpRoute = activity.GetTagItem(HttpRoute) as string ?? string.Empty;
     }
 
-    private void GetTagsFromMetricPoint(MetricPoint metricPoint, out int httpStatusCode, out string httpMethod, out string? httpRoute)
+    private void GetTagsFromMetricPoint(bool useLegacyConventions, MetricPoint metricPoint, out int httpStatusCode, out string httpMethod, out string? httpRoute)
     {
+        var expectedStatusCodeKey = useLegacyConventions ? OldHttpStatusCode : HttpStatusCode;
+        var expectedHttpMethodKey = useLegacyConventions ? OldHttpMethod : HttpMethod;
+
         httpStatusCode = 0;
         httpMethod = string.Empty;
         httpRoute = string.Empty;
 
         foreach (var tag in metricPoint.Tags)
         {
-            if (tag.Key.Equals(HttpStatusCode))
+            if (tag.Key.Equals(expectedStatusCodeKey))
             {
                 httpStatusCode = Convert.ToInt32(tag.Value);
             }
-            else if (tag.Key.Equals(HttpMethod))
+            else if (tag.Key.Equals(expectedHttpMethodKey))
             {
                 httpMethod = (tag.Value as string)!;
             }

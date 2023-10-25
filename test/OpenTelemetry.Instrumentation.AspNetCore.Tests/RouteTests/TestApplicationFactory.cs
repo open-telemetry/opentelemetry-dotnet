@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#nullable disable
+#nullable enable
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
@@ -56,7 +56,7 @@ internal class TestApplicationFactory
         ? AspNetCoreTestsPath
         : Path.Combine(AspNetCoreTestsPath, "RouteTests");
 
-    public static WebApplication CreateApplication(TestApplicationScenario config)
+    public static WebApplication? CreateApplication(TestApplicationScenario config)
     {
         Debug.Assert(Directory.Exists(ContentRootPath), $"Cannot find ContentRootPath: {ContentRootPath}");
         switch (config)
@@ -66,7 +66,11 @@ internal class TestApplicationFactory
             case TestApplicationScenario.AttributeRouting:
                 return CreateAttributeRoutingApplication();
             case TestApplicationScenario.MinimalApi:
+#if NET7_0_OR_GREATER
                 return CreateMinimalApiApplication();
+#else
+                return null;
+#endif
             case TestApplicationScenario.RazorPages:
                 return CreateRazorPagesApplication();
             default:
@@ -125,6 +129,7 @@ internal class TestApplicationFactory
         return app;
     }
 
+#if NET7_0_OR_GREATER
     private static WebApplication CreateMinimalApiApplication()
     {
         var builder = WebApplication.CreateBuilder(); // WebApplication.CreateSlimBuilder();
@@ -134,14 +139,13 @@ internal class TestApplicationFactory
         app.Urls.Add("http://[::1]:0");
         app.UseMiddleware<RouteInfoMiddleware>();
 
-#if NET7_0_OR_GREATER
         var api = app.MapGroup("/MinimalApi");
         api.MapGet("/", () => Results.Ok());
         api.MapGet("/{id}", (int id) => Results.Ok());
-#endif
 
         return app;
     }
+#endif
 
     private static WebApplication CreateRazorPagesApplication()
     {
