@@ -33,7 +33,11 @@ public class RoutingTestFixture : IDisposable
     {
         foreach (var scenario in Enum.GetValues<TestApplicationScenario>())
         {
-            this.apps.Add(scenario, TestApplicationFactory.CreateApplication(scenario));
+            var app = TestApplicationFactory.CreateApplication(scenario);
+            if (app != null)
+            {
+                this.apps.Add(scenario, app);
+            }
         }
 
         foreach (var app in this.apps)

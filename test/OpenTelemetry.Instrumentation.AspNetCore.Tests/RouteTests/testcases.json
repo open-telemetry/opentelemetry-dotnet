@@ -130,13 +130,15 @@
         "httpMethod": "GET",
         "path": "/MinimalApi",
         "expectedStatusCode": 200,
-        "expectedHttpRoute": "/MinimalApi/"
+        "expectedHttpRoute": "/MinimalApi/",
+        "minimumDotnetVersion": 7
     },
     {
         "testApplicationScenario": "MinimalApi",
         "httpMethod": "GET",
         "path": "/MinimalApi/123",
         "expectedStatusCode": 200,
-        "expectedHttpRoute": "/MinimalApi/{id}"
+        "expectedHttpRoute": "/MinimalApi/{id}",
+        "minimumDotnetVersion": 7
     }
 ]

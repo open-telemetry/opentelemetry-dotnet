@@ -55,6 +55,11 @@ public static class RouteTestData
         {
             foreach (var testCase in input)
             {
+                if (testCase.MinimumDotnetVersion.HasValue && Environment.Version.Major < testCase.MinimumDotnetVersion.Value)
+                {
+                    continue;
+                }
+
                 result.Add(new object[]
                 {
                     testCase,
@@ -67,6 +72,8 @@ public static class RouteTestData
 
     public class RouteTestCase
     {
+        public int? MinimumDotnetVersion { get; set; }
+
         public bool Debug { get; set; }
 
         public TestApplicationScenario TestApplicationScenario { get; set; }
