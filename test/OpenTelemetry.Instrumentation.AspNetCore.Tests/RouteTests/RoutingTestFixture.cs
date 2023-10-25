@@ -82,6 +82,8 @@ public class RoutingTestFixture : IDisposable
     private void GenerateReadme()
     {
         var sb = new StringBuilder();
+        sb.AppendLine($"# Test results for ASP.NET Core {Environment.Version.Major}");
+        sb.AppendLine();
         sb.AppendLine("| | | display name | expected name (w/o http.method) | routing type | request |");
         sb.AppendLine("| - | - | - | - | - | - |");
 
@@ -99,14 +101,15 @@ public class RoutingTestFixture : IDisposable
         {
             var result = this.testResults[i];
             sb.AppendLine();
-            sb.AppendLine($"#### {i + 1}");
+            sb.AppendLine($"## {i + 1}");
             sb.AppendLine();
             sb.AppendLine("```json");
             sb.AppendLine(result.RouteInfo.ToString());
             sb.AppendLine("```");
         }
 
-        File.WriteAllText(Path.Combine("..", "..", "..", "RouteTests", "README.md"), sb.ToString());
+        var readmeFileName = $"README.net{Environment.Version.Major}.0.md";
+        File.WriteAllText(Path.Combine("..", "..", "..", "RouteTests", readmeFileName), sb.ToString());
 
         string FormatTestResult(TestResult result)
         {
