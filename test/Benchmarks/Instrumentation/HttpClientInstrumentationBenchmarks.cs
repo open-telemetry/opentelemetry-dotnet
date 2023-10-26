@@ -92,8 +92,13 @@ public class HttpClientInstrumentationBenchmarks
             this.StartWebApplication();
             this.httpClient = new HttpClient();
 
+            var exportedItems = new List<Metric>();
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+                })
                 .Build();
         }
         else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
@@ -106,8 +111,13 @@ public class HttpClientInstrumentationBenchmarks
                 .AddHttpClientInstrumentation()
                 .Build();
 
+            var exportedItems = new List<Metric>();
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+                })
                 .Build();
         }
     }
