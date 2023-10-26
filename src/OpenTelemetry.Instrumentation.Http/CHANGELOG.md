@@ -68,7 +68,7 @@
   variable is set to `http` or `http/dup`.
   ([#4989](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4989))
 
-* Updated description for `http.server.request.duration` metrics to match spec
+* Updated description for `http.client.request.duration` metrics to match spec
   definition.
   ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
 
