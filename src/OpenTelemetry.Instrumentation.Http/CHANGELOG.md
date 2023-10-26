@@ -64,8 +64,8 @@
   ([#4931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4931))
 
   * Added `url.scheme` attribute to `http.client.request.duration` metric. The
-  metric will be emitted when `OTEL_SEMCONV_STABILITY_OPT_IN` is set to `http`
-  or `http/dup`.
+  metric will be emitted when `OTEL_SEMCONV_STABILITY_OPT_IN` environment
+  variable is set to `http` or `http/dup`.
   ([#4989](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4989))
 
 ## 1.5.1-beta.1
