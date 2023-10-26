@@ -109,6 +109,10 @@ to `http` or `http/dup`.
     > The [View API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
     may be used to drop dimensions.
 
+* Updated description for `http.server.request.duration` metrics to match spec
+  definition.
+  ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20
