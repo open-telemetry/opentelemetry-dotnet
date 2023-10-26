@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
 * Introduced a new metric, `http.server.request.duration` measured in seconds.
   The OTel SDK (starting with version 1.6.0)
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
