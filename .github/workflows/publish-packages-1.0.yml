@@ -17,9 +17,6 @@ jobs:
   build-pack:
     runs-on: windows-latest
 
-    env:
-      RunningDotNetPack: true
-
     steps:
     - uses: actions/checkout@v4
       with:
@@ -29,14 +26,14 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dependencies
-      run: dotnet restore OpenTelemetry.proj
+    - name: dotnet restore
+      run: dotnet restore OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
-      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build --no-restore
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v3
