@@ -16,7 +16,7 @@
   `http.request.method` is set on `http.server.request.duration` metric or
   activity when `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is set to
   `http` or `http/dup`.
-  (#5001)[https://github.com/open-telemetry/opentelemetry-dotnet/pull/5001]
+  ([#5001](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5001))
 
 ## 1.6.0-beta.2
 
