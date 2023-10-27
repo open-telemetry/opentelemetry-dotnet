@@ -235,7 +235,7 @@ public class TraceContextPropagator : TextMapPropagator
 
         if (tracestateCollection != null)
         {
-            int validEntries = 0;
+            var keySet = new HashSet<string>();
             var result = new StringBuilder();
             for (int i = 0; i < tracestateCollection.Length; ++i)
             {
@@ -264,7 +264,7 @@ public class TraceContextPropagator : TextMapPropagator
                         continue;
                     }
 
-                    if (validEntries >= 32)
+                    if (keySet.Count >= 32)
                     {
                         // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
                         // test_tracestate_member_count_limit
@@ -294,13 +294,19 @@ public class TraceContextPropagator : TextMapPropagator
                         return false;
                     }
 
+                    // ValidateKey() call above has ensured the key does not contain upper case letters.
+                    if (!keySet.Add(key.ToString()))
+                    {
+                        // test_tracestate_duplicated_keys
+                        return false;
+                    }
+
                     if (result.Length > 0)
                     {
                         result.Append(',');
                     }
 
                     result.Append(listMember.ToString());
-                    validEntries++;
                 }
             }
 

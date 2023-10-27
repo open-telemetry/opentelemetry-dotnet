@@ -103,11 +103,11 @@ public class W3CTraceContextTests : IDisposable
 
         if (AspNetCoreHostingVersion.Major <= 6)
         {
-            Assert.StartsWith("FAILED (failures=4)", lastLine);
+            Assert.StartsWith("FAILED (failures=3)", lastLine);
         }
         else
         {
-            Assert.StartsWith("FAILED (failures=1)", lastLine);
+            Assert.StartsWith("OK", lastLine);
         }
     }
 
