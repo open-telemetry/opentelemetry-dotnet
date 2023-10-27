@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Net;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -24,6 +25,8 @@ using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
 
@@ -355,6 +358,61 @@ public partial class HttpWebRequestTests : IDisposable
         // Exception is thrown and collected as event
         Assert.True(exceptionThrown);
         Assert.Single(exportedItems[0].Events.Where(evt => evt.Name.Equals("exception")));
+    }
+
+    [Theory]
+    [InlineData("CONNECT")]
+    [InlineData("DELETE")]
+    [InlineData("GET")]
+    [InlineData("PUT")]
+    [InlineData("HEAD")]
+    [InlineData("OPTIONS")]
+    [InlineData("PATCH")]
+    [InlineData("Get")]
+    [InlineData("POST")]
+    [InlineData("TRACE")]
+    [InlineData("CUSTOM")]
+    public async Task HttpRequestMethodIsSetAsPerSpec(string method)
+    {
+        var exportedItems = new List<Activity>();
+
+        var configuration = new ConfigurationBuilder()
+           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+           .Build();
+
+        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        try
+        {
+            var request = (HttpWebRequest)WebRequest.Create(this.url);
+
+            request.Method = method;
+
+            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        Assert.Single(exportedItems);
+
+        var activity = exportedItems[0];
+
+        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        {
+            Assert.Equal(val, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == "http.request.method_original");
+        }
+        else
+        {
+            Assert.Equal("_OTHER", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+            Assert.Equal(method, activity.GetTagValue("http.request.method_original") as string);
+        }
     }
 
     [Fact]

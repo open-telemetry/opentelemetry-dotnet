@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 #if NETFRAMEWORK
 using System.Net;
 using System.Net.Http;
@@ -23,10 +24,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 using Xunit.Abstractions;
+
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests;
 
@@ -366,6 +370,140 @@ public partial class HttpClientTests : IDisposable
         Assert.NotEqual(spanid1, spanid2);
         Assert.NotEqual(spanid3, spanid1);
         Assert.NotEqual(spanid2, spanid3);
+    }
+
+    [Theory]
+    [InlineData("CONNECT")]
+    [InlineData("DELETE")]
+    [InlineData("GET")]
+    [InlineData("PUT")]
+    [InlineData("HEAD")]
+    [InlineData("OPTIONS")]
+    [InlineData("PATCH")]
+    [InlineData("Get")]
+    [InlineData("POST")]
+    [InlineData("TRACE")]
+    [InlineData("CUSTOM")]
+    public async Task HttpRequestMethodIsSetOnActivityAsPerSpec(string method)
+    {
+        var exportedItems = new List<Activity>();
+        using var request = new HttpRequestMessage
+        {
+            RequestUri = new Uri(this.url),
+            Method = new HttpMethod(method),
+        };
+
+        var configuration = new ConfigurationBuilder()
+           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+           .Build();
+
+        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var httpClient = new HttpClient();
+
+        try
+        {
+            await httpClient.SendAsync(request).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        Assert.Single(exportedItems);
+
+        var activity = exportedItems[0];
+
+        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        {
+            Assert.Equal(val, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == "http.request.method_original");
+        }
+        else
+        {
+            Assert.Equal("_OTHER", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+            Assert.Equal(method, activity.GetTagValue("http.request.method_original") as string);
+        }
+    }
+
+    [Theory]
+    [InlineData("CONNECT")]
+    [InlineData("DELETE")]
+    [InlineData("GET")]
+    [InlineData("PUT")]
+    [InlineData("HEAD")]
+    [InlineData("OPTIONS")]
+    [InlineData("PATCH")]
+    [InlineData("Get")]
+    [InlineData("POST")]
+    [InlineData("TRACE")]
+    [InlineData("CUSTOM")]
+    public async Task HttpRequestMethodIsSetonRequestDurationMetricAsPerSpec(string method)
+    {
+        var metricItems = new List<Metric>();
+        using var request = new HttpRequestMessage
+        {
+            RequestUri = new Uri(this.url),
+            Method = new HttpMethod(method),
+        };
+
+        var configuration = new ConfigurationBuilder()
+           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+           .Build();
+
+        using var meterprovider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using var httpClient = new HttpClient();
+
+        try
+        {
+            await httpClient.SendAsync(request).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        meterprovider.Dispose();
+
+        var metric = metricItems.FirstOrDefault(m => m.Name == "http.client.request.duration");
+
+        Assert.NotNull(metric);
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (var p in metric.GetMetricPoints())
+        {
+            metricPoints.Add(p);
+        }
+
+        Assert.Single(metricPoints);
+        var mp = metricPoints[0];
+
+        // Inspect Metric Attributes
+        var attributes = new Dictionary<string, object>();
+        foreach (var tag in mp.Tags)
+        {
+            attributes[tag.Key] = tag.Value;
+        }
+
+        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        {
+            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == method.ToUpper());
+        }
+        else
+        {
+            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == "_OTHER");
+        }
+
+        Assert.DoesNotContain(attributes, t => t.Key == "http.request.method_original");
     }
 
     [Fact]

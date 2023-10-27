@@ -153,7 +153,16 @@ internal static class HttpWebRequestActivitySource
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (tracingEmitNewAttributes)
             {
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                if (TelemetryHelper.TryResolveHttpMethod(request.Method, out var httpMethod))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                    activity.SetTag("http.request.method_original", request.Method);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 if (!request.RequestUri.IsDefaultPort)
                 {
@@ -495,7 +504,8 @@ internal static class HttpWebRequestActivitySource
             {
                 TagList tags = default;
 
-                tags.Add(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                TelemetryHelper.TryResolveHttpMethod(request.Method, out var httpMethod);
+                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                 tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
