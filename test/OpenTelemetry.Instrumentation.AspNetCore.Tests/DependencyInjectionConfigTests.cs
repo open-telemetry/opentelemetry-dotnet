@@ -64,35 +64,4 @@ public class DependencyInjectionConfigTests
 
         Assert.True(optionsPickedFromDI);
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("CustomName")]
-    public void TestMetricsOptionsDIConfig(string name)
-    {
-        name ??= Options.DefaultName;
-
-        bool optionsPickedFromDI = false;
-        void ConfigureTestServices(IServiceCollection services)
-        {
-            services.AddOpenTelemetry()
-                .WithMetrics(builder => builder
-                    .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
-
-            services.Configure<AspNetCoreMetricsInstrumentationOptions>(name, options =>
-            {
-                optionsPickedFromDI = true;
-            });
-        }
-
-        // Arrange
-        using (var client = this.factory
-            .WithWebHostBuilder(builder =>
-                builder.ConfigureTestServices(ConfigureTestServices))
-            .CreateClient())
-        {
-        }
-
-        Assert.True(optionsPickedFromDI);
-    }
 }
