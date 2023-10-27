@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -235,6 +236,89 @@ public class MetricTests
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
             expectedTagsCount: 6);
+    }
+
+    [Theory]
+    [InlineData("CONNECT")]
+    [InlineData("DELETE")]
+    [InlineData("GET")]
+    [InlineData("GeT")]
+    [InlineData("PUT")]
+    [InlineData("HEAD")]
+    [InlineData("OPTIONS")]
+    [InlineData("PATCH")]
+    [InlineData("POST")]
+    [InlineData("TRACE")]
+    [InlineData("CUSTOM")]
+    public async Task HttpRequestMethodIsCapturedAsPerSpec(string method)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .Build();
+
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        var message = new HttpRequestMessage();
+        message.Method = new HttpMethod(method);
+
+        try
+        {
+            using var response = await client.SendAsync(message).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        // We need to let End callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the End callback to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        var requestMetrics = metricItems
+            .Where(item => item.Name == "http.server.request.duration")
+            .ToArray();
+
+        var metric = Assert.Single(requestMetrics);
+
+        Assert.Equal("s", metric.Unit);
+        var metricPoints = GetMetricPoints(metric);
+        Assert.Single(metricPoints);
+
+        var mp = metricPoints[0];
+
+        // Inspect Metric Attributes
+        var attributes = new Dictionary<string, object>();
+        foreach (var tag in mp.Tags)
+        {
+            attributes[tag.Key] = tag.Value;
+        }
+
+        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        {
+            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == method.ToUpper());
+        }
+        else
+        {
+            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == "_OTHER");
+        }
+
+        Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
     }
 
 #if !NET8_0_OR_GREATER

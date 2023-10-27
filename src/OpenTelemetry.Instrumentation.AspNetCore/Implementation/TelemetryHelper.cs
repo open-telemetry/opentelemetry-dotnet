@@ -14,11 +14,48 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.AspNetCore.Http;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+using System.Collections.Generic;
+#endif
+
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 internal static class TelemetryHelper
 {
     public static readonly object[] BoxedStatusCodes;
+
+#if NET8_0_OR_GREATER
+    internal static readonly FrozenDictionary<string, string> KnownMethods = FrozenDictionary.ToFrozenDictionary(
+        new[]
+        {
+            KeyValuePair.Create(HttpMethods.Connect, HttpMethods.Connect),
+            KeyValuePair.Create(HttpMethods.Delete, HttpMethods.Delete),
+            KeyValuePair.Create(HttpMethods.Get, HttpMethods.Get),
+            KeyValuePair.Create(HttpMethods.Head, HttpMethods.Head),
+            KeyValuePair.Create(HttpMethods.Options, HttpMethods.Options),
+            KeyValuePair.Create(HttpMethods.Patch, HttpMethods.Patch),
+            KeyValuePair.Create(HttpMethods.Post, HttpMethods.Post),
+            KeyValuePair.Create(HttpMethods.Put, HttpMethods.Put),
+            KeyValuePair.Create(HttpMethods.Trace, HttpMethods.Trace)
+        },
+        StringComparer.OrdinalIgnoreCase);
+#else
+    internal static readonly Dictionary<string, string> KnownMethods = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        { HttpMethods.Connect, HttpMethods.Connect },
+        { HttpMethods.Delete, HttpMethods.Delete },
+        { HttpMethods.Get, HttpMethods.Get },
+        { HttpMethods.Head, HttpMethods.Head },
+        { HttpMethods.Options, HttpMethods.Options },
+        { HttpMethods.Patch, HttpMethods.Patch },
+        { HttpMethods.Post, HttpMethods.Post },
+        { HttpMethods.Put, HttpMethods.Put },
+        { HttpMethods.Trace, HttpMethods.Trace },
+    };
+
+#endif
 
     static TelemetryHelper()
     {
@@ -37,5 +74,20 @@ internal static class TelemetryHelper
         }
 
         return statusCode;
+    }
+
+    public static bool TryResolveHttpMethod(string method, out string resolvedMethod)
+    {
+        if (KnownMethods.TryGetValue(method, out var result))
+        {
+            // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
+            resolvedMethod = result;
+            return true;
+        }
+
+        // Set to default "_OTHER" as per spec.
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+        resolvedMethod = "_OTHER";
+        return false;
     }
 }
