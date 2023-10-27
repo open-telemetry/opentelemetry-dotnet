@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-## 1.6.0-beta.2
-
-Released 2023-Oct-26
-
 * Remove obsolete `TracerShim(Tracer, TextMapPropagator)` constructor.
   Use `TracerShim(TracerProvider)`
   or `TracerShim(TracerProvider, TextMapPropagator)` constructors.
