@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using System.Net;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -25,8 +24,6 @@ using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
-
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
 

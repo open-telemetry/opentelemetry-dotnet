@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Net;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
