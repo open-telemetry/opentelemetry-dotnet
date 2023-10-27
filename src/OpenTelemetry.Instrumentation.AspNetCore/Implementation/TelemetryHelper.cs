@@ -17,7 +17,6 @@
 using Microsoft.AspNetCore.Http;
 #if NET8_0_OR_GREATER
 using System.Collections.Frozen;
-using System.Collections.Generic;
 #endif
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -38,7 +37,7 @@ internal static class TelemetryHelper
             KeyValuePair.Create(HttpMethods.Patch, HttpMethods.Patch),
             KeyValuePair.Create(HttpMethods.Post, HttpMethods.Post),
             KeyValuePair.Create(HttpMethods.Put, HttpMethods.Put),
-            KeyValuePair.Create(HttpMethods.Trace, HttpMethods.Trace)
+            KeyValuePair.Create(HttpMethods.Trace, HttpMethods.Trace),
         },
         StringComparer.OrdinalIgnoreCase);
 #else
