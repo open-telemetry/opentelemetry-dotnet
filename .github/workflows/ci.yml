@@ -122,4 +122,4 @@ jobs:
     if: always() && !cancelled() && !contains(needs.*.result, 'failure')
     runs-on: windows-latest
     steps:
-    - run: echo 'build complete ✓'
+    - run: echo 'build complete'
