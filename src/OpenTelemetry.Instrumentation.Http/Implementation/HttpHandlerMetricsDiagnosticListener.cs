@@ -37,7 +37,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     internal static readonly string MeterVersion = AssemblyName.Version.ToString();
     internal static readonly Meter Meter = new(MeterName, MeterVersion);
     private static readonly Histogram<double> HttpClientDuration = Meter.CreateHistogram<double>("http.client.duration", "ms", "Measures the duration of outbound HTTP requests.");
-    private static readonly Histogram<double> HttpClientRequestDuration = Meter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
+    private static readonly Histogram<double> HttpClientRequestDuration = Meter.CreateHistogram<double>("http.client.request.duration", "s", "Duration of HTTP client requests.");
 
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
@@ -100,6 +100,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
 
                     if (!request.RequestUri.IsDefaultPort)
                     {

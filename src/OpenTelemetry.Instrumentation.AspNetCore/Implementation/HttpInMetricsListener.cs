@@ -59,7 +59,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
         if (this.emitNewAttributes)
         {
-            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
+            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
         }
     }
 
@@ -85,20 +85,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         if (context == null)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
-            return;
-        }
-
-        try
-        {
-            if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
             return;
         }
 
@@ -134,17 +120,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (this.options.Enrich != null)
-        {
-            try
-            {
-                this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
-            }
-        }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
@@ -158,20 +133,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         if (context == null)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
-            return;
-        }
-
-        try
-        {
-            if (this.options.Filter?.Invoke(HttpServerRequestDurationMetricName, context) == false)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
             return;
         }
 
@@ -199,17 +160,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (this.options.Enrich != null)
-        {
-            try
-            {
-                this.options.Enrich(HttpServerRequestDurationMetricName, context, ref tags);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
-            }
-        }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449

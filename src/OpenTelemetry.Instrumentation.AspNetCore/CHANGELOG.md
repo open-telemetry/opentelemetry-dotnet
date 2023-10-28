@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
 * Introduced a new metric, `http.server.request.duration` measured in seconds.
-  The OTel SDK
+  The OTel SDK (starting with version 1.6.0)
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
   for this metric to comply with the
   [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
@@ -85,6 +89,33 @@
 metric. This change only affects users setting `OTEL_SEMCONV_STABILITY_OPT_IN`
 to `http` or `http/dup`.
 ([#4934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4934))
+
+* **Breaking**: Removed `Enrich` and `Filter` support for **metrics**
+  instrumentation. With this change, `AspNetCoreMetricsInstrumentationOptions`
+  is no longer available.
+  ([#4981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4981))
+
+  * `Enrich` migration:
+
+    An enrichment API for the `http.server.request.duration` metric is available
+    inside AspNetCore for users targeting .NET 8.0 (or newer). For details see:
+    [Enrich the ASP.NET Core request
+    metric](https://learn.microsoft.com/aspnet/core/log-mon/metrics/metrics?view=aspnetcore-8.0#enrich-the-aspnet-core-request-metric).
+
+  * `Filter` migration:
+
+    There is no comparable filter mechanism currently available for any .NET
+    version. Please [share your
+    feedback](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4982)
+    if you are impacted by this feature gap.
+
+      > **Note**
+    > The [View API](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#select-specific-tags)
+    may be used to drop dimensions.
+
+* Updated description for `http.server.request.duration` metrics to match spec
+  definition.
+  ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
 
 ## 1.5.1-beta.1
 

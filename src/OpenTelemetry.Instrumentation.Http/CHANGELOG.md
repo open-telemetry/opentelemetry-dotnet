@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
 * Introduced a new metric for `HttpClient`, `http.client.request.duration`
-  measured in seconds. The OTel SDK
+  measured in seconds. The OTel SDK (starting with version 1.6.0)
   [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
   for this metric to comply with the
   [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
@@ -62,6 +66,15 @@
     [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
 
   ([#4931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4931))
+
+* Added `url.scheme` attribute to `http.client.request.duration` metric. The
+  metric will be emitted when `OTEL_SEMCONV_STABILITY_OPT_IN` environment
+  variable is set to `http` or `http/dup`.
+  ([#4989](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4989))
+
+* Updated description for `http.client.request.duration` metrics to match spec
+  definition.
+  ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
 
 ## 1.5.1-beta.1
 
