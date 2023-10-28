@@ -5,6 +5,7 @@
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)/OpenTelemetry.prod.ruleset</CodeAnalysisRuleSet>
     <ExposeExperimentalFeatures Condition="'$(ExposeExperimentalFeatures)' == ''">true</ExposeExperimentalFeatures>
     <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">false</EnablePackageValidation>
+    <MinVerVerbosity>detailed</MinVerVerbosity>
   </PropertyGroup>
 
   <PropertyGroup Label="PackageProperties">
