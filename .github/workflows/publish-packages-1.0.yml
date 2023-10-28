@@ -24,7 +24,6 @@ jobs:
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
-        filter: tree:0
         ref: ${{ github.ref || 'main' }}
 
     - name: Setup dotnet
