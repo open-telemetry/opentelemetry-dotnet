@@ -11,7 +11,9 @@
   `autoGenerateServiceInstanceId` is `true`.
   ([#4988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4988))
 
-* Fixed a bug where isSampled parameter wasn't properly checked in certain cases within the `UpdateWithExemplar` method of `MetricPoint`. ([#4851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+* Fixed a bug where isSampled parameter wasn't properly checked in certain cases
+  within the `UpdateWithExemplar` method of `MetricPoint`.
+  ([#4851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
 
 ## 1.7.0-alpha.1
 
