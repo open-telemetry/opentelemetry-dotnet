@@ -252,7 +252,7 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                if (TelemetryHelper.TryResolveHttpMethod(request.Method, out var httpMethod))
+                if (RequestMethodHelper.TryResolveHttpMethod(request.Method, out var httpMethod))
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
                 }

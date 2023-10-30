@@ -30,6 +30,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -309,7 +310,7 @@ public class MetricTests
             attributes[tag.Key] = tag.Value;
         }
 
-        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        if (RequestMethodHelper.KnownMethods.TryGetValue(method, out var val))
         {
             Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == method.ToUpper());
         }

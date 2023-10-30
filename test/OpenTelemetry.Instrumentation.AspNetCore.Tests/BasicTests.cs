@@ -27,6 +27,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
@@ -710,7 +711,7 @@ public sealed class BasicTests
 
         Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
 
-        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        if (RequestMethodHelper.KnownMethods.TryGetValue(method, out var val))
         {
             Assert.Equal(val, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
             Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);

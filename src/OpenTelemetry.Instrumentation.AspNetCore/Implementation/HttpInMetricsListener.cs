@@ -18,6 +18,8 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Internal;
+
 #if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Routing;
 #endif
@@ -151,7 +153,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
-        TelemetryHelper.TryResolveHttpMethod(context.Request.Method, out var httpMethod);
+        RequestMethodHelper.TryResolveHttpMethod(context.Request.Method, out var httpMethod);
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
 #if NET6_0_OR_GREATER
