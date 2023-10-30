@@ -96,7 +96,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\Component.BuildTest.yml = .github\workflows\Component.BuildTest.yml
 		.github\workflows\docfx.yml = .github\workflows\docfx.yml
 		.github\workflows\dotnet-format.yml = .github\workflows\dotnet-format.yml
-		.github\workflows\integration.yml = .github\workflows\integration.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
 		.github\workflows\package-validation.yml = .github\workflows\package-validation.yml
 		.github\workflows\publish-packages-1.0.yml = .github\workflows\publish-packages-1.0.yml

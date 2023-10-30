@@ -22,8 +22,10 @@ jobs:
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           packaged-code: ['src/**', '!**/*.md']
-          instrumentation: ['*/OpenTelemetry.Instrumentation*/**', '!**/*.md']
-          api: ['*/OpenTelemetry.Api*/**', '!**/*.md']
+          api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
+          instrumentation: ['*/OpenTelemetry.Instrumentation*/**', 'test/TestApp.AspNetCore/**', '!**/*.md']
+          instrumentation-packages: ['src/OpenTelemetry.Instrumentation*/**', '!**/*.md']
+          sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-md:
@@ -60,27 +62,67 @@ jobs:
       project-build-commands: '-p:ExposeExperimentalFeatures=true'
       code-cov-name: 'Solution-Experimental'
 
-  build-test-instrumentation:
+  # Build instrumentation libraries using stable packages released to NuGet
+  build-test-instrumentation-stable:
     needs: detect-changes
     if: |
-      contains(needs.detect-changes.outputs.changes, 'instrumentation')
+      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/Component.BuildTest.yml
     with:
       project-name: './build/InstrumentationLibraries.proj'
-      project-build-commands: '-p:RunningDotNetPack=true'
-      code-cov-name: 'Instrumentation'
+      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=false'
+      code-cov-name: 'Instrumentation-Stable'
 
-  integration-test:
+  # Build instrumentation libraries using stable packages released to NuGet
+  build-test-instrumentation-experimental:
     needs: detect-changes
     if: |
-      contains(needs.detect-changes.outputs.changes, 'api')
-      || contains(needs.detect-changes.outputs.changes, 'instrumentation')
+      contains(needs.detect-changes.outputs.changes, 'instrumentation-packages')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/Component.BuildTest.yml
+    with:
+      project-name: './build/InstrumentationLibraries.proj'
+      project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
+      code-cov-name: 'Instrumentation-Experimental'
+
+  otlp-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'api-packages')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/integration.yml
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ net6.0, net7.0, net8.0 ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run OTLP Exporter docker-compose
+        run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
+
+  w3c-trace-context-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'api-packages')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'instrumentation')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ net6.0, net7.0, net8.0 ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run W3C Trace Context docker-compose
+        run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   validate-packages:
     needs: detect-changes
@@ -114,8 +156,10 @@ jobs:
       lint-dotnet-format,
       build-test-solution-stable,
       build-test-solution-experimental,
-      build-test-instrumentation,
-      integration-test,
+      build-test-instrumentation-stable,
+      build-test-instrumentation-experimental,
+      otlp-integration-test,
+      w3c-trace-context-integration-test,
       validate-packages,
       generate-docs,
       verify-aot-compat
