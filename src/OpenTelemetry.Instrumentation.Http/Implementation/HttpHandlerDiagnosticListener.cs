@@ -259,6 +259,11 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
             if (TryFetchResponse(payload, out HttpResponseMessage response))
             {
+                if (currentStatusCode == ActivityStatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+                }
+
                 if (this.emitOldAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
@@ -267,11 +272,10 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 if (this.emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-                }
-
-                if (currentStatusCode == ActivityStatusCode.Unset)
-                {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+                    if (activity.Status == ActivityStatusCode.Error)
+                    {
+                        activity.SetTag("error.type", TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                    }
                 }
 
                 try

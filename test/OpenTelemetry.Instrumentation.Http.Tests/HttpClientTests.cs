@@ -346,11 +346,22 @@ public partial class HttpClientTests
 
             var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
 
+#if !NETFRAMEWORK
+            int numberOfNewTags = activity.Status == ActivityStatusCode.Error ? 6 : 5;
+            int numberOfDupeTags = activity.Status == ActivityStatusCode.Error ? 12 : 11;
+
+            var expectedAttributeCount = semanticConvention == HttpSemanticConvention.Dupe
+                ? numberOfDupeTags + (tc.ResponseExpected ? 2 : 0)
+                : semanticConvention == HttpSemanticConvention.New
+                    ? numberOfNewTags + (tc.ResponseExpected ? 1 : 0)
+                    : 6 + (tc.ResponseExpected ? 1 : 0);
+#else
             var expectedAttributeCount = semanticConvention == HttpSemanticConvention.Dupe
                 ? 11 + (tc.ResponseExpected ? 2 : 0)
                 : semanticConvention == HttpSemanticConvention.New
                     ? 5 + (tc.ResponseExpected ? 1 : 0)
                     : 6 + (tc.ResponseExpected ? 1 : 0);
+#endif
 
             Assert.Equal(expectedAttributeCount, normalizedAttributes.Count);
 
@@ -519,8 +530,19 @@ public partial class HttpClientTests
                     attributes[tag.Key] = tag.Value;
                 }
 
+#if !NETFRAMEWORK
+                var numberOfTags = 6;
+                if (tc.ResponseExpected)
+                {
+                    var expectedStatusCode = int.Parse(normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
+                    numberOfTags = (expectedStatusCode >= 400) ? 6 : 5;
+                }
+
+                var expectedAttributeCount = numberOfTags + (tc.ResponseExpected ? 1 : 0);
+#else
                 var expectedAttributeCount = 5 + (tc.ResponseExpected ? 1 : 0);
 
+#endif
                 Assert.Equal(expectedAttributeCount, attributes.Count);
 
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
