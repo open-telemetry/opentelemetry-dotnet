@@ -3,11 +3,11 @@
 ## Unreleased
 
 * Updated `http.request.method` to match specification guidelines.
-  * For activity, request method will be set on an additional tag
-    `http.request.method.original` if the method does not belong to one of the
-    [known
-    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
-    and `http.request.method` will be set to `_OTHER`.
+  * For activity, if the method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)then
+    the request method will be set on an additional tag
+    `http.request.method.original` and `http.request.method` will be set to
+    `_OTHER`.
   * For metrics, `http.request.method` on `http.server.request.duration` metric
     will be set to `_OTHER` if the original method does not belong to one of the
     [known
