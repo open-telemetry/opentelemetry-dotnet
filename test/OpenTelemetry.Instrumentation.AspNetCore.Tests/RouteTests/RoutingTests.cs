@@ -24,7 +24,7 @@ using Xunit;
 
 namespace RouteTests;
 
-public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
+public class RoutingTests : IClassFixture<RoutingTestFixture>
 {
     private const string OldHttpStatusCode = "http.status_code";
     private const string OldHttpMethod = "http.method";
@@ -33,32 +33,33 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
     private const string HttpRoute = "http.route";
 
     private readonly RoutingTestFixture fixture;
-    private readonly TracerProvider tracerProvider;
-    private readonly MeterProvider meterProvider;
     private readonly List<Activity> exportedActivities = new();
     private readonly List<Metric> exportedMetrics = new();
 
     public RoutingTests(RoutingTestFixture fixture)
     {
         this.fixture = fixture;
-
-        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(this.exportedActivities)
-            .Build()!;
-
-        this.meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(this.exportedMetrics)
-            .Build()!;
     }
 
     public static IEnumerable<object[]> TestData => RouteTestData.GetTestCases();
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task TestRoutes(RouteTestData.RouteTestCase testCase, bool skipAsserts = true, bool useLegacyConventions = true)
+    public async Task TestRoutes(RouteTestData.RouteTestCase testCase, bool useLegacyConventions)
     {
+        var previousSetting = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
+        Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", useLegacyConventions ? null : "http");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(this.exportedActivities)
+            .Build()!;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(this.exportedMetrics)
+            .Build()!;
+
         await this.fixture.MakeRequest(testCase.TestApplicationScenario, testCase.Path);
 
         for (var i = 0; i < 10; i++)
@@ -71,7 +72,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
             await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
         }
 
-        this.meterProvider.ForceFlush();
+        meterProvider.ForceFlush();
 
         Assert.Single(this.exportedActivities);
         var durationMetric = this.exportedMetrics.Single(x => x.Name == "http.server.request.duration" || x.Name == "http.server.duration");
@@ -95,15 +96,37 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
         Assert.Equal(testCase.HttpMethod, activityHttpMethod);
         Assert.Equal(testCase.HttpMethod, metricHttpMethod);
 
-        if (!skipAsserts)
+        if (testCase.CurrentActivityDisplayName != null)
         {
-            Assert.Equal(testCase.ExpectedHttpRoute, activityHttpRoute);
-            Assert.Equal(testCase.ExpectedHttpRoute, metricHttpRoute);
-
+            Assert.Equal(testCase.CurrentActivityDisplayName, activity.DisplayName);
+        }
+        else
+        {
+            // Activity.DisplayName should be a combination of http.method + http.route attributes, see:
+            // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name
             var expectedActivityDisplayName = string.IsNullOrEmpty(testCase.ExpectedHttpRoute)
                 ? testCase.HttpMethod
                 : $"{testCase.HttpMethod} {testCase.ExpectedHttpRoute}";
+
             Assert.Equal(expectedActivityDisplayName, activity.DisplayName);
+        }
+
+        if (testCase.CurrentActivityHttpRoute != null)
+        {
+            Assert.Equal(testCase.CurrentActivityHttpRoute, activityHttpRoute);
+        }
+        else
+        {
+            Assert.Equal(testCase.ExpectedHttpRoute, activityHttpRoute);
+        }
+
+        if (testCase.CurrentMetricHttpRoute != null)
+        {
+            Assert.Equal(testCase.CurrentMetricHttpRoute, metricHttpRoute);
+        }
+        else
+        {
+            Assert.Equal(testCase.ExpectedHttpRoute, metricHttpRoute);
         }
 
         var testResult = new TestResult
@@ -116,13 +139,12 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>, IDisposable
             TestCase = testCase,
         };
 
-        this.fixture.AddTestResult(testResult);
-    }
+        if (!useLegacyConventions)
+        {
+            this.fixture.AddTestResult(testResult);
+        }
 
-    public void Dispose()
-    {
-        this.tracerProvider.Dispose();
-        this.meterProvider.Dispose();
+        Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", previousSetting);
     }
 
     private void GetTagsFromActivity(bool useLegacyConventions, Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)

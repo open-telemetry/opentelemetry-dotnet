@@ -32,19 +32,22 @@
   "HttpRouteByRawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "HttpRouteByControllerActionAndParameters": "ConventionalRoute/Default",
   "HttpRouteByActionDescriptor": "ConventionalRoute/Default/{id?}",
-  "DebugInfo": {
-    "RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "controller": "ConventionalRoute",
       "action": "Default"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "ConventionalRoute",
-    "ControllerActionDescriptorActionName": "Default"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ConventionalRoute",
+        "ActionName": "Default"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -58,23 +61,26 @@
   "HttpRouteByRawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "HttpRouteByControllerActionAndParameters": "ConventionalRoute/ActionWithStringParameter/{id}/{num}",
   "HttpRouteByActionDescriptor": "ConventionalRoute/ActionWithStringParameter/{id?}",
-  "DebugInfo": {
-    "RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "controller": "ConventionalRoute",
       "action": "ActionWithStringParameter",
       "id": "2"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [
-      "id",
-      "num"
-    ],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "ConventionalRoute",
-    "ControllerActionDescriptorActionName": "ActionWithStringParameter"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [
+        "id",
+        "num"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ConventionalRoute",
+        "ActionName": "ActionWithStringParameter"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -88,22 +94,25 @@
   "HttpRouteByRawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "HttpRouteByControllerActionAndParameters": "ConventionalRoute/ActionWithStringParameter/{id}/{num}",
   "HttpRouteByActionDescriptor": "ConventionalRoute/ActionWithStringParameter/{id?}",
-  "DebugInfo": {
-    "RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "{controller=ConventionalRoute}/{action=Default}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "controller": "ConventionalRoute",
       "action": "ActionWithStringParameter"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [
-      "id",
-      "num"
-    ],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "ConventionalRoute",
-    "ControllerActionDescriptorActionName": "ActionWithStringParameter"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [
+        "id",
+        "num"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ConventionalRoute",
+        "ActionName": "ActionWithStringParameter"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -116,17 +125,12 @@
   "Path": "/ConventionalRoute/NotFound",
   "HttpRouteByRawText": null,
   "HttpRouteByControllerActionAndParameters": "",
-  "HttpRouteByActionDescriptor": "",
-  "DebugInfo": {
-    "RawText": null,
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {},
-    "AttributeRouteInfo": null,
-    "ActionParameters": null,
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+  "HttpRouteByActionDescriptor": null,
+  "RouteSummary": {
+    "RoutePattern.RawText": null,
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
   }
 }
 ```
@@ -140,24 +144,27 @@
   "HttpRouteByRawText": "SomePath/{id}/{num:int}",
   "HttpRouteByControllerActionAndParameters": "ConventionalRoute/ActionWithStringParameter/{id}/{num}",
   "HttpRouteByActionDescriptor": "SomePath/{id}/{num:int}",
-  "DebugInfo": {
-    "RawText": "SomePath/{id}/{num:int}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "SomePath/{id}/{num:int}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "controller": "ConventionalRoute",
       "action": "ActionWithStringParameter",
       "id": "SomeString",
       "num": "2"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [
-      "id",
-      "num"
-    ],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "ConventionalRoute",
-    "ControllerActionDescriptorActionName": "ActionWithStringParameter"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [
+        "id",
+        "num"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ConventionalRoute",
+        "ActionName": "ActionWithStringParameter"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -170,17 +177,12 @@
   "Path": "/SomePath/SomeString/NotAnInt",
   "HttpRouteByRawText": null,
   "HttpRouteByControllerActionAndParameters": "",
-  "HttpRouteByActionDescriptor": "",
-  "DebugInfo": {
-    "RawText": null,
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {},
-    "AttributeRouteInfo": null,
-    "ActionParameters": null,
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+  "HttpRouteByActionDescriptor": null,
+  "RouteSummary": {
+    "RoutePattern.RawText": null,
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
   }
 }
 ```
@@ -194,20 +196,23 @@
   "HttpRouteByRawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
   "HttpRouteByControllerActionAndParameters": "ControllerForMyArea/Default",
   "HttpRouteByActionDescriptor": "{area:exists}/ControllerForMyArea/Default/{id?}",
-  "DebugInfo": {
-    "RawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "controller": "ControllerForMyArea",
       "action": "Default",
       "area": "MyArea"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "ControllerForMyArea",
-    "ControllerActionDescriptorActionName": "Default"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ControllerForMyArea",
+        "ActionName": "Default"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -221,20 +226,23 @@
   "HttpRouteByRawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
   "HttpRouteByControllerActionAndParameters": "ControllerForMyArea/NonDefault",
   "HttpRouteByActionDescriptor": "{area:exists}/ControllerForMyArea/NonDefault/{id?}",
-  "DebugInfo": {
-    "RawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "controller": "ControllerForMyArea",
       "area": "MyArea",
       "action": "NonDefault"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "ControllerForMyArea",
-    "ControllerActionDescriptorActionName": "NonDefault"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [],
+      "ControllerActionDescriptor": {
+        "ControllerName": "ControllerForMyArea",
+        "ActionName": "NonDefault"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -248,20 +256,23 @@
   "HttpRouteByRawText": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
   "HttpRouteByControllerActionAndParameters": "AnotherArea/Index",
   "HttpRouteByActionDescriptor": "SomePrefix/AnotherArea/Index/{id?}",
-  "DebugInfo": {
-    "RawText": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "area": "AnotherArea",
       "controller": "AnotherArea",
       "action": "Index"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "AnotherArea",
-    "ControllerActionDescriptorActionName": "Index"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": null,
+      "Parameters": [],
+      "ControllerActionDescriptor": {
+        "ControllerName": "AnotherArea",
+        "ActionName": "Index"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -275,19 +286,22 @@
   "HttpRouteByRawText": "AttributeRoute",
   "HttpRouteByControllerActionAndParameters": "AttributeRoute/Get",
   "HttpRouteByActionDescriptor": "AttributeRoute",
-  "DebugInfo": {
-    "RawText": "AttributeRoute",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "AttributeRoute",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "action": "Get",
       "controller": "AttributeRoute"
     },
-    "AttributeRouteInfo": "AttributeRoute",
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "AttributeRoute",
-    "ControllerActionDescriptorActionName": "Get"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "AttributeRoute",
+      "Parameters": [],
+      "ControllerActionDescriptor": {
+        "ControllerName": "AttributeRoute",
+        "ActionName": "Get"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -301,19 +315,22 @@
   "HttpRouteByRawText": "AttributeRoute/Get",
   "HttpRouteByControllerActionAndParameters": "AttributeRoute/Get",
   "HttpRouteByActionDescriptor": "AttributeRoute/Get",
-  "DebugInfo": {
-    "RawText": "AttributeRoute/Get",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "AttributeRoute/Get",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "action": "Get",
       "controller": "AttributeRoute"
     },
-    "AttributeRouteInfo": "AttributeRoute/Get",
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "AttributeRoute",
-    "ControllerActionDescriptorActionName": "Get"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "AttributeRoute/Get",
+      "Parameters": [],
+      "ControllerActionDescriptor": {
+        "ControllerName": "AttributeRoute",
+        "ActionName": "Get"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -327,22 +344,25 @@
   "HttpRouteByRawText": "AttributeRoute/Get/{id}",
   "HttpRouteByControllerActionAndParameters": "AttributeRoute/Get/{id}",
   "HttpRouteByActionDescriptor": "AttributeRoute/Get/{id}",
-  "DebugInfo": {
-    "RawText": "AttributeRoute/Get/{id}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "AttributeRoute/Get/{id}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "action": "Get",
       "controller": "AttributeRoute",
       "id": "12"
     },
-    "AttributeRouteInfo": "AttributeRoute/Get/{id}",
-    "ActionParameters": [
-      "id"
-    ],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "AttributeRoute",
-    "ControllerActionDescriptorActionName": "Get"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "AttributeRoute/Get/{id}",
+      "Parameters": [
+        "id"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "AttributeRoute",
+        "ActionName": "Get"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -356,22 +376,25 @@
   "HttpRouteByRawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "HttpRouteByControllerActionAndParameters": "AttributeRoute/GetWithActionNameInDifferentSpotInTemplate/{id}",
   "HttpRouteByActionDescriptor": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-  "DebugInfo": {
-    "RawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "action": "GetWithActionNameInDifferentSpotInTemplate",
       "controller": "AttributeRoute",
       "id": "12"
     },
-    "AttributeRouteInfo": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-    "ActionParameters": [
-      "id"
-    ],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "AttributeRoute",
-    "ControllerActionDescriptorActionName": "GetWithActionNameInDifferentSpotInTemplate"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+      "Parameters": [
+        "id"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "AttributeRoute",
+        "ActionName": "GetWithActionNameInDifferentSpotInTemplate"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -385,22 +408,25 @@
   "HttpRouteByRawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "HttpRouteByControllerActionAndParameters": "AttributeRoute/GetWithActionNameInDifferentSpotInTemplate/{id}",
   "HttpRouteByActionDescriptor": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-  "DebugInfo": {
-    "RawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "action": "GetWithActionNameInDifferentSpotInTemplate",
       "controller": "AttributeRoute",
       "id": "NotAnInt"
     },
-    "AttributeRouteInfo": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-    "ActionParameters": [
-      "id"
-    ],
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": "AttributeRoute",
-    "ControllerActionDescriptorActionName": "GetWithActionNameInDifferentSpotInTemplate"
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+      "Parameters": [
+        "id"
+      ],
+      "ControllerActionDescriptor": {
+        "ControllerName": "AttributeRoute",
+        "ActionName": "GetWithActionNameInDifferentSpotInTemplate"
+      },
+      "PageActionDescriptor": null
+    }
   }
 }
 ```
@@ -414,18 +440,21 @@
   "HttpRouteByRawText": "",
   "HttpRouteByControllerActionAndParameters": "",
   "HttpRouteByActionDescriptor": "/Index",
-  "DebugInfo": {
-    "RawText": "",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "page": "/Index"
     },
-    "AttributeRouteInfo": "",
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": "/Pages/Index.cshtml",
-    "PageActionDescriptorViewEnginePath": "/Index",
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "",
+      "Parameters": [],
+      "ControllerActionDescriptor": null,
+      "PageActionDescriptor": {
+        "RelativePath": "/Pages/Index.cshtml",
+        "ViewEnginePath": "/Index"
+      }
+    }
   }
 }
 ```
@@ -439,18 +468,21 @@
   "HttpRouteByRawText": "Index",
   "HttpRouteByControllerActionAndParameters": "",
   "HttpRouteByActionDescriptor": "/Index",
-  "DebugInfo": {
-    "RawText": "Index",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "Index",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "page": "/Index"
     },
-    "AttributeRouteInfo": "Index",
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": "/Pages/Index.cshtml",
-    "PageActionDescriptorViewEnginePath": "/Index",
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "Index",
+      "Parameters": [],
+      "ControllerActionDescriptor": null,
+      "PageActionDescriptor": {
+        "RelativePath": "/Pages/Index.cshtml",
+        "ViewEnginePath": "/Index"
+      }
+    }
   }
 }
 ```
@@ -464,18 +496,21 @@
   "HttpRouteByRawText": "PageThatThrowsException",
   "HttpRouteByControllerActionAndParameters": "",
   "HttpRouteByActionDescriptor": "/PageThatThrowsException",
-  "DebugInfo": {
-    "RawText": "PageThatThrowsException",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "RouteSummary": {
+    "RoutePattern.RawText": "PageThatThrowsException",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "page": "/PageThatThrowsException"
     },
-    "AttributeRouteInfo": "PageThatThrowsException",
-    "ActionParameters": [],
-    "PageActionDescriptorRelativePath": "/Pages/PageThatThrowsException.cshtml",
-    "PageActionDescriptorViewEnginePath": "/PageThatThrowsException",
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+    "ActionDescriptor": {
+      "AttributeRouteInfo.Template": "PageThatThrowsException",
+      "Parameters": [],
+      "ControllerActionDescriptor": null,
+      "PageActionDescriptor": {
+        "RelativePath": "/Pages/PageThatThrowsException.cshtml",
+        "ViewEnginePath": "/PageThatThrowsException"
+      }
+    }
   }
 }
 ```
@@ -488,17 +523,12 @@
   "Path": "/js/site.js",
   "HttpRouteByRawText": null,
   "HttpRouteByControllerActionAndParameters": "",
-  "HttpRouteByActionDescriptor": "",
-  "DebugInfo": {
-    "RawText": null,
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {},
-    "AttributeRouteInfo": null,
-    "ActionParameters": null,
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+  "HttpRouteByActionDescriptor": null,
+  "RouteSummary": {
+    "RoutePattern.RawText": null,
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
   }
 }
 ```
@@ -511,17 +541,12 @@
   "Path": "/MinimalApi",
   "HttpRouteByRawText": "/MinimalApi/",
   "HttpRouteByControllerActionAndParameters": "",
-  "HttpRouteByActionDescriptor": "",
-  "DebugInfo": {
-    "RawText": "/MinimalApi/",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {},
-    "AttributeRouteInfo": null,
-    "ActionParameters": null,
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+  "HttpRouteByActionDescriptor": null,
+  "RouteSummary": {
+    "RoutePattern.RawText": "/MinimalApi/",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
   }
 }
 ```
@@ -534,19 +559,14 @@
   "Path": "/MinimalApi/123",
   "HttpRouteByRawText": "/MinimalApi/{id}",
   "HttpRouteByControllerActionAndParameters": "",
-  "HttpRouteByActionDescriptor": "",
-  "DebugInfo": {
-    "RawText": "/MinimalApi/{id}",
-    "RouteDiagnosticMetadata": null,
-    "RouteData": {
+  "HttpRouteByActionDescriptor": null,
+  "RouteSummary": {
+    "RoutePattern.RawText": "/MinimalApi/{id}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
       "id": "123"
     },
-    "AttributeRouteInfo": null,
-    "ActionParameters": null,
-    "PageActionDescriptorRelativePath": null,
-    "PageActionDescriptorViewEnginePath": null,
-    "ControllerActionDescriptorControllerName": null,
-    "ControllerActionDescriptorActionName": null
+    "ActionDescriptor": null
   }
 }
 ```

@@ -19,6 +19,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace RouteTests;
 
@@ -45,10 +46,7 @@ public static class RouteTestData
         {
             foreach (var testCase in input.Where(x => x.Debug))
             {
-                result.Add(new object[]
-                {
-                    testCase,
-                });
+                result.Add(new object[] { testCase, true });
             }
         }
         else
@@ -60,10 +58,8 @@ public static class RouteTestData
                     continue;
                 }
 
-                result.Add(new object[]
-                {
-                    testCase,
-                });
+                result.Add(new object[] { testCase, true });
+                result.Add(new object[] { testCase, false });
             }
         }
 
@@ -72,6 +68,8 @@ public static class RouteTestData
 
     public class RouteTestCase
     {
+        public string Name { get; set; } = string.Empty;
+
         public int? MinimumDotnetVersion { get; set; }
 
         public bool Debug { get; set; }
@@ -85,5 +83,16 @@ public static class RouteTestData
         public int ExpectedStatusCode { get; set; }
 
         public string? ExpectedHttpRoute { get; set; }
+
+        public string? CurrentActivityDisplayName { get; set; }
+
+        public string? CurrentActivityHttpRoute { get; set; }
+
+        public string? CurrentMetricHttpRoute { get; set; }
+
+        public override string ToString()
+        {
+            return $"{this.TestApplicationScenario}: {this.Name}";
+        }
     }
 }

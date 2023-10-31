@@ -22,8 +22,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 #endif
 using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 
 namespace RouteTests;
@@ -34,99 +32,84 @@ public class RouteInfo
 
     public RouteInfo()
     {
-        this.DebugInfo = new DebugInfo();
+        this.RouteSummary = new RouteSummary();
     }
 
     public string? HttpMethod { get; set; }
 
     public string? Path { get; set; }
 
-    public string? HttpRouteByRawText => this.DebugInfo.RawText;
+    public string? HttpRouteByRawText => this.RouteSummary.RawText;
 
-    public string HttpRouteByControllerActionAndParameters
+    public string? HttpRouteByControllerActionAndParameters
     {
         get
         {
-            var condition = !string.IsNullOrEmpty(this.DebugInfo.ControllerActionDescriptorActionName)
-                && !string.IsNullOrEmpty(this.DebugInfo.ControllerActionDescriptorActionName)
-                && this.DebugInfo.ActionParameters != null;
-
-            if (!condition)
+            if (this.RouteSummary.ActionDescriptorSummary == null
+                || this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary == null)
             {
                 return string.Empty;
             }
 
-            var paramList = string.Join(string.Empty, this.DebugInfo.ActionParameters!.Select(p => $"/{{{p}}}"));
-            return $"{this.DebugInfo.ControllerActionDescriptorControllerName}/{this.DebugInfo.ControllerActionDescriptorActionName}{paramList}";
+            var controllerName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorControllerName;
+            var actionName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorActionName;
+            var paramList = string.Join(string.Empty, this.RouteSummary.ActionDescriptorSummary.ActionParameters!.Select(p => $"/{{{p}}}"));
+            return $"{controllerName}/{actionName}{paramList}";
         }
     }
 
-    public string HttpRouteByActionDescriptor
+    public string? HttpRouteByActionDescriptor
     {
         get
         {
-            var result = string.Empty;
+            if (this.RouteSummary.RawText == null)
+            {
+                return null;
+            }
 
-            var hasControllerActionDescriptor = this.DebugInfo.ControllerActionDescriptorControllerName != null
-                && this.DebugInfo.ControllerActionDescriptorActionName != null;
-
-            var hasPageActionDescriptor = this.DebugInfo.PageActionDescriptorRelativePath != null
-                && this.DebugInfo.PageActionDescriptorViewEnginePath != null;
-
-            if (this.DebugInfo.RawText != null && hasControllerActionDescriptor)
+            if (this.RouteSummary.ActionDescriptorSummary?.ControllerActionDescriptorSummary != null)
             {
                 var controllerRegex = new System.Text.RegularExpressions.Regex(@"\{controller=.*?\}+?");
                 var actionRegex = new System.Text.RegularExpressions.Regex(@"\{action=.*?\}+?");
-                result = controllerRegex.Replace(this.DebugInfo.RawText, this.DebugInfo.ControllerActionDescriptorControllerName!);
-                result = actionRegex.Replace(result, this.DebugInfo.ControllerActionDescriptorActionName!);
-            }
-            else if (this.DebugInfo.RawText != null && hasPageActionDescriptor)
-            {
-                result = this.DebugInfo.PageActionDescriptorViewEnginePath!;
+                var controllerName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorControllerName;
+                var actionName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorActionName;
+                var result = controllerRegex.Replace(this.RouteSummary.RawText, controllerName);
+                result = actionRegex.Replace(result, actionName);
+                return result;
             }
 
-            return result;
+            if (this.RouteSummary.ActionDescriptorSummary?.PageActionDescriptorSummary != null)
+            {
+                return this.RouteSummary.ActionDescriptorSummary.PageActionDescriptorSummary.PageActionDescriptorViewEnginePath;
+            }
+
+            return null;
         }
     }
 
-    public DebugInfo DebugInfo { get; set; }
+    public RouteSummary RouteSummary { get; set; }
 
     public void SetValues(HttpContext context)
     {
         this.HttpMethod = context.Request.Method;
         this.Path = $"{context.Request.Path}{context.Request.QueryString}";
         var endpoint = context.GetEndpoint();
-        this.DebugInfo.RawText = (endpoint as RouteEndpoint)?.RoutePattern.RawText;
+        this.RouteSummary.RawText = (endpoint as RouteEndpoint)?.RoutePattern.RawText;
 #if NET8_0_OR_GREATER
-        this.DebugInfo.RouteDiagnosticMetadata = endpoint?.Metadata.GetMetadata<IRouteDiagnosticsMetadata>()?.Route;
+        this.RouteSummary.RouteDiagnosticMetadata = endpoint?.Metadata.GetMetadata<IRouteDiagnosticsMetadata>()?.Route;
 #endif
-        this.DebugInfo.RouteData = new Dictionary<string, string?>();
+        this.RouteSummary.RouteData = new Dictionary<string, string?>();
         foreach (var value in context.GetRouteData().Values)
         {
-            this.DebugInfo.RouteData[value.Key] = value.Value?.ToString();
+            this.RouteSummary.RouteData[value.Key] = value.Value?.ToString();
         }
     }
 
     public void SetValues(ActionDescriptor actionDescriptor)
     {
-        this.DebugInfo.AttributeRouteInfo = actionDescriptor.AttributeRouteInfo?.Template;
-
-        this.DebugInfo.ActionParameters = new List<string>();
-        foreach (var item in actionDescriptor.Parameters)
+        if (this.RouteSummary.ActionDescriptorSummary == null)
         {
-            this.DebugInfo.ActionParameters.Add(item.Name);
-        }
-
-        if (actionDescriptor is PageActionDescriptor pad)
-        {
-            this.DebugInfo.PageActionDescriptorRelativePath = pad.RelativePath;
-            this.DebugInfo.PageActionDescriptorViewEnginePath = pad.ViewEnginePath;
-        }
-
-        if (actionDescriptor is ControllerActionDescriptor cad)
-        {
-            this.DebugInfo.ControllerActionDescriptorControllerName = cad.ControllerName;
-            this.DebugInfo.ControllerActionDescriptorActionName = cad.ActionName;
+            this.RouteSummary.ActionDescriptorSummary = new ActionDescriptorSummary(actionDescriptor);
         }
     }
 
