@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -31,6 +32,8 @@ using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
 using TestApp.AspNetCore.Filters;
 using Xunit;
+
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
 
@@ -645,6 +648,78 @@ public sealed class BasicTests
         Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
         Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
+    }
+
+    [Theory]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsSetAsPerSpec(string originalMethod, string expectedMethod)
+    {
+        var exportedItems = new List<Activity>();
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .Build();
+
+        void ConfigureTestServices(IServiceCollection services)
+        {
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+        }
+
+        // Arrange
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(ConfigureTestServices);
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        var message = new HttpRequestMessage();
+
+        message.Method = new HttpMethod(originalMethod);
+
+        try
+        {
+            using var response = await client.SendAsync(message).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        WaitForActivityExport(exportedItems, 1);
+
+        Assert.Single(exportedItems);
+
+        var activity = exportedItems[0];
+
+        Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
+
+        if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
+        }
+        else
+        {
+            Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+        }
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
     }
 
     [Fact]
