@@ -19,6 +19,8 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+#pragma warning disable SA1402
+
 public abstract class AggregatorTestsBase
 {
     private static readonly Meter Meter = new("testMeter");
