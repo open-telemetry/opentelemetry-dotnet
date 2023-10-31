@@ -29,7 +29,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -239,18 +238,18 @@ public class MetricTests
     }
 
     [Theory]
-    [InlineData("CONNECT")]
-    [InlineData("DELETE")]
-    [InlineData("GET")]
-    [InlineData("GeT")]
-    [InlineData("PUT")]
-    [InlineData("HEAD")]
-    [InlineData("OPTIONS")]
-    [InlineData("PATCH")]
-    [InlineData("POST")]
-    [InlineData("TRACE")]
-    [InlineData("CUSTOM")]
-    public async Task HttpRequestMethodIsCapturedAsPerSpec(string method)
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsCapturedAsPerSpec(string originalMethod, string expectedMethod)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
@@ -272,7 +271,7 @@ public class MetricTests
             .CreateClient();
 
         var message = new HttpRequestMessage();
-        message.Method = new HttpMethod(method);
+        message.Method = new HttpMethod(originalMethod);
 
         try
         {
@@ -309,14 +308,7 @@ public class MetricTests
             attributes[tag.Key] = tag.Value;
         }
 
-        if (RequestMethodHelper.KnownMethods.TryGetValue(method, out var val))
-        {
-            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == method.ToUpper());
-        }
-        else
-        {
-            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == "_OTHER");
-        }
+        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == expectedMethod);
 
         Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
     }

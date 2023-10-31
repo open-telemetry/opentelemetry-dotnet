@@ -63,10 +63,9 @@ internal static class RequestMethodHelper
 
     public static bool TryResolveHttpMethod(string method, out string resolvedMethod)
     {
-        if (KnownMethods.TryGetValue(method, out var result))
+        if (KnownMethods.TryGetValue(method, out resolvedMethod))
         {
             // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
-            resolvedMethod = result;
             return true;
         }
 

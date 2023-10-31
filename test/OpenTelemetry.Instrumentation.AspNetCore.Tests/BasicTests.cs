@@ -27,7 +27,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
@@ -652,18 +651,18 @@ public sealed class BasicTests
     }
 
     [Theory]
-    [InlineData("CONNECT")]
-    [InlineData("DELETE")]
-    [InlineData("GET")]
-    [InlineData("PUT")]
-    [InlineData("HEAD")]
-    [InlineData("OPTIONS")]
-    [InlineData("PATCH")]
-    [InlineData("Get")]
-    [InlineData("POST")]
-    [InlineData("TRACE")]
-    [InlineData("CUSTOM")]
-    public async Task HttpRequestMethodIsSetAsPerSpec(string method)
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsSetAsPerSpec(string originalMethod, string expectedMethod)
     {
         var exportedItems = new List<Activity>();
 
@@ -691,7 +690,7 @@ public sealed class BasicTests
 
         var message = new HttpRequestMessage();
 
-        message.Method = new HttpMethod(method);
+        message.Method = new HttpMethod(originalMethod);
 
         try
         {
@@ -711,16 +710,16 @@ public sealed class BasicTests
 
         Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
 
-        if (RequestMethodHelper.KnownMethods.TryGetValue(method, out var val))
+        if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
         {
-            Assert.Equal(val, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
             Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
         }
         else
         {
-            Assert.Equal("_OTHER", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
-            Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+            Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
         }
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
     }
 
     [Fact]
