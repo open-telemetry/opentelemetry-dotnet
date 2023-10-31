@@ -14,19 +14,23 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Coyote;
+using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Metrics.Tests;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Concurrency;
 
 public class MetricsConcurrencyTests
 {
     private readonly ITestOutputHelper output;
-    private readonly AggregatorTestsBase aggregatorTestsBase;
+    private readonly AggregatorTests aggregatorTests;
 
     public MetricsConcurrencyTests(ITestOutputHelper output)
     {
         this.output = output;
-        this.aggregatorTestsBase = new AggregatorTestsBase(false);
+        this.aggregatorTests = new AggregatorTests();
     }
 
     [SkipUnlessEnvVarFoundFact("OTEL_RUN_COYOTE_TESTS")]
@@ -37,7 +41,7 @@ public class MetricsConcurrencyTests
             .WithTestingIterations(100)
             .WithMemoryAccessRaceCheckingEnabled(true);
 
-        var test = TestingEngine.Create(config, this.MultiThreadedHistogramUpdateAndSnapShotTest);
+        var test = TestingEngine.Create(config, this.aggregatorTests.MultiThreadedHistogramUpdateAndSnapShotTest);
 
         test.Run();
 
@@ -45,7 +49,7 @@ public class MetricsConcurrencyTests
         this.output.WriteLine($"Bugs, if any: {string.Join("\n", test.TestReport.BugReports)}");
 
         var dir = Directory.GetCurrentDirectory();
-        if (test.TryEmitReports(dir, $"{nameof(this.MultithreadedLongHistogramTestConcurrencyTest)}_CoyoteOutput", out IEnumerable<string> reportPaths))
+        if (test.TryEmitReports(dir, $"{nameof(this.MultithreadedLongHistogramTestConcurrencyTest)}_CoyoteOutput", out var reportPaths))
         {
             foreach (var reportPath in reportPaths)
             {
