@@ -11,6 +11,10 @@
   `autoGenerateServiceInstanceId` is `true`.
   ([#4988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4988))
 
+* Fixed a bug where isSampled parameter wasn't properly checked in certain cases
+  within the `UpdateWithExemplar` method of `MetricPoint`.
+  ([#4851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+
 * Update `AggregatorStore` to provide known connection metrics with larger
   histogram buckets.
   ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
