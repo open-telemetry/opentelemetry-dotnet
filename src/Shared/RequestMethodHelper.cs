@@ -30,6 +30,7 @@ internal static class RequestMethodHelper
 
     static RequestMethodHelper()
     {
+        // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
 #if NET8_0_OR_GREATER
         KnownMethods = FrozenDictionary.ToFrozenDictionary(
             new[]
@@ -59,19 +60,5 @@ internal static class RequestMethodHelper
             { "CONNECT", "CONNECT" },
         };
 #endif
-    }
-
-    public static bool TryResolveHttpMethod(string method, out string resolvedMethod)
-    {
-        if (KnownMethods.TryGetValue(method, out resolvedMethod))
-        {
-            // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
-            return true;
-        }
-
-        // Set to default "_OTHER" as per spec.
-        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-        resolvedMethod = "_OTHER";
-        return false;
     }
 }

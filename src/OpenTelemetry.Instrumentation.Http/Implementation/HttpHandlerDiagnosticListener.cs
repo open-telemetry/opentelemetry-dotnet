@@ -186,13 +186,15 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (this.emitNewAttributes)
             {
-                if (RequestMethodHelper.TryResolveHttpMethod(request.Method.Method, out var httpMethod))
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
                 }
                 else
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method.Method);
                 }
 

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -98,7 +99,17 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                 {
                     TagList tags = default;
 
-                    RequestMethodHelper.TryResolveHttpMethod(request.Method.Method, out var httpMethod);
+                    if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
+                    {
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+                    }
+                    else
+                    {
+                        // Set to default "_OTHER" as per spec.
+                        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+                    }
+
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
