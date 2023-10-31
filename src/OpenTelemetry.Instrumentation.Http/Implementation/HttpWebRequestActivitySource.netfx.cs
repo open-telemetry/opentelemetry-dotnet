@@ -22,7 +22,6 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Runtime.Remoting.Contexts;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;

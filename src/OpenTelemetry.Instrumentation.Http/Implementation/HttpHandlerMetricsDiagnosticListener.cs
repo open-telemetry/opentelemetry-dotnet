@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
