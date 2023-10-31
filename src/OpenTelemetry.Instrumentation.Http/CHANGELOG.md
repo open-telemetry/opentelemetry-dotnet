@@ -3,15 +3,15 @@
 ## Unreleased
 
 * Updated `http.request.method` to match specification guidelines.
-  * For activity, request method will be set on an additional tag
-    `http.request.method.original` will be added if the method does not belong
-    to one of the [known
+  * For activity, if the method does not belong to one of the [known
     values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
-    and `http.request.method` will be set to `_OTHER`.
-  * For metrics, `http.request.method` on `http.client.request.duration` metric
-    will be set to `_OTHER` if the original method does not belong to one of the
-    [known
+    then the request method will be set on an additional tag
+    `http.request.method.original` and `http.request.method` will be set to
+    `_OTHER`.
+  * For metrics, if the original method does not belong to one of the [known
     values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then `http.request.method` on `http.client.request.duration` metric will be
+    set to `_OTHER`
 
   `http.request.method` is set on `http.client.request.duration` metric or
   activity when `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is set to

@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
@@ -153,14 +154,14 @@ internal static class HttpWebRequestActivitySource
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (tracingEmitNewAttributes)
             {
-                if (TelemetryHelper.TryResolveHttpMethod(request.Method, out var httpMethod))
+                if (RequestMethodHelper.TryResolveHttpMethod(request.Method, out var httpMethod))
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
                 }
                 else
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                    activity.SetTag("http.request.method_original", request.Method);
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
                 }
 
                 activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
@@ -504,7 +505,7 @@ internal static class HttpWebRequestActivitySource
             {
                 TagList tags = default;
 
-                TelemetryHelper.TryResolveHttpMethod(request.Method, out var httpMethod);
+                RequestMethodHelper.TryResolveHttpMethod(request.Method, out var httpMethod);
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);

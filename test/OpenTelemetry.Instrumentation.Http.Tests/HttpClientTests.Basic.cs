@@ -373,24 +373,24 @@ public partial class HttpClientTests : IDisposable
     }
 
     [Theory]
-    [InlineData("CONNECT")]
-    [InlineData("DELETE")]
-    [InlineData("GET")]
-    [InlineData("PUT")]
-    [InlineData("HEAD")]
-    [InlineData("OPTIONS")]
-    [InlineData("PATCH")]
-    [InlineData("Get")]
-    [InlineData("POST")]
-    [InlineData("TRACE")]
-    [InlineData("CUSTOM")]
-    public async Task HttpRequestMethodIsSetOnActivityAsPerSpec(string method)
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsSetOnActivityAsPerSpec(string originalMethod, string expectedMethod)
     {
         var exportedItems = new List<Activity>();
         using var request = new HttpRequestMessage
         {
             RequestUri = new Uri(this.url),
-            Method = new HttpMethod(method),
+            Method = new HttpMethod(originalMethod),
         };
 
         var configuration = new ConfigurationBuilder()
@@ -418,37 +418,39 @@ public partial class HttpClientTests : IDisposable
 
         var activity = exportedItems[0];
 
-        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
+        Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
+
+        if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
         {
-            Assert.Equal(val, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
-            Assert.DoesNotContain(activity.TagObjects, t => t.Key == "http.request.method_original");
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
         }
         else
         {
-            Assert.Equal("_OTHER", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
-            Assert.Equal(method, activity.GetTagValue("http.request.method_original") as string);
+            Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
         }
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
     }
 
     [Theory]
-    [InlineData("CONNECT")]
-    [InlineData("DELETE")]
-    [InlineData("GET")]
-    [InlineData("PUT")]
-    [InlineData("HEAD")]
-    [InlineData("OPTIONS")]
-    [InlineData("PATCH")]
-    [InlineData("Get")]
-    [InlineData("POST")]
-    [InlineData("TRACE")]
-    [InlineData("CUSTOM")]
-    public async Task HttpRequestMethodIsSetonRequestDurationMetricAsPerSpec(string method)
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsSetonRequestDurationMetricAsPerSpec(string originalMethod, string expectedMethod)
     {
         var metricItems = new List<Metric>();
         using var request = new HttpRequestMessage
         {
             RequestUri = new Uri(this.url),
-            Method = new HttpMethod(method),
+            Method = new HttpMethod(originalMethod),
         };
 
         var configuration = new ConfigurationBuilder()
@@ -494,16 +496,9 @@ public partial class HttpClientTests : IDisposable
             attributes[tag.Key] = tag.Value;
         }
 
-        if (TelemetryHelper.KnownMethods.TryGetValue(method, out var val))
-        {
-            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == method.ToUpper());
-        }
-        else
-        {
-            Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == "_OTHER");
-        }
+        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == expectedMethod);
 
-        Assert.DoesNotContain(attributes, t => t.Key == "http.request.method_original");
+        Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
     }
 
     [Fact]

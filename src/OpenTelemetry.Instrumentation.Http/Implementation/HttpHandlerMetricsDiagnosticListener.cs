@@ -23,6 +23,7 @@ using System.Diagnostics.Metrics;
 using System.Net.Http;
 #endif
 using System.Reflection;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
@@ -97,7 +98,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                 {
                     TagList tags = default;
 
-                    TelemetryHelper.TryResolveHttpMethod(request.Method.Method, out var httpMethod);
+                    RequestMethodHelper.TryResolveHttpMethod(request.Method.Method, out var httpMethod);
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
