@@ -14,22 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Coyote;
-using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Metrics.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Concurrency;
 
-public class MetricsConcurrencyTests : AggregatorTestsBase
+public class MetricsConcurrencyTests
 {
     private readonly ITestOutputHelper output;
+    private readonly AggregatorTestsBase aggregatorTestsBase;
 
     public MetricsConcurrencyTests(ITestOutputHelper output)
-        : base(false)
     {
         this.output = output;
+        this.aggregatorTestsBase = new AggregatorTestsBase(false);
     }
 
     [SkipUnlessEnvVarFoundFact("OTEL_RUN_COYOTE_TESTS")]
