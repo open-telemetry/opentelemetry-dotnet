@@ -14,12 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -39,9 +37,6 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
-#if NET8_0_OR_GREATER
-        return builder.ConfigureMeters();
-#else
         // Note: Warm-up the status code and method mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
         _ = RequestMethodHelper.KnownMethods;
@@ -64,7 +59,6 @@ public static class MeterProviderBuilderExtensions
         });
 
         return builder;
-#endif
     }
 
     internal static MeterProviderBuilder ConfigureMeters(this MeterProviderBuilder builder)

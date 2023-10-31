@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -60,4 +59,4 @@ internal sealed class AspNetCoreMetrics : IDisposable
         this.meter?.Dispose();
     }
 }
-#endif
+

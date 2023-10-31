@@ -86,7 +86,6 @@ public class AspNetCoreInstrumentationNewBenchmarks
 {
     private HttpClient httpClient;
     private WebApplication app;
-    private TracerProvider tracerProvider;
     private MeterProvider meterProvider;
 
     [Flags]
@@ -98,17 +97,17 @@ public class AspNetCoreInstrumentationNewBenchmarks
         None = 0,
 
         /// <summary>
-        /// Instrumentation is enbled only for Traces.
+        /// Instrumentation is enbled only for Metrics via DiagnosticSrc.
         /// </summary>
-        Traces = 1,
+        Metrics = 1,
 
         /// <summary>
-        /// Instrumentation is enbled only for Metrics.
+        /// Instrumentation is enbled only for Metrics via Meter.
         /// </summary>
-        Metrics = 2,
+        MetricsNet8 = 2,
     }
 
-    [Params(0, 1, 2, 3)]
+    [Params(0, 1, 2)]
     public EnableInstrumentationOption EnableInstrumentation { get; set; }
 
     [GlobalSetup(Target = nameof(GetRequestForAspNetCoreApp))]
@@ -124,17 +123,8 @@ public class AspNetCoreInstrumentationNewBenchmarks
             this.StartWebApplication();
             this.httpClient = new HttpClient();
         }
-        else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
-        {
-            this.StartWebApplication();
-            this.httpClient = new HttpClient();
 
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                .AddAspNetCoreInstrumentation()
-                .Build();
-        }
-        else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+        if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
@@ -149,21 +139,20 @@ public class AspNetCoreInstrumentationNewBenchmarks
                 })
                 .Build();
         }
-        else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
-            this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
+        else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.MetricsNet8))
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
 
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                .AddAspNetCoreInstrumentation()
-                .Build();
-
             var exportedItems = new List<Metric>();
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
-                .AddAspNetCoreInstrumentation()
+                .AddMeter("Microsoft.AspNetCore.Hosting")
+                .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+                .AddMeter("Microsoft.AspNetCore.Http.Connections")
+                .AddMeter("Microsoft.AspNetCore.Routing")
+                .AddMeter("Microsoft.AspNetCore.Diagnostics")
+                .AddMeter("Microsoft.AspNetCore.RateLimiting")
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
@@ -180,24 +169,10 @@ public class AspNetCoreInstrumentationNewBenchmarks
             this.httpClient.Dispose();
             this.app.DisposeAsync().GetAwaiter().GetResult();
         }
-        else if (this.EnableInstrumentation == EnableInstrumentationOption.Traces)
+        else
         {
             this.httpClient.Dispose();
             this.app.DisposeAsync().GetAwaiter().GetResult();
-            this.tracerProvider.Dispose();
-        }
-        else if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
-        {
-            this.httpClient.Dispose();
-            this.app.DisposeAsync().GetAwaiter().GetResult();
-            this.meterProvider.Dispose();
-        }
-        else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Traces) &&
-            this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.Metrics))
-        {
-            this.httpClient.Dispose();
-            this.app.DisposeAsync().GetAwaiter().GetResult();
-            this.tracerProvider.Dispose();
             this.meterProvider.Dispose();
         }
     }

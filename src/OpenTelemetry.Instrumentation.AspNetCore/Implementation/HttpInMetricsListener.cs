@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
@@ -170,4 +169,4 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
     }
 }
-#endif
+
