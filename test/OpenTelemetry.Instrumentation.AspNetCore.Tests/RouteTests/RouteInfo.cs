@@ -17,11 +17,14 @@
 #nullable enable
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 #if NET8_0_OR_GREATER
 using Microsoft.AspNetCore.Http.Metadata;
 #endif
 using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 
 namespace RouteTests;
@@ -30,91 +33,125 @@ public class RouteInfo
 {
     private static readonly JsonSerializerOptions JsonSerializerOptions = new() { WriteIndented = true };
 
-    public RouteInfo()
-    {
-        this.RouteSummary = new RouteSummary();
-    }
-
     public string? HttpMethod { get; set; }
 
     public string? Path { get; set; }
 
-    public string? HttpRouteByRawText => this.RouteSummary.RawText;
+    [JsonPropertyName("RoutePattern.RawText")]
+    public string? RawText { get; set; }
 
-    public string? HttpRouteByControllerActionAndParameters
-    {
-        get
-        {
-            if (this.RouteSummary.ActionDescriptorSummary == null
-                || this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary == null)
-            {
-                return string.Empty;
-            }
+    [JsonPropertyName("IRouteDiagnosticsMetadata.Route")]
+    public string? RouteDiagnosticMetadata { get; set; }
 
-            var controllerName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorControllerName;
-            var actionName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorActionName;
-            var paramList = string.Join(string.Empty, this.RouteSummary.ActionDescriptorSummary.ActionParameters!.Select(p => $"/{{{p}}}"));
-            return $"{controllerName}/{actionName}{paramList}";
-        }
-    }
+    [JsonPropertyName("HttpContext.GetRouteData()")]
+    public IDictionary<string, string?>? RouteData { get; set; }
 
-    public string? HttpRouteByActionDescriptor
-    {
-        get
-        {
-            if (this.RouteSummary.RawText == null)
-            {
-                return null;
-            }
-
-            if (this.RouteSummary.ActionDescriptorSummary?.ControllerActionDescriptorSummary != null)
-            {
-                var controllerRegex = new System.Text.RegularExpressions.Regex(@"\{controller=.*?\}+?");
-                var actionRegex = new System.Text.RegularExpressions.Regex(@"\{action=.*?\}+?");
-                var controllerName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorControllerName;
-                var actionName = this.RouteSummary.ActionDescriptorSummary.ControllerActionDescriptorSummary.ControllerActionDescriptorActionName;
-                var result = controllerRegex.Replace(this.RouteSummary.RawText, controllerName);
-                result = actionRegex.Replace(result, actionName);
-                return result;
-            }
-
-            if (this.RouteSummary.ActionDescriptorSummary?.PageActionDescriptorSummary != null)
-            {
-                return this.RouteSummary.ActionDescriptorSummary.PageActionDescriptorSummary.PageActionDescriptorViewEnginePath;
-            }
-
-            return null;
-        }
-    }
-
-    public RouteSummary RouteSummary { get; set; }
+    public ActionDescriptorInfo? ActionDescriptor { get; set; }
 
     public void SetValues(HttpContext context)
     {
         this.HttpMethod = context.Request.Method;
         this.Path = $"{context.Request.Path}{context.Request.QueryString}";
         var endpoint = context.GetEndpoint();
-        this.RouteSummary.RawText = (endpoint as RouteEndpoint)?.RoutePattern.RawText;
+        this.RawText = (endpoint as RouteEndpoint)?.RoutePattern.RawText;
 #if NET8_0_OR_GREATER
-        this.RouteSummary.RouteDiagnosticMetadata = endpoint?.Metadata.GetMetadata<IRouteDiagnosticsMetadata>()?.Route;
+        this.RouteDiagnosticMetadata = endpoint?.Metadata.GetMetadata<IRouteDiagnosticsMetadata>()?.Route;
 #endif
-        this.RouteSummary.RouteData = new Dictionary<string, string?>();
+        this.RouteData = new Dictionary<string, string?>();
         foreach (var value in context.GetRouteData().Values)
         {
-            this.RouteSummary.RouteData[value.Key] = value.Value?.ToString();
+            this.RouteData[value.Key] = value.Value?.ToString();
         }
     }
 
     public void SetValues(ActionDescriptor actionDescriptor)
     {
-        if (this.RouteSummary.ActionDescriptorSummary == null)
+        if (this.ActionDescriptor == null)
         {
-            this.RouteSummary.ActionDescriptorSummary = new ActionDescriptorSummary(actionDescriptor);
+            this.ActionDescriptor = new ActionDescriptorInfo(actionDescriptor);
         }
     }
 
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, JsonSerializerOptions);
+    }
+
+    public class ActionDescriptorInfo
+    {
+        public ActionDescriptorInfo()
+        {
+        }
+
+        public ActionDescriptorInfo(ActionDescriptor actionDescriptor)
+        {
+            this.AttributeRouteInfo = actionDescriptor.AttributeRouteInfo?.Template;
+
+            this.ActionParameters = new List<string>();
+            foreach (var item in actionDescriptor.Parameters)
+            {
+                this.ActionParameters.Add(item.Name);
+            }
+
+            if (actionDescriptor is PageActionDescriptor pad)
+            {
+                this.PageActionDescriptorSummary = new PageActionDescriptorInfo(pad.RelativePath, pad.ViewEnginePath);
+            }
+
+            if (actionDescriptor is ControllerActionDescriptor cad)
+            {
+                this.ControllerActionDescriptorSummary = new ControllerActionDescriptorInfo(cad.ControllerName, cad.ActionName);
+            }
+        }
+
+        [JsonPropertyName("AttributeRouteInfo.Template")]
+        public string? AttributeRouteInfo { get; set; }
+
+        [JsonPropertyName("Parameters")]
+        public IList<string>? ActionParameters { get; set; }
+
+        [JsonPropertyName("ControllerActionDescriptor")]
+        public ControllerActionDescriptorInfo? ControllerActionDescriptorSummary { get; set; }
+
+        [JsonPropertyName("PageActionDescriptor")]
+        public PageActionDescriptorInfo? PageActionDescriptorSummary { get; set; }
+    }
+
+    public class ControllerActionDescriptorInfo
+    {
+        public ControllerActionDescriptorInfo()
+        {
+        }
+
+        public ControllerActionDescriptorInfo(string controllerName, string actionName)
+        {
+            this.ControllerActionDescriptorControllerName = controllerName;
+            this.ControllerActionDescriptorActionName = actionName;
+        }
+
+        [JsonPropertyName("ControllerName")]
+        public string ControllerActionDescriptorControllerName { get; set; } = string.Empty;
+
+        [JsonPropertyName("ActionName")]
+        public string ControllerActionDescriptorActionName { get; set; } = string.Empty;
+    }
+
+    public class PageActionDescriptorInfo
+    {
+        public PageActionDescriptorInfo()
+        {
+        }
+
+        public PageActionDescriptorInfo(string relativePath, string viewEnginePath)
+        {
+            this.PageActionDescriptorRelativePath = relativePath;
+            this.PageActionDescriptorViewEnginePath = viewEnginePath;
+        }
+
+        [JsonPropertyName("RelativePath")]
+        public string PageActionDescriptorRelativePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("ViewEnginePath")]
+        public string PageActionDescriptorViewEnginePath { get; set; } = string.Empty;
     }
 }

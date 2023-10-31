@@ -1,4 +1,4 @@
-// <copyright file="AspNetCoreDiagnosticObserver.cs" company="OpenTelemetry Authors">
+// <copyright file="RouteInfoDiagnosticObserver.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ namespace RouteTests;
 /// This route information is used for generating a README file for analyzing
 /// what information is available in different scenarios.
 /// </summary>
-internal sealed class AspNetCoreDiagnosticObserver : IDisposable, IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object?>>
+internal sealed class RouteInfoDiagnosticObserver : IDisposable, IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object?>>
 {
     internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
     internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
@@ -37,7 +37,7 @@ internal sealed class AspNetCoreDiagnosticObserver : IDisposable, IObserver<Diag
     private IDisposable? allSourcesSubscription;
     private long disposed;
 
-    public AspNetCoreDiagnosticObserver()
+    public RouteInfoDiagnosticObserver()
     {
         this.allSourcesSubscription = DiagnosticListener.AllListeners.Subscribe(this);
     }

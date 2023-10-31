@@ -140,7 +140,6 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
             HttpStatusCode = activityHttpStatusCode,
             HttpMethod = activityHttpMethod,
             HttpRoute = activityHttpRoute,
-            RouteInfo = null,
             TestCase = testCase,
         };
 

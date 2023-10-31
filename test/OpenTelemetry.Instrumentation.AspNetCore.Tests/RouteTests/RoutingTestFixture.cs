@@ -26,7 +26,7 @@ public class RoutingTestFixture : IDisposable
 {
     private readonly Dictionary<TestApplicationScenario, WebApplication> apps = new();
     private readonly HttpClient client = new();
-    private readonly AspNetCoreDiagnosticObserver diagnostics = new();
+    private readonly RouteInfoDiagnosticObserver diagnostics = new();
     private readonly List<TestResult> testResults = new();
 
     public RoutingTestFixture()
@@ -62,7 +62,7 @@ public class RoutingTestFixture : IDisposable
         var responseMessage = this.client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
         var response = responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         var info = JsonSerializer.Deserialize<RouteInfo>(response);
-        testResult.RouteInfo = info;
+        testResult.RouteInfo = info!;
         this.testResults.Add(testResult);
     }
 

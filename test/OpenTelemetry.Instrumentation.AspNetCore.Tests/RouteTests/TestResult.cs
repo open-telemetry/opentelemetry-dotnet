@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#nullable disable
+#nullable enable
 
 namespace RouteTests;
 
@@ -26,7 +26,7 @@ public class TestResult
 
     public string HttpMethod { get; set; } = string.Empty;
 
-    public string HttpRoute { get; set; } = string.Empty;
+    public string? HttpRoute { get; set; }
 
     public RouteInfo RouteInfo { get; set; } = new RouteInfo();
 
