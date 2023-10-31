@@ -19,7 +19,6 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace RouteTests;
 
@@ -42,25 +41,15 @@ public static class RouteTestData
     {
         var result = new List<object[]>();
 
-        if (input.Any(x => x.Debug))
+        foreach (var testCase in input)
         {
-            foreach (var testCase in input.Where(x => x.Debug))
+            if (testCase.MinimumDotnetVersion.HasValue && Environment.Version.Major < testCase.MinimumDotnetVersion.Value)
             {
-                result.Add(new object[] { testCase, true });
+                continue;
             }
-        }
-        else
-        {
-            foreach (var testCase in input)
-            {
-                if (testCase.MinimumDotnetVersion.HasValue && Environment.Version.Major < testCase.MinimumDotnetVersion.Value)
-                {
-                    continue;
-                }
 
-                result.Add(new object[] { testCase, true });
-                result.Add(new object[] { testCase, false });
-            }
+            result.Add(new object[] { testCase, true });
+            result.Add(new object[] { testCase, false });
         }
 
         return result;
@@ -71,8 +60,6 @@ public static class RouteTestData
         public string Name { get; set; } = string.Empty;
 
         public int? MinimumDotnetVersion { get; set; }
-
-        public bool Debug { get; set; }
 
         public TestApplicationScenario TestApplicationScenario { get; set; }
 
@@ -92,6 +79,7 @@ public static class RouteTestData
 
         public override string ToString()
         {
+            // This is used by Visual Studio's test runner to identify the test case.
             return $"{this.TestApplicationScenario}: {this.Name}";
         }
     }

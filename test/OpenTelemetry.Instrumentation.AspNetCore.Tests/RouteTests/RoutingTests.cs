@@ -96,6 +96,11 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         Assert.Equal(testCase.HttpMethod, activityHttpMethod);
         Assert.Equal(testCase.HttpMethod, metricHttpMethod);
 
+        // TODO: The CurrentActivityDisplayName, CurrentActivityHttpRoute, and CurrentMetricHttpRoute
+        // properties will go away. They only serve to capture status quo. The "else" blocks are the real
+        // asserts that we ultimately want.
+        // If any of the current properties are null, then that means we already conform to the
+        // correct behavior.
         if (testCase.CurrentActivityDisplayName != null)
         {
             Assert.Equal(testCase.CurrentActivityDisplayName, activity.DisplayName);
@@ -139,6 +144,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
             TestCase = testCase,
         };
 
+        // Only produce README files based on final semantic conventions
         if (!useLegacyConventions)
         {
             this.fixture.AddTestResult(testResult);

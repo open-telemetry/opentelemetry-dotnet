@@ -132,7 +132,7 @@ internal class TestApplicationFactory
 #if NET7_0_OR_GREATER
     private static WebApplication CreateMinimalApiApplication()
     {
-        var builder = WebApplication.CreateBuilder(); // WebApplication.CreateSlimBuilder();
+        var builder = WebApplication.CreateBuilder();
 
         var app = builder.Build();
         app.Urls.Clear();

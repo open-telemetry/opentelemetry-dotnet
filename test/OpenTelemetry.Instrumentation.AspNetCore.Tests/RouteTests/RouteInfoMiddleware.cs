@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#nullable disable
+#nullable enable
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -34,6 +34,10 @@ public class RouteInfoMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // This middleware responds with the route information captured from the
+        // previous request when the request path contains GetLastRouteInfo.
+        // This is used for generating the README files upon running the test suite.
+        // Otherwise, the middleware serves as a passthrough.
         if (context.Request.Path.ToString().Contains("GetLastRouteInfo"))
         {
             var response = context.Response;

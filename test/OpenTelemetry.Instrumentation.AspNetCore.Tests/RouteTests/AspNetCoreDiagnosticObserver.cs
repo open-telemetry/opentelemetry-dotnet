@@ -22,19 +22,23 @@ using Microsoft.AspNetCore.Mvc.Diagnostics;
 
 namespace RouteTests;
 
+/// <summary>
+/// This observer captures all the available route information for a request.
+/// This route information is used for generating a README file for analyzing
+/// what information is available in different scenarios.
+/// </summary>
 internal sealed class AspNetCoreDiagnosticObserver : IDisposable, IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object?>>
 {
     internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
     internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
 
-    private readonly List<IDisposable> listenerSubscriptions;
+    private readonly List<IDisposable> listenerSubscriptions = new();
     private IDisposable? allSourcesSubscription;
     private long disposed;
 
     public AspNetCoreDiagnosticObserver()
     {
-        this.listenerSubscriptions = new List<IDisposable>();
         this.allSourcesSubscription = DiagnosticListener.AllListeners.Subscribe(this);
     }
 
