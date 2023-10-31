@@ -372,10 +372,10 @@ internal sealed class AggregatorStore
 
     private static double[] FindDefaultHistogramBounds(in MetricStreamIdentity metricStreamIdentity)
     {
-        if (metricStreamIdentity.Unit == "s" && Metric.DefaultHistogramBoundMappings
+        if (metricStreamIdentity.Unit == "s" && Metric.DefaultHistogramBoundShortMappings
             .Contains((metricStreamIdentity.MeterName, metricStreamIdentity.InstrumentName)))
         {
-            return Metric.DefaultHistogramBoundsSeconds;
+            return Metric.DefaultHistogramBoundsShortSeconds;
         }
 
         return Metric.DefaultHistogramBounds;
