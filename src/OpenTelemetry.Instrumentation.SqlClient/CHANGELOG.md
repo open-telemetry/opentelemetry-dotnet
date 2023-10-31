@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20

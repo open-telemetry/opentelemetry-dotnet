@@ -497,6 +497,7 @@ internal static class HttpWebRequestActivitySource
 
                 tags.Add(SemanticConventions.AttributeHttpRequestMethod, request.Method);
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+                tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                 tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
                 if (!request.RequestUri.IsDefaultPort)
                 {
