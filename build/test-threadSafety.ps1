@@ -30,10 +30,5 @@ Write-Host "Run Coyote rewrite."
 coyote rewrite "$rootDirectory/test/$testProjectName/rewrite.coyote.json"
 
 Write-Host "Execute re-written binary."
-$Output = dotnet test "$artifactsPath/$testProjectName.dll" --framework $targetFramework --filter CategoryName=$categoryName
+dotnet test "$artifactsPath/$testProjectName.dll" --framework $targetFramework --filter CategoryName=$categoryName
 
-Write-Host "Coyote test output:"
-foreach ($line in $($Output -split "`r`n"))
-{
-    Write-Host $line
-}
