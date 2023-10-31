@@ -11,6 +11,10 @@
   `autoGenerateServiceInstanceId` is `true`.
   ([#4988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4988))
 
+* Update `AggregatorStore` to provide known connection metrics with larger
+  histogram buckets.
+  ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
