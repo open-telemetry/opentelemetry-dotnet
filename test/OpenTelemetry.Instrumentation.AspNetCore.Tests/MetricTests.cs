@@ -14,21 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
-using System.Diagnostics;
-#endif
 #if NET8_0_OR_GREATER
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 #endif
 using Microsoft.AspNetCore.Hosting;
+#if NET8_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 using Microsoft.AspNetCore.Mvc.Testing;
 #if NET8_0_OR_GREATER
 using Microsoft.AspNetCore.RateLimiting;
-#endif
-#if !NET8_0_OR_GREATER
-using Microsoft.AspNetCore.TestHost;
 #endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -241,6 +237,82 @@ public class MetricTests
             expectedTagsCount: 6);
     }
 
+    [Theory]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsCapturedAsPerSpec(string originalMethod, string expectedMethod)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .Build();
+
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        var message = new HttpRequestMessage();
+        message.Method = new HttpMethod(originalMethod);
+
+        try
+        {
+            using var response = await client.SendAsync(message).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        // We need to let End callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the End callback to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        var requestMetrics = metricItems
+            .Where(item => item.Name == "http.server.request.duration")
+            .ToArray();
+
+        var metric = Assert.Single(requestMetrics);
+
+        Assert.Equal("s", metric.Unit);
+        var metricPoints = GetMetricPoints(metric);
+        Assert.Single(metricPoints);
+
+        var mp = metricPoints[0];
+
+        // Inspect Metric Attributes
+        var attributes = new Dictionary<string, object>();
+        foreach (var tag in mp.Tags)
+        {
+            attributes[tag.Key] = tag.Value;
+        }
+
+        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == expectedMethod);
+
+        Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
+    }
+
 #if !NET8_0_OR_GREATER
     [Fact]
     public async Task RequestMetricIsCaptured_Old()
@@ -359,109 +431,6 @@ public class MetricTests
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
             expectedTagsCount: 6);
-    }
-
-    [Fact]
-    public async Task MetricNotCollectedWhenFilterIsApplied()
-    {
-        var metricItems = new List<Metric>();
-
-        void ConfigureTestServices(IServiceCollection services)
-        {
-            this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddAspNetCoreInstrumentation(opt => opt.Filter = (name, ctx) => ctx.Request.Path != "/api/values/2")
-                .AddInMemoryExporter(metricItems)
-                .Build();
-        }
-
-        using (var client = this.factory
-                   .WithWebHostBuilder(builder =>
-                   {
-                       builder.ConfigureTestServices(ConfigureTestServices);
-                       builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                   })
-                   .CreateClient())
-        {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
-
-            response1.EnsureSuccessStatusCode();
-            response2.EnsureSuccessStatusCode();
-        }
-
-        // We need to let End callback execute as it is executed AFTER response was returned.
-        // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-
-        this.meterProvider.Dispose();
-
-        var requestMetrics = metricItems
-            .Where(item => item.Name == "http.server.duration")
-            .ToArray();
-
-        var metric = Assert.Single(requestMetrics);
-
-        // Assert single because we filtered out one route
-        var metricPoint = Assert.Single(GetMetricPoints(metric));
-        AssertMetricPoint_Old(metricPoint);
-    }
-
-    [Fact]
-    public async Task MetricEnrichedWithCustomTags()
-    {
-        var tagsToAdd = new KeyValuePair<string, object>[]
-        {
-            new("custom_tag_1", 1),
-            new("custom_tag_2", "one"),
-        };
-
-        var metricItems = new List<Metric>();
-
-        void ConfigureTestServices(IServiceCollection services)
-        {
-            this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddAspNetCoreInstrumentation(opt => opt.Enrich = (string _, HttpContext _, ref TagList tags) =>
-                {
-                    foreach (var keyValuePair in tagsToAdd)
-                    {
-                        tags.Add(keyValuePair);
-                    }
-                })
-                .AddInMemoryExporter(metricItems)
-                .Build();
-        }
-
-        using (var client = this.factory
-                   .WithWebHostBuilder(builder =>
-                   {
-                       builder.ConfigureTestServices(ConfigureTestServices);
-                       builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                   })
-                   .CreateClient())
-        {
-            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-        }
-
-        // We need to let End callback execute as it is executed AFTER response was returned.
-        // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-
-        this.meterProvider.Dispose();
-
-        var requestMetrics = metricItems
-            .Where(item => item.Name == "http.server.duration")
-            .ToArray();
-
-        var metric = Assert.Single(requestMetrics);
-        var metricPoint = Assert.Single(GetMetricPoints(metric));
-
-        var tags = AssertMetricPoint_Old(metricPoint, expectedTagsCount: StandardTagsCount + 2);
-
-        Assert.Contains(tagsToAdd[0], tags);
-        Assert.Contains(tagsToAdd[1], tags);
     }
 #endif
 

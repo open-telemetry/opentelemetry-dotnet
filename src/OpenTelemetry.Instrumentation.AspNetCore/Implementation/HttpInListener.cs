@@ -252,7 +252,16 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                if (RequestMethodHelper.TryResolveHttpMethod(request.Method, out var httpMethod))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeUrlPath, path);
                 activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
