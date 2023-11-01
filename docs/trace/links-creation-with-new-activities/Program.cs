@@ -31,7 +31,7 @@ internal class Program
                 .AddConsoleExporter()
                 .Build();
 
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        using (var activity = MyActivitySource.StartActivity("OrchestratingActivity"))
         {
             activity?.SetTag("foo", 1);
             DoFanout();
@@ -46,6 +46,7 @@ internal class Program
     public static void DoFanout()
     {
         var previous = Activity.Current;
+        const int NumConcurrentOperations = 10;
 
         var activityContext = Activity.Current!.Context;
         var links = new List<ActivityLink>
@@ -53,11 +54,11 @@ internal class Program
             new ActivityLink(activityContext),
         };
 
-        // Fanning out to 10 different operations.
+        // Fanning out to N concurrent operations.
         // We create a new root activity for each operation and
         // link it to an outer activity that happens to be the current
         // activity.
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < NumConcurrentOperations; i++)
         {
             // Reference: https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities
             // Since we want to create a new root activity for each of the fanned out operations,
@@ -73,7 +74,7 @@ internal class Program
             // We create a new root activity for each of the fanned out operations and link it to the outer activity.
             using var newRootActivityForFannedOutOperation = MyActivitySource.StartActivity(
                 ActivityKind.Internal,  // Set this to the appropriate ActivityKind depending on your scenario
-                name: "FannedOutActivity",
+                name: $"FannedOutActivity {i + 1}",
                 links: links);
 
             // DO THE FANOUT WORK HERE...
