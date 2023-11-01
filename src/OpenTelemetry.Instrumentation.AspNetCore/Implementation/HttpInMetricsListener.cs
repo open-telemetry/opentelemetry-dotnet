@@ -116,13 +116,13 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
         // this makes sure that top-level properties on the payload object are always preserved.
 #if NET6_0_OR_GREATER
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The ASP.NET Core framework guarantees that top level properties are preserved")]
 #endif
         static bool TryFetchException(object payload, out Exception exc)
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
 
 #if NET6_0_OR_GREATER
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The ASP.NET Core framework guarantees that top level properties are preserved")]
 #endif
         static bool TryFetchHttpContext(object payload, out HttpContext ctx)
             => HttpContextPropertyFetcher.TryFetch(payload, out ctx) && ctx != null;
