@@ -39,7 +39,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     private const string EventName = "OnStopActivity";
     private const string NetworkProtocolName = "http";
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
-    private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
+    private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("httpContext");
     private static readonly object ErrorTypekey = "error.type";
 
     private readonly Meter meter;
