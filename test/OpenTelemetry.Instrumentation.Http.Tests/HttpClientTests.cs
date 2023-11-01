@@ -519,7 +519,7 @@ public partial class HttpClientTests
                     attributes[tag.Key] = tag.Value;
                 }
 
-                var expectedAttributeCount = 4 + (tc.ResponseExpected ? 1 : 0);
+                var expectedAttributeCount = 5 + (tc.ResponseExpected ? 1 : 0);
 
                 Assert.Equal(expectedAttributeCount, attributes.Count);
 
@@ -527,6 +527,7 @@ public partial class HttpClientTests
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
                 if (tc.ResponseExpected)
                 {
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);

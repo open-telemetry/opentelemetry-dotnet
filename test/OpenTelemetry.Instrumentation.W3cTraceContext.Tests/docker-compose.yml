@@ -11,4 +11,3 @@ services:
     command: --TestCaseFilter:CategoryName=W3CTraceContextTests
     environment:
       - OTEL_W3CTRACECONTEXT=enabled
-      - SPEC_LEVEL=2

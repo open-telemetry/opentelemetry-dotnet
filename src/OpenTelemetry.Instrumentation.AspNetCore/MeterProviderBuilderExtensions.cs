@@ -42,8 +42,9 @@ public static class MeterProviderBuilderExtensions
 #if NET8_0_OR_GREATER
         return builder.ConfigureMeters();
 #else
-        // Note: Warm-up the status code mapping.
+        // Note: Warm-up the status code and method mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
+        _ = RequestMethodHelper.KnownMethods;
 
         builder.ConfigureServices(services =>
         {
