@@ -18,6 +18,8 @@
 
 #if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
+#if NET8_0_OR_GREATER
 using OpenTelemetry.Internal;
 #endif
 

@@ -19,7 +19,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
-#if NET8_0_OR_GREATER
+#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
 #endif
 using OpenTelemetry.Internal;

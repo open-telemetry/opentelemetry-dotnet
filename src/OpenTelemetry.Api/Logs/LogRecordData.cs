@@ -17,7 +17,7 @@
 #nullable enable
 
 using System.Diagnostics;
-#if NET8_0_OR_GREATER
+#if NET8_0_OR_GREATER && EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 #endif
