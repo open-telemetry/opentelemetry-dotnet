@@ -38,9 +38,9 @@ public static class OpenTelemetryMetricsBuilderExtensions
     /// <param name="metricsBuilder"><see cref="IMetricsBuilder"/>.</param>
     /// <returns>The supplied <see cref="IMetricsBuilder"/> for chaining
     /// calls.</returns>
-    public static IMetricsBuilder AddOpenTelemetryMetrics(
+    public static IMetricsBuilder UseOpenTelemetry(
         this IMetricsBuilder metricsBuilder)
-        => AddOpenTelemetryMetrics(metricsBuilder, b => { });
+        => UseOpenTelemetry(metricsBuilder, b => { });
 
     /// <summary>
     /// Adds OpenTelemetry metric services into the builder.
@@ -55,7 +55,7 @@ public static class OpenTelemetryMetricsBuilderExtensions
     /// configuration callback.</param>
     /// <returns>The supplied <see cref="IMetricsBuilder"/> for chaining
     /// calls.</returns>
-    public static IMetricsBuilder AddOpenTelemetryMetrics(
+    public static IMetricsBuilder UseOpenTelemetry(
         this IMetricsBuilder metricsBuilder,
         Action<MeterProviderBuilder> configure)
     {
