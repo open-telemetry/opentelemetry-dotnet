@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET8_0_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+#endif
+
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -37,19 +40,19 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
-        // Note: Warm-up the status code mapping.
+#if NET8_0_OR_GREATER
+        return builder
+            .AddMeter("System.Net.Http")
+            .AddMeter("System.Net.NameResolution");
+#else
+        // Note: Warm-up the status code and method mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
+        _ = RequestMethodHelper.KnownMethods;
 
         builder.ConfigureServices(services =>
         {
             services.RegisterOptionsFactory(configuration => new HttpClientMetricInstrumentationOptions(configuration));
         });
-
-        // TODO: Handle HttpClientMetricInstrumentationOptions
-        //   SetHttpFlavor - seems like this would be handled by views
-        //   Filter - makes sense for metric instrumentation
-        //   Enrich - do we want a similar kind of functionality for metrics?
-        //   RecordException - probably doesn't make sense for metric instrumentation
 
 #if NETFRAMEWORK
         builder.AddMeter(HttpWebRequestActivitySource.MeterName);
@@ -70,5 +73,6 @@ public static class MeterProviderBuilderExtensions
             sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
 #endif
         return builder;
+#endif
     }
 }

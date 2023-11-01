@@ -17,6 +17,8 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Internal;
+
 #if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Routing;
 #endif
@@ -32,6 +34,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
+    private const string NetworkProtocolName = "http";
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -57,7 +60,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
         if (this.emitNewAttributes)
         {
-            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
+            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
         }
     }
 
@@ -83,20 +86,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         if (context == null)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
-            return;
-        }
-
-        try
-        {
-            if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
             return;
         }
 
@@ -132,17 +121,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (this.options.Enrich != null)
-        {
-            try
-            {
-                this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
-            }
-        }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
@@ -159,20 +137,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             return;
         }
 
-        try
-        {
-            if (this.options.Filter?.Invoke(HttpServerRequestDurationMetricName, context) == false)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
-            return;
-        }
-
         // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
         // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
         // If we want to suppress activity from Prometheus then we should use SuppressInstrumentationScope.
@@ -184,10 +148,20 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         TagList tags = default;
 
         // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolName, NetworkProtocolName));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
-        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
+        if (RequestMethodHelper.KnownMethods.TryGetValue(context.Request.Method, out var httpMethod))
+        {
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+        }
+        else
+        {
+            // Set to default "_OTHER" as per spec.
+            // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+        }
 
 #if NET6_0_OR_GREATER
         var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
@@ -196,17 +170,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (this.options.Enrich != null)
-        {
-            try
-            {
-                this.options.Enrich(HttpServerRequestDurationMetricName, context, ref tags);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
-            }
-        }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
