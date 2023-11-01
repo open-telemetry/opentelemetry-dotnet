@@ -39,6 +39,8 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     private const string EventName = "OnStopActivity";
     private const string NetworkProtocolName = "http";
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
+    private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
+    private static readonly object ErrorTypekey = "error.type";
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -101,16 +103,14 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     public void OnExceptionEventWritten(string name, object payload)
     {
-        var activity = Activity.Current;
-
         // We need to use reflection here as the payload type is not a defined public type.
-        if (!TryFetchException(payload, out Exception exc))
+        if (!TryFetchException(payload, out Exception exc) || !TryFetchHttpContext(payload, out HttpContext ctx))
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnExceptionEventWritten), activity.OperationName);
             return;
         }
 
-        activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+        ctx.Items.Add(ErrorTypekey, exc.GetType().FullName);
 
         // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
         // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
@@ -120,11 +120,19 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 #endif
         static bool TryFetchException(object payload, out Exception exc)
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
+
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchHttpContext(object payload, out HttpContext ctx)
+            => HttpContextPropertyFetcher.TryFetch(payload, out ctx) && ctx != null;
     }
 
     public void OnEventWritten_Old(string name, object payload)
     {
         var context = payload as HttpContext;
+        context.Items.TryGetValue(name, out var item);
+
         if (context == null)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
@@ -214,10 +222,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         }
 #endif
 
-        // check for error.type on activity
-        // TODO: check to see if this can be optimized by first checking the status code
-        var errorType = activity.GetTagValue(SemanticConventions.AttributeErrorType);
-        if (errorType != null)
+        if (context.Items.TryGetValue(ErrorTypekey, out var errorType))
         {
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
         }
