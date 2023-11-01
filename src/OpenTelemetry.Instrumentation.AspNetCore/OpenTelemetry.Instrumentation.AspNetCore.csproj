@@ -14,6 +14,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\GrpcTagHelper.cs" Link="Includes\GrpcTagHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\RequestMethodHelper.cs" Link="Includes\RequestMethodHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'" />
     <Compile Include="$(RepoRoot)\src\Shared\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />

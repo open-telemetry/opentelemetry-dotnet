@@ -9,7 +9,7 @@ FROM ubuntu AS w3c
 #Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
-RUN git clone https://github.com/w3c/trace-context.git
+RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
 
 FROM mcr.microsoft.com/dotnet/sdk:${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
