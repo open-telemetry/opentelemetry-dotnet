@@ -9,8 +9,9 @@ you want each of these new traces to be linked to the original activity.
 
 To give an example, let's say that:
 
-- Service A receives a request for an operation that impacts 1000s of
-resources.
+- Service A receives a request for a customer operation that impacts 1000s of
+resources. The term "resource" here means an entity that is managed by this
+service and should not be confused with the term "resource" in OpenTelemetry.
 - Service A orchestrates this overall operation by fanning out multiple
 calls to Service B, with one call for EACH of the impacted resources.
 - Let's say the number of spans generated for a single resource operation
