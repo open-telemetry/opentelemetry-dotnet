@@ -23,6 +23,7 @@ using System.Net.Http;
 #endif
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
@@ -185,7 +186,18 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (this.emitNewAttributes)
             {
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                }
+                else
+                {
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method.Method);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 if (!request.RequestUri.IsDefaultPort)
                 {

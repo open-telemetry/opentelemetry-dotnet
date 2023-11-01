@@ -60,7 +60,7 @@ public class W3CTraceContextTests : IDisposable
         // disabling due to failing dotnet-format
         // TODO: investigate why dotnet-format fails.
 #pragma warning disable SA1008 // Opening parenthesis should be spaced correctly
-        app.MapPost("/", async([FromBody] Data[] data) =>
+        app.MapPost("/", async ([FromBody] Data[] data) =>
         {
             var result = string.Empty;
             if (data != null)
@@ -103,11 +103,11 @@ public class W3CTraceContextTests : IDisposable
 
         if (AspNetCoreHostingVersion.Major <= 6)
         {
-            Assert.StartsWith("FAILED (failures=5)", lastLine);
+            Assert.StartsWith("FAILED (failures=3)", lastLine);
         }
         else
         {
-            Assert.StartsWith("FAILED (failures=2)", lastLine);
+            Assert.StartsWith("OK", lastLine);
         }
     }
 
