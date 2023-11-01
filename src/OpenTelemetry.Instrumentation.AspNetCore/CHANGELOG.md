@@ -22,9 +22,9 @@
 `http.server.request.duration` metric when the request results in unhandled
 exception. The attribute value will be set to full name of exception type.
 
-The attribute will only be added when `OTEL_SEMCONV_STABILITY_OPT_IN`
-environment variable is set to `http` or `http/dup`.
-([#4986](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4986))
+  The attribute will only be added when `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable is set to `http` or `http/dup`.
+  ([#4986](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4986))
 
 ## 1.6.0-beta.2
 
