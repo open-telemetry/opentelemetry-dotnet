@@ -131,7 +131,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     public void OnEventWritten_Old(string name, object payload)
     {
         var context = payload as HttpContext;
-        context.Items.TryGetValue(name, out var item);
 
         if (context == null)
         {
