@@ -12,6 +12,8 @@ namespace OpenTelemetry.Resources;
 /// </summary>
 public static class ResourceBuilderExtensions
 {
+    private static readonly string InstanceId = Guid.NewGuid().ToString();
+
     private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
     {
         [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
@@ -58,7 +60,7 @@ public static class ResourceBuilderExtensions
 
         if (serviceInstanceId == null && autoGenerateServiceInstanceId)
         {
-            serviceInstanceId = Guid.NewGuid().ToString();
+            serviceInstanceId = InstanceId;
         }
 
         if (serviceInstanceId != null)

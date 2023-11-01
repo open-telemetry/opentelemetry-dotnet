@@ -55,8 +55,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
         this.loggerProvider = loggerProvider;
     }
 
-    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation> instrumentationFactory)
+    public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
 
@@ -64,7 +63,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
             new InstrumentationRegistration(
                 typeof(TInstrumentation).Name,
                 typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-                instrumentationFactory!()!));
+                instrumentationFactory!()));
 
         return this;
     }
@@ -119,9 +118,9 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
     {
         public readonly string Name;
         public readonly string Version;
-        public readonly object Instance;
+        public readonly object? Instance;
 
-        internal InstrumentationRegistration(string name, string version, object instance)
+        internal InstrumentationRegistration(string name, string version, object? instance)
         {
             this.Name = name;
             this.Version = version;

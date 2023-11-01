@@ -20,6 +20,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
             .AddInstrumentation<CustomInstrumentation>()
             .AddInstrumentation((sp, provider) => new CustomInstrumentation() { Provider = provider })
             .AddInstrumentation(new CustomInstrumentation())
+            .AddInstrumentation(() => (object?)null)
             .Build() as LoggerProviderSdk)
         {
             Assert.NotNull(provider);
@@ -165,6 +166,14 @@ public sealed class LoggerProviderBuilderExtensionsTests
         }
     }
 
+    [Fact]
+    public void LoggerProviderBuilderCustomImplementationBuildTest()
+    {
+        var builder = new CustomLoggerProviderBuilder();
+
+        Assert.Throws<NotSupportedException>(() => builder.Build());
+    }
+
     private sealed class CustomInstrumentation : IDisposable
     {
         public bool Disposed;
@@ -193,6 +202,14 @@ public sealed class LoggerProviderBuilderExtensionsTests
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class CustomLoggerProviderBuilder : LoggerProviderBuilder
+    {
+        public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
+        {
+            throw new NotImplementedException();
         }
     }
 }

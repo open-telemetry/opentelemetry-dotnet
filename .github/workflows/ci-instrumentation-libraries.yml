@@ -16,15 +16,12 @@ jobs:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
         os: [ windows-latest, ubuntu-latest ]
-        version: [ net462, net6.0, net7.0 ]
+        version: [ net462, net6.0, net7.0, net8.0 ]
         exclude:
         - os: ubuntu-latest
           version: net462
 
     runs-on: ${{ matrix.os }}
-
-    env:
-      RunningDotNetPack: true
 
     steps:
     - uses: actions/checkout@v4
@@ -34,11 +31,11 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dependencies
-      run: dotnet restore ./build/InstrumentationLibraries.proj
+    - name: dotnet restore
+      run: dotnet restore ./build/InstrumentationLibraries.proj -p:RunningDotNetPack=true
 
-    - name: Build
-      run: dotnet build ./build/InstrumentationLibraries.proj --configuration Release --no-restore
+    - name: dotnet build
+      run: dotnet build ./build/InstrumentationLibraries.proj --configuration Release --no-restore -p:RunningDotNetPack=true
 
-    - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/Release/${{ matrix.version }}/OpenTelemetry.Instrumentation*.Tests.dll --logger:"console;verbosity=detailed"
+    - name: dotnet test
+      run: dotnet test **/bin/Release/${{ matrix.version }}/OpenTelemetry.Instrumentation*.Tests.dll --framework ${{ matrix.version }} --configuration Release --no-restore --no-build --logger:"console;verbosity=detailed"

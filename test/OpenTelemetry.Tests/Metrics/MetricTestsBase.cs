@@ -9,6 +9,8 @@ public class MetricTestsBase
 {
     public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
 
+    // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
+    // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
     public static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
     {
         int tagIndex = 0;
@@ -91,6 +93,8 @@ public class MetricTestsBase
         return null;
     }
 
+    // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
+    // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
     // Provide tags input sorted by Key
     public static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object>> tags, int n)
     {

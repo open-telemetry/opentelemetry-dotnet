@@ -9,7 +9,7 @@ FROM ubuntu AS w3c
 #Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
-RUN git clone https://github.com/w3c/trace-context.git
+RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
 
 FROM mcr.microsoft.com/dotnet/sdk:${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
@@ -17,7 +17,7 @@ ARG PUBLISH_FRAMEWORK=net7.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
-RUN dotnet publish "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true -p:TARGET_FRAMEWORK=${PUBLISH_FRAMEWORK}
+RUN dotnet publish "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /drop -p:IntegrationBuild=true
 
 FROM mcr.microsoft.com/dotnet/sdk:${TEST_SDK_VERSION} AS final
 WORKDIR /test

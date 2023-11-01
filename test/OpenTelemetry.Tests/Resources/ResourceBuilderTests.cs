@@ -56,6 +56,24 @@ public class ResourceBuilderTests
     }
 
     [Fact]
+    public void ServiceResourceGeneratesConsistentInstanceId()
+    {
+        var firstResource = ResourceBuilder.CreateEmpty().AddService("my-service").Build();
+
+        var firstInstanceIdAttribute = firstResource.Attributes.FirstOrDefault(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceInstance);
+
+        Assert.NotNull(firstInstanceIdAttribute.Value);
+
+        var secondResource = ResourceBuilder.CreateEmpty().AddService("other-service").Build();
+
+        var secondInstanceIdAttribute = secondResource.Attributes.FirstOrDefault(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceInstance);
+
+        Assert.NotNull(secondInstanceIdAttribute.Value);
+
+        Assert.Equal(firstInstanceIdAttribute.Value, secondInstanceIdAttribute.Value);
+    }
+
+    [Fact]
     public void ClearTest()
     {
         var resource = ResourceBuilder.CreateEmpty()

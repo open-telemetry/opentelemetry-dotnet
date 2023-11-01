@@ -15,7 +15,7 @@ public sealed class LoggerProviderTests
     [Fact]
     public void NoopLoggerReturnedTest()
     {
-        using var provider = new LoggerProvider();
+        using var provider = new NoopLoggerProvider();
 
         var logger = provider.GetLogger(name: "TestLogger", version: "Version");
 
@@ -54,6 +54,10 @@ public sealed class LoggerProviderTests
 
         Assert.Equal(string.Empty, logger.Name);
         Assert.Null(logger.Version);
+    }
+
+    private sealed class NoopLoggerProvider : LoggerProvider
+    {
     }
 
     private sealed class TestLoggerProvider : LoggerProvider

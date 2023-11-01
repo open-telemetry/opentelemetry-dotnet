@@ -5,8 +5,6 @@ using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
-namespace GettingStarted;
-
 public class Program
 {
     private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
@@ -14,7 +12,7 @@ public class Program
 
     public static void Main()
     {
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
@@ -25,5 +23,9 @@ public class Program
         MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
         MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"));
         MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow"));
+
+        // Dispose meter provider before the application ends.
+        // This will flush the remaining metrics and shutdown the metrics pipeline.
+        meterProvider.Dispose();
     }
 }

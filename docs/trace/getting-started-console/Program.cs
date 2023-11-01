@@ -5,16 +5,13 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-namespace GettingStarted;
-
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new(
-        "MyCompany.MyProduct.MyLibrary");
+    private static readonly ActivitySource MyActivitySource = new("MyCompany.MyProduct.MyLibrary");
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
@@ -26,5 +23,9 @@ public class Program
             activity?.SetTag("baz", new int[] { 1, 2, 3 });
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
+
+        // Dispose tracer provider before the application ends.
+        // This will flush the remaining spans and shutdown the tracing pipeline.
+        tracerProvider.Dispose();
     }
 }

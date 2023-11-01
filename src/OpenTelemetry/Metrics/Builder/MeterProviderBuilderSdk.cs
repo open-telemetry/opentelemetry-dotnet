@@ -46,7 +46,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     // Customers: This is not guaranteed to work forever. We may change this
     // mechanism in the future do this at your own risk.
     public static Regex InstrumentNameRegex { get; set; } = new(
-        @"^[a-z][a-z0-9-._]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        @"^[a-z][a-z0-9-._/]{0,254}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public List<InstrumentationRegistration> Instrumentation { get; } = new();
 
@@ -111,8 +111,7 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
         this.meterProvider = meterProvider;
     }
 
-    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(
-        Func<TInstrumentation> instrumentationFactory)
+    public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
 
@@ -125,17 +124,16 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     public MeterProviderBuilder AddInstrumentation(
         string instrumentationName,
         string instrumentationVersion,
-        object instrumentation)
+        object? instrumentation)
     {
         Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationName), "instrumentationName was null or whitespace");
         Debug.Assert(!string.IsNullOrWhiteSpace(instrumentationVersion), "instrumentationVersion was null or whitespace");
-        Debug.Assert(instrumentation != null, "instrumentation was null");
 
         this.Instrumentation.Add(
             new InstrumentationRegistration(
                 instrumentationName,
                 instrumentationVersion,
-                instrumentation!));
+                instrumentation));
 
         return this;
     }
@@ -236,9 +234,9 @@ internal sealed class MeterProviderBuilderSdk : MeterProviderBuilder, IMeterProv
     {
         public readonly string Name;
         public readonly string Version;
-        public readonly object Instance;
+        public readonly object? Instance;
 
-        internal InstrumentationRegistration(string name, string version, object instance)
+        internal InstrumentationRegistration(string name, string version, object? instance)
         {
             this.Name = name;
             this.Version = version;

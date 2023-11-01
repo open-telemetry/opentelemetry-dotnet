@@ -2,6 +2,96 @@
 
 ## Unreleased
 
+* Updated `http.request.method` to match specification guidelines.
+  * For activity, if the method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then the request method will be set on an additional tag
+    `http.request.method.original` and `http.request.method` will be set to
+    `_OTHER`.
+  * For metrics, if the original method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then `http.request.method` on `http.client.request.duration` metric will be
+    set to `_OTHER`
+
+  `http.request.method` is set on `http.client.request.duration` metric or
+  activity when `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is set to
+  `http` or `http/dup`.
+  ([#5003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5003))
+
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
+* Introduced a new metric for `HttpClient`, `http.client.request.duration`
+  measured in seconds. The OTel SDK (starting with version 1.6.0)
+  [applies custom histogram buckets](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+  for this metric to comply with the
+  [Semantic Convention for Http Metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md).
+  This new metric is only available for users who opt-in to the new
+  semantic convention by configuring the `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable to either `http` (to emit only the new metric) or
+  `http/dup` (to emit both the new and old metrics).
+  ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
+
+  * New metric: `http.client.request.duration`
+    * Unit: `s` (seconds)
+    * Histogram Buckets: `0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5,
+    0.75, 1,  2.5, 5, 7.5, 10`
+  * Old metric: `http.client.duration`
+    * Unit: `ms` (milliseconds)
+    * Histogram Buckets: `0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500,
+    5000, 7500, 10000`
+
+  Note: The older `http.client.duration` metric and
+  `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable will eventually be
+  removed after the HTTP semantic conventions are marked stable. At which time
+  this instrumentation can publish a stable release. Refer to the specification
+  for more information regarding the new HTTP semantic conventions:
+  * [http-spans](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-spans.md)
+  * [http-metrics](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+
+* Added support for publishing `http.client.duration` &
+  `http.client.request.duration` metrics on .NET Framework for `HttpWebRequest`.
+  ([#4870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4870))
+
+* Following `HttpClient` metrics will now be enabled by default when targeting
+  `.NET8.0` framework or newer.
+
+  * **Meter** : `System.Net.Http`
+    * `http.client.request.duration`
+    * `http.client.active_requests`
+    * `http.client.open_connections`
+    * `http.client.connection.duration`
+    * `http.client.request.time_in_queue`
+
+  * **Meter** : `System.Net.NameResolution`
+    * `dns.lookups.duration`
+
+  For details about each individual metric check [System.Net metrics
+  docs
+  page](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
+
+  **NOTES**:
+  * When targeting `.NET8.0` framework or newer, `http.client.request.duration` metric
+    will only follow
+    [v1.22.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-metrics.md#metric-httpclientrequestduration)
+    semantic conventions specification. Ability to switch behavior to older
+    conventions using  `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is
+    not available.
+  * Users can opt-out of metrics that are not required using
+    [views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument).
+
+  ([#4931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4931))
+
+* Added `url.scheme` attribute to `http.client.request.duration` metric. The
+  metric will be emitted when `OTEL_SEMCONV_STABILITY_OPT_IN` environment
+  variable is set to `http` or `http/dup`.
+  ([#4989](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4989))
+
+* Updated description for `http.client.request.duration` metrics to match spec
+  definition.
+  ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
+
 ## 1.5.1-beta.1
 
 Released 2023-Jul-20

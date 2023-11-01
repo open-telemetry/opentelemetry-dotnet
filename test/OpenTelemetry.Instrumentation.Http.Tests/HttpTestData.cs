@@ -36,11 +36,7 @@ public static class HttpTestData
         return value
             .Replace("{host}", host)
             .Replace("{port}", port.ToString())
-#if NETFRAMEWORK
             .Replace("{flavor}", "1.1");
-#else
-            .Replace("{flavor}", "2.0");
-#endif
     }
 
     public class HttpOutTestCase

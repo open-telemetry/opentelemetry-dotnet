@@ -47,8 +47,9 @@ public static class TracerProviderBuilderExtensions
     {
         Guard.ThrowIfNull(builder);
 
-        // Note: Warm-up the status code mapping.
+        // Note: Warm-up the status code and method mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
+        _ = RequestMethodHelper.KnownMethods;
 
         name ??= Options.DefaultName;
 
@@ -71,7 +72,7 @@ public static class TracerProviderBuilderExtensions
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<HttpClientInstrumentationOptions>>().Get(name);
 
-                HttpWebRequestActivitySource.Options = options;
+                HttpWebRequestActivitySource.TracingOptions = options;
             });
         }
 #else

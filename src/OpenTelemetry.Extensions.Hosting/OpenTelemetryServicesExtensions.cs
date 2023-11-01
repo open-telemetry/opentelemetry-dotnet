@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0r the License.
 // </copyright>
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -23,10 +22,17 @@ public static class OpenTelemetryServicesExtensions
     /// cref="IServiceCollection"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="TracerProvider"/> and/or <see
     /// cref="MeterProvider"/> will be created for a given <see
-    /// cref="IServiceCollection"/>.
+    /// cref="IServiceCollection"/>.</item>
+    /// <item>OpenTelemetry SDK services are inserted at the beginning of the
+    /// <see cref="IServiceCollection"/> and started with the host. For details
+    /// about the ordering of events and capturing telemetry in
+    /// <see cref="IHostedService" />s see: <see href="https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Extensions.Hosting/README.md#hosted-service-ordering-and-telemetry-capture" />.</item>
+    /// </list>
     /// </remarks>
     /// <param name="services"><see cref="IServiceCollection"/>.</param>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
@@ -35,8 +41,10 @@ public static class OpenTelemetryServicesExtensions
     {
         Guard.ThrowIfNull(services);
 
-        services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+        if (!services.Any((ServiceDescriptor d) => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(TelemetryHostedService)))
+        {
+            services.Insert(0, ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+        }
 
         return new(services);
     }

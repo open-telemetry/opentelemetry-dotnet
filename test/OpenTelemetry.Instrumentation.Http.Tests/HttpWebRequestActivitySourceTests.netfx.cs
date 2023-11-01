@@ -19,7 +19,6 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     private readonly IDisposable testServer;
     private readonly string testServerHost;
     private readonly int testServerPort;
-    private readonly string hostNameAndPort;
     private readonly string netPeerName;
     private readonly int netPeerPort;
 
@@ -38,10 +37,8 @@ public class HttpWebRequestActivitySourceTests : IDisposable
             },
         };
 
-        HttpWebRequestActivitySource.Options = options;
+        HttpWebRequestActivitySource.TracingOptions = options;
 
-        // Need to touch something in HttpWebRequestActivitySource/Sdk to do the static injection.
-        GC.KeepAlive(HttpWebRequestActivitySource.Options);
         _ = Sdk.SuppressInstrumentation;
     }
 
@@ -56,7 +53,6 @@ public class HttpWebRequestActivitySourceTests : IDisposable
             out this.testServerHost,
             out this.testServerPort);
 
-        this.hostNameAndPort = $"{this.testServerHost}:{this.testServerPort}";
         this.netPeerName = this.testServerHost;
         this.netPeerPort = this.testServerPort;
 

@@ -3,10 +3,6 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- https://dotnet.microsoft.com/download/dotnet-core -->
-    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
-    <!-- https://dotnet.microsoft.com/download/dotnet-framework -->
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462;net47;net471;net472;net48</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForDocs)</TargetFrameworks>
   </PropertyGroup>
 </Project>

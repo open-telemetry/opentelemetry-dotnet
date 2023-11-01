@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET6_0_OR_GREATER
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
@@ -72,4 +71,3 @@ public sealed class InProcServerTests : IDisposable
         await this.app.DisposeAsync().ConfigureAwait(false);
     }
 }
-#endif

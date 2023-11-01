@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 #if NETFRAMEWORK
 using System.Net;
 using System.Net.Http;
@@ -10,26 +11,38 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using Xunit.Abstractions;
+
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests;
 
 public partial class HttpClientTests : IDisposable
 {
+    private readonly ITestOutputHelper output;
     private readonly IDisposable serverLifeTime;
+    private readonly string host;
+    private readonly int port;
     private readonly string url;
 
-    public HttpClientTests()
+    public HttpClientTests(ITestOutputHelper output)
     {
+        this.output = output;
+
         this.serverLifeTime = TestHttpServer.RunServer(
             (ctx) =>
             {
                 string traceparent = ctx.Request.Headers["traceparent"];
                 string custom_traceparent = ctx.Request.Headers["custom_traceparent"];
-                if (string.IsNullOrWhiteSpace(traceparent)
-                    && string.IsNullOrWhiteSpace(custom_traceparent))
+                if ((ctx.Request.Headers["contextRequired"] == null
+                    || bool.Parse(ctx.Request.Headers["contextRequired"]))
+                    &&
+                    (string.IsNullOrWhiteSpace(traceparent)
+                        && string.IsNullOrWhiteSpace(custom_traceparent)))
                 {
                     ctx.Response.StatusCode = 500;
                     ctx.Response.StatusDescription = "Missing trace context";
@@ -43,6 +56,10 @@ public partial class HttpClientTests : IDisposable
                     ctx.Response.RedirectLocation = "/";
                     ctx.Response.StatusCode = 302;
                 }
+                else if (ctx.Request.Headers["responseCode"] != null)
+                {
+                    ctx.Response.StatusCode = int.Parse(ctx.Request.Headers["responseCode"]);
+                }
                 else
                 {
                     ctx.Response.StatusCode = 200;
@@ -53,7 +70,11 @@ public partial class HttpClientTests : IDisposable
             out var host,
             out var port);
 
+        this.host = host;
+        this.port = port;
         this.url = $"http://{host}:{port}/";
+
+        this.output.WriteLine($"HttpServer started: {this.url}");
     }
 
     [Fact]
@@ -338,6 +359,135 @@ public partial class HttpClientTests : IDisposable
         Assert.NotEqual(spanid2, spanid3);
     }
 
+    [Theory]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsSetOnActivityAsPerSpec(string originalMethod, string expectedMethod)
+    {
+        var exportedItems = new List<Activity>();
+        using var request = new HttpRequestMessage
+        {
+            RequestUri = new Uri(this.url),
+            Method = new HttpMethod(originalMethod),
+        };
+
+        var configuration = new ConfigurationBuilder()
+           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+           .Build();
+
+        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var httpClient = new HttpClient();
+
+        try
+        {
+            await httpClient.SendAsync(request).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        Assert.Single(exportedItems);
+
+        var activity = exportedItems[0];
+
+        Assert.Contains(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethod);
+
+        if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
+        }
+        else
+        {
+            Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
+        }
+
+        Assert.Equal(expectedMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
+    }
+
+    [Theory]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsSetonRequestDurationMetricAsPerSpec(string originalMethod, string expectedMethod)
+    {
+        var metricItems = new List<Metric>();
+        using var request = new HttpRequestMessage
+        {
+            RequestUri = new Uri(this.url),
+            Method = new HttpMethod(originalMethod),
+        };
+
+        var configuration = new ConfigurationBuilder()
+           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+           .Build();
+
+        using var meterprovider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddHttpClientInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using var httpClient = new HttpClient();
+
+        try
+        {
+            await httpClient.SendAsync(request).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        meterprovider.Dispose();
+
+        var metric = metricItems.FirstOrDefault(m => m.Name == "http.client.request.duration");
+
+        Assert.NotNull(metric);
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (var p in metric.GetMetricPoints())
+        {
+            metricPoints.Add(p);
+        }
+
+        Assert.Single(metricPoints);
+        var mp = metricPoints[0];
+
+        // Inspect Metric Attributes
+        var attributes = new Dictionary<string, object>();
+        foreach (var tag in mp.Tags)
+        {
+            attributes[tag.Key] = tag.Value;
+        }
+
+        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == expectedMethod);
+
+        Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
+    }
+
     [Fact]
     public async Task RedirectTest()
     {
@@ -618,6 +768,7 @@ public partial class HttpClientTests : IDisposable
     public void Dispose()
     {
         this.serverLifeTime?.Dispose();
+        this.output.WriteLine($"HttpServer stopped: {this.url}");
         Activity.Current = null;
         GC.SuppressFinalize(this);
     }

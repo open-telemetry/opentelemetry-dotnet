@@ -47,5 +47,5 @@ internal
     /// <returns>Returns <see cref="LoggerProviderBuilder"/> for chaining.</returns>
     public abstract LoggerProviderBuilder AddInstrumentation<TInstrumentation>(
         Func<TInstrumentation> instrumentationFactory)
-        where TInstrumentation : class;
+        where TInstrumentation : class?;
 }

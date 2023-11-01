@@ -107,6 +107,7 @@ internal static class SemanticConventions
     public const string AttributeHttpRequestMethod = "http.request.method"; // replaces: "http.method" (AttributeHttpMethod)
     public const string AttributeHttpResponseStatusCode = "http.response.status_code"; // replaces: "http.status_code" (AttributeHttpStatusCode)
     public const string AttributeNetworkProtocolVersion = "network.protocol.version"; // replaces: "http.flavor" (AttributeHttpFlavor)
+    public const string AttributeNetworkProtocolName = "network.protocol.name";
     public const string AttributeServerAddress = "server.address"; // replaces: "net.host.name" (AttributeNetHostName) and "net.peer.name" (AttributeNetPeerName)
     public const string AttributeServerPort = "server.port"; // replaces: "net.host.port" (AttributeNetHostPort) and "net.peer.port" (AttributeNetPeerPort)
     public const string AttributeServerSocketAddress = "server.socket.address"; // replaces: "net.peer.ip" (AttributeNetPeerIp)
@@ -115,4 +116,5 @@ internal static class SemanticConventions
     public const string AttributeUrlScheme = "url.scheme"; // replaces: "http.scheme" (AttributeHttpScheme)
     public const string AttributeUrlQuery = "url.query";
     public const string AttributeUserAgentOriginal = "user_agent.original"; // replaces: "http.user_agent" (AttributeHttpUserAgent)
+    public const string AttributeHttpRequestMethodOriginal = "http.request.method_original";
 }

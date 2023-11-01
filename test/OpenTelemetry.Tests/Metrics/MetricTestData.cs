@@ -26,6 +26,7 @@ public class MetricTestData
                 new object[] { "my_metric2" },
                 new object[] { new string('m', 255) },
                 new object[] { "CaSe-InSeNsItIvE" },
+                new object[] { "my_metric/environment/database" },
        };
 
     public static IEnumerable<object[]> InvalidHistogramBoundaries

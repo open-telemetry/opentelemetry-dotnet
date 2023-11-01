@@ -48,7 +48,7 @@ public class HistogramBenchmarks
     private readonly Random random = new();
     private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
     private Histogram<long> histogram;
-    private MeterProvider provider;
+    private MeterProvider meterProvider;
     private Meter meter;
     private double[] bounds;
 
@@ -71,7 +71,7 @@ public class HistogramBenchmarks
 
         var exportedItems = new List<Metric>();
 
-        this.provider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -85,7 +85,7 @@ public class HistogramBenchmarks
     public void Cleanup()
     {
         this.meter?.Dispose();
-        this.provider?.Dispose();
+        this.meterProvider.Dispose();
     }
 
     [Benchmark]
