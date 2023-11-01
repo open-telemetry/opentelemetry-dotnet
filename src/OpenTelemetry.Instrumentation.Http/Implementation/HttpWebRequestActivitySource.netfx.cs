@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
@@ -153,7 +154,18 @@ internal static class HttpWebRequestActivitySource
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
             if (tracingEmitNewAttributes)
             {
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                }
+                else
+                {
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 if (!request.RequestUri.IsDefaultPort)
                 {
@@ -495,7 +507,17 @@ internal static class HttpWebRequestActivitySource
             {
                 TagList tags = default;
 
-                tags.Add(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
+                {
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+                }
+                else
+                {
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+                }
+
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                 tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));

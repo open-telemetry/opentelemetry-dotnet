@@ -499,11 +499,14 @@ public struct MetricPoint
 
                     this.runningValue.AsLong = number;
 
-                    Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+                    if (isSampled)
+                    {
+                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-                    // TODO: Need to ensure that the lock is always released.
-                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                    this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        // TODO: Need to ensure that the lock is always released.
+                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                    }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -516,11 +519,14 @@ public struct MetricPoint
 
                     this.runningValue.AsLong = number;
 
-                    Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+                    if (isSampled)
+                    {
+                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-                    // TODO: Need to ensure that the lock is always released.
-                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                    this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        // TODO: Need to ensure that the lock is always released.
+                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                    }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -717,11 +723,14 @@ public struct MetricPoint
                         this.runningValue.AsDouble = number;
                     }
 
-                    Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+                    if (isSampled)
+                    {
+                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-                    // TODO: Need to ensure that the lock is always released.
-                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                    this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        // TODO: Need to ensure that the lock is always released.
+                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                    }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
@@ -737,11 +746,14 @@ public struct MetricPoint
                         this.runningValue.AsDouble = number;
                     }
 
-                    Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+                    if (isSampled)
+                    {
+                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
-                    // TODO: Need to ensure that the lock is always released.
-                    // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                    this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                        // TODO: Need to ensure that the lock is always released.
+                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
+                    }
 
                     ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
 
