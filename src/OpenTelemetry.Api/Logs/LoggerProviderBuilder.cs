@@ -18,6 +18,7 @@
 
 #if NET8_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
 #endif
 
 namespace OpenTelemetry.Logs;
@@ -28,7 +29,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 #if NET8_0_OR_GREATER
-[Experimental("OT1000", UrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/{0}.md")]
+[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalFeature, UrlFormat = DiagnosticDefinitions.UrlFormat)]
 #endif
 public
 #else

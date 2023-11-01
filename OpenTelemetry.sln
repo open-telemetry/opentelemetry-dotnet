@@ -261,6 +261,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\ActivityHelperExtensions.cs = src\Shared\ActivityHelperExtensions.cs
 		src\Shared\ActivityInstrumentationHelper.cs = src\Shared\ActivityInstrumentationHelper.cs
+		src\Shared\DiagnosticDefinitions.cs = src\Shared\DiagnosticDefinitions.cs
 		src\Shared\ExceptionExtensions.cs = src\Shared\ExceptionExtensions.cs
 		src\Shared\Guard.cs = src\Shared\Guard.cs
 		src\Shared\HttpSemanticConventionHelper.cs = src\Shared\HttpSemanticConventionHelper.cs
@@ -317,8 +318,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-aspnetcore"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "diagnostics", "diagnostics", "{52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}"
 	ProjectSection(SolutionItems) = preProject
-		docs\diagnostics\OT1000.md = docs\diagnostics\OT1000.md
-		docs\diagnostics\OT1001.md = docs\diagnostics\OT1001.md
+		docs\diagnostics\OTEL1000.md = docs\diagnostics\OTEL1000.md
+		docs\diagnostics\OTEL1001.md = docs\diagnostics\OTEL1001.md
 	EndProjectSection
 EndProject
 Global

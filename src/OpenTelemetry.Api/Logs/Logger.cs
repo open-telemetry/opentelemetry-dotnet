@@ -18,6 +18,7 @@
 
 #if NET8_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.Internal;
 #endif
 
 namespace OpenTelemetry.Logs;
@@ -28,7 +29,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
 #if NET8_0_OR_GREATER
-[Experimental("OT1001", UrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/{0}.md")]
+[Experimental(DiagnosticDefinitions.LogBridgeApiExperimentalFeature, UrlFormat = DiagnosticDefinitions.UrlFormat)]
 #endif
 public
 #else
