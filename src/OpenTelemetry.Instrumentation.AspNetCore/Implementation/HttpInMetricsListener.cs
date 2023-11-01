@@ -14,10 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Internal;
+
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Routing;
@@ -63,7 +64,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
         if (this.emitNewAttributes)
         {
-            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
+            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
         }
     }
 
@@ -193,8 +194,17 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolName, NetworkProtocolName));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
-        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
+        if (RequestMethodHelper.KnownMethods.TryGetValue(context.Request.Method, out var httpMethod))
+        {
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+        }
+        else
+        {
+            // Set to default "_OTHER" as per spec.
+            // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+        }
 
 #if NET6_0_OR_GREATER
         var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
@@ -218,4 +228,3 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
     }
 }
-#endif

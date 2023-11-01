@@ -245,6 +245,82 @@ public class MetricTests
             expectedTagsCount: expectedErrorType == null ? 6 : 7);
     }
 
+    [Theory]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsCapturedAsPerSpec(string originalMethod, string expectedMethod)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .Build();
+
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        var message = new HttpRequestMessage();
+        message.Method = new HttpMethod(originalMethod);
+
+        try
+        {
+            using var response = await client.SendAsync(message).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        // We need to let End callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the End callback to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        var requestMetrics = metricItems
+            .Where(item => item.Name == "http.server.request.duration")
+            .ToArray();
+
+        var metric = Assert.Single(requestMetrics);
+
+        Assert.Equal("s", metric.Unit);
+        var metricPoints = GetMetricPoints(metric);
+        Assert.Single(metricPoints);
+
+        var mp = metricPoints[0];
+
+        // Inspect Metric Attributes
+        var attributes = new Dictionary<string, object>();
+        foreach (var tag in mp.Tags)
+        {
+            attributes[tag.Key] = tag.Value;
+        }
+
+        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == expectedMethod);
+
+        Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
+    }
+
 #if !NET8_0_OR_GREATER
     [Fact]
     public async Task RequestMetricIsCaptured_Old()
