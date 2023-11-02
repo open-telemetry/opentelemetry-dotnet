@@ -488,7 +488,7 @@ public class MetricTests
 
             if (metricPoint.HasValue)
             {
-                AssertMetricPoint_New(metricPoint.Value, expectedRoute, expectedStatusCode, expectedErrorType, expectedTagsCount);
+                AssertMetricPoint_New(metricPoint.Value, expectedStatusCode, expectedRoute, expectedErrorType, expectedTagsCount);
             }
             else
             {
@@ -531,8 +531,8 @@ public class MetricTests
 
     private static KeyValuePair<string, object>[] AssertMetricPoint_New(
         MetricPoint metricPoint,
+        int expectedStatusCode,
         string expectedRoute = "api/Values",
-        int expectedStatusCode = 200,
         string expectedErrorType = null,
         int expectedTagsCount = StandardTagsCount)
     {
