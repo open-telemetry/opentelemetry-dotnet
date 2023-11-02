@@ -33,7 +33,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0-rc.2.23479.6" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[3.1.0,)" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.0-rc.2.23479.6" />
-    
+
     <PackageVersion Include="OpenTelemetry" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api" Version="$(OTelLatestStableVer)" />
     <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="$(OTelLatestStableVer)" />
