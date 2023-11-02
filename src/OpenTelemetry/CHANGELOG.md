@@ -17,6 +17,10 @@
   ([#5004](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
   ([#5016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5016))
 
+* Updated `Microsoft.Extensions.Logging.Configuration` package version to
+  `8.0.0-rc.2.23479.6`.
+  ([#5020](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5020))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
