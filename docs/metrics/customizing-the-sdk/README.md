@@ -198,6 +198,7 @@ with the metric are of interest to you.
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    // Because "color" is dropped the resulting metric values are - name:apple LongSum Value:3 and name:lemon LongSum Value:2
     ...
 
     // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
@@ -214,6 +215,7 @@ with the metric are of interest to you.
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    // Because both "name" and "color" are dropped the resulting metric value is - LongSum Value:5
     ...
 ```
 
