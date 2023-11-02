@@ -24,7 +24,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 
-namespace RouteTests;
+namespace RouteTests.TestApplication;
 
 public enum TestApplicationScenario
 {
@@ -52,9 +52,7 @@ public enum TestApplicationScenario
 internal class TestApplicationFactory
 {
     private static readonly string AspNetCoreTestsPath = new FileInfo(typeof(RoutingTests)!.Assembly!.Location)!.Directory!.Parent!.Parent!.Parent!.FullName;
-    private static readonly string ContentRootPath = AspNetCoreTestsPath.EndsWith("RouteTests")
-        ? AspNetCoreTestsPath
-        : Path.Combine(AspNetCoreTestsPath, "RouteTests");
+    private static readonly string ContentRootPath = Path.Combine(AspNetCoreTestsPath, "RouteTests", "TestApplication");
 
     public static WebApplication? CreateApplication(TestApplicationScenario config)
     {

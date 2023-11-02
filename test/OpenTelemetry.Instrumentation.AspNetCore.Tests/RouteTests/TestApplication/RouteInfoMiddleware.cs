@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 
-namespace RouteTests;
+namespace RouteTests.TestApplication;
 
 public class RouteInfoMiddleware
 {

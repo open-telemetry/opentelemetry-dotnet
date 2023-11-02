@@ -1,4 +1,4 @@
-// <copyright file="RouteTestData.cs" company="OpenTelemetry Authors">
+// <copyright file="RoutingTestCases.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,17 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RouteTests.TestApplication;
 
 namespace RouteTests;
 
-public static class RouteTestData
+public static class RoutingTestCases
 {
     public static IEnumerable<object[]> GetTestCases()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var input = JsonSerializer.Deserialize<RouteTestCase[]>(
-            assembly.GetManifestResourceStream("RouteTests.testcases.json")!,
+        var input = JsonSerializer.Deserialize<TestCase[]>(
+            assembly.GetManifestResourceStream("RoutingTestCases.json")!,
             new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -37,7 +38,7 @@ public static class RouteTestData
         return GetArgumentsFromTestCaseObject(input!);
     }
 
-    private static IEnumerable<object[]> GetArgumentsFromTestCaseObject(IEnumerable<RouteTestCase> input)
+    private static IEnumerable<object[]> GetArgumentsFromTestCaseObject(IEnumerable<TestCase> input)
     {
         var result = new List<object[]>();
 
@@ -55,7 +56,7 @@ public static class RouteTestData
         return result;
     }
 
-    public class RouteTestCase
+    public class TestCase
     {
         public string Name { get; set; } = string.Empty;
 

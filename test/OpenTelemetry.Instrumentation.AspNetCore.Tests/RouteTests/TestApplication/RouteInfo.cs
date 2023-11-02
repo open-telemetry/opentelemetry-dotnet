@@ -26,7 +26,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 
-namespace RouteTests;
+namespace RouteTests.TestApplication;
 
 public class RouteInfo
 {

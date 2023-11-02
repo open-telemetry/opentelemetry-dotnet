@@ -1,4 +1,4 @@
-// <copyright file="TestResult.cs" company="OpenTelemetry Authors">
+// <copyright file="RoutingTestResult.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,11 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RouteTests.TestApplication;
 
 namespace RouteTests;
 
-public class TestResult
+public class RoutingTestResult
 {
     private static readonly JsonSerializerOptions JsonSerializerOptions = new() { WriteIndented = true };
 
@@ -36,7 +37,7 @@ public class TestResult
     public RouteInfo RouteInfo { get; set; } = new RouteInfo();
 
     [JsonIgnore]
-    public RouteTestData.RouteTestCase TestCase { get; set; } = new RouteTestData.RouteTestCase();
+    public RoutingTestCases.TestCase TestCase { get; set; } = new RoutingTestCases.TestCase();
 
     public override string ToString()
     {

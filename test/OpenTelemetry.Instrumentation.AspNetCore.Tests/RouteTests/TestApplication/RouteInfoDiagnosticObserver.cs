@@ -20,7 +20,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
 
-namespace RouteTests;
+namespace RouteTests.TestApplication;
 
 /// <summary>
 /// This observer captures all the available route information for a request.

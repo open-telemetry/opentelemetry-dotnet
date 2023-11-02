@@ -41,11 +41,11 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         this.fixture = fixture;
     }
 
-    public static IEnumerable<object[]> TestData => RouteTestData.GetTestCases();
+    public static IEnumerable<object[]> TestData => RoutingTestCases.GetTestCases();
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task TestRoutes(RouteTestData.RouteTestCase testCase, bool useLegacyConventions)
+    public async Task TestRoutes(RoutingTestCases.TestCase testCase, bool useLegacyConventions)
     {
         var previousSetting = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
         Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", useLegacyConventions ? null : "http");
@@ -134,7 +134,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
             Assert.Equal(testCase.ExpectedHttpRoute, metricHttpRoute);
         }
 
-        var testResult = new TestResult
+        var testResult = new RoutingTestResult
         {
             IdealHttpRoute = testCase.ExpectedHttpRoute,
             ActivityDisplayName = activity.DisplayName,

@@ -19,6 +19,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
+using RouteTests.TestApplication;
 
 namespace RouteTests;
 
@@ -27,7 +28,7 @@ public class RoutingTestFixture : IDisposable
     private readonly Dictionary<TestApplicationScenario, WebApplication> apps = new();
     private readonly HttpClient client = new();
     private readonly RouteInfoDiagnosticObserver diagnostics = new();
-    private readonly List<TestResult> testResults = new();
+    private readonly List<RoutingTestResult> testResults = new();
 
     public RoutingTestFixture()
     {
@@ -54,7 +55,7 @@ public class RoutingTestFixture : IDisposable
         await this.client.GetAsync(url).ConfigureAwait(false);
     }
 
-    public void AddTestResult(TestResult testResult)
+    public void AddTestResult(RoutingTestResult testResult)
     {
         var app = this.apps[testResult.TestCase.TestApplicationScenario];
         var baseUrl = app.Urls.First();

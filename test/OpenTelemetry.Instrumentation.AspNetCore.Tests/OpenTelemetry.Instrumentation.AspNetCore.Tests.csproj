@@ -39,8 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="RouteTests\testcases.json">
-      <LogicalName>RouteTests.testcases.json</LogicalName>
+    <EmbeddedResource Include="RouteTests\RoutingTestCases.json">
+      <LogicalName>RoutingTestCases.json</LogicalName>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
