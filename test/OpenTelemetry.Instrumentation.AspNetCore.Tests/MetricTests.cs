@@ -532,9 +532,9 @@ public class MetricTests
     private static KeyValuePair<string, object>[] AssertMetricPoint_New(
         MetricPoint metricPoint,
         int expectedStatusCode,
-        string expectedRoute = "api/Values",
-        string expectedErrorType = null,
-        int expectedTagsCount = StandardTagsCount)
+        string expectedRoute,
+        string expectedErrorType,
+        int expectedTagsCount)
     {
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
