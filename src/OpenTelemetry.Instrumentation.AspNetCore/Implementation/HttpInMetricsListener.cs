@@ -39,8 +39,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     private const string EventName = "OnStopActivity";
     private const string NetworkProtocolName = "http";
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
-    private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("httpContext");
-    private static readonly object ErrorTypeKey = "error.type";
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -110,7 +108,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             return;
         }
 
-        Activity.Current.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+        Activity.Current.SetCustomProperty(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
 
         // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
         // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
@@ -214,7 +212,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        var errorType = activity.GetTagValue(SemanticConventions.AttributeErrorType);
+        var errorType = activity.GetCustomProperty(SemanticConventions.AttributeErrorType);
         if (errorType != null)
         {
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
