@@ -29,7 +29,7 @@ namespace OpenTelemetry.Logs;
 #if EXPOSE_EXPERIMENTAL_FEATURES
 public
 #else
-    internal
+internal
 #endif
 static class OpenTelemetryDependencyInjectionLoggerProviderBuilderExtensions
 {
