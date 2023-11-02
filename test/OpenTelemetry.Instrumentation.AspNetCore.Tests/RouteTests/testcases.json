@@ -11,7 +11,7 @@
     "expectedHttpRoute": "ConventionalRoute/Default/{id?}"
   },
   {
-    "name": "Non-default action with route parameter and query string parameter",
+    "name": "Non-default action with route parameter and query string",
     "testApplicationScenario": "ConventionalRouting",
     "httpMethod": "GET",
     "path": "/ConventionalRoute/ActionWithStringParameter/2?num=3",
@@ -22,7 +22,7 @@
     "expectedHttpRoute": "ConventionalRoute/ActionWithStringParameter/{id?}"
   },
   {
-    "name": "Non-default action with query string parameter",
+    "name": "Non-default action with query string",
     "testApplicationScenario": "ConventionalRouting",
     "httpMethod": "GET",
     "path": "/ConventionalRoute/ActionWithStringParameter?num=3",

@@ -3,8 +3,8 @@
 | Span http.route | Metric http.route | App | Test Name |
 | - | - | - | - |
 | :broken_heart: | :broken_heart: | ConventionalRouting | [Root path](#conventionalrouting-root-path) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Non-default action with route parameter and query string parameter](#conventionalrouting-non-default-action-with-route-parameter-and-query-string-parameter) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Non-default action with query string parameter](#conventionalrouting-non-default-action-with-query-string-parameter) |
+| :broken_heart: | :broken_heart: | ConventionalRouting | [Non-default action with route parameter and query string](#conventionalrouting-non-default-action-with-route-parameter-and-query-string) |
+| :broken_heart: | :broken_heart: | ConventionalRouting | [Non-default action with query string](#conventionalrouting-non-default-action-with-query-string) |
 | :broken_heart: | :broken_heart: | ConventionalRouting | [Not Found (404)](#conventionalrouting-not-found-404) |
 | :broken_heart: | :green_heart: | ConventionalRouting | [Route template with parameter constraint](#conventionalrouting-route-template-with-parameter-constraint) |
 | :broken_heart: | :green_heart: | ConventionalRouting | [Path that does not match parameter constraint](#conventionalrouting-path-that-does-not-match-parameter-constraint) |
@@ -53,7 +53,7 @@
 }
 ```
 
-## ConventionalRouting: Non-default action with route parameter and query string parameter
+## ConventionalRouting: Non-default action with route parameter and query string
 
 ```json
 {
@@ -87,7 +87,7 @@
 }
 ```
 
-## ConventionalRouting: Non-default action with query string parameter
+## ConventionalRouting: Non-default action with query string
 
 ```json
 {
