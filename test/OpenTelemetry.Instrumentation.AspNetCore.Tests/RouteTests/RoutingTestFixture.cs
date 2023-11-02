@@ -84,44 +84,45 @@ public class RoutingTestFixture : IDisposable
         var sb = new StringBuilder();
         sb.AppendLine($"# Test results for ASP.NET Core {Environment.Version.Major}");
         sb.AppendLine();
-        sb.AppendLine("| | | display name | expected name (w/o http.method) | routing type | request |");
-        sb.AppendLine("| - | - | - | - | - | - |");
+        sb.AppendLine("| Span http.route | Metric http.route | App | Test Name |");
+        sb.AppendLine("| - | - | - | - |");
 
         for (var i = 0; i < this.testResults.Count; ++i)
         {
             var result = this.testResults[i];
-            var emoji = result.ActivityDisplayName.Equals(result.TestCase.ExpectedHttpRoute, StringComparison.InvariantCulture)
-                ? ":green_heart:"
-                : ":broken_heart:";
-            sb.Append($"| {emoji} | [{i + 1}](#{i + 1}) ");
-            sb.AppendLine(FormatTestResult(result));
+            var emoji1 = result.TestCase.CurrentActivityHttpRoute == null ? ":green_heart:" : ":broken_heart:";
+            var emoji2 = result.TestCase.CurrentMetricHttpRoute == null ? ":green_heart:" : ":broken_heart:";
+            sb.Append($"| {emoji1} | {emoji2} ");
+            sb.AppendLine($"| {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({this.MakeAnchorTag(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
         }
 
         for (var i = 0; i < this.testResults.Count; ++i)
         {
             var result = this.testResults[i];
             sb.AppendLine();
-            sb.AppendLine($"## {i + 1}");
+            sb.AppendLine($"## {result.TestCase.TestApplicationScenario}: {result.TestCase.Name}");
             sb.AppendLine();
             sb.AppendLine("```json");
-            sb.AppendLine(result.RouteInfo.ToString());
+            sb.AppendLine(result.ToString());
             sb.AppendLine("```");
         }
 
         var readmeFileName = $"README.net{Environment.Version.Major}.0.md";
         File.WriteAllText(Path.Combine("..", "..", "..", "RouteTests", readmeFileName), sb.ToString());
+    }
 
-        string FormatTestResult(TestResult result)
-        {
-            var testCase = result.TestCase!;
+    private string MakeAnchorTag(TestApplicationScenario scenario, string name)
+    {
+        var chars = name.ToCharArray()
+            .Where(c => !char.IsPunctuation(c) || c == '-')
+            .Select(c => c switch
+            {
+                '-' => '-',
+                ' ' => '-',
+                _ => char.ToLower(c),
+            })
+            .ToArray();
 
-            return $"| {string.Join(
-                " | ",
-                result.ActivityDisplayName, // TODO: should be result.HttpRoute, but http.route is not currently added to Activity
-                testCase.ExpectedHttpRoute,
-                testCase.TestApplicationScenario,
-                $"{testCase.HttpMethod} {testCase.Path}",
-                result.ActivityDisplayName)} |";
-        }
+        return $"#{scenario.ToString().ToLower()}-{new string(chars)}";
     }
 }

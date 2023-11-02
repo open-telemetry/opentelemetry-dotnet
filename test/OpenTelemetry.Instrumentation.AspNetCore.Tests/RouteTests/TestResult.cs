@@ -16,19 +16,30 @@
 
 #nullable enable
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace RouteTests;
 
 public class TestResult
 {
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new() { WriteIndented = true };
+
+    public string? IdealHttpRoute { get; set; }
+
     public string ActivityDisplayName { get; set; } = string.Empty;
 
-    public int HttpStatusCode { get; set; }
+    public string? ActivityHttpRoute { get; set; }
 
-    public string HttpMethod { get; set; } = string.Empty;
-
-    public string? HttpRoute { get; set; }
+    public string? MetricHttpRoute { get; set; }
 
     public RouteInfo RouteInfo { get; set; } = new RouteInfo();
 
+    [JsonIgnore]
     public RouteTestData.RouteTestCase TestCase { get; set; } = new RouteTestData.RouteTestCase();
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, JsonSerializerOptions);
+    }
 }

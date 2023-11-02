@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 #if NET8_0_OR_GREATER
@@ -31,8 +30,6 @@ namespace RouteTests;
 
 public class RouteInfo
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new() { WriteIndented = true };
-
     public string? HttpMethod { get; set; }
 
     public string? Path { get; set; }
@@ -70,11 +67,6 @@ public class RouteInfo
         {
             this.ActionDescriptor = new ActionDescriptorInfo(actionDescriptor);
         }
-    }
-
-    public override string ToString()
-    {
-        return JsonSerializer.Serialize(this, JsonSerializerOptions);
     }
 
     public class ActionDescriptorInfo

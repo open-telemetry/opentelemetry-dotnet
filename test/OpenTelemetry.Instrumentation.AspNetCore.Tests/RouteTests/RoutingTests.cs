@@ -136,10 +136,10 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
         var testResult = new TestResult
         {
+            IdealHttpRoute = testCase.ExpectedHttpRoute,
             ActivityDisplayName = activity.DisplayName,
-            HttpStatusCode = activityHttpStatusCode,
-            HttpMethod = activityHttpMethod,
-            HttpRoute = activityHttpRoute,
+            ActivityHttpRoute = activityHttpRoute,
+            MetricHttpRoute = metricHttpRoute,
             TestCase = testCase,
         };
 
