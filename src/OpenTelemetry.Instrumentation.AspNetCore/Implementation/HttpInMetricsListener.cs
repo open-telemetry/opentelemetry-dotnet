@@ -104,13 +104,13 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     public void OnExceptionEventWritten(string name, object payload)
     {
         // We need to use reflection here as the payload type is not a defined public type.
-        if (!TryFetchException(payload, out Exception exc) || !TryFetchHttpContext(payload, out HttpContext ctx))
+        if (!TryFetchException(payload, out Exception exc))
         {
-            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnExceptionEventWritten), HttpServerDurationMetricName);
+            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnExceptionEventWritten), HttpServerDurationMetricName);
             return;
         }
 
-        ctx.Items.Add(ErrorTypeKey, exc.GetType().FullName);
+        Activity.Current.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
 
         // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
         // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
@@ -120,12 +120,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 #endif
         static bool TryFetchException(object payload, out Exception exc)
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
-
-#if NET6_0_OR_GREATER
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The ASP.NET Core framework guarantees that top level properties are preserved")]
-#endif
-        static bool TryFetchHttpContext(object payload, out HttpContext ctx)
-            => HttpContextPropertyFetcher.TryFetch(payload, out ctx) && ctx != null;
     }
 
     public void OnEventWritten_Old(string name, object payload)
@@ -179,6 +173,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     public void OnEventWritten_New(string name, object payload)
     {
+        var activity = Activity.Current;
         var context = payload as HttpContext;
         if (context == null)
         {
@@ -219,8 +214,8 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-
-        if (context.Items.TryGetValue(ErrorTypeKey, out var errorType))
+        var errorType = activity.GetTagValue(SemanticConventions.AttributeErrorType);
+        if (errorType != null)
         {
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
         }
@@ -228,6 +223,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
         // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-        this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
+        this.httpServerRequestDuration.Record(activity.Duration.TotalSeconds, tags);
     }
 }
