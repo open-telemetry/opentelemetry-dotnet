@@ -572,6 +572,7 @@ public class MetricTests
 #else
             var errorType = new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, expectedErrorType);
 #endif
+            Assert.Contains(errorType, attributes);
         }
 
         // Inspect Histogram Bounds
