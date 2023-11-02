@@ -76,7 +76,7 @@
     <PackageVersion Include="Grpc.Tools" Version="[2.56.2,3.0)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[3.11.0-beta1.23402.2]" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="[3.1.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-rc.2.23479.6" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="[3.1.6,5.0)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="3.1.20" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.0,)" />
