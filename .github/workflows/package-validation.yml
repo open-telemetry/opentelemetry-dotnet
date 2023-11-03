@@ -9,6 +9,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
+        fetch-depth: 0
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
@@ -21,6 +26,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
+        fetch-depth: 0
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
