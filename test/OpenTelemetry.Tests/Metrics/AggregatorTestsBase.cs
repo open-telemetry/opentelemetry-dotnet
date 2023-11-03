@@ -270,7 +270,7 @@ public abstract class AggregatorTestsBase
             maxMetricPoints: 1024,
             this.emitOverflowAttribute);
 
-        KnownHistogramBuckets actualHistogramBounds;
+        KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
         if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
         {
             actualHistogramBounds = KnownHistogramBuckets.DefaultShortSeconds;
@@ -278,10 +278,6 @@ public abstract class AggregatorTestsBase
         else if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsLongSeconds)
         {
             actualHistogramBounds = KnownHistogramBuckets.DefaultLongSeconds;
-        }
-        else
-        {
-            actualHistogramBounds = KnownHistogramBuckets.Default;
         }
 
         Assert.NotNull(aggregatorStore.HistogramBounds);
