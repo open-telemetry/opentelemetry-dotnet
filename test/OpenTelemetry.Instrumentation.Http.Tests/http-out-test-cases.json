@@ -93,7 +93,6 @@
     "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "Error",
-    "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": false,
     "spanAttributes": {
@@ -111,7 +110,6 @@
     "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
     "spanName": "HTTP GET",
     "spanStatus": "Error",
-    "spanStatusHasDescription": true,
     "responseExpected": false,
     "recordException": true,
     "spanAttributes": {
