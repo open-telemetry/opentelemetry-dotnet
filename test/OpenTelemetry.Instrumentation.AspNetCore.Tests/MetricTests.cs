@@ -557,9 +557,15 @@ public class MetricTests
             histogramBounds.Add(t.ExplicitBound);
         }
 
-        Assert.Equal(
-            expected: new List<double> { 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
+        // TODO: Remove the check for the older bounds once 1.7.0 is released. This is a temporary fix for instrumentation libraries CI workflow.
+
+        var expectedHistogramBoundsOld = new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+        var expectedHistogramBoundsNew = new List<double> { 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+
+        var histogramBoundsMatchCorrectly = Enumerable.SequenceEqual(expectedHistogramBoundsOld, histogramBounds) ||
+            Enumerable.SequenceEqual(expectedHistogramBoundsNew, histogramBounds);
+
+        Assert.True(histogramBoundsMatchCorrectly);
 
         return attributes;
     }

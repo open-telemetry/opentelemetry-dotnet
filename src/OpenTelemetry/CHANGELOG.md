@@ -27,8 +27,9 @@
   their default histogram buckets as `[ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2,
   5, 10, 30, 60, 120, 300 ]`.
   ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
+  ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
 
-* Remove the bucket with value `0` for histogram buckets for metrics from
+* Remove the bucket with value `0` for histogram buckets for all metrics from
   ASP.NET Core and HttpClient.
   ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
 
