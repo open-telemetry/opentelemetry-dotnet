@@ -425,6 +425,11 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
+            if (this.emitNewAttributes)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+            }
+
             if (this.options.RecordException)
             {
                 activity.RecordException(exc);
