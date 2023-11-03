@@ -22,9 +22,16 @@ using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
 #endif
+#if !NETSTANDARD
+using System.Text.RegularExpressions;
+#endif
 using Microsoft.AspNetCore.Http;
-#if NET6_0_OR_GREATER
+#if !NETSTANDARD
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
 #if !NETSTANDARD2_0
@@ -202,7 +209,9 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
+
+            this.GetDisplayNameAndHttpMethod(request.Method, null, out var httpMethod, out var displayName);
+            activity.DisplayName = displayName;
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
             if (this.emitOldAttributes)
@@ -252,15 +261,9 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
+                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                if (!httpMethod.Equals(request.Method, StringComparison.InvariantCulture))
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
                 }
 
@@ -301,6 +304,20 @@ internal class HttpInListener : ListenerHandler
             }
 
             var response = context.Response;
+
+#if !NETSTANDARD
+            var httpRoute = activity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string;
+            if (string.IsNullOrEmpty(httpRoute))
+            {
+                var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+                if (!string.IsNullOrEmpty(routePattern))
+                {
+                    this.GetDisplayNameAndHttpMethod(context.Request.Method, routePattern, out var _, out var displayName);
+                    activity.DisplayName = displayName;
+                    activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
+                }
+            }
+#endif
 
             if (this.emitOldAttributes)
             {
@@ -393,14 +410,11 @@ internal class HttpInListener : ListenerHandler
 
         if (activity.IsAllDataRequested)
         {
-#if !NET6_0_OR_GREATER
+#if NETSTANDARD
             _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
             _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
             _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-#else
-            var beforeActionEventData = payload as BeforeActionEventData;
-            var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
-#endif
+
             if (!string.IsNullOrEmpty(template))
             {
                 // override the span name that was previously set to the path part of URL.
@@ -411,6 +425,23 @@ internal class HttpInListener : ListenerHandler
             // TODO: Should we get values from RouteData?
             // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
             // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
+#else
+            var beforeActionEventData = payload as BeforeActionEventData;
+            var httpContext = beforeActionEventData.HttpContext;
+            var actionDescriptor = beforeActionEventData.ActionDescriptor;
+            var template = actionDescriptor?.AttributeRouteInfo?.Template;
+
+            // The template will be null when application does not use attribute routing
+            // For attribute routing, the DisplayName and http.route will be set when
+            // the activity ends.
+            if (actionDescriptor != null && (string.IsNullOrEmpty(template) || actionDescriptor is PageActionDescriptor))
+            {
+                var httpRoute = GetHttpRouteFromActionDescriptor(httpContext, actionDescriptor);
+                this.GetDisplayNameAndHttpMethod(httpContext.Request.Method, httpRoute, out var _, out var displayName);
+                activity.DisplayName = displayName;
+                activity.SetTag(SemanticConventions.AttributeHttpRoute, httpRoute);
+            }
+#endif
         }
     }
 
@@ -456,6 +487,27 @@ internal class HttpInListener : ListenerHandler
         static bool TryFetchException(object payload, out Exception exc)
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
+
+#if !NETSTANDARD
+    private static string GetHttpRouteFromActionDescriptor(HttpContext httpContext, ActionDescriptor actionDescriptor)
+    {
+        var result = (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+
+        if (actionDescriptor is ControllerActionDescriptor cad)
+        {
+            var controllerRegex = new Regex(@"\{controller=.*?\}+?");
+            var actionRegex = new Regex(@"\{action=.*?\}+?");
+            result = controllerRegex.Replace(result, cad.ControllerName);
+            result = actionRegex.Replace(result, cad.ActionName);
+        }
+        else if (actionDescriptor is PageActionDescriptor pad)
+        {
+            result = pad.ViewEnginePath;
+        }
+
+        return result;
+    }
+#endif
 
     private static string GetUri(HttpRequest request)
     {
@@ -509,7 +561,28 @@ internal class HttpInListener : ListenerHandler
         grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
         return !string.IsNullOrEmpty(grpcMethod);
     }
+#endif
 
+    private void GetDisplayNameAndHttpMethod(string method, string httpRoute, out string httpMethod, out string displayName)
+    {
+        var isKnownHttpMethod = RequestMethodHelper.KnownMethods.TryGetValue(method, out httpMethod);
+        if (!isKnownHttpMethod && this.emitNewAttributes)
+        {
+            // Set to default "_OTHER" as per spec.
+            // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+            httpMethod = "_OTHER";
+        }
+        else
+        {
+            httpMethod = method;
+        }
+
+        displayName = string.IsNullOrEmpty(httpRoute)
+            ? httpMethod
+            : $"{httpMethod} {httpRoute}";
+    }
+
+#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
     {
