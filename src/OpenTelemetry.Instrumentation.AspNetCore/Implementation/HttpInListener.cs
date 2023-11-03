@@ -539,21 +539,8 @@ internal class HttpInListener : ListenerHandler
 
     private void GetDisplayNameAndHttpMethod(string method, string httpRoute, out string httpMethod, out string displayName)
     {
-        var isKnownHttpMethod = RequestMethodHelper.KnownMethods.TryGetValue(method, out httpMethod);
-        if (!isKnownHttpMethod && this.emitNewAttributes)
-        {
-            // Set to default "_OTHER" as per spec.
-            // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-            httpMethod = "_OTHER";
-        }
-        else
-        {
-            httpMethod = method;
-        }
-
-        displayName = string.IsNullOrEmpty(httpRoute)
-            ? httpMethod
-            : $"{httpMethod} {httpRoute}";
+        httpMethod = this.emitNewAttributes ? RequestMethodHelper.GetNormalizedHttpMethod(method) : method;
+        displayName = string.IsNullOrEmpty(httpRoute) ? httpMethod : $"{httpMethod} {httpRoute}";
     }
 
 #if !NETSTANDARD2_0

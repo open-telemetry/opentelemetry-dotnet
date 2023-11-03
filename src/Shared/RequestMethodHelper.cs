@@ -50,4 +50,13 @@ internal static class RequestMethodHelper
         KnownMethods = knownMethodSet;
 #endif
     }
+
+    public static string GetNormalizedHttpMethod(string method)
+    {
+        // Set to default "_OTHER" as per spec.
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+        return !KnownMethods.TryGetValue(method, out var httpMethod)
+            ? "_OTHER"
+            : httpMethod;
+    }
 }
