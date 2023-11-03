@@ -22,7 +22,7 @@
   * `signalr.server.connection.duration`
   * `kestrel.connection.duration`
   * `http.client.connection.duration`
-  
+
   These histogram metrics which have their `Unit` as `s` (second) will have
   their default histogram buckets as `[ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2,
   5, 10, 30, 60, 120, 300 ]`.
