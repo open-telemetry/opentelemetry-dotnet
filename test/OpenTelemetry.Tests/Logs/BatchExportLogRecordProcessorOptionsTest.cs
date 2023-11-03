@@ -64,7 +64,7 @@ public sealed class BatchExportLogRecordProcessorOptionsTest : IDisposable
     [Fact]
     public void ExportLogRecordProcessorOptions_UsingIConfiguration()
     {
-        var values = new Dictionary<string, string>()
+        var values = new Dictionary<string, string?>()
         {
             [BatchExportLogRecordProcessorOptions.MaxQueueSizeEnvVarKey] = "1",
             [BatchExportLogRecordProcessorOptions.MaxExportBatchSizeEnvVarKey] = "2",

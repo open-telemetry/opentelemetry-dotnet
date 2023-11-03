@@ -13,9 +13,9 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Condition="'$(TargetFramework)' == 'net462'" />
-    <PackageReference Include="System.Text.Json" Condition="'$(TargetFramework)' == 'net462'" />
+  <ItemGroup Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'">
+    <PackageReference Include="Microsoft.CSharp" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>
