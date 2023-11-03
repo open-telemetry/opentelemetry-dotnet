@@ -22,13 +22,8 @@ using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
 #endif
-#if !NETSTANDARD
-using System.Text.RegularExpressions;
-#endif
 using Microsoft.AspNetCore.Http;
 #if !NETSTANDARD
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
@@ -436,7 +431,7 @@ internal class HttpInListener : ListenerHandler
             // the activity ends.
             if (actionDescriptor != null && (string.IsNullOrEmpty(template) || actionDescriptor is PageActionDescriptor))
             {
-                var httpRoute = GetHttpRouteFromActionDescriptor(httpContext, actionDescriptor);
+                var httpRoute = HttpTagHelper.GetHttpRouteFromActionDescriptor(httpContext, actionDescriptor);
                 this.GetDisplayNameAndHttpMethod(httpContext.Request.Method, httpRoute, out var _, out var displayName);
                 activity.DisplayName = displayName;
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, httpRoute);
@@ -487,27 +482,6 @@ internal class HttpInListener : ListenerHandler
         static bool TryFetchException(object payload, out Exception exc)
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
-
-#if !NETSTANDARD
-    private static string GetHttpRouteFromActionDescriptor(HttpContext httpContext, ActionDescriptor actionDescriptor)
-    {
-        var result = (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-
-        if (actionDescriptor is ControllerActionDescriptor cad)
-        {
-            var controllerRegex = new Regex(@"\{controller=.*?\}+?");
-            var actionRegex = new Regex(@"\{action=.*?\}+?");
-            result = controllerRegex.Replace(result, cad.ControllerName);
-            result = actionRegex.Replace(result, cad.ActionName);
-        }
-        else if (actionDescriptor is PageActionDescriptor pad)
-        {
-            result = pad.ViewEnginePath;
-        }
-
-        return result;
-    }
-#endif
 
     private static string GetUri(HttpRequest request)
     {
