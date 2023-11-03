@@ -73,11 +73,11 @@ generated for a test case:
 > `/ConventionalRoute/ActionWithStringParameter/2?num=3`. Currently, we see
 > that the `http.route` attribute on the metric emitted is
 > `{controller=ConventionalRoute}/{action=Default}/{id?}` which was derived
-> using [`RoutePattern.RawText`](#routepatternrawtext). This is not ideal
+> using `RoutePattern.RawText`. This is not ideal
 > because the route template does not include the actual action that was
 > invoked `ActionWithStringParameter`. The invoked action could be derived
-> using either the [`ControllerActionDescriptor`](#controlleractiondescriptor)
-> or [`HttpContext.GetRouteData()`](#httpcontextgetroutedata).
+> using either the `ControllerActionDescriptor`
+> or `HttpContext.GetRouteData()`.
 
 ## ASP.NET Core APIs for retrieving route information
 
