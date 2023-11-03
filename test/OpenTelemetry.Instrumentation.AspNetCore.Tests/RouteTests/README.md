@@ -86,6 +86,15 @@ APIs available for retrieving route information.
 
 ### Retrieving the route template
 
+The route template can be obtained from `HttpContext` by retrieving the
+`RouteEndpoint` using the following two APIs.
+
+For attribute routing and minimal API scenarios, using the route template alone
+is sufficient for deriving `http.route` in all test cases.
+
+The route template does not well describe the `http.route` in conventional
+routing and some Razor page scenarios.
+
 #### [RoutePattern.RawText](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.routing.patterns.routepattern.rawtext)
 
 ```csharp
@@ -94,34 +103,56 @@ APIs available for retrieving route information.
 
 #### [IRouteDiagnosticsMetadata.Route](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.metadata.iroutediagnosticsmetadata.route)
 
+This API was introduced in .NET 8.
+
 ```csharp
 httpContext.GetEndpoint()?.Metadata.GetMetadata<IRouteDiagnosticsMetadata>()?.Route;
 ```
 
-### [HttpContext.GetRouteData()](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.routing.routinghttpcontextextensions.getroutedata)
+### RouteData
+
+`RouteData` can be retrieved from `HttpContext` using the `GetRouteData()`
+extension method. The values obtained from `RouteData` identify the controller/
+action or Razor page invoked by the request.
+
+#### [HttpContext.GetRouteData()](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.routing.routinghttpcontextextensions.getroutedata)
 
 ```csharp
-foreach (var value in context.GetRouteData().Values)
+foreach (var value in httpContext.GetRouteData().Values)
 {
     Console.WriteLine($"{value.Key} = {value.Value?.ToString()}");
 }
 ```
 
+For example, the above code produces something like:
+
+```text
+controller = ConventionalRoute
+action = ActionWithStringParameter
+id = 2
+```
+
 ### Information from the ActionDescriptor
 
+For requests that invoke an action or Razor page, the `ActionDescriptor` can
+be used to access route information.
+
 #### [AttributeRouteInfo.Template](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.routing.attributerouteinfo.template)
+
+The `AttributeRouteInfo.Template` is equivalent to using
+[other APIs for retrieving the route template](#retrieving-the-route-template)
+when using attribute routing. For conventional routing and Razor pages it will
+be `null`.
 
 ```csharp
 actionDescriptor.AttributeRouteInfo?.Template;
 ```
 
-#### [Parameters](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.abstractions.actiondescriptor.parameters#microsoft-aspnetcore-mvc-abstractions-actiondescriptor-parameters)
-
-```csharp
-actionDescriptor.Parameters;
-```
-
 #### [ControllerActionDescriptor](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllers.controlleractiondescriptor)
+
+For requests that invoke an action on a controller, the `ActionDescriptor`
+will be of type `ControllerActionDescriptor` which includes the controller and
+action name.
 
 ```csharp
 (actionDescriptor as ControllerActionDescriptor)?.ControllerName;
@@ -130,7 +161,44 @@ actionDescriptor.Parameters;
 
 #### [PageActionDescriptor](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.razorpages.pageactiondescriptor)
 
+For requests that invoke a Razor page, the `ActionDescriptor`
+will be of type `PageActionDescriptor` which includes the path to the invoked
+page.
+
 ```csharp
 (actionDescriptor as PageActionDescriptor)?.RelativePath;
 (actionDescriptor as PageActionDescriptor)?.ViewEnginePath;
+```
+
+#### [Parameters](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.abstractions.actiondescriptor.parameters#microsoft-aspnetcore-mvc-abstractions-actiondescriptor-parameters)
+
+The `ActionDescriptor.Parameters` property is interesting because it describes
+the actual parameters (type and name) of an invoked action method. Some APM
+products use `ActionDescriptor.Parameters` to more precisely describe the
+method an endpoint invokes since not all parameters may be present in the
+route template.
+
+Consider the following action method:
+
+```csharp
+public IActionResult SomeActionMethod(string id, int num) { ... }
+```
+
+Using conventional routing assuming a default route template
+`{controller=ConventionalRoute}/{action=Default}/{id?}`, the `SomeActionMethod`
+may match this route template. The route template describes the `id` parameter
+but not the `num` parameter.
+
+```csharp
+foreach (var parameter in actionDescriptor.Parameters)
+{
+    Console.WriteLine($"{parameter.Name}");
+}
+```
+
+The above code produces:
+
+```text
+id
+num
 ```
