@@ -110,6 +110,7 @@ internal static class SemanticConventions
     public const string AttributeExceptionType = "exception.type";
     public const string AttributeExceptionMessage = "exception.message";
     public const string AttributeExceptionStacktrace = "exception.stacktrace";
+    public const string AttributeErrorType = "error.type";
 
     // v1.21.0
     // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
@@ -129,4 +130,5 @@ internal static class SemanticConventions
     public const string AttributeUrlScheme = "url.scheme"; // replaces: "http.scheme" (AttributeHttpScheme)
     public const string AttributeUrlQuery = "url.query";
     public const string AttributeUserAgentOriginal = "user_agent.original"; // replaces: "http.user_agent" (AttributeHttpUserAgent)
+    public const string AttributeHttpRequestMethodOriginal = "http.request.method_original";
 }

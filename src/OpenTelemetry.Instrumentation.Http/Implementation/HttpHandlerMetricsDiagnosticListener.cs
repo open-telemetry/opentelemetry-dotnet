@@ -23,6 +23,7 @@ using System.Diagnostics.Metrics;
 using System.Net.Http;
 #endif
 using System.Reflection;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
@@ -125,8 +126,22 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
 
-                    var spanStatus = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode);
-                    if (spanStatus != ActivityStatusCode.Unset)
+                    if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
+                    {
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+                    }
+                    else
+                    {
+                        // Set to default "_OTHER" as per spec.
+                        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+                    }
+
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
+
+                    if (!request.RequestUri.IsDefaultPort)
                     {
                         tags.Add(new KeyValuePair<string, object>("error.type", TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
