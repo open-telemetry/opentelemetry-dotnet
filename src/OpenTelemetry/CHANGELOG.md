@@ -26,6 +26,10 @@
   0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120, 300 ]`.
   ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
 
+* Remove the bucket with value `0` for histogram buckets for metrics from
+  ASP.NET Core and HttpClient.
+  ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
