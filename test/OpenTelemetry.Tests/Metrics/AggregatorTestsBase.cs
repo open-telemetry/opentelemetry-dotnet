@@ -239,47 +239,49 @@ public abstract class AggregatorTestsBase
     }
 
     [Theory]
-    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration")]
-    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration")]
-    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration")]
-    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue")]
-    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration")]
-    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration")]
-    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration")]
-    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration")]
-    [InlineData("System.Net.Http", "http.client.connection.duration")]
-    [InlineData("System.Net.Http", "http.client.request.duration")]
-    [InlineData("System.Net.Http", "http.client.request.time_in_queue")]
-    [InlineData("System.Net.NameResolution", "dns.lookups.duration")]
-    [InlineData("General.App", "simple.alternative.counter")]
-    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName)
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", "By", KnownHistogramBuckets.Default)]
+    [InlineData("Microsoft.AspNetCore.Hosting", "http.server.request.duration", null, KnownHistogramBuckets.Default)]
+    [InlineData("Microsoft.AspNetCore.Http.Connections", "signalr.server.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
+    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
+    [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("System.Net.Http", "http.client.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
+    [InlineData("System.Net.Http", "http.client.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("System.Net.Http", "http.client.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("System.Net.NameResolution", "dns.lookups.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("General.App", "simple.alternative.counter", "s", KnownHistogramBuckets.Default)]
+    public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string unit, KnownHistogramBuckets expectedHistogramBuckets)
     {
-        RunTest(meterName, instrumentName, unit: "s");
-        RunTest(meterName, instrumentName, unit: "ms");
-        RunTest(meterName, instrumentName, unit: "By");
-        RunTest(meterName, instrumentName, unit: null);
+        using var meter = new Meter(meterName);
 
-        void RunTest(string meterName, string instrumentName, string unit)
+        var instrument = meter.CreateHistogram<double>(instrumentName, unit);
+
+        var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
+
+        AggregatorStore aggregatorStore = new(
+            metricStreamIdentity,
+            AggregationType.Histogram,
+            AggregationTemporality.Cumulative,
+            maxMetricPoints: 1024,
+            this.emitOverflowAttribute);
+
+        KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
+        if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
         {
-            using var meter = new Meter(meterName);
-
-            var instrument = meter.CreateHistogram<double>(instrumentName, unit);
-
-            var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
-
-            AggregatorStore aggregatorStore = new(
-                metricStreamIdentity,
-                AggregationType.Histogram,
-                AggregationTemporality.Cumulative,
-                maxMetricPoints: 1024,
-                this.emitOverflowAttribute);
-
-            Assert.NotNull(aggregatorStore.HistogramBounds);
-            Assert.Equal(
-                unit == "s" && Metric.DefaultHistogramBoundMappings.Contains((meterName, instrumentName)) ?
-                    Metric.DefaultHistogramBoundsSeconds : Metric.DefaultHistogramBounds,
-                aggregatorStore.HistogramBounds);
+            actualHistogramBounds = KnownHistogramBuckets.DefaultShortSeconds;
         }
+        else if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsLongSeconds)
+        {
+            actualHistogramBounds = KnownHistogramBuckets.DefaultLongSeconds;
+        }
+
+        Assert.NotNull(aggregatorStore.HistogramBounds);
+        Assert.Equal(expectedHistogramBuckets, actualHistogramBounds);
     }
 
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
