@@ -86,7 +86,6 @@ internal class TestApplicationFactory
         var app = builder.Build();
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
-        app.UseMiddleware<RouteInfoMiddleware>();
         app.UseStaticFiles();
         app.UseRouting();
 
@@ -121,7 +120,6 @@ internal class TestApplicationFactory
         var app = builder.Build();
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
-        app.UseMiddleware<RouteInfoMiddleware>();
         app.MapControllers();
 
         return app;
@@ -135,7 +133,6 @@ internal class TestApplicationFactory
         var app = builder.Build();
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
-        app.UseMiddleware<RouteInfoMiddleware>();
 
         var api = app.MapGroup("/MinimalApi");
         api.MapGet("/", () => Results.Ok());
@@ -159,7 +156,6 @@ internal class TestApplicationFactory
         var app = builder.Build();
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
-        app.UseMiddleware<RouteInfoMiddleware>();
         app.UseStaticFiles();
         app.UseRouting();
         app.MapRazorPages();

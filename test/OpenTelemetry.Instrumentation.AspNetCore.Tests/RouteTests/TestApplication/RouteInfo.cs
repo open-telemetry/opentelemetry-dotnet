@@ -30,6 +30,8 @@ namespace RouteTests.TestApplication;
 
 public class RouteInfo
 {
+    public static RouteInfo Current { get; set; } = new();
+
     public string? HttpMethod { get; set; }
 
     public string? Path { get; set; }

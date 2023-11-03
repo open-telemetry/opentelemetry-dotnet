@@ -17,7 +17,6 @@
 #nullable enable
 
 using System.Text;
-using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using RouteTests.TestApplication;
 
@@ -55,16 +54,9 @@ public class RoutingTestFixture : IDisposable
         await this.client.GetAsync(url).ConfigureAwait(false);
     }
 
-    public void AddTestResult(RoutingTestResult testResult)
+    public void AddTestResult(RoutingTestResult result)
     {
-        var app = this.apps[testResult.TestCase.TestApplicationScenario];
-        var baseUrl = app.Urls.First();
-        var url = $"{baseUrl}/GetLastRouteInfo";
-        var responseMessage = this.client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
-        var response = responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        var info = JsonSerializer.Deserialize<RouteInfo>(response);
-        testResult.RouteInfo = info!;
-        this.testResults.Add(testResult);
+        this.testResults.Add(result);
     }
 
     public void Dispose()

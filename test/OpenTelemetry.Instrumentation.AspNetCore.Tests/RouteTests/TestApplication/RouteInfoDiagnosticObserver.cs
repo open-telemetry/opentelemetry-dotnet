@@ -68,23 +68,18 @@ internal sealed class RouteInfoDiagnosticObserver : IDisposable, IObserver<Diagn
                 Debug.Assert(context != null, "HttpContext was null");
                 info = new RouteInfo();
                 info.SetValues(context);
-                context.Items["RouteInfo"] = info;
+                RouteInfo.Current = info;
                 break;
             case OnMvcBeforeActionEvent:
                 actionMethodEventData = value.Value as BeforeActionEventData;
                 Debug.Assert(actionMethodEventData != null, $"expected {nameof(BeforeActionEventData)}");
-                info = actionMethodEventData.HttpContext.Items["RouteInfo"] as RouteInfo;
-                Debug.Assert(info != null, "RouteInfo object not present in context.Items");
-                info.SetValues(actionMethodEventData.HttpContext);
-                info.SetValues(actionMethodEventData.ActionDescriptor);
+                RouteInfo.Current.SetValues(actionMethodEventData.HttpContext);
+                RouteInfo.Current.SetValues(actionMethodEventData.ActionDescriptor);
                 break;
             case OnStopEvent:
                 context = value.Value as HttpContext;
                 Debug.Assert(context != null, "HttpContext was null");
-                info = context.Items["RouteInfo"] as RouteInfo;
-                Debug.Assert(info != null, "RouteInfo object not present in context.Items");
-                info.SetValues(context);
-                RouteInfoMiddleware.RouteInfos.Add(info);
+                RouteInfo.Current.SetValues(context);
                 break;
             default:
                 break;

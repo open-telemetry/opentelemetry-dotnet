@@ -20,6 +20,7 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using RouteTests.TestApplication;
 using Xunit;
 
 namespace RouteTests;
@@ -45,7 +46,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public async Task TestRoutes(RoutingTestCases.TestCase testCase, bool useLegacyConventions)
+    public async Task TestHttpRoute(RoutingTestCases.TestCase testCase, bool useLegacyConventions)
     {
         var previousSetting = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
         Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", useLegacyConventions ? null : "http");
@@ -134,18 +135,19 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
             Assert.Equal(testCase.ExpectedHttpRoute, metricHttpRoute);
         }
 
-        var testResult = new RoutingTestResult
-        {
-            IdealHttpRoute = testCase.ExpectedHttpRoute,
-            ActivityDisplayName = activity.DisplayName,
-            ActivityHttpRoute = activityHttpRoute,
-            MetricHttpRoute = metricHttpRoute,
-            TestCase = testCase,
-        };
-
         // Only produce README files based on final semantic conventions
         if (!useLegacyConventions)
         {
+            var testResult = new RoutingTestResult
+            {
+                IdealHttpRoute = testCase.ExpectedHttpRoute,
+                ActivityDisplayName = activity.DisplayName,
+                ActivityHttpRoute = activityHttpRoute,
+                MetricHttpRoute = metricHttpRoute,
+                TestCase = testCase,
+                RouteInfo = RouteInfo.Current,
+            };
+
             this.fixture.AddTestResult(testResult);
         }
 
