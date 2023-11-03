@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  run-dotnet-format:
+  run-dotnet-format-stable:
     runs-on: windows-latest
 
     steps:
@@ -14,8 +14,28 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install dotnet-format
-      run: dotnet tool install -g dotnet-format
+    - name: dotnet restore
+      run: dotnet restore
 
     - name: dotnet format
-      run: dotnet-format --folder --check
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      env:
+        ExposeExperimentalFeatures: false
+
+  run-dotnet-format-experimental:
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: dotnet restore
+      run: dotnet restore
+
+    - name: dotnet format
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      env:
+        ExposeExperimentalFeatures: true
