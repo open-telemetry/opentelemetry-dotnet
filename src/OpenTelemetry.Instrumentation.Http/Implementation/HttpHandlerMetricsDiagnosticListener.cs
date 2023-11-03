@@ -44,6 +44,11 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<HttpRequestMessage> StopRequestFetcher = new("Request");
     private static readonly PropertyFetcher<HttpResponseMessage> StopResponseFetcher = new("Response");
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
+    private static readonly PropertyFetcher<HttpRequestMessage> RequestFetcher = new("Request");
+#if NET6_0_OR_GREATER
+    private static readonly HttpRequestOptionsKey<string> HttpRequestOptionsErrorKey = new HttpRequestOptionsKey<string>(SemanticConventions.AttributeErrorType);
+#endif
+
     private readonly HttpClientMetricInstrumentationOptions options;
     private readonly bool emitOldAttributes;
     private readonly bool emitNewAttributes;
@@ -112,7 +117,17 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
             {
                 TagList tags = default;
 
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)));
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
+                {
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+                }
+                else
+                {
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+                }
+
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
@@ -126,33 +141,22 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
 
-                    if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
+                    if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)response.StatusCode) == ActivityStatusCode.Error)
                     {
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
-                    }
-                    else
-                    {
-                        // Set to default "_OTHER" as per spec.
-                        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
-                    }
-
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
-                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
-
-                    if (!request.RequestUri.IsDefaultPort)
-                    {
-                        tags.Add(new KeyValuePair<string, object>("error.type", TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
                     }
                 }
 
                 if (response == null)
                 {
-                    var errorType = activity.GetTagValue("error.type");
+#if !NET6_0_OR_GREATER
+                    request.Properties.TryGetValue(SemanticConventions.AttributeErrorType, out var errorType);
+#else
+                    request.Options.TryGetValue(HttpRequestOptionsErrorKey, out var errorType);
+#endif
                     if (errorType != null)
                     {
-                        tags.Add(new KeyValuePair<string, object>("error.type", errorType));
+                        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
                     }
                 }
 
@@ -182,13 +186,17 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 
     public void OnExceptionEventWritten(Activity activity, object payload)
     {
-        if (!TryFetchException(payload, out Exception exc))
+        if (!TryFetchException(payload, out Exception exc) || !TryFetchRequest(payload, out HttpRequestMessage request))
         {
-            HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnExceptionEventWritten));
+            HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerMetricsDiagnosticListener), nameof(this.OnExceptionEventWritten));
             return;
         }
 
-        activity.SetTag("error.type", exc.GetType().FullName);
+#if !NET6_0_OR_GREATER
+        request.Properties.Add(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+#else
+        request.Options.Set(HttpRequestOptionsErrorKey, exc.GetType().FullName);
+#endif
 
         // The AOT-annotation DynamicallyAccessedMembers in System.Net.Http library ensures that top-level properties on the payload object are always preserved.
         // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
@@ -198,6 +206,21 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
         static bool TryFetchException(object payload, out Exception exc)
         {
             if (!StopExceptionFetcher.TryFetch(payload, out exc) || exc == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        // The AOT-annotation DynamicallyAccessedMembers in System.Net.Http library ensures that top-level properties on the payload object are always preserved.
+        // see https://github.com/dotnet/runtime/blob/f9246538e3d49b90b0e9128d7b1defef57cd6911/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L325
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The event source guarantees that top-level properties are preserved")]
+#endif
+        static bool TryFetchRequest(object payload, out HttpRequestMessage request)
+        {
+            if (!RequestFetcher.TryFetch(payload, out request) || request == null)
             {
                 return false;
             }

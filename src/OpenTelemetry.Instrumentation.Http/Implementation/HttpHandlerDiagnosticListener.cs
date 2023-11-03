@@ -286,7 +286,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                     if (activity.Status == ActivityStatusCode.Error)
                     {
-                        activity.SetTag("error.type", TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                        activity.SetTag(SemanticConventions.AttributeErrorType, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                     }
                 }
 
@@ -341,6 +341,16 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
+            if (this.emitNewAttributes)
+            {
+#if NET8_0_OR_GREATER
+                var errorType = GetErrorType(exc);
+#else
+                var errorType = exc.GetType().FullName;
+#endif
+                activity.SetTag(SemanticConventions.AttributeErrorType, errorType);
+            }
+
             if (this.options.RecordException)
             {
                 activity.RecordException(exc);
@@ -376,4 +386,35 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             return true;
         }
     }
+
+#if NET8_0_OR_GREATER
+    private static object GetErrorType(Exception exc)
+    {
+        var httpRequestException = exc as HttpRequestException;
+        if (httpRequestException != null)
+        {
+            return httpRequestException.HttpRequestError switch
+            {
+                HttpRequestError.NameResolutionError => "name_resolution_error",
+                HttpRequestError.ConnectionError => "connection_error",
+                HttpRequestError.SecureConnectionError => "secure_connection_error",
+                HttpRequestError.HttpProtocolError => "http_protocol_error",
+                HttpRequestError.ExtendedConnectNotSupported => "extended_connect_not_supported",
+                HttpRequestError.VersionNegotiationError => "version_negotiation_error",
+                HttpRequestError.UserAuthenticationError => "user_authentication_error",
+                HttpRequestError.ProxyTunnelError => "proxy_tunnel_error",
+                HttpRequestError.InvalidResponse => "invalid_response",
+                HttpRequestError.ResponseEnded => "response_ended",
+                HttpRequestError.ConfigurationLimitExceeded => "configuration_limit_exceeded",
+
+                // Fall back to the exception type name in case of HttpRequestError.Unknown
+                _ => exc.GetType().FullName,
+            };
+        }
+        else
+        {
+            return exc.GetType().FullName;
+        }
+    }
+#endif
 }
