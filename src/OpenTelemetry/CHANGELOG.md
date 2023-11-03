@@ -21,9 +21,11 @@
   metrics from ASP.NET Core and HttpClient runtime:
   * `signalr.server.connection.duration`
   * `kestrel.connection.duration`
-  * `http.client.connection.duration` These histogram metrics which have their
-  `Unit` as `s` (second) will have their default histogram buckets as `[ 0.01,
-  0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 120, 300 ]`.
+  * `http.client.connection.duration`
+  
+  These histogram metrics which have their `Unit` as `s` (second) will have
+  their default histogram buckets as `[ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2,
+  5, 10, 30, 60, 120, 300 ]`.
   ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
 
 * Remove the bucket with value `0` for histogram buckets for metrics from
