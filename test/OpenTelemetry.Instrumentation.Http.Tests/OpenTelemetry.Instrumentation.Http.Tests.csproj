@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net462'" />
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
   </ItemGroup>
 
   <ItemGroup>
