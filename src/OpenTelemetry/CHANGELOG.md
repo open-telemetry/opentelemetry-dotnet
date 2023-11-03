@@ -11,9 +11,11 @@
   `autoGenerateServiceInstanceId` is `true`.
   ([#4988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4988))
 
-* Fixed a bug where isSampled parameter wasn't properly checked in certain cases
-  within the `UpdateWithExemplar` method of `MetricPoint`.
-  ([#4851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+* Fixed a Metrics SDK bug which led to `ExemplarReservoir.Offer` always being
+  called regardless of whether or not the `ExemplarFilter` sampled the
+  measurement.
+  ([#5004](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+  ([#5016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5016))
 
 * Update `AggregatorStore` to provide known connection metrics with larger
   histogram buckets.
