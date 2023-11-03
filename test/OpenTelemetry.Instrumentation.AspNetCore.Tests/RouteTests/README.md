@@ -14,7 +14,7 @@ ASP.NET Core:
 * [Razor pages](https://learn.microsoft.com/aspnet/core/razor-pages/razor-pages-conventions)
 * [Minimal APIs](https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis/route-handlers)
 
-The individual test cases are defined in [RoutingTestCases.json](./RoutingTestCases.json).
+The individual test cases are defined in RoutingTestCases.json.
 
 The test suite is unique in that, when run, it generates README files for each
 target framework which aids in documenting how the instrumentation behaves for
