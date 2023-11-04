@@ -57,6 +57,6 @@ internal static class RequestMethodHelper
 
     public static bool IsWellKnownHttpMethod(string method)
     {
-        return !KnownMethods.TryGetValue(method, out var _);
+        return KnownMethods.TryGetValue(method, out var _);
     }
 }

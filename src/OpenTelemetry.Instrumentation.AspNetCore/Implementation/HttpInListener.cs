@@ -539,10 +539,16 @@ internal class HttpInListener : ListenerHandler
 
     private string GetDisplayName(string httpMethod, string httpRoute = null)
     {
-        var normalizedMethod = this.emitNewAttributes && RequestMethodHelper.IsWellKnownHttpMethod(httpMethod)
-            ? httpMethod
-            : RequestMethodHelper.OtherHttpMethod;
-        return string.IsNullOrEmpty(httpRoute) ? httpMethod : $"{normalizedMethod} {httpRoute}";
+        var normalizedMethod = httpMethod;
+
+        if (this.emitNewAttributes)
+        {
+            normalizedMethod = RequestMethodHelper.IsWellKnownHttpMethod(httpMethod)
+                ? httpMethod
+                : RequestMethodHelper.OtherHttpMethod;
+        }
+
+        return string.IsNullOrEmpty(httpRoute) ? normalizedMethod : $"{normalizedMethod} {httpRoute}";
     }
 
 #if !NETSTANDARD2_0
