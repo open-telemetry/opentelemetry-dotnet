@@ -204,9 +204,7 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-
-            this.GetDisplayNameAndHttpMethod(request.Method, null, out var httpMethod, out var displayName);
-            activity.DisplayName = displayName;
+            activity.DisplayName = this.GetDisplayName(request.Method);
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
             if (this.emitOldAttributes)
@@ -256,9 +254,13 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                if (!httpMethod.Equals(request.Method, StringComparison.InvariantCulture))
+                if (RequestMethodHelper.IsWellKnownHttpMethod(request.Method))
                 {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                }
+                else
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, RequestMethodHelper.OtherHttpMethod);
                     activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
                 }
 
@@ -307,8 +309,7 @@ internal class HttpInListener : ListenerHandler
                 var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
                 if (!string.IsNullOrEmpty(routePattern))
                 {
-                    this.GetDisplayNameAndHttpMethod(context.Request.Method, routePattern, out var _, out var displayName);
-                    activity.DisplayName = displayName;
+                    activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
                     activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
                 }
             }
@@ -432,8 +433,7 @@ internal class HttpInListener : ListenerHandler
             if (actionDescriptor != null && (string.IsNullOrEmpty(template) || actionDescriptor is PageActionDescriptor))
             {
                 var httpRoute = HttpTagHelper.GetHttpRouteFromActionDescriptor(httpContext, actionDescriptor);
-                this.GetDisplayNameAndHttpMethod(httpContext.Request.Method, httpRoute, out var _, out var displayName);
-                activity.DisplayName = displayName;
+                activity.DisplayName = this.GetDisplayName(httpContext.Request.Method, httpRoute);
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, httpRoute);
             }
 #endif
@@ -537,10 +537,12 @@ internal class HttpInListener : ListenerHandler
     }
 #endif
 
-    private void GetDisplayNameAndHttpMethod(string method, string httpRoute, out string httpMethod, out string displayName)
+    private string GetDisplayName(string httpMethod, string httpRoute = null)
     {
-        httpMethod = this.emitNewAttributes ? RequestMethodHelper.GetNormalizedHttpMethod(method) : method;
-        displayName = string.IsNullOrEmpty(httpRoute) ? httpMethod : $"{httpMethod} {httpRoute}";
+        var normalizedMethod = this.emitNewAttributes && RequestMethodHelper.IsWellKnownHttpMethod(httpMethod)
+            ? httpMethod
+            : RequestMethodHelper.OtherHttpMethod;
+        return string.IsNullOrEmpty(httpRoute) ? httpMethod : $"{normalizedMethod} {httpRoute}";
     }
 
 #if !NETSTANDARD2_0
