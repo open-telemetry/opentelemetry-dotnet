@@ -535,25 +535,25 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    this.UpdateHistogram((double)number, tags, true);
+                    this.UpdateHistogram((double)number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    this.UpdateHistogramWithMinMax((double)number, tags, true);
+                    this.UpdateHistogramWithMinMax((double)number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    this.UpdateHistogramWithBuckets((double)number, tags, true);
+                    this.UpdateHistogramWithBuckets((double)number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, true);
+                    this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
@@ -762,25 +762,25 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    this.UpdateHistogram(number, tags, true);
+                    this.UpdateHistogram(number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    this.UpdateHistogramWithMinMax(number, tags, true);
+                    this.UpdateHistogramWithMinMax(number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    this.UpdateHistogramWithBuckets(number, tags, true);
+                    this.UpdateHistogramWithBuckets(number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    this.UpdateHistogramWithBucketsAndMinMax(number, tags, true);
+                    this.UpdateHistogramWithBucketsAndMinMax(number, tags, reportExemplar: true, isSampled);
                     break;
                 }
 
@@ -1384,7 +1384,7 @@ public struct MetricPoint
         Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
     }
 
-    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -1398,7 +1398,7 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
         }
 
-        if (reportExemplar)
+        if (reportExemplar && isSampled)
         {
             Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
@@ -1410,7 +1410,7 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -1426,7 +1426,7 @@ public struct MetricPoint
             histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
         }
 
-        if (reportExemplar)
+        if (reportExemplar && isSampled)
         {
             Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
@@ -1438,7 +1438,7 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -1456,7 +1456,7 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
             histogramBuckets.RunningBucketCounts![i]++;
 
-            if (reportExemplar)
+            if (reportExemplar && isSampled)
             {
                 Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
@@ -1469,7 +1469,7 @@ public struct MetricPoint
         ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
     }
 
-    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
+    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
     {
         Debug.Assert(this.mpComponents?.HistogramBuckets != null, "histogramBuckets was null");
 
@@ -1487,7 +1487,7 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
             histogramBuckets.RunningBucketCounts![i]++;
 
-            if (reportExemplar)
+            if (reportExemplar && isSampled)
             {
                 Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 

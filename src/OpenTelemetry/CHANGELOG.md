@@ -11,9 +11,31 @@
   `autoGenerateServiceInstanceId` is `true`.
   ([#4988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4988))
 
-* Fixed a bug where isSampled parameter wasn't properly checked in certain cases
-  within the `UpdateWithExemplar` method of `MetricPoint`.
-  ([#4851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+* Fixed a Metrics SDK bug which led to `ExemplarReservoir.Offer` always being
+  called regardless of whether or not the `ExemplarFilter` sampled the
+  measurement.
+  ([#5004](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+  ([#5016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5016))
+
+* Update Metrics SDK to override the default histogram buckets for the following
+  metrics from ASP.NET Core and HttpClient runtime:
+  * `signalr.server.connection.duration`
+  * `kestrel.connection.duration`
+  * `http.client.connection.duration`
+
+  These histogram metrics which have their `Unit` as `s` (second) will have
+  their default histogram buckets as `[ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2,
+  5, 10, 30, 60, 120, 300 ]`.
+  ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
+  ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
+
+* Remove the bucket with value `0` for histogram buckets for all metrics from
+  ASP.NET Core and HttpClient.
+  ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
+
+* Updated `Microsoft.Extensions.Logging.Configuration` package version to
+  `8.0.0-rc.2.23479.6`.
+  ([#5020](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5020))
 
 ## 1.7.0-alpha.1
 
