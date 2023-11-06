@@ -20,7 +20,7 @@ using Microsoft.Extensions.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
 
-internal sealed class OpenTelemetryMetricListener : IMetricsListener
+internal sealed class OpenTelemetryMetricListener : IMetricsListener, IDisposable
 {
     private readonly MeterProviderSdk meterProviderSdk;
     private IObservableInstrumentsSource? observableInstrumentsSource;
@@ -33,13 +33,15 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
 
         this.meterProviderSdk = meterProviderSdk!;
 
-        this.meterProviderSdk.OnCollectObservableInstruments += () =>
-        {
-            this.observableInstrumentsSource?.RecordObservableInstruments();
-        };
+        this.meterProviderSdk.OnCollectObservableInstruments += this.OnCollectObservableInstruments;
     }
 
     public string Name => "OpenTelemetry";
+
+    public void Dispose()
+    {
+        this.meterProviderSdk.OnCollectObservableInstruments -= this.OnCollectObservableInstruments;
+    }
 
     public MeasurementHandlers GetMeasurementHandlers()
     {
@@ -81,6 +83,11 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener
     public void Initialize(IObservableInstrumentsSource source)
     {
         this.observableInstrumentsSource = source;
+    }
+
+    private void OnCollectObservableInstruments()
+    {
+        this.observableInstrumentsSource?.RecordObservableInstruments();
     }
 
     private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)

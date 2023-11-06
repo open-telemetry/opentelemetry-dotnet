@@ -14,6 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+#if BUILDING_HOSTING_TESTS
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.Metrics;
+using Microsoft.Extensions.Hosting;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
@@ -21,6 +27,51 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricTestsBase
 {
     public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+
+    public static IDisposable BuildMeterProvider(
+        out MeterProvider meterProvider,
+        Action<MeterProviderBuilder> configure)
+    {
+        if (configure == null)
+        {
+            throw new ArgumentNullException(nameof(configure));
+        }
+
+#if BUILDING_HOSTING_TESTS
+        var hostBuilder = new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddMetrics(builder => builder.UseOpenTelemetry(
+                    metricsBuilder =>
+                    {
+                        IServiceCollection localServices = null;
+
+                        metricsBuilder.ConfigureServices(services => localServices = services);
+
+                        Debug.Assert(localServices != null, "localServices was null");
+
+                        var testBuilder = new HostingMeterProviderBuilder(localServices);
+                        configure(testBuilder);
+                    }));
+
+                services.AddHostedService<MetricsSubscriptionManagerCleanupHostedService>();
+            });
+
+        var host = hostBuilder.Build();
+
+        host.Start();
+
+        meterProvider = host.Services.GetService<MeterProvider>();
+
+        return host;
+#else
+        var builder = Sdk.CreateMeterProviderBuilder();
+
+        configure(builder);
+
+        return meterProvider = builder.Build();
+#endif
+    }
 
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
@@ -133,4 +184,59 @@ public class MetricTestsBase
     {
         return mp.GetExemplars().Where(exemplar => exemplar.Timestamp != default).ToArray();
     }
+
+#if BUILDING_HOSTING_TESTS
+    private class MetricsSubscriptionManagerCleanupHostedService : IHostedService, IDisposable
+    {
+        private readonly object metricsSubscriptionManager;
+
+        public MetricsSubscriptionManagerCleanupHostedService(IServiceProvider serviceProvider)
+        {
+            this.metricsSubscriptionManager = serviceProvider.GetService(
+                typeof(ConsoleMetrics).Assembly.GetType("Microsoft.Extensions.Diagnostics.Metrics.MetricsSubscriptionManager"));
+
+            if (this.metricsSubscriptionManager == null)
+            {
+                throw new InvalidOperationException("MetricsSubscriptionManager could not be found reflectively.");
+            }
+        }
+
+        public void Dispose()
+        {
+            // Note: The current version of MetricsSubscriptionManager seems to
+            // be bugged in that it doesn't implement IDisposable. This hack
+            // manually invokes Dispose so that tests don't clobber each other.
+            // See: https://github.com/dotnet/runtime/issues/94434.
+            this.metricsSubscriptionManager.GetType().GetMethod("Dispose").Invoke(this.metricsSubscriptionManager, null);
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task StopAsync(CancellationToken cancellationToken)
+            => Task.CompletedTask;
+    }
+
+    private class HostingMeterProviderBuilder : MeterProviderBuilderBase
+    {
+        public HostingMeterProviderBuilder(IServiceCollection services)
+            : base(services)
+        {
+        }
+
+        public override MeterProviderBuilder AddMeter(params string[] names)
+        {
+            return this.ConfigureServices(services =>
+            {
+                foreach (var name in names)
+                {
+                    // Note: The entire purpose of this class is to use the
+                    // IMetricsBuilder API to enable Metrics and NOT the
+                    // traditional AddMeter API.
+                    services.AddMetrics(builder => builder.EnableMetrics(name));
+                }
+            });
+        }
+    }
+#endif
 }
