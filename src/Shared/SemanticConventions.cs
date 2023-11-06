@@ -110,6 +110,7 @@ internal static class SemanticConventions
     public const string AttributeExceptionType = "exception.type";
     public const string AttributeExceptionMessage = "exception.message";
     public const string AttributeExceptionStacktrace = "exception.stacktrace";
+    public const string AttributeErrorType = "error.type";
 
     // v1.21.0
     // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
