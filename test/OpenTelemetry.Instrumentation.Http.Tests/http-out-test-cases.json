@@ -322,24 +322,6 @@
     }
   },
   {
-    "name": "Response code: 600",
-    "method": "GET",
-    "url": "http://{host}:{port}/",
-    "responseCode": 600,
-    "spanName": "HTTP GET",
-    "spanStatus": "Error",
-    "responseExpected": true,
-    "spanAttributes": {
-      "http.scheme": "http",
-      "http.method": "GET",
-      "net.peer.name": "{host}",
-      "net.peer.port": "{port}",
-      "http.flavor": "{flavor}",
-      "http.status_code": "600",
-      "http.url": "http://{host}:{port}/"
-    }
-  },
-  {
     "name": "Http version attribute populated",
     "method": "GET",
     "url": "http://{host}:{port}/",

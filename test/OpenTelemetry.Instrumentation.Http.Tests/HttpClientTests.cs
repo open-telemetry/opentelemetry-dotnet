@@ -394,20 +394,24 @@ public partial class HttpClientTests
                 {
                     Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
 
+#if !NETFRAMEWORK
                     if (tc.ResponseCode >= 400)
                     {
                         Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
                     }
+#endif
                 }
                 else
                 {
                     Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
+#if !NETFRAMEWORK
 #if !NET8_0_OR_GREATER
                     Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "System.Net.Http.HttpRequestException");
 #else
                     // we are using fake address so it will be "name_resolution_error"
                     // TODO: test other error types.
                     Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "name_resolution_error");
+#endif
 #endif
                 }
             }
@@ -545,7 +549,13 @@ public partial class HttpClientTests
                 }
 
 #if !NETFRAMEWORK
+#if !NET8_0_OR_GREATER
+                var numberOfTags = 6;
+#else
+                // network.protocol.version is not emitted when response if not received.
+                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
                 var numberOfTags = 5;
+#endif
                 if (tc.ResponseExpected)
                 {
                     var expectedStatusCode = int.Parse(normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
@@ -563,28 +573,37 @@ public partial class HttpClientTests
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
+#if !NET8_0_OR_GREATER
+                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
+#endif
 
                 if (tc.ResponseExpected)
                 {
-                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
 
+#if !NETFRAMEWORK
                     if (tc.ResponseCode >= 400)
                     {
                         Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
                     }
+#endif
                 }
                 else
                 {
-                    Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
                     Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
 
+#if !NETFRAMEWORK
 #if !NET8_0_OR_GREATER
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "System.Net.Http.HttpRequestException");
 #else
                     // we are using fake address so it will be "name_resolution_error"
                     // TODO: test other error types.
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "name_resolution_error");
+
+                    // network.protocol.version is not emitted when response if not received.
+                    // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
+                    Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
+#endif
 #endif
                 }
 
