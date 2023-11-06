@@ -18,6 +18,19 @@
   `http` or `http/dup`.
   ([#5003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5003))
 
+* An additional attribute `error.type` will be added to activity and
+  `http.client.request.duration` metric in case of failed requests as per the
+  [specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes).
+
+  Users moving to `net8.0` or newer frameworks from lower versions will see
+  difference in values in case of an exception. `net8.0` or newer frameworks adds
+  the ability to further drilldown the exceptions to a specific type through
+  [HttpRequestError](https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0)
+  enum. For lower versions the individual types will be rolled in to a single
+  type. This could be a **breaking change** if alerts are set based on the values.
+
+  ([#5005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5005))
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26
