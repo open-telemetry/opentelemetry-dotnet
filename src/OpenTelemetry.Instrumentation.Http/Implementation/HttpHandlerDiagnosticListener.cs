@@ -344,6 +344,8 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             if (this.emitNewAttributes)
             {
 #if NET8_0_OR_GREATER
+                // For net8.0 and above exception type can be found using HttpRequestError.
+                // https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0
                 var errorType = GetErrorType(exc);
 #else
                 var errorType = exc.GetType().FullName;

@@ -141,6 +141,8 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
                 {
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
 
+                    // Set error.type to status code for failed requests
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
                     if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)response.StatusCode) == ActivityStatusCode.Error)
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
@@ -154,6 +156,9 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 #else
                     request.Options.TryGetValue(HttpRequestOptionsErrorKey, out var errorType);
 #endif
+
+                    // Set error.type to exception type if response was not received.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes
                     if (errorType != null)
                     {
                         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
