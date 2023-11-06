@@ -29,6 +29,9 @@
   enum. For lower versions the individual types will be rolled in to a single
   type. This could be a **breaking change** if alerts are set based on the values.
 
+  The attribute will only be added when `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable is set to `http` or `http/dup`.
+
   ([#5005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5005))
 
 ## 1.6.0-beta.2
