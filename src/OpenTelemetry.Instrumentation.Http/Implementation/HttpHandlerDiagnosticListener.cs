@@ -343,14 +343,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
             if (this.emitNewAttributes)
             {
-#if NET8_0_OR_GREATER
-                // For net8.0 and above exception type can be found using HttpRequestError.
-                // https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0
-                var errorType = GetErrorType(exc);
-#else
-                var errorType = exc.GetType().FullName;
-#endif
-                activity.SetTag(SemanticConventions.AttributeErrorType, errorType);
+                activity.SetTag(SemanticConventions.AttributeErrorType, GetErrorType(exc));
             }
 
             if (this.options.RecordException)
@@ -389,9 +382,11 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         }
     }
 
-#if NET8_0_OR_GREATER
     private static string GetErrorType(Exception exc)
     {
+#if NET8_0_OR_GREATER
+        // For net8.0 and above exception type can be found using HttpRequestError.
+        // https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0
         var httpRequestException = exc as HttpRequestException;
         if (httpRequestException != null)
         {
@@ -417,6 +412,8 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         {
             return exc.GetType().FullName;
         }
-    }
+#else
+        return exc.GetType().FullName;
 #endif
+    }
 }
