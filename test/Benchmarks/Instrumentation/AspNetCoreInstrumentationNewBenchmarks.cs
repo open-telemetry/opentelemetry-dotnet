@@ -28,57 +28,18 @@ using OpenTelemetry.Trace;
 /*
 // * Summary *
 
-BenchmarkDotNet=v0.13.5, OS=Windows 11 (10.0.22621.1992/22H2/2022Update/SunValley2), VM=Hyper-V
-AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
-.NET SDK=7.0.306
-  [Host]     : .NET 7.0.9 (7.0.923.32018), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.9 (7.0.923.32018), X64 RyuJIT AVX2
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.22631.2428/23H2/2023Update/SunValley3)
+Intel Core i7-8850H CPU 2.60GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical cores
+.NET SDK 8.0.100-rc.2.23502.2
+  [Host]     : .NET 8.0.0 (8.0.23.47906), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.47906), X64 RyuJIT AVX2
 
 
-|                     Method | EnableInstrumentation |     Mean |   Error |  StdDev | Allocated |
-|--------------------------- |---------------------- |---------:|--------:|--------:|----------:|
-| GetRequestForAspNetCoreApp |                  None | 150.7 us | 1.68 us | 1.57 us |   2.45 KB |
-| GetRequestForAspNetCoreApp |                Traces | 156.6 us | 3.12 us | 6.37 us |   3.46 KB |
-| GetRequestForAspNetCoreApp |               Metrics | 148.8 us | 2.87 us | 2.69 us |   2.92 KB |
-| GetRequestForAspNetCoreApp |       Traces, Metrics | 164.0 us | 3.19 us | 6.22 us |   3.52 KB |
-
-Allocation details for .NET 7:
-
-// Traces
-* Activity creation + `Activity.Start()` = 416 B
-* Casting of the struct `Microsoft.Extensions.Primitives.StringValues` to `IEnumerable<string>` by `HttpRequestHeaderValuesGetter`
-  - `TraceContextPropagator.Extract` = 24 B
-  - `BaggageContextPropagator.Extract` = 24 B
-* String creation for `HttpRequest.HostString.Host` = 40 B
-* `Activity.TagsLinkedList` (this is allocated on the first Activity.SetTag call) = 40 B
-* Boxing of `Port` number when adding it as a tag = 24 B
-* Setting `Baggage` (Setting AsyncLocal values causes allocation)
-  - `BaggageHolder` creation = 24 B
-  - `System.Threading.AsyncLocalValueMap.TwoElementAsyncLocalValueMap` = 48 B
-  - `System.Threading.ExecutionContext` = 40 B
-* `DiagNode<KeyValuePair<System.String, System.Object>>`
-  - This is allocated seven times for the seven (eight if query string is available) tags that are added = 7 * 40 = 280 B
-* `Activity.Stop()` trying to set `Activity.Current` (This happens because of setting another AsyncLocal variable which is `Baggage`
-  - System.Threading.AsyncLocalValueMap.OneElementAsyncLocalValueMap = 32 B
-  - System.Threading.ExecutionContext = 40 B
-
-Baseline = 2.45 KB
-With Traces = 2.45 + (1032 / 1024) = 2.45 + 1.01 = 3.46 KB
-
-
-// Metrics
-* Activity creation + `Activity.Start()` = 416 B
-* Boxing of `Port` number when adding it as a tag = 24 B
-* String creation for `HttpRequest.HostString.Host` = 40 B
-
-Baseline = 2.45 KB
-With Metrics = 2.45 + (416 + 40 + 24) / 1024 = 2.45 + 0.47 = 2.92 KB
-
-// With Traces and Metrics
-
-Baseline = 2.45 KB
-With Traces and Metrics = Baseline + With Traces + (With Metrics - (Activity creation + `Acitivity.Stop()`)) (they use the same activity)
-                        = 2.45 + (1032 + 64) / 1024 = 2.45 + 1.07 = ~3.52KB
+| Method                     | EnableInstrumentation | Mean     | Error   | StdDev  | Gen0   | Allocated |
+|--------------------------- |---------------------- |---------:|--------:|--------:|-------:|----------:|
+| GetRequestForAspNetCoreApp | None                  | 140.9 us | 2.05 us | 1.91 us | 0.4883 |   2.23 KB |
+| GetRequestForAspNetCoreApp | Metri(...)brary [32]  | 147.6 us | 2.94 us | 2.75 us | 0.4883 |   2.68 KB |
+| GetRequestForAspNetCoreApp | MetricsViaNet8Meters  | 150.5 us | 2.70 us | 2.53 us | 0.4883 |   2.27 KB |
 */
 namespace Benchmarks.Instrumentation;
 
@@ -97,14 +58,14 @@ public class AspNetCoreInstrumentationNewBenchmarks
         None = 0,
 
         /// <summary>
-        /// Instrumentation is enbled only for Metrics via DiagnosticSrc.
+        /// Instrumentation is enabled for Metrics via instrumentation library DiagnosticSrc.
         /// </summary>
-        Metrics = 1,
+        MetricsViaInstrumentationLibrary = 1,
 
         /// <summary>
-        /// Instrumentation is enbled only for Metrics via Meter.
+        /// Instrumentation is enabled for Metrics via Meter (Enables all metrics).
         /// </summary>
-        MetricsNet8 = 2,
+        MetricsViaNet8Meters = 2,
     }
 
     [Params(0, 1, 2)]
@@ -123,8 +84,7 @@ public class AspNetCoreInstrumentationNewBenchmarks
             this.StartWebApplication();
             this.httpClient = new HttpClient();
         }
-
-        if (this.EnableInstrumentation == EnableInstrumentationOption.Metrics)
+        else if (this.EnableInstrumentation == EnableInstrumentationOption.MetricsViaInstrumentationLibrary)
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
@@ -139,14 +99,13 @@ public class AspNetCoreInstrumentationNewBenchmarks
                 })
                 .Build();
         }
-        else if (this.EnableInstrumentation.HasFlag(EnableInstrumentationOption.MetricsNet8))
+        else if (this.EnableInstrumentation == EnableInstrumentationOption.MetricsViaNet8Meters)
         {
             this.StartWebApplication();
             this.httpClient = new HttpClient();
 
             var exportedItems = new List<Metric>();
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
                 .AddMeter("Microsoft.AspNetCore.Hosting")
                 .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
                 .AddMeter("Microsoft.AspNetCore.Http.Connections")
