@@ -22,8 +22,8 @@ each test case. These files are source-controlled, so if the behavior of the
 instrumentation changes, the README files will be updated to reflect the change.
 
 * [.NET 6](./README.net6.0.md)
-* [.NET 7](./README.net6.0.md)
-* [.NET 8](./README.net6.0.md)
+* [.NET 7](./README.net7.0.md)
+* [.NET 8](./README.net8.0.md)
 
 For each test case a request is made to an ASP.NET Core application with a
 particular routing configuration. ASP.NET Core offers a

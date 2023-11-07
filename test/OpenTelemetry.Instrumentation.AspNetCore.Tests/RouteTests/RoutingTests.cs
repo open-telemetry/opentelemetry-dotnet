@@ -17,11 +17,14 @@
 #nullable enable
 
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using RouteTests.TestApplication;
 using Xunit;
+using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace RouteTests;
 
@@ -48,15 +51,18 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
     [MemberData(nameof(TestData))]
     public async Task TestHttpRoute(RoutingTestCases.TestCase testCase, bool useLegacyConventions)
     {
-        var previousSetting = Environment.GetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN");
-        Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", useLegacyConventions ? null : "http");
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { [SemanticConventionOptInKeyName] = useLegacyConventions ? null : "http" })
+            .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddAspNetCoreInstrumentation()
             .AddInMemoryExporter(this.exportedActivities)
             .Build()!;
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddAspNetCoreInstrumentation()
             .AddInMemoryExporter(this.exportedMetrics)
             .Build()!;
@@ -150,8 +156,6 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
             this.fixture.AddTestResult(testResult);
         }
-
-        Environment.SetEnvironmentVariable("OTEL_SEMCONV_STABILITY_OPT_IN", previousSetting);
     }
 
     private void GetTagsFromActivity(bool useLegacyConventions, Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
