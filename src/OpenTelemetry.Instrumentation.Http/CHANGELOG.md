@@ -23,7 +23,7 @@
   [specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes).
 
   Users moving to `net8.0` or newer frameworks from lower versions will see
-  difference in values in case of an exception. `net8.0` or newer frameworks adds
+  difference in values in case of an exception. `net8.0` or newer frameworks add
   the ability to further drilldown the exceptions to a specific type through
   [HttpRequestError](https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0)
   enum. For lower versions, the individual types will be rolled in to a single
