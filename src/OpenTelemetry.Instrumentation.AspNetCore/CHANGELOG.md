@@ -2,9 +2,8 @@
 
 ## Unreleased
 
-* On Exception, Activity Status is set to Error. The Exception Message
-  has been removed from Activity Status Description to comply with the
-  [Http spec](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#status).
+* Removed the Activity Status Description that was being set during unhandled
+  exceptions. Activity Status will continue to be reported as `Error`.
   This is a **breaking change**. `EnrichWithException` can be leveraged
   to restore this behavior.
   ([#5025](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5025))
