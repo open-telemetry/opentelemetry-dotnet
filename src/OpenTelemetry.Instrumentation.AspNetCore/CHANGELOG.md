@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Removed the Activity Status Description that was being set during unhandled
+* Removed the Activity Status Description that was being set during
   exceptions. Activity Status will continue to be reported as `Error`.
   This is a **breaking change**. `EnrichWithException` can be leveraged
   to restore this behavior.
