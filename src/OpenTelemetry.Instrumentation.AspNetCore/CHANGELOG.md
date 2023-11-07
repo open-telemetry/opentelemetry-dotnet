@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* On Exception, Activity Status is set to Error. The Exception Message
+  has been removed from Activity Status Description to comply with the
+  [Http spec](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#status).
+  This is a **breaking change**. `EnrichWithException` can be leveraged
+  to restore this behavior.
+  ([#5025](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5025))
+
 * Updated `http.request.method` to match specification guidelines.
   * For activity, if the method does not belong to one of the [known
     values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
