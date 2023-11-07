@@ -64,9 +64,9 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddReader<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this MeterProviderBuilder meterProviderBuilder)
+    T>(this MeterProviderBuilder meterProviderBuilder)
         where T : MetricReader
     {
         meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());

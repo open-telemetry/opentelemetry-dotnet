@@ -30,23 +30,7 @@ internal static class RequestMethodHelper
 
     static RequestMethodHelper()
     {
-#if NET8_0_OR_GREATER
-        KnownMethods = FrozenDictionary.ToFrozenDictionary(
-            new[]
-            {
-                KeyValuePair.Create("GET", "GET"),
-                KeyValuePair.Create("PUT", "PUT"),
-                KeyValuePair.Create("POST", "POST"),
-                KeyValuePair.Create("DELETE", "DELETE"),
-                KeyValuePair.Create("HEAD", "HEAD"),
-                KeyValuePair.Create("OPTIONS", "OPTIONS"),
-                KeyValuePair.Create("TRACE", "TRACE"),
-                KeyValuePair.Create("PATCH", "PATCH"),
-                KeyValuePair.Create("CONNECT", "CONNECT"),
-            },
-            StringComparer.OrdinalIgnoreCase);
-#else
-        KnownMethods = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        var knownMethodSet = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "GET", "GET" },
             { "PUT", "PUT" },
@@ -58,20 +42,12 @@ internal static class RequestMethodHelper
             { "PATCH", "PATCH" },
             { "CONNECT", "CONNECT" },
         };
+
+        // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
+#if NET8_0_OR_GREATER
+        KnownMethods = FrozenDictionary.ToFrozenDictionary(knownMethodSet, StringComparer.OrdinalIgnoreCase);
+#else
+        KnownMethods = knownMethodSet;
 #endif
-    }
-
-    public static bool TryResolveHttpMethod(string method, out string resolvedMethod)
-    {
-        if (KnownMethods.TryGetValue(method, out resolvedMethod))
-        {
-            // KnownMethods ignores case. Use the value returned by the dictionary to have a consistent case.
-            return true;
-        }
-
-        // Set to default "_OTHER" as per spec.
-        // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-        resolvedMethod = "_OTHER";
-        return false;
     }
 }

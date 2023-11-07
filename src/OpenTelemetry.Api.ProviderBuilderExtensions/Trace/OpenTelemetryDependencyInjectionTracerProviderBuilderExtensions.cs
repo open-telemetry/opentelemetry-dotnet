@@ -40,9 +40,9 @@ public static class OpenTelemetryDependencyInjectionTracerProviderBuilderExtensi
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public static TracerProviderBuilder AddInstrumentation<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this TracerProviderBuilder tracerProviderBuilder)
+    T>(this TracerProviderBuilder tracerProviderBuilder)
         where T : class
     {
         tracerProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
