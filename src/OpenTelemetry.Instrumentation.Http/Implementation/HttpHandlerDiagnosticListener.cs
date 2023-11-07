@@ -390,7 +390,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     }
 
 #if NET8_0_OR_GREATER
-    private static object GetErrorType(Exception exc)
+    private static string GetErrorType(Exception exc)
     {
         var httpRequestException = exc as HttpRequestException;
         if (httpRequestException != null)
