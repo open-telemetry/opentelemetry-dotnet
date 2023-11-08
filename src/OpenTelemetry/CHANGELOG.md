@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+* Updated `Microsoft.Extensions.Logging` package version to
+  `8.0.0-rc.2.23479.6`.
+  ([#4959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4959))
+
+* The `AddService` `ResourceBuilder` extension method will now generate the same
+  `service.instance.id` for the lifetime of a process when
+  `autoGenerateServiceInstanceId` is `true`.
+  ([#4988](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4988))
+
+* Fixed a Metrics SDK bug which led to `ExemplarReservoir.Offer` always being
+  called regardless of whether or not the `ExemplarFilter` sampled the
+  measurement.
+  ([#5004](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5004))
+  ([#5016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5016))
+
+* Update Metrics SDK to override the default histogram buckets for the following
+  metrics from ASP.NET Core and HttpClient runtime:
+  * `signalr.server.connection.duration`
+  * `kestrel.connection.duration`
+  * `http.client.connection.duration`
+
+  These histogram metrics which have their `Unit` as `s` (second) will have
+  their default histogram buckets as `[ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2,
+  5, 10, 30, 60, 120, 300 ]`.
+  ([#5008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5008))
+  ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
+
+* Remove the bucket with value `0` for histogram buckets for all metrics from
+  ASP.NET Core and HttpClient.
+  ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
+
+* Updated `Microsoft.Extensions.Logging.Configuration` package version to
+  `8.0.0-rc.2.23479.6`.
+  ([#5020](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5020))
+
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
 * Update `AggregatorStore` to reclaim unused MetricPoints for Delta aggregation
   temporality.
   ([#4486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4486))
@@ -18,6 +57,11 @@
   will now throw a `NotSupportedException` if invoked on a non-SDK builder type.
   Previously it would return `null`.
   ([#4885](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4885))
+
+* Updated `Microsoft.Extensions.Logging` package version to
+  `8.0.0-rc.1.23419.4`.
+  ([#4920](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4920),
+  [#4933](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4933))
 
 ## 1.6.0
 

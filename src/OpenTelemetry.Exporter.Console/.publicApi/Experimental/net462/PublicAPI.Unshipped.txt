@@ -1,3 +1,0 @@
-static OpenTelemetry.Logs.ConsoleExporterLoggingExtensions.AddConsoleExporter(this OpenTelemetry.Logs.LoggerProviderBuilder loggerProviderBuilder) -> OpenTelemetry.Logs.LoggerProviderBuilder
-static OpenTelemetry.Logs.ConsoleExporterLoggingExtensions.AddConsoleExporter(this OpenTelemetry.Logs.LoggerProviderBuilder loggerProviderBuilder, string name, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure) -> OpenTelemetry.Logs.LoggerProviderBuilder
-static OpenTelemetry.Logs.ConsoleExporterLoggingExtensions.AddConsoleExporter(this OpenTelemetry.Logs.LoggerProviderBuilder loggerProviderBuilder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure) -> OpenTelemetry.Logs.LoggerProviderBuilder

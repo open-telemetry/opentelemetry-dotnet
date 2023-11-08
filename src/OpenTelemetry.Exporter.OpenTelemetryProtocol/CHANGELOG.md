@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Made `OpenTelemetry.Exporter.OtlpLogExporter` public. ([#4979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4979))
+
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
 * Bumped the version of `Google.Protobuf` used by the project to `3.22.5` so
   that consuming applications can be published as NativeAOT successfully. Also,
   a new performance feature can be used instead of reflection emit, which is
@@ -17,7 +23,27 @@
 attributes will be exported when
 `OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES` environment
 variable will be set to `true`.
-([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
+
+  **NOTE**: These attributes were removed in [1.6.0-rc.1](#160-rc1) release in
+  order to support stable release of OTLP Log Exporter. The attributes will now be
+  available via environment variable mentioned above.
+  ([#4892](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4892))
+
+* Added ability to export attributes corresponding to `LogRecord.EventId.Id` as
+`logrecord.event.id` and `LogRecord.EventId.Name` as `logrecord.event.name`. The
+attributes will be exported when
+`OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES` will be set to `true`.
+
+  **NOTE**: These attributes were removed in [1.6.0-rc.1](#160-rc1) release in
+  order to support stable release of OTLP Log Exporter. The attributes will now
+  be available via environment variable mentioned above.
+  ([#4925](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4925))
+
+* `LogRecord.CategoryName` will now be exported as
+[InstrumentationScope](https://github.com/open-telemetry/opentelemetry-dotnet/blob/3c2bb7c93dd2e697636479a1882f49bb0c4a362e/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/opentelemetry/proto/common/v1/common.proto#L71-L81)
+`name` field under
+[ScopeLogs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/3c2bb7c93dd2e697636479a1882f49bb0c4a362e/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/opentelemetry/proto/logs/v1/logs.proto#L64-L75).
+([#4941](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4941))
 
 ## 1.6.0
 

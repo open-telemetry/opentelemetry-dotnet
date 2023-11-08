@@ -103,12 +103,16 @@ public class TraceContextPropagatorTest
         Assert.False(ctx.ActivityContext.IsValid());
     }
 
-    [Fact]
-    public void IsBlankIfInvalid()
+    [Theory]
+    [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01")]
+    [InlineData($"00-{TraceId}-xyz7c989f97918e1-01")]
+    [InlineData($"00-{TraceId}-{SpanId}-x1")]
+    [InlineData($"00-{TraceId}-{SpanId}-1x")]
+    public void IsBlankIfInvalid(string invalidTraceParent)
     {
         var headers = new Dictionary<string, string>
         {
-            { TraceParent, $"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01" },
+            { TraceParent, invalidTraceParent },
         };
 
         var f = new TraceContextPropagator();
@@ -191,8 +195,8 @@ public class TraceContextPropagatorTest
         // test_tracestate_duplicated_keys
         Assert.Empty(CallTraceContextPropagator("foo=1,foo=1"));
         Assert.Empty(CallTraceContextPropagator("foo=1,foo=2"));
-        Assert.Empty(CallTraceContextPropagator(new string[] { "foo=1", "foo=1" }));
-        Assert.Empty(CallTraceContextPropagator(new string[] { "foo=1", "foo=2" }));
+        Assert.Empty(CallTraceContextPropagator(new[] { "foo=1", "foo=1" }));
+        Assert.Empty(CallTraceContextPropagator(new[] { "foo=1", "foo=2" }));
     }
 
     [Fact]
@@ -318,7 +322,7 @@ public class TraceContextPropagatorTest
     {
         var headers = new Dictionary<string, string[]>
         {
-            { TraceParent, new string[] { $"00-{TraceId}-{SpanId}-01" } },
+            { TraceParent, new[] { $"00-{TraceId}-{SpanId}-01" } },
             { TraceState, tracestate },
         };
         var f = new TraceContextPropagator();

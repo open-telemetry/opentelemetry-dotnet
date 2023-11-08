@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter;
 /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
 /// the OpenTelemetry protocol (OTLP).
 /// </summary>
-internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
+public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
     private readonly OtlpLogRecordTransformer otlpLogRecordTransformer;
@@ -96,9 +96,11 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        OtlpCollector.ExportLogsServiceRequest request = null;
+
         try
         {
-            var request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
+            request = this.otlpLogRecordTransformer.BuildExportRequest(this.ProcessResource, logRecordBatch);
 
             if (!this.exportClient.SendExportRequest(request))
             {
@@ -109,6 +111,13 @@ internal sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             return ExportResult.Failure;
+        }
+        finally
+        {
+            if (request != null)
+            {
+                this.otlpLogRecordTransformer.Return(request);
+            }
         }
 
         return ExportResult.Success;

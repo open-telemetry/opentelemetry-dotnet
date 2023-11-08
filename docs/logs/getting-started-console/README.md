@@ -17,14 +17,11 @@ You should see the following output:
 Hello World!
 ```
 
-Install the latest version of
-[Microsoft.Extensions.Logging](https://www.nuget.org/packages/Microsoft.Extensions.Logging/)
-package and
+Install the
 [OpenTelemetry.Exporter.Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 package:
 
 ```sh
-dotnet add package Microsoft.Extensions.Logging
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
@@ -43,7 +40,7 @@ LogRecord.Attributes (Key:Value):
     name: artichoke
     price: 9.99
     OriginalFormat (a.k.a Body): Food `{name}` price changed to `{price}`.
-LogRecord.EventId:                 1
+LogRecord.EventId:                 344095174
 LogRecord.EventName:               FoodPriceChanged
 
 ...
@@ -60,7 +57,7 @@ LogRecord.Attributes (Key:Value):
     recallReasonDescription: due to a possible health risk from Listeria monocytogenes
     companyName: Contoso Fresh Vegetables, Inc.
     OriginalFormat (a.k.a Body): A `{productType}` recall notice was published for `{brandName} {productDescription}` produced by `{companyName}` ({recallReasonDescription}).
-LogRecord.EventId:                 2
+LogRecord.EventId:                 1338249384
 LogRecord.EventName:               FoodRecallNotice
 
 ...
@@ -93,7 +90,7 @@ logging, and type-checked parameters:
 ```csharp
 public static partial class ApplicationLogs
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Food `{name}` price changed to `{price}`.")]
+    [LoggerMessage(LogLevel.Information, "Food `{name}` price changed to `{price}`.")]
     public static partial void FoodPriceChanged(this ILogger logger, string name, double price);
 
     ...

@@ -40,7 +40,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
 		build\OpenTelemetry.test.ruleset = build\OpenTelemetry.test.ruleset
-		build\PreBuild.ps1 = build\PreBuild.ps1
 		build\process-codecoverage.ps1 = build\process-codecoverage.ps1
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
@@ -91,7 +90,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{E69578EB-B456-4062-A645-877CD964528B}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\apicompatibility.yml = .github\workflows\apicompatibility.yml
+		.github\workflows\ci-aot-md.yml = .github\workflows\ci-aot-md.yml
 		.github\workflows\ci-aot.yml = .github\workflows\ci-aot.yml
 		.github\workflows\ci-instrumentation-libraries-md.yml = .github\workflows\ci-instrumentation-libraries-md.yml
 		.github\workflows\ci-instrumentation-libraries.yml = .github\workflows\ci-instrumentation-libraries.yml
@@ -105,6 +104,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\integration-md.yml = .github\workflows\integration-md.yml
 		.github\workflows\integration.yml = .github\workflows\integration.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
+		.github\workflows\package-validation.yml = .github\workflows\package-validation.yml
 		.github\workflows\publish-packages-1.0.yml = .github\workflows\publish-packages-1.0.yml
 		.github\workflows\sanitycheck.yml = .github\workflows\sanitycheck.yml
 		.github\workflows\stale.yml = .github\workflows\stale.yml
@@ -269,6 +269,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\PeriodicExportingMetricReaderHelper.cs = src\Shared\PeriodicExportingMetricReaderHelper.cs
 		src\Shared\PooledList.cs = src\Shared\PooledList.cs
 		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
+		src\Shared\RequestMethodHelper.cs = src\Shared\RequestMethodHelper.cs
 		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
 		src\Shared\SpanHelper.cs = src\Shared\SpanHelper.cs
@@ -314,6 +315,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Metrics", "Metrics", "{1C45
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-aspnetcore", "docs\logs\getting-started-aspnetcore\getting-started-aspnetcore.csproj", "{99B4D965-8782-4694-8DFA-B7A3630CEF60}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "links-creation", "docs\trace\links-creation-with-new-activities\links-creation.csproj", "{B4856711-6D4C-4246-A686-49458D4C1301}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -589,6 +592,10 @@ Global
 		{99B4D965-8782-4694-8DFA-B7A3630CEF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99B4D965-8782-4694-8DFA-B7A3630CEF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99B4D965-8782-4694-8DFA-B7A3630CEF60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4856711-6D4C-4246-A686-49458D4C1301}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4856711-6D4C-4246-A686-49458D4C1301}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4856711-6D4C-4246-A686-49458D4C1301}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4856711-6D4C-4246-A686-49458D4C1301}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -637,6 +644,7 @@ Global
 		{A0CB9A10-F22D-4E66-A449-74B3D0361A9C} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{1C459B5B-C702-46FF-BF1A-EE795E420FFA} = {A49299FB-C5CD-4E0E-B7E1-B7867BBD67CC}
 		{99B4D965-8782-4694-8DFA-B7A3630CEF60} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
+		{B4856711-6D4C-4246-A686-49458D4C1301} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

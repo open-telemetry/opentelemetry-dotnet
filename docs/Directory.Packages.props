@@ -1,6 +1,3 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
-  <ItemGroup>
-    <PackageVersion Update="Microsoft.Extensions.Logging" Version="[6.0.0,)" />
-  </ItemGroup>
 </Project>

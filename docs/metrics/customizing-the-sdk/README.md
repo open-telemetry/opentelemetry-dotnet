@@ -198,6 +198,7 @@ with the metric are of interest to you.
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    // Because "color" is dropped the resulting metric values are - name:apple LongSum Value:3 and name:lemon LongSum Value:2
     ...
 
     // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
@@ -214,6 +215,7 @@ with the metric are of interest to you.
     MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
     MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    // Because both "name" and "color" are dropped the resulting metric value is - LongSum Value:5
     ...
 ```
 
@@ -529,11 +531,11 @@ Histograms with buckets, and it stores at most one exemplar per histogram
 bucket. The exemplar stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
-`SimpleExemplarReservoir` is the default reservoir used for all metrics except
+* `SimpleExemplarReservoir` is the default reservoir used for all metrics except
 Histograms with buckets. It has a fixed reservoir pool, and implements the
 equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
-size (currently defaulting to 10) determines the maximum number of exemplars
+size (currently defaulting to 1) determines the maximum number of exemplars
 stored.
 
 > **Note**

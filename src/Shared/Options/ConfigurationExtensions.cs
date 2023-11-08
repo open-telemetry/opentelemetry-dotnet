@@ -147,7 +147,7 @@ internal static class ConfigurationExtensions
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
 
-        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(c),
@@ -168,7 +168,7 @@ internal static class ConfigurationExtensions
         Debug.Assert(services != null, "services was null");
         Debug.Assert(optionsFactoryFunc != null, "optionsFactoryFunc was null");
 
-        services.TryAddSingleton<IOptionsFactory<T>>(sp =>
+        services!.TryAddSingleton<IOptionsFactory<T>>(sp =>
         {
             return new DelegatingOptionsFactory<T>(
                 (c, n) => optionsFactoryFunc!(sp, c, n),

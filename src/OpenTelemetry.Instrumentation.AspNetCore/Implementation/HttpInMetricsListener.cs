@@ -17,7 +17,10 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Internal;
+
 #if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Trace;
@@ -30,8 +33,14 @@ internal sealed class HttpInMetricsListener : ListenerHandler
     internal const string HttpServerDurationMetricName = "http.server.duration";
     internal const string HttpServerRequestDurationMetricName = "http.server.request.duration";
 
+    internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
+    internal const string OnUnhandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
     private const string EventName = "OnStopActivity";
+    private const string NetworkProtocolName = "http";
+    private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
+    private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
+    private static readonly object ErrorTypeHttpContextItemsKey = new();
 
     private readonly Meter meter;
     private readonly AspNetCoreMetricsInstrumentationOptions options;
@@ -57,46 +66,74 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
         if (this.emitNewAttributes)
         {
-            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Measures the duration of inbound HTTP requests.");
+            this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
         }
     }
 
     public override void OnEventWritten(string name, object payload)
     {
-        if (name == OnStopEvent)
+        switch (name)
         {
-            if (this.emitOldAttributes)
-            {
-                this.OnEventWritten_Old(name, payload);
-            }
+            case OnUnhandledDiagnosticsExceptionEvent:
+            case OnUnhandledHostingExceptionEvent:
+                {
+                    if (this.emitNewAttributes)
+                    {
+                        this.OnExceptionEventWritten(name, payload);
+                    }
+                }
 
-            if (this.emitNewAttributes)
-            {
-                this.OnEventWritten_New(name, payload);
-            }
+                break;
+            case OnStopEvent:
+                {
+                    if (this.emitOldAttributes)
+                    {
+                        this.OnEventWritten_Old(name, payload);
+                    }
+
+                    if (this.emitNewAttributes)
+                    {
+                        this.OnEventWritten_New(name, payload);
+                    }
+                }
+
+                break;
         }
+    }
+
+    public void OnExceptionEventWritten(string name, object payload)
+    {
+        // We need to use reflection here as the payload type is not a defined public type.
+        if (!TryFetchException(payload, out Exception exc) || !TryFetchHttpContext(payload, out HttpContext ctx))
+        {
+            AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnExceptionEventWritten), HttpServerDurationMetricName);
+            return;
+        }
+
+        ctx.Items.Add(ErrorTypeHttpContextItemsKey, exc.GetType().FullName);
+
+        // See https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L252
+        // and https://github.com/dotnet/aspnetcore/blob/690d78279e940d267669f825aa6627b0d731f64c/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L174
+        // this makes sure that top-level properties on the payload object are always preserved.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The ASP.NET Core framework guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchException(object payload, out Exception exc)
+            => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The ASP.NET Core framework guarantees that top level properties are preserved")]
+#endif
+        static bool TryFetchHttpContext(object payload, out HttpContext ctx)
+            => HttpContextPropertyFetcher.TryFetch(payload, out ctx) && ctx != null;
     }
 
     public void OnEventWritten_Old(string name, object payload)
     {
         var context = payload as HttpContext;
+
         if (context == null)
         {
             AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
-            return;
-        }
-
-        try
-        {
-            if (this.options.Filter?.Invoke(HttpServerDurationMetricName, context) == false)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
             return;
         }
 
@@ -132,17 +169,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (this.options.Enrich != null)
-        {
-            try
-            {
-                this.options.Enrich(HttpServerDurationMetricName, context, ref tags);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerDurationMetricName, ex);
-            }
-        }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
@@ -159,20 +185,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             return;
         }
 
-        try
-        {
-            if (this.options.Filter?.Invoke(HttpServerRequestDurationMetricName, context) == false)
-            {
-                AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
-            return;
-        }
-
         // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
         // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
         // If we want to suppress activity from Prometheus then we should use SuppressInstrumentationScope.
@@ -184,10 +196,20 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         TagList tags = default;
 
         // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
+        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolName, NetworkProtocolName));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
-        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, context.Request.Method));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
+        if (RequestMethodHelper.KnownMethods.TryGetValue(context.Request.Method, out var httpMethod))
+        {
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
+        }
+        else
+        {
+            // Set to default "_OTHER" as per spec.
+            // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
+        }
 
 #if NET6_0_OR_GREATER
         var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
@@ -196,16 +218,9 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, route));
         }
 #endif
-        if (this.options.Enrich != null)
+        if (context.Items.TryGetValue(ErrorTypeHttpContextItemsKey, out var errorType))
         {
-            try
-            {
-                this.options.Enrich(HttpServerRequestDurationMetricName, context, ref tags);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(nameof(HttpInMetricsListener), EventName, HttpServerRequestDurationMetricName, ex);
-            }
+            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, errorType));
         }
 
         // We are relying here on ASP.NET Core to set duration before writing the stop event.

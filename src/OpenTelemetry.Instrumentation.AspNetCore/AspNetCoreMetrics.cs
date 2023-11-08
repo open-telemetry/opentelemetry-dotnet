@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !NET8_0_OR_GREATER
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
@@ -35,6 +36,8 @@ internal sealed class AspNetCoreMetrics : IDisposable
         "Microsoft.AspNetCore.Hosting.HttpRequestIn",
         "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
         "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
+        "Microsoft.AspNetCore.Diagnostics.UnhandledException",
+        "Microsoft.AspNetCore.Hosting.UnhandledException",
     };
 
     private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)
@@ -59,3 +62,4 @@ internal sealed class AspNetCoreMetrics : IDisposable
         this.meter?.Dispose();
     }
 }
+#endif

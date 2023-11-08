@@ -195,11 +195,12 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
-        byte options1;
+        byte optionsLowByte;
         try
         {
             spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan().Slice(VersionAndTraceIdLength, SpanIdLength));
-            options1 = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
+            _ = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]); // to verify if there is no bad chars on options position
+            optionsLowByte = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -207,7 +208,7 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
-        if ((options1 & 1) == 1)
+        if ((optionsLowByte & 1) == 1)
         {
             traceOptions |= ActivityTraceFlags.Recorded;
         }

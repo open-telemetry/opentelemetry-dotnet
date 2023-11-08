@@ -252,7 +252,18 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                }
+                else
+                {
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeUrlPath, path);
                 activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
@@ -412,6 +423,11 @@ internal class HttpInListener : ListenerHandler
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException), activity.OperationName);
                 return;
+            }
+
+            if (this.emitNewAttributes)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
             }
 
             if (this.options.RecordException)
