@@ -14,9 +14,6 @@ on:
 jobs:
   
   build-test-stable:
-    defaults:
-      run:
-        working-directory: examples
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
@@ -51,9 +48,6 @@ jobs:
         dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
 
   build-test-experimental:
-    defaults:
-      run:
-        working-directory: examples
     strategy:
       fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
       matrix:
