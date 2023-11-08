@@ -36,17 +36,17 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
-      run:
+      run: |
         cd examples
         dotnet restore
 
     - name: Build
-      run:
+      run: |
         cd examples
         dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
 
     - name: Test ${{ matrix.version }}
-      run:
+      run: |
         cd examples
         dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
 
@@ -73,16 +73,16 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
-      run:
+      run: |
         cd examples
         dotnet restore
 
     - name: Build
-      run:
+      run: |
         cd examples
         dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
 
     - name: Test ${{ matrix.version }}
-      run:
+      run: |
         cd examples
         dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
