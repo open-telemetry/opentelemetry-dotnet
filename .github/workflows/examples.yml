@@ -35,13 +35,19 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
-      run: dotnet restore
+      run:
+        cd examples
+        dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
+      run:
+        cd examples
+        dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
 
     - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+      run:
+        cd examples
+        dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
 
   build-test-experimental:
     defaults:
@@ -66,10 +72,16 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
-      run: dotnet restore
+      run:
+        cd examples
+        dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
+      run:
+        cd examples
+        dotnet build --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
 
     - name: Test ${{ matrix.version }}
-      run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+      run:
+        cd examples
+        dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
