@@ -387,8 +387,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 #if NET8_0_OR_GREATER
         // For net8.0 and above exception type can be found using HttpRequestError.
         // https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0
-        var httpRequestException = exc as HttpRequestException;
-        if (httpRequestException != null)
+        if (exc is HttpRequestException httpRequestException)
         {
             return httpRequestException.HttpRequestError switch
             {
@@ -408,12 +407,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 _ => exc.GetType().FullName,
             };
         }
-        else
-        {
-            return exc.GetType().FullName;
-        }
-#else
-        return exc.GetType().FullName;
 #endif
+        return exc.GetType().FullName;
     }
 }
