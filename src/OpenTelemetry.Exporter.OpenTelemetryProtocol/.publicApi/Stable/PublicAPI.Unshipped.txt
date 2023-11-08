@@ -1,3 +1,4 @@
+#nullable enable
 OpenTelemetry.Exporter.OtlpLogExporter
 OpenTelemetry.Exporter.OtlpLogExporter.OtlpLogExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
 override OpenTelemetry.Exporter.OtlpLogExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Logs.LogRecord> logRecordBatch) -> OpenTelemetry.ExportResult
