@@ -96,7 +96,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        OtlpCollector.ExportLogsServiceRequest request = null;
+        OtlpCollector.ExportLogsServiceRequest? request = null;
 
         try
         {

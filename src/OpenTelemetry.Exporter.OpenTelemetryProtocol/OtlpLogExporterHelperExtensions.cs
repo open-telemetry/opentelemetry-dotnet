@@ -97,7 +97,11 @@ public static class OtlpLogExporterHelperExtensions
         LogRecordExportProcessorOptions processorOptions,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
     {
-        Debug.Assert(sp != null, "sp was null");
+        if (sp == null)
+        {
+            throw new ArgumentNullException(nameof(sp));
+        }
+
         Debug.Assert(exporterOptions != null, "exporterOptions was null");
         Debug.Assert(processorOptions != null, "processorOptions was null");
 
