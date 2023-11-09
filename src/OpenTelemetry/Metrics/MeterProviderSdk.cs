@@ -168,7 +168,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         this.listener.InstrumentPublished = (instrument, listener) =>
         {
-            object? state = this.InstrumentPublished(instrument, skipShouldListenToCheck: false);
+            object? state = this.InstrumentPublished(instrument, listeningIsManagedExternally: false);
             if (state != null)
             {
                 listener.EnableMeasurementEvents(instrument, state);
@@ -219,11 +219,26 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     internal int ViewCount => this.viewConfigs.Count;
 
-    internal object? InstrumentPublished(Instrument instrument, bool skipShouldListenToCheck)
+    internal object? InstrumentPublished(Instrument instrument, bool listeningIsManagedExternally)
     {
-        if (!skipShouldListenToCheck && !this.shouldListenTo(instrument))
+        var listenToInstrumentUsingSdkConfiguration = this.shouldListenTo(instrument);
+
+        if (listeningIsManagedExternally && listenToInstrumentUsingSdkConfiguration)
         {
-            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                instrument.Name,
+                instrument.Meter.Name,
+                "Instrument belongs to a Meter which has been enabled externally and via a subscription on the provider. External subscription will be ignored in favor of the provider subscription.",
+                "Don't call AddMeter when also using external management.");
+            return null;
+        }
+        else if (!listeningIsManagedExternally && !listenToInstrumentUsingSdkConfiguration)
+        {
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                instrument.Name,
+                instrument.Meter.Name,
+                "Instrument belongs to a Meter not subscribed by the provider.",
+                "Use AddMeter to add the Meter to the provider.");
             return null;
         }
 

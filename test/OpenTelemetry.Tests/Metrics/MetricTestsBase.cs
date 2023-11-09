@@ -38,28 +38,9 @@ public class MetricTestsBase
         }
 
 #if BUILDING_HOSTING_TESTS
-        var hostBuilder = new HostBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddMetrics(builder => builder.UseOpenTelemetry(
-                    metricsBuilder =>
-                    {
-                        IServiceCollection localServices = null;
-
-                        metricsBuilder.ConfigureServices(services => localServices = services);
-
-                        Debug.Assert(localServices != null, "localServices was null");
-
-                        var testBuilder = new HostingMeterProviderBuilder(localServices);
-                        configure(testBuilder);
-                    }));
-
-                services.AddHostedService<MetricsSubscriptionManagerCleanupHostedService>();
-            });
-
-        var host = hostBuilder.Build();
-
-        host.Start();
+        var host = BuildHost(
+            configureMetricsBuilder: null,
+            configureMeterProviderBuilder: configure);
 
         meterProvider = host.Services.GetService<MeterProvider>();
 
@@ -72,6 +53,42 @@ public class MetricTestsBase
         return meterProvider = builder.Build();
 #endif
     }
+
+#if BUILDING_HOSTING_TESTS
+    public static IHost BuildHost(
+        Action<IMetricsBuilder> configureMetricsBuilder = null,
+        Action<HostingMeterProviderBuilder> configureMeterProviderBuilder = null)
+    {
+        var hostBuilder = new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddMetrics(builder =>
+                {
+                    configureMetricsBuilder?.Invoke(builder);
+
+                    builder.UseOpenTelemetry(metricsBuilder =>
+                    {
+                        IServiceCollection localServices = null;
+
+                        metricsBuilder.ConfigureServices(services => localServices = services);
+
+                        Debug.Assert(localServices != null, "localServices was null");
+
+                        var testBuilder = new HostingMeterProviderBuilder(localServices);
+                        configureMeterProviderBuilder?.Invoke(testBuilder);
+                    });
+                });
+
+                services.AddHostedService<MetricsSubscriptionManagerCleanupHostedService>();
+            });
+
+        var host = hostBuilder.Build();
+
+        host.Start();
+
+        return host;
+    }
+#endif
 
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.
@@ -186,7 +203,34 @@ public class MetricTestsBase
     }
 
 #if BUILDING_HOSTING_TESTS
-    private class MetricsSubscriptionManagerCleanupHostedService : IHostedService, IDisposable
+    public sealed class HostingMeterProviderBuilder : MeterProviderBuilderBase
+    {
+        public HostingMeterProviderBuilder(IServiceCollection services)
+            : base(services)
+        {
+        }
+
+        public override MeterProviderBuilder AddMeter(params string[] names)
+        {
+            return this.ConfigureServices(services =>
+            {
+                foreach (var name in names)
+                {
+                    // Note: The entire purpose of this class is to use the
+                    // IMetricsBuilder API to enable Metrics and NOT the
+                    // traditional AddMeter API.
+                    services.AddMetrics(builder => builder.EnableMetrics(name));
+                }
+            });
+        }
+
+        public MeterProviderBuilder AddSdkMeter(params string[] names)
+        {
+            return base.AddMeter(names);
+        }
+    }
+
+    private sealed class MetricsSubscriptionManagerCleanupHostedService : IHostedService, IDisposable
     {
         private readonly object metricsSubscriptionManager;
 
@@ -215,28 +259,6 @@ public class MetricTestsBase
 
         public Task StopAsync(CancellationToken cancellationToken)
             => Task.CompletedTask;
-    }
-
-    private class HostingMeterProviderBuilder : MeterProviderBuilderBase
-    {
-        public HostingMeterProviderBuilder(IServiceCollection services)
-            : base(services)
-        {
-        }
-
-        public override MeterProviderBuilder AddMeter(params string[] names)
-        {
-            return this.ConfigureServices(services =>
-            {
-                foreach (var name in names)
-                {
-                    // Note: The entire purpose of this class is to use the
-                    // IMetricsBuilder API to enable Metrics and NOT the
-                    // traditional AddMeter API.
-                    services.AddMetrics(builder => builder.EnableMetrics(name));
-                }
-            });
-        }
     }
 #endif
 }

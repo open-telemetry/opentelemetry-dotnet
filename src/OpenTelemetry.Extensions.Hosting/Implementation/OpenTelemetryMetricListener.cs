@@ -62,7 +62,7 @@ internal sealed class OpenTelemetryMetricListener : IMetricsListener, IDisposabl
 
     public bool InstrumentPublished(Instrument instrument, out object? userState)
     {
-        userState = this.meterProviderSdk.InstrumentPublished(instrument, skipShouldListenToCheck: true);
+        userState = this.meterProviderSdk.InstrumentPublished(instrument, listeningIsManagedExternally: true);
         return userState != null;
     }
 
