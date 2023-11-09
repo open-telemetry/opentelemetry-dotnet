@@ -396,7 +396,7 @@ internal static class HttpWebRequestActivitySource
     private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
         HttpStatusCode? httpStatusCode = null;
-        object errorType = null;
+        string errorType = null;
 
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
@@ -461,7 +461,7 @@ internal static class HttpWebRequestActivitySource
                 if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value) == ActivityStatusCode.Error)
                 {
                     // override the errorType to statusCode for failures.
-                    errorType = TelemetryHelper.GetBoxedStatusCode(httpStatusCode.Value);
+                    errorType = TelemetryHelper.GetStatusCodeString(httpStatusCode.Value);
                 }
             }
         }
