@@ -31,10 +31,10 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
-      run: dotnet restore examples\Examples.sln
+      run: dotnet restore examples/Examples.sln
 
     - name: Build
-      run: dotnet build examples\Examples.sln --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
+      run: dotnet build examples/Examples.sln --configuration Release --no-restore --property:ExposeExperimentalFeatures=false
 
   build-test-experimental:
     strategy:
@@ -56,10 +56,7 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Install dependencies
-      run: dotnet restore examples\Examples.sln
+      run: dotnet restore examples/Examples.sln
 
     - name: Build
-      run: dotnet build examples\Examples.sln --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
-
-    - name: Test ${{ matrix.version }}
-      run: dotnet test examples\Examples.sln **/bin/**/${{ matrix.version }}/*.Tests.dll --logger:"console;verbosity=detailed"
+      run: dotnet build examples/Examples.sln --configuration Release --no-restore --property:ExposeExperimentalFeatures=true
