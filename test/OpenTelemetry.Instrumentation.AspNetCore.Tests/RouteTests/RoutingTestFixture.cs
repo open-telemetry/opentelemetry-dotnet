@@ -24,8 +24,8 @@ namespace RouteTests;
 
 public class RoutingTestFixture : IDisposable
 {
+    private static readonly HttpClient HttpClient = new();
     private readonly Dictionary<TestApplicationScenario, WebApplication> apps = new();
-    private readonly HttpClient client = new();
     private readonly RouteInfoDiagnosticObserver diagnostics = new();
     private readonly List<RoutingTestResult> testResults = new();
 
@@ -51,7 +51,7 @@ public class RoutingTestFixture : IDisposable
         var app = this.apps[scenario];
         var baseUrl = app.Urls.First();
         var url = $"{baseUrl}{path}";
-        await this.client.GetAsync(url).ConfigureAwait(false);
+        await HttpClient.GetAsync(url).ConfigureAwait(false);
     }
 
     public void AddTestResult(RoutingTestResult result)
@@ -66,7 +66,7 @@ public class RoutingTestFixture : IDisposable
             app.Value.DisposeAsync().GetAwaiter().GetResult();
         }
 
-        this.client.Dispose();
+        HttpClient.Dispose();
         this.diagnostics.Dispose();
 
         this.GenerateReadme();
@@ -86,7 +86,7 @@ public class RoutingTestFixture : IDisposable
             var emoji1 = result.TestCase.CurrentActivityHttpRoute == null ? ":green_heart:" : ":broken_heart:";
             var emoji2 = result.TestCase.CurrentMetricHttpRoute == null ? ":green_heart:" : ":broken_heart:";
             sb.Append($"| {emoji1} | {emoji2} ");
-            sb.AppendLine($"| {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({this.MakeAnchorTag(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
+            sb.AppendLine($"| {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({MakeAnchorTag(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
         }
 
         for (var i = 0; i < this.testResults.Count; ++i)
@@ -102,20 +102,20 @@ public class RoutingTestFixture : IDisposable
 
         var readmeFileName = $"README.net{Environment.Version.Major}.0.md";
         File.WriteAllText(Path.Combine("..", "..", "..", "RouteTests", readmeFileName), sb.ToString());
-    }
 
-    private string MakeAnchorTag(TestApplicationScenario scenario, string name)
-    {
-        var chars = name.ToCharArray()
-            .Where(c => !char.IsPunctuation(c) || c == '-')
-            .Select(c => c switch
-            {
-                '-' => '-',
-                ' ' => '-',
-                _ => char.ToLower(c),
-            })
-            .ToArray();
+        static string MakeAnchorTag(TestApplicationScenario scenario, string name)
+        {
+            var chars = name.ToCharArray()
+                .Where(c => !char.IsPunctuation(c) || c == '-')
+                .Select(c => c switch
+                {
+                    '-' => '-',
+                    ' ' => '-',
+                    _ => char.ToLower(c),
+                })
+                .ToArray();
 
-        return $"#{scenario.ToString().ToLower()}-{new string(chars)}";
+            return $"#{scenario.ToString().ToLower()}-{new string(chars)}";
+        }
     }
 }

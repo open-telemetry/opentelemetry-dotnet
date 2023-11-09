@@ -91,8 +91,8 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         var activity = Assert.Single(this.exportedActivities);
         var metricPoint = Assert.Single(metricPoints);
 
-        this.GetTagsFromActivity(useLegacyConventions, activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
-        this.GetTagsFromMetricPoint(useLegacyConventions && Environment.Version.Major < 8, metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
+        GetTagsFromActivity(useLegacyConventions, activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
+        GetTagsFromMetricPoint(useLegacyConventions && Environment.Version.Major < 8, metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
 
         Assert.Equal(testCase.ExpectedStatusCode, activityHttpStatusCode);
         Assert.Equal(testCase.ExpectedStatusCode, metricHttpStatusCode);
@@ -154,7 +154,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         }
     }
 
-    private void GetTagsFromActivity(bool useLegacyConventions, Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
+    private static void GetTagsFromActivity(bool useLegacyConventions, Activity activity, out int httpStatusCode, out string httpMethod, out string? httpRoute)
     {
         var expectedStatusCodeKey = useLegacyConventions ? OldHttpStatusCode : HttpStatusCode;
         var expectedHttpMethodKey = useLegacyConventions ? OldHttpMethod : HttpMethod;
@@ -163,7 +163,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         httpRoute = activity.GetTagItem(HttpRoute) as string ?? string.Empty;
     }
 
-    private void GetTagsFromMetricPoint(bool useLegacyConventions, MetricPoint metricPoint, out int httpStatusCode, out string httpMethod, out string? httpRoute)
+    private static void GetTagsFromMetricPoint(bool useLegacyConventions, MetricPoint metricPoint, out int httpStatusCode, out string httpMethod, out string? httpRoute)
     {
         var expectedStatusCodeKey = useLegacyConventions ? OldHttpStatusCode : HttpStatusCode;
         var expectedHttpMethodKey = useLegacyConventions ? OldHttpMethod : HttpMethod;
