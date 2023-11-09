@@ -87,7 +87,7 @@ public static class ResourceBuilderExtensions
     /// <summary>
     /// Adds service information to a <see cref="ResourceBuilder"/>
     /// following <a
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk">semantic
+    /// href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk">semantic
     /// conventions</a>.
     /// </summary>
     /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
