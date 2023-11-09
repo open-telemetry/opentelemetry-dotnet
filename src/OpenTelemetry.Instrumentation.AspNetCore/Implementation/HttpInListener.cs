@@ -254,15 +254,7 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                if (RequestMethodHelper.IsWellKnownHttpMethod(request.Method))
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
-                }
-                else
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, RequestMethodHelper.OtherHttpMethod);
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
-                }
+                RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
                 activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeUrlPath, path);
@@ -539,16 +531,13 @@ internal class HttpInListener : ListenerHandler
 
     private string GetDisplayName(string httpMethod, string httpRoute = null)
     {
-        var normalizedMethod = httpMethod;
+        var normalizedMethod = this.emitNewAttributes
+            ? RequestMethodHelper.GetNormalizedHttpMethod(httpMethod)
+            : httpMethod;
 
-        if (this.emitNewAttributes)
-        {
-            normalizedMethod = RequestMethodHelper.IsWellKnownHttpMethod(httpMethod)
-                ? httpMethod
-                : RequestMethodHelper.OtherHttpMethod;
-        }
-
-        return string.IsNullOrEmpty(httpRoute) ? normalizedMethod : $"{normalizedMethod} {httpRoute}";
+        return string.IsNullOrEmpty(httpRoute)
+            ? normalizedMethod
+            : $"{normalizedMethod} {httpRoute}";
     }
 
 #if !NETSTANDARD2_0

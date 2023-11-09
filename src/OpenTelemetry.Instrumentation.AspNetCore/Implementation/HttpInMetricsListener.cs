@@ -201,10 +201,7 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
 
-        var httpMethod = context.Request.Method;
-        httpMethod = RequestMethodHelper.IsWellKnownHttpMethod(httpMethod)
-            ? httpMethod
-            : RequestMethodHelper.OtherHttpMethod;
+        var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(context.Request.Method);
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
 #if NET6_0_OR_GREATER

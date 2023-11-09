@@ -17,6 +17,8 @@
 #if NET8_0_OR_GREATER
 using System.Collections.Frozen;
 #endif
+using System.Diagnostics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal;
 
@@ -55,8 +57,23 @@ internal static class RequestMethodHelper
 #endif
     }
 
-    public static bool IsWellKnownHttpMethod(string method)
+    public static string GetNormalizedHttpMethod(string method)
     {
-        return KnownMethods.TryGetValue(method, out var _);
+        return KnownMethods.TryGetValue(method, out var normalizedMethod)
+            ? normalizedMethod
+            : OtherHttpMethod;
+    }
+
+    public static void SetHttpMethodTag(Activity activity, string method)
+    {
+        if (KnownMethods.TryGetValue(method, out var normalizedMethod))
+        {
+            activity?.SetTag(SemanticConventions.AttributeHttpRequestMethod, normalizedMethod);
+        }
+        else
+        {
+            activity?.SetTag(SemanticConventions.AttributeHttpRequestMethod, OtherHttpMethod);
+            activity?.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, method);
+        }
     }
 }
