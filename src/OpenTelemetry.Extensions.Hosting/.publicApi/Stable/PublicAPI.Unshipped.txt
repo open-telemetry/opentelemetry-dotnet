@@ -1,0 +1,3 @@
+OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
+OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<System.IServiceProvider!, OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
+OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<System.IServiceProvider!, OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!

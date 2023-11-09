@@ -105,6 +105,25 @@ public sealed class OpenTelemetryBuilder
     }
 
     /// <summary>
+    /// Adds metric services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithMetrics()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="MeterProviderBuilder"/>
+    /// deferred configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithMetrics(Action<IServiceProvider, MeterProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        this.WithMetrics();
+
+        this.Services.ConfigureOpenTelemetryMeterProvider(configure);
+
+        return this;
+    }
+
+    /// <summary>
     /// Adds tracing services into the builder.
     /// </summary>
     /// <remarks>
@@ -132,6 +151,25 @@ public sealed class OpenTelemetryBuilder
         var builder = new TracerProviderBuilderBase(this.Services);
 
         configure(builder);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds tracing services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithTracing()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="TracerProviderBuilder"/>
+    /// deferred configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public OpenTelemetryBuilder WithTracing(Action<IServiceProvider, TracerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        this.WithTracing();
+
+        this.Services.ConfigureOpenTelemetryTracerProvider(configure);
 
         return this;
     }
@@ -193,6 +231,38 @@ public sealed class OpenTelemetryBuilder
         var builder = new LoggerProviderBuilderBase(this.Services);
 
         configure(builder);
+
+        return this;
+    }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="LoggerProviderBuilder"/>
+    /// deferred configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public
+#else
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
+    /// <param name="configure"><see cref="LoggerProviderBuilder"/>
+    /// deferred configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    internal
+#endif
+        OpenTelemetryBuilder WithLogging(Action<IServiceProvider, LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        this.WithLogging();
+
+        this.Services.ConfigureOpenTelemetryLoggerProvider(configure);
 
         return this;
     }

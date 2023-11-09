@@ -101,6 +101,25 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
+    public void AddOpenTelemetry_WithTracing_DeferredCallbackTest()
+    {
+        var services = new ServiceCollection();
+        var isHit = false;
+
+        services.AddOpenTelemetry().WithTracing((services, builder) => isHit = true);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.NotNull(serviceProvider);
+
+        Assert.False(isHit);
+
+        _ = serviceProvider.GetRequiredService<TracerProvider>();
+
+        Assert.True(isHit);
+    }
+
+    [Fact]
     public void AddOpenTelemetry_WithTracing_DisposalTest()
     {
         var services = new ServiceCollection();
@@ -224,6 +243,25 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
+    public void AddOpenTelemetry_WithMetrics_DeferredCallbackTest()
+    {
+        var services = new ServiceCollection();
+        var isHit = false;
+
+        services.AddOpenTelemetry().WithMetrics((services, builder) => isHit = true);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.NotNull(serviceProvider);
+
+        Assert.False(isHit);
+
+        _ = serviceProvider.GetRequiredService<MeterProvider>();
+
+        Assert.True(isHit);
+    }
+
+    [Fact]
     public void AddOpenTelemetry_WithMetrics_DisposalTest()
     {
         var services = new ServiceCollection();
@@ -260,7 +298,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public async Task AddOpenTelemetry_WithMetrics_HostConfigurationHonoredTest()
     {
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(builder =>
@@ -344,6 +382,25 @@ public class OpenTelemetryServicesExtensionsTests
         var loggerProviders = serviceProvider.GetServices<LoggerProvider>();
 
         Assert.Single(loggerProviders);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithLogging_DeferredCallbackTest()
+    {
+        var services = new ServiceCollection();
+        var isHit = false;
+
+        services.AddOpenTelemetry().WithLogging((services, builder) => isHit = true);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.NotNull(serviceProvider);
+
+        Assert.False(isHit);
+
+        _ = serviceProvider.GetRequiredService<LoggerProvider>();
+
+        Assert.True(isHit);
     }
 
     [Fact]
