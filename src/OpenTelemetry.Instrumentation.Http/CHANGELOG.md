@@ -39,6 +39,7 @@
   environment variable is set to `http` or `http/dup`.
 
   ([#5005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5005))
+  ([#5034](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5034))
 
 ## 1.6.0-beta.2
 
