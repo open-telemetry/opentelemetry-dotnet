@@ -286,7 +286,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                     if (activity.Status == ActivityStatusCode.Error)
                     {
-                        activity.SetTag(SemanticConventions.AttributeErrorType, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                        activity.SetTag(SemanticConventions.AttributeErrorType, TelemetryHelper.GetStatusCodeString(response.StatusCode));
                     }
                 }
 
