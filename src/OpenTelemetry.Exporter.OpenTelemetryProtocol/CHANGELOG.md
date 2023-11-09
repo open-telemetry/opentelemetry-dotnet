@@ -2,7 +2,14 @@
 
 ## Unreleased
 
-* Made `OpenTelemetry.Exporter.OtlpLogExporter` public. ([#4979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4979))
+* Updated `AddOtlpExporter` function to use
+ `AddProcessor(Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory)`
+  overload for configuring `OpenTelemetryLoggerOptions` in OTLP log exporter
+  registration to support options being configured through `IConfiguration`.
+  ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
+
+* Made `OpenTelemetry.Exporter.OtlpLogExporter` public.
+  ([#4979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4979))
 
 ## 1.7.0-alpha.1
 

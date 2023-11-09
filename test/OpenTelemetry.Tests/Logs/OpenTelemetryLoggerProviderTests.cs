@@ -128,5 +128,7 @@ public sealed class OpenTelemetryLoggerProviderTests
         Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
     }
 
-    internal class MyProcessor : BaseProcessor<LogRecord> { }
+    private class MyProcessor : BaseProcessor<LogRecord>
+    {
+    }
 }
