@@ -81,19 +81,15 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
 
         meterProvider.ForceFlush();
 
-        Assert.Single(this.exportedActivities);
         var durationMetric = this.exportedMetrics.Single(x => x.Name == "http.server.request.duration" || x.Name == "http.server.duration");
-
         var metricPoints = new List<MetricPoint>();
         foreach (var mp in durationMetric.GetMetricPoints())
         {
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-
-        var activity = this.exportedActivities[0];
-        var metricPoint = metricPoints.First();
+        var activity = Assert.Single(this.exportedActivities);
+        var metricPoint = Assert.Single(metricPoints);
 
         this.GetTagsFromActivity(useLegacyConventions, activity, out var activityHttpStatusCode, out var activityHttpMethod, out var activityHttpRoute);
         this.GetTagsFromMetricPoint(useLegacyConventions && Environment.Version.Major < 8, metricPoint, out var metricHttpStatusCode, out var metricHttpMethod, out var metricHttpRoute);
