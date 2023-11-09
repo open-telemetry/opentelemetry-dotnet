@@ -353,7 +353,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
             if (exc is HttpRequestException)
             {
-                activity.SetStatus(ActivityStatusCode.Error, exc.Message);
+                activity.SetStatus(ActivityStatusCode.Error);
             }
 
             try

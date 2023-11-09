@@ -131,14 +131,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
 
             // Instrumentation is not expected to set status description
             // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-            if (!urlPath.EndsWith("exception"))
-            {
-                Assert.True(string.IsNullOrEmpty(activity.StatusDescription));
-            }
-            else
-            {
-                Assert.Equal("exception description", activity.StatusDescription);
-            }
+            Assert.Null(activity.StatusDescription);
 
             if (recordException)
             {

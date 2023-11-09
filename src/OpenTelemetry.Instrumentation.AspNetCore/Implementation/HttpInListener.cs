@@ -435,7 +435,7 @@ internal class HttpInListener : ListenerHandler
                 activity.RecordException(exc);
             }
 
-            activity.SetStatus(ActivityStatusCode.Error, exc.Message);
+            activity.SetStatus(ActivityStatusCode.Error);
 
             try
             {
