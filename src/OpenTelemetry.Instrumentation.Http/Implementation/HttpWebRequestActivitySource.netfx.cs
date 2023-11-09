@@ -222,6 +222,8 @@ internal static class HttpWebRequestActivitySource
     {
         if (exception is WebException wexc)
         {
+            // TODO: consider other Status values from
+            // https://learn.microsoft.com/dotnet/api/system.net.webexceptionstatus?view=netframework-4.6.2
             return wexc.Status switch
             {
                 WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
