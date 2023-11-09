@@ -549,7 +549,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         Assert.Equal("Stop", exceptionEvent.Key);
 
         Assert.True(activity.Status != ActivityStatusCode.Unset);
-        Assert.NotNull(activity.StatusDescription);
+        Assert.Null(activity.StatusDescription);
     }
 
     /// <summary>
@@ -627,7 +627,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         Assert.Equal("Stop", exceptionEvent.Key);
 
         Assert.True(exceptionEvent.Value.Status != ActivityStatusCode.Unset);
-        Assert.NotNull(exceptionEvent.Value.StatusDescription);
+        Assert.Null(exceptionEvent.Value.StatusDescription);
     }
 
     /// <summary>
@@ -669,7 +669,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         Assert.Equal("Stop", exceptionEvent.Key);
 
         Assert.True(exceptionEvent.Value.Status != ActivityStatusCode.Unset);
-        Assert.NotNull(exceptionEvent.Value.StatusDescription);
+        Assert.Null(exceptionEvent.Value.StatusDescription);
     }
 
     [Fact]
