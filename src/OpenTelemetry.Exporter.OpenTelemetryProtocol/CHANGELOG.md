@@ -235,7 +235,7 @@ Released 2022-Oct-17
 
 * Adds support for limiting the length and count of attributes exported from
   the OTLP log exporter. These
-  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#attribute-limits)
   are configured via the environment variables defined in the specification.
   ([#3684](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3684))
 
@@ -260,7 +260,7 @@ Released 2022-Sep-29
 Released 2022-Aug-18
 
 * When using [Attribute
-  Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#attribute-limits)
   the OTLP exporter will now send "dropped" counts where applicable (ex:
   [dropped_attributes_count](https://github.com/open-telemetry/opentelemetry-proto/blob/001e5eabf3ea0193ef9343c1b9a057d23d583d7c/opentelemetry/proto/trace/v1/trace.proto#L191)).
   ([#3580](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3580))
@@ -271,7 +271,7 @@ Released 2022-Aug-02
 
 * Adds support for limiting the length and count of attributes exported from
   the OTLP exporter. These
-  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#attribute-limits)
   are configured via the environment variables defined in the specification.
   ([#3376](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3376))
 
@@ -520,7 +520,7 @@ Released 2021-Apr-23
   ([#1873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1873))
 
 * Null values in string arrays are preserved according to
-  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
+  [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/README.md).
   ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)
   [#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945))
 

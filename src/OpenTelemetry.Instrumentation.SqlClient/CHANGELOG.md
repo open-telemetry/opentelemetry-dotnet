@@ -190,7 +190,7 @@ Released 2021-Jan-29
   activities created by the instrumentation.
 * New setting on SqlClientInstrumentationOptions on .NET Core: `RecordException`
   can be set to instruct the instrumentation to record SqlExceptions as Activity
-  [events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
+  [events](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md).
   ([#1592](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1592))
 
 ## 1.0.0-rc1.1
