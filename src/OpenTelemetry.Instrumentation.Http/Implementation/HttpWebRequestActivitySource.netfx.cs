@@ -224,13 +224,14 @@ internal static class HttpWebRequestActivitySource
         {
             return wexc.Status switch
             {
-                WebExceptionStatus.Timeout => "timeout",
-                WebExceptionStatus.RequestCanceled => "request_cancelled",
-                WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
                 WebExceptionStatus.ConnectFailure => "connect_failure",
-                WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
+                WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.RequestCanceled => "request_cancelled",
                 WebExceptionStatus.TrustFailure => "trust_failure",
+                WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
                 WebExceptionStatus.ServerProtocolViolation => "server_protocol_violation",
+                WebExceptionStatus.Timeout => "timeout",
                 WebExceptionStatus.MessageLengthLimitExceeded => "message_length_limit_exceeded",
                 _ => wexc.GetType().FullName,
             };
@@ -420,7 +421,7 @@ internal static class HttpWebRequestActivitySource
     private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
         HttpStatusCode? httpStatusCode = null;
-        object? errorType = null;
+        object errorType = null;
 
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
@@ -494,7 +495,7 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
-        if (errorType != null)
+        if (tracingEmitNewAttributes && errorType != null)
         {
             activity?.SetTag(SemanticConventions.AttributeErrorType, errorType);
         }
