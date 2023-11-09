@@ -44,6 +44,11 @@ public static class RoutingTestCases
 
         foreach (var testCase in input)
         {
+            if (testCase.MinimumDotnetVersion.HasValue && Environment.Version.Major < testCase.MinimumDotnetVersion.Value)
+            {
+                continue;
+            }
+
             result.Add(new object[] { testCase, true });
             result.Add(new object[] { testCase, false });
         }
@@ -54,6 +59,8 @@ public static class RoutingTestCases
     public class TestCase
     {
         public string Name { get; set; } = string.Empty;
+
+        public int? MinimumDotnetVersion { get; set; }
 
         public TestApplicationScenario TestApplicationScenario { get; set; }
 

@@ -18,7 +18,9 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
+#if NET7_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 
@@ -62,7 +64,11 @@ internal class TestApplicationFactory
             case TestApplicationScenario.AttributeRouting:
                 return CreateAttributeRoutingApplication();
             case TestApplicationScenario.MinimalApi:
+#if NET7_0_OR_GREATER
                 return CreateMinimalApiApplication();
+#else
+                return null;
+#endif
             case TestApplicationScenario.RazorPages:
                 return CreateRazorPagesApplication();
             default:
@@ -119,6 +125,7 @@ internal class TestApplicationFactory
         return app;
     }
 
+#if NET7_0_OR_GREATER
     private static WebApplication CreateMinimalApiApplication()
     {
         var builder = WebApplication.CreateBuilder();
@@ -127,17 +134,13 @@ internal class TestApplicationFactory
         app.Urls.Clear();
         app.Urls.Add("http://[::1]:0");
 
-#if NET7_0_OR_GREATER
         var api = app.MapGroup("/MinimalApi");
         api.MapGet("/", () => Results.Ok());
         api.MapGet("/{id}", (int id) => Results.Ok());
-#else
-        app.MapGet("/MinimalApi/", () => Results.Ok());
-        app.MapGet("/MinimalApi/{id}", (int id) => Results.Ok());
-#endif
 
         return app;
     }
+#endif
 
     private static WebApplication CreateRazorPagesApplication()
     {
