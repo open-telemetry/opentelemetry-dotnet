@@ -233,11 +233,13 @@ public sealed class IntegrationTests : IDisposable
 
         DelegatingExporter<LogRecord> delegatingExporter = null;
         var exportResults = new List<ExportResult>();
-        var processorOptions = new LogRecordExportProcessorOptions();
-        processorOptions.ExportProcessorType = exportProcessorType;
-        processorOptions.BatchExportProcessorOptions = new()
+        var processorOptions = new LogRecordExportProcessorOptions
         {
-            ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
+            {
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
         };
 
         using var loggerFactory = LoggerFactory.Create(builder =>
