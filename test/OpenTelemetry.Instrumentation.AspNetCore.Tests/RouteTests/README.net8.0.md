@@ -22,6 +22,8 @@
 | :green_heart: | :green_heart: | RazorPages | [Static content](#razorpages-static-content) |
 | :broken_heart: | :green_heart: | MinimalApi | [Action without parameter](#minimalapi-action-without-parameter) |
 | :broken_heart: | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
+| :broken_heart: | :green_heart: | MinimalApi | [Action without parameter (MapGroup)](#minimalapi-action-without-parameter-mapgroup) |
+| :broken_heart: | :green_heart: | MinimalApi | [Action with parameter (MapGroup)](#minimalapi-action-with-parameter-mapgroup) |
 
 ## ConventionalRouting: Root path
 
@@ -555,15 +557,15 @@
 
 ```json
 {
-  "IdealHttpRoute": "/MinimalApi/",
+  "IdealHttpRoute": "/MinimalApi",
   "ActivityDisplayName": "/MinimalApi",
   "ActivityHttpRoute": "",
-  "MetricHttpRoute": "/MinimalApi/",
+  "MetricHttpRoute": "/MinimalApi",
   "RouteInfo": {
     "HttpMethod": "GET",
     "Path": "/MinimalApi",
-    "RoutePattern.RawText": "/MinimalApi/",
-    "IRouteDiagnosticsMetadata.Route": "/MinimalApi/",
+    "RoutePattern.RawText": "/MinimalApi",
+    "IRouteDiagnosticsMetadata.Route": "/MinimalApi",
     "HttpContext.GetRouteData()": {},
     "ActionDescriptor": null
   }
@@ -583,6 +585,46 @@
     "Path": "/MinimalApi/123",
     "RoutePattern.RawText": "/MinimalApi/{id}",
     "IRouteDiagnosticsMetadata.Route": "/MinimalApi/{id}",
+    "HttpContext.GetRouteData()": {
+      "id": "123"
+    },
+    "ActionDescriptor": null
+  }
+}
+```
+
+## MinimalApi: Action without parameter (MapGroup)
+
+```json
+{
+  "IdealHttpRoute": "/MinimalApiUsingMapGroup/",
+  "ActivityDisplayName": "/MinimalApiUsingMapGroup",
+  "ActivityHttpRoute": "",
+  "MetricHttpRoute": "/MinimalApiUsingMapGroup/",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/MinimalApiUsingMapGroup",
+    "RoutePattern.RawText": "/MinimalApiUsingMapGroup/",
+    "IRouteDiagnosticsMetadata.Route": "/MinimalApiUsingMapGroup/",
+    "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
+  }
+}
+```
+
+## MinimalApi: Action with parameter (MapGroup)
+
+```json
+{
+  "IdealHttpRoute": "/MinimalApiUsingMapGroup/{id}",
+  "ActivityDisplayName": "/MinimalApiUsingMapGroup/123",
+  "ActivityHttpRoute": "",
+  "MetricHttpRoute": "/MinimalApiUsingMapGroup/{id}",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/MinimalApiUsingMapGroup/123",
+    "RoutePattern.RawText": "/MinimalApiUsingMapGroup/{id}",
+    "IRouteDiagnosticsMetadata.Route": "/MinimalApiUsingMapGroup/{id}",
     "HttpContext.GetRouteData()": {
       "id": "123"
     },

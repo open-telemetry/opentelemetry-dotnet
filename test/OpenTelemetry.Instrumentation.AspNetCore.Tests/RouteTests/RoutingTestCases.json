@@ -199,7 +199,6 @@
   },
   {
     "name": "Action without parameter",
-    "minimumDotnetVersion": 7,
     "testApplicationScenario": "MinimalApi",
     "httpMethod": "GET",
     "path": "/MinimalApi",
@@ -207,11 +206,10 @@
     "currentActivityDisplayName": "/MinimalApi",
     "currentActivityHttpRoute": "",
     "currentMetricHttpRoute": null,
-    "expectedHttpRoute": "/MinimalApi/"
+    "expectedHttpRoute": "/MinimalApi"
   },
   {
     "name": "Action with parameter",
-    "minimumDotnetVersion": 7,
     "testApplicationScenario": "MinimalApi",
     "httpMethod": "GET",
     "path": "/MinimalApi/123",
@@ -220,5 +218,29 @@
     "currentActivityHttpRoute": "",
     "currentMetricHttpRoute": null,
     "expectedHttpRoute": "/MinimalApi/{id}"
+  },
+  {
+    "name": "Action without parameter (MapGroup)",
+    "minimumDotnetVersion": 7,
+    "testApplicationScenario": "MinimalApi",
+    "httpMethod": "GET",
+    "path": "/MinimalApiUsingMapGroup",
+    "expectedStatusCode": 200,
+    "currentActivityDisplayName": "/MinimalApiUsingMapGroup",
+    "currentActivityHttpRoute": "",
+    "currentMetricHttpRoute": null,
+    "expectedHttpRoute": "/MinimalApiUsingMapGroup/"
+  },
+  {
+    "name": "Action with parameter (MapGroup)",
+    "minimumDotnetVersion": 7,
+    "testApplicationScenario": "MinimalApi",
+    "httpMethod": "GET",
+    "path": "/MinimalApiUsingMapGroup/123",
+    "expectedStatusCode": 200,
+    "currentActivityDisplayName": "/MinimalApiUsingMapGroup/123",
+    "currentActivityHttpRoute": "",
+    "currentMetricHttpRoute": null,
+    "expectedHttpRoute": "/MinimalApiUsingMapGroup/{id}"
   }
 ]
