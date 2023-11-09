@@ -298,7 +298,7 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public async Task AddOpenTelemetry_WithMetrics_HostConfigurationHonoredTest()
     {
-        var configureBuilderCalled = false;
+        bool configureBuilderCalled = false;
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(builder =>
