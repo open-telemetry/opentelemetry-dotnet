@@ -72,8 +72,6 @@ public static class HttpTestData
 
         public string SpanStatus { get; set; }
 
-        public bool? SpanStatusHasDescription { get; set; }
-
         public Dictionary<string, string> SpanAttributes { get; set; }
     }
 }

@@ -253,57 +253,30 @@ internal static class HttpWebRequestActivitySource
         }
 
         ActivityStatusCode status;
-        string exceptionMessage = null;
 
-        if (exception is WebException wexc)
+        if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
         {
-            if (wexc.Response is HttpWebResponse response)
+            statusCode = response.StatusCode;
+
+            if (tracingEmitOldAttributes)
             {
-                statusCode = response.StatusCode;
-
-                if (tracingEmitOldAttributes)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)statusCode);
-                }
-
-                if (tracingEmitNewAttributes)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)statusCode);
-                }
-
-                status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)statusCode);
+                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)statusCode);
             }
-            else
+
+            if (tracingEmitNewAttributes)
             {
-                switch (wexc.Status)
-                {
-                    case WebExceptionStatus.Timeout:
-                    case WebExceptionStatus.RequestCanceled:
-                        status = ActivityStatusCode.Error;
-                        break;
-                    case WebExceptionStatus.SendFailure:
-                    case WebExceptionStatus.ConnectFailure:
-                    case WebExceptionStatus.SecureChannelFailure:
-                    case WebExceptionStatus.TrustFailure:
-                    case WebExceptionStatus.ServerProtocolViolation:
-                    case WebExceptionStatus.MessageLengthLimitExceeded:
-                        status = ActivityStatusCode.Error;
-                        exceptionMessage = exception.Message;
-                        break;
-                    default:
-                        status = ActivityStatusCode.Error;
-                        exceptionMessage = exception.Message;
-                        break;
-                }
+                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)statusCode);
             }
+
+            status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)statusCode);
         }
         else
         {
             status = ActivityStatusCode.Error;
-            exceptionMessage = exception.Message;
         }
 
-        activity.SetStatus(status, exceptionMessage);
+        activity.SetStatus(status);
+
         if (TracingOptions.RecordException)
         {
             activity.RecordException(exception);
