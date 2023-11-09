@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 
 namespace RouteTests.TestApplication;
 
@@ -73,6 +74,8 @@ internal class TestApplicationFactory
     private static WebApplication CreateConventionalRoutingApplication()
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = ContentRootPath });
+        builder.Logging.ClearProviders();
+
         builder.Services
             .AddControllersWithViews()
             .AddApplicationPart(typeof(RoutingTests).Assembly);
@@ -107,6 +110,8 @@ internal class TestApplicationFactory
     private static WebApplication CreateAttributeRoutingApplication()
     {
         var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+
         builder.Services
             .AddControllers()
             .AddApplicationPart(typeof(RoutingTests).Assembly);
@@ -122,6 +127,7 @@ internal class TestApplicationFactory
     private static WebApplication CreateMinimalApiApplication()
     {
         var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
 
         var app = builder.Build();
         app.Urls.Clear();
@@ -142,6 +148,8 @@ internal class TestApplicationFactory
     private static WebApplication CreateRazorPagesApplication()
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = ContentRootPath });
+        builder.Logging.ClearProviders();
+
         builder.Services
             .AddRazorPages()
             .AddRazorRuntimeCompilation(options =>
