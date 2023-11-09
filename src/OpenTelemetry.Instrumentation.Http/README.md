@@ -12,9 +12,9 @@ and
 and collects metrics and traces about outgoing HTTP requests.
 
 **Note: This component is based on the OpenTelemetry semantic conventions for
-[metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/metrics.md)
+[metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md)
 and
-[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
+[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
 These conventions are
 [Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).

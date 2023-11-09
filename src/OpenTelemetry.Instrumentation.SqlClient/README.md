@@ -18,7 +18,7 @@ and later.
 >
 > **Note**
 > This component is based on the OpenTelemetry semantic conventions for
-[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
+[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md).
 These conventions are
 [Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
