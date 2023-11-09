@@ -199,7 +199,6 @@
   },
   {
     "name": "Action without parameter",
-    "minimumDotnetVersion": 7,
     "testApplicationScenario": "MinimalApi",
     "httpMethod": "GET",
     "path": "/MinimalApi",
@@ -211,7 +210,6 @@
   },
   {
     "name": "Action with parameter",
-    "minimumDotnetVersion": 7,
     "testApplicationScenario": "MinimalApi",
     "httpMethod": "GET",
     "path": "/MinimalApi/123",

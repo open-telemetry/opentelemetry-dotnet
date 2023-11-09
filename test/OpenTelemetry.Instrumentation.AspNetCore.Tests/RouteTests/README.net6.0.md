@@ -20,6 +20,8 @@
 | :broken_heart: | :broken_heart: | RazorPages | [Index page](#razorpages-index-page) |
 | :broken_heart: | :broken_heart: | RazorPages | [Throws exception](#razorpages-throws-exception) |
 | :green_heart: | :green_heart: | RazorPages | [Static content](#razorpages-static-content) |
+| :broken_heart: | :green_heart: | MinimalApi | [Action without parameter](#minimalapi-action-without-parameter) |
+| :broken_heart: | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
 
 ## ConventionalRouting: Root path
 
@@ -544,6 +546,46 @@
     "RoutePattern.RawText": null,
     "IRouteDiagnosticsMetadata.Route": null,
     "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
+  }
+}
+```
+
+## MinimalApi: Action without parameter
+
+```json
+{
+  "IdealHttpRoute": "/MinimalApi/",
+  "ActivityDisplayName": "/MinimalApi",
+  "ActivityHttpRoute": "",
+  "MetricHttpRoute": "/MinimalApi/",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/MinimalApi",
+    "RoutePattern.RawText": "/MinimalApi/",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {},
+    "ActionDescriptor": null
+  }
+}
+```
+
+## MinimalApi: Action with parameter
+
+```json
+{
+  "IdealHttpRoute": "/MinimalApi/{id}",
+  "ActivityDisplayName": "/MinimalApi/123",
+  "ActivityHttpRoute": "",
+  "MetricHttpRoute": "/MinimalApi/{id}",
+  "RouteInfo": {
+    "HttpMethod": "GET",
+    "Path": "/MinimalApi/123",
+    "RoutePattern.RawText": "/MinimalApi/{id}",
+    "IRouteDiagnosticsMetadata.Route": null,
+    "HttpContext.GetRouteData()": {
+      "id": "123"
+    },
     "ActionDescriptor": null
   }
 }
