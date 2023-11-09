@@ -18,7 +18,7 @@ and later.
 >
 > **Note**
 > This component is based on the OpenTelemetry semantic conventions for
-[traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
 These conventions are
 [Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
@@ -81,7 +81,7 @@ This instrumentation can be configured to change the default behavior by using
 
 The `SqlClientInstrumentationOptions` class exposes two properties that can be
 used to configure how the
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
+[`db.statement`](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md#call-level-attributes)
 attribute is captured upon execution of a query but the behavior depends on the
 runtime used.
 
@@ -93,13 +93,13 @@ control capturing of `CommandType.StoredProcedure` and `CommandType.Text`
 respectively.
 
 `SetDbStatementForStoredProcedure` is _true_ by default and will set
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
+[`db.statement`](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md#call-level-attributes)
 attribute to the stored procedure command name.
 
 `SetDbStatementForText` is _false_ by default (to prevent accidental capture of
 sensitive data that might be part of the SQL statement text). When set to
 `true`, the instrumentation will set
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
+[`db.statement`](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md#call-level-attributes)
 attribute to the text of the SQL command being executed.
 
 To disable capturing stored procedure commands use configuration like below.
@@ -127,7 +127,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 On .NET Framework, the `SetDbStatementForText` property controls whether or not
 this instrumentation will set the
-[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
+[`db.statement`](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md#call-level-attributes)
 attribute to the text of the `SqlCommand` being executed. This could either be
 the name of a stored procedure (when `CommandType.StoredProcedure` is used) or
 the full text of a `CommandType.Text` query. `SetDbStatementForStoredProcedure`
@@ -222,7 +222,7 @@ access to `SqlCommand` object.
 
 This option can be set to instruct the instrumentation to record SqlExceptions
 as Activity
-[events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
+[events](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md).
 
 The default value is `false` and can be changed by the code like below.
 
@@ -273,4 +273,4 @@ using var traceProvider = Sdk.CreateTracerProviderBuilder()
 * [OpenTelemetry Project](https://opentelemetry.io/)
 
 * [OpenTelemetry semantic conventions for database
-  calls](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md)
+  calls](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md)

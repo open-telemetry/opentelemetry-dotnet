@@ -11,9 +11,9 @@ also collects traces from incoming gRPC requests using
 [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore).
 
 **Note: This component is based on the OpenTelemetry semantic conventions for
-[metrics](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/metrics/semantic_conventions)
+[metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/metrics.md)
 and
-[traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
 These conventions are
 [Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).

@@ -37,13 +37,13 @@ telemetry is exported to a specific telemetry backend, how to sample the
 telemetry, etc. The API consists of [Tracing
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md),
 [Logging
-API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md),
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/README.md),
 [Metrics
 API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md),
 [Context and Propagation
 API](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/context),
 and a set of [semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
 
 ### Tracing API
 
@@ -206,7 +206,7 @@ here as well.
     this activity are protected with a null check.
 
 4. Populate activity with tags following the [OpenTelemetry semantic
-   conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+   conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md).
    It is highly recommended to check `activity.IsAllDataRequested`, before
    populating any tags which are not readily available. `IsAllDataRequested` is
    the same as
@@ -311,7 +311,7 @@ chose not to sample this activity.
    Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes).
    Earlier sample showed the usage of `SetTag` method of `Activity` to add tags.
    Refer to the
-   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attribute-and-label-naming)
+   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/attribute-naming.md)
    for best practices on naming tags. It is also possible to provide an initial
    set of tags during activity creation, as shown below. It is recommended to
    provide all available `Tags` during activity creation itself, as
