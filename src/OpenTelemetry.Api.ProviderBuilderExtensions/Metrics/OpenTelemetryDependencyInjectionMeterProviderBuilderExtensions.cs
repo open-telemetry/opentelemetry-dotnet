@@ -40,9 +40,9 @@ public static class OpenTelemetryDependencyInjectionMeterProviderBuilderExtensio
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder AddInstrumentation<
 #if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(this MeterProviderBuilder meterProviderBuilder)
+    T>(this MeterProviderBuilder meterProviderBuilder)
         where T : class
     {
         meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());

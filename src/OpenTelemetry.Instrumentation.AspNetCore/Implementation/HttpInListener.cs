@@ -252,7 +252,18 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, request.Method);
+                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
+                {
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+                }
+                else
+                {
+                    // Set to default "_OTHER" as per spec.
+                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
+                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
+                }
+
                 activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeUrlPath, path);
                 activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
@@ -414,12 +425,17 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
+            if (this.emitNewAttributes)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+            }
+
             if (this.options.RecordException)
             {
                 activity.RecordException(exc);
             }
 
-            activity.SetStatus(ActivityStatusCode.Error, exc.Message);
+            activity.SetStatus(ActivityStatusCode.Error);
 
             try
             {
@@ -499,7 +515,7 @@ internal class HttpInListener : ListenerHandler
     {
         // The RPC semantic conventions indicate the span name
         // should not have a leading forward slash.
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#span-name
+        // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md#span-name
         activity.DisplayName = grpcMethod.TrimStart('/');
 
         activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);

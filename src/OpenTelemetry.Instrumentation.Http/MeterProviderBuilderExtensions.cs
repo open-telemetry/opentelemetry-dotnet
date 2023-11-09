@@ -45,8 +45,9 @@ public static class MeterProviderBuilderExtensions
             .AddMeter("System.Net.Http")
             .AddMeter("System.Net.NameResolution");
 #else
-        // Note: Warm-up the status code mapping.
+        // Note: Warm-up the status code and method mapping.
         _ = TelemetryHelper.BoxedStatusCodes;
+        _ = RequestMethodHelper.KnownMethods;
 
         builder.ConfigureServices(services =>
         {

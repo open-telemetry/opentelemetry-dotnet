@@ -185,8 +185,10 @@ public class MetricTests
     }
 #endif
 
-    [Fact]
-    public async Task RequestMetricIsCaptured_New()
+    [Theory]
+    [InlineData("/api/values/2", "api/Values/{id}", null, 200)]
+    [InlineData("/api/Error", "api/Error", "System.Exception", 500)]
+    public async Task RequestMetricIsCaptured_New(string api, string expectedRoute, string expectedErrorType, int expectedStatusCode)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
@@ -207,11 +209,15 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
-
-            response1.EnsureSuccessStatusCode();
-            response2.EnsureSuccessStatusCode();
+            try
+            {
+                using var response = await client.GetAsync(api).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+            }
+            catch
+            {
+                // ignore error.
+            }
         }
 
         // We need to let End callback execute as it is executed AFTER response was returned.
@@ -229,12 +235,90 @@ public class MetricTests
 
         Assert.Equal("s", metric.Unit);
         var metricPoints = GetMetricPoints(metric);
-        Assert.Equal(2, metricPoints.Count);
+        Assert.Single(metricPoints);
 
         AssertMetricPoints_New(
             metricPoints: metricPoints,
-            expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6);
+            expectedRoutes: new List<string> { expectedRoute },
+            expectedErrorType,
+            expectedStatusCode,
+            expectedTagsCount: expectedErrorType == null ? 6 : 7);
+    }
+
+    [Theory]
+    [InlineData("CONNECT", "CONNECT")]
+    [InlineData("DELETE", "DELETE")]
+    [InlineData("GET", "GET")]
+    [InlineData("PUT", "PUT")]
+    [InlineData("HEAD", "HEAD")]
+    [InlineData("OPTIONS", "OPTIONS")]
+    [InlineData("PATCH", "PATCH")]
+    [InlineData("Get", "GET")]
+    [InlineData("POST", "POST")]
+    [InlineData("TRACE", "TRACE")]
+    [InlineData("CUSTOM", "_OTHER")]
+    public async Task HttpRequestMethodIsCapturedAsPerSpec(string originalMethod, string expectedMethod)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
+            .Build();
+
+        var metricItems = new List<Metric>();
+
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(metricItems)
+            .Build();
+
+        using var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            })
+            .CreateClient();
+
+        var message = new HttpRequestMessage();
+        message.Method = new HttpMethod(originalMethod);
+
+        try
+        {
+            using var response = await client.SendAsync(message).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore error.
+        }
+
+        // We need to let End callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the End callback to complete
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+
+        this.meterProvider.Dispose();
+
+        var requestMetrics = metricItems
+            .Where(item => item.Name == "http.server.request.duration")
+            .ToArray();
+
+        var metric = Assert.Single(requestMetrics);
+
+        Assert.Equal("s", metric.Unit);
+        var metricPoints = GetMetricPoints(metric);
+        Assert.Single(metricPoints);
+
+        var mp = metricPoints[0];
+
+        // Inspect Metric Attributes
+        var attributes = new Dictionary<string, object>();
+        foreach (var tag in mp.Tags)
+        {
+            attributes[tag.Key] = tag.Value;
+        }
+
+        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == expectedMethod);
+
+        Assert.DoesNotContain(attributes, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
     }
 
 #if !NET8_0_OR_GREATER
@@ -354,6 +438,8 @@ public class MetricTests
         AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
+            null,
+            200,
             expectedTagsCount: 6);
     }
 #endif
@@ -380,6 +466,8 @@ public class MetricTests
     private static void AssertMetricPoints_New(
         List<MetricPoint> metricPoints,
         List<string> expectedRoutes,
+        string expectedErrorType,
+        int expectedStatusCode,
         int expectedTagsCount)
     {
         // Assert that one MetricPoint exists for each ExpectedRoute
@@ -400,7 +488,7 @@ public class MetricTests
 
             if (metricPoint.HasValue)
             {
-                AssertMetricPoint_New(metricPoint.Value, expectedRoute, expectedTagsCount);
+                AssertMetricPoint_New(metricPoint.Value, expectedStatusCode, expectedRoute, expectedErrorType, expectedTagsCount);
             }
             else
             {
@@ -443,8 +531,10 @@ public class MetricTests
 
     private static KeyValuePair<string, object>[] AssertMetricPoint_New(
         MetricPoint metricPoint,
-        string expectedRoute = "api/Values",
-        int expectedTagsCount = StandardTagsCount)
+        int expectedStatusCode,
+        string expectedRoute,
+        string expectedErrorType,
+        int expectedTagsCount)
     {
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
@@ -464,7 +554,7 @@ public class MetricTests
 
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "GET");
         var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
-        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
+        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, expectedStatusCode);
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
         var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
         Assert.Contains(method, attributes);
@@ -472,6 +562,18 @@ public class MetricTests
         Assert.Contains(statusCode, attributes);
         Assert.Contains(flavor, attributes);
         Assert.Contains(route, attributes);
+
+        if (expectedErrorType != null)
+        {
+#if NET8_0_OR_GREATER
+            // Expected to change in next release
+            // https://github.com/dotnet/aspnetcore/issues/51029
+            var errorType = new KeyValuePair<string, object>("exception.type", expectedErrorType);
+#else
+            var errorType = new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, expectedErrorType);
+#endif
+            Assert.Contains(errorType, attributes);
+        }
 
         // Inspect Histogram Bounds
         var histogramBuckets = metricPoint.GetHistogramBuckets();
@@ -481,9 +583,15 @@ public class MetricTests
             histogramBounds.Add(t.ExplicitBound);
         }
 
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
+        // TODO: Remove the check for the older bounds once 1.7.0 is released. This is a temporary fix for instrumentation libraries CI workflow.
+
+        var expectedHistogramBoundsOld = new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+        var expectedHistogramBoundsNew = new List<double> { 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+
+        var histogramBoundsMatchCorrectly = Enumerable.SequenceEqual(expectedHistogramBoundsOld, histogramBounds) ||
+            Enumerable.SequenceEqual(expectedHistogramBoundsNew, histogramBounds);
+
+        Assert.True(histogramBoundsMatchCorrectly);
 
         return attributes;
     }

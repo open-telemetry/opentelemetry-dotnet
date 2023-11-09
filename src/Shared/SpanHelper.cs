@@ -25,7 +25,7 @@ internal static class SpanHelper
 {
     /// <summary>
     /// Helper method that populates span properties from http status code according
-    /// to https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md#status.
+    /// to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#common-attributes.
     /// </summary>
     /// <param name="kind">The span kind.</param>
     /// <param name="httpStatusCode">Http status code.</param>
