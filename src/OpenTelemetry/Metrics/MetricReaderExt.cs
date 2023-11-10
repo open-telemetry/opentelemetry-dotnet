@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public abstract partial class MetricReader
 {
-    private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, MetricStreamRegistration> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
     private readonly object instrumentCreationLock = new();
     private int maxMetricStreams;
@@ -55,15 +55,6 @@ public abstract partial class MetricReader
                 return existingMetric;
             }
 
-            if (this.metricStreamNames.Contains(metricStreamIdentity.MetricStreamName))
-            {
-                OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
-                    metricStreamIdentity.InstrumentName,
-                    metricStreamIdentity.MeterName,
-                    "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
-                    "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
-            }
-
             var index = ++this.metricIndex;
             if (index >= this.maxMetricStreams)
             {
@@ -89,7 +80,9 @@ public abstract partial class MetricReader
 
                 this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                 this.metrics![index] = metric;
-                this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName);
+
+                this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
+
                 return metric;
             }
         }
@@ -140,15 +133,6 @@ public abstract partial class MetricReader
                     continue;
                 }
 
-                if (this.metricStreamNames.Contains(metricStreamIdentity.MetricStreamName))
-                {
-                    OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
-                        metricStreamIdentity.InstrumentName,
-                        metricStreamIdentity.MeterName,
-                        "Metric instrument has the same name as an existing one but differs by description, unit, instrument type, or aggregation configuration (like histogram bounds, tag keys etc. ). Measurements from this instrument will still be exported but may result in conflicts.",
-                        "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
-                }
-
                 if (metricStreamConfig == MetricStreamConfiguration.Drop)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
@@ -167,7 +151,8 @@ public abstract partial class MetricReader
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics![index] = metric;
                     metrics.Add(metric);
-                    this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName);
+
+                    this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
                 }
             }
 
@@ -213,14 +198,14 @@ public abstract partial class MetricReader
 
     internal void CompleteSingleStreamMeasurement(Metric metric)
     {
-        metric.InstrumentDisposed = true;
+        DeactivateMetric(metric);
     }
 
     internal void CompleteMeasurement(List<Metric> metrics)
     {
         foreach (var metric in metrics)
         {
-            metric.InstrumentDisposed = true;
+            DeactivateMetric(metric);
         }
     }
 
@@ -250,6 +235,52 @@ public abstract partial class MetricReader
         }
     }
 
+    private static void DeactivateMetric(Metric metric)
+    {
+        metric.InstrumentDisposed = true;
+
+        var metricStreamIdentity = metric.InstrumentIdentity;
+
+        OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
+            metricStreamIdentity.InstrumentName,
+            metricStreamIdentity.MeterName);
+    }
+
+    private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
+    {
+        var registration = this.metricStreamNames.GetOrAdd(
+            metricStreamIdentity.MetricStreamName,
+            CreateRegistration);
+
+        var currentRegistrationCount = Interlocked.CompareExchange(ref registration.RegistrationCount, 1, -1);
+
+        if (currentRegistrationCount == -1)
+        {
+            // Most common case where instrument being added is the first registration.
+            return;
+        }
+
+        if (currentRegistrationCount > 0)
+        {
+            OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
+                metricStreamIdentity.InstrumentName,
+                metricStreamIdentity.MeterName,
+                "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
+                "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+        }
+        else
+        {
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentReactivated(
+                metricStreamIdentity.InstrumentName,
+                metricStreamIdentity.MeterName);
+        }
+
+        Interlocked.Increment(ref registration.RegistrationCount);
+
+        static MetricStreamRegistration CreateRegistration(string metricStreamName)
+            => new() { RegistrationCount = -1 };
+    }
+
     private Batch<Metric> GetMetricsBatch()
     {
         Debug.Assert(this.metrics != null, "this.metrics was null");
@@ -269,7 +300,15 @@ public abstract partial class MetricReader
                     if (metric.InstrumentDisposed)
                     {
                         metricPointSize = metric.Snapshot();
-                        this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
+
+                        var metricStreamNamesLookupResult = this.metricStreamNames.TryGetValue(metric.InstrumentIdentity.MetricStreamName, out var registration);
+                        Debug.Assert(metricStreamNamesLookupResult, "result was false");
+                        Debug.Assert(registration != null, "registration was null");
+                        Interlocked.Decrement(ref registration!.RegistrationCount);
+
+                        var instrumentIdentityToMetricLookupResult = this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
+                        Debug.Assert(instrumentIdentityToMetricLookupResult, "instrumentIdentityToMetricLookupResult was false");
+
                         this.metrics[i] = null;
                     }
                     else
@@ -291,5 +330,10 @@ public abstract partial class MetricReader
             OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.GetMetricsBatch), ex);
             return default;
         }
+    }
+
+    private sealed class MetricStreamRegistration
+    {
+        public int RegistrationCount;
     }
 }

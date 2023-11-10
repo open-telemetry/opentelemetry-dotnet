@@ -16,6 +16,7 @@
 
 #if BUILDING_HOSTING_TESTS
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
@@ -39,7 +40,6 @@ public class MetricTestsBase
 
 #if BUILDING_HOSTING_TESTS
         var host = BuildHost(
-            configureMetricsBuilder: null,
             configureMeterProviderBuilder: configure);
 
         meterProvider = host.Services.GetService<MeterProvider>();
@@ -56,12 +56,21 @@ public class MetricTestsBase
 
 #if BUILDING_HOSTING_TESTS
     public static IHost BuildHost(
+        Action<HostBuilderContext, IConfigurationBuilder> configureAppConfiguration = null,
+        Action<IServiceCollection> configureServices = null,
         Action<IMetricsBuilder> configureMetricsBuilder = null,
         Action<HostingMeterProviderBuilder> configureMeterProviderBuilder = null)
     {
         var hostBuilder = new HostBuilder()
+            .ConfigureDefaults(null)
+            .ConfigureAppConfiguration((context, builder) =>
+            {
+                configureAppConfiguration?.Invoke(context, builder);
+            })
             .ConfigureServices(services =>
             {
+                configureServices?.Invoke(services);
+
                 services.AddMetrics(builder =>
                 {
                     configureMetricsBuilder?.Invoke(builder);

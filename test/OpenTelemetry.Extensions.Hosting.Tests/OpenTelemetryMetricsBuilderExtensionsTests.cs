@@ -15,7 +15,12 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
+using Microsoft.Extensions.Options;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Tests;
@@ -41,18 +46,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             counter.Add(1);
         }
 
-        Assert.Single(exportedItems);
-
-        List<MetricPoint> metricPoints = new();
-        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
-        {
-            metricPoints.Add(mp);
-        }
-
-        Assert.Single(metricPoints);
-
-        var metricPoint = metricPoints[0];
-        Assert.Equal(1, metricPoint.GetSumLong());
+        AssertSingleMetricWithLongSumOfOne(exportedItems);
     }
 
     [Fact]
@@ -71,6 +65,83 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             counter.Add(1);
         }
 
+        AssertSingleMetricWithLongSumOfOne(exportedItems);
+    }
+
+    [Fact]
+    public void ReloadOfMetricsViaIConfigurationTest()
+    {
+        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = new();
+
+        var source = new MemoryConfigurationSource();
+        var memory = new MemoryConfigurationProvider(source);
+        var configuration = new ConfigurationRoot(new[] { memory });
+
+        using var host = MetricTestsBase.BuildHost(
+            configureAppConfiguration: (context, builder) => builder.AddConfiguration(configuration),
+            configureMeterProviderBuilder: builder => builder
+                .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = MetricReaderTemporalityPreference.Delta));
+
+        var meterProvider = host.Services.GetRequiredService<MeterProvider>();
+        var options = host.Services.GetRequiredService<IOptionsMonitor<MetricsOptions>>();
+
+        var counter = meter.CreateCounter<long>("TestCounter");
+        counter.Add(1);
+
+        meterProvider.ForceFlush();
+
+        Assert.Empty(exportedItems);
+
+        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "true");
+
+        configuration.Reload();
+
+        counter.Add(1);
+
+        meterProvider.ForceFlush();
+
+        AssertSingleMetricWithLongSumOfOne(exportedItems);
+
+        exportedItems.Clear();
+
+        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "false");
+
+        configuration.Reload();
+
+        counter.Add(1);
+
+        meterProvider.ForceFlush();
+
+        Assert.Empty(exportedItems);
+
+        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "true");
+
+        configuration.Reload();
+
+        counter.Add(1);
+
+        meterProvider.ForceFlush();
+
+        AssertSingleMetricWithLongSumOfOne(exportedItems);
+
+        var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
+
+        Assert.Empty(duplicateMetricInstrumentEvents);
+
+        var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
+
+        Assert.Single(metricInstrumentDeactivatedEvents);
+
+        var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
+
+        Assert.Single(metricInstrumentReactivatedEvents);
+    }
+
+    private static void AssertSingleMetricWithLongSumOfOne(List<Metric> exportedItems)
+    {
         Assert.Single(exportedItems);
 
         List<MetricPoint> metricPoints = new();
