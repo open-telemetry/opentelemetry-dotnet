@@ -173,7 +173,6 @@ internal static class HttpWebRequestActivitySource
                 }
 
                 activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
             }
 
             try
@@ -201,6 +200,7 @@ internal static class HttpWebRequestActivitySource
 
             if (tracingEmitNewAttributes)
             {
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(response.ProtocolVersion));
                 activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
             }
 
@@ -243,11 +243,12 @@ internal static class HttpWebRequestActivitySource
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddExceptionTags(Exception exception, Activity activity, out HttpStatusCode? statusCode)
+    private static void AddExceptionTags(Exception exception, Activity activity, out HttpStatusCode? statusCode, out Version protocolVersion)
     {
         Debug.Assert(activity != null, "Activity must not be null");
 
         statusCode = null;
+        protocolVersion = null;
 
         if (!activity.IsAllDataRequested)
         {
@@ -259,6 +260,7 @@ internal static class HttpWebRequestActivitySource
         if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
         {
             statusCode = response.StatusCode;
+            protocolVersion = response.ProtocolVersion;
 
             if (tracingEmitOldAttributes)
             {
@@ -397,6 +399,7 @@ internal static class HttpWebRequestActivitySource
     {
         HttpStatusCode? httpStatusCode = null;
         string errorType = null;
+        Version protocolVersion = null;
 
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
@@ -415,11 +418,12 @@ internal static class HttpWebRequestActivitySource
                 errorType = GetErrorType(ex);
                 if (activity != null)
                 {
-                    AddExceptionTags(ex, activity, out httpStatusCode);
+                    AddExceptionTags(ex, activity, out httpStatusCode, out protocolVersion);
                 }
                 else if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
                 {
                     httpStatusCode = response.StatusCode;
+                    protocolVersion = response.ProtocolVersion;
                 }
             }
             else
@@ -447,6 +451,7 @@ internal static class HttpWebRequestActivitySource
                     }
 
                     httpStatusCode = responseCopy.StatusCode;
+                    protocolVersion = responseCopy.ProtocolVersion;
                 }
                 else
                 {
@@ -456,6 +461,7 @@ internal static class HttpWebRequestActivitySource
                     }
 
                     httpStatusCode = response.StatusCode;
+                    protocolVersion = response.ProtocolVersion;
                 }
 
                 if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value) == ActivityStatusCode.Error)
@@ -531,7 +537,11 @@ internal static class HttpWebRequestActivitySource
 
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
-                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                if (protocolVersion != null)
+                {
+                    tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(protocolVersion));
+                }
+
                 if (!request.RequestUri.IsDefaultPort)
                 {
                     tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
