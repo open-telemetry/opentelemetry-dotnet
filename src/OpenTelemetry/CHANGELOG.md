@@ -846,7 +846,7 @@ Released 2020-Nov-17
   `TracerProviderBuilder.SetResourceBuilder`.
   ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533))
 * By default `TracerProvider` will set a `Resource` containing [Telemetry
-    SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk)
+    SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk)
     details
     ([#1533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1533)):
   * `telemetry.sdk.name` = `opentelemetry`

@@ -288,9 +288,9 @@ writing custom exporters.
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the
-[default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
 resource is used to indicate the
-[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service).
 The `ConfigureResource` method on `TracerProviderBuilder` can be used to
 configure the resource on the provider. `ConfigureResource` accepts an `Action`
 to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
@@ -303,9 +303,9 @@ provider is built, by calling the `Build()` method on the
 `ResourceBuilder` offers various methods to construct resource comprising of
 multiple attributes from various sources. Examples include `AddTelemetrySdk()`
 which adds [Telemetry
-Sdk](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#telemetry-sdk)
+Sdk](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk)
 resource, and `AddService()` which adds
-[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service)
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
 resource. It also allows adding `ResourceDetector`s.
 
 Follow [this](../extending-the-sdk/README.md#resource-detector) document
@@ -558,7 +558,7 @@ var provider = Sdk.CreateTracerProviderBuilder()
 The [OpenTelemetry
 Specification](https://github.com/open-telemetry/opentelemetry-specification)
 defines [specific environment
-variables](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md)
+variables](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md)
 which may be used to configure SDK implementations.
 
 The OpenTelemetry .NET SDK will look for the environment variables defined in
