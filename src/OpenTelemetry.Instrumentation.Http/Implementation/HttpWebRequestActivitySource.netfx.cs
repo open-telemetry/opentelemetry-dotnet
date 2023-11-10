@@ -200,7 +200,7 @@ internal static class HttpWebRequestActivitySource
 
             if (tracingEmitNewAttributes)
             {
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(response.ProtocolVersion));
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.ProtocolVersion));
                 activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
             }
 
@@ -261,6 +261,8 @@ internal static class HttpWebRequestActivitySource
         {
             statusCode = response.StatusCode;
             protocolVersion = response.ProtocolVersion;
+
+            activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
 
             if (tracingEmitOldAttributes)
             {
@@ -539,7 +541,7 @@ internal static class HttpWebRequestActivitySource
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
                 if (protocolVersion != null)
                 {
-                    tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(protocolVersion));
+                    tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
                 }
 
                 if (!request.RequestUri.IsDefaultPort)

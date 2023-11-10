@@ -282,7 +282,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
                 if (this.emitNewAttributes)
                 {
-                    activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(response.Version));
+                    activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.Version));
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
                     if (activity.Status == ActivityStatusCode.Error)
                     {
