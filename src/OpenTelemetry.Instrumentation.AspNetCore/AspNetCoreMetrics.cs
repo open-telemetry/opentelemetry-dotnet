@@ -23,6 +23,8 @@ internal sealed class AspNetCoreMetrics : IDisposable
         "Microsoft.AspNetCore.Hosting.HttpRequestIn",
         "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start",
         "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop",
+        "Microsoft.AspNetCore.Diagnostics.UnhandledException",
+        "Microsoft.AspNetCore.Hosting.UnhandledException",
     };
 
     private readonly Func<string, object, object, bool> isEnabled = (eventName, _, _)

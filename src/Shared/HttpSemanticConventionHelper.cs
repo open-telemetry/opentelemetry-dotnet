@@ -64,7 +64,7 @@ internal static class HttpSemanticConventionHelper
     {
         try
         {
-            var stringValue = configuration![SemanticConventionOptInKeyName];
+            var stringValue = configuration[SemanticConventionOptInKeyName];
 
             if (string.IsNullOrWhiteSpace(stringValue))
             {
@@ -72,7 +72,7 @@ internal static class HttpSemanticConventionHelper
                 return false;
             }
 
-            var stringValues = stringValue.Split(separator: new[] { ',', ' ' }, options: StringSplitOptions.RemoveEmptyEntries);
+            var stringValues = stringValue!.Split(separator: new[] { ',', ' ' }, options: StringSplitOptions.RemoveEmptyEntries);
             values = new HashSet<string>(stringValues, StringComparer.OrdinalIgnoreCase);
             return true;
         }

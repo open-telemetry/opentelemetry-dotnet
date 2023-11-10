@@ -44,10 +44,7 @@ public class W3CTraceContextTests : IDisposable
         var builder = WebApplication.CreateBuilder();
         using var app = builder.Build();
 
-        // disabling due to failing dotnet-format
-        // TODO: investigate why dotnet-format fails.
-#pragma warning disable SA1008 // Opening parenthesis should be spaced correctly
-        app.MapPost("/", async([FromBody] Data[] data) =>
+        app.MapPost("/", async ([FromBody] Data[] data) =>
         {
             var result = string.Empty;
             if (data != null)
@@ -71,7 +68,6 @@ public class W3CTraceContextTests : IDisposable
 
             return result;
         });
-#pragma warning restore SA1008 // Opening parenthesis should be spaced correctly
 
         app.RunAsync();
 

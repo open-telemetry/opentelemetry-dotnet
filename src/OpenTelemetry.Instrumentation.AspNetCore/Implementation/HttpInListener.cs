@@ -412,12 +412,17 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
+            if (this.emitNewAttributes)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
+            }
+
             if (this.options.RecordException)
             {
                 activity.RecordException(exc);
             }
 
-            activity.SetStatus(ActivityStatusCode.Error, exc.Message);
+            activity.SetStatus(ActivityStatusCode.Error);
 
             try
             {
@@ -497,7 +502,7 @@ internal class HttpInListener : ListenerHandler
     {
         // The RPC semantic conventions indicate the span name
         // should not have a leading forward slash.
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#span-name
+        // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md#span-name
         activity.DisplayName = grpcMethod.TrimStart('/');
 
         activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);

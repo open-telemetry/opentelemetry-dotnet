@@ -10,12 +10,17 @@ name: dotnet format
 on:
   pull_request:
     branches: [ 'main*' ]
-    paths-ignore:
-    - '**.cs'
-    - '.editorconfig'
+    paths:
+    - '**.md'
 
 jobs:
-  check-format:
+  check-format-stable:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: 'echo "No build required"'
+
+  check-format-experimental:
     runs-on: ubuntu-latest
 
     steps:

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Removed the Activity Status Description that was being set during
+  exceptions. Activity Status will continue to be reported as `Error`.
+  This is a **breaking change**. `EnrichWithException` can be leveraged
+  to restore this behavior.
+  ([#5025](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5025))
+
 * Updated `http.request.method` to match specification guidelines.
   * For activity, if the method does not belong to one of the [known
     values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
@@ -17,6 +23,17 @@
   activity when `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is set to
   `http` or `http/dup`.
   ([#5001](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5001))
+
+* An additional attribute `error.type` will be added to activity and
+`http.server.request.duration` metric when the request results in unhandled
+exception. The attribute value will be set to full name of exception type.
+
+  The attribute will only be added when `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable is set to `http` or `http/dup`.
+  ([#4986](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4986))
+
+* Fixed `network.protocol.version` attribute values to match the specification.
+  ([#5007](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5007))
 
 ## 1.6.0-beta.2
 

@@ -7,14 +7,14 @@ namespace OpenTelemetry.Trace;
 
 /// <summary>
 /// Constants for semantic attribute names outlined by the OpenTelemetry specifications.
-/// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/README.md"/> and
-/// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/README.md"/>.
+/// <see href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md"/> and
+/// <see href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/metrics.md"/>.
 /// </summary>
 internal static class SemanticConventions
 {
     // The set of constants matches the specification as of this commit.
-    // https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions
-    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md
+    // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/general/trace.md
+    // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md
     public const string AttributeNetTransport = "net.transport";
     public const string AttributeNetPeerIp = "net.peer.ip";
     public const string AttributeNetPeerPort = "net.peer.port";
@@ -97,6 +97,7 @@ internal static class SemanticConventions
     public const string AttributeExceptionType = "exception.type";
     public const string AttributeExceptionMessage = "exception.message";
     public const string AttributeExceptionStacktrace = "exception.stacktrace";
+    public const string AttributeErrorType = "error.type";
 
     // v1.21.0
     // https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md

@@ -194,7 +194,7 @@ public class SqlClientInstrumentationOptions
     /// <para><b>RecordException is only supported on .NET and .NET Core
     /// runtimes.</b></para>
     /// <para>For specification details see: <see
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md"/>.</para>
+    /// href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md"/>.</para>
     /// </remarks>
     public bool RecordException { get; set; }
 

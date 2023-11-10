@@ -110,11 +110,7 @@ public partial class HttpWebRequestTests
 
                 if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
                 {
-                    if (tc.SpanStatusHasDescription.HasValue)
-                    {
-                        Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(tagValue));
-                    }
-
+                    Assert.Null(tagValue);
                     continue;
                 }
 

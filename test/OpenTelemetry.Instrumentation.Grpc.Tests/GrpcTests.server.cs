@@ -173,7 +173,7 @@ public partial class GrpcTests : IDisposable
         Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
         Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeUrlScheme));
         Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeUrlPath));
-        Assert.Equal("2.0", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
+        Assert.Equal("2", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
         Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeUserAgentOriginal) as string);
     }
 
@@ -279,7 +279,7 @@ public partial class GrpcTests : IDisposable
         Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
         Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeUrlScheme));
         Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeUrlPath));
-        Assert.Equal("2.0", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
+        Assert.Equal("2", activity.GetTagValue(SemanticConventions.AttributeNetworkProtocolVersion));
         Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeUserAgentOriginal) as string);
     }
 

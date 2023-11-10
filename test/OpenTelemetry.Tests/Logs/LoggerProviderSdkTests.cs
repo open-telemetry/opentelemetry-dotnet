@@ -19,7 +19,7 @@ public sealed class LoggerProviderSdkTests
             .ConfigureServices(services =>
             {
                 services.AddSingleton<IConfiguration>(
-                    new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { ["OTEL_SERVICE_NAME"] = "TestServiceName" }).Build());
+                    new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_SERVICE_NAME"] = "TestServiceName" }).Build());
             })
             .Build() as LoggerProviderSdk;
 
