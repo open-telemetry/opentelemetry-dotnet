@@ -262,8 +262,6 @@ internal static class HttpWebRequestActivitySource
             statusCode = response.StatusCode;
             protocolVersion = response.ProtocolVersion;
 
-            activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
-
             if (tracingEmitOldAttributes)
             {
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)statusCode);
@@ -271,6 +269,7 @@ internal static class HttpWebRequestActivitySource
 
             if (tracingEmitNewAttributes)
             {
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
                 activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)statusCode);
             }
 
