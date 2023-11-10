@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+* Removed the Activity Status Description that was being set during
+  exceptions. Activity Status will continue to be reported as `Error`.
+  This is a **breaking change**. `EnrichWithException` can be leveraged
+  to restore this behavior.
+  ([#5025](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5025))
+
+* Updated `http.request.method` to match specification guidelines.
+  * For activity, if the method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then the request method will be set on an additional tag
+    `http.request.method.original` and `http.request.method` will be set to
+    `_OTHER`.
+  * For metrics, if the original method does not belong to one of the [known
+    values](https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#:~:text=http.request.method%20has%20the%20following%20list%20of%20well%2Dknown%20values)
+    then `http.request.method` on `http.client.request.duration` metric will be
+    set to `_OTHER`
+
+  `http.request.method` is set on `http.client.request.duration` metric or
+  activity when `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable is set to
+  `http` or `http/dup`.
+  ([#5003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5003))
+
+* An additional attribute `error.type` will be added to activity and
+  `http.client.request.duration` metric in case of failed requests as per the
+  [specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#common-attributes).
+
+  Users moving to `net8.0` or newer frameworks from lower versions will see
+  difference in values in case of an exception. `net8.0` or newer frameworks add
+  the ability to further drill down the exceptions to a specific type through
+  [HttpRequestError](https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0)
+  enum. For lower versions, the individual types will be rolled in to a single
+  type. This could be a **breaking change** if alerts are set based on the values.
+
+  The attribute will only be added when `OTEL_SEMCONV_STABILITY_OPT_IN`
+  environment variable is set to `http` or `http/dup`.
+
+  ([#5005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5005))
+  ([#5034](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5034))
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26

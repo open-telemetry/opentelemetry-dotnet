@@ -8,7 +8,7 @@ which instruments [Grpc.Net.Client](https://www.nuget.org/packages/Grpc.Net.Clie
 and collects traces about outgoing gRPC requests.
 
 **Note: This component is based on the OpenTelemetry semantic conventions for
-[traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md).
 These conventions are
 [Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).

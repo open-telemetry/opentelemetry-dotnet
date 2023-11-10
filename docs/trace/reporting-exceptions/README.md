@@ -107,7 +107,7 @@ leveraging Activity status. Neither of the approach actually records the
 Exception itself to do more richer debugging. `Activity.RecordException()`
 allows the exception to be stored in the Activity as ActivityEvent as per
 [OpenTelemetry
-convention](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md),
+convention](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md),
 as shown below:
 
 ```csharp
