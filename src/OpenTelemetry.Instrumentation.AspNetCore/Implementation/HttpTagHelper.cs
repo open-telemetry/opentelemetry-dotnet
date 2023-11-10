@@ -31,10 +31,10 @@ internal static class HttpTagHelper
         switch (protocol)
         {
             case "HTTP/2":
-                return "2.0";
+                return "2";
 
             case "HTTP/3":
-                return "3.0";
+                return "3";
 
             case "HTTP/1.1":
                 return "1.1";
