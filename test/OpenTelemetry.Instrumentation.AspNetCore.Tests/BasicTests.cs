@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -23,6 +24,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTelemetry.Context.Propagation;
@@ -1083,25 +1085,50 @@ public sealed class BasicTests
     {
         var exportedItems = new List<Activity>();
 
-        // configure SDK
-        using var tracerprovider = Sdk.CreateTracerProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(exportedItems)
+        void ConfigureTestServices(IServiceCollection services)
+        {
+            // configure SDK
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var meterFactory = this.factory.Services.GetRequiredService<IMeterFactory>();
+            services.AddSingleton(meterFactory);
+            services.AddRouting();
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
+                    builder.AddInstrumentation(() => this.tracerProvider));
+        }
+
+        using var host = new HostBuilder()
+            .ConfigureServices(s =>
+            {
+                ConfigureTestServices(s);
+            })
+            .ConfigureWebHost(webHostBuilder =>
+                webHostBuilder
+                    .UseTestServer()
+                    .Configure(app =>
+                    {
+                        app.UseRouting();
+                        app.UseEndpoints(endpoints =>
+                        {
+                            endpoints.MapGet("/custom/abc", async context =>
+                            {
+                                await context.Response.WriteAsync("Hello World!");
+                            });
+                        });
+                    }))
             .Build();
 
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        var app = builder.Build();
+        await host.StartAsync();
 
-        app.MapGet("/custom/{name:alpha}", () => "Hello");
-
-        _ = app.RunAsync();
-
-        using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/custom/abc").ConfigureAwait(false);
+        using var client = host.GetTestClient();
+        var res = await client.GetStringAsync("/custom/abc").ConfigureAwait(false);
         Assert.NotNull(res);
 
-        tracerprovider.ForceFlush();
+        this.tracerProvider.ForceFlush();
         for (var i = 0; i < 10; i++)
         {
             if (exportedItems.Count > 0)
@@ -1125,8 +1152,6 @@ public sealed class BasicTests
 
         // After fix this should be /custom/{name:alpha}
         Assert.Equal("/custom/abc", activity.DisplayName);
-
-        await app.DisposeAsync().ConfigureAwait(false);
     }
 
     public void Dispose()

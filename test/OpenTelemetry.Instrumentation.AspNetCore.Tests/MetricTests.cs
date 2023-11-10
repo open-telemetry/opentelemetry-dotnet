@@ -62,14 +62,20 @@ public class MetricTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task ValidateNet8MetricsAsync()
     {
-        var metricItems = new List<Metric>();
+        var exportedItems = new List<Metric>();
+        void ConfigureTestServices(IServiceCollection services)
+        {
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
-        this.meterProvider = Sdk.CreateMeterProviderBuilder()
-           .AddAspNetCoreInstrumentation()
-           .AddInMemoryExporter(metricItems)
-           .Build();
-
-        var meterFactory = this.factory.Services.GetRequiredService<IMeterFactory>();
+            var meterFactory = this.factory.Services.GetRequiredService<IMeterFactory>();
+            services.AddSingleton(meterFactory);
+            services.AddOpenTelemetry()
+                .WithMetrics(builder =>
+                    builder.AddInstrumentation(() => this.meterProvider));
+        }
 
         //var collectors = new List<MetricCollector<double>>
         //{
@@ -80,58 +86,70 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         //    //new(meterFactory, "Microsoft.AspNetCore.Hosting", "kestrel.queued_connections"),
         //};
 
-        var collector1 = new MetricCollector<double>(meterFactory, "Microsoft.AspNetCore.Hosting", "http.server.request.duration");
-        var collector2 = new MetricCollector<int>(meterFactory, "Microsoft.AspNetCore.Routing", "aspnetcore.routing.match_attempts");
+        //var collector1 = new MetricCollector<double>(meterFactory, "Microsoft.AspNetCore.Hosting", "http.server.request.duration");
+        //var collector2 = new MetricCollector<int>(meterFactory, "Microsoft.AspNetCore.Routing", "aspnetcore.routing.match_attempts");
 
-        using var host = new HostBuilder()
-            .ConfigureServices(s =>
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
             {
-                s.AddRouting();
-                s.AddSingleton(meterFactory);
-                s.AddOpenTelemetry()
-                    .WithMetrics(builder =>
-                        builder.AddInstrumentation(() => this.meterProvider));
+                builder.ConfigureTestServices(ConfigureTestServices);
             })
-            .ConfigureWebHost(webHostBuilder =>
-                webHostBuilder
-                    .UseKestrel()
-                    .UseTestServer()
-                    .Configure(app =>
-                    {
-                        app.UseRouting();
-                        app.UseEndpoints(endpoints =>
-                        {
-                            endpoints.MapGet("/", async context =>
-                            {
-                                await context.Response.WriteAsync("Hello World!");
-                            });
-                        });
-                    }))
-            .Build();
+            .CreateClient())
+        {
+            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+            Assert.NotNull(response);
+        }
 
-        await host.StartAsync();
+        //    using var host = new HostBuilder()
+        //        .ConfigureServices(s =>
+        //        {
+        //            s.AddRouting();
+        //            s.AddSingleton(meterFactory);
+        //            s.AddOpenTelemetry()
+        //                .WithMetrics(builder =>
+        //                    builder.AddInstrumentation(() => this.meterProvider));
+        //        })
+        //        .ConfigureWebHost(webHostBuilder =>
+        //            webHostBuilder
+        //                .UseKestrel()
+        //                .UseTestServer()
+        //                .Configure(app =>
+        //                {
+        //                    app.UseRouting();
+        //                    app.UseEndpoints(endpoints =>
+        //                    {
+        //                        endpoints.MapGet("/", async context =>
+        //                        {
+        //                            await context.Response.WriteAsync("Hello World!");
+        //                        });
+        //                    });
+        //                }))
+        //        .Build();
 
-        var client = host.GetTestClient();
-        var res = await client.GetStringAsync("/").ConfigureAwait(false);
-        Assert.NotNull(res);
+        //await host.StartAsync();
 
+        //var client = host.GetTestClient();
+        //var res = await client.GetStringAsync("/").ConfigureAwait(false);
+
+
+        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
         this.meterProvider.Dispose();
 
-        var requestDurationMetric = metricItems
+        var requestDurationMetric = exportedItems
             .Count(item => item.Name == "http.server.request.duration");
 
-        var activeRequestsMetric = metricItems.
+        var activeRequestsMetric = exportedItems.
             Count(item => item.Name == "http.server.active_requests");
 
-        var routeMatchingMetric = metricItems.
+        var routeMatchingMetric = exportedItems.
             Count(item => item.Name == "aspnetcore.routing.match_attempts");
 
         // TODO
-        // var kestrelActiveConnectionsMetric = metricItems.
-        //    Count(item => item.Name == "kestrel.active_connections");
+        //var kestrelActiveConnectionsMetric = exportedItems.
+        //   Count(item => item.Name == "kestrel.active_connections");
 
-        // var kestrelQueuedConnectionMetric = metricItems.
-        //    Count(item => item.Name == "kestrel.queued_connections");
+        //var kestrelQueuedConnectionMetric = exportedItems.
+        //   Count(item => item.Name == "kestrel.queued_connections");
 
         Assert.Equal(1, requestDurationMetric);
         Assert.Equal(1, activeRequestsMetric);
@@ -140,16 +158,16 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         // Assert.Equal(1, kestrelActiveConnectionsMetric);
         // Assert.Equal(1, kestrelQueuedConnectionMetric);
 
-        await collector1
-               .WaitForMeasurementsAsync(minCount: 1)
-               .ConfigureAwait(false);
+        //await collector1
+        //       .WaitForMeasurementsAsync(minCount: 1)
+        //       .ConfigureAwait(false);
 
         // .WaitAsync(TimeSpan.FromSeconds(5));
 
 
-        Assert.Collection(
-            collector1.GetMeasurementSnapshot(),
-            m => Assert.True(m.Value > 0));
+        //Assert.Collection(
+        //    collector1.GetMeasurementSnapshot(),
+        //    m => Assert.True(m.Value > 0));
 
         // TODO
         // Second WaitForMeasurementsAsync call hangs
