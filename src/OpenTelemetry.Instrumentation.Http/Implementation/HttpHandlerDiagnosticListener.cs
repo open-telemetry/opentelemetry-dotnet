@@ -205,7 +205,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 }
 
                 activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.Version));
 
                 if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
                 {
