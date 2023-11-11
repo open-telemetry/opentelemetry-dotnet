@@ -92,7 +92,7 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         using (var client = this.factory
             .WithWebHostBuilder(builder =>
             {
-                builder.ConfigureTestServices(ConfigureTestServices);
+                builder.ConfigureServices(ConfigureTestServices);
             })
             .CreateClient())
         {
@@ -144,12 +144,11 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         var routeMatchingMetric = exportedItems.
             Count(item => item.Name == "aspnetcore.routing.match_attempts");
 
-        // TODO
-        //var kestrelActiveConnectionsMetric = exportedItems.
-        //   Count(item => item.Name == "kestrel.active_connections");
+        var kestrelActiveConnectionsMetric = exportedItems.
+          Count(item => item.Name == "kestrel.active_connections");
 
-        //var kestrelQueuedConnectionMetric = exportedItems.
-        //   Count(item => item.Name == "kestrel.queued_connections");
+        var kestrelQueuedConnectionMetric = exportedItems.
+           Count(item => item.Name == "kestrel.queued_connections");
 
         Assert.Equal(1, requestDurationMetric);
         Assert.Equal(1, activeRequestsMetric);
