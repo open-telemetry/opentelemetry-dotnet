@@ -173,7 +173,7 @@ internal static class HttpWebRequestActivitySource
                 }
 
                 activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.ProtocolVersion));
             }
 
             try
@@ -531,7 +531,7 @@ internal static class HttpWebRequestActivitySource
 
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
-                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.ProtocolVersion));
                 if (!request.RequestUri.IsDefaultPort)
                 {
                     tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);

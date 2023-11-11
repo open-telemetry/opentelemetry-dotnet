@@ -41,6 +41,9 @@
   ([#5005](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5005))
   ([#5034](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5034))
 
+* Fixed `network.protocol.version` attribute values to match the specification.
+  ([#5006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5006))
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26
