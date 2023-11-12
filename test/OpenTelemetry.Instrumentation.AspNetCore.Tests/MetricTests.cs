@@ -27,11 +27,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.RateLimiting;
 #endif
 #if NET8_0_OR_GREATER
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Diagnostics.Metrics.Testing;
 using Microsoft.Extensions.Hosting;
 #endif
-using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -70,69 +67,27 @@ public class MetricTests(WebApplicationFactory<Program> factory)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var meterFactory = this.factory.Services.GetRequiredService<IMeterFactory>();
-            services.AddSingleton(meterFactory);
             services.AddOpenTelemetry()
                 .WithMetrics(builder =>
                     builder.AddInstrumentation(() => this.meterProvider));
         }
 
-        //var collectors = new List<MetricCollector<double>>
-        //{
-            
-        //    //new(meterFactory, "Microsoft.AspNetCore.Hosting", "http.server.active_requests"),
-        //    new(meterFactory, "Microsoft.AspNetCore.Routing", "aspnetcore.routing.match_attempts"),
-        //    //new(meterFactory, "Microsoft.AspNetCore.Hosting", "kestrel.active_connections"),
-        //    //new(meterFactory, "Microsoft.AspNetCore.Hosting", "kestrel.queued_connections"),
-        //};
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseUrls("http://*:0");
+        ConfigureTestServices(builder.Services);
+        var app = builder.Build();
 
-        //var collector1 = new MetricCollector<double>(meterFactory, "Microsoft.AspNetCore.Hosting", "http.server.request.duration");
-        //var collector2 = new MetricCollector<int>(meterFactory, "Microsoft.AspNetCore.Routing", "aspnetcore.routing.match_attempts");
+        app.MapGet("/", () => "Hello");
 
-        using (var client = this.factory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(ConfigureTestServices);
-            })
-            .CreateClient())
-        {
-            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
-            Assert.NotNull(response);
-        }
+        _ = app.RunAsync();
 
-        //    using var host = new HostBuilder()
-        //        .ConfigureServices(s =>
-        //        {
-        //            s.AddRouting();
-        //            s.AddSingleton(meterFactory);
-        //            s.AddOpenTelemetry()
-        //                .WithMetrics(builder =>
-        //                    builder.AddInstrumentation(() => this.meterProvider));
-        //        })
-        //        .ConfigureWebHost(webHostBuilder =>
-        //            webHostBuilder
-        //                .UseKestrel()
-        //                .UseTestServer()
-        //                .Configure(app =>
-        //                {
-        //                    app.UseRouting();
-        //                    app.UseEndpoints(endpoints =>
-        //                    {
-        //                        endpoints.MapGet("/", async context =>
-        //                        {
-        //                            await context.Response.WriteAsync("Hello World!");
-        //                        });
-        //                    });
-        //                }))
-        //        .Build();
+        var url = app.Urls.ToArray()[0];
+        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
 
-        //await host.StartAsync();
+        using var client = new HttpClient();
+        var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
+        Assert.True(res.IsSuccessStatusCode);
 
-        //var client = host.GetTestClient();
-        //var res = await client.GetStringAsync("/").ConfigureAwait(false);
-
-
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
         this.meterProvider.Dispose();
 
         var requestDurationMetric = exportedItems
@@ -153,34 +108,8 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         Assert.Equal(1, requestDurationMetric);
         Assert.Equal(1, activeRequestsMetric);
         Assert.Equal(1, routeMatchingMetric);
-
-        // Assert.Equal(1, kestrelActiveConnectionsMetric);
-        // Assert.Equal(1, kestrelQueuedConnectionMetric);
-
-        //await collector1
-        //       .WaitForMeasurementsAsync(minCount: 1)
-        //       .ConfigureAwait(false);
-
-        // .WaitAsync(TimeSpan.FromSeconds(5));
-
-
-        //Assert.Collection(
-        //    collector1.GetMeasurementSnapshot(),
-        //    m => Assert.True(m.Value > 0));
-
-        // TODO
-        // Second WaitForMeasurementsAsync call hangs
-
-        //await collector2
-        //       .WaitForMeasurementsAsync(minCount: 1)
-        //       .ConfigureAwait(false);
-
-        // .WaitAsync(TimeSpan.FromSeconds(5));
-
-
-        //Assert.Collection(
-        //    collector2.GetMeasurementSnapshot(),
-        //    m => Assert.True(m.Value > 0));
+        Assert.Equal(1, kestrelActiveConnectionsMetric);
+        Assert.Equal(1, kestrelQueuedConnectionMetric);
 
         // TODO
         // kestrel.queued_requests
@@ -188,85 +117,77 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         // kestrel.rejected_connections
         // kestrel.tls_handshake.duration
         // kestrel.active_tls_handshakes
+
+        await app.DisposeAsync();
     }
 
     [Fact]
     public async Task ValidateNet8RateLimitingMetricsAsync()
     {
-        var metricItems = new List<Metric>();
+        var exportedItems = new List<Metric>();
 
-        this.meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(metricItems)
-            .Build();
+        void ConfigureTestServices(IServiceCollection services)
+        {
+            var metricItems = new List<Metric>();
 
-        var meterFactory = this.factory.Services.GetRequiredService<IMeterFactory>();
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
-        using var host = new HostBuilder()
-            .ConfigureServices(s =>
-            {
-                s.AddRouting();
-                s.AddSingleton(meterFactory);
-                s.AddOpenTelemetry()
-                    .WithMetrics(builder =>
-                        builder.AddInstrumentation(() => this.meterProvider));
+            services.AddOpenTelemetry()
+                .WithMetrics(builder =>
+                    builder.AddInstrumentation(() => this.meterProvider));
+        }
 
-                s.AddRateLimiter(_ => _
-                    .AddFixedWindowLimiter(policyName: "fixed", options =>
-                    {
-                        options.PermitLimit = 4;
-                        options.Window = TimeSpan.FromSeconds(12);
-                        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        options.QueueLimit = 2;
-                    }));
-            })
-            .ConfigureWebHost(webHostBuilder =>
-                webHostBuilder
-                    .UseKestrel()
-                    .UseTestServer()
-                    .Configure(app =>
-                    {
-                        app.UseRouting();
-                        app.UseEndpoints(endpoints =>
-                        {
-                            endpoints.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
-                                                            .RequireRateLimiting("fixed");
-                        });
-                        app.UseRateLimiter();
-                    }))
-            .Build();
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseUrls("http://*:0");
+        ConfigureTestServices(builder.Services);
+        builder.Services.AddRateLimiter(_ => _
+        .AddFixedWindowLimiter(policyName: "fixed", options =>
+        {
+            options.PermitLimit = 4;
+            options.Window = TimeSpan.FromSeconds(12);
+            options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            options.QueueLimit = 2;
+        }));
 
-        await host.StartAsync();
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
+
+        app.UseRateLimiter();
 
         static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
 
-        var client = host.GetTestClient();
-        var res = await client.GetStringAsync("/").ConfigureAwait(false);
-        Assert.NotNull(res);
+        app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
+                                   .RequireRateLimiting("fixed");
 
-        // We need to let metric callback execute as it is executed AFTER response was returned.
-        // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the callbacks to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        _ = app.RunAsync();
+
+        var url = app.Urls.ToArray()[0];
+        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
+
+        using var client = new HttpClient();
+        var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
+        Assert.True(res.IsSuccessStatusCode);
 
         this.meterProvider.Dispose();
 
-        var activeRequestLeasesMetric = metricItems
+        var activeRequestLeasesMetric = exportedItems
             .Where(item => item.Name == "aspnetcore.rate_limiting.active_request_leases")
             .ToArray();
 
-        var requestLeaseDurationMetric = metricItems.
+        var requestLeaseDurationMetric = exportedItems.
             Where(item => item.Name == "aspnetcore.rate_limiting.request_lease.duration")
             .ToArray();
 
-        var limitingRequestsMetric = metricItems.
+        var limitingRequestsMetric = exportedItems.
             Where(item => item.Name == "aspnetcore.rate_limiting.requests")
             .ToArray();
 
-        // TODO
-        // Assert.Single(activeRequestLeasesMetric);
-        // Assert.Single(requestLeaseDurationMetric);
-        // Assert.Single(limitingRequestsMetric);
+        Assert.Single(activeRequestLeasesMetric);
+        Assert.Single(requestLeaseDurationMetric);
+        Assert.Single(limitingRequestsMetric);
 
         // TODO
         // aspnetcore.rate_limiting.request.time_in_queue
