@@ -35,10 +35,10 @@ exception. The attribute value will be set to full name of exception type.
 * Fixed `network.protocol.version` attribute values to match the specification.
   ([#5007](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5007))
 
-* Removed exclusion of measurements from `http.server.request.duration` metric
-  when the request path contained `/metrics`. This change may affect prometheus
-  pull scenario if the prometheus server sends request to the scrapping endpoint
-  that contains `/metrics` in path.
+* Calls to `/metrics` will now be included in the `http.server.request.duration`
+  metric. This change may affect prometheus pull scenario if the prometheus
+  server sends request to the scrapping endpoint that contains `/metrics` in
+  path.
   ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
 
 ## 1.6.0-beta.2
