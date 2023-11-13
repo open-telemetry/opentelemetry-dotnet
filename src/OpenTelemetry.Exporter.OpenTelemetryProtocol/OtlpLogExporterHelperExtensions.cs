@@ -39,7 +39,7 @@ public static class OtlpLogExporterHelperExtensions
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions)
-        => AddOtlpExporter(loggerOptions, configure: null);
+        => AddOtlpExporter(loggerOptions, name: null, configure: null);
 
     /// <summary>
     /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
@@ -50,15 +50,28 @@ public static class OtlpLogExporterHelperExtensions
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions>? configure)
+        => AddOtlpExporter(loggerOptions, name: null, configure);
+
+    /// <summary>
+    /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
+    /// </summary>
+    /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    public static OpenTelemetryLoggerOptions AddOtlpExporter(
+        this OpenTelemetryLoggerOptions loggerOptions,
+        string? name,
+        Action<OtlpExporterOptions>? configure)
     {
         Guard.ThrowIfNull(loggerOptions);
 
-        var name = Options.DefaultName;
+        name ??= Options.DefaultName;
 
         return loggerOptions.AddProcessor(sp =>
         {
             var exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(name);
-            var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
+            var processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(name);
 
             configure?.Invoke(exporterOptions);
 
@@ -75,15 +88,28 @@ public static class OtlpLogExporterHelperExtensions
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
         Action<OtlpExporterOptions, LogRecordExportProcessorOptions>? configureExporterAndProcessor)
+        => AddOtlpExporter(loggerOptions, name: null, configureExporterAndProcessor);
+
+    /// <summary>
+    /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
+    /// </summary>
+    /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
+    /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+    public static OpenTelemetryLoggerOptions AddOtlpExporter(
+        this OpenTelemetryLoggerOptions loggerOptions,
+        string? name,
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions>? configureExporterAndProcessor)
     {
         Guard.ThrowIfNull(loggerOptions);
 
-        var name = Options.DefaultName;
+        name ??= Options.DefaultName;
 
         return loggerOptions.AddProcessor(sp =>
         {
             var exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(name);
-            var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(name);
+            var processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(name);
 
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
