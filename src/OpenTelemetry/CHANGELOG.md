@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-* Added `AddProcessor` overload which exposes the factory pattern
-  `(Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory)`.
-  ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
-
 * Updated `Microsoft.Extensions.Logging` package version to
   `8.0.0-rc.2.23479.6`.
   ([#4959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4959))
@@ -40,6 +36,11 @@
 * Updated `Microsoft.Extensions.Logging.Configuration` package version to
   `8.0.0-rc.2.23479.6`.
   ([#5020](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5020))
+
+* Added `AddProcessor` overload on `OpenTelemetryLoggerOptions` which exposes
+  the factory pattern `(Func<IServiceProvider, BaseProcessor<LogRecord>>
+  implementationFactory)`.
+  ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
 
 ## 1.7.0-alpha.1
 
