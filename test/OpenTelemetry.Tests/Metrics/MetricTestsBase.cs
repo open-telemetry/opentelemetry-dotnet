@@ -40,6 +40,7 @@ public class MetricTestsBase
 
 #if BUILDING_HOSTING_TESTS
         var host = BuildHost(
+            useWithMetricsStyle: false,
             configureMeterProviderBuilder: configure);
 
         meterProvider = host.Services.GetService<MeterProvider>();
@@ -56,6 +57,7 @@ public class MetricTestsBase
 
 #if BUILDING_HOSTING_TESTS
     public static IHost BuildHost(
+        bool useWithMetricsStyle,
         Action<HostBuilderContext, IConfigurationBuilder> configureAppConfiguration = null,
         Action<IServiceCollection> configureServices = null,
         Action<IMetricsBuilder> configureMetricsBuilder = null,
@@ -75,18 +77,18 @@ public class MetricTestsBase
                 {
                     configureMetricsBuilder?.Invoke(builder);
 
-                    builder.UseOpenTelemetry(metricsBuilder =>
+                    if (!useWithMetricsStyle)
                     {
-                        IServiceCollection localServices = null;
-
-                        metricsBuilder.ConfigureServices(services => localServices = services);
-
-                        Debug.Assert(localServices != null, "localServices was null");
-
-                        var testBuilder = new HostingMeterProviderBuilder(localServices);
-                        configureMeterProviderBuilder?.Invoke(testBuilder);
-                    });
+                        builder.UseOpenTelemetry(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder));
+                    }
                 });
+
+                if (useWithMetricsStyle)
+                {
+                    services
+                        .AddOpenTelemetry()
+                        .WithMetrics(metricsBuilder => ConfigureBuilder(metricsBuilder, configureMeterProviderBuilder));
+                }
 
                 services.AddHostedService<MetricsSubscriptionManagerCleanupHostedService>();
             });
@@ -96,6 +98,18 @@ public class MetricTestsBase
         host.Start();
 
         return host;
+
+        static void ConfigureBuilder(MeterProviderBuilder builder, Action<HostingMeterProviderBuilder> configureMeterProviderBuilder)
+        {
+            IServiceCollection localServices = null;
+
+            builder.ConfigureServices(services => localServices = services);
+
+            Debug.Assert(localServices != null, "localServices was null");
+
+            var testBuilder = new HostingMeterProviderBuilder(localServices);
+            configureMeterProviderBuilder?.Invoke(testBuilder);
+        }
     }
 #endif
 

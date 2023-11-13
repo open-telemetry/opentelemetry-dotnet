@@ -60,11 +60,14 @@ public static class OpenTelemetryMetricsBuilderExtensions
         Action<MeterProviderBuilder> configure)
     {
         Guard.ThrowIfNull(metricsBuilder);
+        Guard.ThrowIfNull(configure);
+
+        var builder = new MeterProviderBuilderBase(metricsBuilder.Services);
 
         metricsBuilder.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricListener>());
 
-        metricsBuilder.Services.AddOpenTelemetry().WithMetrics(configure);
+        configure(builder);
 
         return metricsBuilder;
     }

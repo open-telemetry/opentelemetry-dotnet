@@ -32,13 +32,16 @@ namespace OpenTelemetry.Extensions.Hosting.Tests;
 
 public class OpenTelemetryMetricsBuilderExtensionsTests
 {
-    [Fact]
-    public void EnableMetricsTest()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EnableMetricsTest(bool useWithMetricsStyle)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = new();
 
         using (var host = MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
         {
@@ -49,13 +52,16 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         AssertSingleMetricWithLongSumOfOne(exportedItems);
     }
 
-    [Fact]
-    public void EnableMetricsWithAddMeterTest()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EnableMetricsWithAddMeterTest(bool useWithMetricsStyle)
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = new();
 
         using (var host = MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
             configureMetricsBuilder: builder => builder.EnableMetrics(meter.Name),
             configureMeterProviderBuilder: builder => builder
                 .AddSdkMeter(meter.Name)
@@ -68,8 +74,10 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         AssertSingleMetricWithLongSumOfOne(exportedItems);
     }
 
-    [Fact]
-    public void ReloadOfMetricsViaIConfigurationTest()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReloadOfMetricsViaIConfigurationTest(bool useWithMetricsStyle)
     {
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
@@ -81,6 +89,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         var configuration = new ConfigurationRoot(new[] { memory });
 
         using var host = MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
             configureAppConfiguration: (context, builder) => builder.AddConfiguration(configuration),
             configureMeterProviderBuilder: builder => builder
                 .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = MetricReaderTemporalityPreference.Delta));
@@ -117,7 +126,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         Assert.Empty(exportedItems);
 
-        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "true");
+        memory.Set($"Metrics:OpenTelemetry:EnabledMetrics:{meter.Name}:Default", "true");
 
         configuration.Reload();
 

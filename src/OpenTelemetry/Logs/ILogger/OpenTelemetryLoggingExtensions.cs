@@ -123,7 +123,7 @@ public static class OpenTelemetryLoggingExtensions
     /// </summary>
     /// <remarks><inheritdoc cref="UseOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-    /// <param name="configureBuilder">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
+    /// <param name="configure">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
     public
 #else
@@ -132,14 +132,18 @@ public static class OpenTelemetryLoggingExtensions
     /// </summary>
     /// <remarks><inheritdoc cref="UseOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-    /// <param name="configureBuilder">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
+    /// <param name="configure"><see cref="LoggerProviderBuilder"/> configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
     internal
 #endif
         static ILoggingBuilder UseOpenTelemetry(
         this ILoggingBuilder builder,
-        Action<LoggerProviderBuilder>? configureBuilder)
-        => AddOpenTelemetryInternal(builder, configureBuilder, configureOptions: null);
+        Action<LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        return AddOpenTelemetryInternal(builder, configureBuilder: configure, configureOptions: null);
+    }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
