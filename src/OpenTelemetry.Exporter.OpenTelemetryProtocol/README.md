@@ -93,10 +93,29 @@ are ignored by exporter. Duplicate keys are exported as is.
 
 You can configure the `OtlpExporter` through `OtlpExporterOptions`
 and environment variables.
-The `OtlpExporterOptions` type setters take precedence over the environment variables.
 
-This can be achieved by providing an `Action<OtlpExporterOptions>` delegate to the
-`AddOtlpExporter()` method or using `AddOptions<OtlpExporterOptions>()`.
+> **Note**
+> The `OtlpExporterOptions` type setters take precedence over the environment variables.
+
+This can be achieved by providing an `Action<OtlpExporterOptions>` delegate to
+the `AddOtlpExporter()` method or using the `Configure<OtlpExporterOptions>()`
+Options API extension.
+
+> **Note**
+> The `OtlpExporterOptions` class is shared by logging, metrics, and tracing. To
+> specify different settings for each signal use the `name` parameter on the
+> `AddOtlpExporter` extensions:
+> ```csharp
+> appBuilder.Services.AddOpenTelemetry()
+>     .WithTracing(builder => builder.AddOtlpExporter("tracing", o => { }))
+>     .WithMetrics(builder => builder.AddOtlpExporter("metrics", o => { }));
+> 
+> appBuilder.Logging.AddOpenTelemetry(builder => builder.AddOtlpExporter("logging", o => { }));
+> 
+> appBuilder.Services.Configure<OtlpExporterOptions>("tracing", o => o.Endpoint = new("http://tracing_endpoint_here"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("metrics", o => o.Endpoint = new("http://metrics_endpoint_here"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("logging", o => o.Endpoint = new("http://logging_endpoint_here"));
+> ```
 
 If additional services from the dependency injection are required, they can be
 configured like this:
@@ -109,7 +128,7 @@ services.AddOptions<OtlpExporterOptions>().Configure<Service>((opts, svc) => {
 
 TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
-## OtlpExporterOptions
+### OtlpExporterOptions
 
 * `Protocol`: OTLP transport protocol. Supported values:
   `OtlpExportProtocol.Grpc` and `OtlpExportProtocol.HttpProtobuf`.
@@ -142,6 +161,24 @@ The following options are only applicable to `OtlpTraceExporter`:
 
 See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
 an example of how to use the exporter.
+
+### LogRecordExportProcessorOptions
+
+The `LogRecordExportProcessorOptions` class may be used to configure processor &
+batch settings for logging:
+
+```csharp
+// Set via code:
+appBuilder.Services.Configure<LogRecordExportProcessorOptions>(o =>
+{
+    o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
+    o.BatchExportProcessorOptions.MaxExportBatchSize = 5000;
+});
+
+// Set via configuration:
+appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:Logging"));
+```
 
 ## Environment Variables
 
