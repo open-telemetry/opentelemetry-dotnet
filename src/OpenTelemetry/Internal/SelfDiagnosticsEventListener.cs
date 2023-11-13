@@ -318,7 +318,12 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     /// <param name="eventData">Data of the EventSource event.</param>
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
-        this.WriteEvent(eventData.Message, eventData.Payload);
+        // Note: The EventSource check here works around a bug in EventListener.
+        // See:
+        if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            this.WriteEvent(eventData.Message, eventData.Payload);
+        }
     }
 
     private void Dispose(bool disposing)
