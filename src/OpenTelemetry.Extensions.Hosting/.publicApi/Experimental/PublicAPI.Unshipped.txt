@@ -1,3 +1,6 @@
 OpenTelemetry.OpenTelemetryBuilder.WithLogging() -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> OpenTelemetry.OpenTelemetryBuilder!
+Microsoft.Extensions.Diagnostics.Metrics.OpenTelemetryMetricsBuilderExtensions
+static Microsoft.Extensions.Diagnostics.Metrics.OpenTelemetryMetricsBuilderExtensions.UseOpenTelemetry(this Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder! metricsBuilder) -> Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder!
+static Microsoft.Extensions.Diagnostics.Metrics.OpenTelemetryMetricsBuilderExtensions.UseOpenTelemetry(this Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder! metricsBuilder, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder!>! configure) -> Microsoft.Extensions.Diagnostics.Metrics.IMetricsBuilder!
