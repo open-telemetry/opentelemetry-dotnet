@@ -173,7 +173,7 @@ internal static class HttpWebRequestActivitySource
                 }
 
                 activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.ProtocolVersion));
             }
 
             try
@@ -215,6 +215,31 @@ internal static class HttpWebRequestActivitySource
                 HttpInstrumentationEventSource.Log.EnrichmentException(ex);
             }
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static string GetErrorType(Exception exception)
+    {
+        if (exception is WebException wexc)
+        {
+            // TODO: consider other Status values from
+            // https://learn.microsoft.com/dotnet/api/system.net.webexceptionstatus?view=netframework-4.6.2
+            return wexc.Status switch
+            {
+                WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
+                WebExceptionStatus.ConnectFailure => "connect_failure",
+                WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.RequestCanceled => "request_cancelled",
+                WebExceptionStatus.TrustFailure => "trust_failure",
+                WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
+                WebExceptionStatus.ServerProtocolViolation => "server_protocol_violation",
+                WebExceptionStatus.Timeout => "timeout",
+                WebExceptionStatus.MessageLengthLimitExceeded => "message_length_limit_exceeded",
+                _ => wexc.GetType().FullName,
+            };
+        }
+
+        return exception.GetType().FullName;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -371,6 +396,7 @@ internal static class HttpWebRequestActivitySource
     private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy, HttpWebRequest request, long startTimestamp)
     {
         HttpStatusCode? httpStatusCode = null;
+        string errorType = null;
 
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
@@ -386,6 +412,7 @@ internal static class HttpWebRequestActivitySource
         {
             if (result is Exception ex)
             {
+                errorType = GetErrorType(ex);
                 if (activity != null)
                 {
                     AddExceptionTags(ex, activity, out httpStatusCode);
@@ -430,11 +457,22 @@ internal static class HttpWebRequestActivitySource
 
                     httpStatusCode = response.StatusCode;
                 }
+
+                if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value) == ActivityStatusCode.Error)
+                {
+                    // override the errorType to statusCode for failures.
+                    errorType = TelemetryHelper.GetStatusCodeString(httpStatusCode.Value);
+                }
             }
         }
         catch (Exception ex)
         {
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
+        }
+
+        if (tracingEmitNewAttributes && errorType != null)
+        {
+            activity?.SetTag(SemanticConventions.AttributeErrorType, errorType);
         }
 
         activity?.Stop();
@@ -493,7 +531,7 @@ internal static class HttpWebRequestActivitySource
 
                 tags.Add(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
                 tags.Add(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme);
-                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
+                tags.Add(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.ProtocolVersion));
                 if (!request.RequestUri.IsDefaultPort)
                 {
                     tags.Add(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
@@ -502,6 +540,11 @@ internal static class HttpWebRequestActivitySource
                 if (httpStatusCode.HasValue)
                 {
                     tags.Add(SemanticConventions.AttributeHttpResponseStatusCode, (int)httpStatusCode.Value);
+                }
+
+                if (errorType != null)
+                {
+                    tags.Add(SemanticConventions.AttributeErrorType, errorType);
                 }
 
                 HttpClientRequestDuration.Record(durationS, tags);

@@ -67,7 +67,7 @@ internal static class GrpcTagHelper
 
     /// <summary>
     /// Helper method that populates span properties from RPC status code according
-    /// to https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/rpc.md#status.
+    /// to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/grpc.md#grpc-attributes.
     /// </summary>
     /// <param name="statusCode">RPC status code.</param>
     /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>
