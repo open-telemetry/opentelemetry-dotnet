@@ -81,15 +81,9 @@ public static class OpenTelemetryLoggingExtensions
     /// </summary>
     /// <remarks>
     /// <para><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>This is safe to be called multiple times and by library authors.
+    /// Note: This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
-    /// for a given <see cref="IServiceCollection"/>.</item>
-    /// <item><see cref="IServiceCollection"/> / <see cref="IServiceProvider"/>
-    /// features (DI, Options, IConfiguration, etc.) are not available when
-    /// using <see cref="ILoggingBuilder"/>.</item>
-    /// </list>
+    /// for a given <see cref="IServiceCollection"/>.
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -99,15 +93,9 @@ public static class OpenTelemetryLoggingExtensions
     /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
     /// </summary>
     /// <remarks>
-    /// Notes:
-    /// <list type="bullet">
-    /// <item>This is safe to be called multiple times and by library authors.
+    /// Note: This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
-    /// for a given <see cref="IServiceCollection"/>.</item>
-    /// <item><see cref="IServiceCollection"/> / <see cref="IServiceProvider"/>
-    /// features (DI, Options, IConfiguration, etc.) are not available when
-    /// using <see cref="ILoggingBuilder"/>.</item>
-    /// </list>
+    /// for a given <see cref="IServiceCollection"/>.
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>

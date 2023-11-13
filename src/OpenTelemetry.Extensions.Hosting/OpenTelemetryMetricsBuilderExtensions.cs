@@ -63,12 +63,7 @@ public static class OpenTelemetryMetricsBuilderExtensions
     /// <summary>
     /// Adds an OpenTelemetry <see cref="IMetricsListener"/> named 'OpenTelemetry' to the <see cref="IMetricsBuilder"/>.
     /// </summary>
-    /// <remarks>
-    /// <para><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
-    /// Note: This is safe to be called multiple times and by library authors.
-    /// Only a single <see cref="IMetricsListener"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
-    /// </remarks>
+    /// <remarks><inheritdoc cref="UseOpenTelemetry(IMetricsBuilder)" path="/remarks"/></remarks>
     /// <param name="metricsBuilder"><see cref="IMetricsBuilder"/>.</param>
     /// <param name="configure"><see cref="MeterProviderBuilder"/>
     /// configuration callback.</param>
@@ -79,11 +74,7 @@ public static class OpenTelemetryMetricsBuilderExtensions
     /// <summary>
     /// Adds an OpenTelemetry <see cref="IMetricsListener"/> named 'OpenTelemetry' to the <see cref="IMetricsBuilder"/>.
     /// </summary>
-    /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
-    /// Only a single <see cref="IMetricsListener"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
-    /// </remarks>
+    /// <remarks><inheritdoc cref="UseOpenTelemetry(IMetricsBuilder)" path="/remarks"/></remarks>
     /// <param name="metricsBuilder"><see cref="IMetricsBuilder"/>.</param>
     /// <param name="configure"><see cref="MeterProviderBuilder"/>
     /// configuration callback.</param>
