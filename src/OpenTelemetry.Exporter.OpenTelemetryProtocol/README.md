@@ -110,9 +110,9 @@ Options API extension.
 > appBuilder.Services.AddOpenTelemetry()
 >     .WithTracing(builder => builder.AddOtlpExporter("tracing", configure: null))
 >     .WithMetrics(builder => builder.AddOtlpExporter("metrics", configure: null));
-> 
+>
 > appBuilder.Logging.AddOpenTelemetry(builder => builder.AddOtlpExporter("logging", configure: null));
-> 
+>
 > appBuilder.Services.Configure<OtlpExporterOptions>("tracing", o => o.Endpoint = new("http://tracing_endpoint_here"));
 > appBuilder.Services.Configure<OtlpExporterOptions>("metrics", o => o.Endpoint = new("http://metrics_endpoint_here"));
 > appBuilder.Services.Configure<OtlpExporterOptions>("logging", o => o.Endpoint = new("http://logging_endpoint_here"));
