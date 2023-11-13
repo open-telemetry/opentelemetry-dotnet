@@ -39,8 +39,8 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
     }
 
     [Theory]
-    [InlineData("/api/values", null, "user-agent", 503, "503")]
-    [InlineData("/api/values", "?query=1", null, 503, null)]
+    [InlineData("/api/values", null, "user-agent", 200, null)]
+    [InlineData("/api/values", "?query=1", null, 200, null)]
     [InlineData("/api/exception", null, null, 503, null)]
     [InlineData("/api/exception", null, null, 503, null, true)]
     public async Task SuccessfulTemplateControllerCallGeneratesASpan_New(
@@ -123,6 +123,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
             if (statusCode == 503)
             {
                 Assert.Equal(ActivityStatusCode.Error, activity.Status);
+                Assert.Equal("System.Exception", activity.GetTagValue(SemanticConventions.AttributeErrorType));
             }
             else
             {
@@ -131,14 +132,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
 
             // Instrumentation is not expected to set status description
             // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-            if (!urlPath.EndsWith("exception"))
-            {
-                Assert.True(string.IsNullOrEmpty(activity.StatusDescription));
-            }
-            else
-            {
-                Assert.Equal("exception description", activity.StatusDescription);
-            }
+            Assert.Null(activity.StatusDescription);
 
             if (recordException)
             {

@@ -17,9 +17,12 @@
 
   <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
   <PropertyGroup>
+    <NetFrameworkMinimumSupportedVersion>net462</NetFrameworkMinimumSupportedVersion>
+    <NetFrameworkSupportedVersions>net481;net48;net472;net471;net47;net462</NetFrameworkSupportedVersions>
+
     <!-- production TFMs -->
-    <TargetFrameworksForLibraries>net8.0;net6.0;netstandard2.0;net462</TargetFrameworksForLibraries>
-    <TargetFrameworksForLibrariesExtended>net8.0;net6.0;netstandard2.1;netstandard2.0;net462</TargetFrameworksForLibrariesExtended>
+    <TargetFrameworksForLibraries>net8.0;net6.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
+    <TargetFrameworksForLibrariesExtended>net8.0;net6.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
     <TargetFrameworksForAspNetCoreInstrumentation>net8.0;net7.0;net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForAspNetCoreInstrumentation>
     <TargetFrameworksForGrpcNetClientInstrumentation>net8.0;net6.0;netstandard2.1;netstandard2.0</TargetFrameworksForGrpcNetClientInstrumentation>
     <TargetFrameworksForPrometheusAspNetCore>net8.0;net6.0</TargetFrameworksForPrometheusAspNetCore>
@@ -29,11 +32,11 @@
     <TargetFrameworksForAotCompatibilityTests>net8.0</TargetFrameworksForAotCompatibilityTests>
     <TargetFrameworksForDocs>net8.0;net7.0;net6.0</TargetFrameworksForDocs>
     <TargetFrameworksForDocs Condition="$(OS) == 'Windows_NT' And '$(UsingMicrosoftNETSdkWeb)' != 'True'">
-      $(TargetFrameworksForDocs);net481;net48;net472;net471;net47;net462
+      $(TargetFrameworksForDocs);$(NetFrameworkSupportedVersions)
     </TargetFrameworksForDocs>
     <TargetFrameworksForTests>net8.0;net7.0;net6.0</TargetFrameworksForTests>
     <TargetFrameworksForTests Condition="$(OS) == 'Windows_NT'">
-      $(TargetFrameworksForTests);net462
+      $(TargetFrameworksForTests);$(NetFrameworkMinimumSupportedVersion)
     </TargetFrameworksForTests>
   </PropertyGroup>
 
@@ -54,9 +57,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
-    <!--
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" PrivateAssets="All" Condition="'$(SkipAnalysis)'!='true'" />
-    -->
   </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">

@@ -26,7 +26,7 @@ using Zipkin::OpenTelemetry.Exporter;
 
 namespace Benchmarks.Exporter;
 
-#if !NET462
+#if !NETFRAMEWORK
 [ThreadingDiagnoser]
 #endif
 public class ZipkinExporterBenchmarks

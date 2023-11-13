@@ -205,7 +205,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 }
 
                 activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.Version));
 
                 if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
                 {
@@ -271,6 +271,11 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
             if (TryFetchResponse(payload, out HttpResponseMessage response))
             {
+                if (currentStatusCode == ActivityStatusCode.Unset)
+                {
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+                }
+
                 if (this.emitOldAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
@@ -279,11 +284,10 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 if (this.emitNewAttributes)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-                }
-
-                if (currentStatusCode == ActivityStatusCode.Unset)
-                {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+                    if (activity.Status == ActivityStatusCode.Error)
+                    {
+                        activity.SetTag(SemanticConventions.AttributeErrorType, TelemetryHelper.GetStatusCodeString(response.StatusCode));
+                    }
                 }
 
                 try
@@ -337,6 +341,11 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
+            if (this.emitNewAttributes)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, GetErrorType(exc));
+            }
+
             if (this.options.RecordException)
             {
                 activity.RecordException(exc);
@@ -344,7 +353,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
             if (exc is HttpRequestException)
             {
-                activity.SetStatus(ActivityStatusCode.Error, exc.Message);
+                activity.SetStatus(ActivityStatusCode.Error);
             }
 
             try
@@ -371,5 +380,34 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
 
             return true;
         }
+    }
+
+    private static string GetErrorType(Exception exc)
+    {
+#if NET8_0_OR_GREATER
+        // For net8.0 and above exception type can be found using HttpRequestError.
+        // https://learn.microsoft.com/dotnet/api/system.net.http.httprequesterror?view=net-8.0
+        if (exc is HttpRequestException httpRequestException)
+        {
+            return httpRequestException.HttpRequestError switch
+            {
+                HttpRequestError.NameResolutionError => "name_resolution_error",
+                HttpRequestError.ConnectionError => "connection_error",
+                HttpRequestError.SecureConnectionError => "secure_connection_error",
+                HttpRequestError.HttpProtocolError => "http_protocol_error",
+                HttpRequestError.ExtendedConnectNotSupported => "extended_connect_not_supported",
+                HttpRequestError.VersionNegotiationError => "version_negotiation_error",
+                HttpRequestError.UserAuthenticationError => "user_authentication_error",
+                HttpRequestError.ProxyTunnelError => "proxy_tunnel_error",
+                HttpRequestError.InvalidResponse => "invalid_response",
+                HttpRequestError.ResponseEnded => "response_ended",
+                HttpRequestError.ConfigurationLimitExceeded => "configuration_limit_exceeded",
+
+                // Fall back to the exception type name in case of HttpRequestError.Unknown
+                _ => exc.GetType().FullName,
+            };
+        }
+#endif
+        return exc.GetType().FullName;
     }
 }
