@@ -25,7 +25,12 @@ namespace Microsoft.Extensions.Diagnostics.Metrics;
 /// Contains extension methods for registering OpenTelemetry metrics with an
 /// <see cref="IMetricsBuilder"/> instance.
 /// </summary>
-public static class OpenTelemetryMetricsBuilderExtensions
+#if EXPOSE_EXPERIMENTAL_FEATURES
+public
+#else
+internal
+#endif
+    static class OpenTelemetryMetricsBuilderExtensions
 {
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
