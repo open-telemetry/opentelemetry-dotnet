@@ -37,7 +37,7 @@ exception. The attribute value will be set to full name of exception type.
 
 * Removed exclusion of measurements from `http.server.request.duration` metric
   when the request path contained `/metrics`. This change may affect prometheus
-  pull scenario if the prometheus server sends request to the scrapping endpoint
+  pull scenario if the Prometheus server sends request to the scraping endpoint
   that contains `/metrics` in path.
   ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
 
