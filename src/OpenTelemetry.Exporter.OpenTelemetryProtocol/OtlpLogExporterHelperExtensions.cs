@@ -49,15 +49,15 @@ public static class OtlpLogExporterHelperExtensions
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
-        Action<OtlpExporterOptions>? configure)
+        Action<OtlpExporterOptions> configure)
         => AddOtlpExporter(loggerOptions, name: null, configure);
 
     /// <summary>
     /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
     /// </summary>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configure">Callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configure">Optional callback action for configuring <see cref="OtlpExporterOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
@@ -87,15 +87,15 @@ public static class OtlpLogExporterHelperExtensions
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
-        Action<OtlpExporterOptions, LogRecordExportProcessorOptions>? configureExporterAndProcessor)
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
         => AddOtlpExporter(loggerOptions, name: null, configureExporterAndProcessor);
 
     /// <summary>
     /// Adds an OTLP Exporter to the OpenTelemetry <see cref="ILoggerProvider"/>.
     /// </summary>
     /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
-    /// <param name="name">Name which is used when retrieving options.</param>
-    /// <param name="configureExporterAndProcessor">Callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
+    /// <param name="name">Optional name which is used when retrieving options.</param>
+    /// <param name="configureExporterAndProcessor">Optional callback action for configuring <see cref="OtlpExporterOptions"/> and <see cref="LogRecordExportProcessorOptions"/>.</param>
     /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
     public static OpenTelemetryLoggerOptions AddOtlpExporter(
         this OpenTelemetryLoggerOptions loggerOptions,
