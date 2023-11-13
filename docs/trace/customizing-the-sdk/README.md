@@ -289,8 +289,10 @@ writing custom exporters.
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the
 [default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
-resource is used to indicate the
-[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service).
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
+SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
 The `ConfigureResource` method on `TracerProviderBuilder` can be used to
 configure the resource on the provider. `ConfigureResource` accepts an `Action`
 to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
