@@ -146,13 +146,13 @@ public static class OtlpMetricExporterExtensions
     {
         Guard.ThrowIfNull(builder);
 
-        name ??= Options.DefaultName;
+        var finalOptionsName = name ?? Options.DefaultName;
 
         builder.ConfigureServices(services =>
         {
             OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
 
-            services.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
+            services.AddOptions<MetricReaderOptions>(finalOptionsName).Configure<IConfiguration>(
                 (readerOptions, config) =>
                 {
                     var otlpTemporalityPreference = config[OtlpMetricExporterTemporalityPreferenceEnvVarKey];
@@ -166,8 +166,21 @@ public static class OtlpMetricExporterExtensions
 
         return builder.AddReader(sp =>
         {
-            var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name);
-            var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(name);
+            OtlpExporterOptions exporterOptions;
+            if (name == null)
+            {
+                // If we are NOT using named options we create a new
+                // instance always. The reason for this is
+                // OtlpExporterOptions is shared by all signals. Without a
+                // name, delegates for all signals will mix together.
+                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+            }
+            else
+            {
+                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+            }
+
+            var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName);
 
             configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
 

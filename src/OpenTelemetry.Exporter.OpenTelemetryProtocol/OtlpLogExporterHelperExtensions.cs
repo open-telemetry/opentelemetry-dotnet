@@ -66,12 +66,25 @@ public static class OtlpLogExporterHelperExtensions
     {
         Guard.ThrowIfNull(loggerOptions);
 
-        name ??= Options.DefaultName;
+        var finalOptionsName = name ?? Options.DefaultName;
 
         return loggerOptions.AddProcessor(sp =>
         {
-            var exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(name);
-            var processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(name);
+            OtlpExporterOptions exporterOptions;
+            if (name == null)
+            {
+                // If we are NOT using named options we create a new
+                // instance always. The reason for this is
+                // OtlpExporterOptions is shared by all signals. Without a
+                // name, delegates for all signals will mix together.
+                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+            }
+            else
+            {
+                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+            }
+
+            var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
             configure?.Invoke(exporterOptions);
 
@@ -104,12 +117,25 @@ public static class OtlpLogExporterHelperExtensions
     {
         Guard.ThrowIfNull(loggerOptions);
 
-        name ??= Options.DefaultName;
+        var finalOptionsName = name ?? Options.DefaultName;
 
         return loggerOptions.AddProcessor(sp =>
         {
-            var exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(name);
-            var processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(name);
+            OtlpExporterOptions exporterOptions;
+            if (name == null)
+            {
+                // If we are NOT using named options we create a new
+                // instance always. The reason for this is
+                // OtlpExporterOptions is shared by all signals. Without a
+                // name, delegates for all signals will mix together.
+                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+            }
+            else
+            {
+                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+            }
+
+            var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
