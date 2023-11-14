@@ -85,7 +85,7 @@ public sealed class OpenTelemetryBuilder
     /// <see cref="IServiceCollection"/>.</item>
     /// <item>This method automatically calls <see
     /// cref="MetricsServiceExtensions.AddMetrics(IServiceCollection)"/> and
-    /// registers an <see cref="IMetricsListener"/> named "OpenTelemetry" into
+    /// registers an <see cref="IMetricsListener"/> named 'OpenTelemetry' into
     /// the <see cref="IServiceCollection"/>.</item>
     /// </list>
     /// </remarks>
