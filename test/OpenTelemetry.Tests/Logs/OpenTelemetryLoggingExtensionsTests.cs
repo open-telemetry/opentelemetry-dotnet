@@ -25,25 +25,16 @@ namespace OpenTelemetry.Logs.Tests;
 
 public sealed class OpenTelemetryLoggingExtensionsTests
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ServiceCollectionAddOpenTelemetryNoParametersTest(bool callUseExtension)
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryNoParametersTest()
     {
         bool optionsCallbackInvoked = false;
 
         var serviceCollection = new ServiceCollection();
 
-        serviceCollection.AddLogging(logging =>
+        serviceCollection.AddLogging(configure =>
         {
-            if (callUseExtension)
-            {
-                logging.UseOpenTelemetry();
-            }
-            else
-            {
-                logging.AddOpenTelemetry();
-            }
+            configure.AddOpenTelemetry();
         });
 
         serviceCollection.Configure<OpenTelemetryLoggerOptions>(options =>
@@ -61,16 +52,10 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Theory]
-    [InlineData(false, 1, 0)]
-    [InlineData(false, 1, 1)]
-    [InlineData(false, 5, 5)]
-    [InlineData(true, 1, 0)]
-    [InlineData(true, 1, 1)]
-    [InlineData(true, 5, 5)]
-    public void ServiceCollectionAddOpenTelemetryConfigureActionTests(
-        bool callUseExtension,
-        int numberOfBuilderRegistrations,
-        int numberOfOptionsRegistrations)
+    [InlineData(1, 0)]
+    [InlineData(1, 1)]
+    [InlineData(5, 5)]
+    public void ServiceCollectionAddOpenTelemetryConfigureActionTests(int numberOfBuilderRegistrations, int numberOfOptionsRegistrations)
     {
         int configureCallbackInvocations = 0;
         int optionsCallbackInvocations = 0;
@@ -78,18 +63,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         var serviceCollection = new ServiceCollection();
 
-        serviceCollection.AddLogging(logging =>
+        serviceCollection.AddLogging(configure =>
         {
             for (int i = 0; i < numberOfBuilderRegistrations; i++)
             {
-                if (callUseExtension)
-                {
-                    logging.UseOpenTelemetry(configureBuilder: null, configureOptions: ConfigureCallback);
-                }
-                else
-                {
-                    logging.AddOpenTelemetry(ConfigureCallback);
-                }
+                configure.AddOpenTelemetry(ConfigureCallback);
             }
         });
 
@@ -138,69 +116,6 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         }
     }
 
-    [Fact]
-    public void UseOpenTelemetryDependencyInjectionTest()
-    {
-        var serviceCollection = new ServiceCollection();
-
-        serviceCollection.AddLogging(logging =>
-        {
-            logging.UseOpenTelemetry(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    services.AddSingleton<TestLogProcessor>();
-                });
-
-                builder.ConfigureBuilder((sp, builder) =>
-                {
-                    builder.AddProcessor(
-                        sp.GetRequiredService<TestLogProcessor>());
-                });
-            });
-        });
-
-        using var sp = serviceCollection.BuildServiceProvider();
-
-        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
-
-        Assert.NotNull(loggerProvider);
-
-        Assert.NotNull(loggerProvider.Processor);
-
-        Assert.True(loggerProvider.Processor is TestLogProcessor);
-    }
-
-    [Fact]
-    public void UseOpenTelemetryOptionsOrderingTest()
-    {
-        int currentIndex = -1;
-        int beforeDelegateIndex = -1;
-        int extensionDelegateIndex = -1;
-        int afterDelegateIndex = -1;
-
-        var serviceCollection = new ServiceCollection();
-
-        serviceCollection.Configure<OpenTelemetryLoggerOptions>(o => beforeDelegateIndex = ++currentIndex);
-
-        serviceCollection.AddLogging(logging =>
-        {
-            logging.UseOpenTelemetry(configureBuilder: null, configureOptions: o => extensionDelegateIndex = ++currentIndex);
-        });
-
-        serviceCollection.Configure<OpenTelemetryLoggerOptions>(o => afterDelegateIndex = ++currentIndex);
-
-        using var sp = serviceCollection.BuildServiceProvider();
-
-        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
-
-        Assert.NotNull(loggerProvider);
-
-        Assert.Equal(0, beforeDelegateIndex);
-        Assert.Equal(1, extensionDelegateIndex);
-        Assert.Equal(2, afterDelegateIndex);
-    }
-
     // This test validates that the OpenTelemetryLoggerOptions contains only primitive type properties.
     // This is necessary to ensure trim correctness since that class is effectively deserialized from
     // configuration. The top level properties are ensured via annotation on the RegisterProviderOptions API
@@ -213,9 +128,5 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             Assert.True(prop.PropertyType.IsPrimitive, $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive type. This is potentially a trim compatibility issue.");
         }
-    }
-
-    private sealed class TestLogProcessor : BaseProcessor<LogRecord>
-    {
     }
 }

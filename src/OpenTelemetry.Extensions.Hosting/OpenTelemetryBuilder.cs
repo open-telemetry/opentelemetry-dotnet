@@ -16,7 +16,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
-using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -169,7 +168,7 @@ public sealed class OpenTelemetryBuilder
     internal
 #endif
         OpenTelemetryBuilder WithLogging()
-        => this.WithLogging(configureBuilder: null, configureOptions: null);
+        => this.WithLogging(b => { });
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -196,40 +195,9 @@ public sealed class OpenTelemetryBuilder
     {
         Guard.ThrowIfNull(configure);
 
-        return this.WithLogging(configureBuilder: configure, configureOptions: null);
-    }
+        var builder = new LoggerProviderBuilderBase(this.Services);
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Adds logging services into the builder.
-    /// </summary>
-    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
-    /// <param name="configureBuilder">Optional <see
-    /// cref="LoggerProviderBuilder"/> configuration callback.</param>
-    /// <param name="configureOptions">Optional <see
-    /// cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
-    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
-    /// calls.</returns>
-    public
-#else
-    /// <summary>
-    /// Adds logging services into the builder.
-    /// </summary>
-    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
-    /// <param name="configureBuilder">Optional <see
-    /// cref="LoggerProviderBuilder"/> configuration callback.</param>
-    /// <param name="configureOptions">Optional <see
-    /// cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
-    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
-    /// calls.</returns>
-    internal
-#endif
-        OpenTelemetryBuilder WithLogging(
-            Action<LoggerProviderBuilder>? configureBuilder,
-            Action<OpenTelemetryLoggerOptions>? configureOptions)
-    {
-        this.Services.AddLogging(
-            logging => logging.UseOpenTelemetry(configureBuilder, configureOptions));
+        configure(builder);
 
         return this;
     }

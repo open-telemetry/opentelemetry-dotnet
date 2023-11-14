@@ -381,7 +381,7 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
-    public void AddOpenTelemetry_WithLogging_HostConfigurationHonoredTest()
+    public async Task AddOpenTelemetry_WithLogging_HostConfigurationHonoredTest()
     {
         bool configureBuilderCalled = false;
 
@@ -403,11 +403,8 @@ public class OpenTelemetryServicesExtensionsTests
                             deferredLoggerProviderBuilder.Configure((sp, builder) =>
                             {
                                 configureBuilderCalled = true;
-
                                 var configuration = sp.GetRequiredService<IConfiguration>();
-
                                 var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
-
                                 Assert.Equal("TEST_KEY_VALUE", testKeyValue);
                             });
                         }
@@ -416,7 +413,13 @@ public class OpenTelemetryServicesExtensionsTests
 
         var host = builder.Build();
 
+        Assert.False(configureBuilderCalled);
+
+        await host.StartAsync().ConfigureAwait(false);
+
         Assert.True(configureBuilderCalled);
+
+        await host.StopAsync().ConfigureAwait(false);
 
         host.Dispose();
     }
