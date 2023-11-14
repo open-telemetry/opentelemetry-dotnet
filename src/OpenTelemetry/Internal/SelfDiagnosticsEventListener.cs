@@ -319,7 +319,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
         // Note: The EventSource check here works around a bug in EventListener.
-        // See:
+        // See: https://github.com/open-telemetry/opentelemetry-dotnet/pull/5046
         if (eventData.EventSource.Name.StartsWith(EventSourceNamePrefix, StringComparison.OrdinalIgnoreCase))
         {
             this.WriteEvent(eventData.Message, eventData.Payload);
