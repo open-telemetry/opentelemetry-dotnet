@@ -41,6 +41,9 @@ exception. The attribute value will be set to full name of exception type.
   path.
   ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
 
+* Remove `network.protocol.name` from `http.server.request.duration` metric as
+  per spec. ([#]())
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26
