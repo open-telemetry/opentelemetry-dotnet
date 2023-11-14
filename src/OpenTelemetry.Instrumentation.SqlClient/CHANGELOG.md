@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Updated `Microsoft.Extensions.Configuration` and
-  `Microsoft.Extensions.Options` package version to `8.0.0-rc.2.23479.6`.
+  `Microsoft.Extensions.Options` package version to `8.0.0`.
   ([#5015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5015))
 
 ## 1.6.0-beta.2
