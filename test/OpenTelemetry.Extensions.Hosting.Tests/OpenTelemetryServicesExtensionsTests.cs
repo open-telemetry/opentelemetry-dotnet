@@ -403,8 +403,11 @@ public class OpenTelemetryServicesExtensionsTests
                             deferredLoggerProviderBuilder.Configure((sp, builder) =>
                             {
                                 configureBuilderCalled = true;
+
                                 var configuration = sp.GetRequiredService<IConfiguration>();
+
                                 var testKeyValue = configuration.GetValue<string>("TEST_KEY", null);
+
                                 Assert.Equal("TEST_KEY_VALUE", testKeyValue);
                             });
                         }

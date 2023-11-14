@@ -48,7 +48,6 @@ public static class OpenTelemetryLoggingExtensions
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-    /// todo: [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")]
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder)
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: null);
@@ -60,7 +59,6 @@ public static class OpenTelemetryLoggingExtensions
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <param name="configure">Optional configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-    /// todo: [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")]
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder,
         Action<OpenTelemetryLoggerOptions>? configure)
