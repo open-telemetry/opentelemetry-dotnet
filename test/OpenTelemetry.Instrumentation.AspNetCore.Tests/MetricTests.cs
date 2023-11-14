@@ -242,7 +242,7 @@ public class MetricTests
             expectedRoutes: new List<string> { expectedRoute },
             expectedErrorType,
             expectedStatusCode,
-            expectedTagsCount: expectedErrorType == null ? 6 : 7);
+            expectedTagsCount: expectedErrorType == null ? 5 : 6);
     }
 
     [Theory]
@@ -440,7 +440,7 @@ public class MetricTests
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
             null,
             200,
-            expectedTagsCount: 6);
+            expectedTagsCount: 5);
     }
 #endif
 
@@ -565,13 +565,8 @@ public class MetricTests
 
         if (expectedErrorType != null)
         {
-#if NET8_0_OR_GREATER
-            // Expected to change in next release
-            // https://github.com/dotnet/aspnetcore/issues/51029
-            var errorType = new KeyValuePair<string, object>("exception.type", expectedErrorType);
-#else
             var errorType = new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, expectedErrorType);
-#endif
+
             Assert.Contains(errorType, attributes);
         }
 
