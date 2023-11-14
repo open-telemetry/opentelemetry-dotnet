@@ -4,7 +4,7 @@
 
 * Updated `Microsoft.Extensions.Hosting.Abstractions` package
   version to `8.0.0`.
-  ([#5015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5015))
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
 ## 1.7.0-alpha.1
 

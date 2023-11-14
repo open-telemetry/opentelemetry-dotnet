@@ -4,7 +4,7 @@
 
 * Updated `System.Diagnostics.DiagnosticSource` package version to
   `8.0.0`.
-  ([#4959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4959))
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
 ## 1.7.0-alpha.1
 

@@ -31,11 +31,11 @@
 
 * Updated `Microsoft.Extensions.Logging.Configuration` package version to
   `8.0.0`.
-  ([#5020](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5020))
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
 * Updated `Microsoft.Extensions.Logging` package version to
   `8.0.0`.
-  ([#4959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4959))
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
 ## 1.7.0-alpha.1
 
