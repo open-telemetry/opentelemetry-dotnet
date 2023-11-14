@@ -119,7 +119,7 @@ Released 2023-Oct-26
   ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
 
 * `dns.lookups.duration` metric is renamed to `dns.lookup.duration`. This change
-  impacts users on `.NET8.0` or newer framework.
+  impacts only users on `.NET8.0` or newer framework.
   ([#5049](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5049))
 
 ## 1.5.1-beta.1
