@@ -11,6 +11,10 @@
   `IConfiguration` (similar to metrics and traces).
   ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
 
+* Added an `OpenTelemetryLoggerOptions.AddOtlpExporter` extension overload which
+  accepts a `name` parameter to support named options.
+  ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
