@@ -99,43 +99,19 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
         Assert.Equal(testCase.HttpMethod, activityHttpMethod);
         Assert.Equal(testCase.HttpMethod, metricHttpMethod);
 
-        // TODO: The CurrentActivityDisplayName, CurrentActivityHttpRoute, and CurrentMetricHttpRoute
-        // properties will go away. They only serve to capture status quo. The "else" blocks are the real
-        // asserts that we ultimately want.
-        // If any of the current properties are null, then that means we already conform to the
-        // correct behavior.
-        if (testCase.CurrentActivityDisplayName != null)
-        {
-            Assert.Equal(testCase.CurrentActivityDisplayName, activity.DisplayName);
-        }
-        else
-        {
-            // Activity.DisplayName should be a combination of http.method + http.route attributes, see:
-            // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name
-            var expectedActivityDisplayName = string.IsNullOrEmpty(testCase.ExpectedHttpRoute)
-                ? testCase.HttpMethod
-                : $"{testCase.HttpMethod} {testCase.ExpectedHttpRoute}";
+        // TODO: The CurrentHttpRoute property will go away. It They only serve to capture status quo.
+        // If CurrentHttpRoute is null, then that means we already conform to the correct behavior.
+        var expectedHttpRoute = testCase.CurrentHttpRoute != null ? testCase.CurrentHttpRoute : testCase.ExpectedHttpRoute;
+        Assert.Equal(expectedHttpRoute, activityHttpRoute);
+        Assert.Equal(expectedHttpRoute, metricHttpRoute);
 
-            Assert.Equal(expectedActivityDisplayName, activity.DisplayName);
-        }
+        // Activity.DisplayName should be a combination of http.method + http.route attributes, see:
+        // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name
+        var expectedActivityDisplayName = string.IsNullOrEmpty(expectedHttpRoute)
+            ? testCase.HttpMethod
+            : $"{testCase.HttpMethod} {expectedHttpRoute}";
 
-        if (testCase.CurrentActivityHttpRoute != null)
-        {
-            Assert.Equal(testCase.CurrentActivityHttpRoute, activityHttpRoute);
-        }
-        else
-        {
-            Assert.Equal(testCase.ExpectedHttpRoute, activityHttpRoute);
-        }
-
-        if (testCase.CurrentMetricHttpRoute != null)
-        {
-            Assert.Equal(testCase.CurrentMetricHttpRoute, metricHttpRoute);
-        }
-        else
-        {
-            Assert.Equal(testCase.ExpectedHttpRoute, metricHttpRoute);
-        }
+        Assert.Equal(expectedActivityDisplayName, activity.DisplayName);
 
         // Only produce README files based on final semantic conventions
         if (!useLegacyConventions)

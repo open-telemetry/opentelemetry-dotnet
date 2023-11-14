@@ -14,15 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Text.RegularExpressions;
-#if !NETSTANDARD
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Routing;
-#endif
-
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 /// <summary>
@@ -30,28 +21,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 /// </summary>
 internal static class HttpTagHelper
 {
-    private static readonly Regex ControllerNameRegex = new(@"\{controller=.*?\}+?", RegexOptions.Compiled);
-    private static readonly Regex ActionNameRegex = new(@"\{action=.*?\}+?", RegexOptions.Compiled);
-
-#if !NETSTANDARD
-    public static string GetHttpRouteFromActionDescriptor(HttpContext httpContext, ActionDescriptor actionDescriptor)
-    {
-        var result = (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-
-        if (actionDescriptor is ControllerActionDescriptor cad)
-        {
-            result = ControllerNameRegex.Replace(result, cad.ControllerName);
-            result = ActionNameRegex.Replace(result, cad.ActionName);
-        }
-        else if (actionDescriptor is PageActionDescriptor pad)
-        {
-            result = pad.ViewEnginePath;
-        }
-
-        return result;
-    }
-#endif
-
     /// <summary>
     /// Gets the OpenTelemetry standard version tag value for a span based on its protocol/>.
     /// </summary>

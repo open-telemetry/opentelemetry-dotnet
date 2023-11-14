@@ -24,8 +24,6 @@ using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
 #if !NETSTANDARD
-using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
@@ -43,7 +41,6 @@ internal class HttpInListener : ListenerHandler
     internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
     internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
     internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
-    internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
     internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
     internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
 
@@ -97,12 +94,6 @@ internal class HttpInListener : ListenerHandler
             case OnStopEvent:
                 {
                     this.OnStopActivity(Activity.Current, payload);
-                }
-
-                break;
-            case OnMvcBeforeActionEvent:
-                {
-                    this.OnMvcBeforeAction(Activity.Current, payload);
                 }
 
                 break;
@@ -295,15 +286,11 @@ internal class HttpInListener : ListenerHandler
             var response = context.Response;
 
 #if !NETSTANDARD
-            var httpRoute = activity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string;
-            if (string.IsNullOrEmpty(httpRoute))
+            var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+            if (!string.IsNullOrEmpty(routePattern))
             {
-                var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
-                if (!string.IsNullOrEmpty(routePattern))
-                {
-                    activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
-                    activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
-                }
+                activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
+                activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
 #endif
 
@@ -365,70 +352,6 @@ internal class HttpInListener : ListenerHandler
             // If yes, then we need to store the asp.net core activity inside
             // the one created by the instrumentation.
             // And retrieve it here, and set it to Current.
-        }
-    }
-
-    public void OnMvcBeforeAction(Activity activity, object payload)
-    {
-        // We cannot rely on Activity.Current here
-        // There could be activities started by middleware
-        // after activity started by framework resulting in different Activity.Current.
-        // so, we need to first find the activity started by Asp.Net Core.
-        // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
-        // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
-        // activity = httpActivityFeature.Activity;
-        // However, this will not work as in case of custom propagator
-        // we start a new activity during onStart event which is a sibling to the activity created by framework
-        // So, in that case we need to get the activity created by us here.
-        // we can do so only by looping through activity.Parent chain.
-        while (activity != null)
-        {
-            if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
-            {
-                break;
-            }
-
-            activity = activity.Parent;
-        }
-
-        if (activity == null)
-        {
-            return;
-        }
-
-        if (activity.IsAllDataRequested)
-        {
-#if NETSTANDARD
-            _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-            _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-            _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-
-            if (!string.IsNullOrEmpty(template))
-            {
-                // override the span name that was previously set to the path part of URL.
-                activity.DisplayName = template;
-                activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
-            }
-
-            // TODO: Should we get values from RouteData?
-            // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-            // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
-#else
-            var beforeActionEventData = payload as BeforeActionEventData;
-            var httpContext = beforeActionEventData.HttpContext;
-            var actionDescriptor = beforeActionEventData.ActionDescriptor;
-            var template = actionDescriptor?.AttributeRouteInfo?.Template;
-
-            // The template will be null when application does not use attribute routing
-            // For attribute routing, the DisplayName and http.route will be set when
-            // the activity ends.
-            if (actionDescriptor != null && (string.IsNullOrEmpty(template) || actionDescriptor is PageActionDescriptor))
-            {
-                var httpRoute = HttpTagHelper.GetHttpRouteFromActionDescriptor(httpContext, actionDescriptor);
-                activity.DisplayName = this.GetDisplayName(httpContext.Request.Method, httpRoute);
-                activity.SetTag(SemanticConventions.AttributeHttpRoute, httpRoute);
-            }
-#endif
         }
     }
 

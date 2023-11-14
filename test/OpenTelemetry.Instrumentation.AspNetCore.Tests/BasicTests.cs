@@ -862,12 +862,6 @@ public sealed class BasicTests
                                     }
 
                                     break;
-                                case HttpInListener.OnMvcBeforeActionEvent:
-                                    {
-                                        numberofSubscribedEvents++;
-                                    }
-
-                                    break;
                                 default:
                                     {
                                         numberOfUnSubscribedEvents++;
@@ -895,8 +889,8 @@ public sealed class BasicTests
             using var response = await client.SendAsync(request).ConfigureAwait(false);
         }
 
-        Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(3, numberofSubscribedEvents);
+        Assert.Equal(1, numberOfUnSubscribedEvents);
+        Assert.Equal(2, numberofSubscribedEvents);
     }
 
     [Fact]
@@ -922,12 +916,6 @@ public sealed class BasicTests
 
                                     break;
                                 case HttpInListener.OnStopEvent:
-                                    {
-                                        numberofSubscribedEvents++;
-                                    }
-
-                                    break;
-                                case HttpInListener.OnMvcBeforeActionEvent:
                                     {
                                         numberofSubscribedEvents++;
                                     }
@@ -979,8 +967,8 @@ public sealed class BasicTests
         }
 
         Assert.Equal(1, numberOfExceptionCallbacks);
-        Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(4, numberofSubscribedEvents);
+        Assert.Equal(1, numberOfUnSubscribedEvents);
+        Assert.Equal(3, numberofSubscribedEvents);
     }
 
     [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/4884")]
