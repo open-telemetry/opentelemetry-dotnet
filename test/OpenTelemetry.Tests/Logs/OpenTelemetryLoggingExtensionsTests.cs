@@ -135,11 +135,12 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     {
         // arrange
         var services = new ServiceCollection();
+
         services.AddSingleton<MyProcessor>();
 
-        var serviceCollection = services.AddLogging(logging =>
-                    logging.AddOpenTelemetry(options =>
-                        options.AddProcessor(sp => sp.GetRequiredService<MyProcessor>())));
+        services.AddLogging(logging =>
+            logging.AddOpenTelemetry(
+                o => o.AddProcessor(sp => sp.GetRequiredService<MyProcessor>())));
 
         // act
         using var sp = services.BuildServiceProvider();
@@ -156,14 +157,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     public void VerifyExceptionIsThrownWhenImplementationFactoryIsNull()
     {
         // arrange
-        Func<IServiceProvider, BaseProcessor<LogRecord>>? implementationFactory = null;
         var services = new ServiceCollection();
-#pragma warning disable CS8604 // Suppressed possible null reference warning for testing argument null exception.
-        _ = services.AddLogging(logging =>
+
+        services.AddLogging(logging =>
             logging.AddOpenTelemetry(
-                o =>
-                o.AddProcessor(implementationFactory)));
-#pragma warning restore CS8604 // Suppressed possible null reference warning for testing argument null exception.
+                o => o.AddProcessor(implementationFactory: null!)));
 
         // act
         using var sp = services.BuildServiceProvider();
