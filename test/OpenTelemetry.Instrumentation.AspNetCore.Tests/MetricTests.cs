@@ -77,13 +77,13 @@ public class MetricTests
         _ = app.RunAsync();
 
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        var res = await client.GetStringAsync("http://localhost:5000/");
         Assert.NotNull(res);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the callbacks to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -151,13 +151,13 @@ public class MetricTests
         _ = app.RunAsync();
 
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        var res = await client.GetStringAsync("http://localhost:5000/");
         Assert.NotNull(res);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the callbacks to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -211,7 +211,7 @@ public class MetricTests
         {
             try
             {
-                using var response = await client.GetAsync(api).ConfigureAwait(false);
+                using var response = await client.GetAsync(api);
                 response.EnsureSuccessStatusCode();
             }
             catch
@@ -223,7 +223,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -283,7 +283,7 @@ public class MetricTests
 
         try
         {
-            using var response = await client.SendAsync(message).ConfigureAwait(false);
+            using var response = await client.SendAsync(message);
         }
         catch
         {
@@ -293,7 +293,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -344,8 +344,8 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response1 = await client.GetAsync("/api/values");
+            using var response2 = await client.GetAsync("/api/values/2");
 
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
@@ -354,7 +354,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -395,8 +395,8 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response1 = await client.GetAsync("/api/values");
+            using var response2 = await client.GetAsync("/api/values/2");
 
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
@@ -405,7 +405,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 

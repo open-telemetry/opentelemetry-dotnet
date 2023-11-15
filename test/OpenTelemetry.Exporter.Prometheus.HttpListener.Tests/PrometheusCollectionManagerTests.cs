@@ -65,7 +65,7 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                    var response = await exporter.CollectionManager.EnterCollect();
                     try
                     {
                         return new Response
@@ -81,18 +81,18 @@ public sealed class PrometheusCollectionManagerTests
                 });
             }
 
-            await Task.WhenAll(collectTasks).ConfigureAwait(false);
+            await Task.WhenAll(collectTasks);
 
             Assert.Equal(1, runningCollectCount);
 
-            var firstResponse = collectTasks[0].Result;
+            var firstResponse = await collectTasks[0];
 
             Assert.False(firstResponse.CollectionResponse.FromCache);
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
-                Assert.Equal(firstResponse.ViewPayload, collectTasks[i].Result.ViewPayload);
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[i].Result.CollectionResponse.GeneratedAtUtc);
+                Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
+                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
             }
 
             counter.Add(100);
@@ -100,7 +100,7 @@ public sealed class PrometheusCollectionManagerTests
             // This should use the cache and ignore the second counter update.
             var task = exporter.CollectionManager.EnterCollect();
             Assert.True(task.IsCompleted);
-            var response = await task.ConfigureAwait(false);
+            var response = await task;
             try
             {
                 if (cacheEnabled)
@@ -129,7 +129,7 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                    var response = await exporter.CollectionManager.EnterCollect();
                     try
                     {
                         return new Response
@@ -145,20 +145,20 @@ public sealed class PrometheusCollectionManagerTests
                 });
             }
 
-            await Task.WhenAll(collectTasks).ConfigureAwait(false);
+            await Task.WhenAll(collectTasks);
 
             Assert.Equal(cacheEnabled ? 2 : 3, runningCollectCount);
-            Assert.NotEqual(firstResponse.ViewPayload, collectTasks[0].Result.ViewPayload);
-            Assert.NotEqual(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[0].Result.CollectionResponse.GeneratedAtUtc);
+            Assert.NotEqual(firstResponse.ViewPayload, (await collectTasks[0]).ViewPayload);
+            Assert.NotEqual(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[0]).CollectionResponse.GeneratedAtUtc);
 
-            firstResponse = collectTasks[0].Result;
+            firstResponse = await collectTasks[0];
 
             Assert.False(firstResponse.CollectionResponse.FromCache);
 
             for (int i = 1; i < collectTasks.Length; i++)
             {
-                Assert.Equal(firstResponse.ViewPayload, collectTasks[i].Result.ViewPayload);
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[i].Result.CollectionResponse.GeneratedAtUtc);
+                Assert.Equal(firstResponse.ViewPayload, (await collectTasks[i]).ViewPayload);
+                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, (await collectTasks[i]).CollectionResponse.GeneratedAtUtc);
             }
         }
     }

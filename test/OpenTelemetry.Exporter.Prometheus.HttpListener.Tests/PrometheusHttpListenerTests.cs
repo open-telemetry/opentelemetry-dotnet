@@ -81,13 +81,13 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest().ConfigureAwait(false);
+        await this.RunPrometheusExporterHttpServerIntegrationTest();
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true).ConfigureAwait(false);
+        await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
     }
 
     private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)
@@ -125,7 +125,7 @@ public class PrometheusHttpListenerTests
         }
 
         using HttpClient client = new HttpClient();
-        using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
+        using var response = await client.GetAsync($"{address}metrics");
 
         if (!skipMetrics)
         {
@@ -135,7 +135,7 @@ public class PrometheusHttpListenerTests
 
             Assert.Matches(
                 "^# TYPE counter_double_total counter\ncounter_double_total{key1='value1',key2='value2'} 101.17 \\d+\n\n# EOF\n$".Replace('\'', '"'),
-                await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+                await response.Content.ReadAsStringAsync());
         }
         else
         {
