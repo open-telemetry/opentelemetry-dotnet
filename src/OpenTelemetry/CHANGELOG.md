@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-* Updated `Microsoft.Extensions.Logging` package version to
-  `8.0.0-rc.2.23479.6`.
-  ([#4959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4959))
-
 * The `AddService` `ResourceBuilder` extension method will now generate the same
   `service.instance.id` for the lifetime of a process when
   `autoGenerateServiceInstanceId` is `true`.
@@ -34,8 +30,12 @@
   ([#5021](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5021))
 
 * Updated `Microsoft.Extensions.Logging.Configuration` package version to
-  `8.0.0-rc.2.23479.6`.
-  ([#5020](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5020))
+  `8.0.0`.
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
+
+* Updated `Microsoft.Extensions.Logging` package version to
+  `8.0.0`.
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
 * Added `AddProcessor` overload on `OpenTelemetryLoggerOptions` which exposes
   the factory pattern `(Func<IServiceProvider, BaseProcessor<LogRecord>>

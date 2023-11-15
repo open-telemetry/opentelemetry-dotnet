@@ -189,8 +189,6 @@ public partial class HttpClientTests
             meterProvider.Dispose();
         }
 
-        // dns.lookups.duration is a typo
-        // https://github.com/dotnet/runtime/issues/92917
         var requestMetrics = metrics
             .Where(metric =>
             metric.Name == "http.client.request.duration" ||
@@ -198,7 +196,7 @@ public partial class HttpClientTests
             metric.Name == "http.client.request.time_in_queue" ||
             metric.Name == "http.client.connection.duration" ||
             metric.Name == "http.client.open_connections" ||
-            metric.Name == "dns.lookups.duration")
+            metric.Name == "dns.lookup.duration")
             .ToArray();
 
         if (tc.ResponseExpected)
