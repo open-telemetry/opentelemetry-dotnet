@@ -32,6 +32,15 @@ exception. The attribute value will be set to full name of exception type.
   environment variable is set to `http` or `http/dup`.
   ([#4986](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4986))
 
+* Fixed `network.protocol.version` attribute values to match the specification.
+  ([#5007](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5007))
+
+* Calls to `/metrics` will now be included in the `http.server.request.duration`
+  metric. This change may affect Prometheus pull scenario if the Prometheus
+  server sends request to the scraping endpoint that contains `/metrics` in
+  path.
+  ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26
