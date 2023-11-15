@@ -56,8 +56,11 @@ For more information on Processors, please review [Extending the SDK](../extendi
 
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry.
-If no `Resource` is explicitly configured, the default is to use a resource
-indicating this [Telemetry
+If no `Resource` is explicitly configured, the
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
 SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
 The `SetResourceBuilder` method on `OpenTelemetryLoggerOptions` can be used to
 set a single `ResourceBuilder`. If `SetResourceBuilder` is called multiple
