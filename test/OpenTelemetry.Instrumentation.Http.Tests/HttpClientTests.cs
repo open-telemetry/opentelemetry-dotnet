@@ -339,13 +339,13 @@ public partial class HttpClientTests
 
             var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
 
-            int numberOfNewTags = activity.Status == ActivityStatusCode.Error ? 6 : 5;
-            int numberOfDupeTags = activity.Status == ActivityStatusCode.Error ? 12 : 11;
+            int numberOfNewTags = activity.Status == ActivityStatusCode.Error ? 5 : 4;
+            int numberOfDupeTags = activity.Status == ActivityStatusCode.Error ? 11 : 10;
 
             var expectedAttributeCount = semanticConvention == HttpSemanticConvention.Dupe
-                ? numberOfDupeTags + (tc.ResponseExpected ? 2 : 0)
+                ? numberOfDupeTags + (tc.ResponseExpected ? 3 : 0)
                 : semanticConvention == HttpSemanticConvention.New
-                    ? numberOfNewTags + (tc.ResponseExpected ? 1 : 0)
+                    ? numberOfNewTags + (tc.ResponseExpected ? 2 : 0)
                     : 6 + (tc.ResponseExpected ? 1 : 0);
 
             Assert.Equal(expectedAttributeCount, normalizedAttributes.Count);
@@ -374,9 +374,9 @@ public partial class HttpClientTests
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlFull && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpUrl]);
-                Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                 if (tc.ResponseExpected)
                 {
+                    Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
 
                     if (tc.ResponseCode >= 400)
@@ -387,6 +387,7 @@ public partial class HttpClientTests
                 else
                 {
                     Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
+                    Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
 
 #if NET8_0_OR_GREATER
                     // we are using fake address so it will be "name_resolution_error"
@@ -532,20 +533,18 @@ public partial class HttpClientTests
                     attributes[tag.Key] = tag.Value;
                 }
 
-#if !NET8_0_OR_GREATER
-                var numberOfTags = 6;
-#else
-                // network.protocol.version is not emitted when response if not received.
-                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
-                var numberOfTags = 5;
-#endif
+                var numberOfTags = 4;
                 if (tc.ResponseExpected)
                 {
                     var expectedStatusCode = int.Parse(normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
-                    numberOfTags = (expectedStatusCode >= 400) ? 6 : 5;
+                    numberOfTags = (expectedStatusCode >= 400) ? 5 : 4; // error.type extra tag
+                }
+                else
+                {
+                    numberOfTags = 5; // error.type would be extra
                 }
 
-                var expectedAttributeCount = numberOfTags + (tc.ResponseExpected ? 1 : 0);
+                var expectedAttributeCount = numberOfTags + (tc.ResponseExpected ? 2 : 0); // responsecode + protocolversion
 
                 Assert.Equal(expectedAttributeCount, attributes.Count);
 
@@ -553,12 +552,10 @@ public partial class HttpClientTests
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-#if !NET8_0_OR_GREATER
-                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-#endif
 
                 if (tc.ResponseExpected)
                 {
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
 
                     if (tc.ResponseCode >= 400)
@@ -568,6 +565,7 @@ public partial class HttpClientTests
                 }
                 else
                 {
+                    Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
                     Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
 
 #if NET8_0_OR_GREATER
