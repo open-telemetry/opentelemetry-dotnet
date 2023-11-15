@@ -46,7 +46,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.Old).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.Old);
     }
 
     [Theory]
@@ -59,7 +59,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.Dupe).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.Dupe);
     }
 #endif
 
@@ -73,7 +73,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.New).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.New);
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: false,
-            enableMetrics: true).ConfigureAwait(false);
+            enableMetrics: true);
     }
 
     [Theory]
@@ -97,7 +97,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: true,
-            enableMetrics: false).ConfigureAwait(false);
+            enableMetrics: false);
     }
 
     [Theory]
@@ -109,7 +109,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: false,
-            enableMetrics: false).ConfigureAwait(false);
+            enableMetrics: false);
     }
 
 #if !NET8_0_OR_GREATER
@@ -150,8 +150,8 @@ public partial class HttpClientTests
     [Fact]
     public async Task CheckEnrichmentWhenSampling()
     {
-        await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
-        await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
+        await CheckEnrichment(new AlwaysOffSampler(), false, this.url);
+        await CheckEnrichment(new AlwaysOnSampler(), true, this.url);
     }
 
 #if NET8_0_OR_GREATER
@@ -178,7 +178,7 @@ public partial class HttpClientTests
 
             request.Headers.Add("contextRequired", "false");
             request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
         catch (Exception)
         {
@@ -286,7 +286,7 @@ public partial class HttpClientTests
             request.Headers.Add("contextRequired", "false");
             request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
 
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
         catch (Exception)
         {
@@ -643,7 +643,7 @@ public partial class HttpClientTests
             .Build())
         {
             using var c = new HttpClient();
-            using var r = await c.GetAsync(url).ConfigureAwait(false);
+            using var r = await c.GetAsync(url);
         }
 
         if (enrichExpected)
