@@ -724,11 +724,11 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         }
 
         // wait up to 10 sec for all requests and suppress exceptions
-        await Task.WhenAll(tasks.Select(t => t.Value).ToArray()).ContinueWith(tt =>
+        await Task.WhenAll(tasks.Select(t => t.Value).ToArray()).ContinueWith(async tt =>
         {
             foreach (var task in tasks)
             {
-                task.Value.Result?.Dispose();
+                (await task.Value)?.Dispose();
             }
         });
 
