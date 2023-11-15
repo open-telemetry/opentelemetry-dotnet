@@ -71,7 +71,7 @@ public class W3CTraceContextTests : IDisposable
                             Encoding.UTF8,
                             "application/json"),
                     };
-                    await this.httpClient.SendAsync(request).ConfigureAwait(false);
+                    await this.httpClient.SendAsync(request);
                 }
             }
             else
