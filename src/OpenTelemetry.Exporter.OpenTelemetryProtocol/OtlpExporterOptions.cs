@@ -199,11 +199,16 @@ public class OtlpExporterOptions
 
     internal static void RegisterOtlpExporterOptionsFactory(IServiceCollection services)
     {
-        services.RegisterOptionsFactory(
-            (sp, configuration, name) => new OtlpExporterOptions(
-                configuration,
-                sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+        services.RegisterOptionsFactory(CreateOtlpExporterOptions);
     }
+
+    internal static OtlpExporterOptions CreateOtlpExporterOptions(
+        IServiceProvider serviceProvider,
+        IConfiguration configuration,
+        string name)
+        => new(
+            configuration,
+            serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
 
     private static string GetUserAgentString()
     {

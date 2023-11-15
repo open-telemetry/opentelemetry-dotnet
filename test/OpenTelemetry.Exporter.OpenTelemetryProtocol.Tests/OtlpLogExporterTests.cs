@@ -1289,6 +1289,72 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Empty(OtlpLogRecordTransformer.LogListPool);
     }
 
+    [Fact]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate()
+    {
+        var values = new Dictionary<string, string>()
+        {
+            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var configureDelegateCalled = false;
+
+        using var factory = LoggerFactory.Create(logging =>
+        {
+            logging.Services.AddSingleton<IConfiguration>(configuration);
+
+            logging.Services.Configure<OtlpExporterOptions>(o =>
+            {
+                configureDelegateCalled = true;
+                Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
+            });
+
+            logging.AddOpenTelemetry(o => o.AddOtlpExporter());
+        });
+
+        Assert.True(configureDelegateCalled);
+    }
+
+    [Fact]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder()
+    {
+        var values = new Dictionary<string, string>()
+        {
+            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var configureDelegateCalled = false;
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(configuration);
+
+        services.Configure<OtlpExporterOptions>(o =>
+        {
+            configureDelegateCalled = true;
+            Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
+        });
+
+        services.AddLogging(
+            logging => logging.AddOpenTelemetry(o => o.AddOtlpExporter()));
+
+        using var sp = services.BuildServiceProvider();
+
+        var factory = sp.GetRequiredService<ILoggerFactory>();
+
+        Assert.NotNull(factory);
+
+        Assert.True(configureDelegateCalled);
+    }
+
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
     {
         return record.Attributes.FirstOrDefault(att => att.Key == key);

@@ -70,19 +70,7 @@ public static class OtlpLogExporterHelperExtensions
 
         return loggerOptions.AddProcessor(sp =>
         {
-            OtlpExporterOptions exporterOptions;
-            if (name == null)
-            {
-                // If we are NOT using named options we create a new
-                // instance always. The reason for this is
-                // OtlpExporterOptions is shared by all signals. Without a
-                // name, delegates for all signals will mix together.
-                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
-            }
-            else
-            {
-                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
-            }
+            var exporterOptions = GetOtlpExporterOptions(sp, name, finalOptionsName);
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
@@ -121,19 +109,7 @@ public static class OtlpLogExporterHelperExtensions
 
         return loggerOptions.AddProcessor(sp =>
         {
-            OtlpExporterOptions exporterOptions;
-            if (name == null)
-            {
-                // If we are NOT using named options we create a new
-                // instance always. The reason for this is
-                // OtlpExporterOptions is shared by all signals. Without a
-                // name, delegates for all signals will mix together.
-                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
-            }
-            else
-            {
-                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
-            }
+            var exporterOptions = GetOtlpExporterOptions(sp, name, finalOptionsName);
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
@@ -187,5 +163,40 @@ public static class OtlpLogExporterHelperExtensions
                 batchOptions.ExporterTimeoutMilliseconds,
                 batchOptions.MaxExportBatchSize);
         }
+    }
+
+    private static OtlpExporterOptions GetOtlpExporterOptions(IServiceProvider sp, string? name, string finalName)
+    {
+        // Note: If OtlpExporter has been registered for tracing and/or metrics
+        // then IOptionsFactory will be set by a call to
+        // OtlpExporterOptions.RegisterOtlpExporterOptionsFactory. However if we
+        // are only using logging we don't have an opportunity to do that
+        // registration so we manually create a factory.
+
+        var optionsFactory = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>();
+        if (optionsFactory is not DelegatingOptionsFactory<OtlpExporterOptions>)
+        {
+            optionsFactory = new DelegatingOptionsFactory<OtlpExporterOptions>(
+                (c, n) => OtlpExporterOptions.CreateOtlpExporterOptions(sp, c, n),
+                sp.GetRequiredService<IConfiguration>(),
+                sp.GetServices<IConfigureOptions<OtlpExporterOptions>>(),
+                sp.GetServices<IPostConfigureOptions<OtlpExporterOptions>>(),
+                sp.GetServices<IValidateOptions<OtlpExporterOptions>>());
+
+            return optionsFactory.Create(finalName);
+        }
+
+        if (name == null)
+        {
+            // If we are NOT using named options we create a new
+            // instance always. The reason for this is
+            // OtlpExporterOptions is shared by all signals. Without a
+            // name, delegates for all signals will mix together.
+            return optionsFactory.Create(finalName);
+        }
+
+        // If we have a valid factory AND we are using named options, we can
+        // safely use the Options API fully.
+        return sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalName);
     }
 }
