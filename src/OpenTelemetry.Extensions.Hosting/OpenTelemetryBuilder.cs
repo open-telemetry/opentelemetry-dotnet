@@ -62,13 +62,13 @@ public sealed class OpenTelemetryBuilder
         Guard.ThrowIfNull(configure);
 
         this.Services.ConfigureOpenTelemetryMeterProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
+            builder => builder.ConfigureResource(configure));
 
         this.Services.ConfigureOpenTelemetryTracerProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
+            builder => builder.ConfigureResource(configure));
 
         this.Services.ConfigureOpenTelemetryLoggerProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
+            builder => builder.ConfigureResource(configure));
 
         return this;
     }
