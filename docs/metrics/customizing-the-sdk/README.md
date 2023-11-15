@@ -531,11 +531,11 @@ Histograms with buckets, and it stores at most one exemplar per histogram
 bucket. The exemplar stored is the last measurement recorded - i.e. any new
 measurement overwrites the previous one in that bucket.
 
-`SimpleExemplarReservoir` is the default reservoir used for all metrics except
+* `SimpleExemplarReservoir` is the default reservoir used for all metrics except
 Histograms with buckets. It has a fixed reservoir pool, and implements the
 equivalent of [naive
 reservoir](https://en.wikipedia.org/wiki/Reservoir_sampling). The reservoir pool
-size (currently defaulting to 10) determines the maximum number of exemplars
+size (currently defaulting to 1) determines the maximum number of exemplars
 stored.
 
 > **Note**
@@ -572,9 +572,11 @@ Refer to the individual exporter docs to learn how to use them:
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the
-[default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
 is to use a resource indicating this
-[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
+SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
 The `ConfigureResource` method on `MeterProviderBuilder` can be used to set a
 configure the resource on the provider. When the provider is built, it
 automatically builds the final `Resource` from the configured `ResourceBuilder`.

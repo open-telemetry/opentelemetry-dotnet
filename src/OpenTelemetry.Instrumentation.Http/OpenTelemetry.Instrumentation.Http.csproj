@@ -28,4 +28,8 @@
     <PackageReference Include="OpenTelemetry" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'" />
+  </ItemGroup>
+
 </Project>
