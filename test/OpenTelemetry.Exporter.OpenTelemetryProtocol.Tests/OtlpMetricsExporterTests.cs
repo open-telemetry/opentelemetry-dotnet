@@ -60,7 +60,7 @@ public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
 
         void CheckMetricReaderDefaults()
         {
-            var bindingFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var bindingFlags = BindingFlags.NonPublic | BindingFlags.Instance;
 
             var metricReader = typeof(MetricReader)
                 .Assembly

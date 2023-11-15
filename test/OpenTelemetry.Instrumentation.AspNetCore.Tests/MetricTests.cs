@@ -77,13 +77,13 @@ public class MetricTests
         _ = app.RunAsync();
 
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        var res = await client.GetStringAsync("http://localhost:5000/");
         Assert.NotNull(res);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the callbacks to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -151,13 +151,13 @@ public class MetricTests
         _ = app.RunAsync();
 
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/").ConfigureAwait(false);
+        var res = await client.GetStringAsync("http://localhost:5000/");
         Assert.NotNull(res);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the callbacks to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -185,8 +185,10 @@ public class MetricTests
     }
 #endif
 
-    [Fact]
-    public async Task RequestMetricIsCaptured_New()
+    [Theory]
+    [InlineData("/api/values/2", "api/Values/{id}", null, 200)]
+    [InlineData("/api/Error", "api/Error", "System.Exception", 500)]
+    public async Task RequestMetricIsCaptured_New(string api, string expectedRoute, string expectedErrorType, int expectedStatusCode)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
@@ -207,17 +209,21 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
-
-            response1.EnsureSuccessStatusCode();
-            response2.EnsureSuccessStatusCode();
+            try
+            {
+                using var response = await client.GetAsync(api);
+                response.EnsureSuccessStatusCode();
+            }
+            catch
+            {
+                // ignore error.
+            }
         }
 
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -229,12 +235,14 @@ public class MetricTests
 
         Assert.Equal("s", metric.Unit);
         var metricPoints = GetMetricPoints(metric);
-        Assert.Equal(2, metricPoints.Count);
+        Assert.Single(metricPoints);
 
         AssertMetricPoints_New(
             metricPoints: metricPoints,
-            expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6);
+            expectedRoutes: new List<string> { expectedRoute },
+            expectedErrorType,
+            expectedStatusCode,
+            expectedTagsCount: expectedErrorType == null ? 5 : 6);
     }
 
     [Theory]
@@ -275,7 +283,7 @@ public class MetricTests
 
         try
         {
-            using var response = await client.SendAsync(message).ConfigureAwait(false);
+            using var response = await client.SendAsync(message);
         }
         catch
         {
@@ -285,7 +293,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -336,8 +344,8 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response1 = await client.GetAsync("/api/values");
+            using var response2 = await client.GetAsync("/api/values/2");
 
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
@@ -346,7 +354,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -387,8 +395,8 @@ public class MetricTests
             })
             .CreateClient())
         {
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response1 = await client.GetAsync("/api/values");
+            using var response2 = await client.GetAsync("/api/values/2");
 
             response1.EnsureSuccessStatusCode();
             response2.EnsureSuccessStatusCode();
@@ -397,7 +405,7 @@ public class MetricTests
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
         // giving some breezing room for the End callback to complete
-        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
@@ -430,7 +438,9 @@ public class MetricTests
         AssertMetricPoints_New(
             metricPoints: metricPoints,
             expectedRoutes: new List<string> { "api/Values", "api/Values/{id}" },
-            expectedTagsCount: 6);
+            null,
+            200,
+            expectedTagsCount: 5);
     }
 #endif
 
@@ -456,6 +466,8 @@ public class MetricTests
     private static void AssertMetricPoints_New(
         List<MetricPoint> metricPoints,
         List<string> expectedRoutes,
+        string expectedErrorType,
+        int expectedStatusCode,
         int expectedTagsCount)
     {
         // Assert that one MetricPoint exists for each ExpectedRoute
@@ -476,7 +488,7 @@ public class MetricTests
 
             if (metricPoint.HasValue)
             {
-                AssertMetricPoint_New(metricPoint.Value, expectedRoute, expectedTagsCount);
+                AssertMetricPoint_New(metricPoint.Value, expectedStatusCode, expectedRoute, expectedErrorType, expectedTagsCount);
             }
             else
             {
@@ -519,8 +531,10 @@ public class MetricTests
 
     private static KeyValuePair<string, object>[] AssertMetricPoint_New(
         MetricPoint metricPoint,
-        string expectedRoute = "api/Values",
-        int expectedTagsCount = StandardTagsCount)
+        int expectedStatusCode,
+        string expectedRoute,
+        string expectedErrorType,
+        int expectedTagsCount)
     {
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
@@ -540,7 +554,7 @@ public class MetricTests
 
         var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "GET");
         var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, "http");
-        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, 200);
+        var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, expectedStatusCode);
         var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, "1.1");
         var route = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRoute, expectedRoute);
         Assert.Contains(method, attributes);
@@ -548,6 +562,13 @@ public class MetricTests
         Assert.Contains(statusCode, attributes);
         Assert.Contains(flavor, attributes);
         Assert.Contains(route, attributes);
+
+        if (expectedErrorType != null)
+        {
+            var errorType = new KeyValuePair<string, object>(SemanticConventions.AttributeErrorType, expectedErrorType);
+
+            Assert.Contains(errorType, attributes);
+        }
 
         // Inspect Histogram Bounds
         var histogramBuckets = metricPoint.GetHistogramBuckets();
@@ -557,9 +578,15 @@ public class MetricTests
             histogramBounds.Add(t.ExplicitBound);
         }
 
-        Assert.Equal(
-            expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-            actual: histogramBounds);
+        // TODO: Remove the check for the older bounds once 1.7.0 is released. This is a temporary fix for instrumentation libraries CI workflow.
+
+        var expectedHistogramBoundsOld = new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+        var expectedHistogramBoundsNew = new List<double> { 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+
+        var histogramBoundsMatchCorrectly = Enumerable.SequenceEqual(expectedHistogramBoundsOld, histogramBounds) ||
+            Enumerable.SequenceEqual(expectedHistogramBoundsNew, histogramBounds);
+
+        Assert.True(histogramBoundsMatchCorrectly);
 
         return attributes;
     }

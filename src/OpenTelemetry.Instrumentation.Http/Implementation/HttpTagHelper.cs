@@ -78,6 +78,15 @@ internal static class HttpTagHelper
         return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
     }
 
+    public static string GetProtocolVersionString(Version httpVersion) => (httpVersion.Major, httpVersion.Minor) switch
+    {
+        (1, 0) => "1.0",
+        (1, 1) => "1.1",
+        (2, 0) => "2",
+        (3, 0) => "3",
+        _ => httpVersion.ToString(),
+    };
+
     private static string ConvertMethodToOperationName(string method) => $"HTTP {method}";
 
     private static string ConvertHttpMethodToOperationName(HttpMethod method) => $"HTTP {method}";

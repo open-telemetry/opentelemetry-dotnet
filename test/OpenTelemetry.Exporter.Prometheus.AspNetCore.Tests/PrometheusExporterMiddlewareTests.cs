@@ -172,7 +172,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 path: null,
                 configureBranchedPipeline: null,
                 optionsName: null),
-            registerMeterProvider: false).ConfigureAwait(false);
+            registerMeterProvider: false);
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 configureBranchedPipeline: null,
                 optionsName: null)),
             services => services.AddRouting(),
-            registerMeterProvider: false).ConfigureAwait(false);
+            registerMeterProvider: false);
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
@@ -265,7 +265,7 @@ public sealed class PrometheusExporterMiddlewareTests
                    configureServices?.Invoke(services);
                })
                .Configure(configure))
-           .StartAsync().ConfigureAwait(false);
+           .StartAsync();
 
         var tags = new KeyValuePair<string, object>[]
         {
@@ -284,7 +284,7 @@ public sealed class PrometheusExporterMiddlewareTests
             counter.Add(0.99D, tags);
         }
 
-        using var response = await host.GetTestClient().GetAsync(path).ConfigureAwait(false);
+        using var response = await host.GetTestClient().GetAsync(path);
 
         var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -294,7 +294,7 @@ public sealed class PrometheusExporterMiddlewareTests
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
             Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
-            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            string content = await response.Content.ReadAsStringAsync();
 
             var matches = Regex.Matches(
                 content,
@@ -318,7 +318,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         validateResponse?.Invoke(response);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
     }
 }
 #endif

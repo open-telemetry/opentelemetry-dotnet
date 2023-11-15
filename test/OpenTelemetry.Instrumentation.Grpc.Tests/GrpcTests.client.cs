@@ -55,7 +55,7 @@ public partial class GrpcTests
 
         using var httpClient = ClientTestHelpers.CreateTestClient(async request =>
         {
-            var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
+            var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
             var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
             response.TrailingHeaders().Add("grpc-message", "value");
             return response;
@@ -150,7 +150,7 @@ public partial class GrpcTests
 
         using var httpClient = ClientTestHelpers.CreateTestClient(async request =>
         {
-            var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
+            var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
             var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
             response.TrailingHeaders().Add("grpc-message", "value");
             return response;
@@ -246,7 +246,7 @@ public partial class GrpcTests
 
         using var httpClient = ClientTestHelpers.CreateTestClient(async request =>
         {
-            var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply()).ConfigureAwait(false);
+            var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
             var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
             response.TrailingHeaders().Add("grpc-message", "value");
             return response;

@@ -46,20 +46,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.Old).ConfigureAwait(false);
-    }
-
-    [Theory]
-    [MemberData(nameof(TestData))]
-    public async Task HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsNewSemanticConventionsAsync(HttpTestData.HttpOutTestCase tc)
-    {
-        await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
-            this.host,
-            this.port,
-            tc,
-            enableTracing: true,
-            enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.New).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.Old);
     }
 
     [Theory]
@@ -72,9 +59,22 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.Dupe).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.Dupe);
     }
 #endif
+
+    [Theory]
+    [MemberData(nameof(TestData))]
+    public async Task HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsNewSemanticConventionsAsync(HttpTestData.HttpOutTestCase tc)
+    {
+        await HttpOutCallsAreCollectedSuccessfullyBodyAsync(
+            this.host,
+            this.port,
+            tc,
+            enableTracing: true,
+            enableMetrics: true,
+            semanticConvention: HttpSemanticConvention.New);
+    }
 
     [Theory]
     [MemberData(nameof(TestData))]
@@ -85,7 +85,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: false,
-            enableMetrics: true).ConfigureAwait(false);
+            enableMetrics: true);
     }
 
     [Theory]
@@ -97,7 +97,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: true,
-            enableMetrics: false).ConfigureAwait(false);
+            enableMetrics: false);
     }
 
     [Theory]
@@ -109,7 +109,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: false,
-            enableMetrics: false).ConfigureAwait(false);
+            enableMetrics: false);
     }
 
 #if !NET8_0_OR_GREATER
@@ -143,15 +143,15 @@ public partial class HttpClientTests
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
         var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsOldSemanticConventionsAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
-        await t.ConfigureAwait(false);
+        await t;
     }
 #endif
 
     [Fact]
     public async Task CheckEnrichmentWhenSampling()
     {
-        await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
-        await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
+        await CheckEnrichment(new AlwaysOffSampler(), false, this.url);
+        await CheckEnrichment(new AlwaysOnSampler(), true, this.url);
     }
 
 #if NET8_0_OR_GREATER
@@ -178,7 +178,7 @@ public partial class HttpClientTests
 
             request.Headers.Add("contextRequired", "false");
             request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
         catch (Exception)
         {
@@ -189,8 +189,6 @@ public partial class HttpClientTests
             meterProvider.Dispose();
         }
 
-        // dns.lookups.duration is a typo
-        // https://github.com/dotnet/runtime/issues/92917
         var requestMetrics = metrics
             .Where(metric =>
             metric.Name == "http.client.request.duration" ||
@@ -198,7 +196,7 @@ public partial class HttpClientTests
             metric.Name == "http.client.request.time_in_queue" ||
             metric.Name == "http.client.connection.duration" ||
             metric.Name == "http.client.open_connections" ||
-            metric.Name == "dns.lookups.duration")
+            metric.Name == "dns.lookup.duration")
             .ToArray();
 
         if (tc.ResponseExpected)
@@ -288,7 +286,7 @@ public partial class HttpClientTests
             request.Headers.Add("contextRequired", "false");
             request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
 
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
         catch (Exception)
         {
@@ -337,19 +335,17 @@ public partial class HttpClientTests
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
             Assert.Equal(tc.SpanStatus, activity.Status.ToString());
-
-            if (tc.SpanStatusHasDescription.HasValue)
-            {
-                var desc = activity.StatusDescription;
-                Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
-            }
+            Assert.Null(activity.StatusDescription);
 
             var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
 
+            int numberOfNewTags = activity.Status == ActivityStatusCode.Error ? 5 : 4;
+            int numberOfDupeTags = activity.Status == ActivityStatusCode.Error ? 11 : 10;
+
             var expectedAttributeCount = semanticConvention == HttpSemanticConvention.Dupe
-                ? 11 + (tc.ResponseExpected ? 2 : 0)
+                ? numberOfDupeTags + (tc.ResponseExpected ? 3 : 0)
                 : semanticConvention == HttpSemanticConvention.New
-                    ? 5 + (tc.ResponseExpected ? 1 : 0)
+                    ? numberOfNewTags + (tc.ResponseExpected ? 2 : 0)
                     : 6 + (tc.ResponseExpected ? 1 : 0);
 
             Assert.Equal(expectedAttributeCount, normalizedAttributes.Count);
@@ -378,14 +374,30 @@ public partial class HttpClientTests
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlFull && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpUrl]);
-                Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                 if (tc.ResponseExpected)
                 {
+                    Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
+
+                    if (tc.ResponseCode >= 400)
+                    {
+                        Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
+                    }
                 }
                 else
                 {
                     Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
+                    Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
+
+#if NET8_0_OR_GREATER
+                    // we are using fake address so it will be "name_resolution_error"
+                    // TODO: test other error types.
+                    Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "name_resolution_error");
+#elif NETFRAMEWORK
+                    Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "name_resolution_failure");
+#else
+                    Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "System.Net.Http.HttpRequestException");
+#endif
                 }
             }
 
@@ -505,7 +517,9 @@ public partial class HttpClientTests
                 if (enableTracing)
                 {
                     var activity = Assert.Single(activities);
+#if !NET8_0_OR_GREATER
                     Assert.Equal(activity.Duration.TotalSeconds, sum);
+#endif
                 }
                 else
                 {
@@ -519,22 +533,51 @@ public partial class HttpClientTests
                     attributes[tag.Key] = tag.Value;
                 }
 
-                var expectedAttributeCount = 5 + (tc.ResponseExpected ? 1 : 0);
+                var numberOfTags = 4;
+                if (tc.ResponseExpected)
+                {
+                    var expectedStatusCode = int.Parse(normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
+                    numberOfTags = (expectedStatusCode >= 400) ? 5 : 4; // error.type extra tag
+                }
+                else
+                {
+                    numberOfTags = 5; // error.type would be extra
+                }
+
+                var expectedAttributeCount = numberOfTags + (tc.ResponseExpected ? 2 : 0); // responsecode + protocolversion
 
                 Assert.Equal(expectedAttributeCount, attributes.Count);
 
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpRequestMethod && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpMethod]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
-                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
+
                 if (tc.ResponseExpected)
                 {
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
+
+                    if (tc.ResponseCode >= 400)
+                    {
+                        Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
+                    }
                 }
                 else
                 {
+                    Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
                     Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
+
+#if NET8_0_OR_GREATER
+                    // we are using fake address so it will be "name_resolution_error"
+                    // TODO: test other error types.
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "name_resolution_error");
+#elif NETFRAMEWORK
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "name_resolution_failure");
+
+#else
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeErrorType && kvp.Value.ToString() == "System.Net.Http.HttpRequestException");
+#endif
                 }
 
                 // Inspect Histogram Bounds
@@ -545,9 +588,15 @@ public partial class HttpClientTests
                     histogramBounds.Add(t.ExplicitBound);
                 }
 
-                Assert.Equal(
-                    expected: new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity },
-                    actual: histogramBounds);
+                // TODO: Remove the check for the older bounds once 1.7.0 is released. This is a temporary fix for instrumentation libraries CI workflow.
+
+                var expectedHistogramBoundsOld = new List<double> { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+                var expectedHistogramBoundsNew = new List<double> { 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, double.PositiveInfinity };
+
+                var histogramBoundsMatchCorrectly = Enumerable.SequenceEqual(expectedHistogramBoundsOld, histogramBounds) ||
+                    Enumerable.SequenceEqual(expectedHistogramBoundsNew, histogramBounds);
+
+                Assert.True(histogramBoundsMatchCorrectly);
             }
         }
     }
@@ -592,7 +641,7 @@ public partial class HttpClientTests
             .Build())
         {
             using var c = new HttpClient();
-            using var r = await c.GetAsync(url).ConfigureAwait(false);
+            using var r = await c.GetAsync(url);
         }
 
         if (enrichExpected)
