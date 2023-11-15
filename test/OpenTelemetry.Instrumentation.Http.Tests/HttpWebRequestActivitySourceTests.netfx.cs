@@ -699,7 +699,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     /// Test to make sure every event record has the right dynamic properties.
     /// </summary>
     [Fact]
-    public void TestMultipleConcurrentRequests()
+    public async Task TestMultipleConcurrentRequests()
     {
         ServicePointManager.DefaultConnectionLimit = int.MaxValue;
         using var parentActivity = new Activity("parent").Start();
@@ -724,13 +724,13 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         }
 
         // wait up to 10 sec for all requests and suppress exceptions
-        Task.WhenAll(tasks.Select(t => t.Value).ToArray()).ContinueWith(tt =>
+        await Task.WhenAll(tasks.Select(t => t.Value).ToArray()).ContinueWith(tt =>
         {
             foreach (var task in tasks)
             {
                 task.Value.Result?.Dispose();
             }
-        }).Wait();
+        });
 
         // Examine the result. Make sure we got all successful requests.
 
