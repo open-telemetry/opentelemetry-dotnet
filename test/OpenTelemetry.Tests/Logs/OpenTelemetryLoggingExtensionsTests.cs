@@ -129,4 +129,50 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             Assert.True(prop.PropertyType.IsPrimitive, $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive type. This is potentially a trim compatibility issue.");
         }
     }
+
+    [Fact]
+    public void VerifyAddProcessorOverloadWithImplementationFactory()
+    {
+        // arrange
+        var services = new ServiceCollection();
+        services.AddSingleton<MyProcessor>();
+
+        var serviceCollection = services.AddLogging(logging =>
+                    logging.AddOpenTelemetry(options =>
+                        options.AddProcessor(sp => sp.GetRequiredService<MyProcessor>())));
+
+        // act
+        using var sp = services.BuildServiceProvider();
+
+        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        // assert
+        Assert.NotNull(loggerProvider);
+        Assert.NotNull(loggerProvider.Processor);
+        Assert.True(loggerProvider.Processor is MyProcessor);
+    }
+
+    [Fact]
+    public void VerifyExceptionIsThrownWhenImplementationFactoryIsNull()
+    {
+        // arrange
+        Func<IServiceProvider, BaseProcessor<LogRecord>>? implementationFactory = null;
+        var services = new ServiceCollection();
+#pragma warning disable CS8604 // Suppressed possible null reference warning for testing argument null exception.
+        _ = services.AddLogging(logging =>
+            logging.AddOpenTelemetry(
+                o =>
+                o.AddProcessor(implementationFactory)));
+#pragma warning restore CS8604 // Suppressed possible null reference warning for testing argument null exception.
+
+        // act
+        using var sp = services.BuildServiceProvider();
+
+        // assert
+        Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
+    }
+
+    private class MyProcessor : BaseProcessor<LogRecord>
+    {
+    }
 }

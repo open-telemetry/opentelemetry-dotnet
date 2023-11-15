@@ -15,9 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Moq;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -85,50 +83,5 @@ public sealed class OpenTelemetryLoggerProviderTests
         Assert.Equal(initialValue, provider.Options.IncludeFormattedMessage);
         Assert.Equal(initialValue, provider.Options.IncludeScopes);
         Assert.Equal(initialValue, provider.Options.ParseStateValues);
-    }
-
-    [Fact]
-    public void VerifyAddProcessorOverloadWithImplementationFactory()
-    {
-        // arrange
-        var options = new OpenTelemetryLoggerOptions();
-        var myProcessor = new MyProcessor();
-        var serviceProviderMock = new Mock<IServiceProvider>();
-
-        serviceProviderMock.Setup(x => x.GetService(typeof(BaseProcessor<LogRecord>))).Returns(myProcessor);
-        static BaseProcessor<LogRecord> ImplementationFactory(IServiceProvider x) => x.GetService<BaseProcessor<LogRecord>>();
-
-        // act
-        options.AddProcessor(ImplementationFactory);
-
-        // assert
-        Assert.Single(options.ProcessorFactories);
-        var processorFactory = options.ProcessorFactories[0];
-        var processor = processorFactory(serviceProviderMock.Object);
-        Assert.Equal(myProcessor, processor);
-    }
-
-    [Fact]
-    public void VerifyExceptionIsThrownWhenImplementationFactoryIsNull()
-    {
-        // arrange
-        Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory = null;
-        var services = new ServiceCollection();
-        services.AddLogging(logging =>
-            logging.AddOpenTelemetry(
-                o =>
-                o.AddProcessor(implementationFactory)));
-
-        services.BuildServiceProvider();
-
-        // act
-        using var sp = services.BuildServiceProvider();
-
-        // assert
-        Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
-    }
-
-    private class MyProcessor : BaseProcessor<LogRecord>
-    {
     }
 }
