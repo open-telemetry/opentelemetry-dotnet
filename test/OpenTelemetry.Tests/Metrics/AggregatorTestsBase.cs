@@ -29,16 +29,15 @@ public abstract class AggregatorTestsBase
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
     private readonly bool emitOverflowAttribute;
+    private readonly bool shouldReclaimUnusedMetricPoints;
     private readonly AggregatorStore aggregatorStore;
 
-    protected AggregatorTestsBase(bool emitOverflowAttribute)
+    protected AggregatorTestsBase(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
-        if (emitOverflowAttribute)
-        {
-            this.emitOverflowAttribute = emitOverflowAttribute;
-        }
+        this.emitOverflowAttribute = emitOverflowAttribute;
+        this.shouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
 
-        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute);
+        this.aggregatorStore = new(MetricStreamIdentity, AggregationType.HistogramWithBuckets, AggregationTemporality.Cumulative, 1024, emitOverflowAttribute, this.shouldReclaimUnusedMetricPoints);
     }
 
     [Fact]
@@ -268,7 +267,8 @@ public abstract class AggregatorTestsBase
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
-            this.emitOverflowAttribute);
+            this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints);
 
         KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
         if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
@@ -345,6 +345,7 @@ public abstract class AggregatorTestsBase
             aggregationTemporality,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
@@ -453,7 +454,8 @@ public abstract class AggregatorTestsBase
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
-            this.emitOverflowAttribute);
+            this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints);
 
         aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object>>());
 
@@ -529,7 +531,7 @@ public abstract class AggregatorTestsBase
 public class AggregatorTests : AggregatorTestsBase
 {
     public AggregatorTests()
-        : base(false)
+        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -537,7 +539,23 @@ public class AggregatorTests : AggregatorTestsBase
 public class AggregatorTestsWithOverflowAttribute : AggregatorTestsBase
 {
     public AggregatorTestsWithOverflowAttribute()
-        : base(true)
+        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+    {
+    }
+}
+
+public class AggregatorTestsWithReclaimAttribute : AggregatorTestsBase
+{
+    public AggregatorTestsWithReclaimAttribute()
+        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
+    {
+    }
+}
+
+public class AggregatorTestsWithBothReclaimAndOverflowAttributes : AggregatorTestsBase
+{
+    public AggregatorTestsWithBothReclaimAndOverflowAttributes()
+        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
     {
     }
 }
