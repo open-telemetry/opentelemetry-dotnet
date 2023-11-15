@@ -169,8 +169,8 @@ public static class OtlpLogExporterHelperExtensions
     {
         // Note: If OtlpExporter has been registered for tracing and/or metrics
         // then IOptionsFactory will be set by a call to
-        // OtlpExporterOptions.RegisterOtlpExporterOptionsFactory. However if we
-        // are only using logging we don't have an opportunity to do that
+        // OtlpExporterOptions.RegisterOtlpExporterOptionsFactory. However, if we
+        // are only using logging, we don't have an opportunity to do that
         // registration so we manually create a factory.
 
         var optionsFactory = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>();

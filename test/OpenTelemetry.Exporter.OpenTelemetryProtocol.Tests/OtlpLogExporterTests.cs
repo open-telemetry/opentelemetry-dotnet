@@ -1289,8 +1289,12 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.Empty(OtlpLogRecordTransformer.LogListPool);
     }
 
-    [Fact]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate()
+    [Theory]
+    [InlineData("logging", true)]
+    [InlineData("logging", false)]
+    [InlineData("tracing", true)]
+    [InlineData("tracing", false)]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string name, bool optionalNameMatch)
     {
         var values = new Dictionary<string, string>()
         {
@@ -1307,20 +1311,31 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         {
             logging.Services.AddSingleton<IConfiguration>(configuration);
 
-            logging.Services.Configure<OtlpExporterOptions>(o =>
+            logging.Services.Configure<OtlpExporterOptions>(name, o =>
             {
                 configureDelegateCalled = true;
                 Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
             });
 
-            logging.AddOpenTelemetry(o => o.AddOtlpExporter());
+            logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionalNameMatch ? name : "otherSignalName", configure: null));
         });
 
-        Assert.True(configureDelegateCalled);
+        if (optionalNameMatch)
+        {
+            Assert.True(configureDelegateCalled);
+        }
+        else
+        {
+            Assert.False(configureDelegateCalled);
+        }
     }
 
-    [Fact]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder()
+    [Theory]
+    [InlineData("logging", true)]
+    [InlineData("logging", false)]
+    [InlineData("tracing", true)]
+    [InlineData("tracing", false)]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string name, bool optionalNameMatch)
     {
         var values = new Dictionary<string, string>()
         {
@@ -1337,14 +1352,15 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         services.AddSingleton<IConfiguration>(configuration);
 
-        services.Configure<OtlpExporterOptions>(o =>
+        services.Configure<OtlpExporterOptions>(name, o =>
         {
             configureDelegateCalled = true;
             Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
         });
 
         services.AddLogging(
-            logging => logging.AddOpenTelemetry(o => o.AddOtlpExporter()));
+            logging => logging.AddOpenTelemetry(o =>
+                o.AddOtlpExporter(optionalNameMatch ? name : "otherSignalName", configure: null)));
 
         using var sp = services.BuildServiceProvider();
 
@@ -1352,7 +1368,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 
         Assert.NotNull(factory);
 
-        Assert.True(configureDelegateCalled);
+        if (optionalNameMatch)
+        {
+            Assert.True(configureDelegateCalled);
+        }
+        else
+        {
+            Assert.False(configureDelegateCalled);
+        }
     }
 
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
