@@ -76,7 +76,7 @@ public class RoutingTests : IClassFixture<RoutingTestFixture>
                 break;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
         meterProvider.ForceFlush();

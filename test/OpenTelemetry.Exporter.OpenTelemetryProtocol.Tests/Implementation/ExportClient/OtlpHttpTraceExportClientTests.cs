@@ -106,12 +106,12 @@ public class OtlpHttpTraceExportClientTests
             {
                 return new HttpResponseMessage();
             })
-            .Callback<HttpRequestMessage, CancellationToken>((r, ct) =>
+            .Callback<HttpRequestMessage, CancellationToken>(async (r, ct) =>
             {
                 httpRequest = r;
 
                 // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                httpRequestContent = r.Content.ReadAsByteArrayAsync(ct)?.Result;
+                httpRequestContent = await r.Content.ReadAsByteArrayAsync(ct);
             })
 #else
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -124,7 +124,7 @@ public class OtlpHttpTraceExportClientTests
                 httpRequest = r;
 
                 // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                httpRequestContent = await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                httpRequestContent = await r.Content.ReadAsByteArrayAsync();
             })
 #endif
             .Verifiable();
