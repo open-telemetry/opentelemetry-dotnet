@@ -41,7 +41,7 @@ public sealed class Metric
         ("OpenTelemetry.Instrumentation.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.time_in_queue"),
-        ("System.Net.NameResolution", "dns.lookups.duration"),
+        ("System.Net.NameResolution", "dns.lookup.duration"),
     };
 
     // Long default histogram bounds. Not based on a standard. May change in the future.
