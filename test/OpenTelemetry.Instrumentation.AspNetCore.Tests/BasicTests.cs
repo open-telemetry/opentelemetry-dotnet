@@ -889,7 +889,7 @@ public sealed class BasicTests
             using var response = await client.SendAsync(request);
         }
 
-        Assert.Equal(1, numberOfUnSubscribedEvents);
+        Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberofSubscribedEvents);
     }
 
@@ -967,7 +967,7 @@ public sealed class BasicTests
         }
 
         Assert.Equal(1, numberOfExceptionCallbacks);
-        Assert.Equal(1, numberOfUnSubscribedEvents);
+        Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(3, numberofSubscribedEvents);
     }
 
