@@ -204,8 +204,6 @@ internal static class HttpWebRequestActivitySource
                 activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
             }
 
-            activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
-
             try
             {
                 TracingOptions.EnrichWithHttpWebResponse?.Invoke(activity, response);
@@ -243,44 +241,14 @@ internal static class HttpWebRequestActivitySource
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddExceptionTags(Exception exception, Activity activity, out HttpStatusCode? statusCode, out Version protocolVersion)
+    private static void AddExceptionEvent(Exception exception, Activity activity)
     {
         Debug.Assert(activity != null, "Activity must not be null");
-
-        statusCode = null;
-        protocolVersion = null;
 
         if (!activity.IsAllDataRequested)
         {
             return;
         }
-
-        ActivityStatusCode status;
-
-        if (exception is WebException wexc && wexc.Response is HttpWebResponse response)
-        {
-            statusCode = response.StatusCode;
-            protocolVersion = response.ProtocolVersion;
-
-            if (tracingEmitOldAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)statusCode);
-            }
-
-            if (tracingEmitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(protocolVersion));
-                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, (int)statusCode);
-            }
-
-            status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)statusCode);
-        }
-        else
-        {
-            status = ActivityStatusCode.Error;
-        }
-
-        activity.SetStatus(status);
 
         if (TracingOptions.RecordException)
         {
@@ -401,6 +369,7 @@ internal static class HttpWebRequestActivitySource
         HttpStatusCode? httpStatusCode = null;
         string errorType = null;
         Version protocolVersion = null;
+        ActivityStatusCode status = ActivityStatusCode.Unset;
 
         // Activity may be null if we are not tracing in these cases:
         // 1. No listeners
@@ -417,14 +386,33 @@ internal static class HttpWebRequestActivitySource
             if (result is Exception ex)
             {
                 errorType = GetErrorType(ex);
-                if (activity != null)
+                if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
                 {
-                    AddExceptionTags(ex, activity, out httpStatusCode, out protocolVersion);
+                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode);
+                    if (status == ActivityStatusCode.Error)
+                    {
+                        // override the errorType to statusCode for failures.
+                        errorType = TelemetryHelper.GetStatusCodeString(response.StatusCode);
+                    }
+
+                    if (activity != null)
+                    {
+                        AddResponseTags(response, activity);
+                        AddExceptionEvent(ex, activity);
+                    }
+                    else
+                    {
+                        httpStatusCode = response.StatusCode;
+                        protocolVersion = response.ProtocolVersion;
+                    }
                 }
-                else if (ex is WebException wexc && wexc.Response is HttpWebResponse response)
+                else
                 {
-                    httpStatusCode = response.StatusCode;
-                    protocolVersion = response.ProtocolVersion;
+                    status = ActivityStatusCode.Error;
+                    if (activity != null)
+                    {
+                        AddExceptionEvent(ex, activity);
+                    }
                 }
             }
             else
@@ -465,9 +453,11 @@ internal static class HttpWebRequestActivitySource
                     protocolVersion = response.ProtocolVersion;
                 }
 
-                if (SpanHelper.ResolveSpanStatusForHttpStatusCode(ActivityKind.Client, (int)httpStatusCode.Value) == ActivityStatusCode.Error)
+                status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)httpStatusCode.Value);
+
+                if (status == ActivityStatusCode.Error)
                 {
-                    // override the errorType to statusCode for failures.
+                    // set the errorType to statusCode for failures.
                     errorType = TelemetryHelper.GetStatusCodeString(httpStatusCode.Value);
                 }
             }
@@ -477,9 +467,13 @@ internal static class HttpWebRequestActivitySource
             HttpInstrumentationEventSource.Log.FailedProcessResult(ex);
         }
 
-        if (tracingEmitNewAttributes && errorType != null)
+        if (activity != null && activity.IsAllDataRequested)
         {
-            activity?.SetTag(SemanticConventions.AttributeErrorType, errorType);
+            activity.SetStatus(status);
+            if (tracingEmitNewAttributes && errorType != null)
+            {
+                activity.SetTag(SemanticConventions.AttributeErrorType, errorType);
+            }
         }
 
         activity?.Stop();
