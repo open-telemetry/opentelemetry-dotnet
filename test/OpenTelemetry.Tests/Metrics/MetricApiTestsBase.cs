@@ -1527,7 +1527,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Empty(exportedItems);
     }
 
-    private static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
+    internal static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
         var configurationData = new Dictionary<string, string>();
 
