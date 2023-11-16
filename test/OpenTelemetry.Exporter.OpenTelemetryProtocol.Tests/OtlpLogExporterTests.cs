@@ -1290,11 +1290,53 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     }
 
     [Theory]
-    [InlineData("logging", true)]
-    [InlineData("logging", false)]
-    [InlineData("tracing", true)]
-    [InlineData("tracing", false)]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string name, bool optionalNameMatch)
+    [InlineData(null)]
+    [InlineData("logging")]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string optionsName)
+    {
+        RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
+            optionsName,
+            configure =>
+            {
+                var factory = LoggerFactory.Create(logging =>
+                {
+                    configure(logging.Services);
+
+                    logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionsName, configure: null));
+                });
+
+                return (factory, factory);
+            });
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("logging")]
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string optionsName)
+    {
+        RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
+            optionsName,
+            configure =>
+            {
+                var services = new ServiceCollection();
+
+                configure(services);
+
+                services.AddLogging(
+                    logging => logging.AddOpenTelemetry(o =>
+                        o.AddOtlpExporter(optionsName, configure: null)));
+
+                var sp = services.BuildServiceProvider();
+
+                var factory = sp.GetRequiredService<ILoggerFactory>();
+
+                return (sp, factory);
+            });
+    }
+
+    private static void RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
+        string optionsName,
+        Func<Action<IServiceCollection>, (IDisposable Container, ILoggerFactory LoggerFactory)> createLoggerFactoryFunc)
     {
         var values = new Dictionary<string, string>()
         {
@@ -1306,76 +1348,49 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             .Build();
 
         var configureDelegateCalled = false;
+        var tracingConfigureDelegateCalled = false;
+        var unnamedConfigureDelegateCalled = false;
+        var allConfigureDelegateCalled = false;
 
-        using var factory = LoggerFactory.Create(logging =>
+        var testState = createLoggerFactoryFunc(services =>
         {
-            logging.Services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<IConfiguration>(configuration);
 
-            logging.Services.Configure<OtlpExporterOptions>(name, o =>
+            services.Configure<OtlpExporterOptions>(optionsName, o =>
             {
                 configureDelegateCalled = true;
                 Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
             });
 
-            logging.AddOpenTelemetry(o => o.AddOtlpExporter(optionalNameMatch ? name : "otherSignalName", configure: null));
+            services.Configure<OtlpExporterOptions>("tracing", o =>
+            {
+                tracingConfigureDelegateCalled = true;
+            });
+
+            services.Configure<OtlpExporterOptions>(o =>
+            {
+                unnamedConfigureDelegateCalled = true;
+            });
+
+            services.ConfigureAll<OtlpExporterOptions>(o =>
+            {
+                allConfigureDelegateCalled = true;
+            });
         });
 
-        if (optionalNameMatch)
-        {
-            Assert.True(configureDelegateCalled);
-        }
-        else
-        {
-            Assert.False(configureDelegateCalled);
-        }
-    }
+        using var container = testState.Container;
 
-    [Theory]
-    [InlineData("logging", true)]
-    [InlineData("logging", false)]
-    [InlineData("tracing", true)]
-    [InlineData("tracing", false)]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string name, bool optionalNameMatch)
-    {
-        var values = new Dictionary<string, string>()
-        {
-            [OtlpExporterOptions.EndpointEnvVarName] = "http://test:8888",
-        };
-
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(values)
-            .Build();
-
-        var configureDelegateCalled = false;
-
-        var services = new ServiceCollection();
-
-        services.AddSingleton<IConfiguration>(configuration);
-
-        services.Configure<OtlpExporterOptions>(name, o =>
-        {
-            configureDelegateCalled = true;
-            Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
-        });
-
-        services.AddLogging(
-            logging => logging.AddOpenTelemetry(o =>
-                o.AddOtlpExporter(optionalNameMatch ? name : "otherSignalName", configure: null)));
-
-        using var sp = services.BuildServiceProvider();
-
-        var factory = sp.GetRequiredService<ILoggerFactory>();
+        var factory = testState.LoggerFactory;
 
         Assert.NotNull(factory);
 
-        if (optionalNameMatch)
-        {
-            Assert.True(configureDelegateCalled);
-        }
-        else
-        {
-            Assert.False(configureDelegateCalled);
-        }
+        Assert.True(configureDelegateCalled);
+
+        Assert.False(tracingConfigureDelegateCalled);
+
+        Assert.Equal(optionsName == null, unnamedConfigureDelegateCalled);
+
+        Assert.True(allConfigureDelegateCalled);
     }
 
     private static OtlpCommon.KeyValue TryGetAttribute(OtlpLogs.LogRecord record, string key)
