@@ -59,7 +59,7 @@ public class SqlEventSourceTests
 
         using SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
 
-        await sqlConnection.OpenAsync().ConfigureAwait(false);
+        await sqlConnection.OpenAsync();
 
         string dataSource = sqlConnection.DataSource;
 
@@ -72,7 +72,7 @@ public class SqlEventSourceTests
 
         try
         {
-            await sqlCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sqlCommand.ExecuteNonQueryAsync();
         }
         catch
         {

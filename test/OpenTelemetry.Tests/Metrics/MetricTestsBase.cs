@@ -16,8 +16,10 @@
 
 #if BUILDING_HOSTING_TESTS
 using System.Diagnostics;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+#if BUILDING_HOSTING_TESTS
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
 #endif
@@ -28,31 +30,17 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricTestsBase
 {
     public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+    public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
-    public static IDisposable BuildMeterProvider(
-        out MeterProvider meterProvider,
-        Action<MeterProviderBuilder> configure)
+    protected readonly IConfiguration configuration;
+
+    protected MetricTestsBase()
     {
-        if (configure == null)
-        {
-            throw new ArgumentNullException(nameof(configure));
-        }
+    }
 
-#if BUILDING_HOSTING_TESTS
-        var host = BuildHost(
-            useWithMetricsStyle: false,
-            configureMeterProviderBuilder: configure);
-
-        meterProvider = host.Services.GetService<MeterProvider>();
-
-        return host;
-#else
-        var builder = Sdk.CreateMeterProviderBuilder();
-
-        configure(builder);
-
-        return meterProvider = builder.Build();
-#endif
+    protected MetricTestsBase(IConfiguration configuration)
+    {
+        this.configuration = configuration;
     }
 
 #if BUILDING_HOSTING_TESTS
@@ -218,6 +206,44 @@ public class MetricTestsBase
             Assert.Equal(tags[index].Value, tag.Value);
             index++;
         }
+    }
+
+    public IDisposable BuildMeterProvider(
+        out MeterProvider meterProvider,
+        Action<MeterProviderBuilder> configure)
+    {
+        if (configure == null)
+        {
+            throw new ArgumentNullException(nameof(configure));
+        }
+
+#if BUILDING_HOSTING_TESTS
+        var host = BuildHost(
+            useWithMetricsStyle: false,
+            configureMeterProviderBuilder: configure,
+            configureServices: services =>
+            {
+                if (this.configuration != null)
+                {
+                    services.AddSingleton(this.configuration);
+                }
+            });
+
+        meterProvider = host.Services.GetService<MeterProvider>();
+
+        return host;
+#else
+        var builder = Sdk.CreateMeterProviderBuilder();
+
+        if (this.configuration != null)
+        {
+            builder.ConfigureServices(services => services.AddSingleton(this.configuration));
+        }
+
+        configure(builder);
+
+        return meterProvider = builder.Build();
+#endif
     }
 
     internal static Exemplar[] GetExemplars(MetricPoint mp)

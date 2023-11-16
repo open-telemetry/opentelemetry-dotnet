@@ -29,9 +29,9 @@ public class CallbackMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (this.impl == null || await this.impl.ProcessAsync(context).ConfigureAwait(false))
+        if (this.impl == null || await this.impl.ProcessAsync(context))
         {
-            await this.next(context).ConfigureAwait(false);
+            await this.next(context);
         }
     }
 
@@ -39,7 +39,7 @@ public class CallbackMiddleware
     {
         public virtual async Task<bool> ProcessAsync(HttpContext context)
         {
-            return await Task.FromResult(true).ConfigureAwait(false);
+            return await Task.FromResult(true);
         }
     }
 }

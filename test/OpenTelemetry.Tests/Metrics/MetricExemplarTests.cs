@@ -41,7 +41,7 @@ public class MetricExemplarTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var counter = meter.CreateCounter<double>("testCounter");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
@@ -95,7 +95,7 @@ public class MetricExemplarTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var histogram = meter.CreateHistogram<double>("testHistogram");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
@@ -148,7 +148,7 @@ public class MetricExemplarTests : MetricTestsBase
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var histogram = meter.CreateHistogram<double>("testHistogram");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(new AlwaysOnExemplarFilter())
             .AddView(histogram.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "key1" } })

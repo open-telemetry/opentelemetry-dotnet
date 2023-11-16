@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Metrics.Tests;
 
 #pragma warning disable SA1402
 
-public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
+public abstract class MetricApiTestsBase : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
     private static readonly int NumberOfThreads = Environment.ProcessorCount;
@@ -35,14 +36,10 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
     private static readonly int NumberOfMetricUpdateByEachThread = 100000;
     private readonly ITestOutputHelper output;
 
-    protected MetricApiTestsBase(ITestOutputHelper output, bool emitOverflowAttribute)
+    protected MetricApiTestsBase(ITestOutputHelper output, bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
+        : base(BuildConfiguration(emitOverflowAttribute, shouldReclaimUnusedMetricPoints))
     {
         this.output = output;
-
-        if (emitOverflowAttribute)
-        {
-            Environment.SetEnvironmentVariable(EmitOverFlowAttributeConfigKey, "true");
-        }
     }
 
     [Fact]
@@ -51,7 +48,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -84,7 +81,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -113,7 +110,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -147,7 +144,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -169,7 +166,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -188,7 +185,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -221,7 +218,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -267,7 +264,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -313,7 +310,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -357,7 +354,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -403,7 +400,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}", "1.0");
         using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}", "2.0");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
             .AddInMemoryExporter(exportedItems));
@@ -435,7 +432,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1.{temporality}");
         using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2.{temporality}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder =>
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddMeter(meter1.Name)
@@ -482,7 +479,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         var exportedItems = new List<Metric>();
 
-        using var container = BuildMeterProvider(out var meterProvider, builder =>
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddMeter("AbcCompany.XyzProduct.Component?")
@@ -534,7 +531,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         var exportedItems = new List<Metric>();
 
-        using var container = BuildMeterProvider(out var meterProvider, builder =>
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddInMemoryExporter(exportedItems);
@@ -566,7 +563,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateCounter<long>("mycounter");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -667,7 +664,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
                 };
             });
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -740,7 +737,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
                 };
             });
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -836,7 +833,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
                 };
             });
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -877,7 +874,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateUpDownCounter<long>("mycounter");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -958,7 +955,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
                 };
             });
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1021,7 +1018,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
                 };
             });
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1091,7 +1088,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateCounter<long>("Counter");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1182,7 +1179,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
         var counterLong = meter.CreateCounter<long>("Counter");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1275,7 +1272,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         var counter1 = meter1.CreateCounter<long>("counterFromMeter1");
         var counter2 = meter2.CreateCounter<long>("counterFromMeter2");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
@@ -1343,7 +1340,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
         var counterLong = meter.CreateCounter<long>("mycounterCapTest");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
@@ -1438,7 +1435,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter("InstrumentWithInvalidNameIsIgnoredTest");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1459,7 +1456,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter("InstrumentValidNameIsExportedTest");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1481,7 +1478,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         // This test ensures that MeterProviderSdk can be set up without any reader
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder =>
+        using var container = this.BuildMeterProvider(out var meterProvider, builder =>
         {
             builder
                 .AddMeter(meter.Name);
@@ -1503,7 +1500,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
         var exportedItems = new List<Metric>();
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
@@ -1530,9 +1527,23 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
         Assert.Empty(exportedItems);
     }
 
-    public void Dispose()
+    private static IConfiguration BuildConfiguration(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
-        Environment.SetEnvironmentVariable(EmitOverFlowAttributeConfigKey, null);
+        var configurationData = new Dictionary<string, string>();
+
+        if (emitOverflowAttribute)
+        {
+            configurationData[EmitOverFlowAttributeConfigKey] = "true";
+        }
+
+        if (shouldReclaimUnusedMetricPoints)
+        {
+            configurationData[ReclaimUnusedMetricPointsConfigKey] = "true";
+        }
+
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection(configurationData)
+            .Build();
     }
 
     private static void CounterUpdateThread<T>(object obj)
@@ -1597,7 +1608,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}.{deltaValueUpdatedByEachCall}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metricItems));
 
@@ -1653,7 +1664,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 
         using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
 
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .AddReader(metricReader));
 
@@ -1710,7 +1721,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase, IDisposable
 public class MetricApiTest : MetricApiTestsBase
 {
     public MetricApiTest(ITestOutputHelper output)
-        : base(output, false)
+        : base(output, emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -1718,7 +1729,23 @@ public class MetricApiTest : MetricApiTestsBase
 public class MetricApiTestWithOverflowAttribute : MetricApiTestsBase
 {
     public MetricApiTestWithOverflowAttribute(ITestOutputHelper output)
-        : base(output, true)
+        : base(output, emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+    {
+    }
+}
+
+public class MetricApiTestWithReclaimAttribute : MetricApiTestsBase
+{
+    public MetricApiTestWithReclaimAttribute(ITestOutputHelper output)
+        : base(output, emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
+    {
+    }
+}
+
+public class MetricApiTestWithBothOverflowAndReclaimAttributes : MetricApiTestsBase
+{
+    public MetricApiTestWithBothOverflowAndReclaimAttributes(ITestOutputHelper output)
+        : base(output, emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
     {
     }
 }
