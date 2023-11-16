@@ -253,7 +253,7 @@ public abstract class AggregatorTestsBase
     [InlineData("System.Net.Http", "http.client.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
     [InlineData("System.Net.Http", "http.client.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("System.Net.Http", "http.client.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
-    [InlineData("System.Net.NameResolution", "dns.lookups.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("System.Net.NameResolution", "dns.lookup.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("General.App", "simple.alternative.counter", "s", KnownHistogramBuckets.Default)]
     public void HistogramBucketsDefaultUpdatesForSecondsTest(string meterName, string instrumentName, string unit, KnownHistogramBuckets expectedHistogramBuckets)
     {
