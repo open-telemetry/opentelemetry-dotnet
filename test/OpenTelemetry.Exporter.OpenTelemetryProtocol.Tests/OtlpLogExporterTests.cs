@@ -1348,6 +1348,9 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             .Build();
 
         var configureDelegateCalled = false;
+        var configureExportProcessorOptionsCalled = false;
+        var configureBatchOptionsCalled = false;
+
         var tracingConfigureDelegateCalled = false;
         var unnamedConfigureDelegateCalled = false;
         var allConfigureDelegateCalled = false;
@@ -1360,6 +1363,16 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
             {
                 configureDelegateCalled = true;
                 Assert.Equal(new Uri("http://test:8888"), o.Endpoint);
+            });
+
+            services.Configure<LogRecordExportProcessorOptions>(optionsName, o =>
+            {
+                configureExportProcessorOptionsCalled = true;
+            });
+
+            services.Configure<BatchExportLogRecordProcessorOptions>(optionsName, o =>
+            {
+                configureBatchOptionsCalled = true;
             });
 
             services.Configure<OtlpExporterOptions>("tracing", o =>
@@ -1385,6 +1398,8 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
         Assert.NotNull(factory);
 
         Assert.True(configureDelegateCalled);
+        Assert.True(configureExportProcessorOptionsCalled);
+        Assert.True(configureBatchOptionsCalled);
 
         Assert.False(tracingConfigureDelegateCalled);
 
