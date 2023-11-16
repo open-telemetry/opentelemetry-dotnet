@@ -174,7 +174,7 @@ public partial class HttpClientTests : IDisposable
             .Build())
         {
             using var c = new HttpClient();
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
 
         Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -248,7 +248,7 @@ public partial class HttpClientTests : IDisposable
             .Build())
         {
             using var c = new HttpClient();
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
 
         Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -318,7 +318,7 @@ public partial class HttpClientTests : IDisposable
                 using var c = new HttpClient();
                 using (SuppressInstrumentationScope.Begin())
                 {
-                    await c.SendAsync(request).ConfigureAwait(false);
+                    await c.SendAsync(request);
                 }
             }
 
@@ -357,7 +357,7 @@ public partial class HttpClientTests : IDisposable
         using var clientHandler = new HttpClientHandler();
         using var retryHandler = new RetryHandler(clientHandler, maxRetries);
         using var httpClient = new HttpClient(retryHandler);
-        await httpClient.SendAsync(request).ConfigureAwait(false);
+        await httpClient.SendAsync(request);
 
         // number of exported spans should be 3(maxRetries)
         Assert.Equal(maxRetries, exportedItems.Count());
@@ -407,7 +407,7 @@ public partial class HttpClientTests : IDisposable
 
         try
         {
-            await httpClient.SendAsync(request).ConfigureAwait(false);
+            await httpClient.SendAsync(request);
         }
         catch
         {
@@ -467,7 +467,7 @@ public partial class HttpClientTests : IDisposable
 
         try
         {
-            await httpClient.SendAsync(request).ConfigureAwait(false);
+            await httpClient.SendAsync(request);
         }
         catch
         {
@@ -511,7 +511,7 @@ public partial class HttpClientTests : IDisposable
             .Build())
         {
             using var c = new HttpClient();
-            await c.GetAsync($"{this.url}redirect").ConfigureAwait(false);
+            await c.GetAsync($"{this.url}redirect");
         }
 
 #if NETFRAMEWORK
@@ -562,7 +562,7 @@ public partial class HttpClientTests : IDisposable
             .Build())
         {
             using var c = new HttpClient();
-            await c.GetAsync(this.url).ConfigureAwait(false);
+            await c.GetAsync(this.url);
         }
 
 #if NETFRAMEWORK
@@ -593,7 +593,7 @@ public partial class HttpClientTests : IDisposable
         {
             using var c = new HttpClient();
             using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
-            await c.GetAsync(this.url).ConfigureAwait(false);
+            await c.GetAsync(this.url);
             Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
         }
 
@@ -614,7 +614,7 @@ public partial class HttpClientTests : IDisposable
         using var c = new HttpClient();
         try
         {
-            await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/").ConfigureAwait(false);
+            await c.GetAsync("https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/");
         }
         catch
         {
@@ -640,7 +640,7 @@ public partial class HttpClientTests : IDisposable
         using var c = new HttpClient();
         try
         {
-            await c.GetAsync($"{this.url}500").ConfigureAwait(false);
+            await c.GetAsync($"{this.url}500");
         }
         catch
         {
@@ -671,7 +671,7 @@ public partial class HttpClientTests : IDisposable
         using var c = new HttpClient();
         try
         {
-            await c.GetStringAsync($"{this.url}500").ConfigureAwait(false);
+            await c.GetStringAsync($"{this.url}500");
         }
         catch
         {
@@ -746,7 +746,7 @@ public partial class HttpClientTests : IDisposable
             };
 
             using var c = new HttpClient();
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
 
             parent?.Stop();
 

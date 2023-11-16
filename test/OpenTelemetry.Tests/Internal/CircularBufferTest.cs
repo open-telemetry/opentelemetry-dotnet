@@ -129,7 +129,7 @@ public class CircularBufferTest
 
             tasks.Add(Task.Run(async () =>
             {
-                await Task.Delay(2000).ConfigureAwait(false);
+                await Task.Delay(2000);
 
                 if (tid == 0)
                 {
@@ -167,6 +167,6 @@ public class CircularBufferTest
             }));
         }
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(tasks);
     }
 }

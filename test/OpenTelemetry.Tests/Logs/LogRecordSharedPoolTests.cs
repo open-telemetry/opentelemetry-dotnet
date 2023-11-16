@@ -190,7 +190,7 @@ public sealed class LogRecordSharedPoolTests
             {
                 Random random = new Random();
 
-                await Task.Delay(random.Next(100, 150)).ConfigureAwait(false);
+                await Task.Delay(random.Next(100, 150));
 
                 for (int i = 0; i < 1000; i++)
                 {
@@ -201,12 +201,12 @@ public sealed class LogRecordSharedPoolTests
                     // This should no-op mostly.
                     pool.Return(logRecord);
 
-                    await Task.Delay(random.Next(0, 20)).ConfigureAwait(false);
+                    await Task.Delay(random.Next(0, 20));
                 }
             }));
         }
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(tasks);
 
         processor.ForceFlush();
 
@@ -248,7 +248,7 @@ public sealed class LogRecordSharedPoolTests
         {
             tasks.Add(Task.Run(async () =>
             {
-                await Task.Delay(2000).ConfigureAwait(false);
+                await Task.Delay(2000);
 
                 for (int i = 0; i < 100_000; i++)
                 {
@@ -259,7 +259,7 @@ public sealed class LogRecordSharedPoolTests
             }));
         }
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await Task.WhenAll(tasks);
 
         Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
     }

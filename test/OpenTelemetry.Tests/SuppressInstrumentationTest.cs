@@ -74,7 +74,7 @@ public class SuppressInstrumentationTest
             Assert.False(Sdk.SuppressInstrumentation);
             Assert.Equal(1, SuppressInstrumentationScope.Enter());
             Assert.True(Sdk.SuppressInstrumentation);
-        }).ConfigureAwait(false);
+        });
 
         Assert.False(Sdk.SuppressInstrumentation); // Changes made by SuppressInstrumentationScope.Enter in the task above are not reflected here as it's not part of the same async flow
     }

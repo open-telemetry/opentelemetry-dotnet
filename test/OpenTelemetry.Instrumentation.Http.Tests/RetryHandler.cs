@@ -41,7 +41,7 @@ public class RetryHandler : DelegatingHandler
 
             try
             {
-                response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                response = await base.SendAsync(request, cancellationToken);
             }
             catch
             {

@@ -76,7 +76,7 @@ internal class TestHttpServer
 
                         this.initialized.Set();
 
-                        action(await ctxTask.ConfigureAwait(false));
+                        action(await ctxTask);
                     }
                     catch (Exception ex)
                     {

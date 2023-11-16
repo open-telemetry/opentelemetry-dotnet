@@ -52,7 +52,7 @@ public class InMemoryExporterMetricsExtensionsTests
                 using var meter = new Meter(meterName);
                 var counter = meter.CreateCounter<long>("meter");
                 counter.Add(10);
-            }).ConfigureAwait(false);
+            });
 
         Assert.Single(exportedItems);
         var metricPointsEnumerator = exportedItems[0].GetMetricPoints().GetEnumerator();
@@ -75,7 +75,7 @@ public class InMemoryExporterMetricsExtensionsTests
                 using var meter = new Meter(meterName);
                 var counter = meter.CreateCounter<long>("meter");
                 counter.Add(10);
-            }).ConfigureAwait(false);
+            });
 
         Assert.Single(exportedItems);
         Assert.Equal(10, exportedItems[0].MetricPoints[0].GetSumLong());
@@ -96,13 +96,13 @@ public class InMemoryExporterMetricsExtensionsTests
 
                    return Task.CompletedTask;
                })))
-           .StartAsync().ConfigureAwait(false);
+           .StartAsync();
 
-        using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}").ConfigureAwait(false);
+        using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
     }
 }
 #endif
