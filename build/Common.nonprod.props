@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefaultTargetFrameworkForExampleApps>net7.0</DefaultTargetFrameworkForExampleApps>
+    <DefaultTargetFrameworkForExampleApps>net8.0</DefaultTargetFrameworkForExampleApps>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">

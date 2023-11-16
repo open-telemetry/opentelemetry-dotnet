@@ -87,7 +87,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
                         path += query;
                     }
 
-                    using var response = await client.GetAsync(path).ConfigureAwait(false);
+                    using var response = await client.GetAsync(path);
                 }
                 catch (Exception)
                 {
@@ -104,7 +104,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
                     // We need to let End callback execute as it is executed AFTER response was returned.
                     // In unit tests environment there may be a lot of parallel unit tests executed, so
                     // giving some breezing room for the End callback to complete
-                    await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
 
@@ -177,7 +177,7 @@ public class IncomingRequestsCollectionsIsAccordingToTheSpecTests_New
         {
             context.Response.StatusCode = this.statusCode;
             context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase = this.reasonPhrase;
-            await context.Response.WriteAsync("empty").ConfigureAwait(false);
+            await context.Response.WriteAsync("empty");
 
             if (context.Request.Path.Value.EndsWith("exception"))
             {
