@@ -44,6 +44,12 @@
 * Fixed `network.protocol.version` attribute values to match the specification.
   ([#5006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5006))
 
+* Set `network.protocol.version` value using the protocol version on the
+  received response. If the request fails without response, then
+  `network.protocol.version` attribute will not be set on Activity and
+  `http.client.request.duration` metric.
+  ([#5043](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5043))
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26
@@ -117,6 +123,10 @@ Released 2023-Oct-26
 * Updated description for `http.client.request.duration` metrics to match spec
   definition.
   ([#4990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4990))
+
+* `dns.lookups.duration` metric is renamed to `dns.lookup.duration`. This change
+  impacts only users on `.NET8.0` or newer framework.
+  ([#5049](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5049))
 
 ## 1.5.1-beta.1
 

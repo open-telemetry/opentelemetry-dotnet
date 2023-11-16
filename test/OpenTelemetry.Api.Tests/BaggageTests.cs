@@ -275,7 +275,7 @@ public class BaggageTests
     {
         Baggage.SetBaggage("key1", "value1");
 
-        await InnerTask().ConfigureAwait(false);
+        await InnerTask();
 
         Baggage.SetBaggage("key4", "value4");
 

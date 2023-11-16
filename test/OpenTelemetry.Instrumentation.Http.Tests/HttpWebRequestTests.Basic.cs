@@ -87,7 +87,7 @@ public partial class HttpWebRequestTests : IDisposable
 
         request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
-        using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        using var response = await request.GetResponseAsync();
 
 #if NETFRAMEWORK
         // Note: Back-off is part of the .NET Framework reflection only and
@@ -129,7 +129,7 @@ public partial class HttpWebRequestTests : IDisposable
 
         request.Method = "GET";
 
-        using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        using var response = await request.GetResponseAsync();
 
 #if NETFRAMEWORK
         Assert.True(httpWebRequestFilterApplied);
@@ -163,7 +163,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
 
             Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
         }
@@ -190,7 +190,7 @@ public partial class HttpWebRequestTests : IDisposable
         parent.TraceStateString = "k1=v1,k2=v2";
         parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-        using var response = await request.GetResponseAsync().ConfigureAwait(false);
+        using var response = await request.GetResponseAsync();
 
         Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
         var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
@@ -272,7 +272,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
 
             parent?.Stop();
 
@@ -345,7 +345,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
         }
         catch
         {
@@ -374,7 +374,7 @@ public partial class HttpWebRequestTests : IDisposable
 
             request.Method = "GET";
 
-            using var response = await request.GetResponseAsync().ConfigureAwait(false);
+            using var response = await request.GetResponseAsync();
         }
         catch
         {
