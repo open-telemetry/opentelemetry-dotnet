@@ -189,7 +189,6 @@ public sealed class BasicTests
         var activity = exportedItems[0];
 
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-        Assert.Equal("api/Values/{id}", activity.DisplayName);
 
         Assert.Equal(expectedTraceId, activity.Context.TraceId);
         Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -251,7 +250,6 @@ public sealed class BasicTests
             var activity = exportedItems[0];
 
             Assert.True(activity.Duration != TimeSpan.Zero);
-            Assert.Equal("api/Values/{id}", activity.DisplayName);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -644,10 +642,9 @@ public sealed class BasicTests
         Assert.Equal(activityName, middlewareActivity.OperationName);
         Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-        // tag http.route should be added on activity started by asp.net core
-        Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
+        // tag http.method should be added on activity started by asp.net core
+        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
-        Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
     }
 
     [Theory]
@@ -763,10 +760,9 @@ public sealed class BasicTests
         Assert.Equal(activityName, middlewareActivity.OperationName);
         Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-        // tag http.route should not be added on activity started by asp.net core as it will not be found during OnEventWritten event
-        Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+        // tag http.method should be added on activity started by asp.net core
+        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
-        Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
     }
 
 #if NET7_0_OR_GREATER
@@ -866,12 +862,6 @@ public sealed class BasicTests
                                     }
 
                                     break;
-                                case HttpInListener.OnMvcBeforeActionEvent:
-                                    {
-                                        numberofSubscribedEvents++;
-                                    }
-
-                                    break;
                                 default:
                                     {
                                         numberOfUnSubscribedEvents++;
@@ -900,7 +890,7 @@ public sealed class BasicTests
         }
 
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(3, numberofSubscribedEvents);
+        Assert.Equal(2, numberofSubscribedEvents);
     }
 
     [Fact]
@@ -926,12 +916,6 @@ public sealed class BasicTests
 
                                     break;
                                 case HttpInListener.OnStopEvent:
-                                    {
-                                        numberofSubscribedEvents++;
-                                    }
-
-                                    break;
-                                case HttpInListener.OnMvcBeforeActionEvent:
                                     {
                                         numberofSubscribedEvents++;
                                     }
@@ -984,7 +968,7 @@ public sealed class BasicTests
 
         Assert.Equal(1, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(4, numberofSubscribedEvents);
+        Assert.Equal(3, numberofSubscribedEvents);
     }
 
     [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/4884")]
@@ -1074,57 +1058,6 @@ public sealed class BasicTests
         Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberofSubscribedEvents);
-
-        await app.DisposeAsync();
-    }
-
-    [Fact]
-    public async Task RouteInformationIsNotAddedToRequestsOutsideOfMVC()
-    {
-        var exportedItems = new List<Activity>();
-
-        // configure SDK
-        using var tracerprovider = Sdk.CreateTracerProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(exportedItems)
-            .Build();
-
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        var app = builder.Build();
-
-        app.MapGet("/custom/{name:alpha}", () => "Hello");
-
-        _ = app.RunAsync();
-
-        using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/custom/abc");
-        Assert.NotNull(res);
-
-        tracerprovider.ForceFlush();
-        for (var i = 0; i < 10; i++)
-        {
-            if (exportedItems.Count > 0)
-            {
-                break;
-            }
-
-            // We need to let End callback execute as it is executed AFTER response was returned.
-            // In unit tests environment there may be a lot of parallel unit tests executed, so
-            // giving some breezing room for the End callback to complete
-            await Task.Delay(TimeSpan.FromSeconds(1));
-        }
-
-        var activity = exportedItems[0];
-
-        Assert.NotNull(activity);
-
-        // After fix update to Contains http.route
-        Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
-        Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-
-        // After fix this should be /custom/{name:alpha}
-        Assert.Equal("/custom/abc", activity.DisplayName);
 
         await app.DisposeAsync();
     }

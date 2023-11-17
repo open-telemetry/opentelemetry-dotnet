@@ -60,6 +60,7 @@ public sealed class Metric
         AggregationTemporality temporality,
         int maxMetricPointsPerMetricStream,
         bool emitOverflowAttribute,
+        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilter? exemplarFilter = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
@@ -166,7 +167,7 @@ public sealed class Metric
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, exemplarFilter);
+        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
         this.InstrumentDisposed = false;
     }

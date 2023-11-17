@@ -11,11 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		.github\workflows\ci-concurrency.yml = .github\workflows\ci-concurrency.yml
 		CONTRIBUTING.md = CONTRIBUTING.md
-		Directory.Packages.props = Directory.Packages.props
-		test\Directory.Packages.props = test\Directory.Packages.props
-		examples\Directory.Packages.props = examples\Directory.Packages.props
-		docs\Directory.Packages.props = docs\Directory.Packages.props
 		global.json = global.json
 		LICENSE = LICENSE
 		NuGet.config = NuGet.config
@@ -45,6 +43,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\RELEASING.md = build\RELEASING.md
 		build\stylecop.json = build\stylecop.json
 		build\test-aot-compatibility.ps1 = build\test-aot-compatibility.ps1
+		build\test-threadSafety.ps1 = build\test-threadSafety.ps1
 		build\xunit.runner.json = build\xunit.runner.json
 	EndProjectSection
 EndProject
@@ -115,6 +114,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 	ProjectSection(SolutionItems) = preProject
 		test\Directory.Build.props = test\Directory.Build.props
 		test\Directory.Build.targets = test\Directory.Build.targets
+		test\Directory.Packages.props = test\Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc.Tests", "test\OpenTelemetry.Instrumentation.Grpc.Tests\OpenTelemetry.Instrumentation.Grpc.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
@@ -140,6 +140,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948}"
 	ProjectSection(SolutionItems) = preProject
 		examples\Directory.Build.props = examples\Directory.Build.props
+		examples\Directory.Packages.props = examples\Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trace", "trace", "{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}"
@@ -170,6 +171,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CB401DF1-FF5C-4055-886E-1183E832B2D6}"
 	ProjectSection(SolutionItems) = preProject
 		docs\Directory.Build.props = docs\Directory.Build.props
+		docs\Directory.Packages.props = docs\Directory.Packages.props
 		docs\docfx.json = docs\docfx.json
 		docs\toc.yml = docs\toc.yml
 	EndProjectSection

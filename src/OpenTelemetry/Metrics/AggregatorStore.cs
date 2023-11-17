@@ -25,6 +25,7 @@ namespace OpenTelemetry.Metrics;
 internal sealed class AggregatorStore
 {
     internal readonly bool OutputDelta;
+    internal readonly bool ShouldReclaimUnusedMetricPoints;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -81,6 +82,7 @@ internal sealed class AggregatorStore
         AggregationTemporality temporality,
         int maxMetricPoints,
         bool emitOverflowAttribute,
+        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilter? exemplarFilter = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
@@ -122,7 +124,9 @@ internal sealed class AggregatorStore
             reservedMetricPointsCount++;
         }
 
-        if (this.OutputDelta)
+        this.ShouldReclaimUnusedMetricPoints = shouldReclaimUnusedMetricPoints;
+
+        if (this.OutputDelta && shouldReclaimUnusedMetricPoints)
         {
             this.availableMetricPoints = new Queue<int>(maxMetricPoints - reservedMetricPointsCount);
 
@@ -181,7 +185,7 @@ internal sealed class AggregatorStore
         this.batchSize = 0;
         if (this.OutputDelta)
         {
-            if (this.reclaimMetricPoints)
+            if (this.ShouldReclaimUnusedMetricPoints && this.reclaimMetricPoints)
             {
                 this.SnapshotDeltaWithMetricPointReclaim();
             }
