@@ -21,6 +21,7 @@ namespace OpenTelemetry.Metrics.Tests;
 public class MetricTestsBase
 {
     public const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+    public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
     // This method relies on the assumption that MetricPoints are exported in the order in which they are emitted.
     // For Delta AggregationTemporality, this holds true only until the AggregatorStore has not begun recaliming the MetricPoints.

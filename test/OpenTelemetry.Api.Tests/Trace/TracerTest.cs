@@ -83,16 +83,16 @@ public class TracerTest : IDisposable
 
         async Task DoSomeAsyncWork()
         {
-            await Task.Delay(10).ConfigureAwait(false);
+            await Task.Delay(10);
             using (tracer.GetTracer("tracername").StartRootSpan("RootSpan2"))
             {
-                await Task.Delay(10).ConfigureAwait(false);
+                await Task.Delay(10);
             }
         }
 
         using (tracer.GetTracer("tracername").StartActiveSpan("RootSpan1"))
         {
-            await DoSomeAsyncWork().ConfigureAwait(false);
+            await DoSomeAsyncWork();
         }
 
         Assert.Equal(2, exportedItems.Count);

@@ -155,7 +155,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         // Send a random Http request to generate some events
         using (var client = new HttpClient())
         {
-            (await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)).Dispose();
+            (await client.GetAsync(this.BuildRequestUrl())).Dispose();
         }
 
         // Just make sure some events are written, to confirm we successfully subscribed to it.
@@ -180,8 +180,8 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         using (var client = new HttpClient())
         {
             (method == "GET"
-                ? await client.GetAsync(url).ConfigureAwait(false)
-                : await client.PostAsync(url, new StringContent("hello world")).ConfigureAwait(false)).Dispose();
+                ? await client.GetAsync(url)
+                : await client.PostAsync(url, new StringContent("hello world"))).Dispose();
         }
 
         // We should have exactly one Start and one Stop event
@@ -211,8 +211,8 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         using (var client = new HttpClient())
         {
             (method == "GET"
-                ? await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)
-                : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world")).ConfigureAwait(false)).Dispose();
+                ? await client.GetAsync(this.BuildRequestUrl())
+                : await client.PostAsync(this.BuildRequestUrl(), new StringContent("hello world"))).Dispose();
         }
 
         // There should be no events because we turned off sampling.
@@ -248,7 +248,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                     stream = webRequest.GetRequestStream();
                     break;
                 case 1:
-                    stream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false);
+                    stream = await webRequest.GetRequestStreamAsync();
                     break;
                 case 2:
                     {
@@ -310,7 +310,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                 webResponse = webRequest.GetResponse();
                 break;
             case 1:
-                webResponse = await webRequest.GetResponseAsync().ConfigureAwait(false);
+                webResponse = await webRequest.GetResponseAsync();
                 break;
             case 2:
                 {
@@ -397,7 +397,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
             // Send a random Http request to generate some events
             using (var client = new HttpClient())
             {
-                (await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)).Dispose();
+                (await client.GetAsync(this.BuildRequestUrl())).Dispose();
             }
 
             parent.Stop();
@@ -438,7 +438,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                     request.Content = new StringContent("hello world");
                 }
 
-                (await client.SendAsync(request).ConfigureAwait(false)).Dispose();
+                (await client.SendAsync(request)).Dispose();
             }
 
             // No events are sent.
@@ -466,8 +466,8 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         using (var client = new HttpClient())
         {
             using HttpResponseMessage response = method == "GET"
-                ? await client.GetAsync(url).ConfigureAwait(false)
-                : await client.PostAsync(url, new StringContent("hello world")).ConfigureAwait(false);
+                ? await client.GetAsync(url)
+                : await client.PostAsync(url, new StringContent("hello world"));
         }
 
         // We should have exactly one Start and one Stop event
@@ -499,8 +499,8 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         using (var client = new HttpClient())
         {
             using HttpResponseMessage response = method == "GET"
-                ? await client.GetAsync(this.BuildRequestUrl(queryString: "redirects=10")).ConfigureAwait(false)
-                : await client.PostAsync(this.BuildRequestUrl(queryString: "redirects=10"), new StringContent("hello world")).ConfigureAwait(false);
+                ? await client.GetAsync(this.BuildRequestUrl(queryString: "redirects=10"))
+                : await client.PostAsync(this.BuildRequestUrl(queryString: "redirects=10"), new StringContent("hello world"));
         }
 
         // We should have exactly one Start and one Stop event
@@ -529,7 +529,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
             return method == "GET"
                 ? new HttpClient().GetAsync(url)
                 : new HttpClient().PostAsync(url, new StringContent("hello world"));
-        }).ConfigureAwait(false);
+        });
 
         // check that request failed because of the wrong domain name and not because of reflection
         var webException = (WebException)ex.InnerException;
@@ -572,7 +572,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                 return method == "GET"
                     ? client.GetAsync(url, cts.Token)
                     : client.PostAsync(url, new StringContent("hello world"), cts.Token);
-            }).ConfigureAwait(false);
+            });
             Assert.True(ex is TaskCanceledException || ex is WebException);
         }
 
@@ -611,7 +611,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                 return method == "GET"
                     ? client.GetAsync(url)
                     : client.PostAsync(url, new StringContent("hello world"));
-            }).ConfigureAwait(false);
+            });
             Assert.True(ex is HttpRequestException);
         }
 
@@ -653,7 +653,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
                 return method == "GET"
                     ? client.GetAsync(url)
                     : client.PostAsync(url, new StringContent("hello world"));
-            }).ConfigureAwait(false);
+            });
             Assert.True(ex is HttpRequestException);
         }
 
@@ -685,7 +685,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
 
         using (var client = new HttpClient())
         {
-            (await client.GetAsync(this.BuildRequestUrl()).ConfigureAwait(false)).Dispose();
+            (await client.GetAsync(this.BuildRequestUrl())).Dispose();
         }
 
         Assert.Equal(2, eventRecords.Records.Count());
@@ -699,7 +699,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     /// Test to make sure every event record has the right dynamic properties.
     /// </summary>
     [Fact]
-    public void TestMultipleConcurrentRequests()
+    public async Task TestMultipleConcurrentRequests()
     {
         ServicePointManager.DefaultConnectionLimit = int.MaxValue;
         using var parentActivity = new Activity("parent").Start();
@@ -724,13 +724,13 @@ public class HttpWebRequestActivitySourceTests : IDisposable
         }
 
         // wait up to 10 sec for all requests and suppress exceptions
-        Task.WhenAll(tasks.Select(t => t.Value).ToArray()).ContinueWith(tt =>
+        await Task.WhenAll(tasks.Select(t => t.Value).ToArray()).ContinueWith(async tt =>
         {
             foreach (var task in tasks)
             {
-                task.Value.Result?.Dispose();
+                (await task.Value)?.Dispose();
             }
-        }).Wait();
+        });
 
         // Examine the result. Make sure we got all successful requests.
 

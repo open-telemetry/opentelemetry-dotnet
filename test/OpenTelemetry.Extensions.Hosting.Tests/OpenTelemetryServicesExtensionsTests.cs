@@ -37,9 +37,9 @@ public class OpenTelemetryServicesExtensionsTests
 
         var host = builder.Build();
 
-        await host.StartAsync().ConfigureAwait(false);
+        await host.StartAsync();
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
     }
 
     [Fact]
@@ -75,9 +75,9 @@ public class OpenTelemetryServicesExtensionsTests
 
         var host = builder.Build();
 
-        await Assert.ThrowsAsync<NotSupportedException>(() => host.StartAsync()).ConfigureAwait(false);
+        await Assert.ThrowsAsync<NotSupportedException>(() => host.StartAsync());
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
 
         Assert.True(expectedInnerExceptionThrown);
     }
@@ -172,11 +172,11 @@ public class OpenTelemetryServicesExtensionsTests
 
         Assert.False(configureBuilderCalled);
 
-        await host.StartAsync().ConfigureAwait(false);
+        await host.StartAsync();
 
         Assert.True(configureBuilderCalled);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
 
         host.Dispose();
     }
@@ -295,11 +295,11 @@ public class OpenTelemetryServicesExtensionsTests
 
         Assert.False(configureBuilderCalled);
 
-        await host.StartAsync().ConfigureAwait(false);
+        await host.StartAsync();
 
         Assert.True(configureBuilderCalled);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
 
         host.Dispose();
     }
@@ -418,11 +418,11 @@ public class OpenTelemetryServicesExtensionsTests
 
         Assert.False(configureBuilderCalled);
 
-        await host.StartAsync().ConfigureAwait(false);
+        await host.StartAsync();
 
         Assert.True(configureBuilderCalled);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
 
         host.Dispose();
     }
@@ -469,8 +469,8 @@ public class OpenTelemetryServicesExtensionsTests
         });
 
         var host = builder.Build();
-        await host.StartAsync().ConfigureAwait(false);
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StartAsync();
+        await host.StopAsync();
         host.Dispose();
 
         Assert.Single(exportedItems);

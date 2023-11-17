@@ -42,10 +42,10 @@ public class GreeterService : Greeter.GreeterBase
             var message = $"How are you {request.Name}? {++i}";
             this.logger.LogInformation("Sending greeting {Message}.", message);
 
-            await responseStream.WriteAsync(new HelloReply { Message = message }).ConfigureAwait(false);
+            await responseStream.WriteAsync(new HelloReply { Message = message });
 
             // Gotta look busy
-            await Task.Delay(1000).ConfigureAwait(false);
+            await Task.Delay(1000);
         }
     }
 }

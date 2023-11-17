@@ -130,7 +130,6 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeServerAddress, request.RequestUri.Host));
                 tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, request.RequestUri.Scheme));
-                tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(request.Version)));
 
                 if (!request.RequestUri.IsDefaultPort)
                 {
@@ -139,6 +138,7 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 
                 if (TryFetchResponse(payload, out HttpResponseMessage response))
                 {
+                    tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.Version)));
                     tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode)));
 
                     // Set error.type to status code for failed requests
