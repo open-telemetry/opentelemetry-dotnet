@@ -37,6 +37,13 @@
   `8.0.0`.
   ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
+* Revert the default behavior of Metrics SDK for Delta aggregation. It would not
+  reclaim unused Metric Points by default. You can enable the SDK to reclaim
+  unused Metric Points by setting the environment variable
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS` to `true`
+  before setting up the `MeterProvider`.
+  ([#5052](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5052))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
