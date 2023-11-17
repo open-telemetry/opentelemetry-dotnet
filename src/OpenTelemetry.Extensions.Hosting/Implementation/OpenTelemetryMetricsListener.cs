@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryMetricListener.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryMetricsListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,12 @@ using Microsoft.Extensions.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
 
-internal sealed class OpenTelemetryMetricListener : IMetricsListener, IDisposable
+internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposable
 {
     private readonly MeterProviderSdk meterProviderSdk;
     private IObservableInstrumentsSource? observableInstrumentsSource;
 
-    public OpenTelemetryMetricListener(MeterProvider meterProvider)
+    public OpenTelemetryMetricsListener(MeterProvider meterProvider)
     {
         var meterProviderSdk = meterProvider as MeterProviderSdk;
 

@@ -61,7 +61,7 @@ internal static class OpenTelemetryMetricsBuilderExtensions
         var builder = new MeterProviderBuilderBase(metricsBuilder.Services);
 
         metricsBuilder.Services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricListener>());
+            ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricsListener>());
 
         configure(builder);
 
