@@ -64,7 +64,7 @@ public struct MetricPoint
         Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
         Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
 
-        if (aggregatorStore!.OutputDelta)
+        if (aggregatorStore!.OutputDelta && aggregatorStore.ShouldReclaimUnusedMetricPoints)
         {
             Debug.Assert(lookupData != null, "LookupData was null.");
         }
