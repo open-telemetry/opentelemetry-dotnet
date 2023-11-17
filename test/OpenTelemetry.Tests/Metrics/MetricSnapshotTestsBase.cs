@@ -15,7 +15,8 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
-
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 
 using Xunit;
@@ -24,14 +25,27 @@ namespace OpenTelemetry.Metrics.Tests;
 
 #pragma warning disable SA1402
 
-public abstract class MetricSnapshotTestsBase : IDisposable
+public abstract class MetricSnapshotTestsBase
 {
-    protected MetricSnapshotTestsBase(bool emitOverflowAttribute)
+    private readonly IConfiguration configuration;
+
+    protected MetricSnapshotTestsBase(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
+        var configurationData = new Dictionary<string, string>();
+
         if (emitOverflowAttribute)
         {
-            Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, "true");
+            configurationData[MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true";
         }
+
+        if (shouldReclaimUnusedMetricPoints)
+        {
+            configurationData[MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true";
+        }
+
+        this.configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configurationData)
+            .Build();
     }
 
     [Fact]
@@ -43,6 +57,10 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("meter");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(this.configuration);
+            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedMetrics)
             .AddInMemoryExporter(exportedSnapshots)
@@ -112,6 +130,10 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<int>("histogram");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(this.configuration);
+            })
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedMetrics)
             .AddInMemoryExporter(exportedSnapshots)
@@ -204,6 +226,10 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<int>("histogram");
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(this.configuration);
+            })
             .AddMeter(meter.Name)
             .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration())
             .AddInMemoryExporter(exportedMetrics)
@@ -292,17 +318,12 @@ public abstract class MetricSnapshotTestsBase : IDisposable
         Assert.Equal(10, max);
         AggregatorTestsBase.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
     }
-
-    public void Dispose()
-    {
-        Environment.SetEnvironmentVariable(MetricTestsBase.EmitOverFlowAttributeConfigKey, null);
-    }
 }
 
 public class MetricSnapshotTests : MetricSnapshotTestsBase
 {
     public MetricSnapshotTests()
-        : base(false)
+        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: false)
     {
     }
 }
@@ -310,7 +331,23 @@ public class MetricSnapshotTests : MetricSnapshotTestsBase
 public class MetricSnapshotTestsWithOverflowAttribute : MetricSnapshotTestsBase
 {
     public MetricSnapshotTestsWithOverflowAttribute()
-        : base(true)
+        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: false)
+    {
+    }
+}
+
+public class MetricSnapshotTestsWithReclaimAttribute : MetricSnapshotTestsBase
+{
+    public MetricSnapshotTestsWithReclaimAttribute()
+        : base(emitOverflowAttribute: false, shouldReclaimUnusedMetricPoints: true)
+    {
+    }
+}
+
+public class MetricSnapshotTestsWithBothAttributes : MetricSnapshotTestsBase
+{
+    public MetricSnapshotTestsWithBothAttributes()
+        : base(emitOverflowAttribute: true, shouldReclaimUnusedMetricPoints: true)
     {
     }
 }
