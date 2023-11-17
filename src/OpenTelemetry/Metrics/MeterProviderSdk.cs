@@ -232,7 +232,7 @@ internal sealed class MeterProviderSdk : MeterProvider
                 instrument.Name,
                 instrument.Meter.Name,
                 "Instrument belongs to a Meter which has been enabled both externally and via a subscription on the provider. External subscription will be ignored in favor of the provider subscription.",
-                "Programmatic calls adding meters to the SDK (either by calling AddMeter directly or using 'AddInstrumentation' extensions) are always favored over external registrations. When also using external management (typically IMetricsBuilder or IMetricsListener) remove programmatic calls to the SDK to allow registrations to be added and removed dynamically.");
+                "Programmatic calls adding meters to the SDK (either by calling AddMeter directly or indirectly through helpers such as 'AddInstrumentation' extensions) are always favored over external registrations. When also using external management (typically IMetricsBuilder or IMetricsListener) remove programmatic calls to the SDK to allow registrations to be added and removed dynamically.");
             return null;
         }
         else if (!listenToInstrumentUsingSdkConfiguration && !listeningIsManagedExternally)
