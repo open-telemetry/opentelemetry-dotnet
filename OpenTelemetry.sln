@@ -34,7 +34,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docfx.cmd = build\docfx.cmd
 		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.net7.0.yml = build\docker-compose.net7.0.yml
-		build\docker-compose.net8.0.yml = build\docker-compose.net8.0.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
@@ -323,7 +322,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "diagnostics", "diagnostics", "{52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}"
 	ProjectSection(SolutionItems) = preProject
 		docs\diagnostics\OTEL1000.md = docs\diagnostics\OTEL1000.md
-		docs\diagnostics\EXPERIMENTAL_API.md = docs\diagnostics\EXPERIMENTAL_API.md
+		docs\diagnostics\EXPERIMENTAL_APIS.md = docs\diagnostics\EXPERIMENTAL_APIS.md
 		docs\diagnostics\OTEL1001.md = docs\diagnostics\OTEL1001.md
 	EndProjectSection
 EndProject
