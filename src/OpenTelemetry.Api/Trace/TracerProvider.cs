@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public class TracerProvider : BaseProvider
 {
-    private ConcurrentDictionary<TracerKey, Tracer>? tracers = new();
+    internal ConcurrentDictionary<TracerKey, Tracer>? Tracers = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TracerProvider"/> class.
@@ -55,7 +55,7 @@ public class TracerProvider : BaseProvider
         string name,
         string? version = null)
     {
-        var tracers = this.tracers;
+        var tracers = this.Tracers;
         if (tracers == null)
         {
             // Note: Returns a no-op Tracer once dispose has been called.
@@ -68,7 +68,7 @@ public class TracerProvider : BaseProvider
         {
             lock (tracers)
             {
-                if (this.tracers == null)
+                if (this.Tracers == null)
                 {
                     // Note: We check here for a race with Dispose and return a
                     // no-op Tracer in that case.
@@ -93,7 +93,7 @@ public class TracerProvider : BaseProvider
     {
         if (disposing)
         {
-            var tracers = Interlocked.CompareExchange(ref this.tracers, null, this.tracers);
+            var tracers = Interlocked.CompareExchange(ref this.Tracers, null, this.Tracers);
             if (tracers != null)
             {
                 lock (tracers)
@@ -114,7 +114,7 @@ public class TracerProvider : BaseProvider
         base.Dispose(disposing);
     }
 
-    private readonly record struct TracerKey
+    internal readonly record struct TracerKey
     {
         public readonly string Name;
         public readonly string? Version;
