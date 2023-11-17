@@ -30,8 +30,10 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal readonly IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
+    internal bool ShouldReclaimUnusedMetricPoints;
 
     private const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+    private const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
     private readonly List<object> instrumentations = new();
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
@@ -51,6 +53,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         var config = serviceProvider!.GetRequiredService<IConfiguration>();
         _ = config.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out bool isEmitOverflowAttributeKeySet);
+        _ = config.TryGetBoolValue(ReclaimUnusedMetricPointsConfigKey, out this.ShouldReclaimUnusedMetricPoints);
 
         this.ServiceProvider = serviceProvider!;
 
