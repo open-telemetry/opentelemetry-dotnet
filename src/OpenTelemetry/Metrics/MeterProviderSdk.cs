@@ -231,11 +231,11 @@ internal sealed class MeterProviderSdk : MeterProvider
             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                 instrument.Name,
                 instrument.Meter.Name,
-                "Instrument belongs to a Meter which has been enabled externally and via a subscription on the provider. External subscription will be ignored in favor of the provider subscription.",
+                "Instrument belongs to a Meter which has been enabled both externally and via a subscription on the provider. External subscription will be ignored in favor of the provider subscription.",
                 "Don't call AddMeter when also using external management.");
             return null;
         }
-        else if (!listeningIsManagedExternally && !listenToInstrumentUsingSdkConfiguration)
+        else if (!listenToInstrumentUsingSdkConfiguration && !listeningIsManagedExternally)
         {
             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                 instrument.Name,
