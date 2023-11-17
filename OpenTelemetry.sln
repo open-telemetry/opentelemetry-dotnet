@@ -269,8 +269,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{A49299
 		src\Shared\PeerServiceResolver.cs = src\Shared\PeerServiceResolver.cs
 		src\Shared\PeriodicExportingMetricReaderHelper.cs = src\Shared\PeriodicExportingMetricReaderHelper.cs
 		src\Shared\PooledList.cs = src\Shared\PooledList.cs
-		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
 		src\Shared\RequestMethodHelper.cs = src\Shared\RequestMethodHelper.cs
+		src\Shared\ResourceSemanticConventions.cs = src\Shared\ResourceSemanticConventions.cs
 		src\Shared\SemanticConventions.cs = src\Shared\SemanticConventions.cs
 		src\Shared\SpanAttributeConstants.cs = src\Shared\SpanAttributeConstants.cs
 		src\Shared\SpanHelper.cs = src\Shared\SpanHelper.cs
@@ -322,6 +322,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "diagnostics", "diagnostics", "{52AF6D7D-9E66-4234-9A2C-5D16C6F22B40}"
 	ProjectSection(SolutionItems) = preProject
 		docs\diagnostics\OTEL1000.md = docs\diagnostics\OTEL1000.md
+		docs\diagnostics\EXPERIMENTAL_API.md = docs\diagnostics\EXPERIMENTAL_API.md
 		docs\diagnostics\OTEL1001.md = docs\diagnostics\OTEL1001.md
 	EndProjectSection
 EndProject

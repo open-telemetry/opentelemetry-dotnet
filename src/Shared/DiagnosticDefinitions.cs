@@ -20,8 +20,8 @@ namespace OpenTelemetry.Internal;
 
 internal static class DiagnosticDefinitions
 {
-    public const string UrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/{0}.md";
+    public const string ExperimentalApiUrlFormat = "https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/EXPERIMENTAL_API.md#{0}";
 
-    public const string LoggerProviderExperimentalFeature = "OTEL1000";
-    public const string LogBridgeApiExperimentalFeature = "OTEL1001";
+    public const string LoggerProviderExperimentalApi = "OTEL1000";
+    public const string LogBridgeApiExperimentalApi = "OTEL1001";
 }

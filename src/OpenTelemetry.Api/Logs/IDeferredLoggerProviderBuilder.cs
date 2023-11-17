@@ -31,7 +31,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
 #if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalFeature, UrlFormat = DiagnosticDefinitions.UrlFormat)]
+[Experimental(DiagnosticDefinitions.LoggerProviderExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public
 #else

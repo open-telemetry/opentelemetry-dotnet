@@ -29,7 +29,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
 #if NET8_0_OR_GREATER
-[Experimental(DiagnosticDefinitions.LogBridgeApiExperimentalFeature, UrlFormat = DiagnosticDefinitions.UrlFormat)]
+[Experimental(DiagnosticDefinitions.LogBridgeApiExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 public
 #else
