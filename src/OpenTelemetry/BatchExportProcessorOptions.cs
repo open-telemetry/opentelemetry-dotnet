@@ -14,10 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 namespace OpenTelemetry;
 
+/// <summary>
+/// Contains batch export processor options.
+/// </summary>
+/// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
 public class BatchExportProcessorOptions<T>
     where T : class
 {

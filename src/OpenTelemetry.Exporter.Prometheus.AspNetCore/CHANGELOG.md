@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
+* Fixed writing boolean values to use the JSON representation
+  ([#4823](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4823))
+
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
+* Added support for unit and name conversion following the [OpenTelemetry Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/065b25024549120800da7cda6ccd9717658ff0df/specification/compatibility/prometheus_and_openmetrics.md?plain=1#L235-L240)
+  ([#4753](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4753))
+
 ## 1.6.0-alpha.1
 
 Released 2023-Jul-12

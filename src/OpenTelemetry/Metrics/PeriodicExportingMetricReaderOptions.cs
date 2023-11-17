@@ -19,6 +19,13 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Contains periodic metric reader options.
+/// </summary>
+/// <remarks>
+/// Note: OTEL_METRIC_EXPORT_INTERVAL and OTEL_METRIC_EXPORT_TIMEOUT environment
+/// variables are parsed during object construction.
+/// </remarks>
 public class PeriodicExportingMetricReaderOptions
 {
     internal const string OTelMetricExportIntervalEnvVarKey = "OTEL_METRIC_EXPORT_INTERVAL";

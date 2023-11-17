@@ -35,11 +35,12 @@ and enable the SDK, when they install a particular exporter.
 ## Getting started with Logging
 
 If you are new to logging, it is recommended to first follow the [getting
-started in 5 minutes](../../docs/logs/getting-started/README.md) guide to get up
+started in 5 minutes - Console
+Application](../../docs/logs/getting-started-console/README.md) guide to get up
 and running.
 
 While [OpenTelemetry
-logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
+logging](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/README.md)
 specification is an experimental signal, `ILogger` is the de-facto logging API
 provided by the .NET runtime and is a stable API recommended for production use.
 This repo ships an OpenTelemetry
@@ -173,4 +174,4 @@ start from beginning and overwrite existing text.
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
 * [OpenTelemetry Tracing SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md)
-* [OpenTelemetry Logging specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/overview.md)
+* [OpenTelemetry Logging specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/README.md)

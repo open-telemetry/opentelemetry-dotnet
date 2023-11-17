@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Reflection;
 using OpenTelemetry.Context.Propagation;
@@ -71,20 +69,6 @@ public static class Sdk
     }
 
     /// <summary>
-    /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
-    /// a <see cref="LoggerProvider"/>. In a typical application, a single
-    /// <see cref="LoggerProvider"/> is created at application startup and
-    /// disposed at application shutdown. It is important to ensure that the
-    /// provider is not disposed too early.
-    /// </summary>
-    /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
-    /// to build a <see cref="LoggerProvider"/>.</returns>
-    public static LoggerProviderBuilder CreateLoggerProviderBuilder()
-    {
-        return new LoggerProviderBuilderBase();
-    }
-
-    /// <summary>
     /// Creates a <see cref="MeterProviderBuilder"/> which is used to build
     /// a <see cref="MeterProvider"/>. In a typical application, a single
     /// <see cref="MeterProvider"/> is created at application startup and disposed
@@ -108,6 +92,35 @@ public static class Sdk
     public static TracerProviderBuilder CreateTracerProviderBuilder()
     {
         return new TracerProviderBuilderBase();
+    }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
+    /// a <see cref="LoggerProvider"/>. In a typical application, a single
+    /// <see cref="LoggerProvider"/> is created at application startup and
+    /// disposed at application shutdown. It is important to ensure that the
+    /// provider is not disposed too early.
+    /// </summary>
+    /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
+    /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
+    /// to build a <see cref="LoggerProvider"/>.</returns>
+    public
+#else
+    /// <summary>
+    /// Creates a <see cref="LoggerProviderBuilder"/> which is used to build
+    /// a <see cref="LoggerProvider"/>. In a typical application, a single
+    /// <see cref="LoggerProvider"/> is created at application startup and
+    /// disposed at application shutdown. It is important to ensure that the
+    /// provider is not disposed too early.
+    /// </summary>
+    /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
+    /// to build a <see cref="LoggerProvider"/>.</returns>
+    internal
+#endif
+        static LoggerProviderBuilder CreateLoggerProviderBuilder()
+    {
+        return new LoggerProviderBuilderBase();
     }
 
     internal static string ParseAssemblyInformationalVersion(string? informationalVersion)

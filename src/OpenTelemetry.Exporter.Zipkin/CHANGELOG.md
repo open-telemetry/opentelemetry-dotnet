@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
+## 1.6.0
+
+Released 2023-Sep-05
+
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
 ## 1.6.0-alpha.1
 
 Released 2023-Jul-12

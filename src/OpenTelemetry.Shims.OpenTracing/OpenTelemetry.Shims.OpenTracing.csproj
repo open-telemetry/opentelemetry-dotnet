@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>OpenTracing shim for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);distributed-tracing;OpenTracing</PackageTags>
     <IsPackable>true</IsPackable>
@@ -11,12 +11,6 @@
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
-  </PropertyGroup>
-
-  <!--Do not run ApiCompat as this package has never released a stable version.
-  Remove this property once we have released a stable version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
   <ItemGroup>

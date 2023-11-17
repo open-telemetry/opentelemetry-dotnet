@@ -74,7 +74,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-When we run the application, the `ConsoleExporter` was printing the traces on
+When we ran the application, the `ConsoleExporter` was printing the traces on
 console, and the `OtlpExporter` was attempting to send the traces to Jaeger
 Agent via the default endpoint `http://localhost:4317`.
 
@@ -142,7 +142,7 @@ Jaeger -->|http://localhost:16686/| JaegerUI["Browser<br/>(Jaeger UI)"]
 
 ## Final cleanup
 
-In the end, remove the Console Exporter so we only have Jaeger Exporter in the
+In the end, remove the Console Exporter so we only have OTLP Exporter in the
 final application:
 
 ```csharp

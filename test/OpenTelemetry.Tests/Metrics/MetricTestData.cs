@@ -25,7 +25,7 @@ public class MetricTestData
                 new object[] { "-first-char-not-alphabetic" },
                 new object[] { "1first-char-not-alphabetic" },
                 new object[] { "invalid+separator" },
-                new object[] { new string('m', 64) },
+                new object[] { new string('m', 256) },
                 new object[] { "a\xb5" }, // `\xb5` is the Micro character
        };
 
@@ -37,8 +37,9 @@ public class MetricTestData
                 new object[] { "my-2-instrument" },
                 new object[] { "my.metric" },
                 new object[] { "my_metric2" },
-                new object[] { new string('m', 63) },
+                new object[] { new string('m', 255) },
                 new object[] { "CaSe-InSeNsItIvE" },
+                new object[] { "my_metric/environment/database" },
        };
 
     public static IEnumerable<object[]> InvalidHistogramBoundaries

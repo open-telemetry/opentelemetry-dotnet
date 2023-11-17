@@ -1,0 +1,18 @@
+<Project>
+  <ItemGroup>
+    <SolutionProjects Include="..\**\OpenTelemetry.Instrumentation*.csproj" />
+    <TestProjects Include="..\test\**\OpenTelemetry.Instrumentation*.csproj" />
+  </ItemGroup>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Build" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="Restore">
+    <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
+  </Target>
+
+  <Target Name="VSTest">
+    <MSBuild Projects="@(TestProjects)" Targets="VSTest" ContinueOnError="ErrorAndStop" />
+  </Target>
+</Project>

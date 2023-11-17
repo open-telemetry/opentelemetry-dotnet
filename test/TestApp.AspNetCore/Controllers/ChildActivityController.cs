@@ -18,34 +18,33 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry;
 
-namespace TestApp.AspNetCore.Controllers
+namespace TestApp.AspNetCore.Controllers;
+
+public class ChildActivityController : Controller
 {
-    public class ChildActivityController : Controller
+    [HttpGet]
+    [Route("api/GetChildActivityTraceContext")]
+    public Dictionary<string, string> GetChildActivityTraceContext()
     {
-        [HttpGet]
-        [Route("api/GetChildActivityTraceContext")]
-        public Dictionary<string, string> GetChildActivityTraceContext()
+        var result = new Dictionary<string, string>();
+        var activity = new Activity("ActivityInsideHttpRequest");
+        activity.Start();
+        result["TraceId"] = activity.Context.TraceId.ToString();
+        result["ParentSpanId"] = activity.ParentSpanId.ToString();
+        if (activity.Context.TraceState != null)
         {
-            var result = new Dictionary<string, string>();
-            var activity = new Activity("ActivityInsideHttpRequest");
-            activity.Start();
-            result["TraceId"] = activity.Context.TraceId.ToString();
-            result["ParentSpanId"] = activity.ParentSpanId.ToString();
-            if (activity.Context.TraceState != null)
-            {
-                result["TraceState"] = activity.Context.TraceState;
-            }
-
-            activity.Stop();
-            return result;
+            result["TraceState"] = activity.Context.TraceState;
         }
 
-        [HttpGet]
-        [Route("api/GetChildActivityBaggageContext")]
-        public IReadOnlyDictionary<string, string> GetChildActivityBaggageContext()
-        {
-            var result = Baggage.Current.GetBaggage();
-            return result;
-        }
+        activity.Stop();
+        return result;
+    }
+
+    [HttpGet]
+    [Route("api/GetChildActivityBaggageContext")]
+    public IReadOnlyDictionary<string, string> GetChildActivityBaggageContext()
+    {
+        var result = Baggage.Current.GetBaggage();
+        return result;
     }
 }

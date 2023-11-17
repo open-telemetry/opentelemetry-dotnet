@@ -28,61 +28,60 @@ using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implem
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
-namespace Benchmarks.Exporter
+namespace Benchmarks.Exporter;
+
+public class OtlpGrpcExporterBenchmarks
 {
-    public class OtlpGrpcExporterBenchmarks
+    private OtlpTraceExporter exporter;
+    private Activity activity;
+    private CircularBuffer<Activity> activityBatch;
+
+    [Params(1, 10, 100)]
+    public int NumberOfBatches { get; set; }
+
+    [Params(10000)]
+    public int NumberOfSpans { get; set; }
+
+    [GlobalSetup]
+    public void GlobalSetup()
     {
-        private OtlpTraceExporter exporter;
-        private Activity activity;
-        private CircularBuffer<Activity> activityBatch;
+        var mockClient = new Mock<OtlpCollector.TraceService.TraceServiceClient>();
+        mockClient
+            .Setup(m => m.Export(
+                It.IsAny<OtlpCollector.ExportTraceServiceRequest>(),
+                It.IsAny<Metadata>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(new OtlpCollector.ExportTraceServiceResponse());
 
-        [Params(1, 10, 100)]
-        public int NumberOfBatches { get; set; }
+        var options = new OtlpExporterOptions();
+        this.exporter = new OtlpTraceExporter(
+            options,
+            new SdkLimitOptions(),
+            new OtlpGrpcTraceExportClient(options, mockClient.Object));
 
-        [Params(10000)]
-        public int NumberOfSpans { get; set; }
+        this.activity = ActivityHelper.CreateTestActivity();
+        this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
+    }
 
-        [GlobalSetup]
-        public void GlobalSetup()
+    [GlobalCleanup]
+    public void GlobalCleanup()
+    {
+        this.exporter.Shutdown();
+        this.exporter.Dispose();
+    }
+
+    [Benchmark]
+    public void OtlpExporter_Batching()
+    {
+        for (int i = 0; i < this.NumberOfBatches; i++)
         {
-            var mockClient = new Mock<OtlpCollector.TraceService.TraceServiceClient>();
-            mockClient
-                .Setup(m => m.Export(
-                    It.IsAny<OtlpCollector.ExportTraceServiceRequest>(),
-                    It.IsAny<Metadata>(),
-                    It.IsAny<DateTime?>(),
-                    It.IsAny<CancellationToken>()))
-                .Returns(new OtlpCollector.ExportTraceServiceResponse());
-
-            var options = new OtlpExporterOptions();
-            this.exporter = new OtlpTraceExporter(
-                options,
-                new SdkLimitOptions(),
-                new OtlpGrpcTraceExportClient(options, mockClient.Object));
-
-            this.activity = ActivityHelper.CreateTestActivity();
-            this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
-        }
-
-        [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-            this.exporter.Shutdown();
-            this.exporter.Dispose();
-        }
-
-        [Benchmark]
-        public void OtlpExporter_Batching()
-        {
-            for (int i = 0; i < this.NumberOfBatches; i++)
+            for (int c = 0; c < this.NumberOfSpans; c++)
             {
-                for (int c = 0; c < this.NumberOfSpans; c++)
-                {
-                    this.activityBatch.Add(this.activity);
-                }
-
-                this.exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
+                this.activityBatch.Add(this.activity);
             }
+
+            this.exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
         }
     }
 }

@@ -16,23 +16,22 @@
 
 using Grpc.Core;
 
-namespace Examples.GrpcService
+namespace Examples.GrpcService;
+
+public class GreeterService : Greeter.GreeterBase
 {
-    public class GreeterService : Greeter.GreeterBase
+    private readonly ILogger<GreeterService> logger;
+
+    public GreeterService(ILogger<GreeterService> logger)
     {
-        private readonly ILogger<GreeterService> logger;
+        this.logger = logger;
+    }
 
-        public GreeterService(ILogger<GreeterService> logger)
+    public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
+    {
+        return Task.FromResult(new HelloReply
         {
-            this.logger = logger;
-        }
-
-        public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
-        {
-            return Task.FromResult(new HelloReply
-            {
-                Message = "Hello " + request.Name,
-            });
-        }
+            Message = "Hello " + request.Name,
+        });
     }
 }

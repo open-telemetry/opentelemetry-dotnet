@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -27,6 +25,8 @@ namespace OpenTelemetry.Resources;
 /// </summary>
 public static class ResourceBuilderExtensions
 {
+    private static readonly string InstanceId = Guid.NewGuid().ToString();
+
     private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
     {
         [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
@@ -73,7 +73,7 @@ public static class ResourceBuilderExtensions
 
         if (serviceInstanceId == null && autoGenerateServiceInstanceId)
         {
-            serviceInstanceId = Guid.NewGuid().ToString();
+            serviceInstanceId = InstanceId;
         }
 
         if (serviceInstanceId != null)
@@ -87,7 +87,7 @@ public static class ResourceBuilderExtensions
     /// <summary>
     /// Adds service information to a <see cref="ResourceBuilder"/>
     /// following <a
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk">semantic
+    /// href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk">semantic
     /// conventions</a>.
     /// </summary>
     /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>

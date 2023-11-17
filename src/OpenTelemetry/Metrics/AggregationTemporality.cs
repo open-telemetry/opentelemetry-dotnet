@@ -16,6 +16,10 @@
 
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Enumeration used to define the aggregation temporality for a <see
+/// cref="Metric"/>.
+/// </summary>
 public enum AggregationTemporality : byte
 {
     /// <summary>

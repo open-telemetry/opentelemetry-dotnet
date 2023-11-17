@@ -36,7 +36,7 @@ TODO
 
 ### AddProcessor
 
-[Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/logging-library-sdk.md#logprocessor)
+[Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/sdk.md#logrecordprocessor)
 must be added using `OpenTelemetryLoggerOptions.AddProcessor()`.
 It is not supported to add Processors after building the `LoggerFactory`.
 
@@ -56,9 +56,12 @@ For more information on Processors, please review [Extending the SDK](../extendi
 
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry.
-If no `Resource` is explicitly configured, the default is to use a resource
-indicating this [Telemetry
-SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
+If no `Resource` is explicitly configured, the
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
+SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
 The `SetResourceBuilder` method on `OpenTelemetryLoggerOptions` can be used to
 set a single `ResourceBuilder`. If `SetResourceBuilder` is called multiple
 times, only the last is kept. It is not possible to change the resource builder

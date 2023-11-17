@@ -17,72 +17,71 @@
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus;
+
+/// <summary>
+/// Exporter of OpenTelemetry metrics to Prometheus.
+/// </summary>
+[ExportModes(ExportModes.Pull)]
+internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
 {
+    private Func<int, bool> funcCollect;
+    private Func<Batch<Metric>, ExportResult> funcExport;
+    private bool disposed;
+
     /// <summary>
-    /// Exporter of OpenTelemetry metrics to Prometheus.
+    /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
     /// </summary>
-    [ExportModes(ExportModes.Pull)]
-    internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
+    /// <param name="options"><see cref="PrometheusExporterOptions"/>.</param>
+    public PrometheusExporter(PrometheusExporterOptions options)
     {
-        private Func<int, bool> funcCollect;
-        private Func<Batch<Metric>, ExportResult> funcExport;
-        private bool disposed;
+        Guard.ThrowIfNull(options);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
-        /// </summary>
-        /// <param name="options"><see cref="PrometheusExporterOptions"/>.</param>
-        public PrometheusExporter(PrometheusExporterOptions options)
+        this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
+
+        this.CollectionManager = new PrometheusCollectionManager(this);
+    }
+
+    /// <summary>
+    /// Gets or sets the Collect delegate.
+    /// </summary>
+    public Func<int, bool> Collect
+    {
+        get => this.funcCollect;
+        set => this.funcCollect = value;
+    }
+
+    internal Func<Batch<Metric>, ExportResult> OnExport
+    {
+        get => this.funcExport;
+        set => this.funcExport = value;
+    }
+
+    internal Action OnDispose { get; set; }
+
+    internal PrometheusCollectionManager CollectionManager { get; }
+
+    internal int ScrapeResponseCacheDurationMilliseconds { get; }
+
+    /// <inheritdoc/>
+    public override ExportResult Export(in Batch<Metric> metrics)
+    {
+        return this.OnExport(metrics);
+    }
+
+    /// <inheritdoc/>
+    protected override void Dispose(bool disposing)
+    {
+        if (!this.disposed)
         {
-            Guard.ThrowIfNull(options);
-
-            this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
-
-            this.CollectionManager = new PrometheusCollectionManager(this);
-        }
-
-        /// <summary>
-        /// Gets or sets the Collect delegate.
-        /// </summary>
-        public Func<int, bool> Collect
-        {
-            get => this.funcCollect;
-            set => this.funcCollect = value;
-        }
-
-        internal Func<Batch<Metric>, ExportResult> OnExport
-        {
-            get => this.funcExport;
-            set => this.funcExport = value;
-        }
-
-        internal Action OnDispose { get; set; }
-
-        internal PrometheusCollectionManager CollectionManager { get; }
-
-        internal int ScrapeResponseCacheDurationMilliseconds { get; }
-
-        /// <inheritdoc/>
-        public override ExportResult Export(in Batch<Metric> metrics)
-        {
-            return this.OnExport(metrics);
-        }
-
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            if (!this.disposed)
+            if (disposing)
             {
-                if (disposing)
-                {
-                    this.OnDispose?.Invoke();
-                }
-
-                this.disposed = true;
+                this.OnDispose?.Invoke();
             }
 
-            base.Dispose(disposing);
+            this.disposed = true;
         }
+
+        base.Dispose(disposing);
     }
 }

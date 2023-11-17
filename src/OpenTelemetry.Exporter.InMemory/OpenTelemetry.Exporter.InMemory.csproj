@@ -1,19 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(DefaultTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
     <Description>In-memory exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags)</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
 
     <!-- this is temporary. will remove in future PR. -->
     <Nullable>disable</Nullable>
-  </PropertyGroup>
-
-  <!--Do not run ApiCompat as this package has never released a stable version.
-  Remove this property once we have released a stable version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,8 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
+
+    <!-- Note: When '$(ExposeExperimentalFeatures)' == 'false' this link is NOT
+    required because this project sees API internals -->
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" RequiresExposedExperimentalFeatures="true" />
   </ItemGroup>
 
 </Project>

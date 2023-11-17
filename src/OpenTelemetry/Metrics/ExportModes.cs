@@ -16,6 +16,9 @@
 
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Describes the mode of a metric exporter.
+/// </summary>
 [Flags]
 public enum ExportModes : byte
 {

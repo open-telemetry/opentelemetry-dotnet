@@ -83,7 +83,7 @@ internal sealed class TracerProviderServiceCollectionBuilder : TracerProviderBui
     TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         => this.ConfigureBuilderInternal(configure);
 
-    private TracerProviderBuilder ConfigureBuilderInternal(Action<IServiceProvider, TracerProviderBuilder> configure)
+    private TracerProviderServiceCollectionBuilder ConfigureBuilderInternal(Action<IServiceProvider, TracerProviderBuilder> configure)
     {
         var services = this.Services
             ?? throw new NotSupportedException("Builder cannot be configured during TracerProvider construction.");
@@ -93,7 +93,7 @@ internal sealed class TracerProviderServiceCollectionBuilder : TracerProviderBui
         return this;
     }
 
-    private TracerProviderBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
+    private TracerProviderServiceCollectionBuilder ConfigureServicesInternal(Action<IServiceCollection> configure)
     {
         Guard.ThrowIfNull(configure);
 

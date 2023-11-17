@@ -14,8 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,7 +62,11 @@ public static class MeterProviderBuilderExtensions
     /// <typeparam name="T">Reader type.</typeparam>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder AddReader<T>(this MeterProviderBuilder meterProviderBuilder)
+    public static MeterProviderBuilder AddReader<
+#if NET6_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+    T>(this MeterProviderBuilder meterProviderBuilder)
         where T : MetricReader
     {
         meterProviderBuilder.ConfigureServices(services => services.TryAddSingleton<T>());
@@ -304,13 +309,41 @@ public static class MeterProviderBuilderExtensions
     }
 
     /// <summary>
+    /// Run the given actions to initialize the <see cref="MeterProvider"/>.
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
+    {
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+        {
+            return meterProviderBuilderBase.InvokeBuild();
+        }
+
+        throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
+    }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
+    /// This is applied to all the metrics from this provider.
+    /// </summary>
+    /// <remarks><inheritdoc cref="Exemplar" path="/remarks"/></remarks>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    public
+#else
+    /// <summary>
     /// Sets the <see cref="ExemplarFilter"/> to be used for this provider.
     /// This is applied to all the metrics from this provider.
     /// </summary>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="exemplarFilter"><see cref="ExemplarFilter"/> ExemplarFilter to use.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    public static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
+    internal
+#endif
+        static MeterProviderBuilder SetExemplarFilter(this MeterProviderBuilder meterProviderBuilder, ExemplarFilter exemplarFilter)
     {
         Guard.ThrowIfNull(exemplarFilter);
 
@@ -323,20 +356,5 @@ public static class MeterProviderBuilderExtensions
         });
 
         return meterProviderBuilder;
-    }
-
-    /// <summary>
-    /// Run the given actions to initialize the <see cref="MeterProvider"/>.
-    /// </summary>
-    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-    /// <returns><see cref="MeterProvider"/>.</returns>
-    public static MeterProvider? Build(this MeterProviderBuilder meterProviderBuilder)
-    {
-        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-        {
-            return meterProviderBuilderBase.InvokeBuild();
-        }
-
-        return null;
     }
 }

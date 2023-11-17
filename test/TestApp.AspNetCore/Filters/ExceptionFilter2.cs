@@ -16,13 +16,12 @@
 
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace TestApp.AspNetCore.Filters
+namespace TestApp.AspNetCore.Filters;
+
+public class ExceptionFilter2 : IExceptionFilter
 {
-    public class ExceptionFilter2 : IExceptionFilter
+    public void OnException(ExceptionContext context)
     {
-        public void OnException(ExceptionContext context)
-        {
-            // test the behaviour when an application has two ExceptionFilters defined
-        }
+        // test the behaviour when an application has two ExceptionFilters defined
     }
 }

@@ -27,9 +27,9 @@ public class HistogramBuckets
 {
     internal const int DefaultBoundaryCountForBinarySearch = 50;
 
-    internal readonly double[] ExplicitBounds;
+    internal readonly double[]? ExplicitBounds;
 
-    internal readonly long[] RunningBucketCounts;
+    internal readonly long[]? RunningBucketCounts;
     internal readonly long[] SnapshotBucketCounts;
 
     internal double RunningSum;
@@ -43,20 +43,20 @@ public class HistogramBuckets
 
     internal int IsCriticalSectionOccupied = 0;
 
-    private readonly BucketLookupNode bucketLookupTreeRoot;
+    private readonly BucketLookupNode? bucketLookupTreeRoot;
 
     private readonly Func<double, int> findHistogramBucketIndex;
 
-    internal HistogramBuckets(double[] explicitBounds)
+    internal HistogramBuckets(double[]? explicitBounds)
     {
         this.ExplicitBounds = explicitBounds;
         this.findHistogramBucketIndex = this.FindBucketIndexLinear;
         if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
         {
-            this.bucketLookupTreeRoot = ConstructBalancedBST(explicitBounds, 0, explicitBounds.Length);
+            this.bucketLookupTreeRoot = ConstructBalancedBST(explicitBounds, 0, explicitBounds.Length)!;
             this.findHistogramBucketIndex = this.FindBucketIndexBinary;
 
-            static BucketLookupNode ConstructBalancedBST(double[] values, int min, int max)
+            static BucketLookupNode? ConstructBalancedBST(double[] values, int min, int max)
             {
                 if (min == max)
                 {
@@ -79,6 +79,10 @@ public class HistogramBuckets
         this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
     }
 
+    /// <summary>
+    /// Returns an enumerator that iterates through the <see cref="HistogramBuckets"/>.
+    /// </summary>
+    /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator() => new(this);
 
     internal HistogramBuckets Copy()
@@ -102,13 +106,13 @@ public class HistogramBuckets
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int FindBucketIndexBinary(double value)
     {
-        BucketLookupNode current = this.bucketLookupTreeRoot;
+        BucketLookupNode? current = this.bucketLookupTreeRoot;
 
         Debug.Assert(current != null, "Bucket root was null.");
 
         do
         {
-            if (value <= current.LowerBoundExclusive)
+            if (value <= current!.LowerBoundExclusive)
             {
                 current = current.Left;
             }
@@ -123,14 +127,18 @@ public class HistogramBuckets
         }
         while (current != null);
 
-        return this.ExplicitBounds.Length;
+        Debug.Assert(this.ExplicitBounds != null, "ExplicitBounds was null.");
+
+        return this.ExplicitBounds!.Length;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int FindBucketIndexLinear(double value)
     {
+        Debug.Assert(this.ExplicitBounds != null, "ExplicitBounds was null.");
+
         int i;
-        for (i = 0; i < this.ExplicitBounds.Length; i++)
+        for (i = 0; i < this.ExplicitBounds!.Length; i++)
         {
             // Upper bound is inclusive
             if (value <= this.ExplicitBounds[i])
@@ -178,7 +186,7 @@ public class HistogramBuckets
             if (this.index < this.numberOfBuckets)
             {
                 double explicitBound = this.index < this.numberOfBuckets - 1
-                    ? this.histogramMeasurements.ExplicitBounds[this.index]
+                    ? this.histogramMeasurements.ExplicitBounds![this.index]
                     : double.PositiveInfinity;
                 long bucketCount = this.histogramMeasurements.SnapshotBucketCounts[this.index];
                 this.Current = new HistogramBucket(explicitBound, bucketCount);
@@ -198,8 +206,8 @@ public class HistogramBuckets
 
         public int Index { get; set; }
 
-        public BucketLookupNode Left { get; set; }
+        public BucketLookupNode? Left { get; set; }
 
-        public BucketLookupNode Right { get; set; }
+        public BucketLookupNode? Right { get; set; }
     }
 }

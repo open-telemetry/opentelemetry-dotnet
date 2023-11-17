@@ -7,6 +7,10 @@
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefaultTargetFrameworkForExampleApps>net8.0</DefaultTargetFrameworkForExampleApps>
+  </PropertyGroup>
+
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -15,8 +19,6 @@
     <Content Include="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.sln'))\build\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <!--Temp workaround to allow using daily dotnet 6 builds-->
-    <!--<PackageReference Include="System.Runtime.CompilerServices.Unsafe" PrivateAssets="All" NoWarn="NU1605" Version="6.0.0-preview.4.21253.7" />-->
   </ItemGroup>
 
   <PropertyGroup>

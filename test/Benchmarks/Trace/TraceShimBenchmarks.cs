@@ -19,68 +19,67 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-namespace Benchmarks.Trace
+namespace Benchmarks.Trace;
+
+public class TraceShimBenchmarks
 {
-    public class TraceShimBenchmarks
+    private readonly Tracer tracerWithNoListener = TracerProvider.Default.GetTracer("Benchmark.NoListener");
+    private readonly Tracer tracerWithOneProcessor = TracerProvider.Default.GetTracer("Benchmark.OneProcessor");
+    private readonly Tracer tracerWithTwoProcessors = TracerProvider.Default.GetTracer("Benchmark.TwoProcessors");
+    private readonly Tracer tracerWithThreeProcessors = TracerProvider.Default.GetTracer("Benchmark.ThreeProcessors");
+
+    public TraceShimBenchmarks()
     {
-        private readonly Tracer tracerWithNoListener = TracerProvider.Default.GetTracer("Benchmark.NoListener");
-        private readonly Tracer tracerWithOneProcessor = TracerProvider.Default.GetTracer("Benchmark.OneProcessor");
-        private readonly Tracer tracerWithTwoProcessors = TracerProvider.Default.GetTracer("Benchmark.TwoProcessors");
-        private readonly Tracer tracerWithThreeProcessors = TracerProvider.Default.GetTracer("Benchmark.ThreeProcessors");
+        Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
-        public TraceShimBenchmarks()
-        {
-            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+        Sdk.CreateTracerProviderBuilder()
+            .SetSampler(new AlwaysOnSampler())
+            .AddSource("Benchmark.OneProcessor")
+            .AddProcessor(new DummyActivityProcessor())
+            .Build();
 
-            Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
-                .AddSource("Benchmark.OneProcessor")
-                .AddProcessor(new DummyActivityProcessor())
-                .Build();
+        Sdk.CreateTracerProviderBuilder()
+            .SetSampler(new AlwaysOnSampler())
+            .AddSource("Benchmark.TwoProcessors")
+            .AddProcessor(new DummyActivityProcessor())
+            .AddProcessor(new DummyActivityProcessor())
+            .Build();
 
-            Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
-                .AddSource("Benchmark.TwoProcessors")
-                .AddProcessor(new DummyActivityProcessor())
-                .AddProcessor(new DummyActivityProcessor())
-                .Build();
+        Sdk.CreateTracerProviderBuilder()
+            .SetSampler(new AlwaysOnSampler())
+            .AddSource("Benchmark.ThreeProcessors")
+            .AddProcessor(new DummyActivityProcessor())
+            .AddProcessor(new DummyActivityProcessor())
+            .AddProcessor(new DummyActivityProcessor())
+            .Build();
+    }
 
-            Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
-                .AddSource("Benchmark.ThreeProcessors")
-                .AddProcessor(new DummyActivityProcessor())
-                .AddProcessor(new DummyActivityProcessor())
-                .AddProcessor(new DummyActivityProcessor())
-                .Build();
-        }
+    [Benchmark]
+    public void NoListener()
+    {
+        // this activity won't be created as there is no listener
+        using var activity = this.tracerWithNoListener.StartActiveSpan("Benchmark");
+    }
 
-        [Benchmark]
-        public void NoListener()
-        {
-            // this activity won't be created as there is no listener
-            using var activity = this.tracerWithNoListener.StartActiveSpan("Benchmark");
-        }
+    [Benchmark]
+    public void OneProcessor()
+    {
+        using var activity = this.tracerWithOneProcessor.StartActiveSpan("Benchmark");
+    }
 
-        [Benchmark]
-        public void OneProcessor()
-        {
-            using var activity = this.tracerWithOneProcessor.StartActiveSpan("Benchmark");
-        }
+    [Benchmark]
+    public void TwoProcessors()
+    {
+        using var activity = this.tracerWithTwoProcessors.StartActiveSpan("Benchmark");
+    }
 
-        [Benchmark]
-        public void TwoProcessors()
-        {
-            using var activity = this.tracerWithTwoProcessors.StartActiveSpan("Benchmark");
-        }
+    [Benchmark]
+    public void ThreeProcessors()
+    {
+        using var activity = this.tracerWithThreeProcessors.StartActiveSpan("Benchmark");
+    }
 
-        [Benchmark]
-        public void ThreeProcessors()
-        {
-            using var activity = this.tracerWithThreeProcessors.StartActiveSpan("Benchmark");
-        }
-
-        internal class DummyActivityProcessor : BaseProcessor<Activity>
-        {
-        }
+    internal class DummyActivityProcessor : BaseProcessor<Activity>
+    {
     }
 }

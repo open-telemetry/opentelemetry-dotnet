@@ -14,39 +14,40 @@
 // limitations under the License.
 // </copyright>
 
+#if NETFRAMEWORK
 using System.Net.Http;
+#endif
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+public class RetryHandler : DelegatingHandler
 {
-    public class RetryHandler : DelegatingHandler
+    private readonly int maxRetries;
+
+    public RetryHandler(HttpMessageHandler innerHandler, int maxRetries)
+        : base(innerHandler)
     {
-        private readonly int maxRetries;
+        this.maxRetries = maxRetries;
+    }
 
-        public RetryHandler(HttpMessageHandler innerHandler, int maxRetries)
-            : base(innerHandler)
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        HttpResponseMessage response = null;
+        for (int i = 0; i < this.maxRetries; i++)
         {
-            this.maxRetries = maxRetries;
-        }
+            response?.Dispose();
 
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            HttpResponseMessage response = null;
-            for (int i = 0; i < this.maxRetries; i++)
+            try
             {
-                response?.Dispose();
-
-                try
-                {
-                    response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-                }
-                catch
-                {
-                }
+                response = await base.SendAsync(request, cancellationToken);
             }
-
-            return response;
+            catch
+            {
+            }
         }
+
+        return response;
     }
 }

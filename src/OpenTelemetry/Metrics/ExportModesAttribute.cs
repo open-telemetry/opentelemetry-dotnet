@@ -16,15 +16,25 @@
 
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// An attribute for declaring the supported <see cref="ExportModes"/> of a metric exporter.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public sealed class ExportModesAttribute : Attribute
 {
     private readonly ExportModes supportedExportModes;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExportModesAttribute"/> class.
+    /// </summary>
+    /// <param name="supported"><see cref="ExportModes"/>.</param>
     public ExportModesAttribute(ExportModes supported)
     {
         this.supportedExportModes = supported;
     }
 
+    /// <summary>
+    /// Gets the supported <see cref="ExportModes"/>.
+    /// </summary>
     public ExportModes Supported => this.supportedExportModes;
 }

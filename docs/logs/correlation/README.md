@@ -1,6 +1,6 @@
 # Logs correlation
 
-The getting started docs for [logs](../getting-started/README.md) and
+The getting started docs for [logs](../getting-started-console/README.md) and
 [traces](../../trace/getting-started-console/README.md) showed how to emit logs
 and traces independently, and export them to console exporter.
 
@@ -54,8 +54,8 @@ Resource associated with Activity:
 
 As you can see, the `LogRecord` automatically had the `TraceId`, `SpanId` fields
 matching the ones from the `Activity`. In [the logs getting
-started](../getting-started/README.md) doc, the logging was done outside of an
-`Activity` context, hence these fields in `LogRecord` were not populated.
+started](../getting-started-console/README.md) doc, the logging was done outside
+of an `Activity` context, hence these fields in `LogRecord` were not populated.
 
 ## Learn more
 

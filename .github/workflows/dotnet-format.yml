@@ -13,15 +13,38 @@ on:
     - '.editorconfig'
 
 jobs:
-  check-format:
+  check-format-stable:
     runs-on: windows-latest
 
     steps:
     - name: check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Install format tool
-      run: dotnet tool install -g dotnet-format
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: dotnet restore
+      run: dotnet restore
 
     - name: dotnet format
-      run: dotnet-format --folder --check
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      env:
+        ExposeExperimentalFeatures: false
+
+  check-format-experimental:
+    runs-on: windows-latest
+
+    steps:
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: dotnet restore
+      run: dotnet restore
+
+    - name: dotnet format
+      run: dotnet format OpenTelemetry.sln --no-restore --verify-no-changes
+      env:
+        ExposeExperimentalFeatures: true

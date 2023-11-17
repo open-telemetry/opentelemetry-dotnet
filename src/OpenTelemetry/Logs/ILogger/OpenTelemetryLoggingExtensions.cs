@@ -17,6 +17,9 @@
 #nullable enable
 
 using System.Diagnostics;
+#if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -36,9 +39,15 @@ public static class OpenTelemetryLoggingExtensions
     /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library
-    /// authors. Only a single <see cref="OpenTelemetryLoggerProvider"/>
-    /// will be created for a given <see cref="IServiceCollection"/>.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
+    /// for a given <see cref="IServiceCollection"/>.</item>
+    /// <item><see cref="IServiceCollection"/> / <see cref="IServiceProvider"/>
+    /// features (DI, Options, IConfiguration, etc.) are not available when
+    /// using <see cref="ILoggingBuilder"/>.</item>
+    /// </list>
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -50,7 +59,7 @@ public static class OpenTelemetryLoggingExtensions
         builder.AddConfiguration();
 
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
+        RegisterLoggerProviderOptions(builder.Services);
 
         new LoggerProviderBuilderBase(builder.Services, addSharedServices: true).ConfigureBuilder(
             (sp, logging) =>
@@ -110,6 +119,26 @@ public static class OpenTelemetryLoggingExtensions
                 }));
 
         return builder;
+
+        // The warning here is about the fact that the OpenTelemetryLoggerOptions will be bound to configuration using ConfigurationBinder
+        // That uses reflection a lot - so if any of the properties on that class were complex types reflection would be used on them
+        // and nothing could guarantee its correctness.
+        // Since currently this class only contains primitive properties this is OK. The top level properties are kept
+        // because the first generic argument of RegisterProviderOptions below is annotated with
+        // DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All) so it will preserve everything on the OpenTelemetryLoggerOptions.
+        // But it would not work recursively into complex property values;
+        // This should be fully fixed with the introduction of Configuration binder source generator in .NET 8
+        // and then there should be a way to do this without any warnings.
+        // The correctness of these suppressions is verified by a test which validates that all properties of OpenTelemetryLoggerOptions
+        // are of a primitive type.
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
+        [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
+#endif
+        static void RegisterLoggerProviderOptions(IServiceCollection services)
+        {
+            LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(services);
+        }
     }
 
     /// <summary>

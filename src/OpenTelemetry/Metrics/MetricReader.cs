@@ -27,10 +27,10 @@ public abstract partial class MetricReader : IDisposable
 {
     private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = (MetricReaderTemporalityPreference)0;
 
-    private static Func<Type, AggregationTemporality> cumulativeTemporalityPreferenceFunc =
+    private static readonly Func<Type, AggregationTemporality> CumulativeTemporalityPreferenceFunc =
         (instrumentType) => AggregationTemporality.Cumulative;
 
-    private static Func<Type, AggregationTemporality> monotonicDeltaTemporalityPreferenceFunc = (instrumentType) =>
+    private static readonly Func<Type, AggregationTemporality> MonotonicDeltaTemporalityPreferenceFunc = (instrumentType) =>
     {
         return instrumentType.GetGenericTypeDefinition() switch
         {
@@ -53,11 +53,14 @@ public abstract partial class MetricReader : IDisposable
     private readonly object onCollectLock = new();
     private readonly TaskCompletionSource<bool> shutdownTcs = new();
     private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
-    private Func<Type, AggregationTemporality> temporalityFunc = cumulativeTemporalityPreferenceFunc;
+    private Func<Type, AggregationTemporality> temporalityFunc = CumulativeTemporalityPreferenceFunc;
     private int shutdownCount;
-    private TaskCompletionSource<bool> collectionTcs;
-    private BaseProvider parentProvider;
+    private TaskCompletionSource<bool>? collectionTcs;
+    private BaseProvider? parentProvider;
 
+    /// <summary>
+    /// Gets or sets the metric reader temporality preference.
+    /// </summary>
     public MetricReaderTemporalityPreference TemporalityPreference
     {
         get
@@ -78,16 +81,11 @@ public abstract partial class MetricReader : IDisposable
             }
 
             this.temporalityPreference = value;
-            switch (value)
+            this.temporalityFunc = value switch
             {
-                case MetricReaderTemporalityPreference.Delta:
-                    this.temporalityFunc = monotonicDeltaTemporalityPreferenceFunc;
-                    break;
-                case MetricReaderTemporalityPreference.Cumulative:
-                default:
-                    this.temporalityFunc = cumulativeTemporalityPreferenceFunc;
-                    break;
-            }
+                MetricReaderTemporalityPreference.Delta => MonotonicDeltaTemporalityPreferenceFunc,
+                _ => CumulativeTemporalityPreferenceFunc,
+            };
         }
     }
 

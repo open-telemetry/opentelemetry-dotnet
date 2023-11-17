@@ -18,19 +18,22 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # fetching all
         ref: ${{ github.ref || 'main' }}
 
-    - name: Install dependencies
-      run: dotnet restore
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: dotnet restore
+      run: dotnet restore OpenTelemetry.proj -p:RunningDotNetPack=true
 
     - name: dotnet build
-      run: dotnet build --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }}
+      run: dotnet build OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:BuildNumber=${{ github.run_number }} -p:RunningDotNetPack=true
 
     - name: dotnet pack
-      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
+      run: dotnet pack OpenTelemetry.proj --configuration Release --no-build --no-restore
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v3

@@ -15,11 +15,7 @@
 // </copyright>
 
 #if !NETFRAMEWORK
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -67,15 +63,15 @@ public sealed class MockCollectorIntegrationTests
                        endpoints.MapGrpcService<MockTraceService>();
                    });
                }))
-           .StartAsync().ConfigureAwait(false);
+           .StartAsync();
 
-        var httpClient = new HttpClient() { BaseAddress = new System.Uri("http://localhost:5050") };
+        var httpClient = new HttpClient() { BaseAddress = new Uri("http://localhost:5050") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}").ConfigureAwait(false);
+        await httpClient.GetAsync($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}");
 
         var exportResults = new List<ExportResult>();
-        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new System.Uri("http://localhost:4317") });
+        var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri("http://localhost:4317") });
         var delegatingExporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = (batch) =>
@@ -105,7 +101,7 @@ public sealed class MockCollectorIntegrationTests
         Assert.Equal(2, exportResults.Count);
         Assert.Equal(ExportResult.Success, exportResults[1]);
 
-        await host.StopAsync().ConfigureAwait(false);
+        await host.StopAsync();
     }
 
     private class MockCollectorState

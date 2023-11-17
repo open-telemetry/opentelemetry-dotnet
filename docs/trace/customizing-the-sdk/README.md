@@ -268,15 +268,15 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 It is also common for exporters to provide their own extensions to simplify
 registration. The snippet below shows how to add the
-[JaegerExporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md) to the
-provider before it is built.
+[OtlpExporter](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+to the provider before it is built.
 
  ```csharp
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddJaegerExporter()
+    .AddOtlpExporter()
     .Build();
 ```
 
@@ -288,9 +288,11 @@ writing custom exporters.
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the
-[default](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#semantic-attributes-with-sdk-provided-default-value)
-resource is used to indicate the
-[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service).
+[default](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#semantic-attributes-with-sdk-provided-default-value)
+is to use a resource indicating this
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
+and [Telemetry
+SDK](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk).
 The `ConfigureResource` method on `TracerProviderBuilder` can be used to
 configure the resource on the provider. `ConfigureResource` accepts an `Action`
 to configure the `ResourceBuilder`. Multiple calls to `ConfigureResource` can be
@@ -303,9 +305,9 @@ provider is built, by calling the `Build()` method on the
 `ResourceBuilder` offers various methods to construct resource comprising of
 multiple attributes from various sources. Examples include `AddTelemetrySdk()`
 which adds [Telemetry
-Sdk](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#telemetry-sdk)
+Sdk](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#telemetry-sdk)
 resource, and `AddService()` which adds
-[Service](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md#service)
+[Service](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/resource/README.md#service)
 resource. It also allows adding `ResourceDetector`s.
 
 Follow [this](../extending-the-sdk/README.md#resource-detector) document
@@ -558,7 +560,7 @@ var provider = Sdk.CreateTracerProviderBuilder()
 The [OpenTelemetry
 Specification](https://github.com/open-telemetry/opentelemetry-specification)
 defines [specific environment
-variables](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md)
+variables](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md)
 which may be used to configure SDK implementations.
 
 The OpenTelemetry .NET SDK will look for the environment variables defined in
@@ -620,7 +622,7 @@ components.
 Options classes can always be configured through code but users typically want to
 control key settings through configuration.
 
-The following example shows how to configure `JaegerExporterOptions` by binding
+The following example shows how to configure `OtlpExporterOptions` by binding
 to an `IConfiguration` section.
 
 Json config file (usually appsettings.json):
@@ -628,13 +630,8 @@ Json config file (usually appsettings.json):
 ```json
 {
   "OpenTelemetry": {
-    "Jaeger": {
-      "Protocol": "UdpCompactThrift"
-      "AgentHost": "localhost",
-      "AgentPort": 6831,
-      "BatchExportProcessorOptions": {
-        "ScheduledDelayMilliseconds": 5000
-      }
+    "Otlp": {
+      "Endpoint": "http://localhost:4317"
     }
   }
 }
@@ -645,11 +642,11 @@ Code:
 ```csharp
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.Configure<JaegerExporterOptions>(
-    appBuilder.Configuration.GetSection("OpenTelemetry:Jaeger"));
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:Otlp"));
 
 appBuilder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder.AddJaegerExporter());
+    .WithTracing(builder => builder.AddOtlpExporter());
 ```
 
 The OpenTelemetry .NET SDK supports running multiple `TracerProvider`s inside
@@ -659,7 +656,7 @@ users to target configuration at specific components a "name" parameter is
 typically supported on configuration extensions to control the options instance
 used for the component being registered.
 
-The below example shows how to configure two `JaegerExporter` instances inside a
+The below example shows how to configure two `OtlpExporter` instances inside a
 single `TracerProvider` sending to different ports.
 
 Json config file (usually appsettings.json):
@@ -667,12 +664,12 @@ Json config file (usually appsettings.json):
 ```json
 {
   "OpenTelemetry": {
-    "JaegerPrimary": {
-      "AgentPort": 1818
+    "OtlpPrimary": {
+      "Endpoint": "http://localhost:4317"
     },
-    "JaegerSecondary": {
-      "AgentPort": 8818
-    }
+    "OtlpSecondary": {
+      "Endpoint": "http://localhost:4327"
+    },
   }
 }
 ```
@@ -682,16 +679,16 @@ Code:
 ```csharp
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.Configure<JaegerExporterOptions>(
-    "JaegerPrimary",
-    appBuilder.Configuration.GetSection("OpenTelemetry:JaegerPrimary"));
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    "OtlpPrimary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:OtlpPrimary"));
 
-appBuilder.Services.Configure<JaegerExporterOptions>(
-    "JaegerSecondary",
-    appBuilder.Configuration.GetSection("OpenTelemetry:JaegerSecondary"));
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    "OtlpSecondary",
+    appBuilder.Configuration.GetSection("OpenTelemetry:OtlpSecondary"));
 
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder
-        .AddJaegerExporter(name: "JaegerPrimary", configure: null)
-        .AddJaegerExporter(name: "JaegerSecondary", configure: null));
+        .AddOtlpExporter(name: "OtlpPrimary", configure: null)
+        .AddOtlpExporter(name: "OtlpSecondary", configure: null));
 ```

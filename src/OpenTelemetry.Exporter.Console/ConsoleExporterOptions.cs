@@ -14,13 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+public class ConsoleExporterOptions
 {
-    public class ConsoleExporterOptions
-    {
-        /// <summary>
-        /// Gets or sets the output targets for the console exporter.
-        /// </summary>
-        public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
-    }
+    /// <summary>
+    /// Gets or sets the output targets for the console exporter.
+    /// </summary>
+    public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
 }

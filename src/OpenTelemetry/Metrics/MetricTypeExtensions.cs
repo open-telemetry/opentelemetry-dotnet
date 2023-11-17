@@ -18,6 +18,9 @@ using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics;
 
+/// <summary>
+/// Contains extension methods for performing common operations against the <see cref="MetricType"/> class.
+/// </summary>
 public static class MetricTypeExtensions
 {
 #pragma warning disable SA1310 // field should not contain an underscore
@@ -45,6 +48,12 @@ public static class MetricTypeExtensions
 
 #pragma warning restore SA1310 // field should not contain an underscore
 
+    /// <summary>
+    /// Determines if the supplied <see cref="MetricType"/> is a sum definition.
+    /// </summary>
+    /// <param name="self"><see cref="MetricType"/>.</param>
+    /// <returns><see langword="true"/> if the supplied <see cref="MetricType"/>
+    /// is a sum definition.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSum(this MetricType self)
     {
@@ -52,24 +61,48 @@ public static class MetricTypeExtensions
         return type == METRIC_TYPE_MONOTONIC_SUM || type == METRIC_TYPE_NON_MONOTONIC_SUM;
     }
 
+    /// <summary>
+    /// Determines if the supplied <see cref="MetricType"/> is a gauge definition.
+    /// </summary>
+    /// <param name="self"><see cref="MetricType"/>.</param>
+    /// <returns><see langword="true"/> if the supplied <see cref="MetricType"/>
+    /// is a gauge definition.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsGauge(this MetricType self)
     {
         return (self & METRIC_TYPE_MASK) == METRIC_TYPE_GAUGE;
     }
 
+    /// <summary>
+    /// Determines if the supplied <see cref="MetricType"/> is a histogram definition.
+    /// </summary>
+    /// <param name="self"><see cref="MetricType"/>.</param>
+    /// <returns><see langword="true"/> if the supplied <see cref="MetricType"/>
+    /// is a histogram definition.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsHistogram(this MetricType self)
     {
         return self.HasFlag(METRIC_TYPE_HISTOGRAM);
     }
 
+    /// <summary>
+    /// Determines if the supplied <see cref="MetricType"/> is a double definition.
+    /// </summary>
+    /// <param name="self"><see cref="MetricType"/>.</param>
+    /// <returns><see langword="true"/> if the supplied <see cref="MetricType"/>
+    /// is a double definition.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsDouble(this MetricType self)
     {
         return (self & POINT_KIND_MASK) == POINT_KIND_R8;
     }
 
+    /// <summary>
+    /// Determines if the supplied <see cref="MetricType"/> is a long definition.
+    /// </summary>
+    /// <param name="self"><see cref="MetricType"/>.</param>
+    /// <returns><see langword="true"/> if the supplied <see cref="MetricType"/>
+    /// is a long definition.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsLong(this MetricType self)
     {

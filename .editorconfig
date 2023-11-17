@@ -34,7 +34,7 @@ csharp_indent_switch_labels = true
 csharp_indent_labels = flush_left
 
 # Modifier preferences
-csharp_preferred_modifier_order = public,private,protected,internal,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,volatile,async:suggestion
+csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async:suggestion
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
 
 # this. preferences
@@ -106,6 +106,7 @@ csharp_style_prefer_index_operator = false:none
 csharp_style_prefer_range_operator = false:none
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_deconstructed_variable_declaration = true:suggestion
+csharp_style_namespace_declarations = file_scoped:warning
 
 # Space preferences
 csharp_space_after_cast = false

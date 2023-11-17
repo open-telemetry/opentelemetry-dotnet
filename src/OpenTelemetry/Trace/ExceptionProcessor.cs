@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+#if !NET6_0_OR_GREATER && !NETFRAMEWORK
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.InteropServices;
+#endif
 
 namespace OpenTelemetry.Trace;
 
@@ -31,6 +31,11 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 
     public ExceptionProcessor()
     {
+#if NET6_0_OR_GREATER || NETFRAMEWORK
+        this.fnGetExceptionPointers = Marshal.GetExceptionPointers;
+#else
+        // When running on netstandard or similar the Marshal class is not a part of the netstandard API
+        // but it would still most likely be available in the underlying framework, so use reflection to retrieve it.
         try
         {
             var flags = BindingFlags.Static | BindingFlags.Public;
@@ -43,6 +48,7 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
         {
             throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported", ex);
         }
+#endif
     }
 
     /// <inheritdoc />

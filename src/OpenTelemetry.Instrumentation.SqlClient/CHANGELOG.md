@@ -2,10 +2,36 @@
 
 ## Unreleased
 
-* Updated Semantic Conventions to [v1.21.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md)
-  This library can emit either old, new, or both attributes.
-  Users can control which attributes are emitted by setting the environment
-  variable `OTEL_SEMCONV_STABILITY_OPT_IN`.
+* Updated `Microsoft.Extensions.Configuration` and
+  `Microsoft.Extensions.Options` package version to `8.0.0`.
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
+
+## 1.6.0-beta.2
+
+Released 2023-Oct-26
+
+## 1.5.1-beta.1
+
+Released 2023-Jul-20
+
+* The new network semantic conventions can be opted in to by setting
+  the `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. This allows for a
+  transition period for users to experiment with the new semantic conventions
+  and adapt as necessary. The environment variable supports the following
+  values:
+  * `http` - emit the new, frozen (proposed for stable) networking
+  attributes, and stop emitting the old experimental networking
+  attributes that the instrumentation emitted previously.
+  * `http/dup` - emit both the old and the frozen (proposed for stable)
+  networking attributes, allowing for a more seamless transition.
+  * The default behavior (in the absence of one of these values) is to continue
+  emitting the same network semantic conventions that were emitted in
+  `1.5.0-beta.1`.
+  * Note: this option will eventually be removed after the new
+  network semantic conventions are marked stable. Refer to the
+  specification for more information regarding the new network
+  semantic conventions for
+  [spans](https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/database/database-spans.md).
   ([#4644](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4644))
 
 ## 1.5.0-beta.1
@@ -164,7 +190,7 @@ Released 2021-Jan-29
   activities created by the instrumentation.
 * New setting on SqlClientInstrumentationOptions on .NET Core: `RecordException`
   can be set to instruct the instrumentation to record SqlExceptions as Activity
-  [events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
+  [events](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md).
   ([#1592](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1592))
 
 ## 1.0.0-rc1.1

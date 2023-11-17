@@ -16,11 +16,8 @@
 
 #if NET6_0_OR_GREATER
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Net;
-using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -33,80 +30,79 @@ using OpenTelemetry.Tests;
 
 using Xunit;
 
-namespace OpenTelemetry.Extensions.Hosting.Tests
+namespace OpenTelemetry.Extensions.Hosting.Tests;
+
+/// <summary>
+/// These tests verify that <see cref="InMemoryExporter"/> works with <see cref="IDeferredMeterProviderBuilder"/>.
+/// </summary>
+public class InMemoryExporterMetricsExtensionsTests
 {
-    /// <summary>
-    /// These tests verify that <see cref="InMemoryExporter"/> works with <see cref="IDeferredMeterProviderBuilder"/>.
-    /// </summary>
-    public class InMemoryExporterMetricsExtensionsTests
+    [Fact]
+    public async Task DeferredMeterProviderBuilder_WithMetric()
     {
-        [Fact]
-        public async Task DeferredMeterProviderBuilder_WithMetric()
-        {
-            var meterName = Utils.GetCurrentMethodName();
-            var exportedItems = new List<Metric>();
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
 
-            await RunMetricsTest(
-                configure: builder => builder
-                    .AddMeter(meterName)
-                    .AddInMemoryExporter(exportedItems),
-                testAction: () =>
-                {
-                    using var meter = new Meter(meterName);
-                    var counter = meter.CreateCounter<long>("meter");
-                    counter.Add(10);
-                }).ConfigureAwait(false);
+        await RunMetricsTest(
+            configure: builder => builder
+                .AddMeter(meterName)
+                .AddInMemoryExporter(exportedItems),
+            testAction: () =>
+            {
+                using var meter = new Meter(meterName);
+                var counter = meter.CreateCounter<long>("meter");
+                counter.Add(10);
+            });
 
-            Assert.Single(exportedItems);
-            var metricPointsEnumerator = exportedItems[0].GetMetricPoints().GetEnumerator();
-            Assert.True(metricPointsEnumerator.MoveNext());
-            Assert.Equal(10, metricPointsEnumerator.Current.GetSumLong());
-        }
+        Assert.Single(exportedItems);
+        var metricPointsEnumerator = exportedItems[0].GetMetricPoints().GetEnumerator();
+        Assert.True(metricPointsEnumerator.MoveNext());
+        Assert.Equal(10, metricPointsEnumerator.Current.GetSumLong());
+    }
 
-        [Fact]
-        public async Task DeferredMeterProviderBuilder_WithMetricSnapshot()
-        {
-            var meterName = Utils.GetCurrentMethodName();
-            var exportedItems = new List<MetricSnapshot>();
+    [Fact]
+    public async Task DeferredMeterProviderBuilder_WithMetricSnapshot()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<MetricSnapshot>();
 
-            await RunMetricsTest(
-                configure: builder => builder
-                    .AddMeter(meterName)
-                    .AddInMemoryExporter(exportedItems),
-                testAction: () =>
-                {
-                    using var meter = new Meter(meterName);
-                    var counter = meter.CreateCounter<long>("meter");
-                    counter.Add(10);
-                }).ConfigureAwait(false);
+        await RunMetricsTest(
+            configure: builder => builder
+                .AddMeter(meterName)
+                .AddInMemoryExporter(exportedItems),
+            testAction: () =>
+            {
+                using var meter = new Meter(meterName);
+                var counter = meter.CreateCounter<long>("meter");
+                counter.Add(10);
+            });
 
-            Assert.Single(exportedItems);
-            Assert.Equal(10, exportedItems[0].MetricPoints[0].GetSumLong());
-        }
+        Assert.Single(exportedItems);
+        Assert.Equal(10, exportedItems[0].MetricPoints[0].GetSumLong());
+    }
 
-        private static async Task RunMetricsTest(Action<MeterProviderBuilder> configure, Action testAction)
-        {
-            using var host = await new HostBuilder()
-               .ConfigureWebHost(webBuilder => webBuilder
-                   .UseTestServer()
-                   .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure))
-                   .Configure(app => app.Run(httpContext =>
-                   {
-                       testAction.Invoke();
+    private static async Task RunMetricsTest(Action<MeterProviderBuilder> configure, Action testAction)
+    {
+        using var host = await new HostBuilder()
+           .ConfigureWebHost(webBuilder => webBuilder
+               .UseTestServer()
+               .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure))
+               .Configure(app => app.Run(httpContext =>
+               {
+                   testAction.Invoke();
 
-                       var meterProvider = app.ApplicationServices.GetRequiredService<MeterProvider>();
-                       meterProvider.ForceFlush();
+                   var meterProvider = app.ApplicationServices.GetRequiredService<MeterProvider>();
+                   meterProvider.ForceFlush();
 
-                       return Task.CompletedTask;
-                   })))
-               .StartAsync().ConfigureAwait(false);
+                   return Task.CompletedTask;
+               })))
+           .StartAsync();
 
-            using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}").ConfigureAwait(false);
+        using var response = await host.GetTestClient().GetAsync($"/{nameof(RunMetricsTest)}");
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            await host.StopAsync().ConfigureAwait(false);
-        }
+        await host.StopAsync();
     }
 }
 #endif

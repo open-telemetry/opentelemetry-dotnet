@@ -18,14 +18,13 @@ using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
+namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
+
+public class EventSourceTest
 {
-    public class EventSourceTest
+    [Fact]
+    public void EventSourceTest_AspNetCoreInstrumentationEventSource()
     {
-        [Fact]
-        public void EventSourceTest_AspNetCoreInstrumentationEventSource()
-        {
-            EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(AspNetCoreInstrumentationEventSource.Log);
-        }
+        EventSourceTestHelper.MethodsAreImplementedConsistentlyWithTheirAttributes(AspNetCoreInstrumentationEventSource.Log);
     }
 }

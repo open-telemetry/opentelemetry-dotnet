@@ -15,16 +15,15 @@
 // </copyright>
 using Microsoft.AspNetCore.Mvc;
 
-namespace TestApp.AspNetCore.Controllers
+namespace TestApp.AspNetCore.Controllers;
+
+[Route("api/[controller]")]
+public class ErrorController : Controller
 {
-    [Route("api/[controller]")]
-    public class ErrorController : Controller
+    // GET api/error
+    [HttpGet]
+    public string Get()
     {
-        // GET api/error
-        [HttpGet]
-        public string Get()
-        {
-            throw new Exception("something's wrong!");
-        }
+        throw new Exception("something's wrong!");
     }
 }

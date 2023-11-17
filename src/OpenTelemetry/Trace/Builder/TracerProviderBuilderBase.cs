@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -117,7 +115,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
     protected TracerProviderBuilder AddInstrumentation(
         string instrumentationName,
         string instrumentationVersion,
-        Func<object> instrumentationFactory)
+        Func<object?> instrumentationFactory)
     {
         Guard.ThrowIfNullOrWhitespace(instrumentationName);
         Guard.ThrowIfNullOrWhitespace(instrumentationVersion);
@@ -130,7 +128,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
                 tracerProviderBuilderState.AddInstrumentation(
                     instrumentationName,
                     instrumentationVersion,
-                    instrumentationFactory);
+                    instrumentationFactory());
             }
         });
 

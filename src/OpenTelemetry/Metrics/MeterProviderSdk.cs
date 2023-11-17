@@ -14,11 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -31,6 +30,10 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal readonly IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
+    internal bool ShouldReclaimUnusedMetricPoints;
+
+    private const string EmitOverFlowAttributeConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE";
+    private const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
 
     private readonly List<object> instrumentations = new();
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
@@ -48,6 +51,10 @@ internal sealed class MeterProviderSdk : MeterProvider
         var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
 
+        var config = serviceProvider!.GetRequiredService<IConfiguration>();
+        _ = config.TryGetBoolValue(EmitOverFlowAttributeConfigKey, out bool isEmitOverflowAttributeKeySet);
+        _ = config.TryGetBoolValue(ReclaimUnusedMetricPointsConfigKey, out this.ShouldReclaimUnusedMetricPoints);
+
         this.ServiceProvider = serviceProvider!;
 
         if (ownsServiceProvider)
@@ -57,6 +64,8 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
+
+        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Metric overflow attribute key set to: {isEmitOverflowAttributeKeySet}");
 
         var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
@@ -79,7 +88,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             reader.SetParentProvider(this);
             reader.SetMaxMetricStreams(state.MaxMetricStreams);
-            reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream);
+            reader.SetMaxMetricPointsPerMetricStream(state.MaxMetricPointsPerMetricStream, isEmitOverflowAttributeKeySet);
             reader.SetExemplarFilter(state.ExemplarFilter);
 
             if (this.reader == null)
@@ -123,7 +132,11 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             foreach (var instrumentation in state.Instrumentation)
             {
-                this.instrumentations.Add(instrumentation.Instance);
+                if (instrumentation.Instance is not null)
+                {
+                    this.instrumentations.Add(instrumentation.Instance);
+                }
+
                 instrumentationFactoriesAdded.Append(instrumentation.Name);
                 instrumentationFactoriesAdded.Append(';');
             }
@@ -381,7 +394,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 // TODO: log
                 return;
@@ -485,7 +498,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument!.Name, "SDK internal error occurred.", "Contact SDK owners.");
                 return;
@@ -511,7 +524,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else
         {
-            if (state is not List<Metric> metrics)
+            if (state is not List<Metric?> metrics)
             {
                 OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument!.Name, "SDK internal error occurred.", "Contact SDK owners.");
                 return;

@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 
@@ -30,19 +31,22 @@ public abstract partial class MetricReader
     private readonly object instrumentCreationLock = new();
     private int maxMetricStreams;
     private int maxMetricPointsPerMetricStream;
-    private Metric[] metrics;
-    private Metric[] metricsCurrentBatch;
+    private Metric?[]? metrics;
+    private Metric[]? metricsCurrentBatch;
     private int metricIndex = -1;
+    private bool emitOverflowAttribute;
 
-    private ExemplarFilter exemplarFilter;
+    private ExemplarFilter? exemplarFilter;
 
     internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
     {
         return this.temporalityFunc(instrumentType);
     }
 
-    internal Metric AddMetricWithNoViews(Instrument instrument)
+    internal Metric? AddMetricWithNoViews(Instrument instrument)
     {
+        Debug.Assert(this.metrics != null, "this.metrics was null");
+
         var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
         lock (this.instrumentCreationLock)
         {
@@ -68,10 +72,11 @@ public abstract partial class MetricReader
             }
             else
             {
-                Metric metric = null;
+                Metric? metric = null;
                 try
                 {
-                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, exemplarFilter: this.exemplarFilter);
+                    bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
+                    metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -84,25 +89,27 @@ public abstract partial class MetricReader
                 }
 
                 this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
-                this.metrics[index] = metric;
+                this.metrics![index] = metric;
                 this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName);
                 return metric;
             }
         }
     }
 
-    internal void RecordSingleStreamLongMeasurement(Metric metric, long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    internal void RecordSingleStreamLongMeasurement(Metric metric, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         metric.UpdateLong(value, tags);
     }
 
-    internal void RecordSingleStreamDoubleMeasurement(Metric metric, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    internal void RecordSingleStreamDoubleMeasurement(Metric metric, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         metric.UpdateDouble(value, tags);
     }
 
-    internal List<Metric> AddMetricsListWithViews(Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
+    internal List<Metric> AddMetricsListWithViews(Instrument instrument, List<MetricStreamConfiguration?> metricStreamConfigs)
     {
+        Debug.Assert(this.metrics != null, "this.metrics was null");
+
         var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
 
         // Create list with initial capacity as the max metric count.
@@ -156,10 +163,11 @@ public abstract partial class MetricReader
                 }
                 else
                 {
-                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.exemplarFilter);
+                    bool shouldReclaimUnusedMetricPoints = this.parentProvider is MeterProviderSdk meterProviderSdk && meterProviderSdk.ShouldReclaimUnusedMetricPoints;
+                    Metric metric = new(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, this.emitOverflowAttribute, shouldReclaimUnusedMetricPoints, this.exemplarFilter);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
-                    this.metrics[index] = metric;
+                    this.metrics![index] = metric;
                     metrics.Add(metric);
                     this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName);
                 }
@@ -169,7 +177,7 @@ public abstract partial class MetricReader
         }
     }
 
-    internal void RecordLongMeasurement(List<Metric> metrics, long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    internal void RecordLongMeasurement(List<Metric> metrics, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (metrics.Count == 1)
         {
@@ -187,7 +195,7 @@ public abstract partial class MetricReader
         }
     }
 
-    internal void RecordDoubleMeasurement(List<Metric> metrics, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+    internal void RecordDoubleMeasurement(List<Metric> metrics, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (metrics.Count == 1)
         {
@@ -225,18 +233,30 @@ public abstract partial class MetricReader
         this.metricsCurrentBatch = new Metric[maxMetricStreams];
     }
 
-    internal void SetExemplarFilter(ExemplarFilter exemplarFilter)
+    internal void SetExemplarFilter(ExemplarFilter? exemplarFilter)
     {
         this.exemplarFilter = exemplarFilter;
     }
 
-    internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
+    internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream, bool isEmitOverflowAttributeKeySet)
     {
         this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
+
+        if (isEmitOverflowAttributeKeySet)
+        {
+            // We need at least two metric points. One is reserved for zero tags and the other one for overflow attribute
+            if (maxMetricPointsPerMetricStream > 1)
+            {
+                this.emitOverflowAttribute = true;
+            }
+        }
     }
 
     private Batch<Metric> GetMetricsBatch()
     {
+        Debug.Assert(this.metrics != null, "this.metrics was null");
+        Debug.Assert(this.metricsCurrentBatch != null, "this.metricsCurrentBatch was null");
+
         try
         {
             var indexSnapshot = Math.Min(this.metricIndex, this.maxMetricStreams - 1);
@@ -244,7 +264,7 @@ public abstract partial class MetricReader
             int metricCountCurrentBatch = 0;
             for (int i = 0; i < target; i++)
             {
-                var metric = this.metrics[i];
+                var metric = this.metrics![i];
                 int metricPointSize = 0;
                 if (metric != null)
                 {
@@ -261,12 +281,12 @@ public abstract partial class MetricReader
 
                     if (metricPointSize > 0)
                     {
-                        this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                        this.metricsCurrentBatch![metricCountCurrentBatch++] = metric;
                     }
                 }
             }
 
-            return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
+            return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch!, metricCountCurrentBatch) : default;
         }
         catch (Exception ex)
         {

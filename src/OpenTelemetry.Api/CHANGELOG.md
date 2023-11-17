@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+* Updated `System.Diagnostics.DiagnosticSource` package version to
+  `8.0.0`.
+  ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
+
+## 1.7.0-alpha.1
+
+Released 2023-Oct-16
+
+* Fixed a bug which caused `Tracer.StartRootSpan` to generate a child span if a
+  trace was running (`Activity.Current != null`).
+  ([#4890](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4890))
+
+* Added a `Tracer` cache inside of `TracerProvider` to prevent repeated calls to
+  `GetTracer` from leaking memory.
+  ([#4906](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4906))
+
+* Fix `TraceContextPropagator` by validating the first digit of the hex-encoded
+  `trace-flags` field of the `traceparent` header.
+  ([#4893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4893))
+
+## 1.6.0
+
+Released 2023-Sep-05
+
+## 1.6.0-rc.1
+
+Released 2023-Aug-21
+
 ## 1.6.0-alpha.1
 
 Released 2023-Jul-12
@@ -9,19 +37,19 @@ Released 2023-Jul-12
 * Updated `System.Diagnostics.DiagnosticSource` package version to `7.0.2`.
   ([#4576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4576))
 
-* **Breaking change** In order to make `RuntimeContext` compatible with
-  ahead-of-time compilation (AOT),
-  `RuntimeContext.ContextSlotType` can only be assigned one
-  of the following types: `AsyncLocalRuntimeContextSlot<>`,
+* **Breaking change:** In order to make `RuntimeContext` compatible with
+  ahead-of-time compilation (AOT), `RuntimeContext.ContextSlotType` can only be
+  assigned one of the following types: `AsyncLocalRuntimeContextSlot<>`,
   `ThreadLocalRuntimeContextSlot<>`, and `RemotingRuntimeContextSlot<>`. A
   `System.NotSupportedException` will be thrown if you try to assign any type
   other than the three types mentioned.
   ([#4542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4542))
 
-* Added [Logs Bridge
+* **Experimental (pre-release builds only):** Added [Logs Bridge
   API](https://github.com/open-telemetry/opentelemetry-specification/blob/976432b74c565e8a84af3570e9b82cb95e1d844c/specification/logs/bridge-api.md)
   implementation (`LoggerProviderBuilder`, `LoggerProvider`, `Logger`, etc.).
-  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433))
+  ([#4433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4433),
+  [#4735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4735))
 
 ## 1.5.1
 

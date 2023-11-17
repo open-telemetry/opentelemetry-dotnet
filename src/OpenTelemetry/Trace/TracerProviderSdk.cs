@@ -14,11 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-#nullable enable
-
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -74,15 +73,15 @@ internal sealed class TracerProviderSdk : TracerProvider
         this.Resource = resourceBuilder.Build();
 
         this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+        OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
+
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
-        bool legacyActivityWildcardMode = false;
-        var legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex();
+        Regex? legacyActivityWildcardModeRegex = null;
         foreach (var legacyName in state.LegacyActivityOperationNames)
         {
             if (WildcardHelper.ContainsWildcard(legacyName))
             {
-                legacyActivityWildcardMode = true;
                 legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(state.LegacyActivityOperationNames);
                 break;
             }
@@ -97,7 +96,11 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         foreach (var instrumentation in state.Instrumentation)
         {
-            this.instrumentations.Add(instrumentation.Instance);
+            if (instrumentation.Instance is not null)
+            {
+                this.instrumentations.Add(instrumentation.Instance);
+            }
+
             instrumentationFactoriesAdded.Append(instrumentation.Name);
             instrumentationFactoriesAdded.Append(';');
         }
@@ -119,7 +122,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         if (this.supportLegacyActivity)
         {
             Func<Activity, bool>? legacyActivityPredicate = null;
-            if (legacyActivityWildcardMode)
+            if (legacyActivityWildcardModeRegex != null)
             {
                 legacyActivityPredicate = activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
             }

@@ -16,68 +16,67 @@
 
 using Xunit;
 
-namespace OpenTelemetry.Trace.Tests
+namespace OpenTelemetry.Trace.Tests;
+
+public class SpanAttributesTest
 {
-    public class SpanAttributesTest
+    [Fact]
+    public void ValidateConstructor()
     {
-        [Fact]
-        public void ValidateConstructor()
-        {
-            var spanAttribute = new SpanAttributes();
-            Assert.Empty(spanAttribute.Attributes);
-        }
+        var spanAttribute = new SpanAttributes();
+        Assert.Empty(spanAttribute.Attributes);
+    }
 
-        [Fact]
-        public void ValidateAddMethods()
-        {
-            var spanAttribute = new SpanAttributes();
-            spanAttribute.Add("key_string", "string");
-            spanAttribute.Add("key_a_string", new string[] { "string" });
+    [Fact]
+    public void ValidateAddMethods()
+    {
+        var spanAttribute = new SpanAttributes();
+        spanAttribute.Add("key_string", "string");
+        spanAttribute.Add("key_a_string", new string[] { "string" });
 
-            spanAttribute.Add("key_double", 1.01);
-            spanAttribute.Add("key_a_double", new double[] { 1.01 });
+        spanAttribute.Add("key_double", 1.01);
+        spanAttribute.Add("key_a_double", new double[] { 1.01 });
 
-            spanAttribute.Add("key_bool", true);
-            spanAttribute.Add("key_a_bool", new bool[] { true });
+        spanAttribute.Add("key_bool", true);
+        spanAttribute.Add("key_a_bool", new bool[] { true });
 
-            spanAttribute.Add("key_long", 1);
-            spanAttribute.Add("key_a_long", new long[] { 1 });
+        spanAttribute.Add("key_long", 1);
+        spanAttribute.Add("key_a_long", new long[] { 1 });
 
-            Assert.Equal(8, spanAttribute.Attributes.Count);
-        }
+        Assert.Equal(8, spanAttribute.Attributes.Count);
+    }
 
-        [Fact]
-        public void ValidateNullKey()
-        {
-            var spanAttribute = new SpanAttributes();
-            Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null, "null key"));
-        }
+    [Fact]
+    public void ValidateNullKey()
+    {
+        var spanAttribute = new SpanAttributes();
+        Assert.Throws<ArgumentNullException>(() => spanAttribute.Add(null, "null key"));
+    }
 
-        [Fact]
-        public void ValidateSameKey()
-        {
-            var spanAttribute = new SpanAttributes();
-            spanAttribute.Add("key", "value1");
-            spanAttribute.Add("key", "value2");
-            Assert.Equal("value2", spanAttribute.Attributes["key"]);
-        }
+    [Fact]
+    public void ValidateSameKey()
+    {
+        var spanAttribute = new SpanAttributes();
+        spanAttribute.Add("key", "value1");
+        spanAttribute.Add("key", "value2");
+        Assert.Equal("value2", spanAttribute.Attributes["key"]);
+    }
 
-        [Fact]
-        public void ValidateConstructorWithList()
-        {
-            var spanAttributes = new SpanAttributes(
-               new List<KeyValuePair<string, object>>()
-               {
-                    new KeyValuePair<string, object>("Span attribute int", 1),
-                    new KeyValuePair<string, object>("Span attribute string", "str"),
-               });
-            Assert.Equal(2, spanAttributes.Attributes.Count);
-        }
+    [Fact]
+    public void ValidateConstructorWithList()
+    {
+        var spanAttributes = new SpanAttributes(
+           new List<KeyValuePair<string, object>>()
+           {
+                new KeyValuePair<string, object>("Span attribute int", 1),
+                new KeyValuePair<string, object>("Span attribute string", "str"),
+           });
+        Assert.Equal(2, spanAttributes.Attributes.Count);
+    }
 
-        [Fact]
-        public void ValidateConstructorWithNullList()
-        {
-            Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null));
-        }
+    [Fact]
+    public void ValidateConstructorWithNullList()
+    {
+        Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null));
     }
 }

@@ -11,9 +11,9 @@ also collects traces from incoming gRPC requests using
 [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore).
 
 **Note: This component is based on the OpenTelemetry semantic conventions for
-[metrics](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/metrics/semantic_conventions)
+[metrics](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md)
 and
-[traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+[traces](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md).
 These conventions are
 [Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
@@ -90,13 +90,31 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-The instrumentation is implemented based on [metrics semantic
-conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpserverduration).
-Currently, the instrumentation supports the following metric.
+A different metric is emitted depending on whether a user opts-in to the new
+Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
 
-| Name  | Instrument Type | Unit | Description |
-|-------|-----------------|------|-------------|
-| `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. |
+* By default, the instrumentation emits the following metric.
+
+    | Name  | Instrument Type | Unit | Description | Attributes |
+    |-------|-----------------|------|-------------|------------|
+    | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. | http.flavor, http.scheme, http.method, http.status_code, net.host.name, net.host.port, http.route |
+
+* If user sets the environment variable to `http`, the instrumentation emits
+  the following metric.
+
+    | Name  | Instrument Type | Unit | Description | Attributes |
+    |-------|-----------------|------|-------------|------------|
+    | `http.server.request.duration` | Histogram | `s` | Measures the duration of inbound HTTP requests. | network.protocol.version, url.scheme, http.request.method, http.response.status_code, http.route |
+
+    This metric is emitted in `seconds` as per the semantic convention. While
+    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+    , this feature is not yet available via .NET Metrics API.
+    A [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+    has been included in OTel SDK starting version `1.6.0` which applies
+    recommended buckets by default for `http.server.request.duration`.
+
+* If user sets the environment variable to `http/dup`, the instrumentation
+  emits both `http.server.duration` and `http.server.request.duration`.
 
 ## Advanced configuration
 
