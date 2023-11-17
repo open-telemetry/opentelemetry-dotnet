@@ -33,8 +33,10 @@ Experimental APIs which have been released stable or removed:
 
 <!-- When an experimental API is released or removed:
  1) Move the section from above down here.
- 2) Delete the individual file from the repo and switch the link here to a permalink to the last version.
- 3) Add the version info for when the API was released stable or removed. If removed add details for alternative solution or reasoning.
+ 2) Delete the individual file from the repo and switch the link here to a
+    permalink to the last version.
+ 3) Add the version info for when the API was released stable or removed. If
+    removed add details for alternative solution or reasoning.
 -->
 
 None
