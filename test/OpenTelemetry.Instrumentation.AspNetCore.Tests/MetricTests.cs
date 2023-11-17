@@ -35,6 +35,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
+using Microsoft.AspNetCore.TestHost;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
 
@@ -128,8 +129,6 @@ public class MetricTests(WebApplicationFactory<Program> factory)
 
         void ConfigureTestServices(IServiceCollection services)
         {
-            var metricItems = new List<Metric>();
-
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
                 .AddInMemoryExporter(exportedItems)
@@ -138,38 +137,60 @@ public class MetricTests(WebApplicationFactory<Program> factory)
             services.AddOpenTelemetry()
                 .WithMetrics(builder =>
                     builder.AddInstrumentation(() => this.meterProvider));
+
+            services.AddRateLimiter(_ => _
+                .AddFixedWindowLimiter(policyName: "fixed", options =>
+                {
+                    options.PermitLimit = 4;
+                    options.Window = TimeSpan.FromSeconds(12);
+                    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    options.QueueLimit = 2;
+                }));
         }
 
-        var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls("http://*:0");
-        ConfigureTestServices(builder.Services);
-        builder.Services.AddRateLimiter(_ => _
-        .AddFixedWindowLimiter(policyName: "fixed", options =>
+        //var builder = WebApplication.CreateBuilder();
+        //builder.WebHost.UseUrls("http://*:0");
+        //ConfigureTestServices(builder.Services);
+        //builder.Services.AddRateLimiter(_ => _
+        //.AddFixedWindowLimiter(policyName: "fixed", options =>
+        //{
+        //    options.PermitLimit = 4;
+        //    options.Window = TimeSpan.FromSeconds(12);
+        //    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        //    options.QueueLimit = 2;
+        //}));
+
+        //builder.Logging.ClearProviders();
+        //var app = builder.Build();
+
+        //app.UseRateLimiter();
+
+        //static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
+
+        //app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
+        //                           .RequireRateLimiting("fixed");
+
+        //_ = app.RunAsync();
+
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(ConfigureTestServices);
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                builder.Configure(app => app.UseRateLimiter());
+            })
+            .CreateClient())
         {
-            options.PermitLimit = 4;
-            options.Window = TimeSpan.FromSeconds(12);
-            options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-            options.QueueLimit = 2;
-        }));
+            var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+            Assert.True(response.IsSuccessStatusCode);
+        }
 
-        builder.Logging.ClearProviders();
-        var app = builder.Build();
+        //var url = app.Urls.ToArray()[0];
+        //var portNumber = url.Substring(url.LastIndexOf(':') + 1);
 
-        app.UseRateLimiter();
-
-        static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
-
-        app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
-                                   .RequireRateLimiting("fixed");
-
-        _ = app.RunAsync();
-
-        var url = app.Urls.ToArray()[0];
-        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
-
-        using var client = new HttpClient();
-        var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
-        Assert.True(res.IsSuccessStatusCode);
+        //using var client = new HttpClient();
+        //var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
+        //Assert.True(res.IsSuccessStatusCode);
 
         this.meterProvider.Dispose();
 
