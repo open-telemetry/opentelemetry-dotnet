@@ -49,7 +49,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             counter.Add(1);
         }
 
-        AssertSingleMetricWithLongSumOfOne(exportedItems);
+        AssertSingleMetricWithLongSum(exportedItems);
     }
 
     [Theory]
@@ -71,13 +71,13 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             counter.Add(1);
         }
 
-        AssertSingleMetricWithLongSumOfOne(exportedItems);
+        AssertSingleMetricWithLongSum(exportedItems);
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ReloadOfMetricsViaIConfigurationTest(bool useWithMetricsStyle)
+    public void ReloadOfMetricsViaIConfigurationWithExportCleanupTest(bool useWithMetricsStyle)
     {
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
@@ -112,7 +112,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         meterProvider.ForceFlush();
 
-        AssertSingleMetricWithLongSumOfOne(exportedItems);
+        AssertSingleMetricWithLongSum(exportedItems);
 
         exportedItems.Clear();
 
@@ -134,7 +134,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         meterProvider.ForceFlush();
 
-        AssertSingleMetricWithLongSumOfOne(exportedItems);
+        AssertSingleMetricWithLongSum(exportedItems);
 
         var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
 
@@ -147,9 +147,69 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentReactivatedEvents);
+
+        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 54);
+
+        Assert.Single(metricInstrumentRemovedEvents);
     }
 
-    private static void AssertSingleMetricWithLongSumOfOne(List<Metric> exportedItems)
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReloadOfMetricsViaIConfigurationWithoutExportCleanupTest(bool useWithMetricsStyle)
+    {
+        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = new();
+
+        var source = new MemoryConfigurationSource();
+        var memory = new MemoryConfigurationProvider(source);
+        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "true");
+        var configuration = new ConfigurationRoot(new[] { memory });
+
+        using var host = MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureAppConfiguration: (context, builder) => builder.AddConfiguration(configuration),
+            configureMeterProviderBuilder: builder => builder
+                .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = MetricReaderTemporalityPreference.Delta));
+
+        var meterProvider = host.Services.GetRequiredService<MeterProvider>();
+        var options = host.Services.GetRequiredService<IOptionsMonitor<MetricsOptions>>();
+
+        var counter = meter.CreateCounter<long>("TestCounter");
+        counter.Add(1);
+
+        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "false");
+        configuration.Reload();
+        counter.Add(1);
+
+        memory.Set($"Metrics:EnabledMetrics:{meter.Name}:Default", "true");
+        configuration.Reload();
+        counter.Add(1);
+
+        meterProvider.ForceFlush();
+
+        AssertSingleMetricWithLongSum(exportedItems, expectedValue: 2);
+
+        var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
+
+        Assert.Empty(duplicateMetricInstrumentEvents);
+
+        var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
+
+        Assert.Single(metricInstrumentDeactivatedEvents);
+
+        var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
+
+        Assert.Single(metricInstrumentReactivatedEvents);
+
+        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 54);
+
+        Assert.Empty(metricInstrumentRemovedEvents);
+    }
+
+    private static void AssertSingleMetricWithLongSum(List<Metric> exportedItems, long expectedValue = 1)
     {
         Assert.Single(exportedItems);
 
@@ -162,6 +222,6 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         Assert.Single(metricPoints);
 
         var metricPoint = metricPoints[0];
-        Assert.Equal(1, metricPoint.GetSumLong());
+        Assert.Equal(expectedValue, metricPoint.GetSumLong());
     }
 }

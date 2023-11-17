@@ -27,6 +27,10 @@ public sealed class Metric
 
     internal const int DefaultExponentialHistogramMaxScale = 20;
 
+    internal const int MetricCleanupNoState = 0;
+    internal const int MetricCleanupPending = 1;
+    internal const int MetricCleanupComplete = 2;
+
     internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000 };
 
     // Short default histogram bounds. Based on the recommended semantic convention values for http.server.request.duration.
@@ -169,7 +173,7 @@ public sealed class Metric
 
         this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
-        this.InstrumentDisposed = false;
+        this.CleanupState = MetricCleanupNoState;
     }
 
     /// <summary>
@@ -212,7 +216,9 @@ public sealed class Metric
     /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
-    internal bool InstrumentDisposed { get; set; }
+    internal object CleanupLock => this.aggStore;
+
+    internal int CleanupState { get; set; }
 
     /// <summary>
     /// Get the metric points for the metric stream.
