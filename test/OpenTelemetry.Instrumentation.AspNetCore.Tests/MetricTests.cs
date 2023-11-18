@@ -35,7 +35,6 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Xunit;
-using Microsoft.AspNetCore.TestHost;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
 
