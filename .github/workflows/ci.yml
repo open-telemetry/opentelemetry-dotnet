@@ -22,9 +22,11 @@ jobs:
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           packaged-code: ['src/**', '!**/*.md']
+          api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
           instrumentation: ['*/OpenTelemetry.Instrumentation*/**', 'test/TestApp.AspNetCore/**', '!**/*.md']
           instrumentation-packages: ['src/OpenTelemetry.Instrumentation*/**', '!**/*.md']
+          sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
@@ -148,10 +150,11 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/verifyaotcompat.yml
 
-  run-concurrency-tests:
+  concurrency-tests:
     needs: detect-changes
     if: |
-      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      contains(needs.detect-changes.outputs.changes, 'api-code')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/concurrency-tests.yml
@@ -171,7 +174,7 @@ jobs:
       validate-packages,
       generate-docs,
       verify-aot-compat,
-      run-concurrency-tests
+      concurrency-tests
       ]
     if: always() && !cancelled() && !contains(needs.*.result, 'failure')
     runs-on: windows-latest
