@@ -844,7 +844,7 @@ public sealed class BasicTests
     public async Task DiagnosticSourceCallbacksAreReceivedOnlyForSubscribedEvents()
     {
         int numberOfUnSubscribedEvents = 0;
-        int numberOfSubscribedEvents = 0;
+        int numberofSubscribedEvents = 0;
 
         void ConfigureTestServices(IServiceCollection services)
         {
@@ -858,13 +858,13 @@ public sealed class BasicTests
                             {
                                 case HttpInListener.OnStartEvent:
                                     {
-                                        numberOfSubscribedEvents++;
+                                        numberofSubscribedEvents++;
                                     }
 
                                     break;
                                 case HttpInListener.OnStopEvent:
                                     {
-                                        numberOfSubscribedEvents++;
+                                        numberofSubscribedEvents++;
                                     }
 
                                     break;
@@ -900,14 +900,14 @@ public sealed class BasicTests
         }
 
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(2, numberOfSubscribedEvents);
+        Assert.Equal(2, numberofSubscribedEvents);
     }
 
     [Fact]
     public async Task DiagnosticSourceExceptionCallbackIsReceivedForUnHandledException()
     {
         int numberOfUnSubscribedEvents = 0;
-        int numberOfSubscribedEvents = 0;
+        int numberofSubscribedEvents = 0;
         int numberOfExceptionCallbacks = 0;
 
         void ConfigureTestServices(IServiceCollection services)
@@ -922,13 +922,13 @@ public sealed class BasicTests
                             {
                                 case HttpInListener.OnStartEvent:
                                     {
-                                        numberOfSubscribedEvents++;
+                                        numberofSubscribedEvents++;
                                     }
 
                                     break;
                                 case HttpInListener.OnStopEvent:
                                     {
-                                        numberOfSubscribedEvents++;
+                                        numberofSubscribedEvents++;
                                     }
 
                                     break;
@@ -938,7 +938,7 @@ public sealed class BasicTests
                                 case HttpInListener.OnUnhandledHostingExceptionEvent:
                                 case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                     {
-                                        numberOfSubscribedEvents++;
+                                        numberofSubscribedEvents++;
                                         numberOfExceptionCallbacks++;
                                     }
 
@@ -983,7 +983,7 @@ public sealed class BasicTests
 
         Assert.Equal(1, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(3, numberOfSubscribedEvents);
+        Assert.Equal(3, numberofSubscribedEvents);
     }
 
     [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/4884")]
@@ -991,57 +991,90 @@ public sealed class BasicTests
     {
         int numberOfUnSubscribedEvents = 0;
         int numberofSubscribedEvents = 0;
-        void ConfigureTestServices(IServiceCollection services)
-        {
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation(
-                    new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+        int numberOfExceptionCallbacks = 0;
+
+        // configure SDK
+        using var tracerprovider = Sdk.CreateTracerProviderBuilder()
+            .AddAspNetCoreInstrumentation(
+                new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                {
+                    OnEventWrittenCallback = (name, payload) =>
                     {
-                        OnEventWrittenCallback = (name, payload) =>
+                        switch (name)
                         {
-                            switch (name)
-                            {
-                                case HttpInListener.OnStartEvent:
-                                    {
-                                        numberofSubscribedEvents++;
-                                    }
+                            case HttpInListener.OnStartEvent:
+                                {
+                                    numberofSubscribedEvents++;
+                                }
 
-                                    break;
-                                case HttpInListener.OnStopEvent:
-                                    {
-                                        numberofSubscribedEvents++;
-                                    }
+                                break;
+                            case HttpInListener.OnStopEvent:
+                                {
+                                    numberofSubscribedEvents++;
+                                }
 
-                                    break;
-                                default:
-                                    {
-                                        numberOfUnSubscribedEvents++;
-                                    }
+                                break;
 
-                                    break;
-                            }
-                        },
-                    })
+                            // TODO: Add test case for validating name for both the types
+                            // of exception event.
+                            case HttpInListener.OnUnhandledHostingExceptionEvent:
+                            case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
+                                {
+                                    numberofSubscribedEvents++;
+                                    numberOfExceptionCallbacks++;
+                                }
+
+                                break;
+                            default:
+                                {
+                                    numberOfUnSubscribedEvents++;
+                                }
+
+                                break;
+                        }
+                    },
+                })
                 .Build();
-        }
 
-        // Arrange
-        using (var client = this.factory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(ConfigureTestServices);
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-            })
-            .CreateClient())
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
+
+        app.UseExceptionHandler(handler =>
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+            handler.Run(async (ctx) =>
+            {
+                await ctx.Response.WriteAsync("handled");
+            });
+        });
 
-            // Act
-            using var response = await client.SendAsync(request);
+        app.Map("/error", ThrowException);
+
+        static void ThrowException(IApplicationBuilder app)
+        {
+            app.Run(context =>
+            {
+                throw new Exception("CustomException");
+            });
         }
 
+        _ = app.RunAsync();
+
+        using var client = new HttpClient();
+        try
+        {
+            await client.GetStringAsync("http://localhost:5000/error");
+        }
+        catch
+        {
+            // ignore 500 error.
+        }
+
+        Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberofSubscribedEvents);
+
+        await app.DisposeAsync();
     }
 
     public void Dispose()

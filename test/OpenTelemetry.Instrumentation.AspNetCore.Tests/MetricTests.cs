@@ -164,12 +164,14 @@ public class MetricTests(WebApplicationFactory<Program> factory)
 
         _ = app.RunAsync();
 
-        var url = app.Urls.ToArray()[0];
-        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
-
         using var client = new HttpClient();
-        var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
-        Assert.True(res.IsSuccessStatusCode);
+        var res = await client.GetStringAsync("http://localhost:5000/");
+        Assert.NotNull(res);
+
+        // We need to let metric callback execute as it is executed AFTER response was returned.
+        // In unit tests environment there may be a lot of parallel unit tests executed, so
+        // giving some breezing room for the callbacks to complete
+        await Task.Delay(TimeSpan.FromSeconds(1));
 
         this.meterProvider.Dispose();
 
