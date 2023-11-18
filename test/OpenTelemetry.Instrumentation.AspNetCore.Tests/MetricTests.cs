@@ -168,8 +168,11 @@ public class MetricTests(WebApplicationFactory<Program> factory)
 
         _ = app.RunAsync();
 
+        var url = app.Urls.ToArray()[0];
+        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
+
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/");
+        var res = await client.GetAsync($"http://localhost:{portNumber}/");
         Assert.NotNull(res);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
