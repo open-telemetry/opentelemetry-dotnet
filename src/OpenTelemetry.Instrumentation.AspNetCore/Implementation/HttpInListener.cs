@@ -23,8 +23,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
-#if NET6_0_OR_GREATER
-using Microsoft.AspNetCore.Mvc.Diagnostics;
+#if !NETSTANDARD
+using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
 #if !NETSTANDARD2_0
@@ -41,7 +41,6 @@ internal class HttpInListener : ListenerHandler
     internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
     internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
     internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
-    internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
     internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
     internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
 
@@ -95,12 +94,6 @@ internal class HttpInListener : ListenerHandler
             case OnStopEvent:
                 {
                     this.OnStopActivity(Activity.Current, payload);
-                }
-
-                break;
-            case OnMvcBeforeActionEvent:
-                {
-                    this.OnMvcBeforeAction(Activity.Current, payload);
                 }
 
                 break;
@@ -202,7 +195,7 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
+            activity.DisplayName = this.GetDisplayName(request.Method);
 
             // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
             if (this.emitOldAttributes)
@@ -252,17 +245,7 @@ internal class HttpInListener : ListenerHandler
                     activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
                 }
 
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
-                }
+                RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
                 activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeUrlPath, path);
@@ -301,6 +284,15 @@ internal class HttpInListener : ListenerHandler
             }
 
             var response = context.Response;
+
+#if !NETSTANDARD
+            var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+            if (!string.IsNullOrEmpty(routePattern))
+            {
+                activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
+                activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
+            }
+#endif
 
             if (this.emitOldAttributes)
             {
@@ -360,57 +352,6 @@ internal class HttpInListener : ListenerHandler
             // If yes, then we need to store the asp.net core activity inside
             // the one created by the instrumentation.
             // And retrieve it here, and set it to Current.
-        }
-    }
-
-    public void OnMvcBeforeAction(Activity activity, object payload)
-    {
-        // We cannot rely on Activity.Current here
-        // There could be activities started by middleware
-        // after activity started by framework resulting in different Activity.Current.
-        // so, we need to first find the activity started by Asp.Net Core.
-        // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
-        // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
-        // activity = httpActivityFeature.Activity;
-        // However, this will not work as in case of custom propagator
-        // we start a new activity during onStart event which is a sibling to the activity created by framework
-        // So, in that case we need to get the activity created by us here.
-        // we can do so only by looping through activity.Parent chain.
-        while (activity != null)
-        {
-            if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
-            {
-                break;
-            }
-
-            activity = activity.Parent;
-        }
-
-        if (activity == null)
-        {
-            return;
-        }
-
-        if (activity.IsAllDataRequested)
-        {
-#if !NET6_0_OR_GREATER
-            _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-            _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-            _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-#else
-            var beforeActionEventData = payload as BeforeActionEventData;
-            var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
-#endif
-            if (!string.IsNullOrEmpty(template))
-            {
-                // override the span name that was previously set to the path part of URL.
-                activity.DisplayName = template;
-                activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
-            }
-
-            // TODO: Should we get values from RouteData?
-            // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-            // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
         }
     }
 
@@ -509,7 +450,20 @@ internal class HttpInListener : ListenerHandler
         grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
         return !string.IsNullOrEmpty(grpcMethod);
     }
+#endif
 
+    private string GetDisplayName(string httpMethod, string httpRoute = null)
+    {
+        var normalizedMethod = this.emitNewAttributes
+            ? RequestMethodHelper.GetNormalizedHttpMethod(httpMethod)
+            : httpMethod;
+
+        return string.IsNullOrEmpty(httpRoute)
+            ? normalizedMethod
+            : $"{normalizedMethod} {httpRoute}";
+    }
+
+#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
     {

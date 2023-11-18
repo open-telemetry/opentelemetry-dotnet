@@ -185,31 +185,15 @@ internal sealed class HttpInMetricsListener : ListenerHandler
             return;
         }
 
-        // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
-        // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
-        // If we want to suppress activity from Prometheus then we should use SuppressInstrumentationScope.
-        if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("metrics"))
-        {
-            return;
-        }
-
         TagList tags = default;
 
         // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolName, NetworkProtocolName));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol)));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeUrlScheme, context.Request.Scheme));
         tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(context.Response.StatusCode)));
-        if (RequestMethodHelper.KnownMethods.TryGetValue(context.Request.Method, out var httpMethod))
-        {
-            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
-        }
-        else
-        {
-            // Set to default "_OTHER" as per spec.
-            // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-            tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, "_OTHER"));
-        }
+
+        var httpMethod = RequestMethodHelper.GetNormalizedHttpMethod(context.Request.Method);
+        tags.Add(new KeyValuePair<string, object>(SemanticConventions.AttributeHttpRequestMethod, httpMethod));
 
 #if NET6_0_OR_GREATER
         var route = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;

@@ -37,8 +37,8 @@ public class TestHttpMessageHandler : HttpMessageHandler
         {
             using var registration = cancellationToken.Register(() => tcs.TrySetCanceled());
 
-            var result = await Task.WhenAny(sendAsync(request), tcs.Task).ConfigureAwait(false);
-            return await result.ConfigureAwait(false);
+            var result = await Task.WhenAny(sendAsync(request), tcs.Task);
+            return await result;
         });
     }
 

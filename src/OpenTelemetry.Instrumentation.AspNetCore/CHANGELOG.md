@@ -35,6 +35,27 @@ exception. The attribute value will be set to full name of exception type.
 * Fixed `network.protocol.version` attribute values to match the specification.
   ([#5007](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5007))
 
+* Calls to `/metrics` will now be included in the `http.server.request.duration`
+  metric. This change may affect Prometheus pull scenario if the Prometheus
+  server sends request to the scraping endpoint that contains `/metrics` in
+  path.
+  ([#5044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5044))
+
+* Fixes the `http.route` attribute for scenarios in which it was
+  previously missing or incorrect. Additionally, the `http.route` attribute
+  is now the same for both the metric and `Activity` emitted for a request.
+  Lastly, the `Activity.DisplayName` has been adjusted to have the format
+  `{http.request.method} {http.route}` to conform with [the specification](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-spans.md#name).
+  There remain scenarios when using conventional routing or Razor pages where
+  `http.route` is still incorrect. See [#5056](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5056)
+  and [#5057](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5057)
+  for more details.
+  ([#5026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5026))
+
+* Removed `network.protocol.name` from `http.server.request.duration` metric as
+  per spec.
+  ([#5049](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5049))
+
 ## 1.6.0-beta.2
 
 Released 2023-Oct-26

@@ -46,7 +46,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.Old).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.Old);
     }
 
     [Theory]
@@ -59,7 +59,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.Dupe).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.Dupe);
     }
 #endif
 
@@ -73,7 +73,7 @@ public partial class HttpClientTests
             tc,
             enableTracing: true,
             enableMetrics: true,
-            semanticConvention: HttpSemanticConvention.New).ConfigureAwait(false);
+            semanticConvention: HttpSemanticConvention.New);
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: false,
-            enableMetrics: true).ConfigureAwait(false);
+            enableMetrics: true);
     }
 
     [Theory]
@@ -97,7 +97,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: true,
-            enableMetrics: false).ConfigureAwait(false);
+            enableMetrics: false);
     }
 
     [Theory]
@@ -109,7 +109,7 @@ public partial class HttpClientTests
             this.port,
             tc,
             enableTracing: false,
-            enableMetrics: false).ConfigureAwait(false);
+            enableMetrics: false);
     }
 
 #if !NET8_0_OR_GREATER
@@ -143,15 +143,15 @@ public partial class HttpClientTests
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
         var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyTracesAndMetricsOldSemanticConventionsAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
-        await t.ConfigureAwait(false);
+        await t;
     }
 #endif
 
     [Fact]
     public async Task CheckEnrichmentWhenSampling()
     {
-        await CheckEnrichment(new AlwaysOffSampler(), false, this.url).ConfigureAwait(false);
-        await CheckEnrichment(new AlwaysOnSampler(), true, this.url).ConfigureAwait(false);
+        await CheckEnrichment(new AlwaysOffSampler(), false, this.url);
+        await CheckEnrichment(new AlwaysOnSampler(), true, this.url);
     }
 
 #if NET8_0_OR_GREATER
@@ -178,7 +178,7 @@ public partial class HttpClientTests
 
             request.Headers.Add("contextRequired", "false");
             request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
         catch (Exception)
         {
@@ -189,8 +189,6 @@ public partial class HttpClientTests
             meterProvider.Dispose();
         }
 
-        // dns.lookups.duration is a typo
-        // https://github.com/dotnet/runtime/issues/92917
         var requestMetrics = metrics
             .Where(metric =>
             metric.Name == "http.client.request.duration" ||
@@ -198,7 +196,7 @@ public partial class HttpClientTests
             metric.Name == "http.client.request.time_in_queue" ||
             metric.Name == "http.client.connection.duration" ||
             metric.Name == "http.client.open_connections" ||
-            metric.Name == "dns.lookups.duration")
+            metric.Name == "dns.lookup.duration")
             .ToArray();
 
         if (tc.ResponseExpected)
@@ -288,7 +286,7 @@ public partial class HttpClientTests
             request.Headers.Add("contextRequired", "false");
             request.Headers.Add("responseCode", (tc.ResponseCode == 0 ? 200 : tc.ResponseCode).ToString());
 
-            await c.SendAsync(request).ConfigureAwait(false);
+            await c.SendAsync(request);
         }
         catch (Exception)
         {
@@ -341,13 +339,13 @@ public partial class HttpClientTests
 
             var normalizedAttributes = activity.TagObjects.Where(kv => !kv.Key.StartsWith("otel.")).ToDictionary(x => x.Key, x => x.Value.ToString());
 
-            int numberOfNewTags = activity.Status == ActivityStatusCode.Error ? 6 : 5;
-            int numberOfDupeTags = activity.Status == ActivityStatusCode.Error ? 12 : 11;
+            int numberOfNewTags = activity.Status == ActivityStatusCode.Error ? 5 : 4;
+            int numberOfDupeTags = activity.Status == ActivityStatusCode.Error ? 11 : 10;
 
             var expectedAttributeCount = semanticConvention == HttpSemanticConvention.Dupe
-                ? numberOfDupeTags + (tc.ResponseExpected ? 2 : 0)
+                ? numberOfDupeTags + (tc.ResponseExpected ? 3 : 0)
                 : semanticConvention == HttpSemanticConvention.New
-                    ? numberOfNewTags + (tc.ResponseExpected ? 1 : 0)
+                    ? numberOfNewTags + (tc.ResponseExpected ? 2 : 0)
                     : 6 + (tc.ResponseExpected ? 1 : 0);
 
             Assert.Equal(expectedAttributeCount, normalizedAttributes.Count);
@@ -376,9 +374,9 @@ public partial class HttpClientTests
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeUrlFull && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpUrl]);
-                Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                 if (tc.ResponseExpected)
                 {
+                    Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
 
                     if (tc.ResponseCode >= 400)
@@ -389,6 +387,7 @@ public partial class HttpClientTests
                 else
                 {
                     Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
+                    Assert.DoesNotContain(normalizedAttributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
 
 #if NET8_0_OR_GREATER
                     // we are using fake address so it will be "name_resolution_error"
@@ -534,20 +533,18 @@ public partial class HttpClientTests
                     attributes[tag.Key] = tag.Value;
                 }
 
-#if !NET8_0_OR_GREATER
-                var numberOfTags = 6;
-#else
-                // network.protocol.version is not emitted when response if not received.
-                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4928
-                var numberOfTags = 5;
-#endif
+                var numberOfTags = 4;
                 if (tc.ResponseExpected)
                 {
                     var expectedStatusCode = int.Parse(normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
-                    numberOfTags = (expectedStatusCode >= 400) ? 6 : 5;
+                    numberOfTags = (expectedStatusCode >= 400) ? 5 : 4; // error.type extra tag
+                }
+                else
+                {
+                    numberOfTags = 5; // error.type would be extra
                 }
 
-                var expectedAttributeCount = numberOfTags + (tc.ResponseExpected ? 1 : 0);
+                var expectedAttributeCount = numberOfTags + (tc.ResponseExpected ? 2 : 0); // responsecode + protocolversion
 
                 Assert.Equal(expectedAttributeCount, attributes.Count);
 
@@ -555,12 +552,10 @@ public partial class HttpClientTests
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerAddress && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerName]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeServerPort && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeNetPeerPort]);
                 Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeUrlScheme && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpScheme]);
-#if !NET8_0_OR_GREATER
-                Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
-#endif
 
                 if (tc.ResponseExpected)
                 {
+                    Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpFlavor]);
                     Assert.Contains(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode && kvp.Value.ToString() == normalizedAttributesTestCase[SemanticConventions.AttributeHttpStatusCode]);
 
                     if (tc.ResponseCode >= 400)
@@ -570,6 +565,7 @@ public partial class HttpClientTests
                 }
                 else
                 {
+                    Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeNetworkProtocolVersion);
                     Assert.DoesNotContain(attributes, kvp => kvp.Key == SemanticConventions.AttributeHttpResponseStatusCode);
 
 #if NET8_0_OR_GREATER
@@ -645,7 +641,7 @@ public partial class HttpClientTests
             .Build())
         {
             using var c = new HttpClient();
-            using var r = await c.GetAsync(url).ConfigureAwait(false);
+            using var r = await c.GetAsync(url);
         }
 
         if (enrichExpected)

@@ -84,7 +84,7 @@ public sealed class BasicTests
             .CreateClient())
         {
             // Act
-            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/values");
 
             // Assert
             response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -131,7 +131,7 @@ public sealed class BasicTests
             .CreateClient())
         {
             // Act
-            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/values");
 
             // Assert
             response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -178,7 +178,7 @@ public sealed class BasicTests
             request.Headers.Add("traceparent", $"00-{expectedTraceId}-{expectedSpanId}-01");
 
             // Act
-            var response = await client.SendAsync(request).ConfigureAwait(false);
+            var response = await client.SendAsync(request);
 
             // Assert
             response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -190,7 +190,6 @@ public sealed class BasicTests
         var activity = exportedItems[0];
 
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-        Assert.Equal("api/Values/{id}", activity.DisplayName);
 
         Assert.Equal(expectedTraceId, activity.Context.TraceId);
         Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -242,7 +241,7 @@ public sealed class BasicTests
                     }))
             {
                 using var client = testFactory.CreateClient();
-                using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response = await client.GetAsync("/api/values/2");
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
                 WaitForActivityExport(exportedItems, 1);
@@ -252,7 +251,6 @@ public sealed class BasicTests
             var activity = exportedItems[0];
 
             Assert.True(activity.Duration != TimeSpan.Zero);
-            Assert.Equal("api/Values/{id}", activity.DisplayName);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -293,8 +291,8 @@ public sealed class BasicTests
             using var client = testFactory.CreateClient();
 
             // Act
-            using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-            using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response1 = await client.GetAsync("/api/values");
+            using var response2 = await client.GetAsync("/api/values/2");
 
             // Assert
             response1.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -345,8 +343,8 @@ public sealed class BasicTests
             // Act
             using (var inMemoryEventListener = new InMemoryEventListener(AspNetCoreInstrumentationEventSource.Log))
             {
-                using var response1 = await client.GetAsync("/api/values").ConfigureAwait(false);
-                using var response2 = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+                using var response1 = await client.GetAsync("/api/values");
+                using var response2 = await client.GetAsync("/api/values/2");
 
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
                 response2.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -390,8 +388,8 @@ public sealed class BasicTests
 
             // Test TraceContext Propagation
             var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-            var response = await client.SendAsync(request).ConfigureAwait(false);
-            var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+            var response = await client.SendAsync(request);
+            var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(await response.Content.ReadAsStringAsync());
 
             response.EnsureSuccessStatusCode();
 
@@ -402,8 +400,8 @@ public sealed class BasicTests
             // Test Baggage Context Propagation
             request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-            response = await client.SendAsync(request).ConfigureAwait(false);
-            var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+            response = await client.SendAsync(request);
+            var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(await response.Content.ReadAsStringAsync());
 
             response.EnsureSuccessStatusCode();
 
@@ -456,12 +454,12 @@ public sealed class BasicTests
 
             // Test TraceContext Propagation
             var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-            var response = await client.SendAsync(request).ConfigureAwait(false);
+            var response = await client.SendAsync(request);
 
             // Ensure that filter was called
             Assert.True(isFilterCalled);
 
-            var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+            var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(await response.Content.ReadAsStringAsync());
 
             response.EnsureSuccessStatusCode();
 
@@ -472,8 +470,8 @@ public sealed class BasicTests
             // Test Baggage Context Propagation
             request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-            response = await client.SendAsync(request).ConfigureAwait(false);
-            var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+            response = await client.SendAsync(request);
+            var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(await response.Content.ReadAsStringAsync());
 
             response.EnsureSuccessStatusCode();
 
@@ -540,7 +538,7 @@ public sealed class BasicTests
             request.Headers.TryAddWithoutValidation("baggage", "TestKey1=123,TestKey2=456");
 
             // Act
-            using var response = await client.SendAsync(request).ConfigureAwait(false);
+            using var response = await client.SendAsync(request);
         }
 
         stopSignal.WaitOne(5000);
@@ -594,7 +592,7 @@ public sealed class BasicTests
             .CreateClient();
 
         // Act
-        using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+        using var response = await client.GetAsync("/api/values");
 
         // Assert
         Assert.Equal(shouldFilterBeCalled, filterCalled);
@@ -629,7 +627,7 @@ public sealed class BasicTests
             })
             .CreateClient())
         {
-            using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/values/2");
             response.EnsureSuccessStatusCode();
             WaitForActivityExport(exportedItems, 2);
         }
@@ -645,10 +643,9 @@ public sealed class BasicTests
         Assert.Equal(activityName, middlewareActivity.OperationName);
         Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-        // tag http.route should be added on activity started by asp.net core
-        Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
+        // tag http.method should be added on activity started by asp.net core
+        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
-        Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
     }
 
     [Theory]
@@ -695,7 +692,7 @@ public sealed class BasicTests
 
         try
         {
-            using var response = await client.SendAsync(message).ConfigureAwait(false);
+            using var response = await client.SendAsync(message);
             response.EnsureSuccessStatusCode();
         }
         catch
@@ -748,7 +745,7 @@ public sealed class BasicTests
             })
             .CreateClient())
         {
-            using var response = await client.GetAsync("/api/values/2").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/values/2");
             response.EnsureSuccessStatusCode();
             WaitForActivityExport(exportedItems, 2);
         }
@@ -764,10 +761,9 @@ public sealed class BasicTests
         Assert.Equal(activityName, middlewareActivity.OperationName);
         Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-        // tag http.route should not be added on activity started by asp.net core as it will not be found during OnEventWritten event
-        Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+        // tag http.method should be added on activity started by asp.net core
+        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
-        Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
     }
 
 #if NET7_0_OR_GREATER
@@ -798,7 +794,7 @@ public sealed class BasicTests
             .CreateClient())
         {
             // Act
-            using var response = await client.GetAsync("/api/values").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/values");
 
             // Assert
             response.EnsureSuccessStatusCode(); // Status Code 200-299
@@ -831,7 +827,7 @@ public sealed class BasicTests
             .CreateClient())
         {
             // Act
-            using var response = await client.GetAsync("/api/error").ConfigureAwait(false);
+            using var response = await client.GetAsync("/api/error");
 
             WaitForActivityExport(exportedItems, 1);
         }
@@ -896,7 +892,7 @@ public sealed class BasicTests
             using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
 
             // Act
-            using var response = await client.SendAsync(request).ConfigureAwait(false);
+            using var response = await client.SendAsync(request);
         }
 
         Assert.Equal(0, numberOfUnSubscribedEvents);
@@ -973,7 +969,7 @@ public sealed class BasicTests
                 using var request = new HttpRequestMessage(HttpMethod.Get, "/api/error");
 
                 // Act
-                using var response = await client.SendAsync(request).ConfigureAwait(false);
+                using var response = await client.SendAsync(request);
             }
             catch
             {

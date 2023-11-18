@@ -41,7 +41,7 @@ public sealed class Metric
         ("OpenTelemetry.Instrumentation.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.time_in_queue"),
-        ("System.Net.NameResolution", "dns.lookups.duration"),
+        ("System.Net.NameResolution", "dns.lookup.duration"),
     };
 
     // Long default histogram bounds. Not based on a standard. May change in the future.
@@ -60,6 +60,7 @@ public sealed class Metric
         AggregationTemporality temporality,
         int maxMetricPointsPerMetricStream,
         bool emitOverflowAttribute,
+        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilter? exemplarFilter = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
@@ -166,7 +167,7 @@ public sealed class Metric
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, exemplarFilter);
+        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
         this.InstrumentDisposed = false;
     }

@@ -51,7 +51,7 @@ public class RoutingTestFixture : IDisposable
         var app = this.apps[scenario];
         var baseUrl = app.Urls.First();
         var url = $"{baseUrl}{path}";
-        await HttpClient.GetAsync(url).ConfigureAwait(false);
+        await HttpClient.GetAsync(url);
     }
 
     public void AddTestResult(RoutingTestResult result)
@@ -77,16 +77,14 @@ public class RoutingTestFixture : IDisposable
         var sb = new StringBuilder();
         sb.AppendLine($"# Test results for ASP.NET Core {Environment.Version.Major}");
         sb.AppendLine();
-        sb.AppendLine("| Span http.route | Metric http.route | App | Test Name |");
-        sb.AppendLine("| - | - | - | - |");
+        sb.AppendLine("| http.route | App | Test Name |");
+        sb.AppendLine("| - | - | - |");
 
         for (var i = 0; i < this.testResults.Count; ++i)
         {
             var result = this.testResults[i];
-            var emoji1 = result.TestCase.CurrentActivityHttpRoute == null ? ":green_heart:" : ":broken_heart:";
-            var emoji2 = result.TestCase.CurrentMetricHttpRoute == null ? ":green_heart:" : ":broken_heart:";
-            sb.Append($"| {emoji1} | {emoji2} ");
-            sb.AppendLine($"| {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({MakeAnchorTag(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
+            var emoji = result.TestCase.CurrentHttpRoute == null ? ":green_heart:" : ":broken_heart:";
+            sb.AppendLine($"| {emoji} | {result.TestCase.TestApplicationScenario} | [{result.TestCase.Name}]({MakeAnchorTag(result.TestCase.TestApplicationScenario, result.TestCase.Name)}) |");
         }
 
         for (var i = 0; i < this.testResults.Count; ++i)
