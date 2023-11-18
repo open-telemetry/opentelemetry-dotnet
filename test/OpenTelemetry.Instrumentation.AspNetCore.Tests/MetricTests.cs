@@ -148,49 +148,28 @@ public class MetricTests(WebApplicationFactory<Program> factory)
                 }));
         }
 
-        //var builder = WebApplication.CreateBuilder();
-        //builder.WebHost.UseUrls("http://*:0");
-        //ConfigureTestServices(builder.Services);
-        //builder.Services.AddRateLimiter(_ => _
-        //.AddFixedWindowLimiter(policyName: "fixed", options =>
-        //{
-        //    options.PermitLimit = 4;
-        //    options.Window = TimeSpan.FromSeconds(12);
-        //    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        //    options.QueueLimit = 2;
-        //}));
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseUrls("http://*:0");
+        ConfigureTestServices(builder.Services);
 
-        //builder.Logging.ClearProviders();
-        //var app = builder.Build();
+        builder.Logging.ClearProviders();
+        var app = builder.Build();
 
-        //app.UseRateLimiter();
+        app.UseRateLimiter();
 
-        //static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
+        static string GetTicks() => (DateTime.Now.Ticks & 0x11111).ToString("00000");
 
-        //app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
-        //                           .RequireRateLimiting("fixed");
+        app.MapGet("/", () => Results.Ok($"Hello {GetTicks()}"))
+                                   .RequireRateLimiting("fixed");
 
-        //_ = app.RunAsync();
+        _ = app.RunAsync();
 
-        using (var client = this.factory
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(ConfigureTestServices);
-                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                builder.Configure(app => app.UseRateLimiter());
-            })
-            .CreateClient())
-        {
-            var response = await client.GetAsync("/api/values").ConfigureAwait(false);
-            Assert.True(response.IsSuccessStatusCode);
-        }
+        var url = app.Urls.ToArray()[0];
+        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
 
-        //var url = app.Urls.ToArray()[0];
-        //var portNumber = url.Substring(url.LastIndexOf(':') + 1);
-
-        //using var client = new HttpClient();
-        //var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
-        //Assert.True(res.IsSuccessStatusCode);
+        using var client = new HttpClient();
+        var res = await client.GetAsync($"http://localhost:{portNumber}/").ConfigureAwait(false);
+        Assert.True(res.IsSuccessStatusCode);
 
         this.meterProvider.Dispose();
 

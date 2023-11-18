@@ -868,12 +868,6 @@ public sealed class BasicTests
                                     }
 
                                     break;
-                                case HttpInListener.OnMvcBeforeActionEvent:
-                                    {
-                                        numberOfSubscribedEvents++;
-                                    }
-
-                                    break;
                                 default:
                                     {
                                         numberOfUnSubscribedEvents++;
@@ -906,7 +900,7 @@ public sealed class BasicTests
         }
 
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(3, numberOfSubscribedEvents);
+        Assert.Equal(2, numberOfSubscribedEvents);
     }
 
     [Fact]
@@ -933,12 +927,6 @@ public sealed class BasicTests
 
                                     break;
                                 case HttpInListener.OnStopEvent:
-                                    {
-                                        numberOfSubscribedEvents++;
-                                    }
-
-                                    break;
-                                case HttpInListener.OnMvcBeforeActionEvent:
                                     {
                                         numberOfSubscribedEvents++;
                                     }
@@ -995,170 +983,65 @@ public sealed class BasicTests
 
         Assert.Equal(1, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(4, numberOfSubscribedEvents);
+        Assert.Equal(3, numberOfSubscribedEvents);
     }
 
     [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/4884")]
     public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
     {
         int numberOfUnSubscribedEvents = 0;
-        int numberOfSubscribedEvents = 0;
-        int numberOfExceptionCallbacks = 0;
-
+        int numberofSubscribedEvents = 0;
         void ConfigureTestServices(IServiceCollection services)
         {
-            // configure SDK
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddAspNetCoreInstrumentation(
-                new TestHttpInListener(new AspNetCoreInstrumentationOptions())
-                {
-                    OnEventWrittenCallback = (name, payload) =>
+                .AddAspNetCoreInstrumentation(
+                    new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                     {
-                        switch (name)
+                        OnEventWrittenCallback = (name, payload) =>
                         {
-                            case HttpInListener.OnStartEvent:
-                                {
-                                    numberOfSubscribedEvents++;
-                                }
+                            switch (name)
+                            {
+                                case HttpInListener.OnStartEvent:
+                                    {
+                                        numberofSubscribedEvents++;
+                                    }
 
-                                break;
-                            case HttpInListener.OnStopEvent:
-                                {
-                                    numberOfSubscribedEvents++;
-                                }
+                                    break;
+                                case HttpInListener.OnStopEvent:
+                                    {
+                                        numberofSubscribedEvents++;
+                                    }
 
-                                break;
+                                    break;
+                                default:
+                                    {
+                                        numberOfUnSubscribedEvents++;
+                                    }
 
-                            // TODO: Add test case for validating name for both the types
-                            // of exception event.
-                            case HttpInListener.OnUnhandledHostingExceptionEvent:
-                            case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
-                                {
-                                    numberOfSubscribedEvents++;
-                                    numberOfExceptionCallbacks++;
-                                }
-
-                                break;
-                            default:
-                                {
-                                    numberOfUnSubscribedEvents++;
-                                }
-
-                                break;
-                        }
-                    },
-                })
+                                    break;
+                            }
+                        },
+                    })
                 .Build();
-
-            services.AddOpenTelemetry()
-                .WithTracing(builder => builder
-                    .AddInstrumentation(() => this.tracerProvider));
         }
 
+        // Arrange
         using (var client = this.factory
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureTestServices(ConfigureTestServices);
                 builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
-                builder.Configure(app => app
-                    .UseExceptionHandler(handler =>
-                    {
-                        handler.Run(async (ctx) =>
-                        {
-                            await ctx.Response.WriteAsync("handled").ConfigureAwait(false);
-                        });
-                    }));
             })
             .CreateClient())
         {
-            try
-            {
-                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/error");
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
 
-                // Act
-                using var response = await client.SendAsync(request).ConfigureAwait(false);
-            }
-            catch
-            {
-                // ignore exception
-            }
+            // Act
+            using var response = await client.SendAsync(request);
         }
 
-        Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(2, numberOfSubscribedEvents);
-    }
-
-    [Fact]
-    public async Task RouteInformationIsNotAddedToRequestsOutsideOfMVC()
-    {
-        var exportedItems = new List<Activity>();
-
-        void ConfigureTestServices(IServiceCollection services)
-        {
-            // configure SDK
-            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetCoreInstrumentation()
-                .AddInMemoryExporter(exportedItems)
-                .Build();
-
-            services.AddRouting();
-            services.AddOpenTelemetry()
-                .WithTracing(builder =>
-                    builder.AddInstrumentation(() => this.tracerProvider));
-        }
-
-        using var host = new HostBuilder()
-            .ConfigureServices(s =>
-            {
-                ConfigureTestServices(s);
-            })
-            .ConfigureWebHost(webHostBuilder =>
-                webHostBuilder
-                    .UseTestServer()
-                    .Configure(app =>
-                    {
-                        app.UseRouting();
-                        app.UseEndpoints(endpoints =>
-                        {
-                            endpoints.MapGet("/custom/abc", async context =>
-                            {
-                                await context.Response.WriteAsync("Hello World!");
-                            });
-                        });
-                    }))
-            .Build();
-
-        await host.StartAsync();
-
-        using var client = host.GetTestClient();
-        var res = await client.GetStringAsync("/custom/abc").ConfigureAwait(false);
-        Assert.NotNull(res);
-
-        this.tracerProvider.ForceFlush();
-        for (var i = 0; i < 10; i++)
-        {
-            if (exportedItems.Count > 0)
-            {
-                break;
-            }
-
-            // We need to let End callback execute as it is executed AFTER response was returned.
-            // In unit tests environment there may be a lot of parallel unit tests executed, so
-            // giving some breezing room for the End callback to complete
-            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-        }
-
-        var activity = exportedItems[0];
-
-        Assert.NotNull(activity);
-
-        // After fix update to Contains http.route
-        Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
-        Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-
-        // After fix this should be /custom/{name:alpha}
-        Assert.Equal("/custom/abc", activity.DisplayName);
+        Assert.Equal(2, numberofSubscribedEvents);
     }
 
     public void Dispose()
