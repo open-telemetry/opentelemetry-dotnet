@@ -75,9 +75,11 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ReloadOfMetricsViaIConfigurationWithExportCleanupTest(bool useWithMetricsStyle)
+    [InlineData(false, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(true, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(false, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(true, MetricReaderTemporalityPreference.Cumulative)]
+    public void ReloadOfMetricsViaIConfigurationWithExportCleanupTest(bool useWithMetricsStyle, MetricReaderTemporalityPreference temporalityPreference)
     {
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
@@ -92,7 +94,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             useWithMetricsStyle,
             configureAppConfiguration: (context, builder) => builder.AddConfiguration(configuration),
             configureMeterProviderBuilder: builder => builder
-                .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = MetricReaderTemporalityPreference.Delta));
+                .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = temporalityPreference));
 
         var meterProvider = host.Services.GetRequiredService<MeterProvider>();
         var options = host.Services.GetRequiredService<IOptionsMonitor<MetricsOptions>>();
@@ -124,7 +126,20 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         meterProvider.ForceFlush();
 
-        Assert.Empty(exportedItems);
+        if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+        {
+            // Note: When in Cumulative the metric shows up on the export
+            // immediately after being deactivated and then is ignored.
+            AssertSingleMetricWithLongSum(exportedItems);
+
+            meterProvider.ForceFlush();
+            exportedItems.Clear();
+            Assert.Empty(exportedItems);
+        }
+        else
+        {
+            Assert.Empty(exportedItems);
+        }
 
         memory.Set($"Metrics:OpenTelemetry:EnabledMetrics:{meter.Name}:Default", "true");
 
@@ -134,7 +149,9 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         meterProvider.ForceFlush();
 
-        AssertSingleMetricWithLongSum(exportedItems);
+        AssertSingleMetricWithLongSum(
+            exportedItems,
+            expectedValue: temporalityPreference == MetricReaderTemporalityPreference.Delta ? 1 : 2);
 
         var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
 
@@ -147,16 +164,14 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentReactivatedEvents);
-
-        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 54);
-
-        Assert.Single(metricInstrumentRemovedEvents);
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ReloadOfMetricsViaIConfigurationWithoutExportCleanupTest(bool useWithMetricsStyle)
+    [InlineData(false, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(true, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(false, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(true, MetricReaderTemporalityPreference.Cumulative)]
+    public void ReloadOfMetricsViaIConfigurationWithoutExportCleanupTest(bool useWithMetricsStyle, MetricReaderTemporalityPreference temporalityPreference)
     {
         using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
 
@@ -172,7 +187,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             useWithMetricsStyle,
             configureAppConfiguration: (context, builder) => builder.AddConfiguration(configuration),
             configureMeterProviderBuilder: builder => builder
-                .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = MetricReaderTemporalityPreference.Delta));
+                .AddInMemoryExporter(exportedItems, reader => reader.TemporalityPreference = temporalityPreference));
 
         var meterProvider = host.Services.GetRequiredService<MeterProvider>();
         var options = host.Services.GetRequiredService<IOptionsMonitor<MetricsOptions>>();
@@ -203,10 +218,6 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentReactivatedEvents);
-
-        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 54);
-
-        Assert.Empty(metricInstrumentRemovedEvents);
     }
 
     private static void AssertSingleMetricWithLongSum(List<Metric> exportedItems, long expectedValue = 1)

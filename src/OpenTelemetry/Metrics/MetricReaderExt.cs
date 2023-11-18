@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public abstract partial class MetricReader
 {
-    private readonly ConcurrentDictionary<string, MetricStreamRegistration> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
     private readonly object instrumentCreationLock = new();
     private int maxMetricStreams;
@@ -52,34 +52,9 @@ public abstract partial class MetricReader
         {
             if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
             {
-                if (existingMetric.CleanupState != Metric.MetricCleanupNoState)
-                {
-                    bool activated = false;
+                ActivateMetricIfRequired(existingMetric);
 
-                    lock (existingMetric.CleanupLock)
-                    {
-                        if (existingMetric.CleanupState == Metric.MetricCleanupPending)
-                        {
-                            existingMetric.CleanupState = Metric.MetricCleanupNoState;
-                            activated = true;
-                        }
-                    }
-
-                    if (activated)
-                    {
-                        // Note: This case here is a metric was deactivated
-                        // and then reactivated before an export ran to
-                        // finish the cleanup.
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentReactivated(
-                            metricStreamIdentity.InstrumentName,
-                            metricStreamIdentity.MeterName);
-                        return existingMetric;
-                    }
-                }
-                else
-                {
-                    return existingMetric;
-                }
+                return existingMetric;
             }
 
             var index = ++this.metricIndex;
@@ -157,6 +132,8 @@ public abstract partial class MetricReader
 
                 if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
                 {
+                    ActivateMetricIfRequired(existingMetric);
+
                     metrics.Add(existingMetric);
                     continue;
                 }
@@ -266,26 +243,33 @@ public abstract partial class MetricReader
 
     private static void DeactivateMetric(Metric metric)
     {
-        metric.CleanupState = Metric.MetricCleanupPending;
+        metric.Status = Metric.MetricStatusDeactivating;
 
-        OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(metric.Name, metric.MeterName);
+        OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
+            metric.Name,
+            metric.MeterName);
+    }
+
+    private static void ActivateMetricIfRequired(Metric metric)
+    {
+        if (metric.Status != Metric.MetricStatusActive)
+        {
+            lock (metric.StatusLock)
+            {
+                metric.Status = Metric.MetricStatusActive;
+            }
+
+            // TODO: Should we reset metric data points & start time?
+
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentReactivated(
+                metric.Name,
+                metric.MeterName);
+        }
     }
 
     private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
     {
-        var registration = this.metricStreamNames.GetOrAdd(
-            metricStreamIdentity.MetricStreamName,
-            CreateRegistration);
-
-        var currentRegistrationCount = Interlocked.CompareExchange(ref registration.RegistrationCount, 1, -1);
-
-        if (currentRegistrationCount == -1)
-        {
-            // Most common case where instrument being added is the first registration.
-            return;
-        }
-
-        if (currentRegistrationCount > 0)
+        if (!this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName))
         {
             OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
                 metricStreamIdentity.InstrumentName,
@@ -293,19 +277,6 @@ public abstract partial class MetricReader
                 "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
                 "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
         }
-        else
-        {
-            // Note: This case here is a metric was deactivated and then
-            // reactivated after an export ran and finished the cleanup.
-            OpenTelemetrySdkEventSource.Log.MetricInstrumentReactivated(
-                metricStreamIdentity.InstrumentName,
-                metricStreamIdentity.MeterName);
-        }
-
-        Interlocked.Increment(ref registration.RegistrationCount);
-
-        static MetricStreamRegistration CreateRegistration(string metricStreamName)
-            => new() { RegistrationCount = -1 };
     }
 
     private Batch<Metric> GetMetricsBatch()
@@ -320,19 +291,25 @@ public abstract partial class MetricReader
             int metricCountCurrentBatch = 0;
             for (int i = 0; i < target; i++)
             {
-                ref var metric = ref this.metrics![i];
+                var metric = this.metrics![i];
                 if (metric != null)
                 {
+                    var metricStatus = metric.Status;
+                    if (metricStatus != Metric.MetricStatusActive)
+                    {
+                        if (metricStatus == Metric.MetricStatusInactive)
+                        {
+                            continue;
+                        }
+
+                        this.CompleteMetricDeactivation(metric);
+                    }
+
                     int metricPointSize = metric.Snapshot();
 
                     if (metricPointSize > 0)
                     {
                         this.metricsCurrentBatch![metricCountCurrentBatch++] = metric;
-                    }
-
-                    if (metric.CleanupState == Metric.MetricCleanupPending)
-                    {
-                        this.CleanupMetric(ref metric);
                     }
                 }
             }
@@ -346,39 +323,18 @@ public abstract partial class MetricReader
         }
     }
 
-    private void CleanupMetric(ref Metric metric)
+    private void CompleteMetricDeactivation(Metric metric)
     {
-        lock (metric.CleanupLock)
+        lock (metric.StatusLock)
         {
-            if (metric.CleanupState != Metric.MetricCleanupPending)
+            if (metric.Status != Metric.MetricStatusDeactivating)
             {
                 // Note: If we fall here it means the metric was reactivated
                 // while we were waiting on the lock.
                 return;
             }
 
-            var metricStreamNamesLookupResult = this.metricStreamNames.TryGetValue(metric.InstrumentIdentity.MetricStreamName, out var registration);
-            Debug.Assert(metricStreamNamesLookupResult, "result was false");
-            Debug.Assert(registration != null, "registration was null");
-            Interlocked.Decrement(ref registration!.RegistrationCount);
-
-            metric.CleanupState = Metric.MetricCleanupComplete;
+            metric.Status = Metric.MetricStatusInactive;
         }
-
-        var instrumentIdentityToMetricLookupResult = this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
-        Debug.Assert(instrumentIdentityToMetricLookupResult, "instrumentIdentityToMetricLookupResult was false");
-
-        OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric.Name, metric.MeterName);
-
-        // Note: This is a pointer to the storage for the metric inside
-        // this.metrics array. Clearing using the pointer is faster than
-        // re-accessing it which will incur a bounds check (this.metrics[i] =
-        // null).
-        metric = null!;
-    }
-
-    private sealed class MetricStreamRegistration
-    {
-        public int RegistrationCount;
     }
 }

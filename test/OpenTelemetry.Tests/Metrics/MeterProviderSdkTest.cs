@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
@@ -44,5 +46,48 @@ public class MeterProviderSdkTest
         using var provider = currentBuilder.Build();
 
         Assert.NotNull(provider);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TransientMeterReusesMetricTest(bool withView)
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        var builder = Sdk.CreateMeterProviderBuilder()
+            .SetMaxMetricStreams(1)
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems);
+
+        if (withView)
+        {
+            builder.AddView(i => null);
+        }
+
+        using var meterProvider = builder
+            .Build() as MeterProviderSdk;
+
+        Assert.NotNull(meterProvider);
+
+        RunTest();
+        RunTest();
+
+        void RunTest()
+        {
+            exportedItems.Clear();
+
+            var meter = new Meter(meterName);
+
+            var counter = meter.CreateCounter<int>("Counter");
+            counter.Add(1);
+
+            meter.Dispose();
+
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+        }
     }
 }
