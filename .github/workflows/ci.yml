@@ -148,6 +148,14 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/verifyaotcompat.yml
 
+  run-concurrency-tests:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'packaged-code')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/concurrency-tests.yml
+
   build-test:
     needs: [
       lint-misspell-sanitycheck,
@@ -162,7 +170,8 @@ jobs:
       w3c-trace-context-integration-test,
       validate-packages,
       generate-docs,
-      verify-aot-compat
+      verify-aot-compat,
+      run-concurrency-tests
       ]
     if: always() && !cancelled() && !contains(needs.*.result, 'failure')
     runs-on: windows-latest
