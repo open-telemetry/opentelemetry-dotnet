@@ -245,6 +245,8 @@ public abstract partial class MetricReader
     {
         metric.Status = Metric.MetricStatusDeactivating;
 
+        // TODO: Should we set end time here?
+
         OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
             metric.Name,
             metric.MeterName);
@@ -259,7 +261,9 @@ public abstract partial class MetricReader
                 metric.Status = Metric.MetricStatusActive;
             }
 
-            // TODO: Should we reset metric data points & start time?
+            // TODO: Should we set start time here? Should we reset the data
+            // points? What if we are activating before an export/collect has
+            // had a chance to export the previously collected data?
 
             OpenTelemetrySdkEventSource.Log.MetricInstrumentReactivated(
                 metric.Name,
