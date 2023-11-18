@@ -25,7 +25,7 @@ Details: [OTEL1000](./OTEL1000.md)
 
 Description: Log Bridge API
 
-Details: [OTEL1000](./OTEL1001.md)
+Details: [OTEL1001](./OTEL1001.md)
 
 ## Inactive
 
