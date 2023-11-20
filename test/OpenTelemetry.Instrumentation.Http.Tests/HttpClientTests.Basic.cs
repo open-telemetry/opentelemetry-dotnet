@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
 #if NETFRAMEWORK
 using System.Net;
 using System.Net.Http;
