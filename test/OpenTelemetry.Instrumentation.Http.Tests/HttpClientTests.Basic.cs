@@ -30,8 +30,6 @@ using OpenTelemetry.Trace;
 using Xunit;
 using Xunit.Abstractions;
 
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
-
 namespace OpenTelemetry.Instrumentation.Http.Tests;
 
 public partial class HttpClientTests : IDisposable
@@ -393,12 +391,7 @@ public partial class HttpClientTests : IDisposable
             Method = new HttpMethod(originalMethod),
         };
 
-        var configuration = new ConfigurationBuilder()
-           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
-           .Build();
-
         using var traceprovider = Sdk.CreateTracerProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddHttpClientInstrumentation()
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -453,12 +446,7 @@ public partial class HttpClientTests : IDisposable
             Method = new HttpMethod(originalMethod),
         };
 
-        var configuration = new ConfigurationBuilder()
-           .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
-           .Build();
-
         using var meterprovider = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
             .AddHttpClientInstrumentation()
             .AddInMemoryExporter(metricItems)
             .Build();
@@ -523,15 +511,15 @@ public partial class HttpClientTests : IDisposable
         Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
 
         var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
-        Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 200);
+        Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 200);
 #else
         Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnEnd/OnShutdown/Dispose called.
 
         var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
-        Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 302);
+        Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 302);
 
         var secondActivity = (Activity)processor.Invocations[4].Arguments[0]; // Second OnEnd
-        Assert.Contains(secondActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 200);
+        Assert.Contains(secondActivity.TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 200);
 #endif
     }
 

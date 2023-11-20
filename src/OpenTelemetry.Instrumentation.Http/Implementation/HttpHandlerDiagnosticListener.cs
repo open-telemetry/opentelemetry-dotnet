@@ -25,7 +25,6 @@ using System.Reflection;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation;
 
@@ -49,8 +48,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     private static readonly PropertyFetcher<Exception> StopExceptionFetcher = new("Exception");
     private static readonly PropertyFetcher<TaskStatus> StopRequestStatusFetcher = new("RequestTaskStatus");
     private readonly HttpClientInstrumentationOptions options;
-    private readonly bool emitOldAttributes;
-    private readonly bool emitNewAttributes;
 
     static HttpHandlerDiagnosticListener()
     {
@@ -68,10 +65,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         : base("HttpHandlerDiagnosticListener")
     {
         this.options = options;
-
-        this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-
-        this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -168,51 +161,33 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
             }
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (this.emitOldAttributes)
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
+            if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
             {
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
-                activity.SetTag(SemanticConventions.AttributeNetPeerName, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetPeerPort, request.RequestUri.Port);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
+                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
+            }
+            else
+            {
+                // Set to default "_OTHER" as per spec.
+                // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
+                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
+                activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method.Method);
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (this.emitNewAttributes)
+            activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
+            if (!request.RequestUri.IsDefaultPort)
             {
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method.Method);
-                }
+                activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
+            }
 
-                activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
-                if (!request.RequestUri.IsDefaultPort)
-                {
-                    activity.SetTag(SemanticConventions.AttributeServerPort, request.RequestUri.Port);
-                }
+            activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
 
-                activity.SetTag(SemanticConventions.AttributeUrlFull, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-
-                if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
+            if (request.Headers.TryGetValues("User-Agent", out var userAgentValues))
+            {
+                var userAgent = userAgentValues.FirstOrDefault();
+                if (!string.IsNullOrEmpty(userAgent))
                 {
-                    var userAgent = userAgentValues.FirstOrDefault();
-                    if (!string.IsNullOrEmpty(userAgent))
-                    {
-                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
-                    }
+                    activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
                 }
             }
 
@@ -275,19 +250,11 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
                 }
 
-                if (this.emitOldAttributes)
+                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.Version));
+                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                if (activity.Status == ActivityStatusCode.Error)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-                }
-
-                if (this.emitNewAttributes)
-                {
-                    activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetProtocolVersionString(response.Version));
-                    activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-                    if (activity.Status == ActivityStatusCode.Error)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeErrorType, TelemetryHelper.GetStatusCodeString(response.StatusCode));
-                    }
+                    activity.SetTag(SemanticConventions.AttributeErrorType, TelemetryHelper.GetStatusCodeString(response.StatusCode));
                 }
 
                 try
@@ -341,10 +308,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
-            if (this.emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeErrorType, GetErrorType(exc));
-            }
+            activity.SetTag(SemanticConventions.AttributeErrorType, GetErrorType(exc));
 
             if (this.options.RecordException)
             {
