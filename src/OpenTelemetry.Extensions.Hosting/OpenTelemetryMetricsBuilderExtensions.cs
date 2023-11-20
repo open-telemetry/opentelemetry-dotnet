@@ -71,9 +71,9 @@ internal static class OpenTelemetryMetricsBuilderExtensions
 
         Guard.ThrowIfNull(configure);
 
-        var builder = new MeterProviderBuilderBase(services);
+        var builder = new MeterProviderBuilderBase(services!);
 
-        services.TryAddEnumerable(
+        services!.TryAddEnumerable(
             ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricsListener>());
 
         configure(builder);
