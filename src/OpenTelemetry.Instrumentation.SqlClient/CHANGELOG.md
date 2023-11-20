@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-beta.3
+
+Released 2023-Nov-17
+
 * Updated `Microsoft.Extensions.Configuration` and
   `Microsoft.Extensions.Options` package version to `8.0.0`.
   ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
