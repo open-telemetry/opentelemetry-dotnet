@@ -125,6 +125,19 @@ Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
 * If user sets the environment variable to `http/dup`, the instrumentation
   emits both `http.client.duration` and `http.client.request.duration`.
 
+##### Metrics on .NET8.0 and above frameworks
+
+This library enables all [built-in
+metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net)
+by default when targeting .NET8.0 and above.
+[Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
+can be used to opt-out of metrics that you do not need. Alternatively, you can
+also enable selected set of metrics by calling `AddMeter()` extension on
+`MeterProviderBuilder` for meters listed in
+[built-in-metrics-system-net](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
+Note that if you choose to enable metrics via `AddMeter()` then you do not need
+to call `AddHttpClientInstrumentation()` on `MeterProviderBuilder`.
+
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
