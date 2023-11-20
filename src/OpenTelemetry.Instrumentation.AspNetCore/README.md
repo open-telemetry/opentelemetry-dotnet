@@ -123,10 +123,10 @@ metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-as
 by default when targeting ASP.NET Core 8.0 and above framework.
 [Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
 can be used to opt-out of metrics that you do not need. Alternatively, you can
-also enable selected set of metrics by calling `AddMeter()` extension on
+also enable a selected set of metrics by calling the `AddMeter()` extension on
 `MeterProviderBuilder` for meters listed in
 [built-in-metrics-aspnetcore](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
-Note that if you choose to enable metrics via `AddMeter()` then you do not need
+Note that if you choose to enable metrics via `AddMeter()`, then you do not need
 to call `AddAspNetCoreInstrumentation()` on `MeterProviderBuilder`.
 
 ## Advanced configuration
