@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-beta.3
+
+Released 2023-Nov-17
+
 * Removed the Activity Status Description that was being set during
   exceptions. Activity Status will continue to be reported as `Error`.
   This is a **breaking change**. `EnrichWithException` can be leveraged
