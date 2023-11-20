@@ -116,7 +116,7 @@ Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
 * If user sets the environment variable to `http/dup`, the instrumentation
   emits both `http.server.duration` and `http.server.request.duration`.
 
-##### Metrics on ASP.NET Core 8.0 and above frameworks
+##### Metrics on ASP.NET Core 8.0 and above
 
 This library enables all [built-in
 metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore)
