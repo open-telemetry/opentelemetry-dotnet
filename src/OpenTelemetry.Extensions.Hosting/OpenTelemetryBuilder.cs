@@ -82,10 +82,9 @@ public sealed class OpenTelemetryBuilder
     /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="MeterProvider"/> will be created for a given
     /// <see cref="IServiceCollection"/>.</item>
-    /// <item>This method automatically calls <see
-    /// cref="MetricsServiceExtensions.AddMetrics(IServiceCollection)"/> and
-    /// registers an <see cref="IMetricsListener"/> named 'OpenTelemetry' into
-    /// the <see cref="IServiceCollection"/>.</item>
+    /// <item>This method automatically registers an <see
+    /// cref="IMetricsListener"/> named 'OpenTelemetry' into the <see
+    /// cref="IServiceCollection"/>.</item>
     /// </list>
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
@@ -103,8 +102,9 @@ public sealed class OpenTelemetryBuilder
     /// calls.</returns>
     public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder> configure)
     {
-        this.Services.AddMetrics(
-            builder => builder.UseOpenTelemetry(configure));
+        OpenTelemetryMetricsBuilderExtensions.RegisterMetricsListener(
+            this.Services,
+            configure);
 
         return this;
     }

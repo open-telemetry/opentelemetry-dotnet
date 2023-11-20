@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -56,15 +57,25 @@ internal static class OpenTelemetryMetricsBuilderExtensions
         Action<MeterProviderBuilder> configure)
     {
         Guard.ThrowIfNull(metricsBuilder);
+
+        RegisterMetricsListener(metricsBuilder.Services, configure);
+
+        return metricsBuilder;
+    }
+
+    internal static void RegisterMetricsListener(
+        IServiceCollection services,
+        Action<MeterProviderBuilder> configure)
+    {
+        Debug.Assert(services != null, "services was null");
+
         Guard.ThrowIfNull(configure);
 
-        var builder = new MeterProviderBuilderBase(metricsBuilder.Services);
+        var builder = new MeterProviderBuilderBase(services);
 
-        metricsBuilder.Services.TryAddEnumerable(
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricsListener>());
 
         configure(builder);
-
-        return metricsBuilder;
     }
 }
