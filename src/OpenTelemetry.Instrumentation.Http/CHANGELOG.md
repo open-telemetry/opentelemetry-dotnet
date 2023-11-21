@@ -3,9 +3,9 @@
 ## Unreleased
 
 * Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
-  library will now emit
+  library will now emit only the
   [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
-  semantic conventions by default.
+  semantic conventions.
   ([#5068](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5068))
 
 ## 1.6.0-beta.3
