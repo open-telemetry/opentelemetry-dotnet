@@ -75,13 +75,16 @@ public static class OpenTelemetryLoggingExtensions
 
         var services = builder.Services;
 
-        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        RegisterLoggerProviderOptions(services);
-
         if (configureOptions != null)
         {
+            // TODO: Move this below the RegisterLoggerProviderOptions call so
+            // that user-supplied delegate fires AFTER the options are bound to
+            // Logging:OpenTelemetry configuration.
             services.Configure(configureOptions);
         }
+
+        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
+        RegisterLoggerProviderOptions(services);
 
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
