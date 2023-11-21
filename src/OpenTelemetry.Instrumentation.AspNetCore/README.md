@@ -129,7 +129,7 @@ newer versions.
 > The `http.server.request.duration` metric is emitted in `seconds` as
     per the semantic convention. While the convention [recommends using custom
     histogram
-    buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+    buckets](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md)
     , this feature is not yet available via .NET Metrics API. A
     [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
     has been included in OTel SDK starting version `1.6.0` which applies
