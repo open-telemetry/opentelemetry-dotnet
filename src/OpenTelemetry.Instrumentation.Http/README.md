@@ -117,7 +117,7 @@ the `AddMeter()` extension on `MeterProviderBuilder` for meters listed in
 [built-in-metrics-system-net](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
 If you choose to enable metrics via `AddMeter()`, then you do not need to call
 `AddHttpClientInstrumentation()`. `AddHttpClientInstrumentation()` internally
-also calls `AddMeter()` for the built-in meters from ASP.NET Core. There is no
+also calls `AddMeter()` for the built-in meters from System.Net. There is no
 difference in the features or metrics that are emitted when enabling via
 `AddMeter()` versus via `AddHttpClientInstrumentation()`.
 
