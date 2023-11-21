@@ -776,20 +776,20 @@ public class HttpWebRequestActivitySourceTests : IDisposable
     private static void VerifyActivityStartTags(string netPeerName, int? netPeerPort, string method, string url, Activity activity)
     {
         Assert.NotNull(activity.TagObjects);
-        Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
+        Assert.Equal(method, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod));
         if (netPeerPort != null)
         {
-            Assert.Equal(netPeerPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+            Assert.Equal(netPeerPort, activity.GetTagValue(SemanticConventions.AttributeServerPort));
         }
 
-        Assert.Equal(netPeerName, activity.GetTagValue(SemanticConventions.AttributeNetPeerName));
+        Assert.Equal(netPeerName, activity.GetTagValue(SemanticConventions.AttributeServerAddress));
 
-        Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+        Assert.Equal(url, activity.GetTagValue(SemanticConventions.AttributeUrlFull));
     }
 
     private static void VerifyActivityStopTags(int statusCode, Activity activity)
     {
-        Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+        Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpResponseStatusCode));
     }
 
     private static void ActivityEnrichment(Activity activity, string method, object obj)
