@@ -247,6 +247,8 @@ public abstract class AggregatorTestsBase
     [InlineData("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
     [InlineData("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
+    [InlineData("OpenTelemetry.Instrumentation.AspNet", "http.server.duration", "ms", KnownHistogramBuckets.Default)]
+    [InlineData("OpenTelemetry.Instrumentation.AspNet", "http.server.request.duration", "s", KnownHistogramBuckets.DefaultShortSeconds)]
     [InlineData("OpenTelemetry.Instrumentation.AspNetCore", "http.server.duration", "ms", KnownHistogramBuckets.Default)]
     [InlineData("OpenTelemetry.Instrumentation.Http", "http.client.duration", "ms", KnownHistogramBuckets.Default)]
     [InlineData("System.Net.Http", "http.client.connection.duration", "s", KnownHistogramBuckets.DefaultLongSeconds)]
