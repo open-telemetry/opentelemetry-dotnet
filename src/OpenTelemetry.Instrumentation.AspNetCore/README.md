@@ -90,44 +90,44 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-A different metric is emitted depending on whether a user opts-in to the new
-Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
+When the application is targeting `.NET6.0` or `NET7.0`, the instrumentation
+emits the following metric.
 
-* By default, the instrumentation emits the following metric.
+| Name  | Details |
+|-------|-----------------|
+| `http.server.request.duration` | [specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpserverrequestduration) |
 
-    | Name  | Instrument Type | Unit | Description | Attributes |
-    |-------|-----------------|------|-------------|------------|
-    | `http.server.duration` | Histogram | `ms` | Measures the duration of inbound HTTP requests. | http.flavor, http.scheme, http.method, http.status_code, net.host.name, net.host.port, http.route |
-
-* If user sets the environment variable to `http`, the instrumentation emits
-  the following metric.
-
-    | Name  | Instrument Type | Unit | Description | Attributes |
-    |-------|-----------------|------|-------------|------------|
-    | `http.server.request.duration` | Histogram | `s` | Measures the duration of inbound HTTP requests. | network.protocol.version, url.scheme, http.request.method, http.response.status_code, http.route |
-
-    This metric is emitted in `seconds` as per the semantic convention. While
-    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
-    , this feature is not yet available via .NET Metrics API.
-    A [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
-    has been included in OTel SDK starting version `1.6.0` which applies
-    recommended buckets by default for `http.server.request.duration`.
-
-* If user sets the environment variable to `http/dup`, the instrumentation
-  emits both `http.server.duration` and `http.server.request.duration`.
-
-##### Metrics on ASP.NET Core 8.0 and above
-
-This library enables all [built-in
+When the application is targeting `.NET8.0` and above, the instrumentation
+library enables all [built-in
 metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore)
-by default when targeting ASP.NET Core 8.0 and above framework.
-[Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
-can be used to opt-out of metrics that you do not need. Alternatively, you can
-also enable a selected set of metrics by calling the `AddMeter()` extension on
-`MeterProviderBuilder` for meters listed in
+by default.
+
+Note that the `AddAspNetCoreInstrumentation()` extension in `.NET8.0` and above
+is provided for ease of enabling all the built-in metrics via single line of
+code. Alternatively, you can also enable a selected set of metrics by calling
+the `AddMeter()` extension on `MeterProviderBuilder` for meters listed in
 [built-in-metrics-aspnetcore](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
-Note that if you choose to enable metrics via `AddMeter()`, then you do not need
-to call `AddAspNetCoreInstrumentation()` on `MeterProviderBuilder`.
+If you choose to enable metrics via `AddMeter()`, then you do not need to call
+`AddAspNetCoreInstrumentation()`. `AddAspNetCoreInstrumentation()` internally
+also calls `AddMeter()` for the built-in meters from ASP.NET Core. There is no
+difference in the features or metrics that are emitted when enabling via
+`AddMeter()` versus via `AddAspNetCoreInstrumentation()`.
+
+If you use `AddAspNetCoreInstrumentation()` and want to opt-out of metrics you
+do not need, you can use
+[Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
+to do so.
+
+##### http.server.request.duration metric
+
+This metric is emitted in `seconds` as per the semantic convention. While the
+convention [recommends using custom histogram
+buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+, this feature is not yet available via .NET Metrics API. A
+[workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+has been included in OTel SDK starting version `1.6.0` which applies recommended
+buckets by default for `http.server.request.duration`. This applies to all
+targeted frameworks.
 
 ## Advanced configuration
 
