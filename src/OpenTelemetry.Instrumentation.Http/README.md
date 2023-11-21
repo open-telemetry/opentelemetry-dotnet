@@ -99,42 +99,51 @@ to see how to enable this instrumentation in an ASP.NET application.
 
 #### List of metrics produced
 
-When the application is targeting `NETFRAMEWORK`, `.NET6.0` or `NET7.0`, the instrumentation
-emits the following metric.
+When the application targets `NETFRAMEWORK`, `.NET6.0` or `.NET7.0`, the
+instrumentation emits the following metric:
 
-| Name  | Details |
-|-------|-----------------|
-| `http.client.request.duration` | [specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpclientrequestduration) |
+| Name                              | Details                                                                                                       |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `http.client.request.duration`    | [Specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpclientrequestduration) |
 
-When the application is targeting `.NET8.0` and above, the instrumentation
-library enables all [built-in-metrics-system-net](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net)
-by default.
+Starting from `.NET8.0`, metrics instrumentation is natively implemented, and
+the HttpClient library has incorporated support for [built-in
+metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net)
+following the OpenTelemetry semantic conventions. These metrics in HttpClient
+include additional metrics beyond those defined in the
+[specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md),
+covering additional scenarios for HttpClient users. When the application targets
+`.NET8.0` and newer versions, the instrumentation library automatically enables
+all `built-in` metrics by default.
 
-Note that the `AddHttpClientInstrumentation()` extension in `.NET8.0` and above
-is provided for ease of enabling all the built-in metrics via single line of
-code. Alternatively, you can also enable a selected set of metrics by calling
-the `AddMeter()` extension on `MeterProviderBuilder` for meters listed in
+Note that the `AddHttpClientInstrumentation()` extension simplifies the process
+of enabling all built-in metrics via a single line of code. Alternatively, for
+more granular control over emitted metrics, you can utilize the `AddMeter()`
+extension on `MeterProviderBuilder` for meters listed in
 [built-in-metrics-system-net](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
-If you choose to enable metrics via `AddMeter()`, then you do not need to call
-`AddHttpClientInstrumentation()`. `AddHttpClientInstrumentation()` internally
-also calls `AddMeter()` for the built-in meters from System.Net. There is no
-difference in the features or metrics that are emitted when enabling via
-`AddMeter()` versus via `AddHttpClientInstrumentation()`.
+Using `AddMeter()` for metrics activation eliminates the need to take dependency
+on the instrumentation library package and calling
+`AddHttpClientInstrumentation()`.
 
-If you use `AddHttpClientInstrumentation()` and want to opt-out of metrics you
-do not need, you can use
+If you utilize `AddHttpClientInstrumentation()` and wish to exclude unnecessary
+metrics, you can utilize
 [Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
-to do so.
+to achieve this.
 
- > **Note**
-> http.client.request.duration metric is emitted in `seconds` as per the
-semantic convention. While the convention [recommends using custom histogram
-buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
-, this feature is not yet available via .NET Metrics API. A
-[workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
-has been included in OTel SDK starting version `1.6.0` which applies recommended
-buckets by default for `http.client.request.duration`. This applies to all
-targeted frameworks.
+**Note:** There is no difference in features or emitted metrics when enabling
+metrics using `AddMeter()` or `AddHttpClientInstrumentation()` on `.NET8.0` and
+newer versions.
+
+> **Note**
+> The `http.client.request.duration` metric is emitted in `seconds` as
+    per the semantic convention. While the convention [recommends using custom
+    histogram
+    buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
+    , this feature is not yet available via .NET Metrics API. A
+    [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+    has been included in OTel SDK starting version `1.6.0` which applies
+    recommended buckets by default for `http.client.request.duration`. This
+    applies to all targeted frameworks.
 
 ## Advanced configuration
 

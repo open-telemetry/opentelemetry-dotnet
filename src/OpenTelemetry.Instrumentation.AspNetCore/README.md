@@ -90,36 +90,43 @@ public void ConfigureServices(IServiceCollection services)
 
 #### List of metrics produced
 
-When the application is targeting `.NET6.0` or `NET7.0`, the instrumentation
-emits the following metric.
+When the application targets `.NET6.0` or `.NET7.0`, the instrumentation emits
+the following metric:
 
-| Name  | Details |
-|-------|-----------------|
-| `http.server.request.duration` | [specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpserverrequestduration) |
+| Name                              | Details                                                                                                       |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `http.server.request.duration`    | [Specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpserverrequestduration) |
 
-When the application is targeting `.NET8.0` and above, the instrumentation
-library enables all [built-in
+Starting from `.NET8.0`, metrics instrumentation is natively implemented, and
+the ASP.NET Core library has incorporated support for [built-in
 metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore)
-by default.
+following the OpenTelemetry semantic conventions. These metrics in ASP.NET Core
+include additional metrics beyond those defined in the
+[specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md),
+covering additional scenarios for ASP.NET Core users. When the application
+targets `.NET8.0` and newer versions, the instrumentation library automatically
+enables all `built-in` metrics by default.
 
-Note that the `AddAspNetCoreInstrumentation()` extension in `.NET8.0` and above
-is provided for ease of enabling all the built-in metrics via single line of
-code. Alternatively, you can also enable a selected set of metrics by calling
-the `AddMeter()` extension on `MeterProviderBuilder` for meters listed in
+Note that the `AddAspNetCoreInstrumentation()` extension simplifies the process
+of enabling all built-in metrics via a single line of code. Alternatively, for
+more granular control over emitted metrics, you can utilize the `AddMeter()`
+extension on `MeterProviderBuilder` for meters listed in
 [built-in-metrics-aspnetcore](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore).
-If you choose to enable metrics via `AddMeter()`, then you do not need to call
-`AddAspNetCoreInstrumentation()`. `AddAspNetCoreInstrumentation()` internally
-also calls `AddMeter()` for the built-in meters from ASP.NET Core. There is no
-difference in the features or metrics that are emitted when enabling via
-`AddMeter()` versus via `AddAspNetCoreInstrumentation()`.
+Using `AddMeter()` for metrics activation eliminates the need to take dependency
+on the instrumentation library package and calling
+`AddAspNetCoreInstrumentation()`.
 
-If you use `AddAspNetCoreInstrumentation()` and want to opt-out of metrics you
-do not need, you can use
+If you utilize `AddAspNetCoreInstrumentation()` and wish to exclude unnecessary
+metrics, you can utilize
 [Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
-to do so.
+to achieve this.
 
-  > **Note**
-> The http.server.request.duration metric is emitted in `seconds` as
+**Note:** There is no difference in features or emitted metrics when enabling
+metrics using `AddMeter()` or `AddAspNetCoreInstrumentation()` on `.NET8.0` and
+newer versions.
+
+> **Note**
+> The `http.server.request.duration` metric is emitted in `seconds` as
     per the semantic convention. While the convention [recommends using custom
     histogram
     buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
