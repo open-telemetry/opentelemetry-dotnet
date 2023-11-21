@@ -93,14 +93,14 @@ public void ConfigureServices(IServiceCollection services)
 When the application targets `.NET6.0` or `.NET7.0`, the instrumentation emits
 the following metric:
 
-| Name                              | Details                                                                                                       |
-|-----------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Name                              | Details                                                                                                                                                 |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `http.server.request.duration`    | [Specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpserverrequestduration) |
 
 Starting from `.NET8.0`, metrics instrumentation is natively implemented, and
 the ASP.NET Core library has incorporated support for [built-in
 metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore)
-following the OpenTelemetry semantic conventions. The library include additional
+following the OpenTelemetry semantic conventions. The library includes additional
 metrics beyond those defined in the
 [specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md),
 covering additional scenarios for ASP.NET Core users. When the application
