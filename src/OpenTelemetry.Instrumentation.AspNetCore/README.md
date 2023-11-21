@@ -118,7 +118,7 @@ do not need, you can use
 [Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
 to do so.
 
- > **Note**
+  > **Note**
 > The http.server.request.duration metric is emitted in `seconds` as
     per the semantic convention. While the convention [recommends using custom
     histogram
