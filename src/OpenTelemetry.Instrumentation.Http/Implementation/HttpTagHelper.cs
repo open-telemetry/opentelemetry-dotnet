@@ -28,12 +28,10 @@ internal static class HttpTagHelper
     private static readonly ConcurrentDictionary<string, string> MethodOperationNameCache = new();
     private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodOperationNameCache = new();
     private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodNameCache = new();
-    private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new();
 
     private static readonly Func<string, string> ConvertMethodToOperationNameRef = ConvertMethodToOperationName;
     private static readonly Func<HttpMethod, string> ConvertHttpMethodToOperationNameRef = ConvertHttpMethodToOperationName;
     private static readonly Func<HttpMethod, string> ConvertHttpMethodToNameRef = ConvertHttpMethodToName;
-    private static readonly Func<Version, string> ConvertProtocolVersionToStringRef = ConvertProtocolVersionToString;
 
     /// <summary>
     /// Gets the OpenTelemetry standard name for an activity based on its Http method.
@@ -55,13 +53,6 @@ internal static class HttpTagHelper
     /// <param name="method"><see cref="HttpMethod"/>.</param>
     /// <returns>Span method name.</returns>
     public static string GetNameForHttpMethod(HttpMethod method) => HttpMethodNameCache.GetOrAdd(method, ConvertHttpMethodToNameRef);
-
-    /// <summary>
-    /// Gets the OpenTelemetry standard version tag value for a span based on its protocol <see cref="Version"/>.
-    /// </summary>
-    /// <param name="protocolVersion"><see cref="Version"/>.</param>
-    /// <returns>Span flavor value.</returns>
-    public static string GetFlavorTagValueFromProtocolVersion(Version protocolVersion) => ProtocolVersionToStringCache.GetOrAdd(protocolVersion, ConvertProtocolVersionToStringRef);
 
     /// <summary>
     /// Gets the OpenTelemetry standard uri tag value for a span based on its request <see cref="Uri"/>.
@@ -92,6 +83,4 @@ internal static class HttpTagHelper
     private static string ConvertHttpMethodToOperationName(HttpMethod method) => $"HTTP {method}";
 
     private static string ConvertHttpMethodToName(HttpMethod method) => method.ToString();
-
-    private static string ConvertProtocolVersionToString(Version protocolVersion) => protocolVersion.ToString();
 }
