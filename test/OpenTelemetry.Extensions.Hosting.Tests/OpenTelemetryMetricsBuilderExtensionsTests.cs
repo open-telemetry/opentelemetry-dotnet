@@ -149,21 +149,20 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         meterProvider.ForceFlush();
 
-        AssertSingleMetricWithLongSum(
-            exportedItems,
-            expectedValue: temporalityPreference == MetricReaderTemporalityPreference.Delta ? 1 : 2);
+        AssertSingleMetricWithLongSum(exportedItems);
 
         var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
 
-        Assert.Empty(duplicateMetricInstrumentEvents);
+        // Note: We currently log a duplicate warning anytime a metric is reactivated.
+        Assert.Single(duplicateMetricInstrumentEvents);
 
         var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);
 
-        var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
+        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
 
-        Assert.Single(metricInstrumentReactivatedEvents);
+        Assert.Single(metricInstrumentRemovedEvents);
     }
 
     [Theory]
@@ -205,27 +204,49 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         meterProvider.ForceFlush();
 
-        AssertSingleMetricWithLongSum(exportedItems, expectedValue: 2);
+        // Note: We end up with 2 of the same metric being exported. This is
+        // because the current behavior when something is deactivated is to
+        // remove the metric. The next publish creates a new metric.
+        Assert.Equal(2, exportedItems.Count);
+
+        AssertMetricWithLongSum(exportedItems[0]);
+        AssertMetricWithLongSum(exportedItems[1]);
+
+        exportedItems.Clear();
+
+        counter.Add(1);
+
+        meterProvider.ForceFlush();
+
+        AssertSingleMetricWithLongSum(
+            exportedItems,
+            expectedValue: temporalityPreference == MetricReaderTemporalityPreference.Delta ? 1 : 2);
 
         var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
 
-        Assert.Empty(duplicateMetricInstrumentEvents);
+        // Note: We currently log a duplicate warning anytime a metric is reactivated.
+        Assert.Single(duplicateMetricInstrumentEvents);
 
         var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);
 
-        var metricInstrumentReactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
+        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
 
-        Assert.Single(metricInstrumentReactivatedEvents);
+        Assert.Single(metricInstrumentRemovedEvents);
     }
 
     private static void AssertSingleMetricWithLongSum(List<Metric> exportedItems, long expectedValue = 1)
     {
         Assert.Single(exportedItems);
 
+        AssertMetricWithLongSum(exportedItems[0], expectedValue);
+    }
+
+    private static void AssertMetricWithLongSum(Metric metric, long expectedValue = 1)
+    {
         List<MetricPoint> metricPoints = new();
-        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
         }

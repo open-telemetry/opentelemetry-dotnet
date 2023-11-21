@@ -353,8 +353,8 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(52, instrumentName, meterName);
     }
 
-    [Event(53, Message = "A previously deactivated Instrument '{0}', Meter '{1}' has been reactivated.", Level = EventLevel.Informational)]
-    public void MetricInstrumentReactivated(string instrumentName, string meterName)
+    [Event(53, Message = "Instrument '{0}', Meter '{1}' has been removed.", Level = EventLevel.Informational)]
+    public void MetricInstrumentRemoved(string instrumentName, string meterName)
     {
         this.WriteEvent(53, instrumentName, meterName);
     }

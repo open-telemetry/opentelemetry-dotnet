@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -49,10 +50,14 @@ public class MeterProviderSdkTest
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void TransientMeterReusesMetricTest(bool withView)
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    public void TransientMeterExhaustsMetricStorageTest(bool withView, bool forceFlushAfterEachTest)
     {
+        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+
         var meterName = Utils.GetCurrentMethodName();
         var exportedItems = new List<Metric>();
 
@@ -72,7 +77,28 @@ public class MeterProviderSdkTest
         Assert.NotNull(meterProvider);
 
         RunTest();
+
+        if (forceFlushAfterEachTest)
+        {
+            Assert.Single(exportedItems);
+        }
+
         RunTest();
+
+        if (forceFlushAfterEachTest)
+        {
+            Assert.Empty(exportedItems);
+        }
+        else
+        {
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+        }
+
+        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33);
+
+        Assert.Single(metricInstrumentIgnoredEvents);
 
         void RunTest()
         {
@@ -85,9 +111,10 @@ public class MeterProviderSdkTest
 
             meter.Dispose();
 
-            meterProvider.ForceFlush();
-
-            Assert.Single(exportedItems);
+            if (forceFlushAfterEachTest)
+            {
+                meterProvider.ForceFlush();
+            }
         }
     }
 }

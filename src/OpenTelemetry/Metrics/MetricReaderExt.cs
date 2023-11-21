@@ -16,6 +16,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 
@@ -50,10 +51,8 @@ public abstract partial class MetricReader
         var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
         lock (this.instrumentCreationLock)
         {
-            if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
+            if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
             {
-                ActivateMetricIfRequired(existingMetric);
-
                 return existingMetric;
             }
 
@@ -130,10 +129,8 @@ public abstract partial class MetricReader
                     continue;
                 }
 
-                if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
+                if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
                 {
-                    ActivateMetricIfRequired(existingMetric);
-
                     metrics.Add(existingMetric);
                     continue;
                 }
@@ -243,38 +240,38 @@ public abstract partial class MetricReader
 
     private static void DeactivateMetric(Metric metric)
     {
-        metric.Status = Metric.MetricStatusDeactivating;
-
-        // TODO: Should we set end time here?
-
-        OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
-            metric.Name,
-            metric.MeterName);
-    }
-
-    private static void ActivateMetricIfRequired(Metric metric)
-    {
-        if (metric.Status != Metric.MetricStatusActive)
+        if (metric.Active)
         {
-            lock (metric.StatusLock)
-            {
-                metric.Status = Metric.MetricStatusActive;
-            }
+            // TODO: This will cause the metric to be removed from the storage
+            // array during the next collect/export. If this happens often we
+            // will run out of storage. Would it be better instead to set the
+            // end time on the metric and keep it around so it can be
+            // reactivated?
+            metric.Active = false;
 
-            // TODO: Should we set start time here? Should we reset the data
-            // points? What if we are activating before an export/collect has
-            // had a chance to export the previously collected data?
-
-            OpenTelemetrySdkEventSource.Log.MetricInstrumentReactivated(
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
                 metric.Name,
                 metric.MeterName);
         }
+    }
+
+    private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
+    {
+        if (!this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out existingMetric)
+            || !existingMetric.Active)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
     {
         if (!this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName))
         {
+            // TODO: If a metric is deactivated and then reactivated we log the
+            // same warning as if it was a duplicate.
             OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
                 metricStreamIdentity.InstrumentName,
                 metricStreamIdentity.MeterName,
@@ -295,25 +292,19 @@ public abstract partial class MetricReader
             int metricCountCurrentBatch = 0;
             for (int i = 0; i < target; i++)
             {
-                var metric = this.metrics![i];
+                ref var metric = ref this.metrics![i];
                 if (metric != null)
                 {
-                    var metricStatus = metric.Status;
-                    if (metricStatus != Metric.MetricStatusActive)
-                    {
-                        if (metricStatus == Metric.MetricStatusInactive)
-                        {
-                            continue;
-                        }
-
-                        this.CompleteMetricDeactivation(metric);
-                    }
-
                     int metricPointSize = metric.Snapshot();
 
                     if (metricPointSize > 0)
                     {
                         this.metricsCurrentBatch![metricCountCurrentBatch++] = metric;
+                    }
+
+                    if (!metric.Active)
+                    {
+                        this.RemoveMetric(ref metric);
                     }
                 }
             }
@@ -327,18 +318,24 @@ public abstract partial class MetricReader
         }
     }
 
-    private void CompleteMetricDeactivation(Metric metric)
+    private void RemoveMetric(ref Metric? metric)
     {
-        lock (metric.StatusLock)
-        {
-            if (metric.Status != Metric.MetricStatusDeactivating)
-            {
-                // Note: If we fall here it means the metric was reactivated
-                // while we were waiting on the lock.
-                return;
-            }
+        Debug.Assert(metric != null, "metric was null");
 
-            metric.Status = Metric.MetricStatusInactive;
-        }
+        // TODO: This logic removes the metric. If the same
+        // metric is published again we will create a new metric
+        // for it. If this happens often we will run out of
+        // storage. Instead, should we keep the metric around
+        // and set a new start time + reset its data if it comes
+        // back?
+
+        OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric!.Name, metric.MeterName);
+
+        var result = this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
+        Debug.Assert(result, "result was false");
+
+        // Note: metric is a reference to the array storage so
+        // this clears the metric out of the array.
+        metric = null;
     }
 }
