@@ -360,7 +360,7 @@ public class MetricTests
         }
     }
 
-    private static KeyValuePair<string, object>[] AssertMetricPoint(
+    private static void AssertMetricPoint(
         MetricPoint metricPoint,
         int expectedStatusCode,
         string expectedRoute,
@@ -418,7 +418,5 @@ public class MetricTests
             Enumerable.SequenceEqual(expectedHistogramBoundsNew, histogramBounds);
 
         Assert.True(histogramBoundsMatchCorrectly);
-
-        return attributes;
     }
 }
