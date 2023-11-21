@@ -100,8 +100,8 @@ the following metric:
 Starting from `.NET8.0`, metrics instrumentation is natively implemented, and
 the ASP.NET Core library has incorporated support for [built-in
 metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-aspnetcore)
-following the OpenTelemetry semantic conventions. These metrics in ASP.NET Core
-include additional metrics beyond those defined in the
+following the OpenTelemetry semantic conventions. The library include additional
+metrics beyond those defined in the
 [specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md),
 covering additional scenarios for ASP.NET Core users. When the application
 targets `.NET8.0` and newer versions, the instrumentation library automatically
