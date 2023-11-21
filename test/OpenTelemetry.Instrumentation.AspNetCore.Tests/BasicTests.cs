@@ -989,8 +989,10 @@ public sealed class BasicTests
         int numberofSubscribedEvents = 0;
         int numberOfExceptionCallbacks = 0;
 
-        // configure SDK
-        using var tracerprovider = Sdk.CreateTracerProviderBuilder()
+        void ConfigureTestServices(IServiceCollection services)
+        {
+            // configure SDK
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetCoreInstrumentation(
                 new TestHttpInListener(new AspNetCoreInstrumentationOptions())
                 {
@@ -1032,45 +1034,41 @@ public sealed class BasicTests
                 })
                 .Build();
 
-        var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
-        var app = builder.Build();
-
-        app.UseExceptionHandler(handler =>
-        {
-            handler.Run(async (ctx) =>
-            {
-                await ctx.Response.WriteAsync("handled");
-            });
-        });
-
-        app.Map("/error", ThrowException);
-
-        static void ThrowException(IApplicationBuilder app)
-        {
-            app.Run(context =>
-            {
-                throw new Exception("CustomException");
-            });
+            services.AddOpenTelemetry()
+                .WithTracing(builder => builder
+                    .AddInstrumentation(() => this.tracerProvider));
         }
 
-        _ = app.RunAsync();
-
-        using var client = new HttpClient();
-        try
+        using (var client = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(ConfigureTestServices);
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+                builder.Configure(app => app
+                    .UseExceptionHandler(handler =>
+                    {
+                        handler.Run(async (ctx) =>
+                        {
+                            await ctx.Response.WriteAsync("handled");
+                        });
+                    }));
+            })
+            .CreateClient())
         {
-            await client.GetStringAsync("http://localhost:5000/error");
-        }
-        catch
-        {
-            // ignore 500 error.
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/error");
+                using var response = await client.SendAsync(request);
+            }
+            catch
+            {
+                // ignore exception
+            }
         }
 
         Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
         Assert.Equal(2, numberofSubscribedEvents);
-
-        await app.DisposeAsync();
     }
 
     public void Dispose()
