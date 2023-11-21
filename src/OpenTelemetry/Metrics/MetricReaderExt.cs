@@ -256,15 +256,8 @@ public abstract partial class MetricReader
     }
 
     private bool TryGetExistingMetric(in MetricStreamIdentity metricStreamIdentity, [NotNullWhen(true)] out Metric? existingMetric)
-    {
-        if (!this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out existingMetric)
-            || !existingMetric.Active)
-        {
-            return false;
-        }
-
-        return true;
-    }
+        => this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out existingMetric)
+            && existingMetric.Active;
 
     private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
     {
