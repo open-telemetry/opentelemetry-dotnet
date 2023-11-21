@@ -37,11 +37,10 @@ internal sealed class HttpClientMetrics : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="HttpClientMetrics"/> class.
     /// </summary>
-    /// <param name="options">HttpClient metric instrumentation options.</param>
-    public HttpClientMetrics(HttpClientMetricInstrumentationOptions options)
+    public HttpClientMetrics()
     {
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-            new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener", options),
+            new HttpHandlerMetricsDiagnosticListener("HttpHandlerDiagnosticListener"),
             this.isEnabled,
             HttpInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
