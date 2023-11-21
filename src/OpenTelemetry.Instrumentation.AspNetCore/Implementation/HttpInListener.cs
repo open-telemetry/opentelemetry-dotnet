@@ -23,8 +23,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
-#if NET6_0_OR_GREATER
-using Microsoft.AspNetCore.Mvc.Diagnostics;
+#if !NETSTANDARD
+using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
 #if !NETSTANDARD2_0
@@ -32,7 +32,6 @@ using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
@@ -41,7 +40,6 @@ internal class HttpInListener : ListenerHandler
     internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
     internal const string OnStartEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start";
     internal const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
-    internal const string OnMvcBeforeActionEvent = "Microsoft.AspNetCore.Mvc.BeforeAction";
     internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
     internal const string OnUnHandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
 
@@ -67,8 +65,6 @@ internal class HttpInListener : ListenerHandler
     private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
 #endif
     private readonly AspNetCoreInstrumentationOptions options;
-    private readonly bool emitOldAttributes;
-    private readonly bool emitNewAttributes;
 
     public HttpInListener(AspNetCoreInstrumentationOptions options)
         : base(DiagnosticSourceName)
@@ -76,10 +72,6 @@ internal class HttpInListener : ListenerHandler
         Guard.ThrowIfNull(options);
 
         this.options = options;
-
-        this.emitOldAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.Old);
-
-        this.emitNewAttributes = this.options.HttpSemanticConvention.HasFlag(HttpSemanticConvention.New);
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -95,12 +87,6 @@ internal class HttpInListener : ListenerHandler
             case OnStopEvent:
                 {
                     this.OnStopActivity(Activity.Current, payload);
-                }
-
-                break;
-            case OnMvcBeforeActionEvent:
-                {
-                    this.OnMvcBeforeAction(Activity.Current, payload);
                 }
 
                 break;
@@ -202,79 +188,38 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = path;
+            activity.DisplayName = this.GetDisplayName(request.Method);
 
-            // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/semantic_conventions/http.md
-            if (this.emitOldAttributes)
+            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
+
+            if (request.Host.HasValue)
             {
-                if (request.Host.HasValue)
+                activity.SetTag(SemanticConventions.AttributeServerAddress, request.Host.Host);
+
+                if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
                 {
-                    activity.SetTag(SemanticConventions.AttributeNetHostName, request.Host.Host);
-
-                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeNetHostPort, request.Host.Port);
-                    }
-                }
-
-                activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
-                activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
-                activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
-                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
-
-                if (request.Headers.TryGetValue("User-Agent", out var values))
-                {
-                    var userAgent = values.Count > 0 ? values[0] : null;
-                    if (!string.IsNullOrEmpty(userAgent))
-                    {
-                        activity.SetTag(SemanticConventions.AttributeHttpUserAgent, userAgent);
-                    }
+                    activity.SetTag(SemanticConventions.AttributeServerPort, request.Host.Port);
                 }
             }
 
-            // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/http/http-spans.md
-            if (this.emitNewAttributes)
+            if (request.QueryString.HasValue)
             {
-                if (request.Host.HasValue)
-                {
-                    activity.SetTag(SemanticConventions.AttributeServerAddress, request.Host.Host);
+                // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
+                activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
+            }
 
-                    if (request.Host.Port is not null && request.Host.Port != 80 && request.Host.Port != 443)
-                    {
-                        activity.SetTag(SemanticConventions.AttributeServerPort, request.Host.Port);
-                    }
-                }
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
-                if (request.QueryString.HasValue)
-                {
-                    // QueryString should be sanitized. see: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4571
-                    activity.SetTag(SemanticConventions.AttributeUrlQuery, request.QueryString.Value);
-                }
+            activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
+            activity.SetTag(SemanticConventions.AttributeUrlPath, path);
+            activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
 
-                if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
+            if (request.Headers.TryGetValue("User-Agent", out var values))
+            {
+                var userAgent = values.Count > 0 ? values[0] : null;
+                if (!string.IsNullOrEmpty(userAgent))
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-                }
-                else
-                {
-                    // Set to default "_OTHER" as per spec.
-                    // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
-                    activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
-                }
-
-                activity.SetTag(SemanticConventions.AttributeUrlScheme, request.Scheme);
-                activity.SetTag(SemanticConventions.AttributeUrlPath, path);
-                activity.SetTag(SemanticConventions.AttributeNetworkProtocolVersion, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
-
-                if (request.Headers.TryGetValue("User-Agent", out var values))
-                {
-                    var userAgent = values.Count > 0 ? values[0] : null;
-                    if (!string.IsNullOrEmpty(userAgent))
-                    {
-                        activity.SetTag(SemanticConventions.AttributeUserAgentOriginal, userAgent);
-                    }
+                    activity.SetTag(SemanticConventions.AttributeUserAgentOriginal, userAgent);
                 }
             }
 
@@ -302,15 +247,16 @@ internal class HttpInListener : ListenerHandler
 
             var response = context.Response;
 
-            if (this.emitOldAttributes)
+#if !NETSTANDARD
+            var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+            if (!string.IsNullOrEmpty(routePattern))
             {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+                activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
+                activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
+#endif
 
-            if (this.emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-            }
+            activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
 #if !NETSTANDARD2_0
             if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
@@ -363,57 +309,6 @@ internal class HttpInListener : ListenerHandler
         }
     }
 
-    public void OnMvcBeforeAction(Activity activity, object payload)
-    {
-        // We cannot rely on Activity.Current here
-        // There could be activities started by middleware
-        // after activity started by framework resulting in different Activity.Current.
-        // so, we need to first find the activity started by Asp.Net Core.
-        // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
-        // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
-        // activity = httpActivityFeature.Activity;
-        // However, this will not work as in case of custom propagator
-        // we start a new activity during onStart event which is a sibling to the activity created by framework
-        // So, in that case we need to get the activity created by us here.
-        // we can do so only by looping through activity.Parent chain.
-        while (activity != null)
-        {
-            if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
-            {
-                break;
-            }
-
-            activity = activity.Parent;
-        }
-
-        if (activity == null)
-        {
-            return;
-        }
-
-        if (activity.IsAllDataRequested)
-        {
-#if !NET6_0_OR_GREATER
-            _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-            _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-            _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-#else
-            var beforeActionEventData = payload as BeforeActionEventData;
-            var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
-#endif
-            if (!string.IsNullOrEmpty(template))
-            {
-                // override the span name that was previously set to the path part of URL.
-                activity.DisplayName = template;
-                activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
-            }
-
-            // TODO: Should we get values from RouteData?
-            // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
-            // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
-        }
-    }
-
     public void OnException(Activity activity, object payload)
     {
         if (activity.IsAllDataRequested)
@@ -425,10 +320,7 @@ internal class HttpInListener : ListenerHandler
                 return;
             }
 
-            if (this.emitNewAttributes)
-            {
-                activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
-            }
+            activity.SetTag(SemanticConventions.AttributeErrorType, exc.GetType().FullName);
 
             if (this.options.RecordException)
             {
@@ -509,7 +401,18 @@ internal class HttpInListener : ListenerHandler
         grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
         return !string.IsNullOrEmpty(grpcMethod);
     }
+#endif
 
+    private string GetDisplayName(string httpMethod, string httpRoute = null)
+    {
+        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
+
+        return string.IsNullOrEmpty(httpRoute)
+            ? normalizedMethod
+            : $"{normalizedMethod} {httpRoute}";
+    }
+
+#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
     {
@@ -520,27 +423,14 @@ internal class HttpInListener : ListenerHandler
 
         activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
 
-        if (this.emitOldAttributes)
-        {
-            if (context.Connection.RemoteIpAddress != null)
-            {
-                // TODO: This attribute was changed in v1.13.0 https://github.com/open-telemetry/opentelemetry-specification/pull/2614
-                activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
-            }
+        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/rpc/rpc-spans.md
 
-            activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
+        if (context.Connection.RemoteIpAddress != null)
+        {
+            activity.SetTag(SemanticConventions.AttributeClientAddress, context.Connection.RemoteIpAddress.ToString());
         }
 
-        // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.21.0/docs/rpc/rpc-spans.md
-        if (this.emitNewAttributes)
-        {
-            if (context.Connection.RemoteIpAddress != null)
-            {
-                activity.SetTag(SemanticConventions.AttributeClientAddress, context.Connection.RemoteIpAddress.ToString());
-            }
-
-            activity.SetTag(SemanticConventions.AttributeClientPort, context.Connection.RemotePort);
-        }
+        activity.SetTag(SemanticConventions.AttributeClientPort, context.Connection.RemotePort);
 
         bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
         if (validConversion)

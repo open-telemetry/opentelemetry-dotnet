@@ -37,6 +37,7 @@ public sealed class Metric
         ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request.time_in_queue"),
         ("Microsoft.AspNetCore.RateLimiting", "aspnetcore.rate_limiting.request_lease.duration"),
         ("Microsoft.AspNetCore.Server.Kestrel", "kestrel.tls_handshake.duration"),
+        ("OpenTelemetry.Instrumentation.AspNet", "http.server.request.duration"),
         ("OpenTelemetry.Instrumentation.AspNetCore", "http.server.request.duration"),
         ("OpenTelemetry.Instrumentation.Http", "http.client.request.duration"),
         ("System.Net.Http", "http.client.request.duration"),
@@ -60,6 +61,7 @@ public sealed class Metric
         AggregationTemporality temporality,
         int maxMetricPointsPerMetricStream,
         bool emitOverflowAttribute,
+        bool shouldReclaimUnusedMetricPoints,
         ExemplarFilter? exemplarFilter = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
@@ -166,7 +168,7 @@ public sealed class Metric
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, exemplarFilter);
+        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
         this.InstrumentDisposed = false;
     }

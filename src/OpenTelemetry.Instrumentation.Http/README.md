@@ -99,31 +99,51 @@ to see how to enable this instrumentation in an ASP.NET application.
 
 #### List of metrics produced
 
-A different metric is emitted depending on whether a user opts-in to the new
-Http Semantic Conventions using `OTEL_SEMCONV_STABILITY_OPT_IN`.
+When the application targets `NETFRAMEWORK`, `.NET6.0` or `.NET7.0`, the
+instrumentation emits the following metric:
 
-* By default, the instrumentation emits the following metric.
+| Name                              | Details                                                                                                                                                 |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `http.client.request.duration`    | [Specification](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md#metric-httpclientrequestduration) |
 
-    | Name  | Instrument Type | Unit | Description |
-    |-------|-----------------|------|-------------|
-    | `http.client.duration` | Histogram | `ms` | Measures the duration of outbound HTTP requests. |
+Starting from `.NET8.0`, metrics instrumentation is natively implemented, and
+the HttpClient library has incorporated support for [built-in
+metrics](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net)
+following the OpenTelemetry semantic conventions. The library includes additional
+metrics beyond those defined in the
+[specification](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md),
+covering additional scenarios for HttpClient users. When the application targets
+`.NET8.0` and newer versions, the instrumentation library automatically enables
+all `built-in` metrics by default.
 
-* If user sets the environment variable to `http`, the instrumentation emits
-  the following metric.
+Note that the `AddHttpClientInstrumentation()` extension simplifies the process
+of enabling all built-in metrics via a single line of code. Alternatively, for
+more granular control over emitted metrics, you can utilize the `AddMeter()`
+extension on `MeterProviderBuilder` for meters listed in
+[built-in-metrics-system-net](https://learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-system-net).
+Using `AddMeter()` for metrics activation eliminates the need to take dependency
+on the instrumentation library package and calling
+`AddHttpClientInstrumentation()`.
 
-    | Name  | Instrument Type | Unit | Description |
-    |-------|-----------------|------|-------------|
-    | `http.client.request.duration` | Histogram | `s` | Measures the duration of outbound HTTP requests. |
+If you utilize `AddHttpClientInstrumentation()` and wish to exclude unnecessary
+metrics, you can utilize
+[Views](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/metrics/customizing-the-sdk#drop-an-instrument)
+to achieve this.
 
-    This metric is emitted in `seconds` as per the semantic convention. While
-    the convention [recommends using custom histogram buckets](https://github.com/open-telemetry/semantic-conventions/blob/2bad9afad58fbd6b33cc683d1ad1f006e35e4a5d/docs/http/http-metrics.md)
-    , this feature is not yet available via .NET Metrics API.
-    A [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
+**Note:** There is no difference in features or emitted metrics when enabling
+metrics using `AddMeter()` or `AddHttpClientInstrumentation()` on `.NET8.0` and
+newer versions.
+
+> **Note**
+> The `http.client.request.duration` metric is emitted in `seconds` as
+    per the semantic convention. While the convention [recommends using custom
+    histogram
+    buckets](https://github.com/open-telemetry/semantic-conventions/blob/release/v1.23.x/docs/http/http-metrics.md)
+    , this feature is not yet available via .NET Metrics API. A
+    [workaround](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4820)
     has been included in OTel SDK starting version `1.6.0` which applies
-    recommended buckets by default for `http.client.request.duration`.
-
-* If user sets the environment variable to `http/dup`, the instrumentation
-  emits both `http.client.duration` and `http.client.request.duration`.
+    recommended buckets by default for `http.client.request.duration`. This
+    applies to all targeted frameworks.
 
 ## Advanced configuration
 

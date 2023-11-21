@@ -49,8 +49,7 @@ public static class RoutingTestCases
                 continue;
             }
 
-            result.Add(new object[] { testCase, true });
-            result.Add(new object[] { testCase, false });
+            result.Add(new object[] { testCase });
         }
 
         return result;
@@ -72,11 +71,7 @@ public static class RoutingTestCases
 
         public string? ExpectedHttpRoute { get; set; }
 
-        public string? CurrentActivityDisplayName { get; set; }
-
-        public string? CurrentActivityHttpRoute { get; set; }
-
-        public string? CurrentMetricHttpRoute { get; set; }
+        public string? CurrentHttpRoute { get; set; }
 
         public override string ToString()
         {

@@ -1,35 +1,35 @@
 # Test results for ASP.NET Core 6
 
-| Span http.route | Metric http.route | App | Test Name |
-| - | - | - | - |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Root path](#conventionalrouting-root-path) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Non-default action with route parameter and query string](#conventionalrouting-non-default-action-with-route-parameter-and-query-string) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Non-default action with query string](#conventionalrouting-non-default-action-with-query-string) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Not Found (404)](#conventionalrouting-not-found-404) |
-| :broken_heart: | :green_heart: | ConventionalRouting | [Route template with parameter constraint](#conventionalrouting-route-template-with-parameter-constraint) |
-| :broken_heart: | :green_heart: | ConventionalRouting | [Path that does not match parameter constraint](#conventionalrouting-path-that-does-not-match-parameter-constraint) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Area using area:exists, default controller/action](#conventionalrouting-area-using-areaexists-default-controlleraction) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Area using area:exists, non-default action](#conventionalrouting-area-using-areaexists-non-default-action) |
-| :broken_heart: | :broken_heart: | ConventionalRouting | [Area w/o area:exists, default controller/action](#conventionalrouting-area-wo-areaexists-default-controlleraction) |
-| :green_heart: | :green_heart: | AttributeRouting | [Default action](#attributerouting-default-action) |
-| :green_heart: | :green_heart: | AttributeRouting | [Action without parameter](#attributerouting-action-without-parameter) |
-| :green_heart: | :green_heart: | AttributeRouting | [Action with parameter](#attributerouting-action-with-parameter) |
-| :green_heart: | :green_heart: | AttributeRouting | [Action with parameter before action name in template](#attributerouting-action-with-parameter-before-action-name-in-template) |
-| :green_heart: | :green_heart: | AttributeRouting | [Action invoked resulting in 400 Bad Request](#attributerouting-action-invoked-resulting-in-400-bad-request) |
-| :broken_heart: | :broken_heart: | RazorPages | [Root path](#razorpages-root-path) |
-| :broken_heart: | :broken_heart: | RazorPages | [Index page](#razorpages-index-page) |
-| :broken_heart: | :broken_heart: | RazorPages | [Throws exception](#razorpages-throws-exception) |
-| :green_heart: | :green_heart: | RazorPages | [Static content](#razorpages-static-content) |
-| :broken_heart: | :green_heart: | MinimalApi | [Action without parameter](#minimalapi-action-without-parameter) |
-| :broken_heart: | :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
+| http.route | App | Test Name |
+| - | - | - |
+| :broken_heart: | ConventionalRouting | [Root path](#conventionalrouting-root-path) |
+| :broken_heart: | ConventionalRouting | [Non-default action with route parameter and query string](#conventionalrouting-non-default-action-with-route-parameter-and-query-string) |
+| :broken_heart: | ConventionalRouting | [Non-default action with query string](#conventionalrouting-non-default-action-with-query-string) |
+| :green_heart: | ConventionalRouting | [Not Found (404)](#conventionalrouting-not-found-404) |
+| :green_heart: | ConventionalRouting | [Route template with parameter constraint](#conventionalrouting-route-template-with-parameter-constraint) |
+| :green_heart: | ConventionalRouting | [Path that does not match parameter constraint](#conventionalrouting-path-that-does-not-match-parameter-constraint) |
+| :broken_heart: | ConventionalRouting | [Area using area:exists, default controller/action](#conventionalrouting-area-using-areaexists-default-controlleraction) |
+| :broken_heart: | ConventionalRouting | [Area using area:exists, non-default action](#conventionalrouting-area-using-areaexists-non-default-action) |
+| :broken_heart: | ConventionalRouting | [Area w/o area:exists, default controller/action](#conventionalrouting-area-wo-areaexists-default-controlleraction) |
+| :green_heart: | AttributeRouting | [Default action](#attributerouting-default-action) |
+| :green_heart: | AttributeRouting | [Action without parameter](#attributerouting-action-without-parameter) |
+| :green_heart: | AttributeRouting | [Action with parameter](#attributerouting-action-with-parameter) |
+| :green_heart: | AttributeRouting | [Action with parameter before action name in template](#attributerouting-action-with-parameter-before-action-name-in-template) |
+| :green_heart: | AttributeRouting | [Action invoked resulting in 400 Bad Request](#attributerouting-action-invoked-resulting-in-400-bad-request) |
+| :broken_heart: | RazorPages | [Root path](#razorpages-root-path) |
+| :broken_heart: | RazorPages | [Index page](#razorpages-index-page) |
+| :broken_heart: | RazorPages | [Throws exception](#razorpages-throws-exception) |
+| :green_heart: | RazorPages | [Static content](#razorpages-static-content) |
+| :green_heart: | MinimalApi | [Action without parameter](#minimalapi-action-without-parameter) |
+| :green_heart: | MinimalApi | [Action with parameter](#minimalapi-action-with-parameter) |
 
 ## ConventionalRouting: Root path
 
 ```json
 {
   "IdealHttpRoute": "ConventionalRoute/Default/{id?}",
-  "ActivityDisplayName": "/",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET {controller=ConventionalRoute}/{action=Default}/{id?}",
+  "ActivityHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "MetricHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -58,8 +58,8 @@
 ```json
 {
   "IdealHttpRoute": "ConventionalRoute/ActionWithStringParameter/{id?}",
-  "ActivityDisplayName": "/ConventionalRoute/ActionWithStringParameter/2",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET {controller=ConventionalRoute}/{action=Default}/{id?}",
+  "ActivityHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "MetricHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -92,8 +92,8 @@
 ```json
 {
   "IdealHttpRoute": "ConventionalRoute/ActionWithStringParameter/{id?}",
-  "ActivityDisplayName": "/ConventionalRoute/ActionWithStringParameter",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET {controller=ConventionalRoute}/{action=Default}/{id?}",
+  "ActivityHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "MetricHttpRoute": "{controller=ConventionalRoute}/{action=Default}/{id?}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -125,7 +125,7 @@
 ```json
 {
   "IdealHttpRoute": "",
-  "ActivityDisplayName": "/ConventionalRoute/NotFound",
+  "ActivityDisplayName": "GET",
   "ActivityHttpRoute": "",
   "MetricHttpRoute": "",
   "RouteInfo": {
@@ -144,8 +144,8 @@
 ```json
 {
   "IdealHttpRoute": "SomePath/{id}/{num:int}",
-  "ActivityDisplayName": "/SomePath/SomeString/2",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET SomePath/{id}/{num:int}",
+  "ActivityHttpRoute": "SomePath/{id}/{num:int}",
   "MetricHttpRoute": "SomePath/{id}/{num:int}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -179,7 +179,7 @@
 ```json
 {
   "IdealHttpRoute": "",
-  "ActivityDisplayName": "/SomePath/SomeString/NotAnInt",
+  "ActivityDisplayName": "GET",
   "ActivityHttpRoute": "",
   "MetricHttpRoute": "",
   "RouteInfo": {
@@ -198,8 +198,8 @@
 ```json
 {
   "IdealHttpRoute": "{area:exists}/ControllerForMyArea/Default/{id?}",
-  "ActivityDisplayName": "/MyArea",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET {area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
+  "ActivityHttpRoute": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
   "MetricHttpRoute": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -229,8 +229,8 @@
 ```json
 {
   "IdealHttpRoute": "{area:exists}/ControllerForMyArea/NonDefault/{id?}",
-  "ActivityDisplayName": "/MyArea/ControllerForMyArea/NonDefault",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET {area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
+  "ActivityHttpRoute": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
   "MetricHttpRoute": "{area:exists}/{controller=ControllerForMyArea}/{action=Default}/{id?}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -260,8 +260,8 @@
 ```json
 {
   "IdealHttpRoute": "SomePrefix/AnotherArea/Index/{id?}",
-  "ActivityDisplayName": "/SomePrefix",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
+  "ActivityHttpRoute": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
   "MetricHttpRoute": "SomePrefix/{controller=AnotherArea}/{action=Index}/{id?}",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -291,7 +291,7 @@
 ```json
 {
   "IdealHttpRoute": "AttributeRoute",
-  "ActivityDisplayName": "AttributeRoute",
+  "ActivityDisplayName": "GET AttributeRoute",
   "ActivityHttpRoute": "AttributeRoute",
   "MetricHttpRoute": "AttributeRoute",
   "RouteInfo": {
@@ -321,7 +321,7 @@
 ```json
 {
   "IdealHttpRoute": "AttributeRoute/Get",
-  "ActivityDisplayName": "AttributeRoute/Get",
+  "ActivityDisplayName": "GET AttributeRoute/Get",
   "ActivityHttpRoute": "AttributeRoute/Get",
   "MetricHttpRoute": "AttributeRoute/Get",
   "RouteInfo": {
@@ -351,7 +351,7 @@
 ```json
 {
   "IdealHttpRoute": "AttributeRoute/Get/{id}",
-  "ActivityDisplayName": "AttributeRoute/Get/{id}",
+  "ActivityDisplayName": "GET AttributeRoute/Get/{id}",
   "ActivityHttpRoute": "AttributeRoute/Get/{id}",
   "MetricHttpRoute": "AttributeRoute/Get/{id}",
   "RouteInfo": {
@@ -384,7 +384,7 @@
 ```json
 {
   "IdealHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-  "ActivityDisplayName": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+  "ActivityDisplayName": "GET AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "ActivityHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "MetricHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "RouteInfo": {
@@ -417,7 +417,7 @@
 ```json
 {
   "IdealHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
-  "ActivityDisplayName": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
+  "ActivityDisplayName": "GET AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "ActivityHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "MetricHttpRoute": "AttributeRoute/{id}/GetWithActionNameInDifferentSpotInTemplate",
   "RouteInfo": {
@@ -450,7 +450,7 @@
 ```json
 {
   "IdealHttpRoute": "/Index",
-  "ActivityDisplayName": "/",
+  "ActivityDisplayName": "GET",
   "ActivityHttpRoute": "",
   "MetricHttpRoute": "",
   "RouteInfo": {
@@ -479,7 +479,7 @@
 ```json
 {
   "IdealHttpRoute": "/Index",
-  "ActivityDisplayName": "Index",
+  "ActivityDisplayName": "GET Index",
   "ActivityHttpRoute": "Index",
   "MetricHttpRoute": "Index",
   "RouteInfo": {
@@ -508,7 +508,7 @@
 ```json
 {
   "IdealHttpRoute": "/PageThatThrowsException",
-  "ActivityDisplayName": "PageThatThrowsException",
+  "ActivityDisplayName": "GET PageThatThrowsException",
   "ActivityHttpRoute": "PageThatThrowsException",
   "MetricHttpRoute": "PageThatThrowsException",
   "RouteInfo": {
@@ -537,7 +537,7 @@
 ```json
 {
   "IdealHttpRoute": "",
-  "ActivityDisplayName": "/js/site.js",
+  "ActivityDisplayName": "GET",
   "ActivityHttpRoute": "",
   "MetricHttpRoute": "",
   "RouteInfo": {
@@ -556,8 +556,8 @@
 ```json
 {
   "IdealHttpRoute": "/MinimalApi",
-  "ActivityDisplayName": "/MinimalApi",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET /MinimalApi",
+  "ActivityHttpRoute": "/MinimalApi",
   "MetricHttpRoute": "/MinimalApi",
   "RouteInfo": {
     "HttpMethod": "GET",
@@ -575,8 +575,8 @@
 ```json
 {
   "IdealHttpRoute": "/MinimalApi/{id}",
-  "ActivityDisplayName": "/MinimalApi/123",
-  "ActivityHttpRoute": "",
+  "ActivityDisplayName": "GET /MinimalApi/{id}",
+  "ActivityHttpRoute": "/MinimalApi/{id}",
   "MetricHttpRoute": "/MinimalApi/{id}",
   "RouteInfo": {
     "HttpMethod": "GET",
