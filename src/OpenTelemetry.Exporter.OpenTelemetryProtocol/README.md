@@ -103,7 +103,7 @@ Options API extension.
 
 > **Note**
 > The `OtlpExporterOptions` class is shared by logging, metrics, and tracing. To
-> specify different settings for each signal use the `name` parameter on the
+> bind configuration specific to each signal use the `name` parameter on the
 > `AddOtlpExporter` extensions:
 >
 > ```csharp
@@ -113,9 +113,9 @@ Options API extension.
 >
 > appBuilder.Logging.AddOpenTelemetry(builder => builder.AddOtlpExporter("logging", configure: null));
 >
-> appBuilder.Services.Configure<OtlpExporterOptions>("tracing", o => o.Endpoint = new("http://tracing_endpoint_here"));
-> appBuilder.Services.Configure<OtlpExporterOptions>("metrics", o => o.Endpoint = new("http://metrics_endpoint_here"));
-> appBuilder.Services.Configure<OtlpExporterOptions>("logging", o => o.Endpoint = new("http://logging_endpoint_here"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("tracing", appBuilder.Configuration.GetSection("OpenTelemetry:tracing:otlp"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("metrics", appBuilder.Configuration.GetSection("OpenTelemetry:metrics:otlp"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("logging", appBuilder.Configuration.GetSection("OpenTelemetry:logging:otlp"));
 > ```
 
 If additional services from the dependency injection are required, they can be
