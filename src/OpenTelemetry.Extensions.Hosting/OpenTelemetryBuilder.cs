@@ -15,6 +15,7 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -61,13 +62,13 @@ public sealed class OpenTelemetryBuilder
         Guard.ThrowIfNull(configure);
 
         this.Services.ConfigureOpenTelemetryMeterProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
+            builder => builder.ConfigureResource(configure));
 
         this.Services.ConfigureOpenTelemetryTracerProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
+            builder => builder.ConfigureResource(configure));
 
         this.Services.ConfigureOpenTelemetryLoggerProvider(
-            (sp, builder) => builder.ConfigureResource(configure));
+            builder => builder.ConfigureResource(configure));
 
         return this;
     }
@@ -76,9 +77,15 @@ public sealed class OpenTelemetryBuilder
     /// Adds metric services into the builder.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="MeterProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
+    /// <see cref="IServiceCollection"/>.</item>
+    /// <item>This method automatically registers an <see
+    /// cref="IMetricsListener"/> named 'OpenTelemetry' into the <see
+    /// cref="IServiceCollection"/>.</item>
+    /// </list>
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
@@ -95,11 +102,9 @@ public sealed class OpenTelemetryBuilder
     /// calls.</returns>
     public OpenTelemetryBuilder WithMetrics(Action<MeterProviderBuilder> configure)
     {
-        Guard.ThrowIfNull(configure);
-
-        var builder = new MeterProviderBuilderBase(this.Services);
-
-        configure(builder);
+        OpenTelemetryMetricsBuilderExtensions.RegisterMetricsListener(
+            this.Services,
+            configure);
 
         return this;
     }

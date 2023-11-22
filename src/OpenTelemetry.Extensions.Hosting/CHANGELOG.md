@@ -6,6 +6,12 @@
   version to `8.0.0`.
   ([#5051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5051))
 
+* The `OpenTelemetryBuilder.WithMetrics` method will now register an
+  `IMetricsListener` named 'OpenTelemetry' into the `IServiceCollection` to
+  enable metric management via the new `Microsoft.Extensions.Diagnostics` .NET 8
+  APIs.
+  ([#4958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4958))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
