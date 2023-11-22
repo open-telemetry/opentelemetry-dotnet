@@ -61,9 +61,9 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
                     builder.SetResourceBuilder(optionsInstance.ResourceBuilder);
                 }
 
-                foreach (var processor in optionsInstance.Processors)
+                foreach (var processorFactory in optionsInstance.ProcessorFactories)
                 {
-                    builder.AddProcessor(processor);
+                    builder.AddProcessor(processorFactory);
                 }
             })
             .Build();

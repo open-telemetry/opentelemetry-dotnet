@@ -233,34 +233,38 @@ public sealed class IntegrationTests : IDisposable
 
         DelegatingExporter<LogRecord> delegatingExporter = null;
         var exportResults = new List<ExportResult>();
-        var processorOptions = new LogRecordExportProcessorOptions();
-        processorOptions.ExportProcessorType = exportProcessorType;
-        processorOptions.BatchExportProcessorOptions = new()
+        var processorOptions = new LogRecordExportProcessorOptions
         {
-            ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            ExportProcessorType = exportProcessorType,
+            BatchExportProcessorOptions = new()
+            {
+                ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
+            },
         };
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
                 .AddOpenTelemetry(options => options
-                    .AddProcessor(OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
-                        exporterOptions,
-                        processorOptions,
-                        configureExporterInstance: otlpExporter =>
-                        {
-                            delegatingExporter = new DelegatingExporter<LogRecord>
+                    .AddProcessor(sp =>
+                        OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                            sp,
+                            exporterOptions,
+                            processorOptions,
+                            configureExporterInstance: otlpExporter =>
                             {
-                                OnExportFunc = (batch) =>
+                                delegatingExporter = new DelegatingExporter<LogRecord>
                                 {
-                                    var result = otlpExporter.Export(batch);
-                                    exportResults.Add(result);
-                                    handle.Set();
-                                    return result;
-                                },
-                            };
-                            return delegatingExporter;
-                        })));
+                                    OnExportFunc = (batch) =>
+                                    {
+                                        var result = otlpExporter.Export(batch);
+                                        exportResults.Add(result);
+                                        handle.Set();
+                                        return result;
+                                    },
+                                };
+                                return delegatingExporter;
+                            })));
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
