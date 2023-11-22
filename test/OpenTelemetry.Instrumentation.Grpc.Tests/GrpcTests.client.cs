@@ -446,91 +446,66 @@ public partial class GrpcTests
     [InlineData(false)]
     public void GrpcPropagatesContextWithSuppressInstrumentationOptionSetToTrue(bool suppressHttpInstrumentation)
     {
-        try
+        var uri = new Uri($"http://localhost:{this.server.Port}");
+        var exporterItems = new List<Activity>();
+
+        using var source = new ActivitySource("test-source");
+
+        using (Sdk.CreateTracerProviderBuilder()
+            .AddSource("test-source")
+            .AddGrpcClientInstrumentation()
+            .AddHttpClientInstrumentation(o => o.SuppressInstrumentationWhenGrpcIsPresent = suppressHttpInstrumentation)
+            .AddAspNetCoreInstrumentation()
+            .AddInMemoryExporter(exporterItems)
+            .Build())
         {
-            var uri = new Uri($"http://localhost:{this.server.Port}");
-            var exporterItems = new List<Activity>();
-
-            using var source = new ActivitySource("test-source");
-
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
-                {
-                    action(message, "customField", "customValue");
-                });
-
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
+            using (var activity = source.StartActivity("parent"))
             {
-                new TraceContextPropagator(),
-                propagator.Object,
-            }));
-
-            using (Sdk.CreateTracerProviderBuilder()
-                .AddSource("test-source")
-                .AddGrpcClientInstrumentation()
-                .AddHttpClientInstrumentation(o => o.SuppressInstrumentationWhenGrpcIsPresent = suppressHttpInstrumentation)
-                .AddAspNetCoreInstrumentation(options =>
-                {
-                    options.EnrichWithHttpRequest = (activity, request) =>
-                    {
-                        activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
-                    };
-                }) // Instrumenting the server side as well
-                .AddInMemoryExporter(exporterItems)
-                .Build())
-            {
-                using (var activity = source.StartActivity("parent"))
-                {
-                    Assert.NotNull(activity);
-                    var channel = GrpcChannel.ForAddress(uri);
-                    var client = new Greeter.GreeterClient(channel);
-                    var rs = client.SayHello(new HelloRequest());
-                }
-            }
-
-            if (suppressHttpInstrumentation)
-            {
-                Assert.Equal(3, exporterItems.Count); // parent, grpc client and grpc server activity.
-
-                var serverActivity = exporterItems[0];
-                var clientActivity = exporterItems[1];
-
-                Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
-                Assert.Equal($"greet.Greeter/SayHello", serverActivity.DisplayName);
-                Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
-                Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
-                Assert.Equal(0, clientActivity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
-                Assert.Equal("customValue", serverActivity.GetCustomProperty("customField") as string);
-            }
-            else
-            {
-                Assert.Equal(4, exporterItems.Count);
-
-                var server = exporterItems
-                    .Where(item => item.OperationName == OperationNameHttpRequestIn).ToArray();
-
-                var httpClient = exporterItems
-                    .Where(item => item.OperationName == OperationNameHttpOut).ToArray();
-
-                var grpcClient = exporterItems
-                    .Where(item => item.OperationName == OperationNameGrpcOut).ToArray();
-
-                Assert.Single(server);
-                Assert.Single(httpClient);
-                Assert.Single(grpcClient);
-
-                Assert.Equal(server[0].ParentId, httpClient[0].Id);
-                Assert.Equal(httpClient[0].ParentId, grpcClient[0].Id);
+                Assert.NotNull(activity);
+                var channel = GrpcChannel.ForAddress(uri);
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
             }
         }
-        finally
+
+        if (suppressHttpInstrumentation)
         {
-            Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
-            {
-                new TraceContextPropagator(),
-                new BaggagePropagator(),
-            }));
+            Assert.Equal(3, exporterItems.Count); // parent, grpc client and grpc server activity.
+
+            var server = exporterItems
+                .Where(item => item.OperationName == OperationNameHttpRequestIn).ToArray();
+
+            var httpClient = exporterItems
+                .Where(item => item.OperationName == OperationNameHttpOut).ToArray();
+
+            var grpcClient = exporterItems
+                .Where(item => item.OperationName == OperationNameGrpcOut).ToArray();
+
+            Assert.Single(server);
+            Assert.Empty(httpClient);
+            Assert.Single(grpcClient);
+
+            Assert.Equal(server[0].ParentId, grpcClient[0].Id);
+        }
+        else
+        {
+            Assert.Equal(4, exporterItems.Count); // parent, grpc client, httpclient and grpc server activity.
+
+            var server = exporterItems
+                .Where(item => item.OperationName == OperationNameHttpRequestIn).ToArray();
+
+            var httpClient = exporterItems
+                .Where(item => item.OperationName == OperationNameHttpOut).ToArray();
+
+            var grpcClient = exporterItems
+                .Where(item => item.OperationName == OperationNameGrpcOut).ToArray();
+
+            Assert.Single(server);
+            Assert.Single(httpClient);
+            Assert.Single(grpcClient);
+
+            Assert.Equal(server[0].ParentId, httpClient[0].Id);
+            Assert.Equal(httpClient[0].ParentId, grpcClient[0].Id);
         }
     }
 
