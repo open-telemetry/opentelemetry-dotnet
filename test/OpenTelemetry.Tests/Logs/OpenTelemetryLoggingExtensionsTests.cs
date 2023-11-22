@@ -215,7 +215,47 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         }
     }
 
-    private sealed class TestLogProcessor : BaseProcessor<LogRecord>
+    [Fact]
+    public void VerifyAddProcessorOverloadWithImplementationFactory()
+    {
+        // arrange
+        var services = new ServiceCollection();
+
+        services.AddSingleton<TestLogProcessor>();
+
+        services.AddLogging(logging =>
+            logging.AddOpenTelemetry(
+                o => o.AddProcessor(sp => sp.GetRequiredService<TestLogProcessor>())));
+
+        // act
+        using var sp = services.BuildServiceProvider();
+
+        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        // assert
+        Assert.NotNull(loggerProvider);
+        Assert.NotNull(loggerProvider.Processor);
+        Assert.True(loggerProvider.Processor is TestLogProcessor);
+    }
+
+    [Fact]
+    public void VerifyExceptionIsThrownWhenImplementationFactoryIsNull()
+    {
+        // arrange
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging =>
+            logging.AddOpenTelemetry(
+                o => o.AddProcessor(implementationFactory: null!)));
+
+        // act
+        using var sp = services.BuildServiceProvider();
+
+        // assert
+        Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
+    }
+
+    private class TestLogProcessor : BaseProcessor<LogRecord>
     {
     }
 }

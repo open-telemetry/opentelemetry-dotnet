@@ -128,6 +128,7 @@ OpenTelemetry.Logs.LogRecordScope.LogRecordScope() -> void
 OpenTelemetry.Logs.LogRecordScope.Scope.get -> object?
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor(System.Func<System.IServiceProvider!, OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>!>! implementationFactory) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeScopes.get -> bool
