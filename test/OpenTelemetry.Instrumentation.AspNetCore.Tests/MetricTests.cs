@@ -26,6 +26,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 #if NET8_0_OR_GREATER
 using Microsoft.AspNetCore.RateLimiting;
 #endif
+#if NET8_0_OR_GREATER
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+#endif
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -33,48 +37,45 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
 
-public class MetricTests
-    : IClassFixture<WebApplicationFactory<Program>>, IDisposable
+public class MetricTests(WebApplicationFactory<Program> factory)
+        : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
     private const int StandardTagsCount = 6;
 
-    private readonly WebApplicationFactory<Program> factory;
+    private readonly WebApplicationFactory<Program> factory = factory;
     private MeterProvider meterProvider;
-
-    public MetricTests(WebApplicationFactory<Program> factory)
-    {
-        this.factory = factory;
-    }
 
     [Fact]
     public void AddAspNetCoreInstrumentation_BadArgs()
     {
         MeterProviderBuilder builder = null;
-        Assert.Throws<ArgumentNullException>(() => builder.AddAspNetCoreInstrumentation());
+        Assert.Throws<ArgumentNullException>(builder.AddAspNetCoreInstrumentation);
     }
 
 #if NET8_0_OR_GREATER
     [Fact]
     public async Task ValidateNet8MetricsAsync()
     {
-        var metricItems = new List<Metric>();
-
+        var exportedItems = new List<Metric>();
         this.meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(metricItems)
-            .Build();
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
         var builder = WebApplication.CreateBuilder();
-        builder.Logging.ClearProviders();
+        builder.WebHost.UseUrls("http://*:0");
         var app = builder.Build();
 
         app.MapGet("/", () => "Hello");
 
         _ = app.RunAsync();
 
+        var url = app.Urls.ToArray()[0];
+        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
+
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/");
-        Assert.NotNull(res);
+        var res = await client.GetAsync($"http://localhost:{portNumber}/");
+        Assert.True(res.IsSuccessStatusCode);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
@@ -83,20 +84,20 @@ public class MetricTests
 
         this.meterProvider.Dispose();
 
-        var requestDurationMetric = metricItems
+        var requestDurationMetric = exportedItems
             .Count(item => item.Name == "http.server.request.duration");
 
-        var activeRequestsMetric = metricItems.
+        var activeRequestsMetric = exportedItems.
             Count(item => item.Name == "http.server.active_requests");
 
-        var routeMatchingMetric = metricItems.
+        var routeMatchingMetric = exportedItems.
             Count(item => item.Name == "aspnetcore.routing.match_attempts");
 
-        var kestrelActiveConnectionsMetric = metricItems.
-            Count(item => item.Name == "kestrel.active_connections");
+        var kestrelActiveConnectionsMetric = exportedItems.
+          Count(item => item.Name == "kestrel.active_connections");
 
-        var kestrelQueuedConnectionMetric = metricItems.
-            Count(item => item.Name == "kestrel.queued_connections");
+        var kestrelQueuedConnectionMetric = exportedItems.
+           Count(item => item.Name == "kestrel.queued_connections");
 
         Assert.Equal(1, requestDurationMetric);
         Assert.Equal(1, activeRequestsMetric);
@@ -117,22 +118,28 @@ public class MetricTests
     [Fact]
     public async Task ValidateNet8RateLimitingMetricsAsync()
     {
-        var metricItems = new List<Metric>();
+        var exportedItems = new List<Metric>();
 
-        this.meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(metricItems)
-            .Build();
+        void ConfigureTestServices(IServiceCollection services)
+        {
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            services.AddRateLimiter(_ => _
+                .AddFixedWindowLimiter(policyName: "fixed", options =>
+                {
+                    options.PermitLimit = 4;
+                    options.Window = TimeSpan.FromSeconds(12);
+                    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    options.QueueLimit = 2;
+                }));
+        }
 
         var builder = WebApplication.CreateBuilder();
-        builder.Services.AddRateLimiter(_ => _
-        .AddFixedWindowLimiter(policyName: "fixed", options =>
-        {
-            options.PermitLimit = 4;
-            options.Window = TimeSpan.FromSeconds(12);
-            options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-            options.QueueLimit = 2;
-        }));
+        builder.WebHost.UseUrls("http://*:0");
+        ConfigureTestServices(builder.Services);
 
         builder.Logging.ClearProviders();
         var app = builder.Build();
@@ -146,8 +153,11 @@ public class MetricTests
 
         _ = app.RunAsync();
 
+        var url = app.Urls.ToArray()[0];
+        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
+
         using var client = new HttpClient();
-        var res = await client.GetStringAsync("http://localhost:5000/");
+        var res = await client.GetAsync($"http://localhost:{portNumber}/");
         Assert.NotNull(res);
 
         // We need to let metric callback execute as it is executed AFTER response was returned.
@@ -157,19 +167,19 @@ public class MetricTests
 
         this.meterProvider.Dispose();
 
-        var activeRequestleasesMetric = metricItems
+        var activeRequestLeasesMetric = exportedItems
             .Where(item => item.Name == "aspnetcore.rate_limiting.active_request_leases")
             .ToArray();
 
-        var requestLeaseDurationMetric = metricItems.
+        var requestLeaseDurationMetric = exportedItems.
             Where(item => item.Name == "aspnetcore.rate_limiting.request_lease.duration")
             .ToArray();
 
-        var limitingRequestsMetric = metricItems.
+        var limitingRequestsMetric = exportedItems.
             Where(item => item.Name == "aspnetcore.rate_limiting.requests")
             .ToArray();
 
-        Assert.Single(activeRequestleasesMetric);
+        Assert.Single(activeRequestLeasesMetric);
         Assert.Single(requestLeaseDurationMetric);
         Assert.Single(limitingRequestsMetric);
 
