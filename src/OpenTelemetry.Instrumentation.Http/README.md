@@ -145,6 +145,13 @@ newer versions.
     recommended buckets by default for `http.client.request.duration`. This
     applies to all targeted frameworks.
 
+## Activity and http.client.request.duration when using HttpClient
+
+`Activity.Duration` and `http.client.request.duration` values represents the
+time the underlying client handler takes to complete the request. Completing the
+request includes the time up to reading response headers from the network
+stream. It doesn't include the time spent reading the response body.
+
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
