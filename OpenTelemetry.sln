@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -56,6 +55,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNetCore.Tests", "test\OpenTelemetry.Instrumentation.AspNetCore.Tests\OpenTelemetry.Instrumentation.AspNetCore.Tests.csproj", "{2A47F6A8-63E5-4237-8046-94CAF321E797}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{E359BB2B-9AEC-497D-B321-7DF2450C3B8E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Shims.OpenTracing", "src\OpenTelemetry.Shims.OpenTracing\OpenTelemetry.Shims.OpenTracing.csproj", "{AAC408FE-40EF-4479-97D9-697F2C1A0B28}"
 EndProject
@@ -125,6 +126,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D2E73927-5
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc.Tests", "test\OpenTelemetry.Instrumentation.Grpc.Tests\OpenTelemetry.Instrumentation.Grpc.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Console", "examples\Console\Examples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.AspNetCore", "examples\AspNetCore\Examples.AspNetCore.csproj", "{0935622B-9377-4056-8343-AE6ECDC274CF}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "test\Benchmarks\Benchmarks.csproj", "{DE9130A4-F30A-49D7-8834-41DE3021218B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.SqlClient.Tests", "test\OpenTelemetry.Instrumentation.SqlClient.Tests\OpenTelemetry.Instrumentation.SqlClient.Tests.csproj", "{0C606039-BE0A-4EE6-B8F7-F75B41E52CB8}"
@@ -157,6 +162,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E
 		docs\logs\getting-started-console\README.md = docs\logs\getting-started-console\README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
+	ProjectSection(SolutionItems) = preProject
+		examples\MicroserviceExample\.dockerignore = examples\MicroserviceExample\.dockerignore
+		examples\MicroserviceExample\docker-compose.yml = examples\MicroserviceExample\docker-compose.yml
+		examples\MicroserviceExample\README.md = examples\MicroserviceExample\README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "examples\MicroserviceExample\WebApi\WebApi.csproj", "{07336602-860B-4975-95DD-405D19C00901}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "examples\MicroserviceExample\WorkerService\WorkerService.csproj", "{FA7A6F67-1F2F-4855-890D-51B5829578A9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "examples\MicroserviceExample\Utils\Utils.csproj", "{5435517C-AEC5-4182-87AE-14E13D31525F}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CB401DF1-FF5C-4055-886E-1183E832B2D6}"
 	ProjectSection(SolutionItems) = preProject
 		docs\Directory.Build.props = docs\Directory.Build.props
@@ -168,6 +186,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\trace\extending-the-sdk\extending-the-sdk.csproj", "{FCDCF532-A163-40DA-80B7-7530AA1182C4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.W3cTraceContext.Tests", "test\OpenTelemetry.Instrumentation.W3cTraceContext.Tests\OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj", "{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.GrpcService", "examples\GrpcService\Examples.GrpcService.csproj", "{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-console", "docs\logs\getting-started-console\getting-started-console.csproj", "{B3F03725-23A0-4582-9526-F6A7E38F35CC}"
 EndProject
@@ -368,6 +388,14 @@ Global
 		{305E9DFD-E73B-4A28-8769-795C25551020}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{305E9DFD-E73B-4A28-8769-795C25551020}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0935622B-9377-4056-8343-AE6ECDC274CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0935622B-9377-4056-8343-AE6ECDC274CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0935622B-9377-4056-8343-AE6ECDC274CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0935622B-9377-4056-8343-AE6ECDC274CF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9130A4-F30A-49D7-8834-41DE3021218B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -392,6 +420,18 @@ Global
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0246BFC4-8AAF-45E1-A127-DB43D6E345BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07336602-860B-4975-95DD-405D19C00901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5435517C-AEC5-4182-87AE-14E13D31525F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FCDCF532-A163-40DA-80B7-7530AA1182C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FCDCF532-A163-40DA-80B7-7530AA1182C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCDCF532-A163-40DA-80B7-7530AA1182C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -400,6 +440,10 @@ Global
 		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAAC5A3C-708A-4609-A21F-8E5221AB58F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -565,12 +609,19 @@ Global
 		{E69578EB-B456-4062-A645-877CD964528B} = {F1D0972B-38CF-49C2-9F4B-4C5DE02FB71D}
 		{C1542297-8763-4DF4-957C-489ED771C21D} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 		{D2E73927-5966-445C-94E9-EFE6F269C8D5} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
+		{FF3E6E08-E8E4-4523-B526-847CD989279F} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{0935622B-9377-4056-8343-AE6ECDC274CF} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 		{5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
 		{3862190B-E2C5-418E-AFDC-DB281FB5C705} = {7C87CAF9-79D7-4C26-9FFB-F3F1FB6911F1}
+		{4D492D62-5150-45F9-817F-C99562E364E2} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
+		{07336602-860B-4975-95DD-405D19C00901} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{FA7A6F67-1F2F-4855-890D-51B5829578A9} = {4D492D62-5150-45F9-817F-C99562E364E2}
+		{5435517C-AEC5-4182-87AE-14E13D31525F} = {4D492D62-5150-45F9-817F-C99562E364E2}
 		{CB401DF1-FF5C-4055-886E-1183E832B2D6} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 		{FCDCF532-A163-40DA-80B7-7530AA1182C4} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
+		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{08D29501-F0A3-468F-B18D-BD1821A72383} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}

@@ -982,11 +982,11 @@ public sealed class BasicTests
         Assert.Equal(3, numberofSubscribedEvents);
     }
 
-    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/4884")]
+    [Fact]
     public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
     {
         int numberOfUnSubscribedEvents = 0;
-        int numberofSubscribedEvents = 0;
+        int numberOfSubscribedEvents = 0;
         int numberOfExceptionCallbacks = 0;
 
         void ConfigureTestServices(IServiceCollection services)
@@ -1002,13 +1002,13 @@ public sealed class BasicTests
                         {
                             case HttpInListener.OnStartEvent:
                                 {
-                                    numberofSubscribedEvents++;
+                                    numberOfSubscribedEvents++;
                                 }
 
                                 break;
                             case HttpInListener.OnStopEvent:
                                 {
-                                    numberofSubscribedEvents++;
+                                    numberOfSubscribedEvents++;
                                 }
 
                                 break;
@@ -1018,7 +1018,7 @@ public sealed class BasicTests
                             case HttpInListener.OnUnhandledHostingExceptionEvent:
                             case HttpInListener.OnUnHandledDiagnosticsExceptionEvent:
                                 {
-                                    numberofSubscribedEvents++;
+                                    numberOfSubscribedEvents++;
                                     numberOfExceptionCallbacks++;
                                 }
 
@@ -1068,7 +1068,7 @@ public sealed class BasicTests
 
         Assert.Equal(0, numberOfExceptionCallbacks);
         Assert.Equal(0, numberOfUnSubscribedEvents);
-        Assert.Equal(2, numberofSubscribedEvents);
+        Assert.Equal(2, numberOfSubscribedEvents);
     }
 
     public void Dispose()
