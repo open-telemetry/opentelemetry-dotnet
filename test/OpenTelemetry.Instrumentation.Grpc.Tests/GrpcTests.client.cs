@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 using System.Net;
-using System.Runtime.InteropServices;
 using Greet;
 #if !NETFRAMEWORK
 using Grpc.Core;
