@@ -9,7 +9,7 @@
   ([#5068](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5068))
 
 * Update activity DisplayName as per the specification.
-  (()[])
+  ([#5078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5078))
 
 ## 1.6.0-beta.3
 
