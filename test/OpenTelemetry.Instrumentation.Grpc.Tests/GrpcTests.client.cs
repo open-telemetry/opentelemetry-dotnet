@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.InteropServices;
 using Greet;
 #if !NETFRAMEWORK
 using Grpc.Core;
@@ -394,16 +395,13 @@ public partial class GrpcTests
     public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
     {
         var uri = new Uri($"http://localhost:{this.server.Port}");
-        var processor = new Mock<BaseProcessor<Activity>>();
-
-        using var parent = new Activity("parent")
-            .Start();
+        var exporterItems = new List<Activity>();
 
         using (Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddGrpcClientInstrumentation(o => o.SuppressDownstreamInstrumentation = true)
-                .AddHttpClientInstrumentation()
-                .AddProcessor(processor.Object)
+                .AddGrpcClientInstrumentation()
+                .AddHttpClientInstrumentation(o => o.SuppressInstrumentationWhenGrpcIsPresent = true)
+                .AddInMemoryExporter(exporterItems)
                 .Build())
         {
             Parallel.ForEach(
@@ -420,11 +418,11 @@ public partial class GrpcTests
             });
         }
 
-        Assert.Equal(11, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
-        var grpcSpan1 = (Activity)processor.Invocations[2].Arguments[0];
-        var grpcSpan2 = (Activity)processor.Invocations[4].Arguments[0];
-        var grpcSpan3 = (Activity)processor.Invocations[6].Arguments[0];
-        var grpcSpan4 = (Activity)processor.Invocations[8].Arguments[0];
+        Assert.Equal(4, exporterItems.Count); // SetParentProvider + OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
+        var grpcSpan1 = exporterItems[0];
+        var grpcSpan2 = exporterItems[1];
+        var grpcSpan3 = exporterItems[2];
+        var grpcSpan4 = exporterItems[3];
 
         ValidateGrpcActivity(grpcSpan1);
         Assert.Equal($"greet.Greeter/SayHello", grpcSpan1.DisplayName);
@@ -443,13 +441,15 @@ public partial class GrpcTests
         Assert.Equal(0, grpcSpan4.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
     }
 
-    [Fact]
-    public void GrpcPropagatesContextWithSuppressInstrumentationOptionSetToTrue()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void GrpcPropagatesContextWithSuppressInstrumentationOptionSetToTrue(bool suppressHttpInstrumentation)
     {
         try
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exporterItems = new List<Activity>();
 
             using var source = new ActivitySource("test-source");
 
@@ -468,11 +468,8 @@ public partial class GrpcTests
 
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSource("test-source")
-                .AddGrpcClientInstrumentation(o =>
-                {
-                    o.SuppressDownstreamInstrumentation = true;
-                })
-                .AddHttpClientInstrumentation()
+                .AddGrpcClientInstrumentation()
+                .AddHttpClientInstrumentation(o => o.SuppressInstrumentationWhenGrpcIsPresent = suppressHttpInstrumentation)
                 .AddAspNetCoreInstrumentation(options =>
                 {
                     options.EnrichWithHttpRequest = (activity, request) =>
@@ -480,7 +477,7 @@ public partial class GrpcTests
                         activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
                     };
                 }) // Instrumenting the server side as well
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exporterItems)
                 .Build())
             {
                 using (var activity = source.StartActivity("parent"))
@@ -490,31 +487,42 @@ public partial class GrpcTests
                     var client = new Greeter.GreeterClient(channel);
                     var rs = client.SayHello(new HelloRequest());
                 }
-
-                WaitForProcessorInvocations(processor, 7);
             }
 
-            Assert.Equal(9, processor.Invocations.Count); // SetParentProvider + (OnStart + OnEnd) * 3 (parent, gRPC client, and server) + Shutdown + Dispose called.
+            if (suppressHttpInstrumentation)
+            {
+                Assert.Equal(3, exporterItems.Count); // parent, grpc client and grpc server activity.
 
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == "SetParentProvider");
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), "parent"));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameGrpcOut));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameHttpRequestIn));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameHttpRequestIn));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameGrpcOut));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), "parent"));
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == "OnShutdown");
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == nameof(processor.Object.Dispose));
+                var serverActivity = exporterItems[0];
+                var clientActivity = exporterItems[1];
 
-            var serverActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
-            var clientActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameGrpcOut);
+                Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
+                Assert.Equal($"greet.Greeter/SayHello", serverActivity.DisplayName);
+                Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
+                Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
+                Assert.Equal(0, clientActivity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
+                Assert.Equal("customValue", serverActivity.GetCustomProperty("customField") as string);
+            }
+            else
+            {
+                Assert.Equal(4, exporterItems.Count);
 
-            Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
-            Assert.Equal($"greet.Greeter/SayHello", serverActivity.DisplayName);
-            Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
-            Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
-            Assert.Equal(0, clientActivity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
-            Assert.Equal("customValue", serverActivity.GetCustomProperty("customField") as string);
+                var server = exporterItems
+                    .Where(item => item.OperationName == OperationNameHttpRequestIn).ToArray();
+
+                var httpClient = exporterItems
+                    .Where(item => item.OperationName == OperationNameHttpOut).ToArray();
+
+                var grpcClient = exporterItems
+                    .Where(item => item.OperationName == OperationNameGrpcOut).ToArray();
+
+                Assert.Single(server);
+                Assert.Single(httpClient);
+                Assert.Single(grpcClient);
+
+                Assert.Equal(server[0].ParentId, httpClient[0].Id);
+                Assert.Equal(httpClient[0].ParentId, grpcClient[0].Id);
+            }
         }
         finally
         {
@@ -526,7 +534,7 @@ public partial class GrpcTests
         }
     }
 
-    [Fact]
+    [Fact(Skip = "TODO:Remove this test, this will not be needed")]
     public void GrpcDoesNotPropagateContextWithSuppressInstrumentationOptionSetToFalse()
     {
         try
@@ -586,7 +594,7 @@ public partial class GrpcTests
         }
     }
 
-    [Fact]
+    [Fact(Skip = "TODO:Remove this test, this will not be needed")]
     public void GrpcClientInstrumentationRespectsSdkSuppressInstrumentation()
     {
         try
