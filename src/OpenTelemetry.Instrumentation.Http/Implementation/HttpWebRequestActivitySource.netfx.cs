@@ -108,22 +108,12 @@ internal static class HttpWebRequestActivitySource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void AddRequestTagsAndInstrumentRequest(HttpWebRequest request, Activity activity)
     {
-        activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+        activity.DisplayName = RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod) ? httpMethod : "HTTP";
 
         if (activity.IsAllDataRequested)
         {
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method, out var httpMethod))
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-            }
-            else
-            {
-                // Set to default "_OTHER" as per spec.
-                // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method);
-            }
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)

@@ -381,7 +381,7 @@ public partial class GrpcTests
         ValidateGrpcActivity(grpcSpan);
         Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
         Assert.Equal(0, grpcSpan.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
-        Assert.Equal($"HTTP POST", httpSpan.DisplayName);
+        Assert.Equal("POST", httpSpan.DisplayName);
         Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
 
         Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
