@@ -95,7 +95,7 @@ public sealed class BasicTests
         Assert.Single(exportedItems);
         var activity = exportedItems[0];
 
-        Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+        Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpResponseStatusCode));
         Assert.Equal(ActivityStatusCode.Unset, activity.Status);
         ValidateAspNetCoreActivity(activity, "/api/values");
     }
@@ -644,7 +644,7 @@ public sealed class BasicTests
         Assert.Equal(activityName, middlewareActivity.DisplayName);
 
         // tag http.method should be added on activity started by asp.net core
-        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
+        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
     }
 
@@ -762,7 +762,7 @@ public sealed class BasicTests
         Assert.Equal(activityName, middlewareActivity.DisplayName);
 
         // tag http.method should be added on activity started by asp.net core
-        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
+        Assert.Equal("GET", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRequestMethod) as string);
         Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
     }
 
@@ -1100,7 +1100,7 @@ public sealed class BasicTests
         Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
         Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
 #endif
-        Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
+        Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeUrlPath) as string);
     }
 
     private static void AssertException(List<Activity> exportedItems)

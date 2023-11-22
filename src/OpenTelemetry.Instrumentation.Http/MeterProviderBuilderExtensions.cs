@@ -15,9 +15,9 @@
 // </copyright>
 
 #if !NET8_0_OR_GREATER
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+#if !NETFRAMEWORK
 using OpenTelemetry.Instrumentation.Http;
+#endif
 using OpenTelemetry.Instrumentation.Http.Implementation;
 #endif
 
@@ -49,28 +49,12 @@ public static class MeterProviderBuilderExtensions
         _ = TelemetryHelper.BoxedStatusCodes;
         _ = RequestMethodHelper.KnownMethods;
 
-        builder.ConfigureServices(services =>
-        {
-            services.RegisterOptionsFactory(configuration => new HttpClientMetricInstrumentationOptions(configuration));
-        });
-
 #if NETFRAMEWORK
         builder.AddMeter(HttpWebRequestActivitySource.MeterName);
-
-        if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
-        {
-            deferredMeterProviderBuilder.Configure((sp, builder) =>
-            {
-                var options = sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName);
-
-                HttpWebRequestActivitySource.MetricsOptions = options;
-            });
-        }
 #else
         builder.AddMeter(HttpHandlerMetricsDiagnosticListener.MeterName);
 
-        builder.AddInstrumentation(sp => new HttpClientMetrics(
-            sp.GetRequiredService<IOptionsMonitor<HttpClientMetricInstrumentationOptions>>().Get(Options.DefaultName)));
+        builder.AddInstrumentation(new HttpClientMetrics());
 #endif
         return builder;
 #endif

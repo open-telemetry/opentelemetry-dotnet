@@ -44,6 +44,15 @@
   before setting up the `MeterProvider`.
   ([#5052](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5052))
 
+* Update Metrics SDK to override the default histogram buckets for ASP.NET
+  (.NET Framework).
+
+  Histogram metrics for the meter name `OpenTelemetry.Instrumentation.AspNet`
+  and instrument name `http.request.server.duration` which have their `Unit`
+  as `s` (second) will have their default histogram buckets as `[ 0.005, 0.01,
+  0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 ]`.
+  ([#5063](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5063))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
