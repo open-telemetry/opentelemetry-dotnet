@@ -57,21 +57,13 @@ public class MetricTests(WebApplicationFactory<Program> factory)
     public async Task ValidateNet8MetricsAsync()
     {
         var exportedItems = new List<Metric>();
-        void ConfigureTestServices(IServiceCollection services)
-        {
-            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+        this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            services.AddOpenTelemetry()
-                .WithMetrics(builder =>
-                    builder.AddInstrumentation(() => this.meterProvider));
-        }
-
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls("http://*:0");
-        ConfigureTestServices(builder.Services);
         var app = builder.Build();
 
         app.MapGet("/", () => "Hello");
@@ -135,10 +127,6 @@ public class MetricTests(WebApplicationFactory<Program> factory)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            services.AddOpenTelemetry()
-                .WithMetrics(builder =>
-                    builder.AddInstrumentation(() => this.meterProvider));
-
             services.AddRateLimiter(_ => _
                 .AddFixedWindowLimiter(policyName: "fixed", options =>
                 {
@@ -198,6 +186,8 @@ public class MetricTests(WebApplicationFactory<Program> factory)
         // TODO
         // aspnetcore.rate_limiting.request.time_in_queue
         // aspnetcore.rate_limiting.queued_requests
+
+        await app.DisposeAsync();
     }
 #endif
 
