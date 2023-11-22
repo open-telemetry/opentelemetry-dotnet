@@ -136,7 +136,7 @@ newer versions.
     recommended buckets by default for `http.server.request.duration`. This
     applies to all targeted frameworks.
 
-## Activity and http.server.request.duration details
+## Activity Duration and http.server.request.duration metric details
 
 `Activity.Duration` and `http.client.request.duration` values represents the
 time used to handle an inbound HTTP request as measured at the hosting layer of
