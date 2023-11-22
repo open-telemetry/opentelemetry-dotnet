@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Metrics;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
@@ -44,5 +47,78 @@ public class MeterProviderSdkTest
         using var provider = currentBuilder.Build();
 
         Assert.NotNull(provider);
+    }
+
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    public void TransientMeterExhaustsMetricStorageTest(bool withView, bool forceFlushAfterEachTest)
+    {
+        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        var builder = Sdk.CreateMeterProviderBuilder()
+            .SetMaxMetricStreams(1)
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems);
+
+        if (withView)
+        {
+            builder.AddView(i => null);
+        }
+
+        using var meterProvider = builder
+            .Build() as MeterProviderSdk;
+
+        Assert.NotNull(meterProvider);
+
+        RunTest();
+
+        if (forceFlushAfterEachTest)
+        {
+            Assert.Single(exportedItems);
+        }
+
+        RunTest();
+
+        if (forceFlushAfterEachTest)
+        {
+            Assert.Empty(exportedItems);
+        }
+        else
+        {
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+        }
+
+#if DEBUG
+        // Note: This is inside a debug block because when running in CI the
+        // event source sees events from other tests running in parallel.
+        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33);
+
+        Assert.Single(metricInstrumentIgnoredEvents);
+#endif
+
+        void RunTest()
+        {
+            exportedItems.Clear();
+
+            var meter = new Meter(meterName);
+
+            var counter = meter.CreateCounter<int>("Counter");
+            counter.Add(1);
+
+            meter.Dispose();
+
+            if (forceFlushAfterEachTest)
+            {
+                meterProvider.ForceFlush();
+            }
+        }
     }
 }
