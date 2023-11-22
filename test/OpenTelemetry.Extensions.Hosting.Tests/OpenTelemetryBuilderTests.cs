@@ -75,4 +75,41 @@ public class OpenTelemetryBuilderTests
             loggerProvider.Resource.Attributes,
             kvp => kvp.Key == "l_key1" && (string)kvp.Value == "l_value1");
     }
+
+    [Fact]
+    public void ConfigureResourceServiceProviderTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton<TestResourceDetector>();
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(r => r.AddDetector(sp => sp.GetRequiredService<TestResourceDetector>()))
+            .WithLogging()
+            .WithMetrics()
+            .WithTracing();
+
+        using var sp = services.BuildServiceProvider();
+
+        var tracerProvider = sp.GetRequiredService<TracerProvider>() as TracerProviderSdk;
+        var meterProvider = sp.GetRequiredService<MeterProvider>() as MeterProviderSdk;
+        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+        Assert.NotNull(meterProvider);
+        Assert.NotNull(loggerProvider);
+
+        Assert.Single(tracerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Single(meterProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Single(loggerProvider.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+    }
+
+    private sealed class TestResourceDetector : IResourceDetector
+    {
+        public Resource Detect() => ResourceBuilder.CreateEmpty().AddAttributes(
+            new Dictionary<string, object>
+            {
+                ["key1"] = "value1",
+            }).Build();
+    }
 }

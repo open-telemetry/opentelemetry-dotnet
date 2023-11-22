@@ -31,21 +31,9 @@ public abstract class MetricSnapshotTestsBase
 
     protected MetricSnapshotTestsBase(bool emitOverflowAttribute, bool shouldReclaimUnusedMetricPoints)
     {
-        var configurationData = new Dictionary<string, string>();
-
-        if (emitOverflowAttribute)
-        {
-            configurationData[MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true";
-        }
-
-        if (shouldReclaimUnusedMetricPoints)
-        {
-            configurationData[MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true";
-        }
-
-        this.configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(configurationData)
-            .Build();
+        this.configuration = MetricApiTestsBase.BuildConfiguration(
+            emitOverflowAttribute,
+            shouldReclaimUnusedMetricPoints);
     }
 
     [Fact]

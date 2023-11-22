@@ -347,6 +347,18 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource
         this.WriteEvent(51, type, reason);
     }
 
+    [Event(52, Message = "Instrument '{0}', Meter '{1}' has been deactivated.", Level = EventLevel.Informational)]
+    public void MetricInstrumentDeactivated(string instrumentName, string meterName)
+    {
+        this.WriteEvent(52, instrumentName, meterName);
+    }
+
+    [Event(53, Message = "Instrument '{0}', Meter '{1}' has been removed.", Level = EventLevel.Informational)]
+    public void MetricInstrumentRemoved(string instrumentName, string meterName)
+    {
+        this.WriteEvent(53, instrumentName, meterName);
+    }
+
 #if DEBUG
     public class OpenTelemetryEventListener : EventListener
     {

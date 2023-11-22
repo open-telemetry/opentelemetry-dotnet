@@ -170,7 +170,6 @@ public sealed class Metric
 
         this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
         this.Temporality = temporality;
-        this.InstrumentDisposed = false;
     }
 
     /// <summary>
@@ -213,7 +212,7 @@ public sealed class Metric
     /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
-    internal bool InstrumentDisposed { get; set; }
+    internal bool Active { get; set; } = true;
 
     /// <summary>
     /// Get the metric points for the metric stream.
