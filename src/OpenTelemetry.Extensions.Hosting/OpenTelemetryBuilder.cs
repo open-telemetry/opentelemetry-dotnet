@@ -16,9 +16,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
-#if EXPOSE_EXPERIMENTAL_FEATURES
 using Microsoft.Extensions.Logging;
-#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
