@@ -277,6 +277,8 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
     {
+        Guard.ThrowIfNull(resourceBuilder);
+
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
@@ -297,6 +299,8 @@ public static class MeterProviderBuilderExtensions
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public static MeterProviderBuilder ConfigureResource(this MeterProviderBuilder meterProviderBuilder, Action<ResourceBuilder> configure)
     {
+        Guard.ThrowIfNull(configure);
+
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
