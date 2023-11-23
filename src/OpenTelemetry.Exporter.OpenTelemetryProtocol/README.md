@@ -106,7 +106,7 @@ Options API extension:
 appBuilder.Services.AddOpenTelemetry()
     .WithTracing(builder => builder.AddOtlpExporter(o => {
         // ...
-    }))
+    }));
 
 // Set via Options API using code:
 appBuilder.Services.Configure<OtlpExporterOptions>(o => {
@@ -142,12 +142,12 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
 > appBuilder.Services.Configure<OtlpExporterOptions>("tracing", appBuilder.Configuration.GetSection("OpenTelemetry:tracing:otlp"));
 > appBuilder.Services.Configure<OtlpExporterOptions>("metrics", appBuilder.Configuration.GetSection("OpenTelemetry:metrics:otlp"));
 > appBuilder.Services.Configure<OtlpExporterOptions>("logging", appBuilder.Configuration.GetSection("OpenTelemetry:logging:otlp"));
-> 
+>
 > // Step 2: Register OtlpExporter using the name parameter.
 > appBuilder.Services.AddOpenTelemetry()
 >     .WithTracing(builder => builder.AddOtlpExporter("tracing", configure: null))
 >     .WithMetrics(builder => builder.AddOtlpExporter("metrics", configure: null));
-> 
+>
 > appBuilder.Logging.AddOpenTelemetry(builder => builder.AddOtlpExporter(
 >     "logging",
 >     options =>
@@ -197,14 +197,24 @@ The `LogRecordExportProcessorOptions` class may be used to configure processor &
 batch settings for logging:
 
 ```csharp
-// Set via code:
+// Set via delegate using code:
+appBuilder.Logging.AddOpenTelemetry(options =>
+{
+    options.AddOtlpExporter((exporterOptions, processorOptions) =>
+    {
+        processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
+        processorOptions.BatchExportProcessorOptions.MaxExportBatchSize = 5000;
+    });
+});
+
+// Set via Options API using code:
 appBuilder.Services.Configure<LogRecordExportProcessorOptions>(o =>
 {
     o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
     o.BatchExportProcessorOptions.MaxExportBatchSize = 5000;
 });
 
-// Set via configuration:
+// Set via Options API using configuration:
 appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Logging"));
 ```
@@ -215,13 +225,20 @@ The `MetricReaderOptions` class may be used to configure reader settings for
 metrics:
 
 ```csharp
-// Set via code:
+// Set via delegate using code:
+appBuilder.Services.AddOpenTelemetry()
+    .WithMetrics(builder => builder.AddOtlpExporter((exporterOptions, readerOptions) =>
+    {
+        readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+    }));
+
+// Set via Options API using code:
 appBuilder.Services.Configure<MetricReaderOptions>(o =>
 {
     o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
 });
 
-// Set via configuration:
+// Set via Options API using configuration:
 appBuilder.Services.Configure<MetricReaderOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Metrics"));
 ```
