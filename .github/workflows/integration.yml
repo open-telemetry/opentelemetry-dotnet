@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net6.0, net7.0 ]
+        version: [ net6.0, net7.0, net8.0 ]
     steps:
       - uses: actions/checkout@v4
 
