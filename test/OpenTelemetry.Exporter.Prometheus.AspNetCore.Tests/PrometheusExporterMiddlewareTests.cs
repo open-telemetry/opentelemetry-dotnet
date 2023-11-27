@@ -238,6 +238,15 @@ public sealed class PrometheusExporterMiddlewareTests
             registerMeterProvider: false);
     }
 
+    [Fact]
+    public async Task PrometheusExporterMiddlewareIntegration_DisableExportScopeInfo()
+    {
+        await RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o => o.ScopeInfoEnabled = false);
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,

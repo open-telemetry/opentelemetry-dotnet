@@ -512,8 +512,95 @@ public sealed class PrometheusSerializerTests
         Assert.False(PrometheusSerializer.CanWriteMetric(metrics[0]));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric)
+    [Fact]
+    public void ScopeInfo()
     {
-        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric));
+        var buffer = new byte[85000];
+
+        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, "test_meter");
+
+        Assert.Matches(
+            ("^"
+             + "# TYPE otel_scope_info info\n"
+             + "# HELP otel_scope_info Scope metadata\n"
+             + "otel_scope_info{otel_scope_name='test_meter'} 1\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void SumWithScopeInfo()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("meter_name", "meter_version");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
+        counter.Add(10);
+        counter.Add(-11);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_updown_counter gauge\n"
+             + "test_updown_counter{otel_scope_name='meter_name',otel_scope_version='meter_version'} -1 \\d+\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void HistogramOneDimensionWithScopeInfo()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("meter_name", "meter_version");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(18, new KeyValuePair<string, object>("x", "1"));
+        histogram.Record(100, new KeyValuePair<string, object>("x", "1"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        Assert.Matches(
+            ("^"
+                + "# TYPE test_histogram histogram\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='0'} 0 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='5'} 0 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='10'} 0 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='25'} 1 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='50'} 1 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='75'} 1 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='100'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='250'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='500'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='750'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='1000'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='2500'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='5000'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='7500'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='10000'} 2 \\d+\n"
+                + "test_histogram_bucket{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1',le='\\+Inf'} 2 \\d+\n"
+                + "test_histogram_sum{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1'} 118 \\d+\n"
+                + "test_histogram_count{otel_scope_name='meter_name',otel_scope_version='meter_version',x='1'} 2 \\d+\n"
+                + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool scopeInfoEnabled = false)
+    {
+        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric), scopeInfoEnabled);
     }
 }
