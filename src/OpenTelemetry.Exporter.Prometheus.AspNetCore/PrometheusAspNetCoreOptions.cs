@@ -42,5 +42,14 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets the ability to export metric scope info. Default value: true.
+    /// </summary>
+    public bool ScopeInfoEnabled
+    {
+        get => this.ExporterOptions.ScopeInfoEnabled;
+        set => this.ExporterOptions.ScopeInfoEnabled = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

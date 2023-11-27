@@ -35,7 +35,7 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric)
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool scopeInfoEnabled)
     {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
@@ -51,9 +51,21 @@ internal static partial class PrometheusSerializer
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
 
-                if (tags.Count > 0)
+                if (tags.Count > 0 || scopeInfoEnabled)
                 {
                     buffer[cursor++] = unchecked((byte)'{');
+
+                    if (scopeInfoEnabled)
+                    {
+                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+                        buffer[cursor++] = unchecked((byte)',');
+
+                        if (!string.IsNullOrEmpty(metric.MeterVersion))
+                        {
+                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+                    }
 
                     foreach (var tag in tags)
                     {
@@ -145,9 +157,21 @@ internal static partial class PrometheusSerializer
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
-                if (tags.Count > 0)
+                if (tags.Count > 0 || scopeInfoEnabled)
                 {
                     buffer[cursor++] = unchecked((byte)'{');
+
+                    if (scopeInfoEnabled)
+                    {
+                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+                        buffer[cursor++] = unchecked((byte)',');
+
+                        if (!string.IsNullOrEmpty(metric.MeterVersion))
+                        {
+                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+                    }
 
                     foreach (var tag in tags)
                     {
@@ -171,9 +195,21 @@ internal static partial class PrometheusSerializer
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
 
-                if (tags.Count > 0)
+                if (tags.Count > 0 || scopeInfoEnabled)
                 {
                     buffer[cursor++] = unchecked((byte)'{');
+
+                    if (scopeInfoEnabled)
+                    {
+                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+                        buffer[cursor++] = unchecked((byte)',');
+
+                        if (!string.IsNullOrEmpty(metric.MeterVersion))
+                        {
+                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+                    }
 
                     foreach (var tag in tags)
                     {

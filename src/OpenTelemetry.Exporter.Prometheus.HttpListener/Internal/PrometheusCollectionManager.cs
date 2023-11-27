@@ -182,19 +182,23 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            foreach (var metric in metrics)
+            if (this.exporter.ScopeInfoEnabled)
             {
-                if (!PrometheusSerializer.CanWriteMetric(metric))
+                var scopes = new HashSet<string>();
+
+                foreach (var metric in metrics)
                 {
-                    continue;
+                    if (PrometheusSerializer.CanWriteMetric(metric))
+                    {
+                        scopes.Add(metric.MeterName);
+                    }
                 }
 
-                while (true)
+                foreach (var scope in scopes)
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric));
-                        break;
+                        cursor = PrometheusSerializer.WriteScopeInfo(this.buffer, cursor, scope);
                     }
                     catch (IndexOutOfRangeException)
                     {
@@ -206,6 +210,30 @@ internal sealed class PrometheusCollectionManager
                             // 2. we got an IndexOutOfRangeException which was triggered by some other
                             //    code instead of the buffer[cursor++] - in this case we should give up
                             //    at certain point rather than allocating like crazy.
+                            throw;
+                        }
+                    }
+                }
+            }
+
+            foreach (var metric in metrics)
+            {
+                if (!PrometheusSerializer.CanWriteMetric(metric))
+                {
+                    continue;
+                }
+
+                while (true)
+                {
+                    try
+                    {
+                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), this.exporter.ScopeInfoEnabled);
+                        break;
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        if (!this.IncreaseBufferSize())
+                        {
                             throw;
                         }
                     }

@@ -326,6 +326,31 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName)
+    {
+        if (string.IsNullOrEmpty(scopeName))
+        {
+            return cursor;
+        }
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName);
+        buffer[cursor++] = unchecked((byte)'}');
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'1');
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
     private static string MapPrometheusType(PrometheusType type)
     {
         return type switch

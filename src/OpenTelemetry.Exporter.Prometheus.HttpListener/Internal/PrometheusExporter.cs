@@ -38,6 +38,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         Guard.ThrowIfNull(options);
 
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
+        this.ScopeInfoEnabled = options.ScopeInfoEnabled;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
@@ -62,6 +63,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal PrometheusCollectionManager CollectionManager { get; }
 
     internal int ScrapeResponseCacheDurationMilliseconds { get; }
+
+    internal bool ScopeInfoEnabled { get; }
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
