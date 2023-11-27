@@ -133,9 +133,18 @@ public class PrometheusHttpListenerTests
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
             Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
+            var content = await response.Content.ReadAsStringAsync();
+
             Assert.Matches(
-                "^# TYPE counter_double_total counter\ncounter_double_total{key1='value1',key2='value2'} 101.17 \\d+\n\n# EOF\n$".Replace('\'', '"'),
-                await response.Content.ReadAsStringAsync());
+                ("^"
+                 + "# TYPE otel_scope_info info\n"
+                 + "# HELP otel_scope_info Scope metadata\n"
+                 + $"otel_scope_info{{otel_scope_name='{this.meterName}'}} 1\n"
+                 + "# TYPE counter_double_total counter\n"
+                 + $"counter_double_total{{otel_scope_name='{this.meterName}',key1='value1',key2='value2'}} 101.17 \\d+\n\n"
+                 + "# EOF\n"
+                 + "$").Replace('\'', '"'),
+                content);
         }
         else
         {

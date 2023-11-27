@@ -244,7 +244,8 @@ public sealed class PrometheusExporterMiddlewareTests
         await RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            configureOptions: o => o.ScopeInfoEnabled = false);
+            configureOptions: o => o.ScopeInfoEnabled = false,
+            skipScopeInfo: true);
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
@@ -254,7 +255,8 @@ public sealed class PrometheusExporterMiddlewareTests
         Action<HttpResponseMessage> validateResponse = null,
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
-        bool skipMetrics = false)
+        bool skipMetrics = false,
+        bool skipScopeInfo = false)
     {
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
@@ -305,14 +307,22 @@ public sealed class PrometheusExporterMiddlewareTests
 
             string content = await response.Content.ReadAsStringAsync();
 
+            string expected = skipScopeInfo
+                ? "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
+                  + "\n"
+                  + "# EOF\n"
+                : "# TYPE otel_scope_info info\n"
+                  + "# HELP otel_scope_info Scope metadata\n"
+                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
+                  + "# TYPE counter_double_total counter\n"
+                  + $"counter_double_total{{otel_scope_name='{MeterName}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
+                  + "\n"
+                  + "# EOF\n";
+
             var matches = Regex.Matches(
                 content,
-                ("^"
-                    + "# TYPE counter_double_total counter\n"
-                    + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
-                    + "\n"
-                    + "# EOF\n"
-                    + "$").Replace('\'', '"'));
+                ("^" + expected + "$").Replace('\'', '"'));
 
             Assert.Single(matches);
 
