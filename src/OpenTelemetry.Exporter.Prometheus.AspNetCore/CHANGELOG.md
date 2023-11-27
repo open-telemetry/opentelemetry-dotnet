@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added support for exporting otel_scope_info tags to metrics
 
 ## 1.7.0-alpha.1
 
