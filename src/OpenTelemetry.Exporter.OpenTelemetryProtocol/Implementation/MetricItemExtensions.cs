@@ -58,7 +58,7 @@ internal static class MetricItemExtensions
             var meterName = metric.MeterName;
             if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
             {
-                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
+                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion, metric.MeterTags);
 
                 metricsByLibrary.Add(meterName, scopeMetrics);
                 resourceMetrics.ScopeMetrics.Add(scopeMetrics);
@@ -85,7 +85,7 @@ internal static class MetricItemExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version)
+    internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version, IEnumerable<KeyValuePair<string, object>> meterTags)
     {
         if (!MetricListPool.TryTake(out var metrics))
         {
@@ -97,11 +97,15 @@ internal static class MetricItemExtensions
                     Version = version ?? string.Empty, // NRE throw by proto
                 },
             };
+            metrics.Scope.Attributes.Clear();
+            AddAttributes(meterTags, metrics.Scope.Attributes);
         }
         else
         {
             metrics.Scope.Name = name;
             metrics.Scope.Version = version ?? string.Empty;
+            metrics.Scope.Attributes.Clear();
+            AddAttributes(meterTags, metrics.Scope.Attributes);
         }
 
         return metrics;
@@ -360,6 +364,17 @@ internal static class MetricItemExtensions
     private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
     {
         foreach (var tag in tags)
+        {
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                attributes.Add(result);
+            }
+        }
+    }
+
+    private static void AddAttributes(IEnumerable<KeyValuePair<string, object>> meterTags, RepeatedField<OtlpCommon.KeyValue> attributes)
+    {
+        foreach (var tag in meterTags)
         {
             if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
             {
