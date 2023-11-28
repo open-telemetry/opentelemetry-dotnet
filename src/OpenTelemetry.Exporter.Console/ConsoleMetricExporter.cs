@@ -80,7 +80,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 this.WriteLine("\tMeter Tags:");
                 if (ConsoleTagTransformer.Instance.TryTransformTag(meterTag, out var result))
                 {
-                    this.WriteLine($"\t    {result}");
+                    this.WriteLine($"\t\t{result}");
                 }
             }
 
