@@ -209,6 +209,53 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     }
 
     [Fact]
+    public void MetricInstrumentationScopeAttributesAreNotTreatedAsIdentifyingProperty()
+    {
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#get-a-meter
+        // Meters are identified by name, version, and schema_url fields
+        // and not with tags.
+        var exportedItems = new List<Metric>();
+        var meterName = "MyMeter";
+        var meterVersion = "1.0";
+        var meterTags1 = new List<KeyValuePair<string, object>>
+        {
+            new(
+                "Key1",
+                "Value1"),
+        };
+        var meterTags2 = new List<KeyValuePair<string, object>>
+        {
+            new(
+                "Key2",
+                "Value2"),
+        };
+        using var meter1 = new Meter(meterName, meterVersion, meterTags1);
+        using var meter2 = new Meter(meterName, meterVersion, meterTags2);
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter1 = meter1.CreateCounter<long>("my-counter");
+        counter1.Add(10);
+        var counter2 = meter2.CreateCounter<long>("my-counter");
+        counter2.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // The instruments differ only in the Meter.Tags, which is not an identifying property.
+        // The first instrument's Meter.Tags is exported.
+        // It is considered a user-error to create Meters with same name,version but with
+        // different tags. TODO: See if we can emit an internal log about this.
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(meterName, metric.MeterName);
+        Assert.Equal(meterVersion, metric.MeterVersion);
+
+        bool containsMeterTags = metric.MeterTags.Any(kvp =>
+            kvp.Key == meterTags1[0].Key && Equals(kvp.Value, meterTags1[0].Value));
+        Assert.True(containsMeterTags);
+    }
+
+    [Fact]
     public void DuplicateInstrumentRegistration_NoViews_IdenticalInstruments()
     {
         var exportedItems = new List<Metric>();
