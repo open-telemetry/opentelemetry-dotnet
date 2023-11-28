@@ -44,6 +44,9 @@
   before setting up the `MeterProvider`.
   ([#5052](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5052))
 
+* Add support for Instrumentation Scope Attributes (i.e Meter Tags), fixing
+  issue [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16

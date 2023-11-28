@@ -27,6 +27,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     {
         this.MeterName = instrument.Meter.Name;
         this.MeterVersion = instrument.Meter.Version ?? string.Empty;
+        this.MeterTags = instrument.Meter.Tags ?? Enumerable.Empty<KeyValuePair<string, object?>>();
         this.InstrumentName = metricStreamConfiguration?.Name ?? instrument.Name;
         this.Unit = instrument.Unit ?? string.Empty;
         this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
@@ -75,6 +76,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.InstrumentType.GetHashCode();
             hash = (hash * 31) + this.MeterName.GetHashCode();
             hash = (hash * 31) + this.MeterVersion.GetHashCode();
+
+            // MeterTags is not part of identity, so not included here.
             hash = (hash * 31) + this.InstrumentName.GetHashCode();
             hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
             hash = (hash * 31) + this.ExponentialHistogramMaxSize.GetHashCode();
@@ -100,6 +103,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     public string MeterName { get; }
 
     public string MeterVersion { get; }
+
+    public IEnumerable<KeyValuePair<string, object?>> MeterTags { get; }
 
     public string InstrumentName { get; }
 

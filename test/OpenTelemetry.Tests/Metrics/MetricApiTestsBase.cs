@@ -218,6 +218,42 @@ public abstract class MetricApiTestsBase : MetricTestsBase
     }
 
     [Fact]
+    public void MetricInstrumentationScopeIsExportedCorrectly()
+    {
+        var exportedItems = new List<Metric>();
+        var meterName = Utils.GetCurrentMethodName();
+        var meterVersion = "1.0";
+        var meterTags = new List<KeyValuePair<string, object?>>
+        {
+            new(
+                "MeterTagKey",
+                "MeterTagValue"),
+        };
+        using var meter = new Meter($"{meterName}", meterVersion, meterTags);
+        var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(this.configuration);
+            })
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems);
+
+        using var meterProvider = meterProviderBuilder.Build();
+
+        var counter = meter.CreateCounter<long>("name1");
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(meterName, metric.MeterName);
+        Assert.Equal(meterVersion, metric.MeterVersion);
+
+        bool containsMeterTags = metric.MeterTags.Any(kvp =>
+            kvp.Key == meterTags[0].Key && Equals(kvp.Value, meterTags[0].Value));
+        Assert.True(containsMeterTags);
+    }
+
+    [Fact]
     public void DuplicateInstrumentRegistration_NoViews_IdenticalInstruments()
     {
         var exportedItems = new List<Metric>();

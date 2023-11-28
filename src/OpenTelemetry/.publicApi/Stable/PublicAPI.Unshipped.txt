@@ -1,0 +1,1 @@
+OpenTelemetry.Metrics.Metric.MeterTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>!

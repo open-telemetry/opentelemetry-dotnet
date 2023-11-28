@@ -19,8 +19,8 @@ using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Proto.Common.V1;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
-using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
@@ -58,7 +58,7 @@ internal static class MetricItemExtensions
             var meterName = metric.MeterName;
             if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
             {
-                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
+                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion, metric.MeterTags);
 
                 metricsByLibrary.Add(meterName, scopeMetrics);
                 resourceMetrics.ScopeMetrics.Add(scopeMetrics);
@@ -85,23 +85,28 @@ internal static class MetricItemExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version)
+    internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version, IEnumerable<KeyValuePair<string, object>> meterTags)
     {
         if (!MetricListPool.TryTake(out var metrics))
         {
             metrics = new OtlpMetrics.ScopeMetrics
             {
-                Scope = new OtlpCommon.InstrumentationScope
+                Scope = new InstrumentationScope
                 {
                     Name = name, // Name is enforced to not be null, but it can be empty.
                     Version = version ?? string.Empty, // NRE throw by proto
                 },
             };
+
+            metrics.Scope.Attributes.Clear();
+            AddAttributes(meterTags, metrics.Scope.Attributes);
         }
         else
         {
             metrics.Scope.Name = name;
             metrics.Scope.Version = version ?? string.Empty;
+            metrics.Scope.Attributes.Clear();
+            AddAttributes(meterTags, metrics.Scope.Attributes);
         }
 
         return metrics;
@@ -357,9 +362,20 @@ internal static class MetricItemExtensions
         return otlpMetric;
     }
 
-    private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
+    private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<KeyValue> attributes)
     {
         foreach (var tag in tags)
+        {
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                attributes.Add(result);
+            }
+        }
+    }
+
+    private static void AddAttributes(IEnumerable<KeyValuePair<string, object>> meterTags, RepeatedField<KeyValue> attributes)
+    {
+        foreach (var tag in meterTags)
         {
             if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
             {

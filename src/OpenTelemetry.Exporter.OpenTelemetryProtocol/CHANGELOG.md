@@ -3,6 +3,8 @@
 ## Unreleased
 
 * Made `OpenTelemetry.Exporter.OtlpLogExporter` public. ([#4979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4979))
+* Add support for Instrumentation Scope Attributes (i.e Meter Tags), fixing
+  issue [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
 
 ## 1.7.0-alpha.1
 
