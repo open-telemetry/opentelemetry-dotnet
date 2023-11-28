@@ -27,8 +27,6 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public abstract class MetricOverflowAttributeTestsBase
 {
-    public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
-
     private readonly bool shouldReclaimUnusedMetricPoints;
     private readonly Dictionary<string, string> configurationData = new()
     {
@@ -43,7 +41,7 @@ public abstract class MetricOverflowAttributeTestsBase
 
         if (shouldReclaimUnusedMetricPoints)
         {
-            this.configurationData[ReclaimUnusedMetricPointsConfigKey] = "true";
+            this.configurationData[MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true";
         }
 
         this.configuration = new ConfigurationBuilder()
