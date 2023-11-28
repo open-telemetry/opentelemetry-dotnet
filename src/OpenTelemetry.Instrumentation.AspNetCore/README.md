@@ -237,7 +237,7 @@ to store the exception to the Activity itself as ActivityEvent.
 
 ## Activity Duration and http.server.request.duration metric calculation
 
-`Activity.Duration` and `http.client.request.duration` values represents the
+`Activity.Duration` and `http.server.request.duration` values represents the
 time used to handle an inbound HTTP request as measured at the hosting layer of
 ASP.NET Core. The time measurement starts once the underlying web host has:
 
