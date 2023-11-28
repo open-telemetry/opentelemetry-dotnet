@@ -129,4 +129,48 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             Assert.True(prop.PropertyType.IsPrimitive, $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive type. This is potentially a trim compatibility issue.");
         }
     }
+
+    [Fact]
+    public void VerifyAddProcessorOverloadWithImplementationFactory()
+    {
+        // arrange
+        var services = new ServiceCollection();
+
+        services.AddSingleton<MyProcessor>();
+
+        services.AddLogging(logging =>
+            logging.AddOpenTelemetry(
+                o => o.AddProcessor(sp => sp.GetRequiredService<MyProcessor>())));
+
+        // act
+        using var sp = services.BuildServiceProvider();
+
+        var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+
+        // assert
+        Assert.NotNull(loggerProvider);
+        Assert.NotNull(loggerProvider.Processor);
+        Assert.True(loggerProvider.Processor is MyProcessor);
+    }
+
+    [Fact]
+    public void VerifyExceptionIsThrownWhenImplementationFactoryIsNull()
+    {
+        // arrange
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging =>
+            logging.AddOpenTelemetry(
+                o => o.AddProcessor(implementationFactory: null!)));
+
+        // act
+        using var sp = services.BuildServiceProvider();
+
+        // assert
+        Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
+    }
+
+    private class MyProcessor : BaseProcessor<LogRecord>
+    {
+    }
 }

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -31,7 +32,7 @@ public static class ProviderExtensions
     /// </summary>
     /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
     /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
-    public static Resource GetResource(this BaseProvider baseProvider)
+    public static Resource GetResource([AllowNull] this BaseProvider baseProvider)
     {
         if (baseProvider is TracerProviderSdk tracerProviderSdk)
         {
@@ -58,14 +59,14 @@ public static class ProviderExtensions
     /// </summary>
     /// <param name="baseProvider"><see cref="BaseProvider"/>.</param>
     /// <returns><see cref="Resource"/>if found otherwise <see cref="Resource.Empty"/>.</returns>
-    public static Resource GetDefaultResource(this BaseProvider baseProvider)
+    public static Resource GetDefaultResource([AllowNull] this BaseProvider baseProvider)
     {
         var builder = ResourceBuilder.CreateDefault();
         builder.ServiceProvider = GetServiceProvider(baseProvider);
         return builder.Build();
     }
 
-    internal static IServiceProvider? GetServiceProvider(this BaseProvider baseProvider)
+    internal static IServiceProvider? GetServiceProvider(this BaseProvider? baseProvider)
     {
         if (baseProvider is TracerProviderSdk tracerProviderSdk)
         {
