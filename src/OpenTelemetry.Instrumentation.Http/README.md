@@ -145,13 +145,6 @@ newer versions.
     recommended buckets by default for `http.client.request.duration`. This
     applies to all targeted frameworks.
 
-## Activity Duration and http.client.request.duration metric details
-
-`Activity.Duration` and `http.client.request.duration` values represents the
-time the underlying client handler takes to complete the request. Completing the
-request includes the time up to reading response headers from the network
-stream. It doesn't include the time spent reading the response body.
-
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
@@ -318,6 +311,13 @@ access to raw request, response, and exception objects.
 This instrumentation automatically sets Activity Status to Error if the Http
 StatusCode is >= 400. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
+
+## Activity Duration and http.client.request.duration metric calculation
+
+`Activity.Duration` and `http.client.request.duration` values represents the
+time the underlying client handler takes to complete the request. Completing the
+request includes the time up to reading response headers from the network
+stream. It doesn't include the time spent reading the response body.
 
 ## Troubleshooting
 

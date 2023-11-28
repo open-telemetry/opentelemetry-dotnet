@@ -136,23 +136,6 @@ newer versions.
     recommended buckets by default for `http.server.request.duration`. This
     applies to all targeted frameworks.
 
-## Activity Duration and http.server.request.duration metric details
-
-`Activity.Duration` and `http.client.request.duration` values represents the
-time used to handle an inbound HTTP request as measured at the hosting layer of
-ASP.NET Core. The time measurement starts once the underlying web host has:
-
-* Sufficiently parsed the HTTP request headers on the inbound network stream to
-  identify the new request.
-* Initialized the context data structures such as the
-  [HttpContext](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.httpcontext).
-
-The time ends when:
-
-* The ASP.NET Core handler pipeline is finished executing.
-* All response data has been sent.
-* The context data structures for the request are being disposed.
-
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
@@ -251,6 +234,23 @@ get access to `HttpRequest` and `HttpResponse`.
 This instrumentation automatically sets Activity Status to Error if an unhandled
 exception is thrown. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
+
+## Activity Duration and http.server.request.duration metric calculation
+
+`Activity.Duration` and `http.client.request.duration` values represents the
+time used to handle an inbound HTTP request as measured at the hosting layer of
+ASP.NET Core. The time measurement starts once the underlying web host has:
+
+* Sufficiently parsed the HTTP request headers on the inbound network stream to
+  identify the new request.
+* Initialized the context data structures such as the
+  [HttpContext](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.httpcontext).
+
+The time ends when:
+
+* The ASP.NET Core handler pipeline is finished executing.
+* All response data has been sent.
+* The context data structures for the request are being disposed.
 
 ## Troubleshooting
 
