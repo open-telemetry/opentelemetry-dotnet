@@ -104,16 +104,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        // In case when the http call is part of the grpc call and SuppressInstrumentationWhenGrpcIsPresent is set to true
-        // we skip injecting headers and set activity traceflags to false so that the activity is not exported.
-        // Grpc instrumentation will do the correct context propagation in this case.
-        if (this.options.SuppressInstrumentationWhenGrpcIsPresent && activity.Parent != null && activity.Parent.OperationName == "Grpc.Net.Client.GrpcOut")
-        {
-            activity.IsAllDataRequested = false;
-            activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
-            return;
-        }
-
         if (!TryFetchRequest(payload, out HttpRequestMessage request))
         {
             HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));

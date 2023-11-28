@@ -138,11 +138,6 @@ public class HttpClientInstrumentationOptions
     /// </remarks>
     public bool RecordException { get; set; }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether suppresses http instrumentation when the http call is part of grpc client call.
-    /// </summary>
-    public bool SuppressInstrumentationWhenGrpcIsPresent { get; set; }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool EventFilterHttpRequestMessage(string activityName, object arg1)
     {

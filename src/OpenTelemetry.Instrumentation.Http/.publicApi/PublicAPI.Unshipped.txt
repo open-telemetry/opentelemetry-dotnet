@@ -16,8 +16,6 @@ OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.FilterHttpWe
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.HttpClientInstrumentationOptions() -> void
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.get -> bool
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.set -> void
-OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SuppressInstrumentationWhenGrpcIsPresent.get -> bool
-OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SuppressInstrumentationWhenGrpcIsPresent.set -> void
 OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
