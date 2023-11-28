@@ -15,25 +15,23 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\RequestMethodHelper.cs" Link="Includes\RequestMethodHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\EnvironmentVariables\*.cs" Link="Includes\EnvironmentVariables\%(Filename).cs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
-    <Compile Include="$(RepoRoot)\src\Shared\HttpSemanticConventionHelper.cs" Link="Includes\HttpSemanticConventionHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
 
   <!-- Instrumentation packages when published should take a dependency only on the latest stable version of the API/SDK. -->
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
-    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
     <PackageReference Include="System.Text.Encodings.Web" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">

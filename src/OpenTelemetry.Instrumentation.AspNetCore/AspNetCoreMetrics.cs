@@ -18,7 +18,6 @@
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore;
 
@@ -46,11 +45,10 @@ internal sealed class AspNetCoreMetrics : IDisposable
     private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
     private readonly Meter meter;
 
-    internal AspNetCoreMetrics(AspNetCoreMetricsInstrumentationOptions options)
+    internal AspNetCoreMetrics()
     {
-        Guard.ThrowIfNull(options);
         this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-        var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore", this.meter, options);
+        var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore", this.meter);
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(metricsListener, this.isEnabled, AspNetCoreInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }

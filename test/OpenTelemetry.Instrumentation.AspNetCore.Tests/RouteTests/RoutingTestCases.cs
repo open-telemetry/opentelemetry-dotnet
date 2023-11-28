@@ -49,8 +49,7 @@ public static class RoutingTestCases
                 continue;
             }
 
-            result.Add(new object[] { testCase, true });
-            result.Add(new object[] { testCase, false });
+            result.Add(new object[] { testCase });
         }
 
         return result;
