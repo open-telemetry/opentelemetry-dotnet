@@ -15,6 +15,9 @@
   accepts a `name` parameter to support named options.
   ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
 
+* Add support for Instrumentation Scope Attributes (i.e Meter Tags), fixing
+  issue [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16

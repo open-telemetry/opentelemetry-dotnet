@@ -44,9 +44,6 @@
   before setting up the `MeterProvider`.
   ([#5052](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5052))
 
-* Add support for Instrumentation Scope Attributes (i.e Meter Tags), fixing
-  issue [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
-
 * Update Metrics SDK to override the default histogram buckets for ASP.NET
   (.NET Framework).
 
@@ -60,6 +57,9 @@
   the factory pattern `(Func<IServiceProvider, BaseProcessor<LogRecord>>
   implementationFactory)`.
   ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
+
+* Add support for Instrumentation Scope Attributes (i.e Meter Tags), fixing
+  issue [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
 
 ## 1.7.0-alpha.1
 
