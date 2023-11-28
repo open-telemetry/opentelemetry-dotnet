@@ -15,8 +15,6 @@
 // </copyright>
 
 #if !NET8_0_OR_GREATER
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 #endif
@@ -46,22 +44,9 @@ public static class MeterProviderBuilderExtensions
         _ = TelemetryHelper.BoxedStatusCodes;
         _ = RequestMethodHelper.KnownMethods;
 
-        builder.ConfigureServices(services =>
-        {
-            services.RegisterOptionsFactory(configuration => new AspNetCoreMetricsInstrumentationOptions(configuration));
-        });
-
         builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
 
-        builder.AddInstrumentation(sp =>
-        {
-            var options = sp.GetRequiredService<IOptionsMonitor<AspNetCoreMetricsInstrumentationOptions>>().Get(Options.DefaultName);
-
-            // TODO: Add additional options to AspNetCoreMetricsInstrumentationOptions ?
-            //   RecordException - probably doesn't make sense for metric instrumentation
-            //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
-            return new AspNetCoreMetrics(options);
-        });
+        builder.AddInstrumentation(new AspNetCoreMetrics());
 
         return builder;
 #endif

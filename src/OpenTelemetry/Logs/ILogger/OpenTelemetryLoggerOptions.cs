@@ -25,7 +25,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 public class OpenTelemetryLoggerOptions
 {
-    internal readonly List<BaseProcessor<LogRecord>> Processors = new();
+    internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = new();
     internal ResourceBuilder? ResourceBuilder;
 
     /// <summary>
@@ -99,7 +99,22 @@ public class OpenTelemetryLoggerOptions
     {
         Guard.ThrowIfNull(processor);
 
-        this.Processors.Add(processor);
+        this.ProcessorFactories.Add(_ => processor);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a processor to the provider which will be retrieved using dependency injection.
+    /// </summary>
+    /// <param name="implementationFactory">The factory that creates the service.</param>
+    /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+    public OpenTelemetryLoggerOptions AddProcessor(
+        Func<IServiceProvider, BaseProcessor<LogRecord>> implementationFactory)
+    {
+        Guard.ThrowIfNull(implementationFactory);
+
+        this.ProcessorFactories.Add(implementationFactory);
 
         return this;
     }

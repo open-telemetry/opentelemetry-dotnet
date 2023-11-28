@@ -101,7 +101,7 @@ public partial class HttpWebRequestTests
             x => x.Key,
             x =>
             {
-                if (x.Key == "http.flavor")
+                if (x.Key == "network.protocol.version")
                 {
                     return "1.1";
                 }
@@ -124,6 +124,12 @@ public partial class HttpWebRequestTests
                 if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
                 {
                     Assert.Null(tagValue);
+                    continue;
+                }
+
+                if (tag.Key == SemanticConventions.AttributeErrorType)
+                {
+                    // TODO: Add validation for error.type in test cases.
                     continue;
                 }
 
@@ -173,13 +179,13 @@ public partial class HttpWebRequestTests
                 ""spanKind"": ""Client"",
                 ""setHttpFlavor"": true,
                 ""spanAttributes"": {
-                  ""http.scheme"": ""http"",
-                  ""http.method"": ""GET"",
-                  ""net.peer.name"": ""{host}"",
-                  ""net.peer.port"": ""{port}"",
-                  ""http.flavor"": ""1.1"",
-                  ""http.status_code"": ""200"",
-                  ""http.url"": ""http://{host}:{port}/""
+                  ""url.scheme"": ""http"",
+                  ""http.request.method"": ""GET"",
+                  ""server.address"": ""{host}"",
+                  ""server.port"": ""{port}"",
+                  ""network.protocol.version"": ""1.1"",
+                  ""http.response.status_code"": ""200"",
+                  ""url.full"": ""http://{host}:{port}/""
                 }
               }
             ",
