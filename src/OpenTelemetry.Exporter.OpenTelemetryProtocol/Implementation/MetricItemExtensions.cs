@@ -21,6 +21,7 @@ using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Proto.Common.V1;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
@@ -91,13 +92,12 @@ internal static class MetricItemExtensions
         {
             metrics = new OtlpMetrics.ScopeMetrics
             {
-                Scope = new InstrumentationScope
+                Scope = new OtlpCommon.InstrumentationScope
                 {
                     Name = name, // Name is enforced to not be null, but it can be empty.
                     Version = version ?? string.Empty, // NRE throw by proto
                 },
             };
-
             metrics.Scope.Attributes.Clear();
             AddAttributes(meterTags, metrics.Scope.Attributes);
         }
@@ -362,7 +362,7 @@ internal static class MetricItemExtensions
         return otlpMetric;
     }
 
-    private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<KeyValue> attributes)
+    private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
     {
         foreach (var tag in tags)
         {
