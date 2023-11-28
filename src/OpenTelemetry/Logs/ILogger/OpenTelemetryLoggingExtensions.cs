@@ -41,9 +41,9 @@ public static class OpenTelemetryLoggingExtensions
     /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
     /// for a given <see cref="IServiceCollection"/>.</item>
-    /// <item><see cref="IServiceCollection"/> / <see cref="IServiceProvider"/>
-    /// features (DI, Options, IConfiguration, etc.) are not available when
-    /// using <see cref="ILoggingBuilder"/>.</item>
+    /// <item><see cref="IServiceCollection"/> features available to metrics and
+    /// traces (for example the "ConfigureServices" extension) are NOT available
+    /// when using <see cref="AddOpenTelemetry(ILoggingBuilder)"/>.</item>
     /// </list>
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
@@ -86,6 +86,8 @@ public static class OpenTelemetryLoggingExtensions
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
+        services.AddOpenTelemetrySharedProviderBuilderServices();
+
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
             {
@@ -98,12 +100,12 @@ public static class OpenTelemetryLoggingExtensions
                     options.ResourceBuilder = null;
                 }
 
-                foreach (var processor in options.Processors)
+                foreach (var processorFactory in options.ProcessorFactories)
                 {
-                    logging.AddProcessor(processor);
+                    logging.AddProcessor(processorFactory);
                 }
 
-                options.Processors.Clear();
+                options.ProcessorFactories.Clear();
             });
 
         configureBuilder?.Invoke(loggingBuilder);
