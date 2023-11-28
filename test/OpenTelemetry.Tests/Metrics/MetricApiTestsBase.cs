@@ -184,22 +184,16 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         var exportedItems = new List<Metric>();
         var meterName = Utils.GetCurrentMethodName();
         var meterVersion = "1.0";
-        var meterTags = new List<KeyValuePair<string, object?>>
+        var meterTags = new List<KeyValuePair<string, object>>
         {
             new(
                 "MeterTagKey",
                 "MeterTagValue"),
         };
         using var meter = new Meter($"{meterName}", meterVersion, meterTags);
-        var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
-            .ConfigureServices(services =>
-            {
-                services.AddSingleton(this.configuration);
-            })
+        using var container = this.BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems);
-
-        using var meterProvider = meterProviderBuilder.Build();
+            .AddInMemoryExporter(exportedItems));
 
         var counter = meter.CreateCounter<long>("name1");
         counter.Add(10);
