@@ -19,7 +19,6 @@ using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Proto.Common.V1;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
