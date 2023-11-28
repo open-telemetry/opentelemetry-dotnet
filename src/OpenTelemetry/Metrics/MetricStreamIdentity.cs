@@ -27,7 +27,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     {
         this.MeterName = instrument.Meter.Name;
         this.MeterVersion = instrument.Meter.Version ?? string.Empty;
-        this.MeterTags = instrument.Meter.Tags ?? Enumerable.Empty<KeyValuePair<string, object?>>();
+        this.MeterTags = instrument.Meter.Tags;
         this.InstrumentName = metricStreamConfiguration?.Name ?? instrument.Name;
         this.Unit = instrument.Unit ?? string.Empty;
         this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
@@ -104,7 +104,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public string MeterVersion { get; }
 
-    public IEnumerable<KeyValuePair<string, object?>> MeterTags { get; }
+    public IEnumerable<KeyValuePair<string, object?>>? MeterTags { get; }
 
     public string InstrumentName { get; }
 

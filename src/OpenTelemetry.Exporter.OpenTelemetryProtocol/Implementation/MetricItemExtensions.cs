@@ -97,15 +97,21 @@ internal static class MetricItemExtensions
                     Version = version ?? string.Empty, // NRE throw by proto
                 },
             };
-            metrics.Scope.Attributes.Clear();
-            AddAttributes(meterTags, metrics.Scope.Attributes);
+
+            if (meterTags != null)
+            {
+                AddAttributes(meterTags, metrics.Scope.Attributes);
+            }
         }
         else
         {
             metrics.Scope.Name = name;
             metrics.Scope.Version = version ?? string.Empty;
-            metrics.Scope.Attributes.Clear();
-            AddAttributes(meterTags, metrics.Scope.Attributes);
+            if (meterTags != null)
+            {
+                metrics.Scope.Attributes.Clear();
+                AddAttributes(meterTags, metrics.Scope.Attributes);
+            }
         }
 
         return metrics;

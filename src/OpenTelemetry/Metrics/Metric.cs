@@ -210,7 +210,7 @@ public sealed class Metric
     /// <summary>
     /// Gets the attributes (tags) for the metric stream.
     /// </summary>
-    public IEnumerable<KeyValuePair<string, object?>> MeterTags => this.InstrumentIdentity.MeterTags;
+    public IEnumerable<KeyValuePair<string, object?>>? MeterTags => this.InstrumentIdentity.MeterTags;
 
     /// <summary>
     /// Gets the <see cref="MetricStreamIdentity"/> for the metric stream.
