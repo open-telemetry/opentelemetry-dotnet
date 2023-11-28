@@ -21,7 +21,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -33,8 +32,6 @@ using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
 using TestApp.AspNetCore.Filters;
 using Xunit;
-
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests;
 
@@ -664,14 +661,9 @@ public sealed class BasicTests
     {
         var exportedItems = new List<Activity>();
 
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string> { [SemanticConventionOptInKeyName] = "http" })
-            .Build();
-
         void ConfigureTestServices(IServiceCollection services)
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration))
                 .AddAspNetCoreInstrumentation()
                 .AddInMemoryExporter(exportedItems)
                 .Build();

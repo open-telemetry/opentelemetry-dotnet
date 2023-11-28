@@ -112,11 +112,6 @@ internal class HttpInListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
-
         HttpContext context = payload as HttpContext;
         if (context == null)
         {
