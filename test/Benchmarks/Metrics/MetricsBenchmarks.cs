@@ -22,27 +22,27 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet v0.13.6, Windows 11 (10.0.23424.1000)
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
 Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK 7.0.400
-  [Host]     : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                    Method | AggregationTemporality |      Mean |    Error |   StdDev | Allocated |
+| Method                    | AggregationTemporality | Mean      | Error    | StdDev   | Allocated |
 |-------------------------- |----------------------- |----------:|---------:|---------:|----------:|
-|            CounterHotPath |             Cumulative |  21.61 ns | 0.084 ns | 0.078 ns |         - |
-| CounterWith1LabelsHotPath |             Cumulative |  69.08 ns | 0.261 ns | 0.244 ns |         - |
-| CounterWith3LabelsHotPath |             Cumulative | 149.77 ns | 0.549 ns | 0.486 ns |         - |
-| CounterWith5LabelsHotPath |             Cumulative | 236.47 ns | 1.684 ns | 1.493 ns |         - |
-| CounterWith6LabelsHotPath |             Cumulative | 276.48 ns | 1.442 ns | 1.349 ns |         - |
-| CounterWith7LabelsHotPath |             Cumulative | 294.09 ns | 2.354 ns | 2.202 ns |         - |
-|            CounterHotPath |                  Delta |  27.32 ns | 0.380 ns | 0.355 ns |         - |
-| CounterWith1LabelsHotPath |                  Delta |  80.83 ns | 0.219 ns | 0.183 ns |         - |
-| CounterWith3LabelsHotPath |                  Delta | 162.48 ns | 1.053 ns | 0.985 ns |         - |
-| CounterWith5LabelsHotPath |                  Delta | 255.48 ns | 1.807 ns | 1.602 ns |         - |
-| CounterWith6LabelsHotPath |                  Delta | 281.75 ns | 2.761 ns | 2.583 ns |         - |
-| CounterWith7LabelsHotPath |                  Delta | 310.29 ns | 1.817 ns | 1.611 ns |         - |
+| CounterHotPath            | Cumulative             |  15.37 ns | 0.072 ns | 0.064 ns |         - |
+| CounterWith1LabelsHotPath | Cumulative             |  60.67 ns | 0.764 ns | 0.677 ns |         - |
+| CounterWith3LabelsHotPath | Cumulative             | 112.98 ns | 0.843 ns | 0.704 ns |         - |
+| CounterWith5LabelsHotPath | Cumulative             | 196.83 ns | 1.632 ns | 1.447 ns |         - |
+| CounterWith6LabelsHotPath | Cumulative             | 225.96 ns | 2.676 ns | 2.503 ns |         - |
+| CounterWith7LabelsHotPath | Cumulative             | 249.96 ns | 3.459 ns | 3.066 ns |         - |
+| CounterHotPath            | Delta                  |  19.83 ns | 0.158 ns | 0.148 ns |         - |
+| CounterWith1LabelsHotPath | Delta                  |  59.88 ns | 0.251 ns | 0.235 ns |         - |
+| CounterWith3LabelsHotPath | Delta                  | 124.24 ns | 1.490 ns | 1.394 ns |         - |
+| CounterWith5LabelsHotPath | Delta                  | 203.75 ns | 3.755 ns | 5.504 ns |         - |
+| CounterWith6LabelsHotPath | Delta                  | 226.50 ns | 2.036 ns | 1.805 ns |         - |
+| CounterWith7LabelsHotPath | Delta                  | 253.83 ns | 1.247 ns | 0.973 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
