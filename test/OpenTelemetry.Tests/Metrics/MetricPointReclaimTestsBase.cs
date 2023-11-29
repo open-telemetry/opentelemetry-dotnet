@@ -1,4 +1,4 @@
-// <copyright file="MetricPointReclaimTests.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricPointReclaimTestsBase.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,19 +24,24 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
-public class MetricPointReclaimTests
-{
-    public const string ReclaimUnusedMetricPointsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_RECLAIM_UNUSED_METRIC_POINTS";
+#pragma warning disable SA1402
 
+public abstract class MetricPointReclaimTestsBase
+{
     private readonly Dictionary<string, string> configurationData = new()
     {
-        [ReclaimUnusedMetricPointsConfigKey] = "true",
+        [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = "true",
     };
 
     private readonly IConfiguration configuration;
 
-    public MetricPointReclaimTests()
+    protected MetricPointReclaimTestsBase(bool emitOverflowAttribute)
     {
+        if (emitOverflowAttribute)
+        {
+            this.configurationData[MetricTestsBase.EmitOverFlowAttributeConfigKey] = "true";
+        }
+
         this.configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(this.configurationData)
             .Build();
@@ -52,10 +57,10 @@ public class MetricPointReclaimTests
     public void TestReclaimAttributeConfigWithEnvVar(string value, bool isReclaimAttributeKeySet)
     {
         // Clear the environment variable value first
-        Environment.SetEnvironmentVariable(ReclaimUnusedMetricPointsConfigKey, null);
+        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, null);
 
         // Set the environment variable to the value provided in the test input
-        Environment.SetEnvironmentVariable(ReclaimUnusedMetricPointsConfigKey, value);
+        Environment.SetEnvironmentVariable(MetricTestsBase.ReclaimUnusedMetricPointsConfigKey, value);
 
         var exportedItems = new List<Metric>();
 
@@ -87,7 +92,7 @@ public class MetricPointReclaimTests
             .ConfigureServices(services =>
             {
                 var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { [ReclaimUnusedMetricPointsConfigKey] = value })
+                .AddInMemoryCollection(new Dictionary<string, string> { [MetricTestsBase.ReclaimUnusedMetricPointsConfigKey] = value })
                 .Build();
 
                 services.AddSingleton<IConfiguration>(configuration);
@@ -111,7 +116,7 @@ public class MetricPointReclaimTests
         int numberOfUpdateThreads = 25;
         int maxNumberofDistinctMetricPoints = 4000; // Default max MetricPoints * 2
 
-        using var exporter = new CustomExporter();
+        using var exporter = new CustomExporter(assertNoDroppedMeasurements: true);
         using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
@@ -193,18 +198,18 @@ public class MetricPointReclaimTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void MeasurementsAreAggregatedAfterMetricPointReclaim(bool emitMetricWithNoDimension)
+    public void MeasurementsAreAggregatedEvenAfterTheyAreDropped(bool emitMetricWithNoDimension)
     {
         var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
         long sum = 0;
-        var measurementValues = new long[] { 10, 20 };
+        var measurementValues = new long[] { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
 
         int numberOfUpdateThreads = 4;
         int numberOfMeasurementsPerThread = 10;
 
-        using var exporter = new CustomExporter();
+        using var exporter = new CustomExporter(assertNoDroppedMeasurements: false);
         using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
@@ -216,15 +221,18 @@ public class MetricPointReclaimTests
                 services.AddSingleton(this.configuration);
             })
             .AddMeter(Utils.GetCurrentMethodName())
-            .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 5
+            .SetMaxMetricPointsPerMetricStream(10) // Set max MetricPoints limit to 10
             .AddReader(metricReader)
             .Build();
 
-        // Add nine distinct combinations of dimensions to switch AggregatorStore Snapshot behavior
-        // to start reclaiming Metric Points. (One MetricPoint is reserved for metric point with no dimensions)
-        for (int i = 1; i < 10; i++)
+        // Add 10 distinct combinations of dimensions to surpass the max metric points limit of 10.
+        // Note that one MetricPoint is reserved for zero tags and one MetricPoint is optionally
+        // reserved for the overflow tag depending on the user's input.
+        // This would lead to dropping a few measurements. We want to make sure that they can still be
+        // aggregated later on when there are free MetricPoints available.
+        for (int i = 0; i < 10; i++)
         {
-            counter.Add(100, new KeyValuePair<string, object>("key", Guid.NewGuid()));
+            counter.Add(100, new KeyValuePair<string, object>("key", $"value{i}"));
         }
 
         meterProvider.ForceFlush();
@@ -289,12 +297,16 @@ public class MetricPointReclaimTests
     {
         public long Sum = 0;
 
+        private readonly bool assertNoDroppedMeasurements;
+
         private readonly FieldInfo aggStoreFieldInfo;
 
         private readonly FieldInfo metricPointLookupDictionaryFieldInfo;
 
-        public CustomExporter()
+        public CustomExporter(bool assertNoDroppedMeasurements)
         {
+            this.assertNoDroppedMeasurements = assertNoDroppedMeasurements;
+
             var metricFields = typeof(Metric).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
             this.aggStoreFieldInfo = metricFields!.FirstOrDefault(field => field.Name == "aggStore");
 
@@ -311,7 +323,10 @@ public class MetricPointReclaimTests
 
                 var droppedMeasurements = aggStore.DroppedMeasurements;
 
-                Assert.Equal(0, droppedMeasurements);
+                if (this.assertNoDroppedMeasurements)
+                {
+                    Assert.Equal(0, droppedMeasurements);
+                }
 
                 // This is to ensure that the lookup dictionary does not have unbounded growth
                 Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.MaxMetricPointsPerMetricDefault * 2));
@@ -335,5 +350,21 @@ public class MetricPointReclaimTests
 
             return ExportResult.Success;
         }
+    }
+}
+
+public class MetricPointReclaimTests : MetricPointReclaimTestsBase
+{
+    public MetricPointReclaimTests()
+        : base(emitOverflowAttribute: false)
+    {
+    }
+}
+
+public class MetricPointReclaimTestsWithEmitOverflowAttribute : MetricPointReclaimTestsBase
+{
+    public MetricPointReclaimTestsWithEmitOverflowAttribute()
+        : base(emitOverflowAttribute: true)
+    {
     }
 }
