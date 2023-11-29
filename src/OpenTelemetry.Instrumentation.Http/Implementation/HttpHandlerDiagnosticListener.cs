@@ -104,11 +104,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
-
         if (!TryFetchRequest(payload, out HttpRequestMessage request))
         {
             HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));

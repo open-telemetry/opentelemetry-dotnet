@@ -66,11 +66,6 @@ internal sealed class HttpHandlerMetricsDiagnosticListener : ListenerHandler
 
     public void OnStopEventWritten(Activity activity, object payload)
     {
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
-
         if (TryFetchRequest(payload, out HttpRequestMessage request))
         {
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-metrics.md
