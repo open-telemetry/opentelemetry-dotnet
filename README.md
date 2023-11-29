@@ -123,6 +123,11 @@ If you have trouble accessing the doc, please get in touch on
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Microsoft
 
+[Triagers](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager)
+([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+
+* [Martin Thwaites](https://github.com/martinjt), Honeycomb
+
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
 

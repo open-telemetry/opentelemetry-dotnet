@@ -18,18 +18,18 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Metrics;
 
 /*
-BenchmarkDotNet=v0.13.5, OS=macOS Ventura 13.4 (22F66) [Darwin 22.5.0]
-Apple M1 Max, 1 CPU, 10 logical and 10 physical cores
-.NET SDK=7.0.101
-  [Host]     : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
-  DefaultJob : .NET 7.0.1 (7.0.122.56804), Arm64 RyuJIT AdvSIMD
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|     Method | Scale |     Mean |    Error |   StdDev | Allocated |
-|----------- |------ |---------:|---------:|---------:|----------:|
-| MapToIndex |   -11 | 11.60 ns | 0.057 ns | 0.053 ns |         - |
-| MapToIndex |     3 | 14.63 ns | 0.135 ns | 0.126 ns |         - |
-| MapToIndex |    20 | 14.40 ns | 0.026 ns | 0.024 ns |         - |
+| Method     | Scale | Mean      | Error     | StdDev    | Allocated |
+|----------- |------ |----------:|----------:|----------:|----------:|
+| MapToIndex | -11   |  4.003 ns | 0.0288 ns | 0.0240 ns |         - |
+| MapToIndex | 3     | 11.081 ns | 0.1222 ns | 0.1143 ns |         - |
+| MapToIndex | 20    | 11.077 ns | 0.1103 ns | 0.1032 ns |         - |
 */
 
 namespace Benchmarks.Metrics;
