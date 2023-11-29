@@ -208,6 +208,11 @@ public sealed class Metric
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
     /// <summary>
+    /// Gets the attributes (tags) for the metric stream.
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, object?>>? MeterTags => this.InstrumentIdentity.MeterTags;
+
+    /// <summary>
     /// Gets the <see cref="MetricStreamIdentity"/> for the metric stream.
     /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }

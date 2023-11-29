@@ -58,6 +58,12 @@
   implementationFactory)`.
   ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
 
+* Add support for Instrumentation Scope Attributes (i.e [Meter
+  Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
+  fixing issue
+  [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
+  ([#5089](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5089))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16
