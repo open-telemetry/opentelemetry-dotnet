@@ -27,6 +27,7 @@ internal sealed class PrometheusCollectionManager
     private readonly int scrapeResponseCacheDurationMilliseconds;
     private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private int globalLockState;
@@ -42,6 +43,7 @@ internal sealed class PrometheusCollectionManager
         this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
         this.onCollectRef = this.OnCollect;
         this.metricsCache = new Dictionary<Metric, PrometheusMetric>();
+        this.scopes = new HashSet<string>();
     }
 
 #if NET6_0_OR_GREATER
@@ -184,17 +186,17 @@ internal sealed class PrometheusCollectionManager
         {
             if (this.exporter.ScopeInfoEnabled)
             {
-                var scopes = new HashSet<string>();
+                this.scopes.Clear();
 
                 foreach (var metric in metrics)
                 {
                     if (PrometheusSerializer.CanWriteMetric(metric))
                     {
-                        scopes.Add(metric.MeterName);
+                        this.scopes.Add(metric.MeterName);
                     }
                 }
 
-                foreach (var scope in scopes)
+                foreach (var scope in this.scopes)
                 {
                     try
                     {
