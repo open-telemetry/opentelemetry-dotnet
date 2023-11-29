@@ -70,6 +70,12 @@
   surface (mirrors tracing & metrics).
   ([#5072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5072))
 
+* Changed the `ILoggingBuilder` registration extensions (`AddOpenTelemetry` &
+  `UseOpenTelemetry`) to fire the optional `OpenTelemetryLoggerOptions`
+  configuration delegate AFTER the "Logging:OpenTelemetry" `IConfiguration`
+  section has been applied.
+  ([#5072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5072))
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16

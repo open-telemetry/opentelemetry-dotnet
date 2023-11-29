@@ -17,6 +17,7 @@
 #nullable enable
 
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -181,11 +182,34 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         var serviceCollection = new ServiceCollection();
 
-        serviceCollection.Configure<OpenTelemetryLoggerOptions>(o => beforeDelegateIndex = ++currentIndex);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Logging:OpenTelemetry:IncludeFormattedMessage"] = "true" })
+            .Build();
+
+        serviceCollection.Configure<OpenTelemetryLoggerOptions>(o =>
+        {
+            // Verify this fires BEFORE options are bound
+            Assert.False(o.IncludeFormattedMessage);
+
+            beforeDelegateIndex = ++currentIndex;
+        });
 
         serviceCollection.AddLogging(logging =>
         {
-            logging.UseOpenTelemetry(configureBuilder: null, configureOptions: o => extensionDelegateIndex = ++currentIndex);
+            // Note: Typically the host binds logging configuration to the
+            // "Logging" section but since we aren't using a host we do this
+            // manually.
+            logging.AddConfiguration(config.GetSection("Logging"));
+
+            logging.UseOpenTelemetry(
+                configureBuilder: null,
+                configureOptions: o =>
+                {
+                    // Verify this fires AFTER options are bound
+                    Assert.True(o.IncludeFormattedMessage);
+
+                    extensionDelegateIndex = ++currentIndex;
+                });
         });
 
         serviceCollection.Configure<OpenTelemetryLoggerOptions>(o => afterDelegateIndex = ++currentIndex);
