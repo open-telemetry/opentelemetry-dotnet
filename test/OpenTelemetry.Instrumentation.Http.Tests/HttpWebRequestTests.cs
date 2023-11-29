@@ -17,7 +17,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using Moq;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -49,9 +48,9 @@ public partial class HttpWebRequestTests
         bool enrichWithHttpResponseMessageCalled = false;
         bool enrichWithExceptionCalled = false;
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddHttpClientInstrumentation(options =>
             {
                 options.EnrichWithHttpWebRequest = (activity, httpWebRequest) => { enrichWithHttpWebRequestCalled = true; };
@@ -92,8 +91,8 @@ public partial class HttpWebRequestTests
             tc.ResponseExpected = false;
         }
 
-        Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
-        var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
         ValidateHttpWebRequestActivity(activity);
         Assert.Equal(tc.SpanName, activity.DisplayName);
 

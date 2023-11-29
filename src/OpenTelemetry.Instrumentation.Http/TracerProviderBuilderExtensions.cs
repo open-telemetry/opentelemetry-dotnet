@@ -72,8 +72,6 @@ public static class TracerProviderBuilderExtensions
             {
                 services.Configure(name, configureHttpClientInstrumentationOptions);
             }
-
-            services.RegisterOptionsFactory(configuration => new HttpClientInstrumentationOptions(configuration));
         });
 
 #if NETFRAMEWORK
