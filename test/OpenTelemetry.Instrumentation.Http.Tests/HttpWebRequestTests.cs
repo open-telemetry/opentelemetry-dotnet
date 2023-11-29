@@ -174,7 +174,7 @@ public partial class HttpWebRequestTests
                 ""method"": ""GET"",
                 ""url"": ""http://{host}:{port}/"",
                 ""responseCode"": 200,
-                ""spanName"": ""HTTP GET"",
+                ""spanName"": ""GET"",
                 ""spanStatus"": ""UNSET"",
                 ""spanKind"": ""Client"",
                 ""setHttpFlavor"": true,
