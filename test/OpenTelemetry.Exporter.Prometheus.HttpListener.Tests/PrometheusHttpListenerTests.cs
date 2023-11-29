@@ -140,6 +140,7 @@ public class PrometheusHttpListenerTests
                  + "# TYPE otel_scope_info info\n"
                  + "# HELP otel_scope_info Scope metadata\n"
                  + $"otel_scope_info{{otel_scope_name='{this.meterName}'}} 1\n"
+                 + "\n"
                  + "# TYPE counter_double_total counter\n"
                  + $"counter_double_total{{otel_scope_name='{this.meterName}',key1='value1',key2='value2'}} 101.17 \\d+\n\n"
                  + "# EOF\n"
