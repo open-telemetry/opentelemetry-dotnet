@@ -16,8 +16,6 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore;
 
@@ -26,23 +24,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore;
 /// </summary>
 public class AspNetCoreInstrumentationOptions
 {
-    internal readonly HttpSemanticConvention HttpSemanticConvention;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AspNetCoreInstrumentationOptions"/> class.
-    /// </summary>
-    public AspNetCoreInstrumentationOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
-    {
-    }
-
-    internal AspNetCoreInstrumentationOptions(IConfiguration configuration)
-    {
-        Debug.Assert(configuration != null, "configuration was null");
-
-        this.HttpSemanticConvention = GetSemanticConventionOptIn(configuration);
-    }
-
     /// <summary>
     /// Gets or sets a filter function that determines whether or not to
     /// collect telemetry on a per request basis.
@@ -96,7 +77,7 @@ public class AspNetCoreInstrumentationOptions
     /// </remarks>
     public bool RecordException { get; set; }
 
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
     /// </summary>

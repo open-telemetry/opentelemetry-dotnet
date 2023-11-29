@@ -99,7 +99,38 @@ and environment variables.
 
 This can be achieved by providing an `Action<OtlpExporterOptions>` delegate to
 the `AddOtlpExporter()` method or using the `Configure<OtlpExporterOptions>()`
-Options API extension.
+Options API extension:
+
+```csharp
+// Set via delegate using code:
+appBuilder.Services.AddOpenTelemetry()
+    .WithTracing(builder => builder.AddOtlpExporter(o => {
+        // ...
+    }));
+
+// Set via Options API using code:
+appBuilder.Services.Configure<OtlpExporterOptions>(o => {
+    // ...
+});
+
+// Set via Options API using configuration:
+appBuilder.Services.Configure<OtlpExporterOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:otlp"));
+```
+
+If additional services from the dependency injection are required for
+configuration they can be accessed through the Options API like this:
+
+```csharp
+// Step 1: Register user-created configuration service.
+appBuilder.Services.AddSingleton<MyOtlpConfigurationService>();
+
+// Step 2: Use Options API to configure OtlpExporterOptions with user-created service.
+appBuilder.Services.AddOptions<OtlpExporterOptions>()
+    .Configure<MyOtlpConfigurationService>((o, configService) => {
+        o.Endpoint = configService.ResolveOtlpExporterEndpoint();
+    });
+```
 
 > **Note**
 > The `OtlpExporterOptions` class is shared by logging, metrics, and tracing. To
@@ -107,27 +138,24 @@ Options API extension.
 > `AddOtlpExporter` extensions:
 >
 > ```csharp
+> // Step 1: Bind options to config using the name parameter.
+> appBuilder.Services.Configure<OtlpExporterOptions>("tracing", appBuilder.Configuration.GetSection("OpenTelemetry:tracing:otlp"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("metrics", appBuilder.Configuration.GetSection("OpenTelemetry:metrics:otlp"));
+> appBuilder.Services.Configure<OtlpExporterOptions>("logging", appBuilder.Configuration.GetSection("OpenTelemetry:logging:otlp"));
+>
+> // Step 2: Register OtlpExporter using the name parameter.
 > appBuilder.Services.AddOpenTelemetry()
 >     .WithTracing(builder => builder.AddOtlpExporter("tracing", configure: null))
 >     .WithMetrics(builder => builder.AddOtlpExporter("metrics", configure: null));
 >
-> appBuilder.Logging.AddOpenTelemetry(builder => builder.AddOtlpExporter("logging", configure: null));
->
-> appBuilder.Services.Configure<OtlpExporterOptions>("tracing", appBuilder.Configuration.GetSection("OpenTelemetry:tracing:otlp"));
-> appBuilder.Services.Configure<OtlpExporterOptions>("metrics", appBuilder.Configuration.GetSection("OpenTelemetry:metrics:otlp"));
-> appBuilder.Services.Configure<OtlpExporterOptions>("logging", appBuilder.Configuration.GetSection("OpenTelemetry:logging:otlp"));
+> appBuilder.Logging.AddOpenTelemetry(builder => builder.AddOtlpExporter(
+>     "logging",
+>     options =>
+>     {
+>         // Note: Options can also be set via code but order is important. In the example here the code will apply after configuration.
+>         options.Endpoint = new Uri("http://localhost/logs");
+>     }));
 > ```
-
-If additional services from the dependency injection are required, they can be
-configured like this:
-
-```csharp
-services.AddOptions<OtlpExporterOptions>().Configure<Service>((opts, svc) => {
-    // ...
-});
-```
-
-TODO: Show metrics specific configuration (i.e MetricReaderOptions).
 
 ### OtlpExporterOptions
 
@@ -169,16 +197,50 @@ The `LogRecordExportProcessorOptions` class may be used to configure processor &
 batch settings for logging:
 
 ```csharp
-// Set via code:
+// Set via delegate using code:
+appBuilder.Logging.AddOpenTelemetry(options =>
+{
+    options.AddOtlpExporter((exporterOptions, processorOptions) =>
+    {
+        processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
+        processorOptions.BatchExportProcessorOptions.MaxExportBatchSize = 5000;
+    });
+});
+
+// Set via Options API using code:
 appBuilder.Services.Configure<LogRecordExportProcessorOptions>(o =>
 {
     o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
     o.BatchExportProcessorOptions.MaxExportBatchSize = 5000;
 });
 
-// Set via configuration:
+// Set via Options API using configuration:
 appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Logging"));
+```
+
+### MetricReaderOptions
+
+The `MetricReaderOptions` class may be used to configure reader settings for
+metrics:
+
+```csharp
+// Set via delegate using code:
+appBuilder.Services.AddOpenTelemetry()
+    .WithMetrics(builder => builder.AddOtlpExporter((exporterOptions, readerOptions) =>
+    {
+        readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+    }));
+
+// Set via Options API using code:
+appBuilder.Services.Configure<MetricReaderOptions>(o =>
+{
+    o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
+});
+
+// Set via Options API using configuration:
+appBuilder.Services.Configure<MetricReaderOptions>(
+    appBuilder.Configuration.GetSection("OpenTelemetry:Metrics"));
 ```
 
 ## Environment Variables

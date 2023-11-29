@@ -58,6 +58,12 @@
   implementationFactory)`.
   ([#4916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4916))
 
+* Add support for Instrumentation Scope Attributes (i.e [Meter
+  Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
+  fixing issue
+  [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
+  ([#5089](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5089))
+
 * Added the `ILoggingBuilder.UseOpenTelemetry` experimental API extension for
   registering OpenTelemetry `ILogger` integration using `LoggerProviderBuilder`
   which supports the full DI (`IServiceCollection` \ `IServiceProvider`) API
