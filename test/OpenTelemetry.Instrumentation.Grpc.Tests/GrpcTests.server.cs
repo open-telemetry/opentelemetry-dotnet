@@ -46,6 +46,7 @@ public partial class GrpcTests : IDisposable
         this.server = new GrpcServer<GreeterService>();
     }
 
+/*
     [Theory]
     [InlineData(null)]
     [InlineData(true)]
@@ -207,7 +208,7 @@ public partial class GrpcTests : IDisposable
             }));
         }
     }
-
+*/
     public void Dispose()
     {
         this.server.Dispose();

@@ -252,22 +252,18 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
-
+/*
 #if !NETSTANDARD2_0
+
             if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
             {
                 this.AddGrpcAttributes(activity, grpcMethod, context);
             }
-            else if (activity.Status == ActivityStatusCode.Unset)
-            {
-                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-            }
-#else
+*/
             if (activity.Status == ActivityStatusCode.Unset)
             {
                 activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
             }
-#endif
 
             try
             {
