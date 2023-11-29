@@ -52,6 +52,8 @@ public static class OpenTelemetryLoggingExtensions
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
 #if EXPOSE_EXPERIMENTAL_FEATURES
+    // todo: [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")]
+    // Note: We hide AddOpenTelemetry from IDEs using EditorBrowsable when UseOpenTelemetry is present to reduce confusion.
     [EditorBrowsable(EditorBrowsableState.Never)]
 #endif
     public static ILoggingBuilder AddOpenTelemetry(
@@ -66,6 +68,8 @@ public static class OpenTelemetryLoggingExtensions
     /// <param name="configure">Optional configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
 #if EXPOSE_EXPERIMENTAL_FEATURES
+    // todo: [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")]
+    // Note: We hide AddOpenTelemetry from IDEs using EditorBrowsable when UseOpenTelemetry is present to reduce confusion.
     [EditorBrowsable(EditorBrowsableState.Never)]
 #endif
     public static ILoggingBuilder AddOpenTelemetry(

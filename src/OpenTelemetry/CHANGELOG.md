@@ -67,7 +67,7 @@
 * Added the `ILoggingBuilder.UseOpenTelemetry` experimental API extension for
   registering OpenTelemetry `ILogger` integration using `LoggerProviderBuilder`
   which supports the full DI (`IServiceCollection` \ `IServiceProvider`) API
-  surface available already in tracing & metrics.
+  surface (mirrors tracing & metrics).
   ([#5072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5072))
 
 ## 1.7.0-alpha.1
