@@ -8,6 +8,9 @@
   semantic conventions.
   ([#5066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5066))
 
+* Removed `netstandard2.1` target.
+  ([#5094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5094))
+
 ## 1.6.0-beta.3
 
 Released 2023-Nov-17
