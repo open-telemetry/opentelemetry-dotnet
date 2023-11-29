@@ -16,6 +16,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -146,10 +147,17 @@ public sealed class OpenTelemetryBuilder
     /// Adds logging services into the builder.
     /// </summary>
     /// <remarks>
-    /// <para><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// <para><b>WARNING</b>: This is an experimental API which might change or
+    /// be removed in the future. Use at your own risk.</para>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="LoggerProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
+    /// <see cref="IServiceCollection"/>.</item>
+    /// <item>This method automatically registers an <see
+    /// cref="ILoggerProvider"/> named 'OpenTelemetry' into the <see
+    /// cref="IServiceCollection"/>.</item>
+    /// </list>
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
@@ -159,16 +167,22 @@ public sealed class OpenTelemetryBuilder
     /// Adds logging services into the builder.
     /// </summary>
     /// <remarks>
-    /// Note: This is safe to be called multiple times and by library authors.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>This is safe to be called multiple times and by library authors.
     /// Only a single <see cref="LoggerProvider"/> will be created for a given
-    /// <see cref="IServiceCollection"/>.
+    /// <see cref="IServiceCollection"/>.</item>
+    /// <item>This method automatically registers an <see
+    /// cref="ILoggerProvider"/> named 'OpenTelemetry' into the <see
+    /// cref="IServiceCollection"/>.</item>
+    /// </list>
     /// </remarks>
     /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
     /// calls.</returns>
     internal
 #endif
         OpenTelemetryBuilder WithLogging()
-        => this.WithLogging(b => { });
+        => this.WithLogging(configureBuilder: null, configureOptions: null);
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -195,9 +209,40 @@ public sealed class OpenTelemetryBuilder
     {
         Guard.ThrowIfNull(configure);
 
-        var builder = new LoggerProviderBuilderBase(this.Services);
+        return this.WithLogging(configureBuilder: configure, configureOptions: null);
+    }
 
-        configure(builder);
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
+    /// <param name="configureBuilder">Optional <see
+    /// cref="LoggerProviderBuilder"/> configuration callback.</param>
+    /// <param name="configureOptions">Optional <see
+    /// cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    public
+#else
+    /// <summary>
+    /// Adds logging services into the builder.
+    /// </summary>
+    /// <remarks><inheritdoc cref="WithLogging()" path="/remarks"/></remarks>
+    /// <param name="configureBuilder">Optional <see
+    /// cref="LoggerProviderBuilder"/> configuration callback.</param>
+    /// <param name="configureOptions">Optional <see
+    /// cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
+    /// <returns>The supplied <see cref="OpenTelemetryBuilder"/> for chaining
+    /// calls.</returns>
+    internal
+#endif
+        OpenTelemetryBuilder WithLogging(
+            Action<LoggerProviderBuilder>? configureBuilder,
+            Action<OpenTelemetryLoggerOptions>? configureOptions)
+    {
+        this.Services.AddLogging(
+            logging => logging.UseOpenTelemetry(configureBuilder, configureOptions));
 
         return this;
     }
