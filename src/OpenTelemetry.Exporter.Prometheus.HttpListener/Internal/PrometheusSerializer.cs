@@ -347,6 +347,7 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }
