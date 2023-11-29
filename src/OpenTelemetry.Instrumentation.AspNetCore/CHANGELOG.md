@@ -11,7 +11,8 @@
 * Removed `netstandard2.1` target.
   ([#5094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5094))
 
-* Removed support for grpc instrumentation. For details, see issue
+* Removed support for grpc instrumentation to unblock stable release of http
+  instrumentation. For details, see issue
   [#5098](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5098)
   ([#5097](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5097))
 
