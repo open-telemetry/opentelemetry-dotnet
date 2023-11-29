@@ -414,10 +414,12 @@ public partial class HttpClientTests : IDisposable
 
         if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
         {
+            Assert.Equal(expectedMethod, activity.DisplayName);
             Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
         }
         else
         {
+            Assert.Equal("HTTP", activity.DisplayName);
             Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
         }
 
