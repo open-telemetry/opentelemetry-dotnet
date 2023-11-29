@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
+
 * The `AddService` `ResourceBuilder` extension method will now generate the same
   `service.instance.id` for the lifetime of a process when
   `autoGenerateServiceInstanceId` is `true`.
