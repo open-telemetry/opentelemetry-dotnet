@@ -76,4 +76,10 @@ internal static class RequestMethodHelper
             activity?.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, method);
         }
     }
+
+    public static void SetHttpClientActivityDisplayName(Activity activity, string method)
+    {
+        // https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md#name
+        activity.DisplayName = KnownMethods.TryGetValue(method, out var httpMethod) ? httpMethod : "HTTP";
+    }
 }
