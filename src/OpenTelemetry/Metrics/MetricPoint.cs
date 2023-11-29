@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics;
@@ -36,16 +37,16 @@ public struct MetricPoint
     // that its using is already reclaimed, this helps avoid sorting of the tags for adding a new Dictionary entry.
     internal LookupData? LookupData;
 
+    internal MetricPointOptionalComponents? OptionalComponents;
+
+    // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
+    internal MetricPointValueStorage RunningValue;
+
     private const int DefaultSimpleReservoirPoolSize = 1;
 
     private readonly AggregatorStore aggregatorStore;
 
     private readonly AggregationType aggType;
-
-    private MetricPointOptionalComponents? mpComponents;
-
-    // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
-    private MetricPointValueStorage runningValue;
 
     // Represents either "value" for double/long metric types or "count" when histogram
     private MetricPointValueStorage snapshotValue;
@@ -71,7 +72,7 @@ public struct MetricPoint
 
         this.aggType = aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
-        this.runningValue = default;
+        this.RunningValue = default;
         this.snapshotValue = default;
         this.deltaLastValue = default;
         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -82,8 +83,8 @@ public struct MetricPoint
         if (this.aggType == AggregationType.HistogramWithBuckets ||
             this.aggType == AggregationType.HistogramWithMinMaxBuckets)
         {
-            this.mpComponents = new MetricPointOptionalComponents();
-            this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+            this.OptionalComponents = new MetricPointOptionalComponents();
+            this.OptionalComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
             if (aggregatorStore!.IsExemplarEnabled())
             {
                 reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Length);
@@ -92,18 +93,18 @@ public struct MetricPoint
         else if (this.aggType == AggregationType.Histogram ||
                  this.aggType == AggregationType.HistogramWithMinMax)
         {
-            this.mpComponents = new MetricPointOptionalComponents();
-            this.mpComponents.HistogramBuckets = new HistogramBuckets(null);
+            this.OptionalComponents = new MetricPointOptionalComponents();
+            this.OptionalComponents.HistogramBuckets = new HistogramBuckets(null);
         }
         else if (this.aggType == AggregationType.Base2ExponentialHistogram ||
             this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
-            this.mpComponents = new MetricPointOptionalComponents();
-            this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
+            this.OptionalComponents = new MetricPointOptionalComponents();
+            this.OptionalComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
         }
         else
         {
-            this.mpComponents = null;
+            this.OptionalComponents = null;
         }
 
         if (aggregatorStore!.IsExemplarEnabled() && reservoir == null)
@@ -113,12 +114,12 @@ public struct MetricPoint
 
         if (reservoir != null)
         {
-            if (this.mpComponents == null)
+            if (this.OptionalComponents == null)
             {
-                this.mpComponents = new MetricPointOptionalComponents();
+                this.OptionalComponents = new MetricPointOptionalComponents();
             }
 
-            this.mpComponents.ExemplarReservoir = reservoir;
+            this.OptionalComponents.ExemplarReservoir = reservoir;
         }
 
         // Note: Intentionally set last because this is used to detect valid MetricPoints.
@@ -150,7 +151,7 @@ public struct MetricPoint
         readonly get;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private set;
+        set;
     }
 
     internal readonly bool IsInitialized => this.aggregatorStore != null;
@@ -271,13 +272,13 @@ public struct MetricPoint
         }
 
         Debug.Assert(
-            this.mpComponents?.HistogramBuckets != null
-            || this.mpComponents?.Base2ExponentialBucketHistogram != null,
+            this.OptionalComponents?.HistogramBuckets != null
+            || this.OptionalComponents?.Base2ExponentialBucketHistogram != null,
             "HistogramBuckets and Base2ExponentialBucketHistogram were both null");
 
-        return this.mpComponents!.HistogramBuckets != null
-            ? this.mpComponents.HistogramBuckets.SnapshotSum
-            : this.mpComponents.Base2ExponentialBucketHistogram!.SnapshotSum;
+        return this.OptionalComponents!.HistogramBuckets != null
+            ? this.OptionalComponents.HistogramBuckets.SnapshotSum
+            : this.OptionalComponents.Base2ExponentialBucketHistogram!.SnapshotSum;
     }
 
     /// <summary>
@@ -298,9 +299,9 @@ public struct MetricPoint
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
         }
 
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+        Debug.Assert(this.OptionalComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-        return this.mpComponents!.HistogramBuckets!;
+        return this.OptionalComponents!.HistogramBuckets!;
     }
 
     /// <summary>
@@ -319,9 +320,9 @@ public struct MetricPoint
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
         }
 
-        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+        Debug.Assert(this.OptionalComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-        return this.mpComponents!.Base2ExponentialBucketHistogram!.GetExponentialHistogramData();
+        return this.OptionalComponents!.Base2ExponentialBucketHistogram!.GetExponentialHistogramData();
     }
 
     /// <summary>
@@ -336,19 +337,19 @@ public struct MetricPoint
         if (this.aggType == AggregationType.HistogramWithMinMax
             || this.aggType == AggregationType.HistogramWithMinMaxBuckets)
         {
-            Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+            Debug.Assert(this.OptionalComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-            min = this.mpComponents!.HistogramBuckets!.SnapshotMin;
-            max = this.mpComponents.HistogramBuckets.SnapshotMax;
+            min = this.OptionalComponents!.HistogramBuckets!.SnapshotMin;
+            max = this.OptionalComponents.HistogramBuckets.SnapshotMax;
             return true;
         }
 
         if (this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
-            Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+            Debug.Assert(this.OptionalComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-            min = this.mpComponents!.Base2ExponentialBucketHistogram!.SnapshotMin;
-            max = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMax;
+            min = this.OptionalComponents!.Base2ExponentialBucketHistogram!.SnapshotMin;
+            max = this.OptionalComponents.Base2ExponentialBucketHistogram.SnapshotMax;
             return true;
         }
 
@@ -376,444 +377,28 @@ public struct MetricPoint
         readonly Exemplar[] GetExemplars()
     {
         // TODO: Do not expose Exemplar data structure (array now)
-        return this.mpComponents?.Exemplars ?? Array.Empty<Exemplar>();
+        return this.OptionalComponents?.Exemplars ?? Array.Empty<Exemplar>();
+    }
+
+    internal static void AcquireLock(ref int isCriticalSectionOccupied)
+    {
+        var sw = default(SpinWait);
+        while (Interlocked.Exchange(ref isCriticalSectionOccupied, 1) != 0)
+        {
+            sw.SpinOnce();
+        }
+    }
+
+    internal static void ReleaseLock(ref int isCriticalSectionOccupied)
+    {
+        Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
     }
 
     internal readonly MetricPoint Copy()
     {
         MetricPoint copy = this;
-        copy.mpComponents = this.mpComponents?.Copy();
+        copy.OptionalComponents = this.OptionalComponents?.Copy();
         return copy;
-    }
-
-    internal void Update(long number)
-    {
-        switch (this.aggType)
-        {
-            case AggregationType.LongSumIncomingDelta:
-                {
-                    Interlocked.Add(ref this.runningValue.AsLong, number);
-                    break;
-                }
-
-            case AggregationType.LongSumIncomingCumulative:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
-                    break;
-                }
-
-            case AggregationType.LongGauge:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsLong, number);
-                    break;
-                }
-
-            case AggregationType.Histogram:
-                {
-                    this.UpdateHistogram((double)number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMax:
-                {
-                    this.UpdateHistogramWithMinMax((double)number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithBuckets:
-                {
-                    this.UpdateHistogramWithBuckets((double)number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMaxBuckets:
-                {
-                    this.UpdateHistogramWithBucketsAndMinMax((double)number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogram:
-                {
-                    this.UpdateBase2ExponentialHistogram((double)number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogramWithMinMax:
-                {
-                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number);
-                    break;
-                }
-        }
-
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDelta)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
-    }
-
-    internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
-    {
-        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
-
-        switch (this.aggType)
-        {
-            case AggregationType.LongSumIncomingDelta:
-                {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    unchecked
-                    {
-                        this.runningValue.AsLong += number;
-                    }
-
-                    if (isSampled)
-                    {
-                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                        // TODO: Need to ensure that the lock is always released.
-                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-                    }
-
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    break;
-                }
-
-            case AggregationType.LongSumIncomingCumulative:
-                {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    this.runningValue.AsLong = number;
-
-                    if (isSampled)
-                    {
-                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                        // TODO: Need to ensure that the lock is always released.
-                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-                    }
-
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    break;
-                }
-
-            case AggregationType.LongGauge:
-                {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    this.runningValue.AsLong = number;
-
-                    if (isSampled)
-                    {
-                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                        // TODO: Need to ensure that the lock is always released.
-                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-                    }
-
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    break;
-                }
-
-            case AggregationType.Histogram:
-                {
-                    this.UpdateHistogram((double)number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMax:
-                {
-                    this.UpdateHistogramWithMinMax((double)number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.HistogramWithBuckets:
-                {
-                    this.UpdateHistogramWithBuckets((double)number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMaxBuckets:
-                {
-                    this.UpdateHistogramWithBucketsAndMinMax((double)number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogram:
-                {
-                    this.UpdateBase2ExponentialHistogram((double)number, tags, true);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogramWithMinMax:
-                {
-                    this.UpdateBase2ExponentialHistogramWithMinMax((double)number, tags, true);
-                    break;
-                }
-        }
-
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDelta)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
-    }
-
-    internal void Update(double number)
-    {
-        switch (this.aggType)
-        {
-            case AggregationType.DoubleSumIncomingDelta:
-                {
-                    double initValue, newValue;
-                    var sw = default(SpinWait);
-                    while (true)
-                    {
-                        initValue = this.runningValue.AsDouble;
-
-                        unchecked
-                        {
-                            newValue = initValue + number;
-                        }
-
-                        if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
-                        {
-                            break;
-                        }
-
-                        sw.SpinOnce();
-                    }
-
-                    break;
-                }
-
-            case AggregationType.DoubleSumIncomingCumulative:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
-                    break;
-                }
-
-            case AggregationType.DoubleGauge:
-                {
-                    Interlocked.Exchange(ref this.runningValue.AsDouble, number);
-                    break;
-                }
-
-            case AggregationType.Histogram:
-                {
-                    this.UpdateHistogram(number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMax:
-                {
-                    this.UpdateHistogramWithMinMax(number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithBuckets:
-                {
-                    this.UpdateHistogramWithBuckets(number);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMaxBuckets:
-                {
-                    this.UpdateHistogramWithBucketsAndMinMax(number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogram:
-                {
-                    this.UpdateBase2ExponentialHistogram(number);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogramWithMinMax:
-                {
-                    this.UpdateBase2ExponentialHistogramWithMinMax(number);
-                    break;
-                }
-        }
-
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDelta)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
-    }
-
-    internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool isSampled)
-    {
-        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
-
-        switch (this.aggType)
-        {
-            case AggregationType.DoubleSumIncomingDelta:
-                {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    unchecked
-                    {
-                        this.runningValue.AsDouble += number;
-                    }
-
-                    if (isSampled)
-                    {
-                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                        // TODO: Need to ensure that the lock is always released.
-                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-                    }
-
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    break;
-                }
-
-            case AggregationType.DoubleSumIncomingCumulative:
-                {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    unchecked
-                    {
-                        this.runningValue.AsDouble = number;
-                    }
-
-                    if (isSampled)
-                    {
-                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                        // TODO: Need to ensure that the lock is always released.
-                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-                    }
-
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    break;
-                }
-
-            case AggregationType.DoubleGauge:
-                {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    unchecked
-                    {
-                        this.runningValue.AsDouble = number;
-                    }
-
-                    if (isSampled)
-                    {
-                        Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                        // TODO: Need to ensure that the lock is always released.
-                        // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                        this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-                    }
-
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
-
-                    break;
-                }
-
-            case AggregationType.Histogram:
-                {
-                    this.UpdateHistogram(number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMax:
-                {
-                    this.UpdateHistogramWithMinMax(number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.HistogramWithBuckets:
-                {
-                    this.UpdateHistogramWithBuckets(number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.HistogramWithMinMaxBuckets:
-                {
-                    this.UpdateHistogramWithBucketsAndMinMax(number, tags, reportExemplar: true, isSampled);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogram:
-                {
-                    this.UpdateBase2ExponentialHistogram(number, tags, true);
-                    break;
-                }
-
-            case AggregationType.Base2ExponentialHistogramWithMinMax:
-                {
-                    this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, true);
-                    break;
-                }
-        }
-
-        // There is a race with Snapshot:
-        // Update() updates the value
-        // Snapshot snapshots the value
-        // Snapshot sets status to NoCollectPending
-        // Update sets status to CollectPending -- this is not right as the Snapshot
-        // already included the updated value.
-        // In the absence of any new Update call until next Snapshot,
-        // this results in exporting an Update even though
-        // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
-        this.MetricPointStatus = MetricPointStatus.CollectPending;
-
-        if (this.aggregatorStore.OutputDelta)
-        {
-            Interlocked.Decrement(ref this.ReferenceCount);
-        }
     }
 
     internal void TakeSnapshot(bool outputDelta)
@@ -825,21 +410,21 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        long initValue = Interlocked.Read(ref this.runningValue.AsLong);
+                        long initValue = Interlocked.Read(ref this.RunningValue.AsLong);
                         this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                         this.deltaLastValue.AsLong = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (initValue != Interlocked.Read(ref this.runningValue.AsLong))
+                        if (initValue != Interlocked.Read(ref this.RunningValue.AsLong))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
                     }
                     else
                     {
-                        this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                        this.snapshotValue.AsLong = Interlocked.Read(ref this.RunningValue.AsLong);
                     }
 
                     break;
@@ -855,14 +440,14 @@ public struct MetricPoint
                         // As long as the value is not -ve infinity,
                         // the exchange (to 0.0) will never occur,
                         // but we get the original value atomically.
-                        double initValue = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                        double initValue = Interlocked.CompareExchange(ref this.RunningValue.AsDouble, 0.0, double.NegativeInfinity);
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (initValue != Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity))
+                        if (initValue != Interlocked.CompareExchange(ref this.RunningValue.AsDouble, 0.0, double.NegativeInfinity))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -874,7 +459,7 @@ public struct MetricPoint
                         // As long as the value is not -ve infinity,
                         // the exchange (to 0.0) will never occur,
                         // but we get the original value atomically.
-                        this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                        this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.RunningValue.AsDouble, 0.0, double.NegativeInfinity);
                     }
 
                     break;
@@ -882,12 +467,12 @@ public struct MetricPoint
 
             case AggregationType.LongGauge:
                 {
-                    this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                    this.snapshotValue.AsLong = Interlocked.Read(ref this.RunningValue.AsLong);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     // Check again if value got updated, if yes reset status.
                     // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsLong != Interlocked.Read(ref this.runningValue.AsLong))
+                    if (this.snapshotValue.AsLong != Interlocked.Read(ref this.RunningValue.AsLong))
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                     }
@@ -902,12 +487,12 @@ public struct MetricPoint
                     // As long as the value is not -ve infinity,
                     // the exchange (to 0.0) will never occur,
                     // but we get the original value atomically.
-                    this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                    this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.RunningValue.AsDouble, 0.0, double.NegativeInfinity);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     // Check again if value got updated, if yes reset status.
                     // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsDouble != Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity))
+                    if (this.snapshotValue.AsDouble != Interlocked.CompareExchange(ref this.RunningValue.AsDouble, 0.0, double.NegativeInfinity))
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                     }
@@ -917,18 +502,18 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(this.OptionalComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                     }
 
@@ -943,7 +528,7 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -954,17 +539,17 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(this.OptionalComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                     }
 
@@ -977,20 +562,20 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(this.OptionalComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
                     histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
                     histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                         histogramBuckets.RunningMin = double.PositiveInfinity;
                         histogramBuckets.RunningMax = double.NegativeInfinity;
@@ -1007,7 +592,7 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1017,20 +602,20 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+                    Debug.Assert(this.OptionalComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
                     histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
                     histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                         histogramBuckets.RunningMin = double.PositiveInfinity;
                         histogramBuckets.RunningMax = double.NegativeInfinity;
@@ -1045,19 +630,19 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+                    Debug.Assert(this.OptionalComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                    var histogram = this.OptionalComponents!.Base2ExponentialBucketHistogram;
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogram.SnapshotSum = histogram.RunningSum;
                     histogram.Snapshot();
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogram.RunningSum = 0;
                         histogram.Reset();
                     }
@@ -1071,13 +656,13 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+                    Debug.Assert(this.OptionalComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
-                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                    var histogram = this.OptionalComponents!.Base2ExponentialBucketHistogram;
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogram.SnapshotSum = histogram.RunningSum;
                     histogram.Snapshot();
                     histogram.SnapshotMin = histogram.RunningMin;
@@ -1085,7 +670,7 @@ public struct MetricPoint
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogram.RunningSum = 0;
                         histogram.Reset();
                         histogram.RunningMin = double.PositiveInfinity;
@@ -1103,30 +688,30 @@ public struct MetricPoint
 
     internal void TakeSnapshotWithExemplar(bool outputDelta)
     {
-        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
+        Debug.Assert(this.OptionalComponents != null, "this.mpComponents was null");
 
         switch (this.aggType)
         {
             case AggregationType.LongSumIncomingDelta:
             case AggregationType.LongSumIncomingCumulative:
                 {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    AcquireLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
                     if (outputDelta)
                     {
-                        long initValue = this.runningValue.AsLong;
+                        long initValue = this.RunningValue.AsLong;
                         this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                         this.deltaLastValue.AsLong = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                     }
                     else
                     {
-                        this.snapshotValue.AsLong = this.runningValue.AsLong;
+                        this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    ReleaseLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
@@ -1134,67 +719,67 @@ public struct MetricPoint
             case AggregationType.DoubleSumIncomingDelta:
             case AggregationType.DoubleSumIncomingCumulative:
                 {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    AcquireLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
                     if (outputDelta)
                     {
-                        double initValue = this.runningValue.AsDouble;
+                        double initValue = this.RunningValue.AsDouble;
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                     }
                     else
                     {
-                        this.snapshotValue.AsDouble = this.runningValue.AsDouble;
+                        this.snapshotValue.AsDouble = this.RunningValue.AsDouble;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    ReleaseLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.LongGauge:
                 {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    AcquireLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    ReleaseLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.DoubleGauge:
                 {
-                    AcquireLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    AcquireLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsDouble = this.runningValue.AsDouble;
+                    this.snapshotValue.AsDouble = this.RunningValue.AsDouble;
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
-                    ReleaseLock(ref this.mpComponents!.IsCriticalSectionOccupied);
+                    ReleaseLock(ref this.OptionalComponents!.IsCriticalSectionOccupied);
 
                     break;
                 }
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                     }
 
@@ -1209,7 +794,7 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
 
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -1220,22 +805,22 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1245,20 +830,20 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
                     histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
                     histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                         histogramBuckets.RunningMin = double.PositiveInfinity;
                         histogramBuckets.RunningMax = double.NegativeInfinity;
@@ -1275,7 +860,7 @@ public struct MetricPoint
                         }
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1285,26 +870,26 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    var histogramBuckets = this.mpComponents!.HistogramBuckets;
+                    var histogramBuckets = this.OptionalComponents!.HistogramBuckets;
 
                     Debug.Assert(histogramBuckets != null, "histogramBuckets was null");
 
                     AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
                     histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
                     histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogramBuckets.RunningSum = 0;
                         histogramBuckets.RunningMin = double.PositiveInfinity;
                         histogramBuckets.RunningMax = double.NegativeInfinity;
                     }
 
-                    this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
+                    this.OptionalComponents.Exemplars = this.OptionalComponents.ExemplarReservoir?.Collect(this.Tags, outputDelta);
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                     ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
@@ -1314,19 +899,19 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                    var histogram = this.OptionalComponents!.Base2ExponentialBucketHistogram;
 
                     Debug.Assert(histogram != null, "histogram was null");
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogram.SnapshotSum = histogram.RunningSum;
                     histogram.Snapshot();
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogram.RunningSum = 0;
                         histogram.Reset();
                     }
@@ -1340,13 +925,13 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
+                    var histogram = this.OptionalComponents!.Base2ExponentialBucketHistogram;
 
                     Debug.Assert(histogram != null, "histogram was null");
 
                     AcquireLock(ref histogram!.IsCriticalSectionOccupied);
 
-                    this.snapshotValue.AsLong = this.runningValue.AsLong;
+                    this.snapshotValue.AsLong = this.RunningValue.AsLong;
                     histogram.SnapshotSum = histogram.RunningSum;
                     histogram.Snapshot();
                     histogram.SnapshotMin = histogram.RunningMin;
@@ -1354,7 +939,7 @@ public struct MetricPoint
 
                     if (outputDelta)
                     {
-                        this.runningValue.AsLong = 0;
+                        this.RunningValue.AsLong = 0;
                         histogram.RunningSum = 0;
                         histogram.Reset();
                         histogram.RunningMin = double.PositiveInfinity;
@@ -1370,193 +955,7 @@ public struct MetricPoint
         }
     }
 
-    private static void AcquireLock(ref int isCriticalSectionOccupied)
-    {
-        var sw = default(SpinWait);
-        while (Interlocked.Exchange(ref isCriticalSectionOccupied, 1) != 0)
-        {
-            sw.SpinOnce();
-        }
-    }
-
-    private static void ReleaseLock(ref int isCriticalSectionOccupied)
-    {
-        Interlocked.Exchange(ref isCriticalSectionOccupied, 0);
-    }
-
-    private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
-    {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
-
-        AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
-
-        unchecked
-        {
-            this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
-        }
-
-        if (reportExemplar && isSampled)
-        {
-            Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-            // TODO: Need to ensure that the lock is always released.
-            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-        }
-
-        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
-    }
-
-    private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
-    {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
-
-        AcquireLock(ref histogramBuckets!.IsCriticalSectionOccupied);
-
-        unchecked
-        {
-            this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
-            histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
-        }
-
-        if (reportExemplar && isSampled)
-        {
-            Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-            // TODO: Need to ensure that the lock is always released.
-            // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            this.mpComponents.ExemplarReservoir!.Offer(number, tags);
-        }
-
-        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
-    }
-
-    private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
-    {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
-
-        int i = histogramBuckets!.FindBucketIndex(number);
-
-        Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
-
-        AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
-
-        unchecked
-        {
-            this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningBucketCounts![i]++;
-
-            if (reportExemplar && isSampled)
-            {
-                Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                // TODO: Need to ensure that the lock is always released.
-                // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                this.mpComponents.ExemplarReservoir!.Offer(number, tags, i);
-            }
-        }
-
-        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
-    }
-
-    private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false, bool isSampled = false)
-    {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "histogramBuckets was null");
-
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
-
-        int i = histogramBuckets!.FindBucketIndex(number);
-
-        AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
-
-        Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
-
-        unchecked
-        {
-            this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
-            histogramBuckets.RunningBucketCounts![i]++;
-
-            if (reportExemplar && isSampled)
-            {
-                Debug.Assert(this.mpComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
-
-                // TODO: Need to ensure that the lock is always released.
-                // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                this.mpComponents.ExemplarReservoir!.Offer(number, tags, i);
-            }
-
-            histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
-            histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
-        }
-
-        ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
-    }
-
-#pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
-    private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
-#pragma warning restore IDE0060 // Remove unused parameter
-    {
-        if (number < 0)
-        {
-            return;
-        }
-
-        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
-
-        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
-
-        AcquireLock(ref histogram!.IsCriticalSectionOccupied);
-
-        unchecked
-        {
-            this.runningValue.AsLong++;
-            histogram.RunningSum += number;
-            histogram.Record(number);
-        }
-
-        ReleaseLock(ref histogram.IsCriticalSectionOccupied);
-    }
-
-#pragma warning disable IDE0060 // Remove unused parameter: Exemplars for exponential histograms will be a follow up PR
-    private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool reportExemplar = false)
-#pragma warning restore IDE0060 // Remove unused parameter
-    {
-        if (number < 0)
-        {
-            return;
-        }
-
-        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
-
-        var histogram = this.mpComponents!.Base2ExponentialBucketHistogram;
-
-        AcquireLock(ref histogram!.IsCriticalSectionOccupied);
-
-        unchecked
-        {
-            this.runningValue.AsLong++;
-            histogram.RunningSum += number;
-            histogram.Record(number);
-
-            histogram.RunningMin = Math.Min(histogram.RunningMin, number);
-            histogram.RunningMax = Math.Max(histogram.RunningMax, number);
-        }
-
-        ReleaseLock(ref histogram.IsCriticalSectionOccupied);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
+    [DoesNotReturn]
     private readonly void ThrowNotSupportedMetricTypeException(string methodName)
     {
         throw new NotSupportedException($"{methodName} is not supported for this metric type.");

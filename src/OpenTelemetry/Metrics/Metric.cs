@@ -54,8 +54,6 @@ public sealed class Metric
         ("System.Net.Http", "http.client.connection.duration"),
     };
 
-    private readonly AggregatorStore aggStore;
-
     internal Metric(
         MetricStreamIdentity instrumentIdentity,
         AggregationTemporality temporality,
@@ -66,6 +64,7 @@ public sealed class Metric
     {
         this.InstrumentIdentity = instrumentIdentity;
 
+        MetricBehaviors metricBehaviors;
         AggregationType aggType;
         if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableCounter<int>)
@@ -74,6 +73,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingCumulative;
             this.MetricType = MetricType.LongSum;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Cumulative;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Counter<long>)
             || instrumentIdentity.InstrumentType == typeof(Counter<int>)
@@ -82,18 +82,21 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingDelta;
             this.MetricType = MetricType.LongSum;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Delta;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Counter<double>)
             || instrumentIdentity.InstrumentType == typeof(Counter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingDelta;
             this.MetricType = MetricType.DoubleSum;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Delta;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableCounter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingCumulative;
             this.MetricType = MetricType.DoubleSum;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Cumulative;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<int>)
@@ -102,6 +105,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingCumulative;
             this.MetricType = MetricType.LongSumNonMonotonic;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Cumulative;
         }
         else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<int>)
@@ -110,24 +114,28 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingDelta;
             this.MetricType = MetricType.LongSumNonMonotonic;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Delta;
         }
         else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingDelta;
             this.MetricType = MetricType.DoubleSumNonMonotonic;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Delta;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingCumulative;
             this.MetricType = MetricType.DoubleSumNonMonotonic;
+            metricBehaviors = MetricBehaviors.Sum | MetricBehaviors.Cumulative;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<float>))
         {
             aggType = AggregationType.DoubleGauge;
             this.MetricType = MetricType.DoubleGauge;
+            metricBehaviors = MetricBehaviors.Gauge;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<int>)
@@ -136,6 +144,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
+            metricBehaviors = MetricBehaviors.Gauge;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
@@ -162,13 +171,39 @@ public sealed class Metric
             {
                 aggType = histogramRecordMinMax ? AggregationType.Base2ExponentialHistogramWithMinMax : AggregationType.Base2ExponentialHistogram;
             }
+
+            if (exponentialMaxSize != 0)
+            {
+                metricBehaviors = MetricBehaviors.ExponentialHistogram;
+            }
+            else if (explicitBucketBounds == null || explicitBucketBounds.Length != 0)
+            {
+                metricBehaviors = MetricBehaviors.HistogramWithBuckets;
+            }
+            else
+            {
+                metricBehaviors = MetricBehaviors.Histogram;
+            }
+
+            if (histogramRecordMinMax)
+            {
+                metricBehaviors |= MetricBehaviors.HistogramRecordMinMax;
+            }
         }
         else
         {
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
         }
 
-        this.aggStore = new AggregatorStore(instrumentIdentity, aggType, temporality, maxMetricPointsPerMetricStream, emitOverflowAttribute, shouldReclaimUnusedMetricPoints, exemplarFilter);
+        this.AggregatorStore = new AggregatorStore(
+            in instrumentIdentity,
+            metricBehaviors,
+            aggType,
+            temporality,
+            maxMetricPointsPerMetricStream,
+            emitOverflowAttribute,
+            shouldReclaimUnusedMetricPoints,
+            exemplarFilter);
         this.Temporality = temporality;
     }
 
@@ -212,6 +247,8 @@ public sealed class Metric
     /// </summary>
     internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
+    internal AggregatorStore AggregatorStore { get; }
+
     internal bool Active { get; set; } = true;
 
     /// <summary>
@@ -219,14 +256,8 @@ public sealed class Metric
     /// </summary>
     /// <returns><see cref="MetricPointsAccessor"/>.</returns>
     public MetricPointsAccessor GetMetricPoints()
-        => this.aggStore.GetMetricPoints();
-
-    internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-        => this.aggStore.Update(value, tags);
-
-    internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-        => this.aggStore.Update(value, tags);
+        => this.AggregatorStore.GetMetricPoints();
 
     internal int Snapshot()
-        => this.aggStore.Snapshot();
+        => this.AggregatorStore.Snapshot();
 }

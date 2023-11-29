@@ -39,12 +39,29 @@ public abstract partial class MetricReader
 
     private ExemplarFilter? exemplarFilter;
 
+    internal static void DeactivateMetric(Metric metric)
+    {
+        if (metric.Active)
+        {
+            // TODO: This will cause the metric to be removed from the storage
+            // array during the next collect/export. If this happens often we
+            // will run out of storage. Would it be better instead to set the
+            // end time on the metric and keep it around so it can be
+            // reactivated?
+            metric.Active = false;
+
+            OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
+                metric.Name,
+                metric.MeterName);
+        }
+    }
+
     internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
     {
         return this.temporalityFunc(instrumentType);
     }
 
-    internal Metric? AddMetricWithNoViews(Instrument instrument)
+    internal virtual List<Metric> AddMetricWithNoViews(Instrument instrument)
     {
         Debug.Assert(this.metrics != null, "this.metrics was null");
 
@@ -53,14 +70,14 @@ public abstract partial class MetricReader
         {
             if (this.TryGetExistingMetric(in metricStreamIdentity, out var existingMetric))
             {
-                return existingMetric;
+                return new() { existingMetric };
             }
 
             var index = ++this.metricIndex;
             if (index >= this.maxMetricStreams)
             {
                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
-                return null;
+                return new();
             }
             else
             {
@@ -77,7 +94,7 @@ public abstract partial class MetricReader
                     // Also the message could call out what Instruments
                     // and types (eg: int, long etc) are supported.
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Unsupported instrument. Details: " + nse.Message, "Switch to a supported instrument type.");
-                    return null;
+                    return new();
                 }
 
                 this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
@@ -85,22 +102,12 @@ public abstract partial class MetricReader
 
                 this.CreateOrUpdateMetricStreamRegistration(in metricStreamIdentity);
 
-                return metric;
+                return new() { metric };
             }
         }
     }
 
-    internal void RecordSingleStreamLongMeasurement(Metric metric, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        metric.UpdateLong(value, tags);
-    }
-
-    internal void RecordSingleStreamDoubleMeasurement(Metric metric, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        metric.UpdateDouble(value, tags);
-    }
-
-    internal List<Metric> AddMetricsListWithViews(Instrument instrument, List<MetricStreamConfiguration?> metricStreamConfigs)
+    internal virtual List<Metric> AddMetricWithViews(Instrument instrument, List<MetricStreamConfiguration?> metricStreamConfigs)
     {
         Debug.Assert(this.metrics != null, "this.metrics was null");
 
@@ -163,55 +170,6 @@ public abstract partial class MetricReader
         }
     }
 
-    internal void RecordLongMeasurement(List<Metric> metrics, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        if (metrics.Count == 1)
-        {
-            // special casing the common path
-            // as this is faster than the
-            // foreach, when count is 1.
-            metrics[0].UpdateLong(value, tags);
-        }
-        else
-        {
-            foreach (var metric in metrics)
-            {
-                metric.UpdateLong(value, tags);
-            }
-        }
-    }
-
-    internal void RecordDoubleMeasurement(List<Metric> metrics, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        if (metrics.Count == 1)
-        {
-            // special casing the common path
-            // as this is faster than the
-            // foreach, when count is 1.
-            metrics[0].UpdateDouble(value, tags);
-        }
-        else
-        {
-            foreach (var metric in metrics)
-            {
-                metric.UpdateDouble(value, tags);
-            }
-        }
-    }
-
-    internal void CompleteSingleStreamMeasurement(Metric metric)
-    {
-        DeactivateMetric(metric);
-    }
-
-    internal void CompleteMeasurement(List<Metric> metrics)
-    {
-        foreach (var metric in metrics)
-        {
-            DeactivateMetric(metric);
-        }
-    }
-
     internal void SetMaxMetricStreams(int maxMetricStreams)
     {
         this.maxMetricStreams = maxMetricStreams;
@@ -235,23 +193,6 @@ public abstract partial class MetricReader
             {
                 this.emitOverflowAttribute = true;
             }
-        }
-    }
-
-    private static void DeactivateMetric(Metric metric)
-    {
-        if (metric.Active)
-        {
-            // TODO: This will cause the metric to be removed from the storage
-            // array during the next collect/export. If this happens often we
-            // will run out of storage. Would it be better instead to set the
-            // end time on the metric and keep it around so it can be
-            // reactivated?
-            metric.Active = false;
-
-            OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
-                metric.Name,
-                metric.MeterName);
         }
     }
 

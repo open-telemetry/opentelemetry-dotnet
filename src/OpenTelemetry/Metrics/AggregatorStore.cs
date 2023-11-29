@@ -60,12 +60,11 @@ internal sealed class AggregatorStore
     private readonly double[] histogramBounds;
     private readonly int exponentialHistogramMaxSize;
     private readonly int exponentialHistogramMaxScale;
-    private readonly UpdateLongDelegate updateLongCallback;
-    private readonly UpdateDoubleDelegate updateDoubleCallback;
     private readonly int maxMetricPoints;
     private readonly bool emitOverflowAttribute;
     private readonly ExemplarFilter exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
+    private readonly MetricMeasurementHandler measurementHandler;
 
     private int metricPointIndex = 0;
     private int batchSize = 0;
@@ -76,8 +75,15 @@ internal sealed class AggregatorStore
     // When set to true, the behavior changes to reuse MetricPoints
     private bool reclaimMetricPoints = false;
 
+    private FindMetricPointIndexFunc findMetricPointIndexFunc;
+    private Action<long> dropLongMeasurementAction;
+    private Action<double> dropDoubleMeasurementAction;
+    private RecordMeasurementAction<long> recordLongMeasurementAction;
+    private RecordMeasurementAction<double> recordDoubleMeasurementAction;
+
     internal AggregatorStore(
-        MetricStreamIdentity metricStreamIdentity,
+        in MetricStreamIdentity metricStreamIdentity,
+        MetricBehaviors metricBehaviors,
         AggregationType aggType,
         AggregationTemporality temporality,
         int maxMetricPoints,
@@ -98,15 +104,8 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
-        if (metricStreamIdentity.TagKeys == null)
+        if (metricStreamIdentity.TagKeys != null)
         {
-            this.updateLongCallback = this.UpdateLong;
-            this.updateDoubleCallback = this.UpdateDouble;
-        }
-        else
-        {
-            this.updateLongCallback = this.UpdateLongCustomTags;
-            this.updateDoubleCallback = this.UpdateDoubleCustomTags;
             var hs = new HashSet<string>(metricStreamIdentity.TagKeys, StringComparer.Ordinal);
             this.tagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
@@ -151,11 +150,24 @@ internal sealed class AggregatorStore
         {
             this.lookupAggregatorStore = this.LookupAggregatorStore;
         }
+
+        if (this.exemplarFilter is not AlwaysOffExemplarFilter)
+        {
+            metricBehaviors |= MetricBehaviors.OfferExemplar;
+        }
+
+        if (!MetricMeasurementHandler.Definitions.TryGetValue(metricBehaviors, out var measurementHandler))
+        {
+            throw new NotSupportedException($"Unsupported Instrument Type: {metricStreamIdentity.InstrumentType.FullName}");
+        }
+
+        this.measurementHandler = measurementHandler;
+        this.BuildRecordMeasurementDelegates(in metricStreamIdentity);
     }
 
-    private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    private delegate int FindMetricPointIndexFunc(ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
-    private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    private delegate void RecordMeasurementAction<T>(ref MetricPoint metricPoint, T value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
     internal DateTimeOffset StartTimeExclusive { get; private set; }
 
@@ -170,14 +182,54 @@ internal sealed class AggregatorStore
         return this.exemplarFilter is not AlwaysOffExemplarFilter;
     }
 
-    internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    internal void RecordMeasurement<T>(
+        T value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        this.updateLongCallback(value, tags);
-    }
+        try
+        {
+            var index = this.findMetricPointIndexFunc(tags);
+            if (index < 0)
+            {
+                Interlocked.Increment(ref this.DroppedMeasurements);
+                if (typeof(T) == typeof(long))
+                {
+                    this.dropLongMeasurementAction((long)(object)value!);
+                }
+                else if (typeof(T) == typeof(double))
+                {
+                    this.dropDoubleMeasurementAction((double)(object)value!);
+                }
+                else
+                {
+                    ThrowNotSupportedMeasurementValueTypeException(typeof(T));
+                }
 
-    internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        this.updateDoubleCallback(value, tags);
+                return;
+            }
+
+            ref var metricPoint = ref this.metricPoints[index];
+
+            if (typeof(T) == typeof(long))
+            {
+                this.recordLongMeasurementAction(ref metricPoint, (long)(object)value!, tags);
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                this.recordDoubleMeasurementAction(ref metricPoint, (double)(object)value!, tags);
+            }
+            else
+            {
+                ThrowNotSupportedMeasurementValueTypeException(typeof(T));
+            }
+
+            this.CompleteMeasurement(ref metricPoint);
+        }
+        catch (Exception)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
+        }
     }
 
     internal int Snapshot()
@@ -392,6 +444,12 @@ internal sealed class AggregatorStore
         }
 
         return Metric.DefaultHistogramBounds;
+    }
+
+    [DoesNotReturn]
+    private static void ThrowNotSupportedMeasurementValueTypeException(Type type)
+    {
+        throw new NotSupportedException($"Measurements of type '{type}' are not supported.");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -970,184 +1028,6 @@ internal sealed class AggregatorStore
         }
     }
 
-    private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        try
-        {
-            var index = this.FindMetricAggregatorsDefault(tags);
-            if (index < 0)
-            {
-                Interlocked.Increment(ref this.DroppedMeasurements);
-
-                if (this.emitOverflowAttribute)
-                {
-                    this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
-                    return;
-                }
-                else
-                {
-                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-                    }
-
-                    return;
-                }
-            }
-
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
-            {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
-        }
-        catch (Exception)
-        {
-            Interlocked.Increment(ref this.DroppedMeasurements);
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
-        }
-    }
-
-    private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        try
-        {
-            var index = this.FindMetricAggregatorsCustomTag(tags);
-            if (index < 0)
-            {
-                Interlocked.Increment(ref this.DroppedMeasurements);
-
-                if (this.emitOverflowAttribute)
-                {
-                    this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
-                    return;
-                }
-                else
-                {
-                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-                    }
-
-                    return;
-                }
-            }
-
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
-            {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
-        }
-        catch (Exception)
-        {
-            Interlocked.Increment(ref this.DroppedMeasurements);
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
-        }
-    }
-
-    private void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        try
-        {
-            var index = this.FindMetricAggregatorsDefault(tags);
-            if (index < 0)
-            {
-                Interlocked.Increment(ref this.DroppedMeasurements);
-
-                if (this.emitOverflowAttribute)
-                {
-                    this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
-                    return;
-                }
-                else
-                {
-                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-                    }
-
-                    Interlocked.Increment(ref this.DroppedMeasurements);
-                    return;
-                }
-            }
-
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
-            {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: default, shouldSample);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
-        }
-        catch (Exception)
-        {
-            Interlocked.Increment(ref this.DroppedMeasurements);
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
-        }
-    }
-
-    private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
-    {
-        try
-        {
-            var index = this.FindMetricAggregatorsCustomTag(tags);
-            if (index < 0)
-            {
-                Interlocked.Increment(ref this.DroppedMeasurements);
-
-                if (this.emitOverflowAttribute)
-                {
-                    this.InitializeOverflowTagPointIfNotInitialized();
-                    this.metricPoints[1].Update(value);
-                    return;
-                }
-                else
-                {
-                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
-                    }
-
-                    Interlocked.Increment(ref this.DroppedMeasurements);
-                    return;
-                }
-            }
-
-            // TODO: can special case built-in filters to be bit faster.
-            if (this.IsExemplarEnabled())
-            {
-                var shouldSample = this.exemplarFilter.ShouldSample(value, tags);
-                this.metricPoints[index].UpdateWithExemplar(value, tags: tags, shouldSample);
-            }
-            else
-            {
-                this.metricPoints[index].Update(value);
-            }
-        }
-        catch (Exception)
-        {
-            Interlocked.Increment(ref this.DroppedMeasurements);
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
-        }
-    }
-
     private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         int tagLength = tags.Length;
@@ -1191,5 +1071,184 @@ internal sealed class AggregatorStore
         Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
 
         return this.lookupAggregatorStore(tagKeysAndValues!, actualLength);
+    }
+
+    [MemberNotNull(nameof(findMetricPointIndexFunc))]
+    [MemberNotNull(nameof(dropLongMeasurementAction))]
+    [MemberNotNull(nameof(dropDoubleMeasurementAction))]
+    [MemberNotNull(nameof(recordLongMeasurementAction))]
+    [MemberNotNull(nameof(recordDoubleMeasurementAction))]
+    private void BuildRecordMeasurementDelegates(
+        in MetricStreamIdentity metricStreamIdentity)
+    {
+        bool emitOverflowAttribute = this.emitOverflowAttribute;
+        bool hasCustomTags = metricStreamIdentity.TagKeys != null;
+        bool isExemplarEnabled = this.IsExemplarEnabled();
+
+        this.findMetricPointIndexFunc = hasCustomTags
+            ? this.FindMetricAggregatorsCustomTag
+            : this.FindMetricAggregatorsDefault;
+
+        this.dropLongMeasurementAction = emitOverflowAttribute
+            ? this.DropMeasurementWithOverflowRecording
+            : this.DropMeasurementDefault;
+
+        this.dropDoubleMeasurementAction = emitOverflowAttribute
+            ? this.DropMeasurementWithOverflowRecording
+            : this.DropMeasurementDefault;
+
+        if (isExemplarEnabled)
+        {
+            this.recordLongMeasurementAction = hasCustomTags
+                ? this.SampleAndRecordMeasurementWithCustomTags
+                : this.SampleAndRecordMeasurement;
+
+            this.recordDoubleMeasurementAction = hasCustomTags
+                ? this.SampleAndRecordMeasurementWithCustomTags
+                : this.SampleAndRecordMeasurement;
+        }
+        else
+        {
+            this.recordLongMeasurementAction = this.RecordMeasurementDefault;
+            this.recordDoubleMeasurementAction = this.RecordMeasurementDefault;
+        }
+    }
+
+    private void DropMeasurementDefault<T>(T value)
+    {
+        if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
+        }
+
+        Interlocked.Increment(ref this.DroppedMeasurements);
+    }
+
+    private void DropMeasurementWithOverflowRecording<T>(T value)
+    {
+        this.InitializeOverflowTagPointIfNotInitialized();
+
+        ref var metricPoint = ref this.metricPoints[1];
+
+        if (typeof(T) == typeof(long))
+        {
+            this.measurementHandler.RecordMeasurement(ref metricPoint, (long)(object)value!, tags: default, isSampled: false);
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            this.measurementHandler.RecordMeasurement(ref metricPoint, (double)(object)value!, tags: default, isSampled: false);
+        }
+        else
+        {
+            ThrowNotSupportedMeasurementValueTypeException(typeof(T));
+        }
+
+        this.CompleteMeasurement(ref metricPoint);
+    }
+
+    private void RecordMeasurementDefault<T>(
+        ref MetricPoint metricPoint,
+        T value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        if (typeof(T) == typeof(long))
+        {
+            this.measurementHandler.RecordMeasurement(
+                ref metricPoint,
+                (long)(object)value!,
+                tags: default,
+                isSampled: false);
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            this.measurementHandler.RecordMeasurement(
+                ref metricPoint,
+                (double)(object)value!,
+                tags: default,
+                isSampled: false);
+        }
+        else
+        {
+            ThrowNotSupportedMeasurementValueTypeException(typeof(T));
+        }
+    }
+
+    private void SampleAndRecordMeasurement<T>(
+        ref MetricPoint metricPoint,
+        T value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var isSampled = this.SampleMeasurement(value, tags);
+
+        this.RecordMeasurementWithSamplingResult(ref metricPoint, value, tags: default, isSampled);
+    }
+
+    private void SampleAndRecordMeasurementWithCustomTags<T>(
+        ref MetricPoint metricPoint,
+        T value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var isSampled = this.SampleMeasurement(value, tags);
+
+        this.RecordMeasurementWithSamplingResult(ref metricPoint, value, tags, isSampled);
+    }
+
+    private void RecordMeasurementWithSamplingResult<T>(
+        ref MetricPoint metricPoint,
+        T value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        bool isSampled)
+    {
+        if (typeof(T) == typeof(long))
+        {
+            this.measurementHandler.RecordMeasurement(
+                ref metricPoint,
+                (long)(object)value!,
+                tags,
+                isSampled);
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            this.measurementHandler.RecordMeasurement(
+                ref metricPoint,
+                (double)(object)value!,
+                tags,
+                isSampled);
+        }
+        else
+        {
+            ThrowNotSupportedMeasurementValueTypeException(typeof(T));
+        }
+    }
+
+    private bool SampleMeasurement<T>(
+        T value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        // TODO: can special case built-in exemplar filters to be bit faster.
+
+        if (typeof(T) == typeof(long))
+        {
+            return this.exemplarFilter.ShouldSample((long)(object)value!, tags);
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            return this.exemplarFilter.ShouldSample((double)(object)value!, tags);
+        }
+        else
+        {
+            ThrowNotSupportedMeasurementValueTypeException(typeof(T));
+            return false; // Note: Should never reach here
+        }
+    }
+
+    private void CompleteMeasurement(ref MetricPoint metricPoint)
+    {
+        metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+
+        if (this.OutputDelta)
+        {
+            Interlocked.Decrement(ref metricPoint.ReferenceCount);
+        }
     }
 }
