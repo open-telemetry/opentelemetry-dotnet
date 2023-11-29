@@ -93,7 +93,7 @@ public partial class HttpClientTests
                     ""url"": ""http://{host}:{port}/"",
                     ""responseCode"": 399,
                     ""responseExpected"": true,
-                    ""spanName"": ""HTTP GET"",
+                    ""spanName"": ""GET"",
                     ""spanStatus"": ""Unset"",
                     ""spanKind"": ""Client"",
                     ""spanAttributes"": {
