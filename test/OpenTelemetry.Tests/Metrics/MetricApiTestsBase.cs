@@ -203,9 +203,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
-        bool containsMeterTags = metric.MeterTags.Any(kvp =>
-            kvp.Key == meterTags[0].Key && Equals(kvp.Value, meterTags[0].Value));
-        Assert.True(containsMeterTags);
+        Assert.Single(metric.MeterTags.Attributes.Where(kvp => kvp.Key == meterTags[0].Key && kvp.Value == meterTags[0].Value));
     }
 
     [Fact]
@@ -238,7 +236,7 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         var counter1 = meter1.CreateCounter<long>("my-counter");
         counter1.Add(10);
         var counter2 = meter2.CreateCounter<long>("my-counter");
-        counter2.Add(10);
+        counter2.Add(15);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // The instruments differ only in the Meter.Tags, which is not an identifying property.
@@ -250,9 +248,18 @@ public abstract class MetricApiTestsBase : MetricTestsBase
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
-        bool containsMeterTags = metric.MeterTags.Any(kvp =>
-            kvp.Key == meterTags1[0].Key && Equals(kvp.Value, meterTags1[0].Value));
-        Assert.True(containsMeterTags);
+        Assert.Single(metric.MeterTags.Attributes.Where(kvp => kvp.Key == meterTags1[0].Key && kvp.Value == meterTags1[0].Value));
+        Assert.DoesNotContain(metric.MeterTags.Attributes.Where(kvp => kvp.Key == meterTags2[0].Key && kvp.Value == meterTags2[0].Value));
+
+        List<MetricPoint> metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var metricPoint1 = metricPoints[0];
+        Assert.Equal(25, metricPoint1.GetSumLong());
     }
 
     [Fact]
