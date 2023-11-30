@@ -27,7 +27,14 @@ internal class TestMetrics
 {
     internal static object Run(MetricsOptions options)
     {
-        using var meter = new Meter("TestMeter");
+        var meterVersion = "1.0";
+        var meterTags = new List<KeyValuePair<string, object>>
+        {
+            new(
+                "MeterTagKey",
+                "MeterTagValue"),
+        };
+        using var meter = new Meter("TestMeter", meterVersion, meterTags);
 
         var providerBuilder = Sdk.CreateMeterProviderBuilder()
             .ConfigureResource(r => r.AddService("myservice"))
