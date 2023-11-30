@@ -15,12 +15,12 @@
 // </copyright>
 
 using System.Diagnostics;
+
 #if NETFRAMEWORK
 using System.Net;
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Metrics;
@@ -224,14 +224,6 @@ public partial class HttpClientTests : IDisposable
     [Fact]
     public async Task InjectsHeadersAsync_CustomFormat()
     {
-        var propagator = new Mock<TextMapPropagator>();
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-            .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
-            {
-                action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
-                action(message, "custom_tracestate", Activity.Current.TraceStateString);
-            });
-
         var exportedItems = new List<Activity>();
 
         using var request = new HttpRequestMessage
@@ -246,7 +238,11 @@ public partial class HttpClientTests : IDisposable
         parent.TraceStateString = "k1=v1,k2=v2";
         parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-        Sdk.SetDefaultTextMapPropagator(propagator.Object);
+        var propagator = new CustomTextMapPropagator();
+        propagator.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+        propagator.Add("custom_traceState", context => Activity.Current.TraceStateString);
+
+        Sdk.SetDefaultTextMapPropagator(propagator);
 
         using (Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
@@ -271,13 +267,13 @@ public partial class HttpClientTests : IDisposable
         // not the HttpRequestMessage passed to HttpClient.
         Assert.Empty(request.Headers);
 #else
-        Assert.True(request.Headers.TryGetValues("custom_traceparent", out var traceparents));
-        Assert.True(request.Headers.TryGetValues("custom_tracestate", out var tracestates));
-        Assert.Single(traceparents);
-        Assert.Single(tracestates);
+        Assert.True(request.Headers.TryGetValues("custom_traceParent", out var traceParents));
+        Assert.True(request.Headers.TryGetValues("custom_traceState", out var traceStates));
+        Assert.Single(traceParents);
+        Assert.Single(traceStates);
 
-        Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceparents.Single());
-        Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+        Assert.Equal($"00/{activity.Context.TraceId}/{activity.Context.SpanId}/01", traceParents.Single());
+        Assert.Equal("k1=v1,k2=v2", traceStates.Single());
 #endif
 
         Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
@@ -292,13 +288,9 @@ public partial class HttpClientTests : IDisposable
     {
         try
         {
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
-                {
-                    action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
-                    action(message, "custom_tracestate", Activity.Current.TraceStateString);
-                });
+            var propagator = new CustomTextMapPropagator();
+            propagator.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+            propagator.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
             var exportedItems = new List<Activity>();
 
@@ -314,7 +306,7 @@ public partial class HttpClientTests : IDisposable
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             using (Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
@@ -331,8 +323,8 @@ public partial class HttpClientTests : IDisposable
             // If suppressed, activity is not emitted and
             // propagation is also not performed.
             Assert.Empty(exportedItems);
-            Assert.False(request.Headers.Contains("custom_traceparent"));
-            Assert.False(request.Headers.Contains("custom_tracestate"));
+            Assert.False(request.Headers.Contains("custom_traceParent"));
+            Assert.False(request.Headers.Contains("custom_traceState"));
         }
         finally
         {
@@ -368,14 +360,14 @@ public partial class HttpClientTests : IDisposable
         // number of exported spans should be 3(maxRetries)
         Assert.Equal(maxRetries, exportedItems.Count);
 
-        var spanid1 = exportedItems[0].SpanId;
-        var spanid2 = exportedItems[1].SpanId;
-        var spanid3 = exportedItems[2].SpanId;
+        var spanId1 = exportedItems[0].SpanId;
+        var spanId2 = exportedItems[1].SpanId;
+        var spanId3 = exportedItems[2].SpanId;
 
         // Validate span ids are different
-        Assert.NotEqual(spanid1, spanid2);
-        Assert.NotEqual(spanid3, spanid1);
-        Assert.NotEqual(spanid2, spanid3);
+        Assert.NotEqual(spanId1, spanId2);
+        Assert.NotEqual(spanId3, spanId1);
+        Assert.NotEqual(spanId2, spanId3);
     }
 
     [Theory]
@@ -685,27 +677,15 @@ public partial class HttpClientTests : IDisposable
         ActivityContext parentContext = default;
         ActivityContext contextFromPropagator = default;
 
-        var propagator = new Mock<TextMapPropagator>();
+        void Propagator_Injected(object sender, PropagationContextEventArgs e)
+        {
+            contextFromPropagator = e.Context.ActivityContext;
+        }
 
-#if NETFRAMEWORK
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-            .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
-            });
-#else
-        propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-            .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, carrier, setter) =>
-            {
-                contextFromPropagator = context.ActivityContext;
-
-                setter(carrier, "custom_traceparent", $"00/{contextFromPropagator.TraceId}/{contextFromPropagator.SpanId}/01");
-                setter(carrier, "custom_tracestate", contextFromPropagator.TraceState);
-            });
-#endif
+        var propagator = new CustomTextMapPropagator();
+        propagator.Injected += Propagator_Injected;
+        propagator.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+        propagator.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
         var exportedItems = new List<Activity>();
 
@@ -716,7 +696,7 @@ public partial class HttpClientTests : IDisposable
            .Build())
         {
             var previousDefaultTextMapPropagator = Propagators.DefaultTextMapPropagator;
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             Activity parent = null;
             if (createParentActivity)
