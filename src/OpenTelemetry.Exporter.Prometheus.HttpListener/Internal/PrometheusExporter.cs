@@ -58,6 +58,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         set => this.funcExport = value;
     }
 
+    internal bool? OpenMetricsRequested { get; set; }
+
     internal Action OnDispose { get; set; }
 
     internal PrometheusCollectionManager CollectionManager { get; }

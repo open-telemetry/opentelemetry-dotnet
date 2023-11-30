@@ -65,7 +65,7 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect();
+                    var response = await exporter.CollectionManager.EnterCollect(false);
                     try
                     {
                         return new Response
@@ -98,7 +98,7 @@ public sealed class PrometheusCollectionManagerTests
             counter.Add(100);
 
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect();
+            var task = exporter.CollectionManager.EnterCollect(false);
             Assert.True(task.IsCompleted);
             var response = await task;
             try
@@ -129,7 +129,7 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect();
+                    var response = await exporter.CollectionManager.EnterCollect(false);
                     try
                     {
                         return new Response

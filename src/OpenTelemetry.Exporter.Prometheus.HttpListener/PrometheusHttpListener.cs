@@ -151,7 +151,10 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested = this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(context.Request.Headers);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 context.Response.Headers.Add("Server", string.Empty);
@@ -160,7 +163,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 
-                    if (this.AcceptsOpenMetrics(context.Request.Headers))
+                    if (openMetricsRequested)
                     {
                         context.Response.ContentType = "application/openmetrics-text; version=1.0.0; charset=utf-8";
                     }

@@ -35,7 +35,7 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsEnabled = true)
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsEnabled = true, bool openMetricsRequested = false)
     {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
@@ -81,7 +81,7 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }
@@ -118,7 +118,7 @@ internal static partial class PrometheusSerializer
                     cursor = WriteLong(buffer, cursor, totalCount);
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
+                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
@@ -133,7 +133,7 @@ internal static partial class PrometheusSerializer
                 cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                 buffer[cursor++] = ASCII_LINEFEED;
 
@@ -147,7 +147,7 @@ internal static partial class PrometheusSerializer
                 cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }

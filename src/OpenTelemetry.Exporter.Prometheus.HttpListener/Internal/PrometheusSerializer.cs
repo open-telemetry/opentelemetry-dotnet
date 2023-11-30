@@ -353,9 +353,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTimestamp(byte[] buffer, int cursor, long value, bool openMetricsEnabled)
+    public static int WriteTimestamp(byte[] buffer, int cursor, long value, bool useOpenMetrics)
     {
-        if (openMetricsEnabled)
+        if (useOpenMetrics)
         {
             cursor = WriteLong(buffer, cursor, value / 1000);
             buffer[cursor++] = unchecked((byte)'.');

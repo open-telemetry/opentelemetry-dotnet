@@ -68,7 +68,11 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested =
+                this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(httpContext.Request);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 if (collectionResponse.View.Count > 0)
@@ -79,7 +83,8 @@ internal sealed class PrometheusExporterMiddleware
 #else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 #endif
-                    if (this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(httpContext.Request))
+
+                    if (openMetricsRequested)
                     {
                         response.ContentType = "application/openmetrics-text; version=1.0.0; charset=utf-8";
                     }
