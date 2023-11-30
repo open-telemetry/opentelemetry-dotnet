@@ -24,11 +24,13 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 public sealed class PrometheusCollectionManagerTests
 {
     [Theory]
-    [InlineData(0)] // disable cache, default value for HttpListener
+    [InlineData(0, true)] // disable cache, default value for HttpListener
+    [InlineData(0, false)] // disable cache, default value for HttpListener
 #if PROMETHEUS_ASPNETCORE
-    [InlineData(300)] // default value for AspNetCore, no possibility to set on HttpListener
+    [InlineData(300, true)] // default value for AspNetCore, no possibility to set on HttpListener
+    [InlineData(300, false)] // default value for AspNetCore, no possibility to set on HttpListener
 #endif
-    public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds)
+    public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds, bool requestOpenMetrics)
     {
         bool cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -65,7 +67,7 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(false);
+                    var response = await exporter.CollectionManager.EnterCollect(requestOpenMetrics);
                     try
                     {
                         return new Response
@@ -98,7 +100,7 @@ public sealed class PrometheusCollectionManagerTests
             counter.Add(100);
 
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(false);
+            var task = exporter.CollectionManager.EnterCollect(requestOpenMetrics);
             Assert.True(task.IsCompleted);
             var response = await task;
             try
@@ -129,7 +131,7 @@ public sealed class PrometheusCollectionManagerTests
             {
                 collectTasks[i] = Task.Run(async () =>
                 {
-                    var response = await exporter.CollectionManager.EnterCollect(false);
+                    var response = await exporter.CollectionManager.EnterCollect(requestOpenMetrics);
                     try
                     {
                         return new Response
