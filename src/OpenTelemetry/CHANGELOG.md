@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
+
 * The `AddService` `ResourceBuilder` extension method will now generate the same
   `service.instance.id` for the lifetime of a process when
   `autoGenerateServiceInstanceId` is `true`.
@@ -63,6 +67,18 @@
   fixing issue
   [#4563](https://github.com/open-telemetry/opentelemetry-dotnet/issues/4563).
   ([#5089](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5089))
+
+* Added the `ILoggingBuilder.UseOpenTelemetry` experimental API extension for
+  registering OpenTelemetry `ILogger` integration using `LoggerProviderBuilder`
+  which supports the full DI (`IServiceCollection` \ `IServiceProvider`) API
+  surface (mirrors tracing & metrics).
+  ([#5072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5072))
+
+* Changed the `ILoggingBuilder` registration extensions (`AddOpenTelemetry` &
+  `UseOpenTelemetry`) to fire the optional `OpenTelemetryLoggerOptions`
+  configuration delegate AFTER the "Logging:OpenTelemetry" `IConfiguration`
+  section has been applied.
+  ([#5072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5072))
 
 ## 1.7.0-alpha.1
 

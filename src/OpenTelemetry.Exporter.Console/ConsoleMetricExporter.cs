@@ -75,12 +75,15 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
             this.WriteLine(msg.ToString());
 
-            foreach (var meterTag in metric.MeterTags)
+            if (metric.MeterTags != null)
             {
-                this.WriteLine("\tMeter Tags:");
-                if (ConsoleTagTransformer.Instance.TryTransformTag(meterTag, out var result))
+                foreach (var meterTag in metric.MeterTags)
                 {
-                    this.WriteLine($"\t\t{result}");
+                    this.WriteLine("\tMeter Tags:");
+                    if (ConsoleTagTransformer.Instance.TryTransformTag(meterTag, out var result))
+                    {
+                        this.WriteLine($"\t\t{result}");
+                    }
                 }
             }
 

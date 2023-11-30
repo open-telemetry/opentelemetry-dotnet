@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
+
 * Add support for Instrumentation Scope Attributes (i.e [Meter
   Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)),
   fixing issue
