@@ -289,15 +289,10 @@ public class MetricPointReclaimTests
     {
         public long Sum = 0;
 
-        private readonly FieldInfo aggStoreFieldInfo;
-
         private readonly FieldInfo metricPointLookupDictionaryFieldInfo;
 
         public CustomExporter()
         {
-            var metricFields = typeof(Metric).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-            this.aggStoreFieldInfo = metricFields!.FirstOrDefault(field => field.Name == "aggStore");
-
             var aggregatorStoreFields = typeof(AggregatorStore).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
             this.metricPointLookupDictionaryFieldInfo = aggregatorStoreFields!.FirstOrDefault(field => field.Name == "tagsToMetricPointIndexDictionaryDelta");
         }
@@ -306,7 +301,7 @@ public class MetricPointReclaimTests
         {
             foreach (var metric in batch)
             {
-                var aggStore = this.aggStoreFieldInfo.GetValue(metric) as AggregatorStore;
+                var aggStore = metric.AggregatorStore;
                 var metricPointLookupDictionary = this.metricPointLookupDictionaryFieldInfo.GetValue(aggStore) as ConcurrentDictionary<Tags, LookupData>;
 
                 var droppedMeasurements = aggStore.DroppedMeasurements;

@@ -26,6 +26,8 @@ internal sealed class AggregatorStore
 {
     internal readonly bool OutputDelta;
     internal readonly bool ShouldReclaimUnusedMetricPoints;
+    internal readonly bool EmitOverflowAttribute;
+    internal readonly MetricMeasurementHandler MeasurementHandler;
     internal long DroppedMeasurements = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
@@ -61,10 +63,8 @@ internal sealed class AggregatorStore
     private readonly int exponentialHistogramMaxSize;
     private readonly int exponentialHistogramMaxScale;
     private readonly int maxMetricPoints;
-    private readonly bool emitOverflowAttribute;
     private readonly ExemplarFilter exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
-    private readonly MetricMeasurementHandler measurementHandler;
 
     private int metricPointIndex = 0;
     private int batchSize = 0;
@@ -111,7 +111,7 @@ internal sealed class AggregatorStore
             this.tagsKeysInterestingCount = hs.Count;
         }
 
-        this.emitOverflowAttribute = emitOverflowAttribute;
+        this.EmitOverflowAttribute = emitOverflowAttribute;
 
         var reservedMetricPointsCount = 1;
 
@@ -161,7 +161,7 @@ internal sealed class AggregatorStore
             throw new NotSupportedException($"Unsupported Instrument Type: {metricStreamIdentity.InstrumentType.FullName}");
         }
 
-        this.measurementHandler = measurementHandler;
+        this.MeasurementHandler = measurementHandler;
         this.BuildRecordMeasurementDelegates(in metricStreamIdentity);
     }
 
@@ -307,7 +307,7 @@ internal sealed class AggregatorStore
 
         int startIndexForReclaimableMetricPoints = 1;
 
-        if (this.emitOverflowAttribute)
+        if (this.EmitOverflowAttribute)
         {
             startIndexForReclaimableMetricPoints = 2; // Index 0 and 1 are reserved for no tags and overflow
 
@@ -1081,7 +1081,7 @@ internal sealed class AggregatorStore
     private void BuildRecordMeasurementDelegates(
         in MetricStreamIdentity metricStreamIdentity)
     {
-        bool emitOverflowAttribute = this.emitOverflowAttribute;
+        bool emitOverflowAttribute = this.EmitOverflowAttribute;
         bool hasCustomTags = metricStreamIdentity.TagKeys != null;
         bool isExemplarEnabled = this.IsExemplarEnabled();
 
@@ -1132,11 +1132,11 @@ internal sealed class AggregatorStore
 
         if (typeof(T) == typeof(long))
         {
-            this.measurementHandler.RecordMeasurement(ref metricPoint, (long)(object)value!, tags: default, isSampled: false);
+            this.MeasurementHandler.RecordMeasurement(ref metricPoint, (long)(object)value!, tags: default, isSampled: false);
         }
         else if (typeof(T) == typeof(double))
         {
-            this.measurementHandler.RecordMeasurement(ref metricPoint, (double)(object)value!, tags: default, isSampled: false);
+            this.MeasurementHandler.RecordMeasurement(ref metricPoint, (double)(object)value!, tags: default, isSampled: false);
         }
         else
         {
@@ -1153,7 +1153,7 @@ internal sealed class AggregatorStore
     {
         if (typeof(T) == typeof(long))
         {
-            this.measurementHandler.RecordMeasurement(
+            this.MeasurementHandler.RecordMeasurement(
                 ref metricPoint,
                 (long)(object)value!,
                 tags: default,
@@ -1161,7 +1161,7 @@ internal sealed class AggregatorStore
         }
         else if (typeof(T) == typeof(double))
         {
-            this.measurementHandler.RecordMeasurement(
+            this.MeasurementHandler.RecordMeasurement(
                 ref metricPoint,
                 (double)(object)value!,
                 tags: default,
@@ -1201,7 +1201,7 @@ internal sealed class AggregatorStore
     {
         if (typeof(T) == typeof(long))
         {
-            this.measurementHandler.RecordMeasurement(
+            this.MeasurementHandler.RecordMeasurement(
                 ref metricPoint,
                 (long)(object)value!,
                 tags,
@@ -1209,7 +1209,7 @@ internal sealed class AggregatorStore
         }
         else if (typeof(T) == typeof(double))
         {
-            this.measurementHandler.RecordMeasurement(
+            this.MeasurementHandler.RecordMeasurement(
                 ref metricPoint,
                 (double)(object)value!,
                 tags,
