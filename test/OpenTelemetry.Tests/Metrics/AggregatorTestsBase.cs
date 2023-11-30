@@ -39,7 +39,7 @@ public abstract class AggregatorTestsBase
 
         this.aggregatorStore = new(
             MetricStreamIdentity,
-            MetricBehaviors.HistogramWithBuckets,
+            MetricBehaviors.Histogram,
             AggregationType.HistogramWithBuckets,
             AggregationTemporality.Cumulative,
             1024,
@@ -193,7 +193,7 @@ public abstract class AggregatorTestsBase
 
         AggregatorStore aggregatorStore = new(
             MetricStreamIdentity,
-            MetricBehaviors.Histogram,
+            MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -294,7 +294,7 @@ public abstract class AggregatorTestsBase
 
         AggregatorStore aggregatorStore = new(
             metricStreamIdentity,
-            MetricBehaviors.Histogram,
+            MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -370,7 +370,7 @@ public abstract class AggregatorTestsBase
         var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
         var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
 
-        var metricBehaviors = MetricBehaviors.ExponentialHistogram;
+        var metricBehaviors = MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets;
         if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             metricBehaviors |= MetricBehaviors.HistogramRecordMinMax;
@@ -489,7 +489,7 @@ public abstract class AggregatorTestsBase
 
         var aggregatorStore = new AggregatorStore(
             metricStreamIdentity,
-            MetricBehaviors.ExponentialHistogram,
+            MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,

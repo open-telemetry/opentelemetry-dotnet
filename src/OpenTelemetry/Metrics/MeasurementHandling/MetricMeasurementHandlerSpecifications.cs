@@ -50,43 +50,43 @@ internal static class MetricMeasurementHandlerSpecifications
     {
     }
 
-    public struct HistogramWithBuckets : IHistogramBucketsMetricBehavior
+    public struct HistogramWithMinMax : IHistogramRecordMinMaxMetricBehavior
     {
     }
 
-    public struct HistogramWithBucketsAndExemplar : IHistogramBucketsMetricBehavior, IOfferExemplarMetricBehavior
+    public struct HistogramWithMinMaxAndExemplar : IHistogramRecordMinMaxMetricBehavior, IOfferExemplarMetricBehavior
     {
     }
 
-    public struct HistogramWithBucketsAndMinMax : IHistogramBucketsMetricBehavior, IHistogramRecordMinMaxMetricBehavior
+    public struct HistogramWithoutBuckets : IHistogramWithoutBucketsMetricBehavior
     {
     }
 
-    public struct HistogramWithBucketsAndMinMaxAndExemplar : IHistogramBucketsMetricBehavior, IHistogramRecordMinMaxMetricBehavior, IOfferExemplarMetricBehavior
+    public struct HistogramWithoutBucketsAndWithExemplar : IHistogramWithoutBucketsMetricBehavior, IOfferExemplarMetricBehavior
     {
     }
 
-    public struct HistogramWitMinMax : IHistogramRecordMinMaxMetricBehavior
+    public struct HistogramWithoutBucketsAndWithMinMax : IHistogramWithoutBucketsMetricBehavior, IHistogramRecordMinMaxMetricBehavior
     {
     }
 
-    public struct HistogramWitMinMaxAndExemplar : IHistogramRecordMinMaxMetricBehavior, IOfferExemplarMetricBehavior
+    public struct HistogramWithoutBucketsAndWithMinMaxAndExemplar : IHistogramWithoutBucketsMetricBehavior, IHistogramRecordMinMaxMetricBehavior, IOfferExemplarMetricBehavior
     {
     }
 
-    public struct ExponentialHistogram : IExponentialHistogramMetricBehavior
+    public struct HistogramWithExponentialBuckets : IHistogramWithExponentialBucketsMetricBehavior
     {
     }
 
-    public struct ExponentialHistogramWithExemplar : IExponentialHistogramMetricBehavior, IOfferExemplarMetricBehavior
+    public struct HistogramWithExponentialBucketsAndExemplar : IHistogramWithExponentialBucketsMetricBehavior, IOfferExemplarMetricBehavior
     {
     }
 
-    public struct ExponentialHistogramWitMinMax : IExponentialHistogramMetricBehavior, IHistogramRecordMinMaxMetricBehavior
+    public struct HistogramWithExponentialBucketsAndMinMax : IHistogramWithExponentialBucketsMetricBehavior, IHistogramRecordMinMaxMetricBehavior
     {
     }
 
-    public struct ExponentialHistogramWitMinMaxAndExemplar : IExponentialHistogramMetricBehavior, IHistogramRecordMinMaxMetricBehavior, IOfferExemplarMetricBehavior
+    public struct HistogramWithExponentialBucketsAndMinMaxAndExemplar : IHistogramWithExponentialBucketsMetricBehavior, IHistogramRecordMinMaxMetricBehavior, IOfferExemplarMetricBehavior
     {
     }
 }

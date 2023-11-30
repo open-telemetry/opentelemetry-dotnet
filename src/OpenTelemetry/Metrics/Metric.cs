@@ -172,17 +172,15 @@ public sealed class Metric
                 aggType = histogramRecordMinMax ? AggregationType.Base2ExponentialHistogramWithMinMax : AggregationType.Base2ExponentialHistogram;
             }
 
+            metricBehaviors = MetricBehaviors.Histogram;
+
             if (exponentialMaxSize != 0)
             {
-                metricBehaviors = MetricBehaviors.ExponentialHistogram;
+                metricBehaviors |= MetricBehaviors.HistogramWithExponentialBuckets;
             }
-            else if (explicitBucketBounds == null || explicitBucketBounds.Length != 0)
+            else if (explicitBucketBounds != null && explicitBucketBounds.Length == 0)
             {
-                metricBehaviors = MetricBehaviors.HistogramWithBuckets;
-            }
-            else
-            {
-                metricBehaviors = MetricBehaviors.Histogram;
+                metricBehaviors |= MetricBehaviors.HistogramWithoutBuckets;
             }
 
             if (histogramRecordMinMax)

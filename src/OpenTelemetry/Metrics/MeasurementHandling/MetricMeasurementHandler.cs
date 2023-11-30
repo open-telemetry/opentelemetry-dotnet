@@ -30,18 +30,18 @@ internal abstract class MetricMeasurementHandler
 
         [MetricBehaviors.Histogram] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.Histogram>(),
         [MetricBehaviors.Histogram | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithExemplar>(),
-        [MetricBehaviors.Histogram | MetricBehaviors.HistogramRecordMinMax] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWitMinMax>(),
-        [MetricBehaviors.Histogram | MetricBehaviors.HistogramRecordMinMax | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWitMinMaxAndExemplar>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramRecordMinMax] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithMinMax>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramRecordMinMax | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithMinMaxAndExemplar>(),
 
-        [MetricBehaviors.HistogramWithBuckets] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithBuckets>(),
-        [MetricBehaviors.HistogramWithBuckets | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithBucketsAndExemplar>(),
-        [MetricBehaviors.HistogramWithBuckets | MetricBehaviors.HistogramRecordMinMax] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithBucketsAndMinMax>(),
-        [MetricBehaviors.HistogramWithBuckets | MetricBehaviors.HistogramRecordMinMax | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithBucketsAndMinMaxAndExemplar>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithoutBuckets>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithoutBucketsAndWithExemplar>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets | MetricBehaviors.HistogramRecordMinMax] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithoutBucketsAndWithMinMax>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets | MetricBehaviors.HistogramRecordMinMax | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithoutBucketsAndWithMinMaxAndExemplar>(),
 
-        [MetricBehaviors.ExponentialHistogram] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.ExponentialHistogram>(),
-        [MetricBehaviors.ExponentialHistogram | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.ExponentialHistogramWithExemplar>(),
-        [MetricBehaviors.ExponentialHistogram | MetricBehaviors.HistogramRecordMinMax] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.ExponentialHistogramWitMinMax>(),
-        [MetricBehaviors.ExponentialHistogram | MetricBehaviors.HistogramRecordMinMax | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.ExponentialHistogramWitMinMaxAndExemplar>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithExponentialBuckets>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithExponentialBucketsAndExemplar>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets | MetricBehaviors.HistogramRecordMinMax] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithExponentialBucketsAndMinMax>(),
+        [MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets | MetricBehaviors.HistogramRecordMinMax | MetricBehaviors.OfferExemplar] = new HistogramMetricMeasurementHandler<MetricMeasurementHandlerSpecifications.HistogramWithExponentialBucketsAndMinMaxAndExemplar>(),
     };
 
     public abstract void RecordMeasurement(

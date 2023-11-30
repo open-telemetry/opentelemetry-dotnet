@@ -22,8 +22,8 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
     where T : struct // <- Note: T must be a struct to have specialized code generated based on the type
 {
     // Note: These flags are designed so that code which is not needed can be elided by the JIT
-    private static readonly bool IsExponential = typeof(IExponentialHistogramMetricBehavior).IsAssignableFrom(typeof(T));
-    private static readonly bool HasBuckets = typeof(IHistogramBucketsMetricBehavior).IsAssignableFrom(typeof(T));
+    private static readonly bool IsExponential = typeof(IHistogramWithExponentialBucketsMetricBehavior).IsAssignableFrom(typeof(T));
+    private static readonly bool HasBuckets = !typeof(IHistogramWithoutBucketsMetricBehavior).IsAssignableFrom(typeof(T));
     private static readonly bool RecordMinMax = typeof(IHistogramRecordMinMaxMetricBehavior).IsAssignableFrom(typeof(T));
     private static readonly bool OfferExemplar = typeof(IOfferExemplarMetricBehavior).IsAssignableFrom(typeof(T));
 
