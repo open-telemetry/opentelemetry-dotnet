@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
+
 * Made `OpenTelemetry.Exporter.OtlpLogExporter` public.
   ([#4979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/4979))
 

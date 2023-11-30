@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-* Added support for exporting otel_scope_info tags to metrics
+* Added ability to export otel_scop_info and handle OpenMetrics requests from Prometheus
+
+## 1.7.0-rc.1
+
+Released 2023-Nov-29
 
 ## 1.7.0-alpha.1
 

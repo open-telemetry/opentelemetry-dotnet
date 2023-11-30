@@ -17,6 +17,9 @@
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
+#if EXPOSE_EXPERIMENTAL_FEATURES
+using System.ComponentModel;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -48,6 +51,11 @@ public static class OpenTelemetryLoggingExtensions
     /// </remarks>
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    // todo: [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")]
+    // Note: We hide AddOpenTelemetry from IDEs using EditorBrowsable when UseOpenTelemetry is present to reduce confusion.
+    [EditorBrowsable(EditorBrowsableState.Never)]
+#endif
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder)
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: null);
@@ -59,10 +67,100 @@ public static class OpenTelemetryLoggingExtensions
     /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
     /// <param name="configure">Optional configuration action.</param>
     /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    // todo: [Obsolete("Call UseOpenTelemetry instead this method will be removed in a future version.")]
+    // Note: We hide AddOpenTelemetry from IDEs using EditorBrowsable when UseOpenTelemetry is present to reduce confusion.
+    [EditorBrowsable(EditorBrowsableState.Never)]
+#endif
     public static ILoggingBuilder AddOpenTelemetry(
         this ILoggingBuilder builder,
         Action<OpenTelemetryLoggerOptions>? configure)
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: configure);
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</para>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
+    /// for a given <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    public
+#else
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is safe to be called multiple times and by library authors.
+    /// Only a single <see cref="OpenTelemetryLoggerProvider"/> will be created
+    /// for a given <see cref="IServiceCollection"/>.
+    /// </remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    internal
+#endif
+        static ILoggingBuilder UseOpenTelemetry(
+        this ILoggingBuilder builder)
+        => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: null);
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="UseOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    public
+#else
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="UseOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure"><see cref="LoggerProviderBuilder"/> configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    internal
+#endif
+        static ILoggingBuilder UseOpenTelemetry(
+        this ILoggingBuilder builder,
+        Action<LoggerProviderBuilder> configure)
+    {
+        Guard.ThrowIfNull(configure);
+
+        return AddOpenTelemetryInternal(builder, configureBuilder: configure, configureOptions: null);
+    }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="UseOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configureBuilder">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
+    /// <param name="configureOptions">Optional <see cref="OpenTelemetryLoggerOptions"/> configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    public
+#else
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="UseOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configureBuilder">Optional <see cref="LoggerProviderBuilder"/> configuration action.</param>
+    /// <param name="configureOptions">Optional <see cref="OpenTelemetryLoggerOptions"/> configuration action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    internal
+#endif
+        static ILoggingBuilder UseOpenTelemetry(
+        this ILoggingBuilder builder,
+        Action<LoggerProviderBuilder>? configureBuilder,
+        Action<OpenTelemetryLoggerOptions>? configureOptions)
+        => AddOpenTelemetryInternal(builder, configureBuilder, configureOptions);
 
     private static ILoggingBuilder AddOpenTelemetryInternal(
         ILoggingBuilder builder,
@@ -75,18 +173,18 @@ public static class OpenTelemetryLoggingExtensions
 
         var services = builder.Services;
 
-        if (configureOptions != null)
-        {
-            // TODO: Move this below the RegisterLoggerProviderOptions call so
-            // that user-supplied delegate fires AFTER the options are bound to
-            // Logging:OpenTelemetry configuration.
-            services.Configure(configureOptions);
-        }
-
         // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
         RegisterLoggerProviderOptions(services);
 
         services.AddOpenTelemetrySharedProviderBuilderServices();
+
+        if (configureOptions != null)
+        {
+            // Note: Order is important here so that user-supplied delegate
+            // fires AFTER the options are bound to Logging:OpenTelemetry
+            // configuration.
+            services.Configure(configureOptions);
+        }
 
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
