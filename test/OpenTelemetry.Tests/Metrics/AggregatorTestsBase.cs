@@ -50,7 +50,7 @@ public abstract class AggregatorTestsBase
     [Fact]
     public void HistogramDistributeToAllBucketsDefault()
     {
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
@@ -105,7 +105,7 @@ public abstract class AggregatorTestsBase
     {
         var boundaries = new double[] { 10, 20 };
 
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
@@ -155,7 +155,7 @@ public abstract class AggregatorTestsBase
             boundaries[i] = i;
         }
 
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var histogramPoint = new MetricPoint(this.aggregatorStore,  null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
@@ -200,7 +200,7 @@ public abstract class AggregatorTestsBase
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints);
 
-        var histogramPoint = new MetricPoint(aggregatorStore, AggregationType.Histogram, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var histogramPoint = new MetricPoint(aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         var measurementHandler = aggregatorStore.MeasurementHandler;
 
@@ -232,7 +232,7 @@ public abstract class AggregatorTestsBase
     public void MultiThreadedHistogramUpdateAndSnapShotTest()
     {
         var boundaries = Array.Empty<double>();
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
         var argsToThread = new ThreadArguments
         {
             MeasurementHandler = this.aggregatorStore.MeasurementHandler,

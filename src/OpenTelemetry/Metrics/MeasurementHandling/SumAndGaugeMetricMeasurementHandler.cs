@@ -34,7 +34,9 @@ internal sealed class SumAndGaugeMetricMeasurementHandler<T> : MetricMeasurement
         {
             Debug.Assert(metricPoint.OptionalComponents != null, "mpComponents was null");
 
-            MetricPoint.AcquireLock(ref metricPoint.OptionalComponents!.IsCriticalSectionOccupied);
+            var optionalComponents = metricPoint.OptionalComponents!;
+
+            optionalComponents.AcquireLock();
 
             if (IsDelta)
             {
@@ -55,10 +57,10 @@ internal sealed class SumAndGaugeMetricMeasurementHandler<T> : MetricMeasurement
 
                 // TODO: Need to ensure that the lock is always released.
                 // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                metricPoint.OptionalComponents.ExemplarReservoir!.Offer(value, tags);
+                optionalComponents.ExemplarReservoir!.Offer(value, tags);
             }
 
-            MetricPoint.ReleaseLock(ref metricPoint.OptionalComponents!.IsCriticalSectionOccupied);
+            optionalComponents.ReleaseLock();
         }
         else if (IsDelta)
         {
@@ -81,7 +83,9 @@ internal sealed class SumAndGaugeMetricMeasurementHandler<T> : MetricMeasurement
         {
             Debug.Assert(metricPoint.OptionalComponents != null, "mpComponents was null");
 
-            MetricPoint.AcquireLock(ref metricPoint.OptionalComponents!.IsCriticalSectionOccupied);
+            var optionalComponents = metricPoint.OptionalComponents!;
+
+            optionalComponents.AcquireLock();
 
             if (IsDelta)
             {
@@ -102,10 +106,10 @@ internal sealed class SumAndGaugeMetricMeasurementHandler<T> : MetricMeasurement
 
                 // TODO: Need to ensure that the lock is always released.
                 // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-                metricPoint.OptionalComponents.ExemplarReservoir!.Offer(value, tags);
+                optionalComponents.ExemplarReservoir!.Offer(value, tags);
             }
 
-            MetricPoint.ReleaseLock(ref metricPoint.OptionalComponents!.IsCriticalSectionOccupied);
+            optionalComponents.ReleaseLock();
         }
         else if (IsDelta)
         {

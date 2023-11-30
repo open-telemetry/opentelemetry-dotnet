@@ -62,7 +62,8 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
     {
         Debug.Assert(metricPoint.OptionalComponents!.HistogramBuckets != null, "HistogramBuckets was null");
 
-        var histogramBuckets = metricPoint.OptionalComponents!.HistogramBuckets!;
+        var optionalComponents = metricPoint.OptionalComponents!;
+        var histogramBuckets = optionalComponents.HistogramBuckets!;
 
         int bucketIndex;
         if (HasBuckets)
@@ -74,7 +75,7 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
             bucketIndex = 0;
         }
 
-        MetricPoint.AcquireLock(ref histogramBuckets.IsCriticalSectionOccupied);
+        optionalComponents.AcquireLock();
 
         unchecked
         {
@@ -90,11 +91,11 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
 
         if (OfferExemplar && isSampled)
         {
-            Debug.Assert(metricPoint.OptionalComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+            Debug.Assert(optionalComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
             // TODO: Need to ensure that the lock is always released.
             // A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            metricPoint.OptionalComponents.ExemplarReservoir!.Offer(value, tags, bucketIndex);
+            optionalComponents.ExemplarReservoir!.Offer(value, tags, bucketIndex);
         }
 
         if (RecordMinMax)
@@ -103,7 +104,7 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
             histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, value);
         }
 
-        MetricPoint.ReleaseLock(ref histogramBuckets.IsCriticalSectionOccupied);
+        optionalComponents.ReleaseLock();
     }
 
     private static void RecordMeasurementExponentialHistogram(
@@ -116,9 +117,10 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
 
         if (value >= 0)
         {
-            var histogram = metricPoint.OptionalComponents!.Base2ExponentialBucketHistogram;
+            var optionalComponents = metricPoint.OptionalComponents!;
+            var histogram = optionalComponents.Base2ExponentialBucketHistogram!;
 
-            MetricPoint.AcquireLock(ref histogram!.IsCriticalSectionOccupied);
+            optionalComponents.AcquireLock();
 
             unchecked
             {
@@ -129,7 +131,7 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
 
             if (OfferExemplar && isSampled)
             {
-                Debug.Assert(metricPoint.OptionalComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
+                Debug.Assert(optionalComponents.ExemplarReservoir != null, "ExemplarReservoir was null");
 
                 // TODO: Exemplars for exponential histograms will be a follow up PR
             }
@@ -140,7 +142,7 @@ internal sealed class HistogramMetricMeasurementHandler<T> : MetricMeasurementHa
                 histogram.RunningMax = Math.Max(histogram.RunningMax, value);
             }
 
-            MetricPoint.ReleaseLock(ref histogram.IsCriticalSectionOccupied);
+            optionalComponents.ReleaseLock();
         }
     }
 }

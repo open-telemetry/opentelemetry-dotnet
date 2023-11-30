@@ -33,7 +33,7 @@ internal sealed class MetricPointOptionalComponents
 
     public Exemplar[]? Exemplars;
 
-    public int IsCriticalSectionOccupied = 0;
+    private int isCriticalSectionOccupied = 0;
 
     internal MetricPointOptionalComponents Copy()
     {
@@ -50,5 +50,19 @@ internal sealed class MetricPointOptionalComponents
         }
 
         return copy;
+    }
+
+    internal void AcquireLock()
+    {
+        var sw = default(SpinWait);
+        while (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
+        {
+            sw.SpinOnce();
+        }
+    }
+
+    internal void ReleaseLock()
+    {
+        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
     }
 }

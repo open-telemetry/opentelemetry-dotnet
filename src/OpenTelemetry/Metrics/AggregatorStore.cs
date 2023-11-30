@@ -27,6 +27,8 @@ internal sealed class AggregatorStore
     internal readonly bool OutputDelta;
     internal readonly bool ShouldReclaimUnusedMetricPoints;
     internal readonly bool EmitOverflowAttribute;
+    internal readonly AggregationType AggregationType;
+    internal readonly MetricBehaviors MetricBehaviors;
     internal readonly MetricMeasurementHandler MeasurementHandler;
     internal long DroppedMeasurements = 0;
 
@@ -58,7 +60,6 @@ internal sealed class AggregatorStore
     private readonly string metricPointCapHitMessage;
     private readonly MetricPoint[] metricPoints;
     private readonly int[] currentMetricPointBatch;
-    private readonly AggregationType aggType;
     private readonly double[] histogramBounds;
     private readonly int exponentialHistogramMaxSize;
     private readonly int exponentialHistogramMaxScale;
@@ -97,7 +98,7 @@ internal sealed class AggregatorStore
         this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
         this.metricPoints = new MetricPoint[maxMetricPoints];
         this.currentMetricPointBatch = new int[maxMetricPoints];
-        this.aggType = aggType;
+        this.AggregationType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
         this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
@@ -156,11 +157,13 @@ internal sealed class AggregatorStore
             metricBehaviors |= MetricBehaviors.OfferExemplar;
         }
 
-        if (!MetricMeasurementHandler.Definitions.TryGetValue(metricBehaviors, out var measurementHandler))
+        var metricBehaviorsWithoutDataType = metricBehaviors & ~(MetricBehaviors.Long | MetricBehaviors.Double);
+        if (!MetricMeasurementHandler.Definitions.TryGetValue(metricBehaviorsWithoutDataType, out var measurementHandler))
         {
             throw new NotSupportedException($"Unsupported Instrument Type: {metricStreamIdentity.InstrumentType.FullName}");
         }
 
+        this.MetricBehaviors = metricBehaviors;
         this.MeasurementHandler = measurementHandler;
         this.BuildRecordMeasurementDelegates(in metricStreamIdentity);
     }
@@ -464,11 +467,11 @@ internal sealed class AggregatorStore
                     if (this.OutputDelta)
                     {
                         var lookupData = new LookupData(0, Tags.EmptyTags, Tags.EmptyTags);
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                        this.metricPoints[0] = new MetricPoint(this, null, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                     }
                     else
                     {
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                        this.metricPoints[0] = new MetricPoint(this, null, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                     }
 
                     this.zeroTagMetricPointInitialized = true;
@@ -492,11 +495,11 @@ internal sealed class AggregatorStore
                     if (this.OutputDelta)
                     {
                         var lookupData = new LookupData(1, tags, tags);
-                        this.metricPoints[1] = new MetricPoint(this, this.aggType, keyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                        this.metricPoints[1] = new MetricPoint(this, keyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                     }
                     else
                     {
-                        this.metricPoints[1] = new MetricPoint(this, this.aggType, keyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                        this.metricPoints[1] = new MetricPoint(this, keyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                     }
 
                     this.overflowTagMetricPointInitialized = true;
@@ -565,7 +568,7 @@ internal sealed class AggregatorStore
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                            metricPoint = new MetricPoint(this, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
@@ -614,7 +617,7 @@ internal sealed class AggregatorStore
                         }
 
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                        metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                        metricPoint = new MetricPoint(this, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
                         // Add to dictionary *after* initializing MetricPoint
                         // as other threads can start writing to the
@@ -701,7 +704,7 @@ internal sealed class AggregatorStore
                             lookupData = new LookupData(index, sortedTags, givenTags);
 
                             ref var metricPoint = ref this.metricPoints[index];
-                            metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                            metricPoint = new MetricPoint(this, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                             newMetricPointCreated = true;
 
                             // Add to dictionary *after* initializing MetricPoint
@@ -758,7 +761,7 @@ internal sealed class AggregatorStore
                         lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
 
                         ref var metricPoint = ref this.metricPoints[index];
-                        metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                        metricPoint = new MetricPoint(this, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                         newMetricPointCreated = true;
 
                         // Add to dictionary *after* initializing MetricPoint
@@ -869,7 +872,7 @@ internal sealed class AggregatorStore
                 lookupData = new LookupData(index, sortedTags, givenTags);
 
                 ref var metricPoint = ref this.metricPoints[index];
-                metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                metricPoint = new MetricPoint(this, sortedTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                 newMetricPointCreated = true;
 
                 // Add to dictionary *after* initializing MetricPoint
@@ -900,7 +903,7 @@ internal sealed class AggregatorStore
                 lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
 
                 ref var metricPoint = ref this.metricPoints[index];
-                metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                metricPoint = new MetricPoint(this, givenTags.KeyValuePairs, this.histogramBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                 newMetricPointCreated = true;
 
                 // Add to dictionary *after* initializing MetricPoint

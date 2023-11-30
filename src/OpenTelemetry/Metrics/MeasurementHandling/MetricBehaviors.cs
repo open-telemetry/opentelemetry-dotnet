@@ -23,15 +23,17 @@ internal enum MetricBehaviors
 {
 #pragma warning disable SA1602 // Enumeration items should be documented
     None = 0,
-    Sum = 1,
-    Gauge = 1 << 1,
-    Cumulative = 1 << 2,
-    Delta = 1 << 3,
-    Histogram = 1 << 4,
-    HistogramRecordMinMax = 1 << 5,
-    HistogramWithoutBuckets = 1 << 6,
-    HistogramWithExponentialBuckets = 1 << 7,
-    OfferExemplar = 1 << 8,
+    Long = 1,
+    Double = 1 << 1,
+    Sum = 1 << 2,
+    Gauge = 1 << 3,
+    Cumulative = 1 << 4,
+    Delta = 1 << 5,
+    Histogram = 1 << 6,
+    HistogramRecordMinMax = 1 << 7,
+    HistogramWithoutBuckets = 1 << 8,
+    HistogramWithExponentialBuckets = 1 << 9,
+    OfferExemplar = 1 << 10,
 #pragma warning restore SA1602 // Enumeration items should be documented
 }
 
