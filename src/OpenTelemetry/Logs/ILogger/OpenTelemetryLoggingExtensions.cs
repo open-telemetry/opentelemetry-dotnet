@@ -17,6 +17,7 @@
 #if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -64,6 +65,18 @@ public static class OpenTelemetryLoggingExtensions
         Action<OpenTelemetryLoggerOptions>? configure)
         => AddOpenTelemetryInternal(builder, configureBuilder: null, configureOptions: configure);
 
+    /// <summary>
+    /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+    /// </summary>
+    /// <remarks><inheritdoc cref="AddOpenTelemetry(ILoggingBuilder)" path="/remarks"/></remarks>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configureBuilder">Optional configure LoggerProviderBuilder action.</param>
+    /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+    public static ILoggingBuilder AddOpenTelemetry(
+        this ILoggingBuilder builder,
+        Action<LoggerProviderBuilder>? configureBuilder)
+        => AddOpenTelemetryInternal(builder, configureBuilder: configureBuilder, configureOptions: null);
+
     private static ILoggingBuilder AddOpenTelemetryInternal(
         ILoggingBuilder builder,
         Action<LoggerProviderBuilder>? configureBuilder,
@@ -75,17 +88,20 @@ public static class OpenTelemetryLoggingExtensions
 
         var services = builder.Services;
 
+        // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
+        RegisterLoggerProviderOptions(services);
+
         if (configureOptions != null)
         {
-            // TODO: Move this below the RegisterLoggerProviderOptions call so
-            // that user-supplied delegate fires AFTER the options are bound to
-            // Logging:OpenTelemetry configuration.
             services.Configure(configureOptions);
         }
 
-        // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        RegisterLoggerProviderOptions(services);
-
+        /* Note: This ensures IConfiguration is available when using
+        * IServiceCollections NOT attached to a host. For example when
+        * performing:
+        *
+        * new ServiceCollection().AddLogging(b => b.AddOpenTelemetry())
+        */
         services.AddOpenTelemetrySharedProviderBuilderServices();
 
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
@@ -112,10 +128,41 @@ public static class OpenTelemetryLoggingExtensions
 
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
-                sp => new OpenTelemetryLoggerProvider(
-                    sp.GetRequiredService<LoggerProvider>(),
-                    sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
-                    disposeProvider: false)));
+                sp =>
+                {
+                    var state = sp.GetRequiredService<LoggerProviderBuilderSdk>();
+
+                    var provider = state.Provider;
+                    if (provider == null)
+                    {
+                        /*
+                         * Note:
+                         *
+                         * There is a possibility of a circular reference when
+                         * accessing LoggerProvider from the IServiceProvider.
+                         *
+                         * If LoggerProvider is the first thing accessed, and
+                         * it requires some service which accesses ILogger
+                         * (for example, IHttpClientFactory), then the
+                         * OpenTelemetryLoggerProvider will try to access the
+                         * LoggerProvider inside the initial access to
+                         * LoggerProvider.
+                         *
+                         * This check uses the provider reference captured on
+                         * LoggerProviderBuilderSdk during construction of
+                         * LoggerProviderSdk to detect if a provider has
+                         * already been created to give to
+                         * OpenTelemetryLoggerProvider.
+                         */
+                        provider = sp.GetRequiredService<LoggerProvider>();
+                        Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider.");
+                    }
+
+                    return new OpenTelemetryLoggerProvider(
+                        provider,
+                        sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue,
+                        disposeProvider: false);
+                }));
 
         return builder;
 
