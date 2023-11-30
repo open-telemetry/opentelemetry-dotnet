@@ -43,7 +43,7 @@ internal sealed class PrometheusExporterOptions
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to export metric scope info. Default value: true.
+    /// Gets or sets a value indicating whether to export OpenMetrics compatible scrape responses. Default value: true.
     /// </summary>
-    public bool ScopeInfoEnabled { get; set; } = true;
+    public bool OpenMetricsEnabled { get; set; } = true;
 }

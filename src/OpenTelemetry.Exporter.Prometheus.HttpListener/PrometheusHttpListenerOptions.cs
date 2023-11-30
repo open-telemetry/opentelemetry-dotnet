@@ -31,6 +31,11 @@ public class PrometheusHttpListenerOptions
     public string ScrapeEndpointPath { get; set; } = "/metrics";
 
     /// <summary>
+    /// Gets or sets a value indicating whether to export OpenMetrics compatible scrape responses. Default value: true.
+    /// </summary>
+    public bool OpenMetricsEnabled { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
     /// Default value: <c>["http://localhost:9464/"]</c>.
     /// </summary>

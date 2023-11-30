@@ -35,7 +35,7 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool scopeInfoEnabled = true)
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsEnabled = true)
     {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric);
@@ -45,36 +45,11 @@ internal static partial class PrometheusSerializer
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                var tags = metricPoint.Tags;
                 var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
-
-                if (tags.Count > 0 || scopeInfoEnabled)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    if (scopeInfoEnabled)
-                    {
-                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-                        buffer[cursor++] = unchecked((byte)',');
-
-                        if (!string.IsNullOrEmpty(metric.MeterVersion))
-                        {
-                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-                    }
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsEnabled);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -106,7 +81,7 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, timestamp);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }
@@ -125,24 +100,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-
-                    if (scopeInfoEnabled)
-                    {
-                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-                        buffer[cursor++] = unchecked((byte)',');
-
-                        if (!string.IsNullOrEmpty(metric.MeterVersion))
-                        {
-                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-                    }
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
+                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsEnabled, writeEnclosingBraces: false);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -160,7 +118,7 @@ internal static partial class PrometheusSerializer
                     cursor = WriteLong(buffer, cursor, totalCount);
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteLong(buffer, cursor, timestamp);
+                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
@@ -168,82 +126,32 @@ internal static partial class PrometheusSerializer
                 // Histogram sum
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-
-                if (tags.Count > 0 || scopeInfoEnabled)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    if (scopeInfoEnabled)
-                    {
-                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-                        buffer[cursor++] = unchecked((byte)',');
-
-                        if (!string.IsNullOrEmpty(metric.MeterVersion))
-                        {
-                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-                    }
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsEnabled);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, timestamp);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
 
                 buffer[cursor++] = ASCII_LINEFEED;
 
                 // Histogram count
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-
-                if (tags.Count > 0 || scopeInfoEnabled)
-                {
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    if (scopeInfoEnabled)
-                    {
-                        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-                        buffer[cursor++] = unchecked((byte)',');
-
-                        if (!string.IsNullOrEmpty(metric.MeterVersion))
-                        {
-                            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-                    }
-
-                    foreach (var tag in tags)
-                    {
-                        cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
-                }
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsEnabled);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
                 buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, timestamp);
+                cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsEnabled);
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }
         }
-
-        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }

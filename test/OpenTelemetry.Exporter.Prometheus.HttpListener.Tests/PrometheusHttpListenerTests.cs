@@ -16,6 +16,7 @@
 
 using System.Diagnostics.Metrics;
 using System.Net;
+using System.Net.Http.Headers;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -90,7 +91,13 @@ public class PrometheusHttpListenerTests
         await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
+    {
+        await this.RunPrometheusExporterHttpServerIntegrationTest(useOpenMetrics: false);
+    }
+
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, bool useOpenMetrics = true)
     {
         Random random = new Random();
         int retryAttempts = 5;
@@ -107,7 +114,11 @@ public class PrometheusHttpListenerTests
 
             provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
+                .AddPrometheusHttpListener(options =>
+                {
+                    options.OpenMetricsEnabled = useOpenMetrics;
+                    options.UriPrefixes = new string[] { address };
+                })
                 .Build();
         }
 
@@ -125,27 +136,42 @@ public class PrometheusHttpListenerTests
         }
 
         using HttpClient client = new HttpClient();
+
+        if (useOpenMetrics)
+        {
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/openmetrics-text"));
+        }
+
         using var response = await client.GetAsync($"{address}metrics");
 
         if (!skipMetrics)
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+
+            if (useOpenMetrics)
+            {
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+            }
+            else
+            {
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+            }
 
             var content = await response.Content.ReadAsStringAsync();
 
-            Assert.Matches(
-                ("^"
-                 + "# TYPE otel_scope_info info\n"
-                 + "# HELP otel_scope_info Scope metadata\n"
-                 + $"otel_scope_info{{otel_scope_name='{this.meterName}'}} 1\n"
-                 + "\n"
-                 + "# TYPE counter_double_total counter\n"
-                 + $"counter_double_total{{otel_scope_name='{this.meterName}',key1='value1',key2='value2'}} 101.17 \\d+\n\n"
-                 + "# EOF\n"
-                 + "$").Replace('\'', '"'),
-                content);
+            var expected = useOpenMetrics
+                ? "# TYPE otel_scope_info info\n"
+                  + "# HELP otel_scope_info Scope metadata\n"
+                  + $"otel_scope_info{{otel_scope_name='{this.meterName}'}} 1\n"
+                  + "# TYPE counter_double_total counter\n"
+                  + $"counter_double_total{{otel_scope_name='{this.meterName}',key1='value1',key2='value2'}} 101.17 \\d+\\.\\d{{3}}\n"
+                  + "# EOF\n"
+                : "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 \\d+\n"
+                  + "# EOF\n";
+
+            Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
         }
         else
         {

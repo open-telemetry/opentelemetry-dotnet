@@ -17,6 +17,7 @@
 #if !NETFRAMEWORK
 using System.Diagnostics.Metrics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -239,13 +240,13 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_DisableExportScopeInfo()
+    public async Task PrometheusExporterMiddlewareIntegration_DisableOpenMetrics()
     {
         await RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            configureOptions: o => o.ScopeInfoEnabled = false,
-            skipScopeInfo: true);
+            configureOptions: o => o.OpenMetricsEnabled = false,
+            useOpenMetrics: false);
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
@@ -256,7 +257,7 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        bool skipScopeInfo = false)
+        bool useOpenMetrics = true)
     {
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
@@ -295,7 +296,14 @@ public sealed class PrometheusExporterMiddlewareTests
             counter.Add(0.99D, tags);
         }
 
-        using var response = await host.GetTestClient().GetAsync(path);
+        using var client = host.GetTestClient();
+
+        if (useOpenMetrics)
+        {
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/openmetrics-text"));
+        }
+
+        using var response = await client.GetAsync(path);
 
         var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -303,22 +311,27 @@ public sealed class PrometheusExporterMiddlewareTests
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+
+            if (useOpenMetrics)
+            {
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
+            }
+            else
+            {
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+            }
 
             string content = await response.Content.ReadAsStringAsync();
 
-            string expected = skipScopeInfo
-                ? "# TYPE counter_double_total counter\n"
-                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
-                  + "\n"
-                  + "# EOF\n"
-                : "# TYPE otel_scope_info info\n"
+            string expected = useOpenMetrics
+                ? "# TYPE otel_scope_info info\n"
                   + "# HELP otel_scope_info Scope metadata\n"
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
-                  + "\n"
                   + "# TYPE counter_double_total counter\n"
-                  + $"counter_double_total{{otel_scope_name='{MeterName}',key1='value1',key2='value2'}} 101.17 (\\d+)\n"
-                  + "\n"
+                  + $"counter_double_total{{otel_scope_name='{MeterName}',key1='value1',key2='value2'}} 101.17 (\\d+\\.\\d{{3}})\n"
+                  + "# EOF\n"
+                : "# TYPE counter_double_total counter\n"
+                  + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+)\n"
                   + "# EOF\n";
 
             var matches = Regex.Matches(
@@ -327,7 +340,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
             Assert.Single(matches);
 
-            var timestamp = long.Parse(matches[0].Groups[1].Value);
+            var timestamp = long.Parse(matches[0].Groups[1].Value.Replace(".", string.Empty));
 
             Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
         }

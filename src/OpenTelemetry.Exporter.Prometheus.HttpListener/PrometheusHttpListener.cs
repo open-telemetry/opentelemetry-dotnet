@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Specialized;
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -22,6 +23,8 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
+    private const string OpenMetricsMediaType = "application/openmetrics-text";
+
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
     private readonly object syncObject = new();
@@ -156,7 +159,15 @@ internal sealed class PrometheusHttpListener : IDisposable
                 {
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+
+                    if (this.AcceptsOpenMetrics(context.Request.Headers))
+                    {
+                        context.Response.ContentType = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+                    }
+                    else
+                    {
+                        context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+                    }
 
                     await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
@@ -186,5 +197,29 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch
         {
         }
+    }
+
+    private bool AcceptsOpenMetrics(NameValueCollection headers)
+    {
+        var requestAccept = headers["Accept"];
+
+        if (string.IsNullOrEmpty(requestAccept))
+        {
+            return false;
+        }
+
+        var acceptTypes = requestAccept.Split(',');
+
+        foreach (var acceptType in acceptTypes)
+        {
+            var acceptSubType = acceptType.Split(';').FirstOrDefault()?.Trim();
+
+            if (acceptSubType == OpenMetricsMediaType)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

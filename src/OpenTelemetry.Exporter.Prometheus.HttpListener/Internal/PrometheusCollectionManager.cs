@@ -184,7 +184,7 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            if (this.exporter.ScopeInfoEnabled)
+            if (this.exporter.OpenMetricsEnabled)
             {
                 this.scopes.Clear();
 
@@ -229,7 +229,7 @@ internal sealed class PrometheusCollectionManager
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), this.exporter.ScopeInfoEnabled);
+                        cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), this.exporter.OpenMetricsEnabled);
                         break;
                     }
                     catch (IndexOutOfRangeException)

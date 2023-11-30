@@ -43,12 +43,12 @@ public class PrometheusAspNetCoreOptions
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to export metric scope info. Default value: true.
+    /// Gets or sets a value indicating whether to export OpenMetrics compatible scrape responses. Default value: true.
     /// </summary>
-    public bool ScopeInfoEnabled
+    public bool OpenMetricsEnabled
     {
-        get => this.ExporterOptions.ScopeInfoEnabled;
-        set => this.ExporterOptions.ScopeInfoEnabled = value;
+        get => this.ExporterOptions.OpenMetricsEnabled;
+        set => this.ExporterOptions.OpenMetricsEnabled = value;
     }
 
     internal PrometheusExporterOptions ExporterOptions { get; } = new();

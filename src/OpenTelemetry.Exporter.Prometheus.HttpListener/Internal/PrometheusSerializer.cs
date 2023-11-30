@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
@@ -347,7 +348,69 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
-        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteTimestamp(byte[] buffer, int cursor, long value, bool openMetricsEnabled)
+    {
+        if (openMetricsEnabled)
+        {
+            cursor = WriteLong(buffer, cursor, value / 1000);
+            buffer[cursor++] = unchecked((byte)'.');
+
+            long millis = value % 1000;
+
+            if (millis < 100)
+            {
+                buffer[cursor++] = unchecked((byte)'0');
+            }
+
+            if (millis < 10)
+            {
+                buffer[cursor++] = unchecked((byte)'0');
+            }
+
+            return WriteLong(buffer, cursor, millis);
+        }
+
+        return WriteLong(buffer, cursor, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool openMetricsEnabled, bool writeEnclosingBraces = true)
+    {
+        if (tags.Count > 0 || openMetricsEnabled)
+        {
+            if (writeEnclosingBraces)
+            {
+                buffer[cursor++] = unchecked((byte)'{');
+            }
+
+            if (openMetricsEnabled)
+            {
+                cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+                buffer[cursor++] = unchecked((byte)',');
+
+                if (!string.IsNullOrEmpty(metric.MeterVersion))
+                {
+                    cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+                    buffer[cursor++] = unchecked((byte)',');
+                }
+            }
+
+            foreach (var tag in tags)
+            {
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
+            if (writeEnclosingBraces)
+            {
+                buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+            }
+        }
 
         return cursor;
     }
