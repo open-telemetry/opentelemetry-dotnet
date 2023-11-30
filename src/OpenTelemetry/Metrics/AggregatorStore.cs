@@ -214,7 +214,7 @@ internal sealed class AggregatorStore
                 ThrowNotSupportedMeasurementValueTypeException(typeof(T));
             }
 
-            this.CompleteMeasurement(ref metricPoint);
+            this.CompleteRecordMeasurement(ref metricPoint);
         }
         catch (Exception)
         {
@@ -1112,7 +1112,7 @@ internal sealed class AggregatorStore
             ThrowNotSupportedMeasurementValueTypeException(typeof(T));
         }
 
-        this.CompleteMeasurement(ref metricPoint);
+        this.CompleteRecordMeasurement(ref metricPoint);
     }
 
     private void RecordMeasurementDefault<T>(
@@ -1211,7 +1211,7 @@ internal sealed class AggregatorStore
         }
     }
 
-    private void CompleteMeasurement(ref MetricPoint metricPoint)
+    private void CompleteRecordMeasurement(ref MetricPoint metricPoint)
     {
         metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
 
