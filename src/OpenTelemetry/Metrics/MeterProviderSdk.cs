@@ -182,16 +182,16 @@ internal sealed class MeterProviderSdk : MeterProvider
         // If there are no readers added, we do not enable measurements for the instruments.
 
         // Everything double
-        this.listener.SetMeasurementEventCallback<double>(this.MeasurementRecordedDouble);
-        this.listener.SetMeasurementEventCallback<float>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
+        this.listener.SetMeasurementEventCallback<double>(MeasurementRecordedDouble);
+        this.listener.SetMeasurementEventCallback<float>(static (instrument, value, tags, state) => MeasurementRecordedDouble(instrument, value, tags, state));
 
         // Everything long
-        this.listener.SetMeasurementEventCallback<long>(this.MeasurementRecordedLong);
-        this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
-        this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
-        this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+        this.listener.SetMeasurementEventCallback<long>(MeasurementRecordedLong);
+        this.listener.SetMeasurementEventCallback<int>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
+        this.listener.SetMeasurementEventCallback<short>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
+        this.listener.SetMeasurementEventCallback<byte>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
 
-        this.listener.MeasurementsCompleted = this.MeasurementsCompleted;
+        this.listener.MeasurementsCompleted = MeasurementsCompleted;
 
         this.listener.Start();
 
@@ -348,39 +348,6 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
     }
 
-    internal void MeasurementsCompleted(Instrument instrument, object? state)
-    {
-        if (state is not MetricState metricState)
-        {
-            // todo: Log
-            return;
-        }
-
-        metricState.CompleteMeasurement();
-    }
-
-    internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
-    {
-        if (state is not MetricState metricState)
-        {
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
-            return;
-        }
-
-        metricState.RecordLongMeasurement(value, tagsRos);
-    }
-
-    internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? state)
-    {
-        if (state is not MetricState metricState)
-        {
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
-            return;
-        }
-
-        metricState.RecordDoubleMeasurement(value, tagsRos);
-    }
-
     internal void CollectObservableInstruments()
     {
         lock (this.collectLock)
@@ -478,5 +445,38 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         base.Dispose(disposing);
+    }
+
+    private static void MeasurementsCompleted(Instrument instrument, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            // todo: Log
+            return;
+        }
+
+        metricState.CompleteMeasurement();
+    }
+
+    private static void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
+            return;
+        }
+
+        metricState.RecordLongMeasurement(value, tags);
+    }
+
+    private static void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
+            return;
+        }
+
+        metricState.RecordDoubleMeasurement(value, tags);
     }
 }
