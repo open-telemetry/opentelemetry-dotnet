@@ -112,11 +112,6 @@ internal class HttpInListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
-
         HttpContext context = payload as HttpContext;
         if (context == null)
         {
@@ -257,22 +252,18 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
+            /*
+            #if !NETSTANDARD2_0
 
-#if !NETSTANDARD2_0
-            if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
-            {
-                this.AddGrpcAttributes(activity, grpcMethod, context);
-            }
-            else if (activity.Status == ActivityStatusCode.Unset)
-            {
-                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-            }
-#else
+                        if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
+                        {
+                            this.AddGrpcAttributes(activity, grpcMethod, context);
+                        }
+            */
             if (activity.Status == ActivityStatusCode.Unset)
             {
                 activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
             }
-#endif
 
             try
             {
@@ -347,51 +338,6 @@ internal class HttpInListener : ListenerHandler
 #endif
         static bool TryFetchException(object payload, out Exception exc)
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
-    }
-
-    private static string GetUri(HttpRequest request)
-    {
-        // this follows the suggestions from https://github.com/dotnet/aspnetcore/issues/28906
-        var scheme = request.Scheme ?? string.Empty;
-
-        // HTTP 1.0 request with NO host header would result in empty Host.
-        // Use placeholder to avoid incorrect URL like "http:///"
-        var host = request.Host.Value ?? UnknownHostName;
-        var pathBase = request.PathBase.Value ?? string.Empty;
-        var path = request.Path.Value ?? string.Empty;
-        var queryString = request.QueryString.Value ?? string.Empty;
-        var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
-                     + path.Length + queryString.Length;
-
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
-        return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
-        {
-            CopyTo(ref span, parts.scheme);
-            CopyTo(ref span, Uri.SchemeDelimiter);
-            CopyTo(ref span, parts.host);
-            CopyTo(ref span, parts.pathBase);
-            CopyTo(ref span, parts.path);
-            CopyTo(ref span, parts.queryString);
-
-            static void CopyTo(ref Span<char> buffer, ReadOnlySpan<char> text)
-            {
-                if (!text.IsEmpty)
-                {
-                    text.CopyTo(buffer);
-                    buffer = buffer.Slice(text.Length);
-                }
-            }
-        });
-#else
-        return new System.Text.StringBuilder(length)
-            .Append(scheme)
-            .Append(Uri.SchemeDelimiter)
-            .Append(host)
-            .Append(pathBase)
-            .Append(path)
-            .Append(queryString)
-            .ToString();
-#endif
     }
 
 #if !NETSTANDARD2_0

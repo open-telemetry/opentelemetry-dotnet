@@ -8,6 +8,17 @@
   semantic conventions.
   ([#5068](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5068))
 
+* Update activity DisplayName as per the specification.
+  ([#5078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5078))
+
+* Removed reference to `OpenTelemetry` package. This is a **breaking change**
+  for users relying on
+  [SuppressDownstreamInstrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient#suppressdownstreaminstrumentation)
+  option in `OpenTelemetry.Instrumentation.GrpcNetClient`. For details, check
+  out this
+  [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092).
+  ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
+
 ## 1.6.0-beta.3
 
 Released 2023-Nov-17

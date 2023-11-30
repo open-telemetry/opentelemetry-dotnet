@@ -104,11 +104,6 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
         // By this time, samplers have already run and
         // activity.IsAllDataRequested populated accordingly.
 
-        if (Sdk.SuppressInstrumentation)
-        {
-            return;
-        }
-
         if (!TryFetchRequest(payload, out HttpRequestMessage request))
         {
             HttpInstrumentationEventSource.Log.NullPayload(nameof(HttpHandlerDiagnosticListener), nameof(this.OnStartActivity));
@@ -153,7 +148,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
                 return;
             }
 
-            activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
+            RequestMethodHelper.SetHttpClientActivityDisplayName(activity, request.Method.Method);
 
             if (!IsNet7OrGreater)
             {
@@ -162,17 +157,7 @@ internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
             }
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
-            if (RequestMethodHelper.KnownMethods.TryGetValue(request.Method.Method, out var httpMethod))
-            {
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, httpMethod);
-            }
-            else
-            {
-                // Set to default "_OTHER" as per spec.
-                // https://github.com/open-telemetry/semantic-conventions/blob/v1.22.0/docs/http/http-spans.md#common-attributes
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethod, "_OTHER");
-                activity.SetTag(SemanticConventions.AttributeHttpRequestMethodOriginal, request.Method.Method);
-            }
+            RequestMethodHelper.SetHttpMethodTag(activity, request.Method.Method);
 
             activity.SetTag(SemanticConventions.AttributeServerAddress, request.RequestUri.Host);
             if (!request.RequestUri.IsDefaultPort)

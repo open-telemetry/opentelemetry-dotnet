@@ -75,9 +75,9 @@ public partial class HttpWebRequestTests : IDisposable
     [Fact]
     public async Task BacksOffIfAlreadyInstrumented()
     {
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddHttpClientInstrumentation()
             .Build();
 
@@ -90,12 +90,9 @@ public partial class HttpWebRequestTests : IDisposable
         using var response = await request.GetResponseAsync();
 
 #if NETFRAMEWORK
-        // Note: Back-off is part of the .NET Framework reflection only and
-        // is needed to prevent issues when the same request is re-used for
-        // things like redirects or SSL negotiation.
-        Assert.Single(activityProcessor.Invocations); // SetParentProvider called
+        Assert.Empty(exportedItems);
 #else
-        Assert.Equal(3, activityProcessor.Invocations.Count); // SetParentProvider/Begin/End called
+        Assert.Single(exportedItems);
 #endif
     }
 
@@ -105,7 +102,7 @@ public partial class HttpWebRequestTests : IDisposable
         bool httpWebRequestFilterApplied = false;
         bool httpRequestMessageFilterApplied = false;
 
-        List<Activity> exportedItems = new();
+        var exportedItems = new List<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddInMemoryExporter(exportedItems)
@@ -145,7 +142,7 @@ public partial class HttpWebRequestTests : IDisposable
     [Fact]
     public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
     {
-        List<Activity> exportedItems = new();
+        var exportedItems = new List<Activity>();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddInMemoryExporter(exportedItems)
@@ -174,9 +171,9 @@ public partial class HttpWebRequestTests : IDisposable
     [Fact]
     public async Task InjectsHeadersAsync()
     {
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddProcessor(activityProcessor.Object)
+            .AddInMemoryExporter(exportedItems)
             .AddHttpClientInstrumentation()
             .Build();
 
@@ -192,8 +189,8 @@ public partial class HttpWebRequestTests : IDisposable
 
         using var response = await request.GetResponseAsync();
 
-        Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
-        var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
         Assert.Equal(parent.SpanId, activity.ParentSpanId);
@@ -312,13 +309,11 @@ public partial class HttpWebRequestTests : IDisposable
 
         int configurationDelegateInvocations = 0;
 
-        var activityProcessor = new Mock<BaseProcessor<Activity>>();
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
                 services.Configure<HttpClientInstrumentationOptions>(name, o => configurationDelegateInvocations++);
             })
-            .AddProcessor(activityProcessor.Object)
             .AddHttpClientInstrumentation(name, options =>
             {
                 Assert.IsType<HttpClientInstrumentationOptions>(options);
@@ -334,7 +329,7 @@ public partial class HttpWebRequestTests : IDisposable
         var exportedItems = new List<Activity>();
         bool exceptionThrown = false;
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -363,7 +358,7 @@ public partial class HttpWebRequestTests : IDisposable
         var exportedItems = new List<Activity>();
         bool exceptionThrown = false;
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();

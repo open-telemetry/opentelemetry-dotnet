@@ -20,9 +20,7 @@ using System.Net;
 using System.Net.Http;
 #endif
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
 
 namespace OpenTelemetry.Instrumentation.Http;
 
@@ -31,23 +29,6 @@ namespace OpenTelemetry.Instrumentation.Http;
 /// </summary>
 public class HttpClientInstrumentationOptions
 {
-    internal readonly HttpSemanticConvention HttpSemanticConvention;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HttpClientInstrumentationOptions"/> class.
-    /// </summary>
-    public HttpClientInstrumentationOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
-    {
-    }
-
-    internal HttpClientInstrumentationOptions(IConfiguration configuration)
-    {
-        Debug.Assert(configuration != null, "configuration was null");
-
-        this.HttpSemanticConvention = GetSemanticConventionOptIn(configuration);
-    }
-
     /// <summary>
     /// Gets or sets a filter function that determines whether or not to
     /// collect telemetry on a per request basis.

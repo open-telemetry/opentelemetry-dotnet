@@ -120,14 +120,7 @@ public partial class HttpClientTests : IDisposable
     [InlineData(false)]
     public async Task InjectsHeadersAsync(bool shouldEnrich)
     {
-        var processor = new Mock<BaseProcessor<Activity>>();
-        processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
-        {
-            c.SetTag("enrichedWithHttpWebRequest", "no");
-            c.SetTag("enrichedWithHttpWebResponse", "no");
-            c.SetTag("enrichedWithHttpRequestMessage", "no");
-            c.SetTag("enrichedWithHttpResponseMessage", "no");
-        });
+        var exportedItems = new List<Activity>();
 
         using var request = new HttpRequestMessage
         {
@@ -167,15 +160,15 @@ public partial class HttpClientTests : IDisposable
                     };
                 }
             })
-            .AddProcessor(processor.Object)
+            .AddInMemoryExporter(exportedItems)
             .Build())
         {
             using var c = new HttpClient();
             await c.SendAsync(request);
         }
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-        var activity = (Activity)processor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         Assert.Equal(ActivityKind.Client, activity.Kind);
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -198,17 +191,33 @@ public partial class HttpClientTests : IDisposable
 #endif
 
 #if NETFRAMEWORK
-        Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
-        Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+        if (shouldEnrich)
+        {
+            Assert.Equal("yes", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
+            Assert.Equal("yes", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+        }
+        else
+        {
+            Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpWebRequest");
+            Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpWebResponse");
+        }
 
-        Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
-        Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+        Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpRequestMessage");
+        Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpResponseMessage");
 #else
-        Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebRequest").FirstOrDefault().Value);
-        Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpWebResponse").FirstOrDefault().Value);
+        Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpWebRequest");
+        Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpWebResponse");
 
-        Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
-        Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+        if (shouldEnrich)
+        {
+            Assert.Equal("yes", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
+            Assert.Equal("yes", activity.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+        }
+        else
+        {
+            Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpRequestMessage");
+            Assert.DoesNotContain(activity.Tags, tag => tag.Key == "enrichedWithHttpResponseMessage");
+        }
 #endif
     }
 
@@ -223,7 +232,7 @@ public partial class HttpClientTests : IDisposable
                 action(message, "custom_tracestate", Activity.Current.TraceStateString);
             });
 
-        var processor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
 
         using var request = new HttpRequestMessage
         {
@@ -241,15 +250,15 @@ public partial class HttpClientTests : IDisposable
 
         using (Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
-            .AddProcessor(processor.Object)
+            .AddInMemoryExporter(exportedItems)
             .Build())
         {
             using var c = new HttpClient();
             await c.SendAsync(request);
         }
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-        var activity = (Activity)processor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         Assert.Equal(ActivityKind.Client, activity.Kind);
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -278,7 +287,7 @@ public partial class HttpClientTests : IDisposable
         }));
     }
 
-    [Fact]
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092")]
     public async Task RespectsSuppress()
     {
         try
@@ -291,7 +300,7 @@ public partial class HttpClientTests : IDisposable
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
 
             using var request = new HttpRequestMessage
             {
@@ -309,7 +318,7 @@ public partial class HttpClientTests : IDisposable
 
             using (Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
             {
                 using var c = new HttpClient();
@@ -321,7 +330,7 @@ public partial class HttpClientTests : IDisposable
 
             // If suppressed, activity is not emitted and
             // propagation is also not performed.
-            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
+            Assert.Empty(exportedItems);
             Assert.False(request.Headers.Contains("custom_traceparent"));
             Assert.False(request.Headers.Contains("custom_tracestate"));
         }
@@ -345,7 +354,7 @@ public partial class HttpClientTests : IDisposable
             Method = new HttpMethod("GET"),
         };
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -357,7 +366,7 @@ public partial class HttpClientTests : IDisposable
         await httpClient.SendAsync(request);
 
         // number of exported spans should be 3(maxRetries)
-        Assert.Equal(maxRetries, exportedItems.Count());
+        Assert.Equal(maxRetries, exportedItems.Count);
 
         var spanid1 = exportedItems[0].SpanId;
         var spanid2 = exportedItems[1].SpanId;
@@ -390,7 +399,7 @@ public partial class HttpClientTests : IDisposable
             Method = new HttpMethod(originalMethod),
         };
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -414,10 +423,12 @@ public partial class HttpClientTests : IDisposable
 
         if (originalMethod.Equals(expectedMethod, StringComparison.OrdinalIgnoreCase))
         {
+            Assert.Equal(expectedMethod, activity.DisplayName);
             Assert.DoesNotContain(activity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRequestMethodOriginal);
         }
         else
         {
+            Assert.Equal("HTTP", activity.DisplayName);
             Assert.Equal(originalMethod, activity.GetTagValue(SemanticConventions.AttributeHttpRequestMethodOriginal) as string);
         }
 
@@ -445,7 +456,7 @@ public partial class HttpClientTests : IDisposable
             Method = new HttpMethod(originalMethod),
         };
 
-        using var meterprovider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddHttpClientInstrumentation()
             .AddInMemoryExporter(metricItems)
             .Build();
@@ -461,7 +472,7 @@ public partial class HttpClientTests : IDisposable
             // ignore error.
         }
 
-        meterprovider.Dispose();
+        meterProvider.Dispose();
 
         var metric = metricItems.FirstOrDefault(m => m.Name == "http.client.request.duration");
 
@@ -491,10 +502,10 @@ public partial class HttpClientTests : IDisposable
     [Fact]
     public async Task RedirectTest()
     {
-        var processor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
         using (Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation()
-            .AddProcessor(processor.Object)
+            .AddInMemoryExporter(exportedItems)
             .Build())
         {
             using var c = new HttpClient();
@@ -507,18 +518,12 @@ public partial class HttpClientTests : IDisposable
         // good way to produce two spans when redirecting that we have
         // found. For now, this is not supported.
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-
-        var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
-        Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 200);
+        Assert.Single(exportedItems);
+        Assert.Contains(exportedItems[0].TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 200);
 #else
-        Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnEnd/OnShutdown/Dispose called.
-
-        var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
-        Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 302);
-
-        var secondActivity = (Activity)processor.Invocations[4].Arguments[0]; // Second OnEnd
-        Assert.Contains(secondActivity.TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 200);
+        Assert.Equal(2, exportedItems.Count);
+        Assert.Contains(exportedItems[0].TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 302);
+        Assert.Contains(exportedItems[1].TagObjects, t => t.Key == "http.response.status_code" && (int)t.Value == 200);
 #endif
     }
 
@@ -593,7 +598,7 @@ public partial class HttpClientTests : IDisposable
         var exportedItems = new List<Activity>();
         bool exceptionThrown = false;
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -619,7 +624,7 @@ public partial class HttpClientTests : IDisposable
         var exportedItems = new List<Activity>();
         bool exceptionThrown = false;
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -650,7 +655,7 @@ public partial class HttpClientTests : IDisposable
             Method = new HttpMethod("GET"),
         };
 
-        using var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation(o => o.RecordException = true)
             .AddInMemoryExporter(exportedItems)
             .Build();
@@ -704,7 +709,7 @@ public partial class HttpClientTests : IDisposable
 
         var exportedItems = new List<Activity>();
 
-        using (var traceprovider = Sdk.CreateTracerProviderBuilder()
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
            .AddHttpClientInstrumentation()
            .AddInMemoryExporter(exportedItems)
            .SetSampler(sample ? new ParentBasedSampler(new AlwaysOnSampler()) : new AlwaysOffSampler())
