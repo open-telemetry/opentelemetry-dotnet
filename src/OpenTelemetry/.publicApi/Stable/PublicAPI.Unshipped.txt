@@ -1,2 +1,1 @@
-static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 OpenTelemetry.Metrics.Metric.MeterTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
