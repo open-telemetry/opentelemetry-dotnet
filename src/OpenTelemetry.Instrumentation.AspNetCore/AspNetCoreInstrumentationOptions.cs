@@ -77,13 +77,17 @@ public class AspNetCoreInstrumentationOptions
     /// </remarks>
     public bool RecordException { get; set; }
 
-#if NETSTANDARD2_1 || NET6_0_OR_GREATER
-    /// <summary>
-    /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
-    /// </summary>
-    /// <remarks>
-    /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
-    /// </remarks>
-    public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
-#endif
+    /*
+     * Removing for stable release of http instrumentation.
+     * grpc semantic conventions are not yet stable so this option will not be part of stable package.
+    #if NET6_0_OR_GREATER
+        /// <summary>
+        /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
+        /// </remarks>
+        public bool EnableGrpcAspNetCoreSupport { get; set; } = true;
+    #endif
+    */
 }

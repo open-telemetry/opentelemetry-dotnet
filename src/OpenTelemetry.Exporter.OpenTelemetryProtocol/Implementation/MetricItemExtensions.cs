@@ -19,6 +19,9 @@ using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Proto.Metrics.V1;
+using AggregationTemporality = OpenTelemetry.Metrics.AggregationTemporality;
+using Metric = OpenTelemetry.Metrics.Metric;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
@@ -28,15 +31,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 internal static class MetricItemExtensions
 {
-    private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
+    private static readonly ConcurrentBag<ScopeMetrics> MetricListPool = new();
 
     internal static void AddMetrics(
         this OtlpCollector.ExportMetricsServiceRequest request,
         OtlpResource.Resource processResource,
         in Batch<Metric> metrics)
     {
-        var metricsByLibrary = new Dictionary<string, OtlpMetrics.ScopeMetrics>();
-        var resourceMetrics = new OtlpMetrics.ResourceMetrics
+        var metricsByLibrary = new Dictionary<string, ScopeMetrics>();
+        var resourceMetrics = new ResourceMetrics
         {
             Resource = processResource,
         };
@@ -58,7 +61,7 @@ internal static class MetricItemExtensions
             var meterName = metric.MeterName;
             if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
             {
-                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
+                scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion, metric.MeterTags);
 
                 metricsByLibrary.Add(meterName, scopeMetrics);
                 resourceMetrics.ScopeMetrics.Add(scopeMetrics);
@@ -77,19 +80,20 @@ internal static class MetricItemExtensions
             return;
         }
 
-        foreach (var scope in resourceMetrics.ScopeMetrics)
+        foreach (var scopeMetrics in resourceMetrics.ScopeMetrics)
         {
-            scope.Metrics.Clear();
-            MetricListPool.Add(scope);
+            scopeMetrics.Metrics.Clear();
+            scopeMetrics.Scope.Attributes.Clear();
+            MetricListPool.Add(scopeMetrics);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version)
+    internal static ScopeMetrics GetMetricListFromPool(string name, string version, IEnumerable<KeyValuePair<string, object>> meterTags)
     {
-        if (!MetricListPool.TryTake(out var metrics))
+        if (!MetricListPool.TryTake(out var scopeMetrics))
         {
-            metrics = new OtlpMetrics.ScopeMetrics
+            scopeMetrics = new ScopeMetrics
             {
                 Scope = new OtlpCommon.InstrumentationScope
                 {
@@ -97,14 +101,23 @@ internal static class MetricItemExtensions
                     Version = version ?? string.Empty, // NRE throw by proto
                 },
             };
+
+            if (meterTags != null)
+            {
+                AddScopeAttributes(meterTags, scopeMetrics.Scope.Attributes);
+            }
         }
         else
         {
-            metrics.Scope.Name = name;
-            metrics.Scope.Version = version ?? string.Empty;
+            scopeMetrics.Scope.Name = name;
+            scopeMetrics.Scope.Version = version ?? string.Empty;
+            if (meterTags != null)
+            {
+                AddScopeAttributes(meterTags, scopeMetrics.Scope.Attributes);
+            }
         }
 
-        return metrics;
+        return scopeMetrics;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -140,7 +153,7 @@ internal static class MetricItemExtensions
             case MetricType.LongSum:
             case MetricType.LongSumNonMonotonic:
                 {
-                    var sum = new OtlpMetrics.Sum
+                    var sum = new Sum
                     {
                         IsMonotonic = metric.MetricType == MetricType.LongSum,
                         AggregationTemporality = temporality,
@@ -148,7 +161,7 @@ internal static class MetricItemExtensions
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
-                        var dataPoint = new OtlpMetrics.NumberDataPoint
+                        var dataPoint = new NumberDataPoint
                         {
                             StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
                             TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
@@ -167,7 +180,7 @@ internal static class MetricItemExtensions
             case MetricType.DoubleSum:
             case MetricType.DoubleSumNonMonotonic:
                 {
-                    var sum = new OtlpMetrics.Sum
+                    var sum = new Sum
                     {
                         IsMonotonic = metric.MetricType == MetricType.DoubleSum,
                         AggregationTemporality = temporality,
@@ -175,7 +188,7 @@ internal static class MetricItemExtensions
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
-                        var dataPoint = new OtlpMetrics.NumberDataPoint
+                        var dataPoint = new NumberDataPoint
                         {
                             StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
                             TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
@@ -193,10 +206,10 @@ internal static class MetricItemExtensions
 
             case MetricType.LongGauge:
                 {
-                    var gauge = new OtlpMetrics.Gauge();
+                    var gauge = new Gauge();
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
-                        var dataPoint = new OtlpMetrics.NumberDataPoint
+                        var dataPoint = new NumberDataPoint
                         {
                             StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
                             TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
@@ -214,10 +227,10 @@ internal static class MetricItemExtensions
 
             case MetricType.DoubleGauge:
                 {
-                    var gauge = new OtlpMetrics.Gauge();
+                    var gauge = new Gauge();
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
-                        var dataPoint = new OtlpMetrics.NumberDataPoint
+                        var dataPoint = new NumberDataPoint
                         {
                             StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
                             TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
@@ -235,14 +248,14 @@ internal static class MetricItemExtensions
 
             case MetricType.Histogram:
                 {
-                    var histogram = new OtlpMetrics.Histogram
+                    var histogram = new Histogram
                     {
                         AggregationTemporality = temporality,
                     };
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
-                        var dataPoint = new OtlpMetrics.HistogramDataPoint
+                        var dataPoint = new HistogramDataPoint
                         {
                             StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
                             TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
@@ -310,14 +323,14 @@ internal static class MetricItemExtensions
 
             case MetricType.ExponentialHistogram:
                 {
-                    var histogram = new OtlpMetrics.ExponentialHistogram
+                    var histogram = new ExponentialHistogram
                     {
                         AggregationTemporality = temporality,
                     };
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
-                        var dataPoint = new OtlpMetrics.ExponentialHistogramDataPoint
+                        var dataPoint = new ExponentialHistogramDataPoint
                         {
                             StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
                             TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
@@ -337,7 +350,7 @@ internal static class MetricItemExtensions
                         dataPoint.Scale = exponentialHistogramData.Scale;
                         dataPoint.ZeroCount = (ulong)exponentialHistogramData.ZeroCount;
 
-                        dataPoint.Positive = new OtlpMetrics.ExponentialHistogramDataPoint.Types.Buckets();
+                        dataPoint.Positive = new ExponentialHistogramDataPoint.Types.Buckets();
                         dataPoint.Positive.Offset = exponentialHistogramData.PositiveBuckets.Offset;
                         foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
                         {
@@ -360,6 +373,17 @@ internal static class MetricItemExtensions
     private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
     {
         foreach (var tag in tags)
+        {
+            if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+            {
+                attributes.Add(result);
+            }
+        }
+    }
+
+    private static void AddScopeAttributes(IEnumerable<KeyValuePair<string, object>> meterTags, RepeatedField<OtlpCommon.KeyValue> attributes)
+    {
+        foreach (var tag in meterTags)
         {
             if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
             {

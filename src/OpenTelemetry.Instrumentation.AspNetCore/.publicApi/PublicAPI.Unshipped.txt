@@ -1,7 +1,5 @@
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.AspNetCoreInstrumentationOptions() -> void
-OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.get -> bool
-OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithException.get -> System.Action<System.Diagnostics.Activity, System.Exception>
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithException.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnrichWithHttpRequest.get -> System.Action<System.Diagnostics.Activity, Microsoft.AspNetCore.Http.HttpRequest>

@@ -3,7 +3,7 @@
     "name": "Successful GET call to localhost",
     "method": "GET",
     "url": "http://{host}:{port}/",
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -20,7 +20,7 @@
     "name": "Successfully POST call to localhost",
     "method": "POST",
     "url": "http://{host}:{port}/",
-    "spanName": "HTTP POST",
+    "spanName": "POST",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -38,7 +38,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/path/to/resource/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -56,7 +56,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/path/to/resource#fragment",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -74,7 +74,7 @@
     "method": "GET",
     "url": "http://username:password@{host}:{port}/path/to/resource#fragment",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -91,7 +91,7 @@
     "name": "Call that cannot resolve DNS will be reported as error span",
     "method": "GET",
     "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": false,
     "recordException": false,
@@ -108,7 +108,7 @@
     "name": "Call that cannot resolve DNS will be reported as error span. And Records exception",
     "method": "GET",
     "url": "http://sdlfaldfjalkdfjlkajdflkajlsdjf:{port}/",
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": false,
     "recordException": true,
@@ -126,7 +126,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -144,7 +144,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -162,7 +162,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 399,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {
@@ -180,7 +180,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 400,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -198,7 +198,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 401,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -216,7 +216,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 403,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -234,7 +234,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 404,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -252,7 +252,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 429,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -270,7 +270,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 501,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -288,7 +288,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 503,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -306,7 +306,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 504,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Error",
     "responseExpected": true,
     "spanAttributes": {
@@ -324,7 +324,7 @@
     "method": "GET",
     "url": "http://{host}:{port}/",
     "responseCode": 200,
-    "spanName": "HTTP GET",
+    "spanName": "GET",
     "spanStatus": "Unset",
     "responseExpected": true,
     "spanAttributes": {

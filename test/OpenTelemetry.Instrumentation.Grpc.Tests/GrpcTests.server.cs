@@ -16,20 +16,9 @@
 
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
-using System.Net;
-using Greet;
-using Grpc.Core;
-using Grpc.Net.Client;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
-using OpenTelemetry.Instrumentation.GrpcNetClient;
-using OpenTelemetry.Trace;
 using Xunit;
-using static OpenTelemetry.Internal.HttpSemanticConventionHelper;
-using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests;
 
@@ -46,6 +35,7 @@ public partial class GrpcTests : IDisposable
         this.server = new GrpcServer<GreeterService>();
     }
 
+    /*
     [Theory]
     [InlineData(null)]
     [InlineData(true)]
@@ -207,7 +197,7 @@ public partial class GrpcTests : IDisposable
             }));
         }
     }
-
+    */
     public void Dispose()
     {
         this.server.Dispose();

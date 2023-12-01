@@ -19,6 +19,22 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+/*
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+
+
+| Method          | Mean       | Error     | StdDev    | Gen0   | Allocated |
+|---------------- |-----------:|----------:|----------:|-------:|----------:|
+| NoListener      |   5.322 ns | 0.0314 ns | 0.0262 ns |      - |         - |
+| OneProcessor    | 326.566 ns | 3.4034 ns | 3.0170 ns | 0.0701 |     440 B |
+| TwoProcessors   | 335.646 ns | 3.8341 ns | 3.3988 ns | 0.0701 |     440 B |
+| ThreeProcessors | 336.069 ns | 6.5628 ns | 8.5335 ns | 0.0701 |     440 B |
+*/
+
 namespace Benchmarks.Trace;
 
 public class TraceShimBenchmarks
