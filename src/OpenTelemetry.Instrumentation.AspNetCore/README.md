@@ -139,17 +139,17 @@ newer versions.
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`AspNetCoreInstrumentationOptions`, which allows adding [`Filter`](#filter),
+`AspNetCoreTraceInstrumentationOptions`, which allows adding [`Filter`](#filter),
 [`Enrich`](#enrich) as explained below.
 
 // TODO: This section could be refined.
 When used with [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
-all configurations to `AspNetCoreInstrumentationOptions` can be done in the `ConfigureServices`
+all configurations to `AspNetCoreTraceInstrumentationOptions` can be done in the `ConfigureServices`
 method of you applications `Startup` class as shown below.
 
 ```csharp
 // Configure
-services.Configure<AspNetCoreInstrumentationOptions>(options =>
+services.Configure<AspNetCoreTraceInstrumentationOptions>(options =>
 {
     options.Filter = (httpContext) =>
     {
@@ -168,7 +168,7 @@ services.AddOpenTelemetry()
 
 This instrumentation by default collects all the incoming http requests. It
 allows filtering of requests by using the `Filter` function in
-`AspNetCoreInstrumentationOptions`. This defines the condition for allowable
+`AspNetCoreTraceInstrumentationOptions`. This defines the condition for allowable
 requests. The Filter receives the `HttpContext` of the incoming
 request, and does not collect telemetry about the request if the Filter
 returns false or throws exception.
