@@ -43,6 +43,21 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
     [Fact]
+    public void AddOtlpExporterWithNamedLogRecordExportProcessorOptions()
+    {
+        IServiceCollection services = new ServiceCollection();
+        services.AddLogging(builder => builder.UseOpenTelemetry());
+
+        services.Configure<LogRecordExportProcessorOptions>("myOtlpOptions", p => p.ExportProcessorType = ExportProcessorType.Simple);
+        services.ConfigureOpenTelemetryLoggerProvider(builder => builder.AddOtlpExporter(name: "MyOtlpOptions", configureExporterAndProcessor: null));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var provider = serviceProvider.GetRequiredService<LoggerProvider>();
+        Assert.NotNull(provider);
+    }
+
+    [Fact]
     public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse()
     {
         bool optionsValidated = false;

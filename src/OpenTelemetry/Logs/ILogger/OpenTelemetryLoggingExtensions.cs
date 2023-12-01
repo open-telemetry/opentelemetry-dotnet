@@ -193,7 +193,6 @@ public static class OpenTelemetryLoggingExtensions
             services.Configure(configureOptions);
         }
 
-
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
             {

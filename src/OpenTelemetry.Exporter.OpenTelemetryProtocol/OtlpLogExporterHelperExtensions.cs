@@ -119,6 +119,68 @@ public static class OtlpLogExporterHelperExtensions
         });
     }
 
+    /// <summary>
+    /// Adds OpenTelemetry Protocol (OTLP) exporter to the LoggerProvider.
+    /// </summary>
+    /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
+    /// <param name="name">Name which is used when retrieving options.</param>
+    /// <param name="configureExporterAndProcessor">Callback action for
+    /// configuring <see cref="OtlpExporterOptions"/> and <see
+    /// cref="LogRecordExportProcessorOptions"/>.</param>
+    /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
+    public static LoggerProviderBuilder AddOtlpExporter(
+        this LoggerProviderBuilder builder,
+        string name,
+        Action<OtlpExporterOptions, LogRecordExportProcessorOptions> configureExporterAndProcessor)
+    {
+        var finalOptionsName = name ?? Options.DefaultName;
+
+        builder.ConfigureServices(services =>
+        {
+            OtlpExporterOptions.RegisterOtlpExporterOptionsFactory(services);
+            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
+        });
+
+        return builder.AddProcessor(sp =>
+        {
+            OtlpExporterOptions exporterOptions;
+            LogRecordExportProcessorOptions processorOptions;
+
+            if (name == null)
+            {
+                // If we are NOT using named options we create a new
+                // instance always. The reason for this is
+                // OtlpExporterOptions is shared by all signals. Without a
+                // name, delegates for all signals will mix together. See:
+                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4043
+                exporterOptions = sp.GetRequiredService<IOptionsFactory<OtlpExporterOptions>>().Create(finalOptionsName);
+                processorOptions = sp.GetRequiredService<IOptionsFactory<LogRecordExportProcessorOptions>>().Create(finalOptionsName);
+
+                // Configuration delegate is executed inline on the fresh instance.
+                configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
+            }
+            else
+            {
+                // When using named options we can properly utilize Options
+                // API to create or reuse an instance.
+                exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
+                processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
+            }
+
+            // Note: Not using finalOptionsName here for SdkLimitOptions.
+            // There should only be one provider for a given service
+            // collection so SdkLimitOptions is treated as a single default
+            // instance.
+            var sdkOptionsManager = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+
+            return BuildOtlpLogExporterProcessor(
+                exporterOptions,
+                processorOptions,
+                sdkOptionsManager,
+                sp);
+        });
+    }
+
     internal static BaseProcessor<LogRecord> BuildOtlpLogExporter(
         IServiceProvider sp,
         OtlpExporterOptions exporterOptions,
@@ -162,6 +224,41 @@ public static class OtlpLogExporterHelperExtensions
                 batchOptions.ScheduledDelayMilliseconds,
                 batchOptions.ExporterTimeoutMilliseconds,
                 batchOptions.MaxExportBatchSize);
+        }
+    }
+
+    private static BaseProcessor<LogRecord> BuildOtlpLogExporterProcessor(OtlpExporterOptions exporterOptions, LogRecordExportProcessorOptions processorOptions, SdkLimitOptions sdkLimitOptions, IServiceProvider sp)
+    {
+        /*
+         * Note:
+         *
+         * We don't currently enable IHttpClientFactory for OtlpLogExporter.
+         *
+         * The DefaultHttpClientFactory requires the ILoggerFactory in its ctor:
+         * https://github.com/dotnet/runtime/blob/fa40ecf7d36bf4e31d7ae968807c1c529bac66d6/src/libraries/Microsoft.Extensions.Http/src/DefaultHttpClientFactory.cs#L64
+         *
+         * This creates a circular reference: ILoggerFactory ->
+         * OpenTelemetryLoggerProvider -> OtlpLogExporter -> IHttpClientFactory
+         * -> ILoggerFactory
+         *
+         * exporterOptions.TryEnableIHttpClientFactoryIntegration(sp,
+         * "OtlpLogExporter");
+         */
+
+        BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(exporterOptions, sdkLimitOptions, experimentalOptions: new());
+
+        if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
+        {
+            return new SimpleLogRecordExportProcessor(otlpExporter);
+        }
+        else
+        {
+            return new BatchLogRecordExportProcessor(
+                otlpExporter,
+                processorOptions.BatchExportProcessorOptions.MaxQueueSize,
+                processorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                processorOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
         }
     }
 
