@@ -15,9 +15,7 @@
 // </copyright>
 
 #if NET6_0_OR_GREATER
-using System.Diagnostics;
 using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests;
 
