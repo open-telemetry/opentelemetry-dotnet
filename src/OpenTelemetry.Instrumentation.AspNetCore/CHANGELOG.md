@@ -16,7 +16,7 @@
   [#5098](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5098)
   ([#5097](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5097))
 
-* **Breaking Change** : `AspNetCoreInstrumentationOptions` is changed to
+* **Breaking Change** : Renamed `AspNetCoreInstrumentationOptions` to
   `AspNetCoreTraceInstrumentationOptions`.
   ([#5108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5108))
 
