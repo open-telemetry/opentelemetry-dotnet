@@ -16,6 +16,10 @@
   [#5098](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5098)
   ([#5097](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5097))
 
+* **Breaking Change** : `AspNetCoreInstrumentationOptions` is changed to
+  `AspNetCoreTraceInstrumentationOptions`.
+  ([#5108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5108))
+
 ## 1.6.0-beta.3
 
 Released 2023-Nov-17
