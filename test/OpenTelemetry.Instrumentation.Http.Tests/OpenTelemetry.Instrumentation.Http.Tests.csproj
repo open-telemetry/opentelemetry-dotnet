@@ -49,5 +49,4 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\CustomTextMapPropagator.cs" Link="Includes\CustomTextMapPropagator.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\PropagationContextEventArgs.cs" Link="Includes\PropagationContextEventArgs.cs" />
   </ItemGroup>
-  
 </Project>
