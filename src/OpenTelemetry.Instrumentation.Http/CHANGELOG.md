@@ -19,6 +19,10 @@
   [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092).
   ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
 
+* **Breaking Change**: Renamed `HttpClientInstrumentationOptions` to
+  `HttpClientTraceInstrumentationOptions`.
+  ([#5109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5109))
+
 ## 1.6.0-beta.3
 
 Released 2023-Nov-17

@@ -148,7 +148,7 @@ newer versions.
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
-`HttpClientInstrumentationOptions`. It is important to note that there are
+`HttpClientTraceInstrumentationOptions`. It is important to note that there are
 differences between .NET Framework and newer .NET/.NET Core runtimes which
 govern what options are used. On .NET Framework, `HttpClient` uses the
 `HttpWebRequest` API. On .NET & .NET Core, `HttpWebRequest` uses the
@@ -196,7 +196,7 @@ enrich the activity with additional information. These actions are called
 only when `activity.IsAllDataRequested` is `true`. It contains the activity
 itself (which can be enriched) and the actual raw object.
 
-`HttpClientInstrumentationOptions` provides 3 enrich options:
+`HttpClientTraceInstrumentationOptions` provides 3 enrich options:
 `EnrichWithHttpRequestMessage`, `EnrichWithHttpResponseMessage` and
 `EnrichWithException`. These are based on the raw object that is passed in to
 the action to enrich the activity.
@@ -269,7 +269,7 @@ enrich the activity with additional information. These actions are called
 only when `activity.IsAllDataRequested` is `true`. It contains the activity
 itself (which can be enriched) and the actual raw object.
 
-`HttpClientInstrumentationOptions` provides 3 enrich options:
+`HttpClientTraceInstrumentationOptions` provides 3 enrich options:
 `EnrichWithHttpWebRequest`, `EnrichWithHttpWebResponse` and
 `EnrichWithException`. These are based on the raw object that is passed in to
 the action to enrich the activity.
@@ -311,6 +311,13 @@ access to raw request, response, and exception objects.
 This instrumentation automatically sets Activity Status to Error if the Http
 StatusCode is >= 400. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
+
+## Activity Duration and http.client.request.duration metric calculation
+
+`Activity.Duration` and `http.client.request.duration` values represents the
+time the underlying client handler takes to complete the request. Completing the
+request includes the time up to reading response headers from the network
+stream. It doesn't include the time spent reading the response body.
 
 ## Troubleshooting
 

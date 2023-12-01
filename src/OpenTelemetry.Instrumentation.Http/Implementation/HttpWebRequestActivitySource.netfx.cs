@@ -50,7 +50,7 @@ internal static class HttpWebRequestActivitySource
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
     private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
-    private static HttpClientInstrumentationOptions tracingOptions;
+    private static HttpClientTraceInstrumentationOptions tracingOptions;
 
     // Fields for reflection
     private static FieldInfo connectionGroupListField;
@@ -87,7 +87,7 @@ internal static class HttpWebRequestActivitySource
             PrepareReflectionObjects();
             PerformInjection();
 
-            TracingOptions = new HttpClientInstrumentationOptions();
+            TracingOptions = new HttpClientTraceInstrumentationOptions();
         }
         catch (Exception ex)
         {
@@ -96,7 +96,7 @@ internal static class HttpWebRequestActivitySource
         }
     }
 
-    internal static HttpClientInstrumentationOptions TracingOptions
+    internal static HttpClientTraceInstrumentationOptions TracingOptions
     {
         get => tracingOptions;
         set
