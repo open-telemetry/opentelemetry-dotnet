@@ -47,7 +47,7 @@ internal sealed class HttpClientInstrumentation : IDisposable
     /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
     /// </summary>
     /// <param name="options">Configuration options for HTTP client instrumentation.</param>
-    public HttpClientInstrumentation(HttpClientInstrumentationOptions options)
+    public HttpClientInstrumentation(HttpClientTraceInstrumentationOptions options)
     {
         // For .NET7.0 activity will be created using activitySource.
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
