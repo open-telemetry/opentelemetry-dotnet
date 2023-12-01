@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Export OpenMetrics format from Prometheus exporters
+* Export OpenMetrics format from Prometheus exporters ([#5107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5107))
 * 
 ## 1.7.0-alpha.1
 
