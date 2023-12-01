@@ -21,10 +21,10 @@ namespace OpenTelemetry.Tests;
 
 internal sealed class CustomTextMapPropagator : TextMapPropagator
 {
-    private static readonly PropagationContext DefaultPropagationContext = default;
 #pragma warning disable SA1010
     public List<string> ExtractValues = [];
     public Dictionary<string, Func<PropagationContext, string>> InjectValues = [];
+    private static readonly PropagationContext DefaultPropagationContext = default;
 
     public event EventHandler<PropagationContextEventArgs> Injected;
 
