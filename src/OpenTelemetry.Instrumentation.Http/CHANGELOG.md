@@ -23,6 +23,10 @@
   `HttpClientTraceInstrumentationOptions`.
   ([#5109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5109))
 
+* `HttpWebRequest` : Introduced additional values for `error.type` for activity
+  and `http.client.request.duration` metric.
+  ([#5111](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5111))
+
 ## 1.6.0-beta.3
 
 Released 2023-Nov-17
