@@ -326,6 +326,32 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteTimestamp(byte[] buffer, int cursor, long value, bool useOpenMetrics)
+    {
+        if (useOpenMetrics)
+        {
+            cursor = WriteLong(buffer, cursor, value / 1000);
+            buffer[cursor++] = unchecked((byte)'.');
+
+            long millis = value % 1000;
+
+            if (millis < 100)
+            {
+                buffer[cursor++] = unchecked((byte)'0');
+            }
+
+            if (millis < 10)
+            {
+                buffer[cursor++] = unchecked((byte)'0');
+            }
+
+            return WriteLong(buffer, cursor, millis);
+        }
+
+        return WriteLong(buffer, cursor, value);
+    }
+
     private static string MapPrometheusType(PrometheusType type)
     {
         return type switch

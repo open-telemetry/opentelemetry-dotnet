@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Export OpenMetrics format from Prometheus exporters
+
 ## 1.7.0-alpha.1
 
 Released 2023-Oct-16

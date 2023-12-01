@@ -512,8 +512,35 @@ public sealed class PrometheusSerializerTests
         Assert.False(PrometheusSerializer.CanWriteMetric(metrics[0]));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric)
+    [Fact]
+    public void SumWithOpenMetricsFormat()
     {
-        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric));
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
+        counter.Add(10);
+        counter.Add(-11);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_updown_counter gauge\n"
+             + "test_updown_counter -1 \\d+\\.\\d{3}\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
+    {
+        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric), useOpenMetrics);
     }
 }

@@ -42,5 +42,14 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to export OpenMetrics compatible scrape responses. Default value: true.
+    /// </summary>
+    public bool OpenMetricsEnabled
+    {
+        get => this.ExporterOptions.OpenMetricsEnabled;
+        set => this.ExporterOptions.OpenMetricsEnabled = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

@@ -16,6 +16,8 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -27,6 +29,8 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
+    private const string OpenMetricsMediaType = "application/openmetrics-text";
+
     private readonly PrometheusExporter exporter;
 
     /// <summary>
@@ -64,7 +68,9 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+            var openMetricsRequested = this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(httpContext.Request);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+
             try
             {
                 if (collectionResponse.View.Count > 0)
@@ -75,7 +81,9 @@ internal sealed class PrometheusExporterMiddleware
 #else
                     response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 #endif
-                    response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+                    response.ContentType = openMetricsRequested
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        : "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                 }
@@ -101,5 +109,29 @@ internal sealed class PrometheusExporterMiddleware
         }
 
         this.exporter.OnExport = null;
+    }
+
+    private bool AcceptsOpenMetrics(HttpRequest request)
+    {
+        var requestAccept = request.Headers[HeaderNames.Accept];
+
+        if (StringValues.IsNullOrEmpty(requestAccept))
+        {
+            return false;
+        }
+
+        var acceptTypes = requestAccept.ToString().Split(',');
+
+        foreach (var acceptType in acceptTypes)
+        {
+            var acceptSubType = acceptType.Split(';').FirstOrDefault()?.Trim();
+
+            if (acceptSubType == OpenMetricsMediaType)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
