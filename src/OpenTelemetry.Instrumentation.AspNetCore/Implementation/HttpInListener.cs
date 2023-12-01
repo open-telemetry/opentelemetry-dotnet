@@ -64,9 +64,9 @@ internal class HttpInListener : ListenerHandler
     private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
     private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
 #endif
-    private readonly AspNetCoreInstrumentationOptions options;
+    private readonly AspNetCoreTraceInstrumentationOptions options;
 
-    public HttpInListener(AspNetCoreInstrumentationOptions options)
+    public HttpInListener(AspNetCoreTraceInstrumentationOptions options)
         : base(DiagnosticSourceName)
     {
         Guard.ThrowIfNull(options);
