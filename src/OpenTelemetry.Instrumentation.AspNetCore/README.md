@@ -143,8 +143,10 @@ This instrumentation can be configured to change the default behavior by using
 [`Enrich`](#enrich) as explained below.
 
 // TODO: This section could be refined.
-When used with [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
-all configurations to `AspNetCoreTraceInstrumentationOptions` can be done in the `ConfigureServices`
+When used with
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md),
+all configurations to `AspNetCoreTraceInstrumentationOptions` can be done in the
+`ConfigureServices`
 method of you applications `Startup` class as shown below.
 
 ```csharp
