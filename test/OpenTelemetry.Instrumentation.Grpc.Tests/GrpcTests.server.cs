@@ -197,10 +197,11 @@ public partial class GrpcTests : IDisposable
         }
     }
     */
+
     public void Dispose()
     {
         this.server.Dispose();
         GC.SuppressFinalize(this);
-    }    
+    }
 }
 #endif
