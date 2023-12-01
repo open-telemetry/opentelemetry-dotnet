@@ -42,19 +42,52 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
-    [Fact]
-    public void AddOtlpExporterWithNamedLogRecordExportProcessorOptions()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ResolutionOrderTest(bool requestLoggerProviderDirectly)
     {
         IServiceCollection services = new ServiceCollection();
-        services.AddLogging(builder => builder.UseOpenTelemetry());
 
-        services.Configure<LogRecordExportProcessorOptions>("myOtlpOptions", p => p.ExportProcessorType = ExportProcessorType.Simple);
-        services.ConfigureOpenTelemetryLoggerProvider(builder => builder.AddOtlpExporter(name: "MyOtlpOptions", configureExporterAndProcessor: null));
+        services.AddLogging(builder => builder.AddOpenTelemetry());
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var provider = serviceProvider.GetRequiredService<LoggerProvider>();
-        Assert.NotNull(provider);
+        if (requestLoggerProviderDirectly)
+        {
+            var provider = serviceProvider.GetRequiredService<LoggerProvider>();
+            Assert.NotNull(provider);
+        }
+        else
+        {
+            var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            Assert.NotNull(factory);
+        }
+    }
+
+    [Fact]
+    public void AddOtlpExporterWithNamedOptions()
+    {
+        int defaultExporterOptionsConfigureOptionsInvocations = 0;
+        int namedExporterOptionsConfigureOptionsInvocations = 0;
+
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.Configure<OtlpExporterOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<LogRecordExportProcessorOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+
+                services.Configure<OtlpExporterOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<LogRecordExportProcessorOptions>("Exporter2", o => namedExporterOptionsConfigureOptionsInvocations++);
+
+                services.Configure<OtlpExporterOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<LogRecordExportProcessorOptions>("Exporter3", o => namedExporterOptionsConfigureOptionsInvocations++);
+            })
+            .AddOtlpExporter()
+            .Build();
+
+        Assert.Equal(2, defaultExporterOptionsConfigureOptionsInvocations);
+        Assert.Equal(4, namedExporterOptionsConfigureOptionsInvocations);
     }
 
     [Fact]
