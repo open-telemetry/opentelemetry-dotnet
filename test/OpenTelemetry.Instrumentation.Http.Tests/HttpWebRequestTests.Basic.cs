@@ -312,11 +312,11 @@ public partial class HttpWebRequestTests : IDisposable
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<HttpClientInstrumentationOptions>(name, o => configurationDelegateInvocations++);
+                services.Configure<HttpClientTraceInstrumentationOptions>(name, o => configurationDelegateInvocations++);
             })
             .AddHttpClientInstrumentation(name, options =>
             {
-                Assert.IsType<HttpClientInstrumentationOptions>(options);
+                Assert.IsType<HttpClientTraceInstrumentationOptions>(options);
             })
             .Build();
 
