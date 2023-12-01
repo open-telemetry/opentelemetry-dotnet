@@ -29,6 +29,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 using Status = OpenTelemetry.Trace.Status;
