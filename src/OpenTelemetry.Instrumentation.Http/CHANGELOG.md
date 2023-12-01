@@ -23,6 +23,9 @@
   `HttpClientTraceInstrumentationOptions`.
   ([#5109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5109))
 
+* **Breaking Change**: Removed `http.user_agent` tag from HttpClient activity.
+  ([#5110](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5110))
+
 * `HttpWebRequest` : Introduced additional values for `error.type` for activity
   and `http.client.request.duration` metric.
   ([#5111](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5111))
