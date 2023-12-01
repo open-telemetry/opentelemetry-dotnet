@@ -16,7 +16,6 @@
 
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
-using Moq;
 using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
 using Xunit;
 
@@ -216,30 +215,6 @@ public partial class GrpcTests : IDisposable
                 return itemsReceived.Count >= itemCount;
             },
             TimeSpan.FromSeconds(1)));
-    }
-
-    private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
-    {
-        // We need to let End callback execute as it is executed AFTER response was returned.
-        // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the End callback to complete
-        Assert.True(SpinWait.SpinUntil(
-            () =>
-            {
-                Thread.Sleep(10);
-                return spanProcessor.Invocations.Count >= invocationCount;
-            },
-            TimeSpan.FromSeconds(1)));
-    }
-
-    private static Activity GetActivityFromProcessorInvocation(Mock<BaseProcessor<Activity>> processor, string methodName, string activityOperationName)
-    {
-        return processor.Invocations
-            .FirstOrDefault(invo =>
-            {
-                return invo.Method.Name == methodName
-                    && (invo.Arguments[0] as Activity)?.OperationName == activityOperationName;
-            })?.Arguments[0] as Activity;
-    }
+    }    
 }
 #endif

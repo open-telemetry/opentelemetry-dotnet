@@ -24,7 +24,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
@@ -205,14 +204,9 @@ public sealed class BasicTests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
-                new PropagationContext(
-                    new ActivityContext(
-                        expectedTraceId,
-                        expectedSpanId,
-                        ActivityTraceFlags.Recorded),
-                    default));
+            var propagator = new CustomTextMapPropagator();
+            propagator.ExtractValues.Add(expectedTraceId.ToString());
+            propagator.ExtractValues.Add(expectedSpanId.ToString());
 
             // Arrange
             using (var testFactory = this.factory
@@ -220,7 +214,7 @@ public sealed class BasicTests
                     {
                         builder.ConfigureTestServices(services =>
                         {
-                            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                            Sdk.SetDefaultTextMapPropagator(propagator);
                             var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
                             if (addSampler)
@@ -1048,7 +1042,7 @@ public sealed class BasicTests
     {
         // We need to let End callback execute as it is executed AFTER response was returned.
         // In unit tests environment there may be a lot of parallel unit tests executed, so
-        // giving some breezing room for the End callback to complete
+        // giving some breathing room for the End callback to complete
         Assert.True(SpinWait.SpinUntil(
             () =>
             {

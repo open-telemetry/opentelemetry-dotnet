@@ -16,7 +16,7 @@
 
 using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Instrumentation.Http.Tests;
+namespace OpenTelemetry.Tests;
 
 internal class PropagationContextEventArgs(PropagationContext context) : EventArgs
 {

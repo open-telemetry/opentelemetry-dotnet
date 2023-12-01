@@ -226,8 +226,8 @@ public partial class HttpWebRequestTests : IDisposable
 
         var propagator = new CustomTextMapPropagator();
         propagator.Injected += Propagator_Injected;
-        propagator.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
-        propagator.Add("custom_traceState", context => Activity.Current.TraceStateString);
+        propagator.InjectValues.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+        propagator.InjectValues.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
         var exportedItems = new List<Activity>();
 

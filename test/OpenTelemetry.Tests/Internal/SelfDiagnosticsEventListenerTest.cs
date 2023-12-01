@@ -17,7 +17,8 @@
 using System.Diagnostics.Tracing;
 using System.IO.MemoryMappedFiles;
 using System.Text;
-using Moq;
+using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
@@ -41,47 +42,60 @@ public class SelfDiagnosticsEventListenerTest
     [Fact]
     public void SelfDiagnosticsEventListener_EventSourceSetup_LowerSeverity()
     {
-        var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+        var configRefresherMock = Substitute.For<SelfDiagnosticsConfigRefresher>();
+        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
 
         // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
         OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
-        configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny), Times.Never());
+
+        configRefresherMock
+            .Received(0)
+            .TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>());
     }
 
     [Fact]
     public void SelfDiagnosticsEventListener_EventSourceSetup_HigherSeverity()
     {
-        var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
-        configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny))
-                        .Returns(true);
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+        var configRefresherMock = Substitute.For<SelfDiagnosticsConfigRefresher>();
+        configRefresherMock.TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>())
+            .Returns(true);
+
+        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
 
         // Emitting an Error event. Or any EventSource event with higher than or equal to to Error severity.
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
-        configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out It.Ref<Stream>.IsAny, out It.Ref<int>.IsAny));
+        configRefresherMock
+            .Received(1)
+            .TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>());
     }
 
     [Fact]
     public void SelfDiagnosticsEventListener_WriteEvent()
     {
         // Arrange
-        var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+        var configRefresherMock = Substitute.For<SelfDiagnosticsConfigRefresher>();
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
-        Stream stream = memoryMappedFile.CreateViewStream();
+        var stream = memoryMappedFile.CreateViewStream();
         string eventMessage = "Event Message";
         int timestampPrefixLength = "2020-08-14T20:33:24.4788109Z:".Length;
         byte[] bytes = Encoding.UTF8.GetBytes(eventMessage);
-        int availableByteCount = 100;
-        configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(timestampPrefixLength + bytes.Length + 1, out stream, out availableByteCount))
-            .Returns(true);
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+        configRefresherMock.TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>())
+            .Returns(x =>
+            {
+                x[1] = stream;
+                return true;
+            });
+
+        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
 
         // Act: call WriteEvent method directly
         listener.WriteEvent(eventMessage, null);
 
         // Assert
-        configRefresherMock.Verify(refresher => refresher.TryGetLogStream(timestampPrefixLength + bytes.Length + 1, out stream, out availableByteCount));
+        configRefresherMock
+            .Received(1)
+            .TryGetLogStream(timestampPrefixLength + bytes.Length + 1, out Arg.Any<Stream>(), out Arg.Any<int>());
+
         stream.Dispose();
         memoryMappedFile.Dispose();
         AssertFileOutput(LOGFILEPATH, eventMessage);
@@ -90,18 +104,18 @@ public class SelfDiagnosticsEventListenerTest
     [Fact]
     public void SelfDiagnosticsEventListener_DateTimeGetBytes()
     {
-        var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+        var configRefresherMock = Substitute.For<SelfDiagnosticsConfigRefresher>();
+        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
 
         // Check DateTimeKind of Utc, Local, and Unspecified
-        DateTime[] datetimes = new DateTime[]
-        {
+        DateTime[] datetimes =
+        [
             DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Utc),
             DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Local),
             DateTime.SpecifyKind(DateTime.Parse("1996-12-01T14:02:31.1234567-08:00"), DateTimeKind.Unspecified),
             DateTime.UtcNow,
             DateTime.Now,
-        };
+        ];
 
         // Expect to match output string from DateTime.ToString("O")
         string[] expected = new string[datetimes.Length];
@@ -129,18 +143,20 @@ public class SelfDiagnosticsEventListenerTest
     public void SelfDiagnosticsEventListener_EmitEvent_OmitAsConfigured()
     {
         // Arrange
-        var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+        var configRefresherMock = Substitute.For<SelfDiagnosticsConfigRefresher>();
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
         Stream stream = memoryMappedFile.CreateViewStream();
-        configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny))
+        configRefresherMock.TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>())
             .Returns(true);
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
 
         // Act: emit an event with severity lower than configured
         OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
 
         // Assert
-        configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny), Times.Never());
+        configRefresherMock
+            .Received(0)
+            .TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>());
         stream.Dispose();
         memoryMappedFile.Dispose();
 
@@ -154,18 +170,26 @@ public class SelfDiagnosticsEventListenerTest
     public void SelfDiagnosticsEventListener_EmitEvent_CaptureAsConfigured()
     {
         // Arrange
-        var configRefresherMock = new Mock<SelfDiagnosticsConfigRefresher>();
+        var configRefresherMock = Substitute.For<SelfDiagnosticsConfigRefresher>();
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
         Stream stream = memoryMappedFile.CreateViewStream();
-        configRefresherMock.Setup(configRefresher => configRefresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny))
-            .Returns(true);
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock.Object);
+        configRefresherMock.TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>())
+            .Returns(x =>
+            {
+                x[1] = stream;
+                return true;
+            });
+
+        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
 
         // Act: emit an event with severity equal to configured
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
 
         // Assert
-        configRefresherMock.Verify(refresher => refresher.TryGetLogStream(It.IsAny<int>(), out stream, out It.Ref<int>.IsAny));
+        configRefresherMock
+            .Received(1)
+            .TryGetLogStream(Arg.Any<int>(), out Arg.Any<Stream>(), out Arg.Any<int>());
+
         stream.Dispose();
         memoryMappedFile.Dispose();
 

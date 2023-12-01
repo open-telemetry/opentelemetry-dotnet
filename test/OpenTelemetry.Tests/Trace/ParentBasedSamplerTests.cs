@@ -15,7 +15,8 @@
 // </copyright>
 
 using System.Diagnostics;
-using Moq;
+using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
@@ -73,7 +74,7 @@ public class ParentBasedSamplerTests
     {
         var sampledLink = new ActivityLink[]
         {
-            new ActivityLink(
+            new(
                 new ActivityContext(
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
@@ -105,22 +106,21 @@ public class ParentBasedSamplerTests
     [InlineData(false, false)]
     public void CustomSamplers(bool parentIsRemote, bool parentIsSampled)
     {
-        var mockRepository = new MockRepository(MockBehavior.Strict);
-        var remoteParentSampled = mockRepository.Create<Sampler>();
-        var remoteParentNotSampled = mockRepository.Create<Sampler>();
-        var localParentSampled = mockRepository.Create<Sampler>();
-        var localParentNotSampled = mockRepository.Create<Sampler>();
+        var remoteParentSampled = Substitute.For<Sampler>();
+        var remoteParentNotSampled = Substitute.For<Sampler>();
+        var localParentSampled = Substitute.For<Sampler>();
+        var localParentNotSampled = Substitute.For<Sampler>();
 
         var samplerUnderTest = new ParentBasedSampler(
             new AlwaysOnSampler(), // root
-            remoteParentSampled.Object,
-            remoteParentNotSampled.Object,
-            localParentSampled.Object,
-            localParentNotSampled.Object);
+            remoteParentSampled,
+            remoteParentNotSampled,
+            localParentSampled,
+            localParentNotSampled);
 
         var samplingParams = MakeTestParameters(parentIsRemote, parentIsSampled);
 
-        Mock<Sampler> invokedSampler;
+        Sampler invokedSampler;
         if (parentIsRemote && parentIsSampled)
         {
             invokedSampler = remoteParentSampled;
@@ -139,13 +139,16 @@ public class ParentBasedSamplerTests
         }
 
         var expectedResult = new SamplingResult(SamplingDecision.RecordAndSample);
-        invokedSampler.Setup(sampler => sampler.ShouldSample(samplingParams)).Returns(expectedResult);
+        invokedSampler.ShouldSample(Arg.Any<SamplingParameters>()).Returns(expectedResult);
 
         var actualResult = samplerUnderTest.ShouldSample(samplingParams);
 
-        mockRepository.VerifyAll();
+        remoteParentSampled.Received(parentIsRemote && parentIsSampled ? 1 : 0).ShouldSample(samplingParams);
+        remoteParentNotSampled.Received(parentIsRemote && !parentIsSampled ? 1 : 0).ShouldSample(samplingParams);
+        localParentSampled.Received(!parentIsRemote && parentIsSampled ? 1 : 0).ShouldSample(samplingParams);
+        localParentNotSampled.Received(!parentIsRemote && !parentIsSampled ? 1 : 0).ShouldSample(samplingParams);
+
         Assert.Equal(expectedResult, actualResult);
-        mockRepository.VerifyNoOtherCalls();
     }
 
     [Fact]

@@ -23,13 +23,13 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 #if !NETFRAMEWORK
 using OpenTelemetry.Context.Propagation;
 #endif
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 using Status = OpenTelemetry.Trace.Status;
@@ -61,7 +61,7 @@ public partial class GrpcTests
             return response;
         });
 
-        var processor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
 
         using var parent = new Activity("parent")
             .SetIdFormat(ActivityIdFormat.W3C)
@@ -77,7 +77,7 @@ public partial class GrpcTests
                         options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                     }
                 })
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
         {
             var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
@@ -88,8 +88,8 @@ public partial class GrpcTests
             var rs = client.SayHello(new HelloRequest());
         }
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-        var activity = (Activity)processor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         ValidateGrpcActivity(activity);
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -137,7 +137,7 @@ public partial class GrpcTests
     [InlineData("http://[::1]", false)]
     public void GrpcClientCallsAreCollectedSuccessfully_New(string baseAddress, bool shouldEnrich = true)
     {
-        KeyValuePair<string, string>[] config = new KeyValuePair<string, string>[] { new KeyValuePair<string, string>("OTEL_SEMCONV_STABILITY_OPT_IN", "http") };
+        var config = new KeyValuePair<string, string>[] { new("OTEL_SEMCONV_STABILITY_OPT_IN", "http") };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(config)
             .Build();
@@ -156,7 +156,7 @@ public partial class GrpcTests
             return response;
         });
 
-        var processor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
 
         using var parent = new Activity("parent")
             .SetIdFormat(ActivityIdFormat.W3C)
@@ -173,7 +173,7 @@ public partial class GrpcTests
                         options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                     }
                 })
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
         {
             var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
@@ -184,8 +184,8 @@ public partial class GrpcTests
             var rs = client.SayHello(new HelloRequest());
         }
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-        var activity = (Activity)processor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         ValidateGrpcActivity(activity);
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -252,7 +252,7 @@ public partial class GrpcTests
             return response;
         });
 
-        var processor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
 
         using var parent = new Activity("parent")
             .SetIdFormat(ActivityIdFormat.W3C)
@@ -269,7 +269,7 @@ public partial class GrpcTests
                         options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) => { enrichWithHttpResponseMessageCalled = true; };
                     }
                 })
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
         {
             var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
@@ -280,8 +280,8 @@ public partial class GrpcTests
             var rs = client.SayHello(new HelloRequest());
         }
 
-        Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-        var activity = (Activity)processor.Invocations[2].Arguments[0];
+        Assert.Single(exportedItems);
+        var activity = exportedItems[0];
 
         ValidateGrpcActivity(activity);
         Assert.Equal(parent.TraceId, activity.Context.TraceId);
@@ -332,12 +332,8 @@ public partial class GrpcTests
     public void GrpcAndHttpClientInstrumentationIsInvoked(bool shouldEnrich)
     {
         var uri = new Uri($"http://localhost:{this.server.Port}");
-        var processor = new Mock<BaseProcessor<Activity>>();
-        processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c =>
-        {
-            c.SetTag("enrichedWithHttpRequestMessage", "no");
-            c.SetTag("enrichedWithHttpResponseMessage", "no");
-        });
+
+        var exportedItems = new List<Activity>();
 
         using var parent = new Activity("parent")
             .Start();
@@ -360,7 +356,7 @@ public partial class GrpcTests
                     }
                 })
                 .AddHttpClientInstrumentation()
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
         {
             // With net5, based on the grpc changes, the quantity of default activities changed.
@@ -374,9 +370,9 @@ public partial class GrpcTests
             var rs = client.SayHello(new HelloRequest());
         }
 
-        Assert.Equal(7, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) + OnStart/OnEnd (HTTP) + OnShutdown/Dispose called.
-        var httpSpan = (Activity)processor.Invocations[3].Arguments[0];
-        var grpcSpan = (Activity)processor.Invocations[4].Arguments[0];
+        Assert.Equal(2, exportedItems.Count);
+        var httpSpan = exportedItems.Single(activity => activity.OperationName == OperationNameHttpOut);
+        var grpcSpan = exportedItems.Single(activity => activity.OperationName == OperationNameGrpcOut);
 
         ValidateGrpcActivity(grpcSpan);
         Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
@@ -384,17 +380,23 @@ public partial class GrpcTests
         Assert.Equal("POST", httpSpan.DisplayName);
         Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
 
-        Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
-        Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage"));
-        Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage").FirstOrDefault().Value);
-        Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
+        if (shouldEnrich)
+        {
+            Assert.Single(grpcSpan.Tags, tag => tag.Key == "enrichedWithHttpRequestMessage" && tag.Value == "yes");
+            Assert.Single(grpcSpan.Tags, tag => tag.Key == "enrichedWithHttpResponseMessage" && tag.Value == "yes");
+        }
+        else
+        {
+            Assert.Empty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
+            Assert.Empty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage"));
+        }
     }
 
     [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092")]
     public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
     {
         var uri = new Uri($"http://localhost:{this.server.Port}");
-        var processor = new Mock<BaseProcessor<Activity>>();
+        var exportedItems = new List<Activity>();
 
         using var parent = new Activity("parent")
             .Start();
@@ -403,7 +405,7 @@ public partial class GrpcTests
                 .SetSampler(new AlwaysOnSampler())
                 .AddGrpcClientInstrumentation(o => o.SuppressDownstreamInstrumentation = true)
                 .AddHttpClientInstrumentation()
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
         {
             Parallel.ForEach(
@@ -420,11 +422,11 @@ public partial class GrpcTests
             });
         }
 
-        Assert.Equal(11, processor.Invocations.Count); // SetParentProvider + OnStart/OnEnd (gRPC) * 4 + OnShutdown/Dispose called.
-        var grpcSpan1 = (Activity)processor.Invocations[2].Arguments[0];
-        var grpcSpan2 = (Activity)processor.Invocations[4].Arguments[0];
-        var grpcSpan3 = (Activity)processor.Invocations[6].Arguments[0];
-        var grpcSpan4 = (Activity)processor.Invocations[8].Arguments[0];
+        Assert.Equal(4, exportedItems.Count);
+        var grpcSpan1 = exportedItems[0];
+        var grpcSpan2 = exportedItems[1];
+        var grpcSpan3 = exportedItems[2];
+        var grpcSpan4 = exportedItems[3];
 
         ValidateGrpcActivity(grpcSpan1);
         Assert.Equal($"greet.Greeter/SayHello", grpcSpan1.DisplayName);
@@ -449,21 +451,18 @@ public partial class GrpcTests
         try
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
-            var processor = new Mock<BaseProcessor<Activity>>();
 
             using var source = new ActivitySource("test-source");
 
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
-                {
-                    action(message, "customField", "customValue");
-                });
+            var propagator = new CustomTextMapPropagator();
+            propagator.InjectValues.Add("customField", context => "customValue");
+
+            var exportedItems = new List<Activity>();
 
             Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
                 new TraceContextPropagator(),
-                propagator.Object,
+                propagator,
             }));
 
             using (Sdk.CreateTracerProviderBuilder()
@@ -480,37 +479,21 @@ public partial class GrpcTests
                         activity.SetCustomProperty("customField", request.Headers["customField"].ToString());
                     };
                 }) // Instrumenting the server side as well
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
             {
-                using (var activity = source.StartActivity("parent"))
-                {
-                    Assert.NotNull(activity);
-                    var channel = GrpcChannel.ForAddress(uri);
-                    var client = new Greeter.GreeterClient(channel);
-                    var rs = client.SayHello(new HelloRequest());
-                }
-
-                WaitForProcessorInvocations(processor, 7);
+                using var activity = source.StartActivity("parent");
+                Assert.NotNull(activity);
+                var channel = GrpcChannel.ForAddress(uri);
+                var client = new Greeter.GreeterClient(channel);
+                var rs = client.SayHello(new HelloRequest());
             }
 
-            Assert.Equal(9, processor.Invocations.Count); // SetParentProvider + (OnStart + OnEnd) * 3 (parent, gRPC client, and server) + Shutdown + Dispose called.
-
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == "SetParentProvider");
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), "parent"));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameGrpcOut));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameHttpRequestIn));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameHttpRequestIn));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameGrpcOut));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), "parent"));
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == "OnShutdown");
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == nameof(processor.Object.Dispose));
-
-            var serverActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
-            var clientActivity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameGrpcOut);
+            var serverActivity = exportedItems.Single(activity => activity.OperationName == OperationNameHttpRequestIn);
+            var clientActivity = exportedItems.Single(activity => activity.OperationName == OperationNameGrpcOut);
 
             Assert.Equal($"greet.Greeter/SayHello", clientActivity.DisplayName);
-            Assert.Equal($"greet.Greeter/SayHello", serverActivity.DisplayName);
+            Assert.Equal($"POST /greet.Greeter/SayHello", serverActivity.DisplayName);
             Assert.Equal(clientActivity.TraceId, serverActivity.TraceId);
             Assert.Equal(clientActivity.SpanId, serverActivity.ParentSpanId);
             Assert.Equal(0, clientActivity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
@@ -532,21 +515,23 @@ public partial class GrpcTests
         try
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
-            var processor = new Mock<BaseProcessor<Activity>>();
 
             using var source = new ActivitySource("test-source");
 
             bool isPropagatorCalled = false;
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
-                {
-                    isPropagatorCalled = true;
-                });
+            var propagator = new CustomTextMapPropagator();
+            propagator.Injected += Propagator_Injected;
 
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            void Propagator_Injected(object sender, PropagationContextEventArgs e)
+            {
+                isPropagatorCalled = true;
+            }
+
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             var headers = new Metadata();
+
+            var exportedItems = new List<Activity>();
 
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSource("test-source")
@@ -554,7 +539,7 @@ public partial class GrpcTests
                 {
                     o.SuppressDownstreamInstrumentation = false;
                 })
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
             {
                 using var activity = source.StartActivity("parent");
@@ -563,15 +548,12 @@ public partial class GrpcTests
                 var rs = client.SayHello(new HelloRequest(), headers);
             }
 
-            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
+            Assert.Equal(2, exportedItems.Count);
 
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == "SetParentProvider");
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), "parent"));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), OperationNameGrpcOut));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), OperationNameGrpcOut));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), "parent"));
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == "OnShutdown");
-            Assert.Single(processor.Invocations, invo => invo.Method.Name == nameof(processor.Object.Dispose));
+            var parentActivity = exportedItems.Single(activity => activity.OperationName == "parent");
+            var clientActivity = exportedItems.Single(activity => activity.OperationName == OperationNameGrpcOut);
+
+            Assert.Equal(clientActivity.ParentSpanId, parentActivity.SpanId);
 
             // Propagator is not called
             Assert.False(isPropagatorCalled);
@@ -592,22 +574,23 @@ public partial class GrpcTests
         try
         {
             var uri = new Uri($"http://localhost:{this.server.Port}");
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
 
             using var source = new ActivitySource("test-source");
 
             bool isPropagatorCalled = false;
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
-                {
-                    isPropagatorCalled = true;
-                });
+            var propagator = new CustomTextMapPropagator();
+            propagator.Injected += Propagator_Injected;
+
+            void Propagator_Injected(object sender, PropagationContextEventArgs e)
+            {
+                isPropagatorCalled = true;
+            }
 
             Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
                 new TraceContextPropagator(),
-                propagator.Object,
+                propagator,
             }));
 
             using (Sdk.CreateTracerProviderBuilder()
@@ -616,7 +599,7 @@ public partial class GrpcTests
                 {
                     o.SuppressDownstreamInstrumentation = true;
                 })
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build())
             {
                 using var activity = source.StartActivity("parent");
@@ -630,9 +613,7 @@ public partial class GrpcTests
 
             // If suppressed, activity is not emitted and
             // propagation is also not performed.
-            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider + (OnStart + OnEnd) * 3 for parent + OnShutdown + Dispose called.
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnStart), "parent"));
-            Assert.Single(processor.Invocations, GeneratePredicateForMoqProcessorActivity(nameof(processor.Object.OnEnd), "parent"));
+            Assert.Single(exportedItems);
             Assert.False(isPropagatorCalled);
         }
         finally
@@ -679,10 +660,5 @@ public partial class GrpcTests
         Assert.Equal(GrpcClientDiagnosticListener.ActivitySourceName, activityToValidate.Source.Name);
         Assert.Equal(GrpcClientDiagnosticListener.Version.ToString(), activityToValidate.Source.Version);
         Assert.Equal(ActivityKind.Client, activityToValidate.Kind);
-    }
-
-    private static Predicate<IInvocation> GeneratePredicateForMoqProcessorActivity(string methodName, string activityOperationName)
-    {
-        return invo => invo.Method.Name == methodName && (invo.Arguments[0] as Activity)?.OperationName == activityOperationName;
     }
 }

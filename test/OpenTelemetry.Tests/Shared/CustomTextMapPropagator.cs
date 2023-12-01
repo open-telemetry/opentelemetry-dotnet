@@ -14,15 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 
-namespace OpenTelemetry.Instrumentation.Http.Tests;
+namespace OpenTelemetry.Tests;
 
 internal sealed class CustomTextMapPropagator : TextMapPropagator
 {
     private static readonly PropagationContext DefaultPropagationContext = default;
 #pragma warning disable SA1010
-    private readonly Dictionary<string, Func<PropagationContext, string>> values = [];
+    public List<string> ExtractValues = [];
+    public Dictionary<string, Func<PropagationContext, string>> InjectValues = [];
 
     public event EventHandler<PropagationContextEventArgs> Injected;
 
@@ -30,21 +32,26 @@ internal sealed class CustomTextMapPropagator : TextMapPropagator
 
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
     {
+        if (this.ExtractValues.Count == 2)
+        {
+            return new PropagationContext(
+                new ActivityContext(
+                    ActivityTraceId.CreateFromString(this.ExtractValues[0].ToCharArray()),
+                    ActivitySpanId.CreateFromString(this.ExtractValues[1].ToCharArray()),
+                    ActivityTraceFlags.Recorded),
+                default);
+        }
+
         return DefaultPropagationContext;
     }
 
     public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
     {
-        foreach (var kv in this.values)
+        foreach (var kv in this.InjectValues)
         {
             setter(carrier, kv.Key, kv.Value.Invoke(context));
         }
 
         this.Injected?.Invoke(this, new PropagationContextEventArgs(context));
-    }
-
-    internal void Add(string key, Func<PropagationContext, string> func)
-    {
-        this.values.Add(key, func);
     }
 }
