@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetrySdkBenchmarksActivity.cs" company="OpenTelemetry Authors">
+// <copyright file="ActivityCreationBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,27 +21,25 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 /*
-// * Summary *
-
-BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2130/21H2/November2021Update)
-Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
-.NET SDK=7.0.100-preview.7.22377.5
-  [Host]     : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
-  DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                                                   Method |     Mean |   Error |  StdDev |   Gen0 | Allocated |
-|--------------------------------------------------------- |---------:|--------:|--------:|-------:|----------:|
-|                             CreateActivity_NoopProcessor | 457.9 ns | 1.39 ns | 1.23 ns | 0.0992 |     416 B |
-|           CreateActivity_WithParentContext_NoopProcessor | 104.8 ns | 0.43 ns | 0.36 ns |      - |         - |
-|                CreateActivity_WithParentId_NoopProcessor | 221.9 ns | 0.44 ns | 0.39 ns | 0.0343 |     144 B |
-|              CreateActivity_WithAttributes_NoopProcessor | 541.4 ns | 3.32 ns | 2.94 ns | 0.1488 |     624 B |
-|                    CreateActiviti_WithKind_NoopProcessor | 437.5 ns | 2.05 ns | 1.92 ns | 0.0992 |     416 B |
+| Method                                         | Mean      | Error    | StdDev   | Gen0   | Allocated |
+|----------------------------------------------- |----------:|---------:|---------:|-------:|----------:|
+| CreateActivity_NoopProcessor                   | 307.12 ns | 5.769 ns | 6.172 ns | 0.0663 |     416 B |
+| CreateActivity_WithParentContext_NoopProcessor |  75.18 ns | 0.399 ns | 0.354 ns |      - |         - |
+| CreateActivity_WithParentId_NoopProcessor      | 156.52 ns | 1.609 ns | 1.426 ns | 0.0229 |     144 B |
+| CreateActivity_WithAttributes_NoopProcessor    | 372.34 ns | 6.215 ns | 4.852 ns | 0.0992 |     624 B |
+| CreateActivity_WithKind_NoopProcessor          | 302.24 ns | 5.859 ns | 8.402 ns | 0.0663 |     416 B |
 */
 
 namespace Benchmarks.Trace;
 
-public class OpenTelemetrySdkBenchmarksActivity
+public class ActivityCreationBenchmarks
 {
     private readonly ActivitySource benchmarkSource = new("Benchmark");
     private readonly ActivityContext parentCtx = new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
@@ -76,5 +74,5 @@ public class OpenTelemetrySdkBenchmarksActivity
     public void CreateActivity_WithAttributes_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithAttributes(this.benchmarkSource);
 
     [Benchmark]
-    public void CreateActiviti_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
+    public void CreateActivity_WithKind_NoopProcessor() => ActivityCreationScenarios.CreateActivityWithKind(this.benchmarkSource);
 }
