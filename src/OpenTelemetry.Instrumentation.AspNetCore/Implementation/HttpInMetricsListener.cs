@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Internal;
 
@@ -33,21 +34,25 @@ internal sealed class HttpInMetricsListener : ListenerHandler
 
     internal const string OnUnhandledHostingExceptionEvent = "Microsoft.AspNetCore.Hosting.UnhandledException";
     internal const string OnUnhandledDiagnosticsExceptionEvent = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
+
+    internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
+    internal static readonly string InstrumentationName = AssemblyName.Name;
+    internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();
+    internal static readonly Meter Meter = new(InstrumentationName, InstrumentationVersion);
+
     private const string OnStopEvent = "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop";
+
     private const string EventName = "OnStopActivity";
     private const string NetworkProtocolName = "http";
     private static readonly PropertyFetcher<Exception> ExceptionPropertyFetcher = new("Exception");
     private static readonly PropertyFetcher<HttpContext> HttpContextPropertyFetcher = new("HttpContext");
     private static readonly object ErrorTypeHttpContextItemsKey = new();
 
-    private readonly Meter meter;
-    private readonly Histogram<double> httpServerRequestDuration;
+    private static readonly Histogram<double> HttpServerRequestDuration = Meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
 
-    internal HttpInMetricsListener(string name, Meter meter)
+    internal HttpInMetricsListener(string name)
         : base(name)
     {
-        this.meter = meter;
-        this.httpServerRequestDuration = meter.CreateHistogram<double>(HttpServerRequestDurationMetricName, "s", "Duration of HTTP server requests.");
     }
 
     public override void OnEventWritten(string name, object payload)
@@ -130,6 +135,6 @@ internal sealed class HttpInMetricsListener : ListenerHandler
         // We are relying here on ASP.NET Core to set duration before writing the stop event.
         // https://github.com/dotnet/aspnetcore/blob/d6fa351048617ae1c8b47493ba1abbe94c3a24cf/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L449
         // TODO: Follow up with .NET team if we can continue to rely on this behavior.
-        this.httpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
+        HttpServerRequestDuration.Record(Activity.Current.Duration.TotalSeconds, tags);
     }
 }
