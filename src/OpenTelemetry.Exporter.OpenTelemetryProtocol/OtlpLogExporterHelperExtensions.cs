@@ -119,13 +119,14 @@ public static class OtlpLogExporterHelperExtensions
         });
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Adds an OTLP exporter to the LoggerProvider.
     /// </summary>
     /// <param name="builder"><see cref="LoggerProviderBuilder"/> builder to use.</param>
     /// <returns>The instance of <see cref="LoggerProviderBuilder"/> to chain the calls.</returns>
     public static LoggerProviderBuilder AddOtlpExporter(this LoggerProviderBuilder builder)
-           => AddOtlpExporter(builder, name: null, configureExporter: null);
+    => AddOtlpExporter(builder, name: null, configureExporter: null);
 
     /// <summary>
     /// Adds an OTLP exporter to the LoggerProvider.
@@ -351,6 +352,7 @@ public static class OtlpLogExporterHelperExtensions
                 processorOptions.BatchExportProcessorOptions.MaxExportBatchSize);
         }
     }
+#endif
 
     private static OtlpExporterOptions GetOtlpExporterOptions(IServiceProvider sp, string? name, string finalName)
     {
