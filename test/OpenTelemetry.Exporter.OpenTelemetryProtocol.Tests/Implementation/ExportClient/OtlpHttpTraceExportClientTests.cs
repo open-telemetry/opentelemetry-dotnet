@@ -95,7 +95,6 @@ public class OtlpHttpTraceExportClientTests
 
         var httpHandlerMock = new MockHttpMessageHandler();
 
-        //HttpRequestMessage httpRequest = null;
         var httpRequestContent = Array.Empty<byte>();
 
         var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(httpHandlerMock));
