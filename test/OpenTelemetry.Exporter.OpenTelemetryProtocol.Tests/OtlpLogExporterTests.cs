@@ -91,6 +91,89 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     }
 
     [Fact]
+    public void UserHttpFactoryCalledWhenUsingHttpProtobuf()
+    {
+        OtlpExporterOptions options = new OtlpExporterOptions();
+
+        var defaultFactory = options.HttpClientFactory;
+
+        int invocations = 0;
+        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+        options.HttpClientFactory = () =>
+        {
+            invocations++;
+            return defaultFactory();
+        };
+
+        using (var exporter = new OtlpLogExporter(options))
+        {
+            Assert.Equal(1, invocations);
+        }
+
+        using (var provider = Sdk.CreateLoggerProviderBuilder()
+            .AddOtlpExporter(o =>
+            {
+                o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                o.HttpClientFactory = options.HttpClientFactory;
+            })
+            .Build())
+        {
+            Assert.Equal(2, invocations);
+        }
+
+        options.HttpClientFactory = null;
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var exporter = new OtlpLogExporter(options);
+        });
+
+        options.HttpClientFactory = () => null;
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var exporter = new OtlpLogExporter(options);
+        });
+    }
+
+    [Fact]
+    public void AddOtlpExporterSetsDefaultBatchExportProcessor()
+    {
+        if (Environment.Version.Major == 3)
+        {
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+        }
+
+        var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddOtlpExporter()
+            .Build();
+
+        CheckProcessorDefaults();
+
+        loggerProvider.Dispose();
+
+        void CheckProcessorDefaults()
+        {
+            var bindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
+
+            var processor = typeof(BaseProcessor<LogRecord>)
+                .Assembly
+                .GetType("OpenTelemetry.Logs.LoggerProviderSdk")
+                .GetProperty("Processor", bindingFlags)
+                .GetValue(loggerProvider) as BatchExportProcessor<LogRecord>;
+
+            Assert.NotNull(processor);
+
+            var scheduledDelayMilliseconds = typeof(BatchExportProcessor<LogRecord>)
+                .GetField("scheduledDelayMilliseconds", bindingFlags)
+                .GetValue(processor);
+
+            Assert.Equal(5000, scheduledDelayMilliseconds);
+        }
+    }
+
+    [Fact]
     public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse()
     {
         bool optionsValidated = false;
