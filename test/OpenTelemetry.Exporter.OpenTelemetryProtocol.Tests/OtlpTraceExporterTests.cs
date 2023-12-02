@@ -17,9 +17,8 @@
 using System.Diagnostics;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Mock;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -642,13 +641,13 @@ public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
-        var exportClientMock = new Mock<IExportClient<OtlpCollector.ExportTraceServiceRequest>>();
+        var exportClientMock = new MockExportClient<OtlpCollector.ExportTraceServiceRequest>();
 
-        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, exportClientMock.Object);
+        var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), DefaultSdkLimitOptions, exportClientMock);
 
-        var result = exporter.Shutdown();
+        exporter.Shutdown();
 
-        exportClientMock.Verify(m => m.Shutdown(It.IsAny<int>()), Times.Once());
+        Assert.True(exportClientMock.ShutdownCalled);
     }
 
     [Fact]
