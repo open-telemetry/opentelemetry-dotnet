@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Dec-01
+
 * Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
   library will now emit only the
   [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
