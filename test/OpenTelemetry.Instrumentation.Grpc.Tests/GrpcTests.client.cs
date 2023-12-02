@@ -381,7 +381,7 @@ public partial class GrpcTests
         ValidateGrpcActivity(grpcSpan);
         Assert.Equal($"greet.Greeter/SayHello", grpcSpan.DisplayName);
         Assert.Equal(0, grpcSpan.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
-        Assert.Equal($"HTTP POST", httpSpan.DisplayName);
+        Assert.Equal("POST", httpSpan.DisplayName);
         Assert.Equal(grpcSpan.SpanId, httpSpan.ParentSpanId);
 
         Assert.NotEmpty(grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpRequestMessage"));
@@ -390,7 +390,7 @@ public partial class GrpcTests
         Assert.Equal(shouldEnrich ? "yes" : "no", grpcSpan.Tags.Where(tag => tag.Key == "enrichedWithHttpResponseMessage").FirstOrDefault().Value);
     }
 
-    [Fact]
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092")]
     public void GrpcAndHttpClientInstrumentationWithSuppressInstrumentation()
     {
         var uri = new Uri($"http://localhost:{this.server.Port}");
@@ -443,7 +443,7 @@ public partial class GrpcTests
         Assert.Equal(0, grpcSpan4.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
     }
 
-    [Fact]
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092")]
     public void GrpcPropagatesContextWithSuppressInstrumentationOptionSetToTrue()
     {
         try
@@ -586,7 +586,7 @@ public partial class GrpcTests
         }
     }
 
-    [Fact]
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092")]
     public void GrpcClientInstrumentationRespectsSdkSuppressInstrumentation()
     {
         try

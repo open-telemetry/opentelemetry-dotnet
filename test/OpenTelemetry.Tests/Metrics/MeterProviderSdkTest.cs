@@ -96,13 +96,9 @@ public class MeterProviderSdkTest
             Assert.Single(exportedItems);
         }
 
-#if DEBUG
-        // Note: This is inside a debug block because when running in CI the
-        // event source sees events from other tests running in parallel.
-        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33);
+        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33 && e.Payload[1] as string == meterName);
 
         Assert.Single(metricInstrumentIgnoredEvents);
-#endif
 
         void RunTest()
         {
