@@ -68,7 +68,7 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var openMetricsRequested = this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(httpContext.Request);
+            var openMetricsRequested = this.AcceptsOpenMetrics(httpContext.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try

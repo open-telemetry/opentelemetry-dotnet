@@ -150,7 +150,7 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         try
         {
-            var openMetricsRequested = this.exporter.OpenMetricsEnabled && this.AcceptsOpenMetrics(context.Request);
+            var openMetricsRequested = this.AcceptsOpenMetrics(context.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try

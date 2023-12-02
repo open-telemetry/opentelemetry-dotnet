@@ -115,11 +115,7 @@ public class PrometheusHttpListenerTests
 
             provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddPrometheusHttpListener(options =>
-                {
-                    options.OpenMetricsEnabled = useOpenMetrics;
-                    options.UriPrefixes = new string[] { address };
-                })
+                .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
                 .Build();
         }
 

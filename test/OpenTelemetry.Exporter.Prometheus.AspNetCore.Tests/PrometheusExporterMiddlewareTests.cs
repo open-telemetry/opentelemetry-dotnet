@@ -239,16 +239,6 @@ public sealed class PrometheusExporterMiddlewareTests
             registerMeterProvider: false);
     }
 
-    [Fact]
-    public async Task PrometheusExporterMiddlewareIntegration_DisableOpenMetrics()
-    {
-        await RunPrometheusExporterMiddlewareIntegrationTest(
-            "/metrics",
-            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            configureOptions: o => o.OpenMetricsEnabled = false,
-            useOpenMetrics: false);
-    }
-
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
         string path,
         Action<IApplicationBuilder> configure,
