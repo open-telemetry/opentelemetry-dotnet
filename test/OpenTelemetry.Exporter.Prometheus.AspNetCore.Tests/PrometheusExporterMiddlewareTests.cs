@@ -247,7 +247,7 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        bool useOpenMetrics = true)
+        bool requestOpenMetrics = true)
     {
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
@@ -288,7 +288,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        if (useOpenMetrics)
+        if (requestOpenMetrics)
         {
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/openmetrics-text"));
         }
@@ -302,7 +302,7 @@ public sealed class PrometheusExporterMiddlewareTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-            if (useOpenMetrics)
+            if (requestOpenMetrics)
             {
                 Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
             }
@@ -313,7 +313,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
             string content = await response.Content.ReadAsStringAsync();
 
-            string expected = useOpenMetrics
+            string expected = requestOpenMetrics
                 ? "# TYPE counter_double_total counter\n"
                   + "counter_double_total{key1='value1',key2='value2'} 101.17 (\\d+\\.\\d{3})\n"
                   + "# EOF\n"

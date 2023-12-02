@@ -95,10 +95,10 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(useOpenMetrics: false);
+        await this.RunPrometheusExporterHttpServerIntegrationTest(requestOpenMetrics: false);
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, bool useOpenMetrics = true)
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, bool requestOpenMetrics = true)
     {
         Random random = new Random();
         int retryAttempts = 5;
@@ -134,7 +134,7 @@ public class PrometheusHttpListenerTests
 
         using HttpClient client = new HttpClient();
 
-        if (useOpenMetrics)
+        if (requestOpenMetrics)
         {
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/openmetrics-text"));
         }
@@ -146,7 +146,7 @@ public class PrometheusHttpListenerTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-            if (useOpenMetrics)
+            if (requestOpenMetrics)
             {
                 Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType.ToString());
             }
@@ -157,7 +157,7 @@ public class PrometheusHttpListenerTests
 
             var content = await response.Content.ReadAsStringAsync();
 
-            var expected = useOpenMetrics
+            var expected = requestOpenMetrics
                 ? "# TYPE counter_double_total counter\n"
                   + "counter_double_total{key1='value1',key2='value2'} 101.17 \\d+\\.\\d{3}\n"
                   + "# EOF\n"
