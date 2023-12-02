@@ -15,8 +15,6 @@
 // </copyright>
 
 #if !NET8_0_OR_GREATER
-using System.Diagnostics.Metrics;
-using System.Reflection;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore;
@@ -26,12 +24,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore;
 /// </summary>
 internal sealed class AspNetCoreMetrics : IDisposable
 {
-    internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
-    internal static readonly string InstrumentationName = AssemblyName.Name;
-    internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();
-
-    private static readonly Meter InstrumentationMeter = new(InstrumentationName, InstrumentationVersion);
-
     private static readonly HashSet<string> DiagnosticSourceEvents = new()
     {
         "Microsoft.AspNetCore.Hosting.HttpRequestIn",
@@ -48,7 +40,7 @@ internal sealed class AspNetCoreMetrics : IDisposable
 
     internal AspNetCoreMetrics()
     {
-        var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore", InstrumentationMeter);
+        var metricsListener = new HttpInMetricsListener("Microsoft.AspNetCore");
         this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(metricsListener, this.isEnabled, AspNetCoreInstrumentationEventSource.Log.UnknownErrorProcessingEvent);
         this.diagnosticSourceSubscriber.Subscribe();
     }
