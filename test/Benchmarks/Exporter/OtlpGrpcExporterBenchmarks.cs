@@ -19,14 +19,12 @@ extern alias OpenTelemetryProtocol;
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
-using Grpc.Core;
-using Moq;
+using Benchmarks.Mock;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OtlpCollector = OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter;
 
@@ -45,20 +43,11 @@ public class OtlpGrpcExporterBenchmarks
     [GlobalSetup]
     public void GlobalSetup()
     {
-        var mockClient = new Mock<OtlpCollector.TraceService.TraceServiceClient>();
-        mockClient
-            .Setup(m => m.Export(
-                It.IsAny<OtlpCollector.ExportTraceServiceRequest>(),
-                It.IsAny<Metadata>(),
-                It.IsAny<DateTime?>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(new OtlpCollector.ExportTraceServiceResponse());
-
         var options = new OtlpExporterOptions();
         this.exporter = new OtlpTraceExporter(
             options,
             new SdkLimitOptions(),
-            new OtlpGrpcTraceExportClient(options, mockClient.Object));
+            new OtlpGrpcTraceExportClient(options, new MockTraceServiceClient()));
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
