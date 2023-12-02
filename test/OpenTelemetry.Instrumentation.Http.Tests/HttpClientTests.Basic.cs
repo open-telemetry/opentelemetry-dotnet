@@ -16,7 +16,6 @@
 
 using System.Diagnostics;
 #if NETFRAMEWORK
-using System.Net;
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.DependencyInjection;
