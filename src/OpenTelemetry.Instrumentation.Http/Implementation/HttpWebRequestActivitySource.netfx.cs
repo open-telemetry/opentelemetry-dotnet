@@ -166,13 +166,21 @@ internal static class HttpWebRequestActivitySource
             {
                 WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
                 WebExceptionStatus.ConnectFailure => "connect_failure",
+                WebExceptionStatus.ReceiveFailure => "receive_failure",
                 WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.PipelineFailure => "pipeline_failure",
                 WebExceptionStatus.RequestCanceled => "request_cancelled",
+                WebExceptionStatus.ProtocolError => "protocol_error",
+                WebExceptionStatus.ConnectionClosed => "connection_closed",
                 WebExceptionStatus.TrustFailure => "trust_failure",
                 WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
                 WebExceptionStatus.ServerProtocolViolation => "server_protocol_violation",
+                WebExceptionStatus.KeepAliveFailure => "keep_alive_failure",
                 WebExceptionStatus.Timeout => "timeout",
+                WebExceptionStatus.ProxyNameResolutionFailure => "proxy_name_resolution_failure",
                 WebExceptionStatus.MessageLengthLimitExceeded => "message_length_limit_exceeded",
+                WebExceptionStatus.RequestProhibitedByCachePolicy => "request_prohibited_by_cache_policy",
+                WebExceptionStatus.RequestProhibitedByProxy => "request_prohibited_by_proxy",
                 _ => wexc.GetType().FullName,
             };
         }
