@@ -37,7 +37,7 @@ public class HttpWebRequestActivitySourceTests : IDisposable
 
     static HttpWebRequestActivitySourceTests()
     {
-        HttpClientInstrumentationOptions options = new()
+        HttpClientTraceInstrumentationOptions options = new()
         {
             EnrichWithHttpWebRequest = (activity, httpWebRequest) =>
             {

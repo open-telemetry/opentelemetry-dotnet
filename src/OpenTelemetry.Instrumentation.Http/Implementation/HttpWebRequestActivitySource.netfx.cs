@@ -50,7 +50,7 @@ internal static class HttpWebRequestActivitySource
     private static readonly Meter WebRequestMeter = new(MeterName, Version);
     private static readonly Histogram<double> HttpClientRequestDuration = WebRequestMeter.CreateHistogram<double>("http.client.request.duration", "s", "Measures the duration of outbound HTTP requests.");
 
-    private static HttpClientInstrumentationOptions tracingOptions;
+    private static HttpClientTraceInstrumentationOptions tracingOptions;
 
     // Fields for reflection
     private static FieldInfo connectionGroupListField;
@@ -87,7 +87,7 @@ internal static class HttpWebRequestActivitySource
             PrepareReflectionObjects();
             PerformInjection();
 
-            TracingOptions = new HttpClientInstrumentationOptions();
+            TracingOptions = new HttpClientTraceInstrumentationOptions();
         }
         catch (Exception ex)
         {
@@ -96,7 +96,7 @@ internal static class HttpWebRequestActivitySource
         }
     }
 
-    internal static HttpClientInstrumentationOptions TracingOptions
+    internal static HttpClientTraceInstrumentationOptions TracingOptions
     {
         get => tracingOptions;
         set
@@ -166,13 +166,21 @@ internal static class HttpWebRequestActivitySource
             {
                 WebExceptionStatus.NameResolutionFailure => "name_resolution_failure",
                 WebExceptionStatus.ConnectFailure => "connect_failure",
+                WebExceptionStatus.ReceiveFailure => "receive_failure",
                 WebExceptionStatus.SendFailure => "send_failure",
+                WebExceptionStatus.PipelineFailure => "pipeline_failure",
                 WebExceptionStatus.RequestCanceled => "request_cancelled",
+                WebExceptionStatus.ProtocolError => "protocol_error",
+                WebExceptionStatus.ConnectionClosed => "connection_closed",
                 WebExceptionStatus.TrustFailure => "trust_failure",
                 WebExceptionStatus.SecureChannelFailure => "secure_channel_failure",
                 WebExceptionStatus.ServerProtocolViolation => "server_protocol_violation",
+                WebExceptionStatus.KeepAliveFailure => "keep_alive_failure",
                 WebExceptionStatus.Timeout => "timeout",
+                WebExceptionStatus.ProxyNameResolutionFailure => "proxy_name_resolution_failure",
                 WebExceptionStatus.MessageLengthLimitExceeded => "message_length_limit_exceeded",
+                WebExceptionStatus.RequestProhibitedByCachePolicy => "request_prohibited_by_cache_policy",
+                WebExceptionStatus.RequestProhibitedByProxy => "request_prohibited_by_proxy",
                 _ => wexc.GetType().FullName,
             };
         }

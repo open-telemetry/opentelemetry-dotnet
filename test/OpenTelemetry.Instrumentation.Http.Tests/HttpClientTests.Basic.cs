@@ -96,12 +96,12 @@ public partial class HttpClientTests : IDisposable
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
             {
-                services.Configure<HttpClientInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<HttpClientTraceInstrumentationOptions>(o => defaultExporterOptionsConfigureOptionsInvocations++);
 
-                services.Configure<HttpClientInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
+                services.Configure<HttpClientTraceInstrumentationOptions>("Instrumentation2", o => namedExporterOptionsConfigureOptionsInvocations++);
             })
             .AddHttpClientInstrumentation()
-            .AddHttpClientInstrumentation("Instrumentation2", configureHttpClientInstrumentationOptions: null)
+            .AddHttpClientInstrumentation("Instrumentation2", configureHttpClientTraceInstrumentationOptions: null)
             .Build();
 
         Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);

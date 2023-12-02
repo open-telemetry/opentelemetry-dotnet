@@ -496,7 +496,7 @@ public sealed class BasicTests
         {
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetCoreInstrumentation(
-                    new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                    new TestHttpInListener(new AspNetCoreTraceInstrumentationOptions())
                     {
                         OnEventWrittenCallback = (name, payload) =>
                         {
@@ -836,7 +836,7 @@ public sealed class BasicTests
 
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetCoreInstrumentation(
-                new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                new TestHttpInListener(new AspNetCoreTraceInstrumentationOptions())
                 {
                     OnEventWrittenCallback = (name, payload) =>
                     {
@@ -892,7 +892,7 @@ public sealed class BasicTests
 
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetCoreInstrumentation(
-                new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                new TestHttpInListener(new AspNetCoreTraceInstrumentationOptions())
                 {
                     OnEventWrittenCallback = (name, payload) =>
                     {
@@ -968,7 +968,7 @@ public sealed class BasicTests
         // configure SDK
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddAspNetCoreInstrumentation(
-                new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                new TestHttpInListener(new AspNetCoreTraceInstrumentationOptions())
                 {
                     OnEventWrittenCallback = (name, payload) =>
                     {
@@ -1134,7 +1134,7 @@ public sealed class BasicTests
         }
     }
 
-    private class TestHttpInListener(AspNetCoreInstrumentationOptions options) : HttpInListener(options)
+    private class TestHttpInListener(AspNetCoreTraceInstrumentationOptions options) : HttpInListener(options)
     {
         public Action<string, object> OnEventWrittenCallback;
 

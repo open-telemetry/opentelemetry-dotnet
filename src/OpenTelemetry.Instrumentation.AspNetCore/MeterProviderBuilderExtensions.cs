@@ -44,7 +44,7 @@ public static class MeterProviderBuilderExtensions
         _ = TelemetryHelper.BoxedStatusCodes;
         _ = RequestMethodHelper.KnownMethods;
 
-        builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
+        builder.AddMeter(HttpInMetricsListener.InstrumentationName);
 
         builder.AddInstrumentation(new AspNetCoreMetrics());
 
