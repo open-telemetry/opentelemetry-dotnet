@@ -60,13 +60,13 @@ public class TracerShimTests
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
-        var mockFormat = new TestFormatTextMap();
-        var mockCarrier = new TestTextMap();
+        var testFormat = new TestFormatTextMap();
+        var testCarrier = new TestTextMap();
 
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(null, mockFormat, mockCarrier));
-        Assert.Throws<InvalidCastException>(() => shim.Inject(new TestSpanContext(), mockFormat, mockCarrier));
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, mockCarrier));
-        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, mockFormat, null));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(null, testFormat, testCarrier));
+        Assert.Throws<InvalidCastException>(() => shim.Inject(new TestSpanContext(), testFormat, testCarrier));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, testCarrier));
+        Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, testFormat, null));
     }
 
     [Fact]
@@ -97,12 +97,11 @@ public class TracerShimTests
     public void Extract_UnknownFormatIgnored()
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
-
-        var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
+        _ = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
         // Only two specific types of ITextMap are supported, and neither is a Mock.
         var mockCarrier = new TestTextMap();
-        var context = shim.Extract(new TestFormatTextMap(), mockCarrier);
+        _ = shim.Extract(new TestFormatTextMap(), mockCarrier);
 
         // Verify that the carrier mock was never called.
         Assert.False(mockCarrier.SetCalled);
