@@ -145,16 +145,16 @@ public class SelfDiagnosticsEventListenerTest
     public void SelfDiagnosticsEventListener_EmitEvent_CaptureAsConfigured()
     {
         // Arrange
-        var configRefresherMock = new TestSelfDiagnosticsConfigRefresher();
         var memoryMappedFile = MemoryMappedFile.CreateFromFile(LOGFILEPATH, FileMode.Create, null, 1024);
         Stream stream = memoryMappedFile.CreateViewStream();
-        var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresherMock);
+        var configRefresher = new TestSelfDiagnosticsConfigRefresher(stream);
+        _ = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
 
         // Act: emit an event with severity equal to configured
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
 
         // Assert
-        Assert.True(configRefresherMock.TryGetLogStreamCalled);
+        Assert.True(configRefresher.TryGetLogStreamCalled);
         stream.Dispose();
         memoryMappedFile.Dispose();
 
