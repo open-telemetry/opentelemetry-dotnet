@@ -26,7 +26,7 @@ internal sealed class CustomTextMapPropagator : TextMapPropagator
     public Dictionary<string, Func<PropagationContext, string>> InjectValues = [];
     private static readonly PropagationContext DefaultPropagationContext = default;
 
-    public event EventHandler<PropagationContextEventArgs> Injected;
+    public Action<PropagationContext> Injected { get; set; }
 
     public override ISet<string> Fields => null;
 
@@ -52,6 +52,6 @@ internal sealed class CustomTextMapPropagator : TextMapPropagator
             setter(carrier, kv.Key, kv.Value.Invoke(context));
         }
 
-        this.Injected?.Invoke(this, new PropagationContextEventArgs(context));
+        this.Injected?.Invoke(context);
     }
 }

@@ -219,13 +219,10 @@ public partial class HttpWebRequestTests : IDisposable
         ActivityContext parentContext = default;
         ActivityContext contextFromPropagator = default;
 
-        void Propagator_Injected(object sender, PropagationContextEventArgs e)
+        var propagator = new CustomTextMapPropagator
         {
-            contextFromPropagator = e.Context.ActivityContext;
-        }
-
-        var propagator = new CustomTextMapPropagator();
-        propagator.Injected += Propagator_Injected;
+            Injected = (PropagationContext context) => contextFromPropagator = context.ActivityContext,
+        };
         propagator.InjectValues.Add("custom_traceParent", context => $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
         propagator.InjectValues.Add("custom_traceState", context => Activity.Current.TraceStateString);
 
