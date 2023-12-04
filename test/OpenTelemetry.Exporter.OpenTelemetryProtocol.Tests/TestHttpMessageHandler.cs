@@ -1,4 +1,4 @@
-// <copyright file="MockHttpMessageHandler.cs" company="OpenTelemetry Authors">
+// <copyright file="TestHttpMessageHandler.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,15 @@
 using System.Net.Http;
 #endif
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Mock;
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-internal class MockHttpMessageHandler : HttpMessageHandler
+internal class TestHttpMessageHandler : HttpMessageHandler
 {
     public HttpRequestMessage HttpRequestMessage { get; private set; }
 
     public byte[] HttpRequestContent { get; private set; }
 
-    public virtual HttpResponseMessage MockSend(HttpRequestMessage request, CancellationToken cancellationToken)
+    public virtual HttpResponseMessage InternalSend(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         this.HttpRequestMessage = request;
         this.HttpRequestContent = request.Content.ReadAsByteArrayAsync().Result;
@@ -36,12 +36,12 @@ internal class MockHttpMessageHandler : HttpMessageHandler
 #if NET6_0_OR_GREATER
     protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        return this.MockSend(request, cancellationToken);
+        return this.InternalSend(request, cancellationToken);
     }
 #endif
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(this.MockSend(request, cancellationToken));
+        return Task.FromResult(this.InternalSend(request, cancellationToken));
     }
 }

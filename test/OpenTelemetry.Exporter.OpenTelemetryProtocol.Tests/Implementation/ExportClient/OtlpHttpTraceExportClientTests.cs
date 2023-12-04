@@ -20,7 +20,6 @@ using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Mock;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -93,7 +92,7 @@ public class OtlpHttpTraceExportClientTests
             Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
         };
 
-        var httpHandlerMock = new MockHttpMessageHandler();
+        var httpHandlerMock = new TestHttpMessageHandler();
 
         var httpRequestContent = Array.Empty<byte>();
 

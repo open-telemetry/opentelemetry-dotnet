@@ -23,7 +23,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Mock;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -588,7 +587,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
     {
         // Arrange.
-        var fakeExportClient = new MockExportClient<OtlpCollector.ExportLogsServiceRequest>();
+        var fakeExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
@@ -608,7 +607,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportClientThrowsException_ReturnsExportResultFailure()
     {
         // Arrange.
-        var fakeExportClient = new MockExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
+        var fakeExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
@@ -628,7 +627,7 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportIsSuccessful_ReturnsExportResultSuccess()
     {
         // Arrange.
-        var fakeExportClient = new MockExportClient<OtlpCollector.ExportLogsServiceRequest>();
+        var fakeExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
