@@ -17,7 +17,6 @@
 using System.Collections;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Shims.OpenTracing.Tests.Mock;
 using OpenTelemetry.Trace;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -61,11 +60,11 @@ public class TracerShimTests
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
-        var mockFormat = new MockFormatTextMap();
-        var mockCarrier = new MockTextMap();
+        var mockFormat = new TestFormatTextMap();
+        var mockCarrier = new TestTextMap();
 
         Assert.Throws<ArgumentNullException>(() => shim.Inject(null, mockFormat, mockCarrier));
-        Assert.Throws<InvalidCastException>(() => shim.Inject(new MockSpanContext(), mockFormat, mockCarrier));
+        Assert.Throws<InvalidCastException>(() => shim.Inject(new TestSpanContext(), mockFormat, mockCarrier));
         Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, mockCarrier));
         Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, mockFormat, null));
     }
@@ -78,8 +77,8 @@ public class TracerShimTests
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded));
 
         // Only two specific types of ITextMap are supported, and neither is a Mock.
-        var mockCarrier = new MockTextMap();
-        shim.Inject(spanContextShim, new MockFormatTextMap(), mockCarrier);
+        var mockCarrier = new TestTextMap();
+        shim.Inject(spanContextShim, new TestFormatTextMap(), mockCarrier);
 
         // Verify that the carrier mock was never called.
         Assert.False(mockCarrier.SetCalled);
@@ -90,8 +89,8 @@ public class TracerShimTests
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
-        Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new MockTextMap()));
-        Assert.Throws<ArgumentNullException>(() => shim.Extract(new MockFormatTextMap(), null));
+        Assert.Throws<ArgumentNullException>(() => shim.Extract(null, new TestTextMap()));
+        Assert.Throws<ArgumentNullException>(() => shim.Extract(new TestFormatTextMap(), null));
     }
 
     [Fact]
@@ -102,8 +101,8 @@ public class TracerShimTests
         var spanContextShim = new SpanContextShim(new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None));
 
         // Only two specific types of ITextMap are supported, and neither is a Mock.
-        var mockCarrier = new MockTextMap();
-        var context = shim.Extract(new MockFormatTextMap(), mockCarrier);
+        var mockCarrier = new TestTextMap();
+        var context = shim.Extract(new TestFormatTextMap(), mockCarrier);
 
         // Verify that the carrier mock was never called.
         Assert.False(mockCarrier.SetCalled);
@@ -114,7 +113,8 @@ public class TracerShimTests
     {
         var shim = new TracerShim(TracerProvider.Default, new TraceContextPropagator());
 
-        var mockCarrier = new MockTextMap();
+        var mockCarrier = new TestTextMap();
+
         // The ProxyTracer uses OpenTelemetry.Context.Propagation.TraceContextPropagator, so we need to satisfy the traceparent key at the least
         mockCarrier.Items["traceparent"] = "unused";
 

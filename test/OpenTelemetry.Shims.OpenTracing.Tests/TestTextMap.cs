@@ -1,4 +1,4 @@
-// <copyright file="MockTextMap.cs" company="OpenTelemetry Authors">
+// <copyright file="TestTextMap.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,16 +17,17 @@
 using System.Collections;
 using OpenTracing.Propagation;
 
-namespace OpenTelemetry.Shims.OpenTracing.Tests.Mock;
+namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
-internal class MockTextMap : ITextMap
+internal class TestTextMap : ITextMap
 {
     public bool GetEnumeratorCalled { get; private set; }
+
     public bool SetCalled { get; private set; }
 
-#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
-    public Dictionary<string, string> Items { get; } = [];
-#pragma warning restore SA1010 // Opening square brackets should be spaced correctly
+#pragma warning disable IDE0028 // Simplify collection initialization
+    public Dictionary<string, string> Items { get; } = new();
+#pragma warning restore IDE0028 // Simplify collection initialization
 
     public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
     {

@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using OpenTelemetry.Shims.OpenTracing.Tests.Mock;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -56,7 +55,7 @@ public class ScopeManagerShimTests
     {
         var shim = new ScopeManagerShim();
 
-        Assert.Throws<InvalidCastException>(() => shim.Activate(new MockSpan(), true));
+        Assert.Throws<InvalidCastException>(() => shim.Activate(new TestSpan(), true));
     }
 
     [Fact]

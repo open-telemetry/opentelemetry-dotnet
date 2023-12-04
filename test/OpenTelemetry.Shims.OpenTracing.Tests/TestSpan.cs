@@ -1,4 +1,4 @@
-// <copyright file="MockSpan.cs" company="OpenTelemetry Authors">
+// <copyright file="TestSpan.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,9 @@
 using OpenTracing;
 using OpenTracing.Tag;
 
-namespace OpenTelemetry.Shims.OpenTracing.Tests.Mock;
+namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
-internal class MockSpan : ISpan
+internal class TestSpan : ISpan
 {
     public ISpanContext Context => throw new NotImplementedException();
 
