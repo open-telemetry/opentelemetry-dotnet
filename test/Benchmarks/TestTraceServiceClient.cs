@@ -1,4 +1,4 @@
-// <copyright file="MockTraceServiceClient.cs" company="OpenTelemetry Authors">
+// <copyright file="TestTraceServiceClient.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@ extern alias OpenTelemetryProtocol;
 using Grpc.Core;
 using OpenTelemetryProtocol::OpenTelemetry.Proto.Collector.Trace.V1;
 
-namespace Benchmarks.Mock;
+namespace Benchmarks;
 
-internal class MockTraceServiceClient : TraceService.TraceServiceClient
+internal class TestTraceServiceClient : TraceService.TraceServiceClient
 {
     public override ExportTraceServiceResponse Export(ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
     {

@@ -19,7 +19,6 @@ extern alias OpenTelemetryProtocol;
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
-using Benchmarks.Mock;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
@@ -47,7 +46,7 @@ public class OtlpGrpcExporterBenchmarks
         this.exporter = new OtlpTraceExporter(
             options,
             new SdkLimitOptions(),
-            new OtlpGrpcTraceExportClient(options, new MockTraceServiceClient()));
+            new OtlpGrpcTraceExportClient(options, new TestTraceServiceClient()));
 
         this.activity = ActivityHelper.CreateTestActivity();
         this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
