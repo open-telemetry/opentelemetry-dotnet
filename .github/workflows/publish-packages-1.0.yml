@@ -24,7 +24,7 @@ jobs:
         ref: ${{ github.ref || 'main' }}
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: dotnet restore
       run: dotnet restore OpenTelemetry.proj -p:RunningDotNetPack=true
