@@ -517,13 +517,10 @@ public partial class GrpcTests
             using var source = new ActivitySource("test-source");
 
             bool isPropagatorCalled = false;
-            var propagator = new CustomTextMapPropagator();
-            propagator.Injected += Propagator_Injected;
-
-            void Propagator_Injected(object sender, PropagationContextEventArgs e)
+            var propagator = new CustomTextMapPropagator
             {
-                isPropagatorCalled = true;
-            }
+                Injected = (context) => isPropagatorCalled = true,
+            };
 
             Sdk.SetDefaultTextMapPropagator(propagator);
 
@@ -576,12 +573,7 @@ public partial class GrpcTests
 
             bool isPropagatorCalled = false;
             var propagator = new CustomTextMapPropagator();
-            propagator.Injected += Propagator_Injected;
-
-            void Propagator_Injected(object sender, PropagationContextEventArgs e)
-            {
-                isPropagatorCalled = true;
-            }
+            propagator.Injected = (context) => isPropagatorCalled = true;
 
             Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
             {
