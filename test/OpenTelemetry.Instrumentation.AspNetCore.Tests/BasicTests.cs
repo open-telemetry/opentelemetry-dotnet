@@ -204,9 +204,11 @@ public sealed class BasicTests
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
-            var propagator = new CustomTextMapPropagator();
-            propagator.ExtractValues.Add(expectedTraceId.ToString());
-            propagator.ExtractValues.Add(expectedSpanId.ToString());
+            var propagator = new CustomTextMapPropagator
+            {
+                TraceId = expectedTraceId,
+                SpanId = expectedSpanId,
+            };
 
             // Arrange
             using (var testFactory = this.factory

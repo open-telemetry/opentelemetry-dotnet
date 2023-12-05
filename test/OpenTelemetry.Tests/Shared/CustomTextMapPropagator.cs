@@ -21,23 +21,30 @@ namespace OpenTelemetry.Tests;
 
 internal sealed class CustomTextMapPropagator : TextMapPropagator
 {
-#pragma warning disable SA1010
-    public List<string> ExtractValues = [];
-    public Dictionary<string, Func<PropagationContext, string>> InjectValues = [];
     private static readonly PropagationContext DefaultPropagationContext = default;
 
-    public event EventHandler<PropagationContextEventArgs> Injected;
+    public ActivityTraceId TraceId { get; set; }
+
+    public ActivitySpanId SpanId { get; set; }
+
+    public Action<PropagationContext> Injected { get; set; }
 
     public override ISet<string> Fields => null;
 
+#pragma warning disable SA1010
+#pragma warning disable SA1201 // Elements should appear in the correct order
+    public Dictionary<string, Func<PropagationContext, string>> InjectValues;
+#pragma warning restore SA1201 // Elements should appear in the correct order
+#pragma warning restore SA1010
+
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
     {
-        if (this.ExtractValues.Count == 2)
+        if (this.TraceId != default && this.SpanId != default)
         {
             return new PropagationContext(
                 new ActivityContext(
-                    ActivityTraceId.CreateFromString(this.ExtractValues[0].ToCharArray()),
-                    ActivitySpanId.CreateFromString(this.ExtractValues[1].ToCharArray()),
+                    this.TraceId,
+                    this.SpanId,
                     ActivityTraceFlags.Recorded),
                 default);
         }
@@ -52,6 +59,6 @@ internal sealed class CustomTextMapPropagator : TextMapPropagator
             setter(carrier, kv.Key, kv.Value.Invoke(context));
         }
 
-        this.Injected?.Invoke(this, new PropagationContextEventArgs(context));
+        this.Injected?.Invoke(context);
     }
 }
