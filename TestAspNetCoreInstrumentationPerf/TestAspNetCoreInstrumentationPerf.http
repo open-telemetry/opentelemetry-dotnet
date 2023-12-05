@@ -1,0 +1,6 @@
+@TestAspNetCoreInstrumentationPerf_HostAddress = http://localhost:5203
+
+GET {{TestAspNetCoreInstrumentationPerf_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
