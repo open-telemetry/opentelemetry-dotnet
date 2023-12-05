@@ -92,11 +92,11 @@ public class OtlpHttpTraceExportClientTests
             Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
         };
 
-        var httpHandlerMock = new TestHttpMessageHandler();
+        var testHttpHandler = new TestHttpMessageHandler();
 
         var httpRequestContent = Array.Empty<byte>();
 
-        var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(httpHandlerMock));
+        var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(testHttpHandler));
 
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         if (includeServiceNameInResource)
@@ -145,7 +145,7 @@ public class OtlpHttpTraceExportClientTests
             // Act
             var result = exportClient.SendExportRequest(request);
 
-            var httpRequest = httpHandlerMock.HttpRequestMessage;
+            var httpRequest = testHttpHandler.HttpRequestMessage;
 
             // Assert
             Assert.True(result);
@@ -161,11 +161,11 @@ public class OtlpHttpTraceExportClientTests
                 Assert.Contains(httpRequest.Headers, entry => entry.Key == OtlpExporterOptions.StandardHeaders[i].Key && entry.Value.First() == OtlpExporterOptions.StandardHeaders[i].Value);
             }
 
-            Assert.NotNull(httpHandlerMock.HttpRequestContent);
+            Assert.NotNull(testHttpHandler.HttpRequestContent);
             Assert.IsType<OtlpHttpTraceExportClient.ExportRequestContent>(httpRequest.Content);
             Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpTraceExportClient.MediaContentType);
 
-            var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(httpHandlerMock.HttpRequestContent);
+            var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(testHttpHandler.HttpRequestContent);
             Assert.NotNull(exportTraceRequest);
             Assert.Single(exportTraceRequest.ResourceSpans);
 
