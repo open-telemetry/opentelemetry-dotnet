@@ -1,4 +1,4 @@
-// <copyright file="MetricBehaviors.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricPointBehaviors.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,40 +19,19 @@
 namespace OpenTelemetry.Metrics;
 
 [Flags]
-internal enum MetricBehaviors
+internal enum MetricPointBehaviors
 {
 #pragma warning disable SA1602 // Enumeration items should be documented
     None = 0,
     Long = 1,
     Double = 1 << 1,
-    Sum = 1 << 2,
+    Counter = 1 << 2,
     Gauge = 1 << 3,
-    Cumulative = 1 << 4,
-    Delta = 1 << 5,
-    Histogram = 1 << 6,
+    CumulativeAggregation = 1 << 4,
+    DeltaAggregation = 1 << 5,
+    HistogramAggregation = 1 << 6,
     HistogramRecordMinMax = 1 << 7,
     HistogramWithoutBuckets = 1 << 8,
     HistogramWithExponentialBuckets = 1 << 9,
-    OfferExemplar = 1 << 10,
 #pragma warning restore SA1602 // Enumeration items should be documented
-}
-
-internal interface IDeltaMetricBehavior
-{
-}
-
-internal interface IHistogramWithoutBucketsMetricBehavior
-{
-}
-
-internal interface IHistogramRecordMinMaxMetricBehavior
-{
-}
-
-internal interface IHistogramWithExponentialBucketsMetricBehavior
-{
-}
-
-internal interface IOfferExemplarMetricBehavior
-{
 }

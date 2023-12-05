@@ -20,59 +20,114 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class MetricState
 {
-    private MetricState()
+    public readonly Action CompleteMeasurement;
+
+    public readonly RecordMeasurementAction<long> RecordMeasurementLong;
+    public readonly RecordMeasurementAction<double> RecordMeasurementDouble;
+
+    private MetricState(
+        Action completeMeasurement,
+        RecordMeasurementAction<long> recordMeasurementLong,
+        RecordMeasurementAction<double> recordMeasurementDouble)
     {
+        this.CompleteMeasurement = completeMeasurement;
+        this.RecordMeasurementLong = recordMeasurementLong;
+        this.RecordMeasurementDouble = recordMeasurementDouble;
     }
 
     internal delegate void RecordMeasurementAction<T>(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
-
-    public required Action CompleteMeasurement { get; init; }
-
-    public required RecordMeasurementAction<long> RecordLongMeasurement { get; init; }
-
-    public required RecordMeasurementAction<double> RecordDoubleMeasurement { get; init; }
 
     public static MetricState BuildForSingleMetric(
         Metric metric)
     {
         Debug.Assert(metric != null, "metric was null");
+        Debug.Assert(metric!.AggregatorStore != null, "aggregatorStore was null");
 
-        return new()
-        {
-            CompleteMeasurement = () => MetricReader.DeactivateMetric(metric),
-            RecordLongMeasurement = metric!.AggregatorStore.RecordMeasurement,
-            RecordDoubleMeasurement = metric.AggregatorStore.RecordMeasurement,
-        };
+        var aggregatorStore = metric!.AggregatorStore!;
+
+        var measurementHandler = GetMeasurementHandler(aggregatorStore);
+
+        var recordMeasurementLong = measurementHandler.RecordMeasurement<long>;
+        var recordMeasurementDouble = measurementHandler.RecordMeasurement<double>;
+
+        return new(
+            completeMeasurement: () => MetricReader.DeactivateMetric(metric),
+            recordMeasurementLong: (v, t) => recordMeasurementLong(aggregatorStore, v, t),
+            recordMeasurementDouble: (v, t) => recordMeasurementDouble(aggregatorStore!, v, t));
     }
 
     public static MetricState BuildForMetricList(
         List<Metric> metrics)
     {
         Debug.Assert(metrics != null, "metrics was null");
+        Debug.Assert(!metrics.Any(m => m == null), "metrics contained null elements");
 
-        return new()
+        var metricHandlers = metrics.Select(m =>
         {
-            CompleteMeasurement = () =>
+            Debug.Assert(m.AggregatorStore != null, "aggregatorStore was null");
+
+            var aggregatorStore = m!.AggregatorStore!;
+
+            var measurementHandler = GetMeasurementHandler(aggregatorStore);
+
+            var recordMeasurementLong = measurementHandler.RecordMeasurement<long>;
+            var recordMeasurementDouble = measurementHandler.RecordMeasurement<double>;
+
+            return new
             {
-                foreach (var metric in metrics!)
+                Metric = m,
+                AggregatorStore = aggregatorStore,
+                RecordMeasurementLong = recordMeasurementLong,
+                RecordMeasurementDouble = recordMeasurementDouble,
+            };
+        }).ToArray();
+
+        return new(
+            completeMeasurement: () =>
+            {
+                for (int i = 0; i < metricHandlers.Length; i++)
                 {
-                    MetricReader.DeactivateMetric(metric);
+                    var h = metricHandlers[i];
+
+                    MetricReader.DeactivateMetric(h.Metric);
                 }
             },
-            RecordLongMeasurement = (v, t) =>
+            recordMeasurementLong: (v, t) =>
             {
-                foreach (var metric in metrics!)
+                for (int i = 0; i < metricHandlers.Length; i++)
                 {
-                    metric.AggregatorStore.RecordMeasurement(v, t);
+                    var h = metricHandlers[i];
+
+                    h.RecordMeasurementLong(
+                        h.AggregatorStore,
+                        v,
+                        t);
                 }
             },
-            RecordDoubleMeasurement = (v, t) =>
+            recordMeasurementDouble: (v, t) =>
             {
-                foreach (var metric in metrics!)
+                for (int i = 0; i < metricHandlers.Length; i++)
                 {
-                    metric.AggregatorStore.RecordMeasurement(v, t);
+                    var h = metricHandlers[i];
+
+                    h.RecordMeasurementDouble(
+                        h.AggregatorStore,
+                        v,
+                        t);
                 }
-            },
-        };
+            });
+    }
+
+    private static IMetricMeasurementHandler GetMeasurementHandler(AggregatorStore aggregatorStore)
+    {
+        if (!MetricMeasurementHandlerHelper.TryFindMeasurementHandlerForBehaviors(
+            aggregatorStore.AggregatorBehaviors,
+            aggregatorStore.MetricBehaviors,
+            out var measurementHandler))
+        {
+            throw new NotSupportedException($"A measurement handler could not be found for '{aggregatorStore.AggregatorBehaviors}' and '{aggregatorStore.MetricBehaviors}' behaviors.");
+        }
+
+        return measurementHandler;
     }
 }

@@ -78,15 +78,15 @@ public struct MetricPoint
         var metricBehaviors = aggregatorStore.MetricBehaviors;
 
         ExemplarReservoir? reservoir = null;
-        if (metricBehaviors.HasFlag(MetricBehaviors.Histogram))
+        if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramAggregation))
         {
             this.OptionalComponents = new MetricPointOptionalComponents();
 
-            if (metricBehaviors.HasFlag(MetricBehaviors.HistogramWithExponentialBuckets))
+            if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramWithExponentialBuckets))
             {
                 this.OptionalComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
             }
-            else if (!metricBehaviors.HasFlag(MetricBehaviors.HistogramWithoutBuckets))
+            else if (!metricBehaviors.HasFlag(MetricPointBehaviors.HistogramWithoutBuckets))
             {
                 this.OptionalComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
                 if (aggregatorStore!.IsExemplarEnabled())
@@ -147,7 +147,7 @@ public struct MetricPoint
         set;
     }
 
-    internal readonly MetricBehaviors MetricBehaviors => this.aggregatorStore.MetricBehaviors;
+    internal readonly MetricPointBehaviors MetricBehaviors => this.aggregatorStore.MetricBehaviors;
 
     internal readonly AggregationType AggregationType => this.aggregatorStore.AggregationType;
 
@@ -163,7 +163,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly long GetSumLong()
     {
-        if (!this.MetricBehaviors.HasFlag(MetricBehaviors.Long | MetricBehaviors.Sum))
+        if (!this.MetricBehaviors.HasFlag(MetricPointBehaviors.Long | MetricPointBehaviors.Counter))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetSumLong));
         }
@@ -181,7 +181,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly double GetSumDouble()
     {
-        if (!this.MetricBehaviors.HasFlag(MetricBehaviors.Double | MetricBehaviors.Sum))
+        if (!this.MetricBehaviors.HasFlag(MetricPointBehaviors.Double | MetricPointBehaviors.Counter))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetSumDouble));
         }
@@ -199,7 +199,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly long GetGaugeLastValueLong()
     {
-        if (!this.MetricBehaviors.HasFlag(MetricBehaviors.Long | MetricBehaviors.Gauge))
+        if (!this.MetricBehaviors.HasFlag(MetricPointBehaviors.Long | MetricPointBehaviors.Gauge))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetGaugeLastValueLong));
         }
@@ -217,7 +217,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly double GetGaugeLastValueDouble()
     {
-        if (!this.MetricBehaviors.HasFlag(MetricBehaviors.Double | MetricBehaviors.Gauge))
+        if (!this.MetricBehaviors.HasFlag(MetricPointBehaviors.Double | MetricPointBehaviors.Gauge))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetGaugeLastValueDouble));
         }
@@ -235,7 +235,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly long GetHistogramCount()
     {
-        if (!this.MetricBehaviors.HasFlag(MetricBehaviors.Histogram))
+        if (!this.MetricBehaviors.HasFlag(MetricPointBehaviors.HistogramAggregation))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
         }
@@ -255,11 +255,11 @@ public struct MetricPoint
     {
         var metricBehaviors = this.MetricBehaviors;
 
-        if (metricBehaviors.HasFlag(MetricBehaviors.Histogram))
+        if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramAggregation))
         {
             Debug.Assert(this.OptionalComponents != null, "OptionalComponents was null");
 
-            if (metricBehaviors.HasFlag(MetricBehaviors.HistogramWithExponentialBuckets))
+            if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramWithExponentialBuckets))
             {
                 Debug.Assert(
                     this.OptionalComponents!.Base2ExponentialBucketHistogram != null,
@@ -295,8 +295,8 @@ public struct MetricPoint
     {
         var metricBehaviors = this.MetricBehaviors;
 
-        if (!metricBehaviors.HasFlag(MetricBehaviors.Histogram)
-            || metricBehaviors.HasFlag(MetricBehaviors.HistogramWithExponentialBuckets))
+        if (!metricBehaviors.HasFlag(MetricPointBehaviors.HistogramAggregation)
+            || metricBehaviors.HasFlag(MetricPointBehaviors.HistogramWithExponentialBuckets))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
         }
@@ -316,7 +316,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ExponentialHistogramData GetExponentialHistogramData()
     {
-        if (!this.MetricBehaviors.HasFlag(MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets))
+        if (!this.MetricBehaviors.HasFlag(MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithExponentialBuckets))
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
         }
@@ -337,11 +337,11 @@ public struct MetricPoint
     {
         var metricBehaviors = this.MetricBehaviors;
 
-        if (metricBehaviors.HasFlag(MetricBehaviors.Histogram | MetricBehaviors.HistogramRecordMinMax))
+        if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramRecordMinMax))
         {
             Debug.Assert(this.OptionalComponents != null, "OptionalComponents was null");
 
-            if (metricBehaviors.HasFlag(MetricBehaviors.HistogramWithExponentialBuckets))
+            if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramWithExponentialBuckets))
             {
                 Debug.Assert(this.OptionalComponents!.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 

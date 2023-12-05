@@ -64,7 +64,7 @@ public sealed class Metric
     {
         this.InstrumentIdentity = instrumentIdentity;
 
-        MetricBehaviors metricBehaviors;
+        MetricPointBehaviors metricBehaviors;
         AggregationType aggType;
         if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableCounter<int>)
@@ -73,7 +73,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingCumulative;
             this.MetricType = MetricType.LongSum;
-            metricBehaviors = MetricBehaviors.Long | MetricBehaviors.Sum | MetricBehaviors.Cumulative;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Counter | MetricPointBehaviors.CumulativeAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Counter<long>)
             || instrumentIdentity.InstrumentType == typeof(Counter<int>)
@@ -82,21 +82,21 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingDelta;
             this.MetricType = MetricType.LongSum;
-            metricBehaviors = MetricBehaviors.Long | MetricBehaviors.Sum | MetricBehaviors.Delta;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Counter | MetricPointBehaviors.DeltaAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Counter<double>)
             || instrumentIdentity.InstrumentType == typeof(Counter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingDelta;
             this.MetricType = MetricType.DoubleSum;
-            metricBehaviors = MetricBehaviors.Double | MetricBehaviors.Sum | MetricBehaviors.Delta;
+            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.Counter | MetricPointBehaviors.DeltaAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableCounter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingCumulative;
             this.MetricType = MetricType.DoubleSum;
-            metricBehaviors = MetricBehaviors.Double | MetricBehaviors.Sum | MetricBehaviors.Cumulative;
+            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.Counter | MetricPointBehaviors.CumulativeAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<int>)
@@ -105,7 +105,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingCumulative;
             this.MetricType = MetricType.LongSumNonMonotonic;
-            metricBehaviors = MetricBehaviors.Long | MetricBehaviors.Sum | MetricBehaviors.Cumulative;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Counter | MetricPointBehaviors.CumulativeAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<long>)
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<int>)
@@ -114,28 +114,28 @@ public sealed class Metric
         {
             aggType = AggregationType.LongSumIncomingDelta;
             this.MetricType = MetricType.LongSumNonMonotonic;
-            metricBehaviors = MetricBehaviors.Long | MetricBehaviors.Sum | MetricBehaviors.Delta;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Counter | MetricPointBehaviors.DeltaAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingDelta;
             this.MetricType = MetricType.DoubleSumNonMonotonic;
-            metricBehaviors = MetricBehaviors.Double | MetricBehaviors.Sum | MetricBehaviors.Delta;
+            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.Counter | MetricPointBehaviors.DeltaAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<float>))
         {
             aggType = AggregationType.DoubleSumIncomingCumulative;
             this.MetricType = MetricType.DoubleSumNonMonotonic;
-            metricBehaviors = MetricBehaviors.Long | MetricBehaviors.Sum | MetricBehaviors.Cumulative;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Counter | MetricPointBehaviors.CumulativeAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<float>))
         {
             aggType = AggregationType.DoubleGauge;
             this.MetricType = MetricType.DoubleGauge;
-            metricBehaviors = MetricBehaviors.Double | MetricBehaviors.Gauge;
+            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.Gauge;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<int>)
@@ -144,7 +144,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
-            metricBehaviors = MetricBehaviors.Long | MetricBehaviors.Gauge;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Gauge;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
@@ -172,20 +172,20 @@ public sealed class Metric
                 aggType = histogramRecordMinMax ? AggregationType.Base2ExponentialHistogramWithMinMax : AggregationType.Base2ExponentialHistogram;
             }
 
-            metricBehaviors = MetricBehaviors.Double | MetricBehaviors.Histogram;
+            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.HistogramAggregation;
 
             if (exponentialMaxSize != 0)
             {
-                metricBehaviors |= MetricBehaviors.HistogramWithExponentialBuckets;
+                metricBehaviors |= MetricPointBehaviors.HistogramWithExponentialBuckets;
             }
             else if (explicitBucketBounds != null && explicitBucketBounds.Length == 0)
             {
-                metricBehaviors |= MetricBehaviors.HistogramWithoutBuckets;
+                metricBehaviors |= MetricPointBehaviors.HistogramWithoutBuckets;
             }
 
             if (histogramRecordMinMax)
             {
-                metricBehaviors |= MetricBehaviors.HistogramRecordMinMax;
+                metricBehaviors |= MetricPointBehaviors.HistogramRecordMinMax;
             }
         }
         else

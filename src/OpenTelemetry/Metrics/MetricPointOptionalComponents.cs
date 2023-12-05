@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Runtime.CompilerServices;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -52,6 +54,7 @@ internal sealed class MetricPointOptionalComponents
         return copy;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AcquireLock()
     {
         var sw = default(SpinWait);
@@ -61,6 +64,7 @@ internal sealed class MetricPointOptionalComponents
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReleaseLock()
     {
         Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);

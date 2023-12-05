@@ -466,7 +466,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             return;
         }
 
-        metricState.RecordLongMeasurement(value, tags);
+        metricState.RecordMeasurementLong(value, tags);
     }
 
     private static void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
@@ -477,6 +477,6 @@ internal sealed class MeterProviderSdk : MeterProvider
             return;
         }
 
-        metricState.RecordDoubleMeasurement(value, tags);
+        metricState.RecordMeasurementDouble(value, tags);
     }
 }

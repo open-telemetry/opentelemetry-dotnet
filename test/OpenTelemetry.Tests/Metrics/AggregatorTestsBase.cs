@@ -39,7 +39,7 @@ public abstract class AggregatorTestsBase
 
         this.aggregatorStore = new(
             MetricStreamIdentity,
-            MetricBehaviors.Histogram,
+            MetricPointBehaviors.HistogramAggregation,
             AggregationType.HistogramWithBuckets,
             AggregationTemporality.Cumulative,
             1024,
@@ -193,7 +193,7 @@ public abstract class AggregatorTestsBase
 
         AggregatorStore aggregatorStore = new(
             MetricStreamIdentity,
-            MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithoutBuckets,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -294,7 +294,7 @@ public abstract class AggregatorTestsBase
 
         AggregatorStore aggregatorStore = new(
             metricStreamIdentity,
-            MetricBehaviors.Histogram | MetricBehaviors.HistogramWithoutBuckets,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithoutBuckets,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -370,10 +370,10 @@ public abstract class AggregatorTestsBase
         var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
         var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
 
-        var metricBehaviors = MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets;
+        var metricBehaviors = MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithExponentialBuckets;
         if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
-            metricBehaviors |= MetricBehaviors.HistogramRecordMinMax;
+            metricBehaviors |= MetricPointBehaviors.HistogramRecordMinMax;
         }
 
         var aggregatorStore = new AggregatorStore(
@@ -489,7 +489,7 @@ public abstract class AggregatorTestsBase
 
         var aggregatorStore = new AggregatorStore(
             metricStreamIdentity,
-            MetricBehaviors.Histogram | MetricBehaviors.HistogramWithExponentialBuckets,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithExponentialBuckets,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -559,7 +559,7 @@ public abstract class AggregatorTestsBase
 
     private class ThreadArguments
     {
-        public MetricMeasurementHandler MeasurementHandler;
+        public IMetricMeasurementHandler MeasurementHandler;
         public MetricPoint HistogramPoint;
         public ManualResetEvent MreToEnsureAllThreadsStart;
         public int ThreadStartedCount;
