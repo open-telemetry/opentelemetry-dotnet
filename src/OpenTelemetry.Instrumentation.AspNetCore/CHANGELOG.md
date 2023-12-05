@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Added support for gRPC instrumentation under an experimental feature flag
+`OTEL_DOTNET_EXPERIMENTAL_ENABLE_GRPC_INSTRUMENTATION`. Note that the support
+  was removed in `1.6.0-rc.1` version of the package and versions released
+  before `1.6.0-rc.1` had gRPC instrumentation enabled by default. From now
+  onwards, gRPC instrumentation will only be enabled when
+  `OTEL_DOTNET_EXPERIMENTAL_ENABLE_GRPC_INSTRUMENTATION` is set to `True`. The
+  change is introduced in order to support stable release of `http`
+  instrumentation. Semantic conventions for RPC is still
+  [experimental](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/rpc)
+  and hence the package will only support it as an experimental feature.
+  ([#5130](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5130))
+
 ## 1.6.0-rc.1
 
 Released 2023-Dec-01
