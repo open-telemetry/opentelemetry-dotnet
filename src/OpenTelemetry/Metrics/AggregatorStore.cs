@@ -155,7 +155,8 @@ internal sealed class AggregatorStore
             this.AggregatorBehaviors |= MetricAggregatorBehaviors.SampleMeasurementAndOfferExemplar;
         }
 
-        if (this.ShouldReclaimUnusedMetricPoints)
+        if (this.AggregatorBehaviors.HasFlag(MetricAggregatorBehaviors.DeltaTemporality)
+            && this.ShouldReclaimUnusedMetricPoints)
         {
             this.AggregatorBehaviors |= MetricAggregatorBehaviors.ReclaimMetricPoints;
         }

@@ -204,6 +204,39 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     internal MetricReader? Reader => this.reader;
 
+    internal static void MeasurementsCompleted(Instrument instrument, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            // todo: Log
+            return;
+        }
+
+        metricState.CompleteMeasurement();
+    }
+
+    internal static void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
+            return;
+        }
+
+        metricState.RecordMeasurementLong(value, tags);
+    }
+
+    internal static void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    {
+        if (state is not MetricState metricState)
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
+            return;
+        }
+
+        metricState.RecordMeasurementDouble(value, tags);
+    }
+
     internal object? InstrumentPublished(Instrument instrument, bool listeningIsManagedExternally)
     {
         var listenToInstrumentUsingSdkConfiguration = this.shouldListenTo(instrument);
@@ -341,11 +374,18 @@ internal sealed class MeterProviderSdk : MeterProvider
                 return null;
             }
         }
+#if DEBUG
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("SDK internal error occurred.", ex);
+        }
+#else
         catch (Exception)
         {
             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "SDK internal error occurred.", "Contact SDK owners.");
             return null;
         }
+#endif
     }
 
     internal void CollectObservableInstruments()
@@ -445,38 +485,5 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         base.Dispose(disposing);
-    }
-
-    private static void MeasurementsCompleted(Instrument instrument, object? state)
-    {
-        if (state is not MetricState metricState)
-        {
-            // todo: Log
-            return;
-        }
-
-        metricState.CompleteMeasurement();
-    }
-
-    private static void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        if (state is not MetricState metricState)
-        {
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
-            return;
-        }
-
-        metricState.RecordMeasurementLong(value, tags);
-    }
-
-    private static void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        if (state is not MetricState metricState)
-        {
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
-            return;
-        }
-
-        metricState.RecordMeasurementDouble(value, tags);
     }
 }

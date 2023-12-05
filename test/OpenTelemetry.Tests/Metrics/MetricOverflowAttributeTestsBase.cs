@@ -81,7 +81,7 @@ public abstract class MetricOverflowAttributeTestsBase
 
         var metric = exportedItems[0];
 
-        Assert.Equal(isEmitOverflowAttributeKeySet, metric.AggregatorStore.EmitOverflowAttribute);
+        Assert.Equal(isEmitOverflowAttributeKeySet, metric.AggregatorStore.AggregatorBehaviors.HasFlag(MetricAggregatorBehaviors.EmitOverflowAttribute));
     }
 
     [Theory]
@@ -119,7 +119,7 @@ public abstract class MetricOverflowAttributeTestsBase
 
         var metric = exportedItems[0];
 
-        Assert.Equal(isEmitOverflowAttributeKeySet, metric.AggregatorStore.EmitOverflowAttribute);
+        Assert.Equal(isEmitOverflowAttributeKeySet, metric.AggregatorStore.AggregatorBehaviors.HasFlag(MetricAggregatorBehaviors.EmitOverflowAttribute));
     }
 
     [Theory]
@@ -151,7 +151,7 @@ public abstract class MetricOverflowAttributeTestsBase
 
         var metric = exportedItems[0];
 
-        Assert.Equal(isEmitOverflowAttributeKeySet, metric.AggregatorStore.EmitOverflowAttribute);
+        Assert.Equal(isEmitOverflowAttributeKeySet, metric.AggregatorStore.AggregatorBehaviors.HasFlag(MetricAggregatorBehaviors.EmitOverflowAttribute));
     }
 
     [Theory]
@@ -211,6 +211,9 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(5, new KeyValuePair<string, object>("Key", 1998)); // Emit a metric to exceed the max MetricPoint limit
 
         meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+
         metric = exportedItems[0];
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
@@ -243,7 +246,11 @@ public abstract class MetricOverflowAttributeTestsBase
         }
 
         meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+
         metric = exportedItems[0];
+
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);
@@ -284,7 +291,11 @@ public abstract class MetricOverflowAttributeTestsBase
         counter.Add(25);
 
         meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+
         metric = exportedItems[0];
+
         foreach (ref readonly var mp in metric.GetMetricPoints())
         {
             metricPoints.Add(mp);

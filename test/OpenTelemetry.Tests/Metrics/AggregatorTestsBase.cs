@@ -39,7 +39,7 @@ public abstract class AggregatorTestsBase
 
         this.aggregatorStore = new(
             MetricStreamIdentity,
-            MetricPointBehaviors.HistogramAggregation,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double,
             AggregationType.HistogramWithBuckets,
             AggregationTemporality.Cumulative,
             1024,
@@ -52,40 +52,40 @@ public abstract class AggregatorTestsBase
     {
         var histogramPoint = new MetricPoint(this.aggregatorStore, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = this.aggregatorStore.MeasurementHandler;
+        var measurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore);
 
-        measurementHandler.RecordMeasurement(ref histogramPoint, -1, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 0, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 2, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 5, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 8, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 10, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 11, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 25, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 40, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 50, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 70, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 75, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 99, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 100, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 246, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 250, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 499, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 500, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 501, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 750, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 751, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 1000, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 1001, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 2500, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 2501, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 5000, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 5001, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 7500, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 7501, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 10000, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 10001, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 10000000, tags: default, isSampled: false);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, -1D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 0D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 2D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 5D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 8D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 11D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 25D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 40D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 50D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 70D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 75D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 99D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 100D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 246D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 250D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 499D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 500D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 501D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 750D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 751D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 1000D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 1001D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 2500D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 2501D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 5000D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 5001D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 7500D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 7501D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10000D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10001D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10000000D, tags: default);
         histogramPoint.TakeSnapshot(true);
 
         var count = histogramPoint.GetHistogramCount();
@@ -107,18 +107,18 @@ public abstract class AggregatorTestsBase
 
         var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = this.aggregatorStore.MeasurementHandler;
+        var measurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore);
 
         // 5 recordings <=10
-        measurementHandler.RecordMeasurement(ref histogramPoint, -10, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 0, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 1, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 9, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 10, tags: default, isSampled: false);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, -10D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 0D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 1D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 9D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10D, tags: default);
 
         // 2 recordings >10, <=20
-        measurementHandler.RecordMeasurement(ref histogramPoint, 11, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 19, tags: default, isSampled: false);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 11D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 19D, tags: default);
 
         histogramPoint.TakeSnapshot(true);
 
@@ -157,15 +157,15 @@ public abstract class AggregatorTestsBase
 
         var histogramPoint = new MetricPoint(this.aggregatorStore,  null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = this.aggregatorStore.MeasurementHandler;
+        var measurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore);
 
         // Act
-        measurementHandler.RecordMeasurement(ref histogramPoint, -1, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, boundaries[0], tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, boundaries[boundaries.Length - 1], tags: default, isSampled: false);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, -1D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, boundaries[0], tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, boundaries[boundaries.Length - 1], tags: default);
         for (var i = 0.5; i < boundaries.Length; i++)
         {
-            measurementHandler.RecordMeasurement(ref histogramPoint, i, tags: default, isSampled: false);
+            measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, i, tags: default);
         }
 
         histogramPoint.TakeSnapshot(true);
@@ -193,7 +193,7 @@ public abstract class AggregatorTestsBase
 
         AggregatorStore aggregatorStore = new(
             MetricStreamIdentity,
-            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithoutBuckets,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithoutBuckets,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -202,15 +202,15 @@ public abstract class AggregatorTestsBase
 
         var histogramPoint = new MetricPoint(aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = aggregatorStore.MeasurementHandler;
+        var measurementHandler = MetricState.GetMeasurementHandler(aggregatorStore);
 
-        measurementHandler.RecordMeasurement(ref histogramPoint, -10, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 0, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 1, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 9, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 10, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 11, tags: default, isSampled: false);
-        measurementHandler.RecordMeasurement(ref histogramPoint, 19, tags: default, isSampled: false);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, -10D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 0D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 1D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 9D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 10D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 11D, tags: default);
+        measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 19D, tags: default);
 
         histogramPoint.TakeSnapshot(true);
 
@@ -235,7 +235,8 @@ public abstract class AggregatorTestsBase
         var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
         var argsToThread = new ThreadArguments
         {
-            MeasurementHandler = this.aggregatorStore.MeasurementHandler,
+            AggregatorStore = this.aggregatorStore,
+            MeasurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore),
             HistogramPoint = histogramPoint,
             MreToEnsureAllThreadsStart = new ManualResetEvent(false),
         };
@@ -294,7 +295,7 @@ public abstract class AggregatorTestsBase
 
         AggregatorStore aggregatorStore = new(
             metricStreamIdentity,
-            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithoutBuckets,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithoutBuckets,
             AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
@@ -370,7 +371,7 @@ public abstract class AggregatorTestsBase
         var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
         var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
 
-        var metricBehaviors = MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithExponentialBuckets;
+        var metricBehaviors = MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithExponentialBuckets;
         if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             metricBehaviors |= MetricPointBehaviors.HistogramRecordMinMax;
@@ -386,11 +387,13 @@ public abstract class AggregatorTestsBase
             this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
+        var measurementHandler = MetricState.GetMeasurementHandler(aggregatorStore);
+
         var expectedHistogram = new Base2ExponentialBucketHistogram();
 
         foreach (var value in valuesToRecord)
         {
-            aggregatorStore.RecordMeasurement(value, tags: default);
+            measurementHandler.RecordMeasurement(aggregatorStore, value, tags: default);
 
             if (value >= 0)
             {
@@ -489,14 +492,16 @@ public abstract class AggregatorTestsBase
 
         var aggregatorStore = new AggregatorStore(
             metricStreamIdentity,
-            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.HistogramWithExponentialBuckets,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithExponentialBuckets,
             AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints);
 
-        aggregatorStore.RecordMeasurement(10, tags: default);
+        var measurementHandler = MetricState.GetMeasurementHandler(aggregatorStore);
+
+        measurementHandler.RecordMeasurement(aggregatorStore, 10D, tags: default);
 
         aggregatorStore.Snapshot();
 
@@ -551,7 +556,7 @@ public abstract class AggregatorTestsBase
 
         for (int i = 0; i < 10; ++i)
         {
-            args.MeasurementHandler.RecordMeasurement(ref args.HistogramPoint, 10, tags: default, isSampled: false);
+            args.MeasurementHandler.RecordMeasurementOnMetricPoint(args.AggregatorStore, ref args.HistogramPoint, 10D, tags: default);
         }
 
         Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
@@ -559,6 +564,7 @@ public abstract class AggregatorTestsBase
 
     private class ThreadArguments
     {
+        public AggregatorStore AggregatorStore;
         public IMetricMeasurementHandler MeasurementHandler;
         public MetricPoint HistogramPoint;
         public ManualResetEvent MreToEnsureAllThreadsStart;

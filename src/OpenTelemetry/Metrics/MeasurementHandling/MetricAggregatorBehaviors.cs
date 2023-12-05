@@ -1,4 +1,4 @@
-// <copyright file="IMetricMeasurementHandler.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricAggregatorBehaviors.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,17 @@
 
 namespace OpenTelemetry.Metrics;
 
-internal interface IMetricMeasurementHandler
+[Flags]
+internal enum MetricAggregatorBehaviors
 {
-    void RecordMeasurement<T>(
-        AggregatorStore aggregatorStore,
-        T value,
-        ReadOnlySpan<KeyValuePair<string, object?>> tags);
+#pragma warning disable SA1602 // Enumeration items should be documented
+    None = 0,
 
-    void RecordMeasurementOnMetricPoint<T>(
-        AggregatorStore aggregatorStore,
-        ref MetricPoint metricPoint,
-        T value,
-        ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    CumulativeTemporality = 1,
+    DeltaTemporality = 1 << 1,
+    EmitOverflowAttribute = 1 << 2,
+    FilterTags = 1 << 3,
+    SampleMeasurementAndOfferExemplar = 1 << 4,
+    ReclaimMetricPoints = 1 << 5,
+#pragma warning restore SA1602 // Enumeration items should be documented
 }

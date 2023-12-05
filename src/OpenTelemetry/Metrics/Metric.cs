@@ -135,7 +135,7 @@ public sealed class Metric
         {
             aggType = AggregationType.DoubleGauge;
             this.MetricType = MetricType.DoubleGauge;
-            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.Gauge;
+            metricBehaviors = MetricPointBehaviors.Double | MetricPointBehaviors.Gauge | MetricPointBehaviors.CumulativeAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<long>)
             || instrumentIdentity.InstrumentType == typeof(ObservableGauge<int>)
@@ -144,7 +144,7 @@ public sealed class Metric
         {
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
-            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Gauge;
+            metricBehaviors = MetricPointBehaviors.Long | MetricPointBehaviors.Gauge | MetricPointBehaviors.CumulativeAggregation;
         }
         else if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
             || instrumentIdentity.InstrumentType == typeof(Histogram<int>)

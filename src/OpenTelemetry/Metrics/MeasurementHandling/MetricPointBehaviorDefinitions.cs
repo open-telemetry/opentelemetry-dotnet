@@ -19,32 +19,32 @@ namespace OpenTelemetry.Metrics;
 internal static class MetricPointBehaviorDefinitions
 {
     [MetricPointBehaviors(MetricPointBehaviors.CumulativeAggregation | MetricPointBehaviors.Counter | MetricPointBehaviors.Long)]
-    public struct CumulativeSumLong
+    public struct CumulativeCounterLong
     {
     }
 
     [MetricPointBehaviors(MetricPointBehaviors.CumulativeAggregation | MetricPointBehaviors.Counter | MetricPointBehaviors.Double)]
-    public struct CumulativeSumDouble
+    public struct CumulativeCounterDouble
     {
     }
 
     [MetricPointBehaviors(MetricPointBehaviors.DeltaAggregation | MetricPointBehaviors.Counter | MetricPointBehaviors.Long)]
-    public struct DeltaSumLong
+    public struct DeltaCounterLong
     {
     }
 
     [MetricPointBehaviors(MetricPointBehaviors.DeltaAggregation | MetricPointBehaviors.Counter | MetricPointBehaviors.Double)]
-    public struct DeltaSumDouble
+    public struct DeltaCounterDouble
     {
     }
 
     [MetricPointBehaviors(MetricPointBehaviors.CumulativeAggregation | MetricPointBehaviors.Gauge | MetricPointBehaviors.Long)]
-    public struct GaugeLong
+    public struct CumulativeGaugeLong
     {
     }
 
     [MetricPointBehaviors(MetricPointBehaviors.CumulativeAggregation | MetricPointBehaviors.Gauge | MetricPointBehaviors.Double)]
-    public struct GaugeDouble
+    public struct CumulativeGaugeDouble
     {
     }
 

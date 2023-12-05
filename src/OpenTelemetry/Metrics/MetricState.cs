@@ -118,7 +118,7 @@ internal sealed class MetricState
             });
     }
 
-    private static IMetricMeasurementHandler GetMeasurementHandler(AggregatorStore aggregatorStore)
+    internal static IMetricMeasurementHandler GetMeasurementHandler(AggregatorStore aggregatorStore)
     {
         if (!MetricMeasurementHandlerHelper.TryFindMeasurementHandlerForBehaviors(
             aggregatorStore.AggregatorBehaviors,

@@ -1,4 +1,4 @@
-// <copyright file="IMetricMeasurementHandler.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricAggregatorBehaviorsAttribute.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,13 @@
 
 namespace OpenTelemetry.Metrics;
 
-internal interface IMetricMeasurementHandler
+[AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+internal sealed class MetricAggregatorBehaviorsAttribute : Attribute
 {
-    void RecordMeasurement<T>(
-        AggregatorStore aggregatorStore,
-        T value,
-        ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    public MetricAggregatorBehaviorsAttribute(MetricAggregatorBehaviors metricAggregatorBehaviors)
+    {
+        this.MetricAggregatorBehaviors = metricAggregatorBehaviors;
+    }
 
-    void RecordMeasurementOnMetricPoint<T>(
-        AggregatorStore aggregatorStore,
-        ref MetricPoint metricPoint,
-        T value,
-        ReadOnlySpan<KeyValuePair<string, object?>> tags);
+    public MetricAggregatorBehaviors MetricAggregatorBehaviors { get; }
 }
