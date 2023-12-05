@@ -31,11 +31,11 @@ internal sealed class CustomTextMapPropagator : TextMapPropagator
 
     public override ISet<string> Fields => null;
 
-#pragma warning disable SA1010
 #pragma warning disable SA1201 // Elements should appear in the correct order
-    public Dictionary<string, Func<PropagationContext, string>> InjectValues;
+#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
+    public Dictionary<string, Func<PropagationContext, string>> InjectValues = [];
+#pragma warning restore SA1010 // Opening square brackets should be spaced correctly
 #pragma warning restore SA1201 // Elements should appear in the correct order
-#pragma warning restore SA1010
 
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
     {
