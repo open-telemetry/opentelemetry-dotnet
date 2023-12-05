@@ -17,6 +17,7 @@ builder.Services.AddSwaggerGen();
 
 Console.WriteLine("EnableMetricInstrumentation: " + instrumentationOptions.EnableMetricInstrumentation);
 Console.WriteLine("EnableTraceInstrumentation: " + instrumentationOptions.EnableTraceInstrumentation);
+Console.WriteLine("EnableDiagnosticSourceSubscription: " + instrumentationOptions.EnableDiagnosticSourceSubscription);
 
 if (instrumentationOptions.EnableMetricInstrumentation)
 {
