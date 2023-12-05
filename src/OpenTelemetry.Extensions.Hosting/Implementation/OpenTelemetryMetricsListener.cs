@@ -68,7 +68,7 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
 
     public void MeasurementsCompleted(Instrument instrument, object? userState)
     {
-        this.meterProviderSdk.MeasurementsCompleted(instrument, userState);
+        MeterProviderSdk.MeasurementsCompleted(instrument, userState);
     }
 
     public void Initialize(IObservableInstrumentsSource source)
@@ -83,11 +83,11 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
 
     private void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
     {
-        this.meterProviderSdk.MeasurementRecordedDouble(instrument, value, tagsRos, userState);
+        MeterProviderSdk.MeasurementRecordedDouble(instrument, value, tagsRos, userState);
     }
 
     private void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object?>> tagsRos, object? userState)
     {
-        this.meterProviderSdk.MeasurementRecordedLong(instrument, value, tagsRos, userState);
+        MeterProviderSdk.MeasurementRecordedLong(instrument, value, tagsRos, userState);
     }
 }
