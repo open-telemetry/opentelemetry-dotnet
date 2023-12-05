@@ -14,6 +14,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+Console.WriteLine("EnableMetricInstrumentation: " + instrumentationOptions.EnableMetricInstrumentation);
+Console.WriteLine("EnableTraceInstrumentation: " + instrumentationOptions.EnableTraceInstrumentation);
+
 if (instrumentationOptions.EnableMetricInstrumentation)
 {
     builder.Services.AddOpenTelemetry().WithMetrics(builder => builder.AddAspNetCoreInstrumentation().AddReader(new PeriodicExportingMetricReader(new MyExporter<Metric>("TestExporter"))));
