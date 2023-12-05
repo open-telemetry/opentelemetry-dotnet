@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using TestAspNetCoreInstrumentationPerf;
@@ -25,6 +26,19 @@ if (instrumentationOptions.EnableMetricInstrumentation)
 if (instrumentationOptions.EnableTraceInstrumentation)
 {
     builder.Services.AddOpenTelemetry().WithTracing(builder => builder.AddAspNetCoreInstrumentation());
+}
+
+if (instrumentationOptions.EnableDiagnosticSourceSubscription)
+{
+    ActivitySource.AddActivityListener(new ActivityListener
+    {
+        ShouldListenTo = source => source.Name == "Microsoft.AspNetCore",
+        Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+        ActivityStarted = activity => { },
+        ActivityStopped = activity => { },
+    });
+
+    DiagnosticListener.AllListeners.Subscribe(new DiagnosticSourceSubscriber());
 }
 
 var app = builder.Build();
