@@ -16,7 +16,6 @@
 
 using System.Diagnostics.Metrics;
 using System.Net;
-using System.Net.Http.Headers;
 
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -98,7 +97,13 @@ public class PrometheusHttpListenerTests
         await this.RunPrometheusExporterHttpServerIntegrationTest(requestOpenMetrics: false);
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, bool requestOpenMetrics = true)
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
+    {
+        await this.RunPrometheusExporterHttpServerIntegrationTest(openMetricsVersion: "1.0.0");
+    }
+
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, bool requestOpenMetrics = true, string openMetricsVersion = null)
     {
         Random random = new Random();
         int retryAttempts = 5;
@@ -136,7 +141,14 @@ public class PrometheusHttpListenerTests
 
         if (requestOpenMetrics)
         {
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/openmetrics-text"));
+            var mediaType = "application/openmetrics-text";
+
+            if (!string.IsNullOrEmpty(openMetricsVersion))
+            {
+                mediaType += $";version={openMetricsVersion}";
+            }
+
+            client.DefaultRequestHeaders.Add("Accept", mediaType);
         }
 
         using var response = await client.GetAsync($"{address}metrics");

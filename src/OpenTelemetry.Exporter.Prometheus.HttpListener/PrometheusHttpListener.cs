@@ -196,25 +196,33 @@ internal sealed class PrometheusHttpListener : IDisposable
 
     private bool AcceptsOpenMetrics(HttpListenerRequest request)
     {
-        var requestAccept = request.Headers["Accept"];
-
-        if (string.IsNullOrEmpty(requestAccept))
+        if (request.AcceptTypes == null)
         {
             return false;
         }
 
-        var acceptTypes = requestAccept.Split(',');
-
-        foreach (var acceptType in acceptTypes)
+        foreach (var acceptType in request.AcceptTypes)
         {
-            var acceptSubType = acceptType.Split(';').FirstOrDefault()?.Trim();
-
-            if (acceptSubType == OpenMetricsMediaType)
+            if (this.GetMediaType(acceptType) == OpenMetricsMediaType)
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private string GetMediaType(string acceptHeader)
+    {
+        if (string.IsNullOrEmpty(acceptHeader))
+        {
+            return string.Empty;
+        }
+
+        var separatorIndex = acceptHeader.IndexOf(';');
+
+        return separatorIndex == -1
+            ? acceptHeader
+            : acceptHeader.Substring(0, separatorIndex);
     }
 }

@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
@@ -113,22 +114,26 @@ internal sealed class PrometheusExporterMiddleware
 
     private bool AcceptsOpenMetrics(HttpRequest request)
     {
-        var requestAccept = request.Headers[HeaderNames.Accept];
+        var acceptHeader = request.Headers[HeaderNames.Accept];
 
-        if (StringValues.IsNullOrEmpty(requestAccept))
+        if (StringValues.IsNullOrEmpty(acceptHeader))
         {
             return false;
         }
 
-        var acceptTypes = requestAccept.ToString().Split(',');
-
-        foreach (var acceptType in acceptTypes)
+        foreach (var accept in acceptHeader)
         {
-            var acceptSubType = acceptType.Split(';').FirstOrDefault()?.Trim();
+            var value = accept.AsSpan();
 
-            if (acceptSubType == OpenMetricsMediaType)
+            while (value.Length > 0)
             {
-                return true;
+                var headerValue = value.SplitNext(',');
+                var mediaType = headerValue.SplitNext(';');
+
+                if (mediaType.Equals(OpenMetricsMediaType, StringComparison.Ordinal))
+                {
+                    return true;
+                }
             }
         }
 
