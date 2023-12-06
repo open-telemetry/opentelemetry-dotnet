@@ -167,10 +167,6 @@ internal sealed class AggregatorStore
         this.MeasurementHandler = measurementHandler;
     }
 
-    internal delegate int FindMetricPointIndexFunc(ReadOnlySpan<KeyValuePair<string, object?>> tags);
-
-    /*internal delegate void MeasurementAction(ref MetricMeasurement metricMeasurement);*/
-
     internal DateTimeOffset StartTimeExclusive { get; set; }
 
     internal DateTimeOffset EndTimeInclusive { get; set; }
