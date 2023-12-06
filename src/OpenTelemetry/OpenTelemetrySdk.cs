@@ -57,6 +57,28 @@ public sealed class OpenTelemetrySdk : IDisposable
     /// </summary>
     public IServiceProvider Services => this.serviceProvider;
 
+    /// <summary>
+    /// Gets the <see cref="Metrics.MeterProvider"/>.
+    /// </summary>
+    /// <remarks>
+    /// Note: The default <see cref="MeterProvider"/> will be a no-op instance.
+    /// Call <see cref="OpenTelemetryBuilder.WithMetrics()"/> or <see
+    /// cref="OpenTelemetryBuilder.WithMetrics(Action{MeterProviderBuilder})"/>
+    /// to enable metrics.
+    /// </remarks>
+    public MeterProvider MeterProvider { get; }
+
+    /// <summary>
+    /// Gets the <see cref="Trace.TracerProvider"/>.
+    /// </summary>
+    /// <remarks>
+    /// Note: The default <see cref="TracerProvider"/> will be a no-op instance.
+    /// Call <see cref="OpenTelemetryBuilder.WithTracing()"/> or <see
+    /// cref="OpenTelemetryBuilder.WithTracing(Action{TracerProviderBuilder})"/>
+    /// to enable tracing.
+    /// </remarks>
+    public TracerProvider TracerProvider { get; }
+
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets the <see cref="Logs.LoggerProvider"/>.
@@ -80,28 +102,6 @@ public sealed class OpenTelemetrySdk : IDisposable
     /// </remarks>
     internal LoggerProvider LoggerProvider { get; }
 #endif
-
-    /// <summary>
-    /// Gets the <see cref="Metrics.MeterProvider"/>.
-    /// </summary>
-    /// <remarks>
-    /// Note: The default <see cref="MeterProvider"/> will be a no-op instance.
-    /// Call <see cref="OpenTelemetryBuilder.WithMetrics()"/> or <see
-    /// cref="OpenTelemetryBuilder.WithMetrics(Action{MeterProviderBuilder})"/>
-    /// to enable metrics.
-    /// </remarks>
-    public MeterProvider MeterProvider { get; }
-
-    /// <summary>
-    /// Gets the <see cref="Trace.TracerProvider"/>.
-    /// </summary>
-    /// <remarks>
-    /// Note: The default <see cref="TracerProvider"/> will be a no-op instance.
-    /// Call <see cref="OpenTelemetryBuilder.WithTracing()"/> or <see
-    /// cref="OpenTelemetryBuilder.WithTracing(Action{TracerProviderBuilder})"/>
-    /// to enable tracing.
-    /// </remarks>
-    public TracerProvider TracerProvider { get; }
 
     /// <summary>
     /// Create an <see cref="OpenTelemetrySdk"/> instance.
