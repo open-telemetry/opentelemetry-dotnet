@@ -58,7 +58,7 @@ public partial class GrpcTests : IDisposable
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 [SemanticConventionOptInKeyName] = "http",
-                ["OTEL_DOTNET_EXPERIMENTAL_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
+                ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
             })
             .Build();
 
@@ -131,7 +131,7 @@ public partial class GrpcTests : IDisposable
            .AddInMemoryCollection(new Dictionary<string, string>
            {
                [SemanticConventionOptInKeyName] = "http",
-               ["OTEL_DOTNET_EXPERIMENTAL_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
+               ["OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION"] = enableGrpcAspNetCoreSupport,
            })
            .Build();
 

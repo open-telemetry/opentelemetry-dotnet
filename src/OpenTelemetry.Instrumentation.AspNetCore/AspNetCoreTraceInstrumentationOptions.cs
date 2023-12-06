@@ -17,9 +17,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-#if NET6_0_OR_GREATER
 using OpenTelemetry.Internal;
-#endif
 
 namespace OpenTelemetry.Instrumentation.AspNetCore;
 
@@ -40,12 +38,10 @@ public class AspNetCoreTraceInstrumentationOptions
     {
         Debug.Assert(configuration != null, "configuration was null");
 
-#if NET6_0_OR_GREATER
-        if (configuration.TryGetBoolValue("OTEL_DOTNET_EXPERIMENTAL_ENABLE_GRPC_INSTRUMENTATION", out var enableGrpcInstrumentation))
+        if (configuration.TryGetBoolValue("OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION", out var enableGrpcInstrumentation))
         {
             this.EnableGrpcAspNetCoreSupport = enableGrpcInstrumentation;
         }
-#endif
     }
 
     /// <summary>
@@ -101,7 +97,6 @@ public class AspNetCoreTraceInstrumentationOptions
     /// </remarks>
     public bool RecordException { get; set; }
 
-#if NET6_0_OR_GREATER
     /// <summary>
     /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
     /// </summary>
@@ -109,5 +104,4 @@ public class AspNetCoreTraceInstrumentationOptions
     /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
     /// </remarks>
     internal bool EnableGrpcAspNetCoreSupport { get; set; }
-#endif
 }

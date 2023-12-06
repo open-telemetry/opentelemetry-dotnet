@@ -76,9 +76,7 @@ public static class TracerProviderBuilderExtensions
                 services.Configure(name, configureAspNetCoreTraceInstrumentationOptions);
             }
 
-#if !NETSTANDARD2_0
             services.RegisterOptionsFactory(configuration => new AspNetCoreTraceInstrumentationOptions(configuration));
-#endif
         });
 
         if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
