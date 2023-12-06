@@ -33,6 +33,11 @@ public enum TestApplicationScenario
     /// An Razor Pages application.
     /// </summary>
     RazorPages,
+
+    /// <summary>
+    /// Application with Exception Handling Middleware.
+    /// </summary>
+    ExceptionMiddleware,
 }
 
 internal class TestApplicationFactory
@@ -53,6 +58,8 @@ internal class TestApplicationFactory
                 return CreateMinimalApiApplication();
             case TestApplicationScenario.RazorPages:
                 return CreateRazorPagesApplication();
+            case TestApplicationScenario.ExceptionMiddleware:
+                return CreateExceptionHandlerApplication();
             default:
                 throw new ArgumentException($"Invalid {nameof(TestApplicationScenario)}");
         }
@@ -151,6 +158,28 @@ internal class TestApplicationFactory
         app.UseStaticFiles();
         app.UseRouting();
         app.MapRazorPages();
+
+        return app;
+    }
+
+    private static WebApplication CreateExceptionHandlerApplication()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+
+#if NET7_0_OR_GREATER
+        builder.Services.AddProblemDetails();
+#endif
+
+        var app = builder.Build();
+
+#if NET7_0_OR_GREATER
+        app.UseExceptionHandler();
+#endif
+        app.Urls.Clear();
+        app.Urls.Add("http://[::1]:0");
+
+        app.MapGet("/Exception", (ctx) => throw new ApplicationException());
 
         return app;
     }

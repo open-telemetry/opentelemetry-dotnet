@@ -198,5 +198,15 @@
     "expectedStatusCode": 200,
     "currentHttpRoute": null,
     "expectedHttpRoute": "/MinimalApiUsingMapGroup/{id}"
+  },
+  {
+    "name": "Exception Handled by Exception Handler Middleware",
+    "minimumDotnetVersion": 7,
+    "testApplicationScenario": "ExceptionMiddleware",
+    "httpMethod": "GET",
+    "path": "/Exception",
+    "expectedStatusCode": 500,
+    "currentHttpRoute": null,
+    "expectedHttpRoute": "/Exception"
   }
 ]
