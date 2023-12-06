@@ -194,7 +194,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private bool AcceptsOpenMetrics(HttpListenerRequest request)
+    private static AcceptsOpenMetrics(HttpListenerRequest request)
     {
         if (request.AcceptTypes == null)
         {
