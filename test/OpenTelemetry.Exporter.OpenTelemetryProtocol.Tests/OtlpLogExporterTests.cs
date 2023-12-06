@@ -22,9 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -589,37 +587,34 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            fakeExportClient.Object);
+            testExportClient);
 
         // Act.
-        var result = sut.Export(emptyBatch);
+        sut.Export(emptyBatch);
 
         // Assert.
-        fakeExportClient.Verify(x => x.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default), Times.Once());
+        Assert.True(testExportClient.SendExportRequestCalled);
     }
 
     [Fact]
     public void Export_WhenExportClientThrowsException_ReturnsExportResultFailure()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>(throwException: true);
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        fakeExportClient
-            .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
-            .Throws(new Exception("Test Exception"));
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            fakeExportClient.Object);
+            testExportClient);
 
         // Act.
         var result = sut.Export(emptyBatch);
@@ -632,17 +627,14 @@ public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     public void Export_WhenExportIsSuccessful_ReturnsExportResultSuccess()
     {
         // Arrange.
-        var fakeExportClient = new Mock<IExportClient<OtlpCollector.ExportLogsServiceRequest>>();
+        var testExportClient = new TestExportClient<OtlpCollector.ExportLogsServiceRequest>();
         var emptyLogRecords = Array.Empty<LogRecord>();
         var emptyBatch = new Batch<LogRecord>(emptyLogRecords, emptyLogRecords.Length);
-        fakeExportClient
-            .Setup(_ => _.SendExportRequest(It.IsAny<OtlpCollector.ExportLogsServiceRequest>(), default))
-            .Returns(true);
         var sut = new OtlpLogExporter(
             new OtlpExporterOptions(),
             new SdkLimitOptions(),
             new ExperimentalOptions(),
-            fakeExportClient.Object);
+            testExportClient);
 
         // Act.
         var result = sut.Export(emptyBatch);
