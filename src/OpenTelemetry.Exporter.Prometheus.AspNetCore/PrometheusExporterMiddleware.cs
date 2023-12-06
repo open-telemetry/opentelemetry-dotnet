@@ -114,7 +114,7 @@ internal sealed class PrometheusExporterMiddleware
 
     private bool AcceptsOpenMetrics(HttpRequest request)
     {
-        var acceptHeader = request.Headers[HeaderNames.Accept];
+        var acceptHeader = request.Headers.Accept;
 
         if (StringValues.IsNullOrEmpty(acceptHeader))
         {
