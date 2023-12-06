@@ -40,7 +40,6 @@ public abstract class AggregatorTestsBase
         this.aggregatorStore = new(
             MetricStreamIdentity,
             MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double,
-            AggregationType.HistogramWithBuckets,
             AggregationTemporality.Cumulative,
             1024,
             emitOverflowAttribute,
@@ -52,7 +51,7 @@ public abstract class AggregatorTestsBase
     {
         var histogramPoint = new MetricPoint(this.aggregatorStore, null, Metric.DefaultHistogramBounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore);
+        var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, -1D, tags: default);
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 0D, tags: default);
@@ -86,7 +85,8 @@ public abstract class AggregatorTestsBase
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10000D, tags: default);
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10001D, tags: default);
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 10000000D, tags: default);
-        histogramPoint.TakeSnapshot(true);
+
+        measurementHandler.CollectMeasurementsOnMetricPoint(ref histogramPoint);
 
         var count = histogramPoint.GetHistogramCount();
 
@@ -107,7 +107,7 @@ public abstract class AggregatorTestsBase
 
         var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore);
+        var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
         // 5 recordings <=10
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, -10D, tags: default);
@@ -120,7 +120,7 @@ public abstract class AggregatorTestsBase
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 11D, tags: default);
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, 19D, tags: default);
 
-        histogramPoint.TakeSnapshot(true);
+        measurementHandler.CollectMeasurementsOnMetricPoint(ref histogramPoint);
 
         var count = histogramPoint.GetHistogramCount();
         var sum = histogramPoint.GetHistogramSum();
@@ -157,7 +157,7 @@ public abstract class AggregatorTestsBase
 
         var histogramPoint = new MetricPoint(this.aggregatorStore,  null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore);
+        var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
         // Act
         measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, -1D, tags: default);
@@ -168,7 +168,7 @@ public abstract class AggregatorTestsBase
             measurementHandler.RecordMeasurementOnMetricPoint(this.aggregatorStore, ref histogramPoint, i, tags: default);
         }
 
-        histogramPoint.TakeSnapshot(true);
+        measurementHandler.CollectMeasurementsOnMetricPoint(ref histogramPoint);
 
         // Assert
         var index = 0;
@@ -194,7 +194,6 @@ public abstract class AggregatorTestsBase
         AggregatorStore aggregatorStore = new(
             MetricStreamIdentity,
             MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithoutBuckets,
-            AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
@@ -202,7 +201,7 @@ public abstract class AggregatorTestsBase
 
         var histogramPoint = new MetricPoint(aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
-        var measurementHandler = MetricState.GetMeasurementHandler(aggregatorStore);
+        var measurementHandler = aggregatorStore.MeasurementHandler;
 
         measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, -10D, tags: default);
         measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 0D, tags: default);
@@ -212,7 +211,7 @@ public abstract class AggregatorTestsBase
         measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 11D, tags: default);
         measurementHandler.RecordMeasurementOnMetricPoint(aggregatorStore, ref histogramPoint, 19D, tags: default);
 
-        histogramPoint.TakeSnapshot(true);
+        measurementHandler.CollectMeasurementsOnMetricPoint(ref histogramPoint);
 
         var count = histogramPoint.GetHistogramCount();
         var sum = histogramPoint.GetHistogramSum();
@@ -228,16 +227,27 @@ public abstract class AggregatorTestsBase
         Assert.False(enumerator.MoveNext());
     }
 
-    [Fact]
-    public void MultiThreadedHistogramUpdateAndSnapShotTest()
+    [Theory]
+    [InlineData(AggregationTemporality.Cumulative)]
+    [InlineData(AggregationTemporality.Delta)]
+    public void MultiThreadedHistogramUpdateAndSnapShotTest(AggregationTemporality aggregationTemporality)
     {
         var boundaries = Array.Empty<double>();
-        var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+
+        AggregatorStore aggregatorStore = new(
+            MetricStreamIdentity,
+            MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithoutBuckets,
+            aggregationTemporality,
+            maxMetricPoints: 1024,
+            this.emitOverflowAttribute,
+            this.shouldReclaimUnusedMetricPoints);
+
+        var metricPointIndex = aggregatorStore.FindMetricPointIndexDefault(tags: default);
+
         var argsToThread = new ThreadArguments
         {
-            AggregatorStore = this.aggregatorStore,
-            MeasurementHandler = MetricState.GetMeasurementHandler(this.aggregatorStore),
-            HistogramPoint = histogramPoint,
+            AggregatorStore = aggregatorStore,
+            HistogramPoint = aggregatorStore.GetMetricPoint(metricPointIndex),
             MreToEnsureAllThreadsStart = new ManualResetEvent(false),
         };
 
@@ -260,10 +270,17 @@ public abstract class AggregatorTestsBase
         snapshotThread.Join();
 
         // last snapshot
-        histogramPoint.TakeSnapshot(outputDelta: true);
+        aggregatorStore.MeasurementHandler.CollectMeasurementsOnMetricPoint(ref argsToThread.HistogramPoint);
 
-        var lastDelta = histogramPoint.GetHistogramSum();
-        Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
+        var lastSum = argsToThread.HistogramPoint.GetHistogramSum();
+        if (aggregationTemporality == AggregationTemporality.Cumulative)
+        {
+            Assert.Equal(200, lastSum);
+        }
+        else
+        {
+            Assert.Equal(200, argsToThread.SumOfDelta + lastSum);
+        }
     }
 
     [Theory]
@@ -296,7 +313,6 @@ public abstract class AggregatorTestsBase
         AggregatorStore aggregatorStore = new(
             metricStreamIdentity,
             MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithoutBuckets,
-            AggregationType.Histogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
@@ -356,38 +372,33 @@ public abstract class AggregatorTestsBase
     }
 
     [Theory]
-    [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative, true)]
-    [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta, true)]
-    [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative, true)]
-    [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta, true)]
-    [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Cumulative, false)]
-    [InlineData(AggregationType.Base2ExponentialHistogram, AggregationTemporality.Delta, false)]
-    [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Cumulative, false)]
-    [InlineData(AggregationType.Base2ExponentialHistogramWithMinMax, AggregationTemporality.Delta, false)]
-    internal void ExponentialHistogramTests(AggregationType aggregationType, AggregationTemporality aggregationTemporality, bool exemplarsEnabled)
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets, AggregationTemporality.Cumulative, true)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets, AggregationTemporality.Delta, true)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets | MetricPointBehaviors.HistogramRecordMinMax, AggregationTemporality.Cumulative, true)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets | MetricPointBehaviors.HistogramRecordMinMax, AggregationTemporality.Delta, true)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets, AggregationTemporality.Cumulative, false)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets, AggregationTemporality.Delta, false)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets | MetricPointBehaviors.HistogramRecordMinMax, AggregationTemporality.Cumulative, false)]
+    [InlineData(MetricPointBehaviors.HistogramWithExponentialBuckets | MetricPointBehaviors.HistogramRecordMinMax, AggregationTemporality.Delta, false)]
+    internal void ExponentialHistogramTests(MetricPointBehaviors metricBehaviors, AggregationTemporality aggregationTemporality, bool exemplarsEnabled)
     {
         var valuesToRecord = new double[] { -10, 0, 1, 9, 10, 11, 19 };
 
         var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
         var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
 
-        var metricBehaviors = MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithExponentialBuckets;
-        if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
-        {
-            metricBehaviors |= MetricPointBehaviors.HistogramRecordMinMax;
-        }
+        metricBehaviors |= MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithExponentialBuckets;
 
         var aggregatorStore = new AggregatorStore(
             metricStreamIdentity,
             metricBehaviors,
-            aggregationType,
             aggregationTemporality,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints,
             exemplarsEnabled ? new AlwaysOnExemplarFilter() : null);
 
-        var measurementHandler = MetricState.GetMeasurementHandler(aggregatorStore);
+        var measurementHandler = aggregatorStore.MeasurementHandler;
 
         var expectedHistogram = new Base2ExponentialBucketHistogram();
 
@@ -401,7 +412,7 @@ public abstract class AggregatorTestsBase
             }
         }
 
-        aggregatorStore.Snapshot();
+        measurementHandler.CollectMeasurements(aggregatorStore);
 
         var metricPoints = new List<MetricPoint>();
 
@@ -421,7 +432,7 @@ public abstract class AggregatorTestsBase
         Assert.Equal(50, sum);
         Assert.Equal(6, count);
 
-        if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
+        if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramRecordMinMax))
         {
             Assert.True(hasMinMax);
             Assert.Equal(0, min);
@@ -432,7 +443,7 @@ public abstract class AggregatorTestsBase
             Assert.False(hasMinMax);
         }
 
-        metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
+        measurementHandler.CollectMeasurementsOnMetricPoint(ref metricPoint);
 
         count = metricPoint.GetHistogramCount();
         sum = metricPoint.GetHistogramSum();
@@ -444,7 +455,7 @@ public abstract class AggregatorTestsBase
             Assert.Equal(50, sum);
             Assert.Equal(6, count);
 
-            if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
+            if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramRecordMinMax))
             {
                 Assert.True(hasMinMax);
                 Assert.Equal(0, min);
@@ -462,7 +473,7 @@ public abstract class AggregatorTestsBase
             Assert.Equal(0, sum);
             Assert.Equal(0, count);
 
-            if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
+            if (metricBehaviors.HasFlag(MetricPointBehaviors.HistogramRecordMinMax))
             {
                 Assert.True(hasMinMax);
                 Assert.Equal(double.PositiveInfinity, min);
@@ -493,17 +504,16 @@ public abstract class AggregatorTestsBase
         var aggregatorStore = new AggregatorStore(
             metricStreamIdentity,
             MetricPointBehaviors.HistogramAggregation | MetricPointBehaviors.Double | MetricPointBehaviors.HistogramWithExponentialBuckets,
-            AggregationType.Base2ExponentialHistogram,
             AggregationTemporality.Cumulative,
             maxMetricPoints: 1024,
             this.emitOverflowAttribute,
             this.shouldReclaimUnusedMetricPoints);
 
-        var measurementHandler = MetricState.GetMeasurementHandler(aggregatorStore);
+        var measurementHandler = aggregatorStore.MeasurementHandler;
 
         measurementHandler.RecordMeasurement(aggregatorStore, 10D, tags: default);
 
-        aggregatorStore.Snapshot();
+        measurementHandler.CollectMeasurements(aggregatorStore);
 
         var metricPoints = new List<MetricPoint>();
 
@@ -536,7 +546,7 @@ public abstract class AggregatorTestsBase
         double curSnapshotDelta;
         while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 2)
         {
-            args.HistogramPoint.TakeSnapshot(outputDelta: true);
+            args.AggregatorStore.MeasurementHandler.CollectMeasurementsOnMetricPoint(ref args.HistogramPoint);
             curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
             args.SumOfDelta += curSnapshotDelta;
         }
@@ -556,7 +566,7 @@ public abstract class AggregatorTestsBase
 
         for (int i = 0; i < 10; ++i)
         {
-            args.MeasurementHandler.RecordMeasurementOnMetricPoint(args.AggregatorStore, ref args.HistogramPoint, 10D, tags: default);
+            args.AggregatorStore.MeasurementHandler.RecordMeasurementOnMetricPoint(args.AggregatorStore, ref args.HistogramPoint, 10D, tags: default);
         }
 
         Interlocked.Increment(ref args.ThreadsFinishedAllUpdatesCount);
@@ -565,7 +575,6 @@ public abstract class AggregatorTestsBase
     private class ThreadArguments
     {
         public AggregatorStore AggregatorStore;
-        public IMetricMeasurementHandler MeasurementHandler;
         public MetricPoint HistogramPoint;
         public ManualResetEvent MreToEnsureAllThreadsStart;
         public int ThreadStartedCount;

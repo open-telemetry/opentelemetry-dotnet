@@ -45,10 +45,8 @@ internal sealed class MetricState
 
         var aggregatorStore = metric!.AggregatorStore!;
 
-        var measurementHandler = GetMeasurementHandler(aggregatorStore);
-
-        var recordMeasurementLong = measurementHandler.RecordMeasurement<long>;
-        var recordMeasurementDouble = measurementHandler.RecordMeasurement<double>;
+        var recordMeasurementLong = aggregatorStore.MeasurementHandler.RecordMeasurement<long>;
+        var recordMeasurementDouble = aggregatorStore.MeasurementHandler.RecordMeasurement<double>;
 
         return new(
             completeMeasurement: () => MetricReader.DeactivateMetric(metric),
@@ -68,10 +66,8 @@ internal sealed class MetricState
 
             var aggregatorStore = m!.AggregatorStore!;
 
-            var measurementHandler = GetMeasurementHandler(aggregatorStore);
-
-            var recordMeasurementLong = measurementHandler.RecordMeasurement<long>;
-            var recordMeasurementDouble = measurementHandler.RecordMeasurement<double>;
+            var recordMeasurementLong = aggregatorStore.MeasurementHandler.RecordMeasurement<long>;
+            var recordMeasurementDouble = aggregatorStore.MeasurementHandler.RecordMeasurement<double>;
 
             return new
             {
@@ -116,18 +112,5 @@ internal sealed class MetricState
                         t);
                 }
             });
-    }
-
-    internal static IMetricMeasurementHandler GetMeasurementHandler(AggregatorStore aggregatorStore)
-    {
-        if (!MetricMeasurementHandlerHelper.TryFindMeasurementHandlerForBehaviors(
-            aggregatorStore.AggregatorBehaviors,
-            aggregatorStore.MetricBehaviors,
-            out var measurementHandler))
-        {
-            throw new NotSupportedException($"A measurement handler could not be found for '{aggregatorStore.AggregatorBehaviors}' and '{aggregatorStore.MetricBehaviors}' behaviors.");
-        }
-
-        return measurementHandler;
     }
 }

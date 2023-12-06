@@ -41,7 +41,7 @@ public class MetricsConcurrencyTests
             .WithTestingIterations(100)
             .WithMemoryAccessRaceCheckingEnabled(true);
 
-        var test = TestingEngine.Create(config, this.aggregatorTests.MultiThreadedHistogramUpdateAndSnapShotTest);
+        var test = TestingEngine.Create(config, () => this.aggregatorTests.MultiThreadedHistogramUpdateAndSnapShotTest(Metrics.AggregationTemporality.Delta));
 
         test.Run();
 

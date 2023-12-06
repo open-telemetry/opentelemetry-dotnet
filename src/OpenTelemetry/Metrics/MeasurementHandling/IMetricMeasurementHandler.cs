@@ -28,4 +28,8 @@ internal interface IMetricMeasurementHandler
         ref MetricPoint metricPoint,
         T value,
         ReadOnlySpan<KeyValuePair<string, object?>> tags);
+
+    int CollectMeasurements(AggregatorStore aggregatorStore);
+
+    void CollectMeasurementsOnMetricPoint(ref MetricPoint metricPoint);
 }

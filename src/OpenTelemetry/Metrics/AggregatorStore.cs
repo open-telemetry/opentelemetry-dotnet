@@ -26,10 +26,14 @@ internal sealed class AggregatorStore
 {
     internal readonly bool OutputDelta;
     internal readonly bool ShouldReclaimUnusedMetricPoints;
-    internal readonly AggregationType AggregationType;
     internal readonly MetricAggregatorBehaviors AggregatorBehaviors;
     internal readonly MetricPointBehaviors MetricBehaviors;
+    internal readonly int[] CurrentMetricPointBatch;
+    internal readonly int MaxMetricPoints;
+    internal readonly IMetricMeasurementHandler MeasurementHandler;
     internal long DroppedMeasurements = 0;
+    internal int MetricPointIndex = 0;
+    internal int BatchSize = 0;
 
     private static readonly string MetricPointCapHitFixMessage = "Consider opting in for the experimental SDK feature to emit all the throttled metrics under the overflow attribute by setting env variable OTEL_DOTNET_EXPERIMENTAL_METRICS_EMIT_OVERFLOW_ATTRIBUTE = true. You could also modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => x.Key.CompareTo(y.Key);
@@ -51,17 +55,12 @@ internal sealed class AggregatorStore
     private readonly string name;
     private readonly string metricPointCapHitMessage;
     private readonly MetricPoint[] metricPoints;
-    private readonly int[] currentMetricPointBatch;
     private readonly double[] histogramBounds;
     private readonly int exponentialHistogramMaxSize;
     private readonly int exponentialHistogramMaxScale;
-    private readonly int maxMetricPoints;
-    private readonly bool emitOverflowAttribute;
     private readonly ExemplarFilter exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
 
-    private int metricPointIndex = 0;
-    private int batchSize = 0;
     private int metricCapHitMessageLogged;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
@@ -69,7 +68,6 @@ internal sealed class AggregatorStore
     internal AggregatorStore(
         in MetricStreamIdentity metricStreamIdentity,
         MetricPointBehaviors metricBehaviors,
-        AggregationType aggType,
         AggregationTemporality temporality,
         int maxMetricPoints,
         bool emitOverflowAttribute,
@@ -77,12 +75,11 @@ internal sealed class AggregatorStore
         ExemplarFilter? exemplarFilter = null)
     {
         this.name = metricStreamIdentity.InstrumentName;
-        this.maxMetricPoints = maxMetricPoints;
+        this.MaxMetricPoints = maxMetricPoints;
 
-        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
+        this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.MaxMetricPoints}";
         this.metricPoints = new MetricPoint[maxMetricPoints];
-        this.currentMetricPointBatch = new int[maxMetricPoints];
-        this.AggregationType = aggType;
+        this.CurrentMetricPointBatch = new int[maxMetricPoints];
         this.OutputDelta = temporality == AggregationTemporality.Delta;
         this.histogramBounds = metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity);
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
@@ -96,15 +93,13 @@ internal sealed class AggregatorStore
             this.tagsKeysInterestingCount = hs.Count;
         }
 
-        this.emitOverflowAttribute = emitOverflowAttribute;
-
         var reservedMetricPointsCount = 1;
 
         if (emitOverflowAttribute)
         {
             // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
             // Newer attributes should be added starting at the index: 2
-            this.metricPointIndex = 1;
+            this.MetricPointIndex = 1;
             reservedMetricPointsCount++;
         }
 
@@ -122,7 +117,7 @@ internal sealed class AggregatorStore
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
-            for (int i = reservedMetricPointsCount; i < this.maxMetricPoints; i++)
+            for (int i = reservedMetricPointsCount; i < this.MaxMetricPoints; i++)
             {
                 this.availableMetricPoints.Enqueue(i);
             }
@@ -140,7 +135,7 @@ internal sealed class AggregatorStore
             ? MetricAggregatorBehaviors.CumulativeTemporality
             : MetricAggregatorBehaviors.DeltaTemporality;
 
-        if (this.emitOverflowAttribute)
+        if (emitOverflowAttribute)
         {
             this.AggregatorBehaviors |= MetricAggregatorBehaviors.EmitOverflowAttribute;
         }
@@ -160,15 +155,25 @@ internal sealed class AggregatorStore
         {
             this.AggregatorBehaviors |= MetricAggregatorBehaviors.ReclaimMetricPoints;
         }
+
+        if (!MetricMeasurementHandlerHelper.TryFindMeasurementHandlerForBehaviors(
+            this.AggregatorBehaviors,
+            this.MetricBehaviors,
+            out var measurementHandler))
+        {
+            throw new NotSupportedException($"A measurement handler could not be found for '{this.AggregatorBehaviors}' and '{this.MetricBehaviors}' behaviors.");
+        }
+
+        this.MeasurementHandler = measurementHandler;
     }
 
     internal delegate int FindMetricPointIndexFunc(ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
     /*internal delegate void MeasurementAction(ref MetricMeasurement metricMeasurement);*/
 
-    internal DateTimeOffset StartTimeExclusive { get; private set; }
+    internal DateTimeOffset StartTimeExclusive { get; set; }
 
-    internal DateTimeOffset EndTimeInclusive { get; private set; }
+    internal DateTimeOffset EndTimeInclusive { get; set; }
 
     internal double[] HistogramBounds => this.histogramBounds;
 
@@ -181,199 +186,8 @@ internal sealed class AggregatorStore
         return this.exemplarFilter is not AlwaysOffExemplarFilter;
     }
 
-    internal int Snapshot()
-    {
-        this.batchSize = 0;
-        if (this.OutputDelta)
-        {
-            if (this.ShouldReclaimUnusedMetricPoints)
-            {
-                this.SnapshotDeltaWithMetricPointReclaim();
-            }
-            else
-            {
-                var indexSnapshot = Math.Min(this.metricPointIndex, this.maxMetricPoints - 1);
-                this.SnapshotDelta(indexSnapshot);
-            }
-        }
-        else
-        {
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.maxMetricPoints - 1);
-            this.SnapshotCumulative(indexSnapshot);
-        }
-
-        this.EndTimeInclusive = DateTimeOffset.UtcNow;
-        return this.batchSize;
-    }
-
-    internal void SnapshotDelta(int indexSnapshot)
-    {
-        for (int i = 0; i <= indexSnapshot; i++)
-        {
-            ref var metricPoint = ref this.metricPoints[i];
-            if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
-            {
-                continue;
-            }
-
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: true);
-            }
-
-            this.currentMetricPointBatch[this.batchSize] = i;
-            this.batchSize++;
-        }
-
-        if (this.EndTimeInclusive != default)
-        {
-            this.StartTimeExclusive = this.EndTimeInclusive;
-        }
-    }
-
-    internal void SnapshotDeltaWithMetricPointReclaim()
-    {
-        // Index = 0 is reserved for the case where no dimensions are provided.
-        ref var metricPointWithNoTags = ref this.metricPoints[0];
-        if (metricPointWithNoTags.MetricPointStatus != MetricPointStatus.NoCollectPending)
-        {
-            if (this.IsExemplarEnabled())
-            {
-                metricPointWithNoTags.TakeSnapshotWithExemplar(outputDelta: true);
-            }
-            else
-            {
-                metricPointWithNoTags.TakeSnapshot(outputDelta: true);
-            }
-
-            this.currentMetricPointBatch[this.batchSize] = 0;
-            this.batchSize++;
-        }
-
-        int startIndexForReclaimableMetricPoints = 1;
-
-        if (this.emitOverflowAttribute)
-        {
-            startIndexForReclaimableMetricPoints = 2; // Index 0 and 1 are reserved for no tags and overflow
-
-            // TakeSnapshot for the MetricPoint for overflow
-            ref var metricPointForOverflow = ref this.metricPoints[1];
-            if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
-            {
-                if (this.IsExemplarEnabled())
-                {
-                    metricPointForOverflow.TakeSnapshotWithExemplar(outputDelta: true);
-                }
-                else
-                {
-                    metricPointForOverflow.TakeSnapshot(outputDelta: true);
-                }
-
-                this.currentMetricPointBatch[this.batchSize] = 1;
-                this.batchSize++;
-            }
-        }
-
-        for (int i = startIndexForReclaimableMetricPoints; i < this.maxMetricPoints; i++)
-        {
-            ref var metricPoint = ref this.metricPoints[i];
-
-            if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
-            {
-                // If metricPoint.LookupData is `null` then the MetricPoint is already reclaimed and in the queue.
-                // If the Collect thread is successfully able to compare and swap the reference count from zero to int.MinValue, it means that
-                // the MetricPoint can be reused for other tags.
-                if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
-                {
-                    var lookupData = metricPoint.LookupData;
-
-                    // Setting `LookupData` to `null` to denote that this MetricPoint is reclaimed.
-                    // Snapshot method can use this to skip trying to reclaim indices which have already been reclaimed and added to the queue.
-                    metricPoint.LookupData = null;
-
-                    Debug.Assert(this.tagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
-
-                    lock (this.tagsToMetricPointIndexDictionaryDelta!)
-                    {
-                        LookupData? dictionaryValue;
-                        if (lookupData.SortedTags != Tags.EmptyTags)
-                        {
-                            // Check if no other thread added a new entry for the same Tags.
-                            // If no, then remove the existing entries.
-                            if (this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.SortedTags, out dictionaryValue) &&
-                                dictionaryValue == lookupData)
-                            {
-                                this.tagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.SortedTags, out var _);
-                                this.tagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
-                            }
-                        }
-                        else
-                        {
-                            if (this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.GivenTags, out dictionaryValue) &&
-                                dictionaryValue == lookupData)
-                            {
-                                this.tagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
-                            }
-                        }
-
-                        Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
-
-                        this.availableMetricPoints!.Enqueue(i);
-                    }
-                }
-
-                continue;
-            }
-
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: true);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: true);
-            }
-
-            this.currentMetricPointBatch[this.batchSize] = i;
-            this.batchSize++;
-        }
-
-        if (this.EndTimeInclusive != default)
-        {
-            this.StartTimeExclusive = this.EndTimeInclusive;
-        }
-    }
-
-    internal void SnapshotCumulative(int indexSnapshot)
-    {
-        for (int i = 0; i <= indexSnapshot; i++)
-        {
-            ref var metricPoint = ref this.metricPoints[i];
-            if (!metricPoint.IsInitialized)
-            {
-                continue;
-            }
-
-            if (this.IsExemplarEnabled())
-            {
-                metricPoint.TakeSnapshotWithExemplar(outputDelta: false);
-            }
-            else
-            {
-                metricPoint.TakeSnapshot(outputDelta: false);
-            }
-
-            this.currentMetricPointBatch[this.batchSize] = i;
-            this.batchSize++;
-        }
-    }
-
     internal MetricPointsAccessor GetMetricPoints()
-        => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+        => new(this.metricPoints, this.CurrentMetricPointBatch, this.BatchSize);
 
     internal ref MetricPoint GetMetricPoint(int index)
         => ref this.metricPoints[index];
@@ -421,6 +235,51 @@ internal sealed class AggregatorStore
         Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
 
         return this.lookupAggregatorStore(tagKeysAndValues!, actualLength);
+    }
+
+    internal void TryReclaimMetricPoint(ref MetricPoint metricPoint, int metricPointIndex)
+    {
+        // If metricPoint.LookupData is `null` then the MetricPoint is already reclaimed and in the queue.
+        // If the Collect thread is successfully able to compare and swap the reference count from zero to int.MinValue, it means that
+        // the MetricPoint can be reused for other tags.
+        if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
+        {
+            var lookupData = metricPoint.LookupData;
+
+            // Setting `LookupData` to `null` to denote that this MetricPoint is reclaimed.
+            // Snapshot method can use this to skip trying to reclaim indices which have already been reclaimed and added to the queue.
+            metricPoint.LookupData = null;
+
+            Debug.Assert(this.tagsToMetricPointIndexDictionaryDelta != null, "this.tagsToMetricPointIndexDictionaryDelta was null");
+
+            lock (this.tagsToMetricPointIndexDictionaryDelta!)
+            {
+                LookupData? dictionaryValue;
+                if (lookupData.SortedTags != Tags.EmptyTags)
+                {
+                    // Check if no other thread added a new entry for the same Tags.
+                    // If no, then remove the existing entries.
+                    if (this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.SortedTags, out dictionaryValue) &&
+                        dictionaryValue == lookupData)
+                    {
+                        this.tagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.SortedTags, out var _);
+                        this.tagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
+                    }
+                }
+                else
+                {
+                    if (this.tagsToMetricPointIndexDictionaryDelta.TryGetValue(lookupData.GivenTags, out dictionaryValue) &&
+                        dictionaryValue == lookupData)
+                    {
+                        this.tagsToMetricPointIndexDictionaryDelta.TryRemove(lookupData.GivenTags, out var _);
+                    }
+                }
+
+                Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
+                this.availableMetricPoints!.Enqueue(metricPointIndex);
+            }
+        }
     }
 
     internal void DropMeasurementDefault()
@@ -542,8 +401,8 @@ internal sealed class AggregatorStore
 
                 if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                 {
-                    aggregatorIndex = this.metricPointIndex;
-                    if (aggregatorIndex >= this.maxMetricPoints)
+                    aggregatorIndex = this.MetricPointIndex;
+                    if (aggregatorIndex >= this.MaxMetricPoints)
                     {
                         // sorry! out of data points.
                         // TODO: Once we support cleanup of
@@ -571,8 +430,8 @@ internal sealed class AggregatorStore
                         // check again after acquiring lock.
                         if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                         {
-                            aggregatorIndex = ++this.metricPointIndex;
-                            if (aggregatorIndex >= this.maxMetricPoints)
+                            aggregatorIndex = ++this.MetricPointIndex;
+                            if (aggregatorIndex >= this.MaxMetricPoints)
                             {
                                 // sorry! out of data points.
                                 // TODO: Once we support cleanup of
@@ -598,8 +457,8 @@ internal sealed class AggregatorStore
             else
             {
                 // This else block is for tag length = 1
-                aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= this.maxMetricPoints)
+                aggregatorIndex = this.MetricPointIndex;
+                if (aggregatorIndex >= this.MaxMetricPoints)
                 {
                     // sorry! out of data points.
                     // TODO: Once we support cleanup of
@@ -620,8 +479,8 @@ internal sealed class AggregatorStore
                     // check again after acquiring lock.
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out aggregatorIndex))
                     {
-                        aggregatorIndex = ++this.metricPointIndex;
-                        if (aggregatorIndex >= this.maxMetricPoints)
+                        aggregatorIndex = ++this.MetricPointIndex;
+                        if (aggregatorIndex >= this.MaxMetricPoints)
                         {
                             // sorry! out of data points.
                             // TODO: Once we support cleanup of

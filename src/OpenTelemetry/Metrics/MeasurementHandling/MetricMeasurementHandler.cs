@@ -36,6 +36,9 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
     private static readonly bool IsCumulativeAggregation = MetricMeasurementHandlerHelper.IsMetricPointBehaviorDefined<TMetricPointBehavior>(MetricPointBehaviors.CumulativeAggregation);
     private static readonly bool IsDeltaAggregation = MetricMeasurementHandlerHelper.IsMetricPointBehaviorDefined<TMetricPointBehavior>(MetricPointBehaviors.DeltaAggregation);
 
+    private static readonly bool IsLong = MetricMeasurementHandlerHelper.IsMetricPointBehaviorDefined<TMetricPointBehavior>(MetricPointBehaviors.Long);
+    private static readonly bool IsDouble = MetricMeasurementHandlerHelper.IsMetricPointBehaviorDefined<TMetricPointBehavior>(MetricPointBehaviors.Double);
+
     private static readonly bool IsCounter = MetricMeasurementHandlerHelper.IsMetricPointBehaviorDefined<TMetricPointBehavior>(MetricPointBehaviors.Counter);
     private static readonly bool IsGauge = MetricMeasurementHandlerHelper.IsMetricPointBehaviorDefined<TMetricPointBehavior>(MetricPointBehaviors.Gauge);
 
@@ -138,6 +141,8 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
 
         if (LockRequired)
         {
+            Debug.Assert(metricPoint.OptionalComponents != null, "metricPoint.OptionalComponents was null");
+
             metricPoint.OptionalComponents!.AcquireLock();
         }
 
@@ -145,7 +150,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         {
             if (IsCounter || IsGauge)
             {
-                UpdateLongCounterOrGaugeMetricPoint(ref metricPoint, (long)(object)value!);
+                RecoredMeasurementOnLongCounterOrGaugeMetricPoint(ref metricPoint, (long)(object)value!);
             }
             else if (IsHistogramAggregation)
             {
@@ -153,11 +158,11 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
 
                 if (IsHistogramWithExponentialBuckets)
                 {
-                    UpdateExponentialHistogramMetricPoint(ref metricPoint, doubleValue);
+                    RecordMeasurementOnExponentialHistogramMetricPoint(ref metricPoint, doubleValue);
                 }
                 else
                 {
-                    UpdateHistogramMetricPoint(ref metricPoint, doubleValue, ref histogramBucketIndex);
+                    RecordMeasurementOnHistogramMetricPoint(ref metricPoint, doubleValue, ref histogramBucketIndex);
                 }
             }
             else
@@ -169,17 +174,17 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         {
             if (IsCounter || IsGauge)
             {
-                UpdateDoubleCounterOrGaugeMetricPoint(ref metricPoint, (double)(object)value!);
+                RecordMeasurementOnDoubleCounterOrGaugeMetricPoint(ref metricPoint, (double)(object)value!);
             }
             else if (IsHistogramAggregation)
             {
                 if (IsHistogramWithExponentialBuckets)
                 {
-                    UpdateExponentialHistogramMetricPoint(ref metricPoint, (double)(object)value!);
+                    RecordMeasurementOnExponentialHistogramMetricPoint(ref metricPoint, (double)(object)value!);
                 }
                 else
                 {
-                    UpdateHistogramMetricPoint(ref metricPoint, (double)(object)value!, ref histogramBucketIndex);
+                    RecordMeasurementOnHistogramMetricPoint(ref metricPoint, (double)(object)value!, ref histogramBucketIndex);
                 }
             }
             else
@@ -195,6 +200,148 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         if (SampleMeasurementAndOfferExemplar && measurementSampled)
         {
             OfferExemplar(ref metricPoint, value, tags: FilterTags ? tags : default, histogramBucketIndex);
+        }
+
+        if (LockRequired)
+        {
+            metricPoint.OptionalComponents!.ReleaseLock();
+        }
+    }
+
+    public int CollectMeasurements(AggregatorStore aggregatorStore)
+    {
+        aggregatorStore.BatchSize = 0;
+
+        if (IsDeltaTemporality && ReclaimMetricPoints)
+        {
+            // Index = 0 is reserved for the case where no dimensions are provided.
+            ref var metricPointWithNoTags = ref aggregatorStore.GetMetricPoint(0);
+            if (metricPointWithNoTags.MetricPointStatus != MetricPointStatus.NoCollectPending)
+            {
+                this.CollectMeasurementsOnMetricPoint(ref metricPointWithNoTags);
+
+                aggregatorStore.CurrentMetricPointBatch[aggregatorStore.BatchSize] = 0;
+                aggregatorStore.BatchSize++;
+            }
+
+            int startIndexForReclaimableMetricPoints = 1;
+
+            if (EmitOverflowAttribute)
+            {
+                startIndexForReclaimableMetricPoints = 2; // Index 0 and 1 are reserved for no tags and overflow
+
+                // TakeSnapshot for the MetricPoint for overflow
+                ref var metricPointForOverflow = ref aggregatorStore.GetMetricPoint(1);
+                if (metricPointForOverflow.MetricPointStatus != MetricPointStatus.NoCollectPending)
+                {
+                    this.CollectMeasurementsOnMetricPoint(ref metricPointForOverflow);
+
+                    aggregatorStore.CurrentMetricPointBatch[aggregatorStore.BatchSize] = 1;
+                    aggregatorStore.BatchSize++;
+                }
+            }
+
+            for (int i = startIndexForReclaimableMetricPoints; i < aggregatorStore.MaxMetricPoints; i++)
+            {
+                ref var metricPoint = ref aggregatorStore.GetMetricPoint(i);
+
+                if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                {
+                    aggregatorStore.TryReclaimMetricPoint(ref metricPoint, i);
+                    continue;
+                }
+
+                this.CollectMeasurementsOnMetricPoint(ref metricPoint);
+
+                aggregatorStore.CurrentMetricPointBatch[aggregatorStore.BatchSize] = i;
+                aggregatorStore.BatchSize++;
+            }
+        }
+        else
+        {
+            var indexSnapshot = Math.Min(aggregatorStore.MetricPointIndex, aggregatorStore.MaxMetricPoints - 1);
+
+            for (int i = 0; i <= indexSnapshot; i++)
+            {
+                ref var metricPoint = ref aggregatorStore.GetMetricPoint(i);
+                if (IsDeltaTemporality)
+                {
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    Debug.Assert(IsCumulativeTemporality, "IsCumulativeTemporality was false.");
+
+                    if (!metricPoint.IsInitialized)
+                    {
+                        continue;
+                    }
+                }
+
+                this.CollectMeasurementsOnMetricPoint(ref metricPoint);
+
+                aggregatorStore.CurrentMetricPointBatch[aggregatorStore.BatchSize] = i;
+                aggregatorStore.BatchSize++;
+            }
+        }
+
+        if (IsDeltaTemporality)
+        {
+            if (aggregatorStore.EndTimeInclusive != default)
+            {
+                aggregatorStore.StartTimeExclusive = aggregatorStore.EndTimeInclusive;
+            }
+        }
+
+        aggregatorStore.EndTimeInclusive = DateTimeOffset.UtcNow;
+
+        return aggregatorStore.BatchSize;
+    }
+
+    public void CollectMeasurementsOnMetricPoint(ref MetricPoint metricPoint)
+    {
+        if (LockRequired)
+        {
+            Debug.Assert(metricPoint.OptionalComponents != null, "metricPoint.OptionalComponents was null");
+
+            metricPoint.OptionalComponents!.AcquireLock();
+        }
+
+        if (IsCounter)
+        {
+            CollectMeasurementsOnCounterMetricPoint(ref metricPoint);
+        }
+        else if (IsGauge)
+        {
+            CollectMeasurementsOnGaugeMetricPoint(ref metricPoint);
+        }
+        else if (IsHistogramAggregation)
+        {
+            if (IsHistogramWithExponentialBuckets)
+            {
+                CollectMeasurementsOnExponentialHistogramMetricPoint(ref metricPoint);
+            }
+            else
+            {
+                CollectMeasurementsOnHistogramMetricPoint(ref metricPoint);
+            }
+
+            metricPoint.MetricPointStatus = MetricPointStatus.NoCollectPending;
+        }
+        else
+        {
+            ThrowCollectionNotSupportedException();
+        }
+
+        if (SampleMeasurementAndOfferExemplar
+            /* TODO: Enable exemplars for exponential histograms */
+            && !IsHistogramWithExponentialBuckets)
+        {
+            metricPoint.OptionalComponents!.Exemplars
+                = metricPoint.OptionalComponents.ExemplarReservoir?.Collect(metricPoint.Tags, reset: IsDeltaTemporality);
         }
 
         if (LockRequired)
@@ -238,7 +385,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         }
     }
 
-    private static void UpdateLongCounterOrGaugeMetricPoint(ref MetricPoint metricPoint, long value)
+    private static void RecoredMeasurementOnLongCounterOrGaugeMetricPoint(ref MetricPoint metricPoint, long value)
     {
         if (LockRequired)
         {
@@ -268,7 +415,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         }
     }
 
-    private static void UpdateDoubleCounterOrGaugeMetricPoint(ref MetricPoint metricPoint, double value)
+    private static void RecordMeasurementOnDoubleCounterOrGaugeMetricPoint(ref MetricPoint metricPoint, double value)
     {
         if (LockRequired)
         {
@@ -315,7 +462,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         }
     }
 
-    private static void UpdateHistogramMetricPoint(ref MetricPoint metricPoint, double value, ref int bucketIndex)
+    private static void RecordMeasurementOnHistogramMetricPoint(ref MetricPoint metricPoint, double value, ref int bucketIndex)
     {
         Debug.Assert(metricPoint.OptionalComponents!.HistogramBuckets != null, "HistogramBuckets was null");
 
@@ -345,7 +492,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         }
     }
 
-    private static void UpdateExponentialHistogramMetricPoint(ref MetricPoint metricPoint, double value)
+    private static void RecordMeasurementOnExponentialHistogramMetricPoint(ref MetricPoint metricPoint, double value)
     {
         if (value >= 0)
         {
@@ -365,6 +512,243 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
             {
                 histogram.RunningMin = Math.Min(histogram.RunningMin, value);
                 histogram.RunningMax = Math.Max(histogram.RunningMax, value);
+            }
+        }
+    }
+
+    private static void CollectMeasurementsOnCounterMetricPoint(ref MetricPoint metricPoint)
+    {
+        if (IsLong)
+        {
+            if (IsDeltaTemporality)
+            {
+                long initValue;
+                if (!LockRequired)
+                {
+                    initValue = Interlocked.Read(ref metricPoint.RunningValue.AsLong);
+                }
+                else
+                {
+                    initValue = metricPoint.RunningValue.AsLong;
+                }
+
+                metricPoint.SnapshotValue.AsLong = initValue - metricPoint.DeltaLastValue.AsLong;
+                metricPoint.DeltaLastValue.AsLong = initValue;
+                metricPoint.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                if (!LockRequired)
+                {
+                    // Check again if value got updated, if yes reset status.
+                    // This ensures no Updates get Lost.
+                    if (initValue != Interlocked.Read(ref metricPoint.RunningValue.AsLong))
+                    {
+                        metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+                    }
+                }
+            }
+            else
+            {
+                Debug.Assert(IsCumulativeTemporality, "IsCumulativeTemporality was null");
+
+                if (!LockRequired)
+                {
+                    metricPoint.SnapshotValue.AsLong = Interlocked.Read(ref metricPoint.RunningValue.AsLong);
+                }
+                else
+                {
+                    metricPoint.SnapshotValue.AsLong = metricPoint.RunningValue.AsLong;
+                }
+            }
+        }
+        else if (IsDouble)
+        {
+            if (IsDeltaTemporality)
+            {
+                double initValue;
+                if (!LockRequired)
+                {
+                    // TODO:
+                    // Is this thread-safe way to read double?
+                    // As long as the value is not -ve infinity,
+                    // the exchange (to 0.0) will never occur,
+                    // but we get the original value atomically.
+                    initValue = Interlocked.CompareExchange(ref metricPoint.RunningValue.AsDouble, 0.0, double.NegativeInfinity);
+                }
+                else
+                {
+                    initValue = metricPoint.RunningValue.AsDouble;
+                }
+
+                metricPoint.SnapshotValue.AsDouble = initValue - metricPoint.DeltaLastValue.AsDouble;
+                metricPoint.DeltaLastValue.AsDouble = initValue;
+                metricPoint.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                if (!LockRequired)
+                {
+                    // Check again if value got updated, if yes reset status.
+                    // This ensures no Updates get Lost.
+                    if (initValue != Interlocked.CompareExchange(ref metricPoint.RunningValue.AsDouble, 0.0, double.NegativeInfinity))
+                    {
+                        metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+                    }
+                }
+            }
+            else
+            {
+                Debug.Assert(IsCumulativeTemporality, "IsCumulativeTemporality was null");
+
+                if (!LockRequired)
+                {
+                    // TODO:
+                    // Is this thread-safe way to read double?
+                    // As long as the value is not -ve infinity,
+                    // the exchange (to 0.0) will never occur,
+                    // but we get the original value atomically.
+                    metricPoint.SnapshotValue.AsDouble = Interlocked.CompareExchange(ref metricPoint.RunningValue.AsDouble, 0.0, double.NegativeInfinity);
+                }
+                else
+                {
+                    metricPoint.SnapshotValue.AsDouble = metricPoint.RunningValue.AsDouble;
+                }
+            }
+        }
+        else
+        {
+            ThrowCollectionNotSupportedException();
+        }
+    }
+
+    private static void CollectMeasurementsOnGaugeMetricPoint(ref MetricPoint metricPoint)
+    {
+        if (IsLong)
+        {
+            if (!LockRequired)
+            {
+                metricPoint.SnapshotValue.AsLong = Interlocked.Read(ref metricPoint.RunningValue.AsLong);
+            }
+            else
+            {
+                metricPoint.SnapshotValue.AsLong = metricPoint.RunningValue.AsLong;
+            }
+
+            metricPoint.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+            if (!LockRequired)
+            {
+                // Check again if value got updated, if yes reset status.
+                // This ensures no Updates get Lost.
+                if (metricPoint.SnapshotValue.AsLong != Interlocked.Read(ref metricPoint.RunningValue.AsLong))
+                {
+                    metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+                }
+            }
+        }
+        else if (IsDouble)
+        {
+            if (!LockRequired)
+            {
+                // TODO:
+                // Is this thread-safe way to read double?
+                // As long as the value is not -ve infinity,
+                // the exchange (to 0.0) will never occur,
+                // but we get the original value atomically.
+                metricPoint.SnapshotValue.AsDouble = Interlocked.CompareExchange(ref metricPoint.RunningValue.AsDouble, 0.0, double.NegativeInfinity);
+            }
+            else
+            {
+                metricPoint.SnapshotValue.AsDouble = metricPoint.RunningValue.AsDouble;
+            }
+
+            metricPoint.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+            if (!LockRequired)
+            {
+                // Check again if value got updated, if yes reset status.
+                // This ensures no Updates get Lost.
+                if (metricPoint.SnapshotValue.AsDouble != Interlocked.CompareExchange(ref metricPoint.RunningValue.AsDouble, 0.0, double.NegativeInfinity))
+                {
+                    metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+                }
+            }
+        }
+        else
+        {
+            ThrowCollectionNotSupportedException();
+        }
+    }
+
+    private static void CollectMeasurementsOnHistogramMetricPoint(ref MetricPoint metricPoint)
+    {
+        Debug.Assert(metricPoint.OptionalComponents!.HistogramBuckets != null, "HistogramBuckets was null");
+
+        var histogramBuckets = metricPoint.OptionalComponents!.HistogramBuckets!;
+
+        metricPoint.SnapshotValue.AsLong = metricPoint.RunningValue.AsLong;
+        histogramBuckets.SnapshotSum = histogramBuckets.RunningSum;
+
+        if (IsDeltaTemporality)
+        {
+            metricPoint.RunningValue.AsLong = 0;
+            histogramBuckets.RunningSum = 0;
+        }
+
+        if (HistogramRecordMinMax)
+        {
+            histogramBuckets.SnapshotMin = histogramBuckets.RunningMin;
+            histogramBuckets.SnapshotMax = histogramBuckets.RunningMax;
+
+            if (IsDeltaTemporality)
+            {
+                histogramBuckets.RunningMin = double.PositiveInfinity;
+                histogramBuckets.RunningMax = double.NegativeInfinity;
+            }
+        }
+
+        if (!IsHistogramWithoutBuckets)
+        {
+            Debug.Assert(histogramBuckets.RunningBucketCounts != null, "histogramBuckets.RunningBucketCounts was null");
+
+            for (int i = 0; i < histogramBuckets.RunningBucketCounts!.Length; i++)
+            {
+                ref long count = ref histogramBuckets.RunningBucketCounts[i];
+
+                histogramBuckets.SnapshotBucketCounts[i] = count;
+
+                if (IsDeltaTemporality)
+                {
+                    count = 0;
+                }
+            }
+        }
+    }
+
+    private static void CollectMeasurementsOnExponentialHistogramMetricPoint(ref MetricPoint metricPoint)
+    {
+        Debug.Assert(metricPoint.OptionalComponents!.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
+
+        var histogram = metricPoint.OptionalComponents!.Base2ExponentialBucketHistogram!;
+
+        metricPoint.SnapshotValue.AsLong = metricPoint.RunningValue.AsLong;
+
+        histogram.SnapshotSum = histogram.RunningSum;
+        histogram.Snapshot();
+
+        if (IsDeltaTemporality)
+        {
+            metricPoint.RunningValue.AsLong = 0;
+            histogram.RunningSum = 0;
+            histogram.Reset();
+        }
+
+        if (HistogramRecordMinMax)
+        {
+            histogram.SnapshotMin = histogram.RunningMin;
+            histogram.SnapshotMax = histogram.RunningMax;
+
+            if (IsDeltaTemporality)
+            {
+                histogram.RunningMin = double.PositiveInfinity;
+                histogram.RunningMax = double.NegativeInfinity;
             }
         }
     }
@@ -393,5 +777,11 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
     private static void ThrowMeasurementTypeNotSupportedException<T>()
     {
         throw new NotSupportedException($"Measurements of type '{typeof(T)}' are not supported with '{typeof(TAggregatorBehavior)}' and '{typeof(TMetricPointBehavior)}' behaviors.");
+    }
+
+    [DoesNotReturn]
+    private static void ThrowCollectionNotSupportedException()
+    {
+        throw new NotSupportedException($"Collection is not supported with '{typeof(TAggregatorBehavior)}' and '{typeof(TMetricPointBehavior)}' behaviors.");
     }
 }
