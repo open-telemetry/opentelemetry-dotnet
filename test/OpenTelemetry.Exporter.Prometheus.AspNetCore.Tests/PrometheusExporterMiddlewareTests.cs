@@ -244,7 +244,7 @@ public sealed class PrometheusExporterMiddlewareTests
         return RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            requestOpenMetrics: false);
+            acceptHeader: "text/plain");
     }
 
     [Fact]
@@ -253,7 +253,7 @@ public sealed class PrometheusExporterMiddlewareTests
         return RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            openMetricsVersion: "1.0.0");
+            acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
@@ -264,9 +264,10 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions> configureOptions = null,
         bool skipMetrics = false,
-        bool requestOpenMetrics = true,
-        string openMetricsVersion = null)
+        string acceptHeader = "application/openmetrics-text")
     {
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
                .UseTestServer()
@@ -306,16 +307,9 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        if (requestOpenMetrics)
+        if (!string.IsNullOrEmpty(acceptHeader))
         {
-            var mediaType = "application/openmetrics-text";
-
-            if (!string.IsNullOrEmpty(openMetricsVersion))
-            {
-                mediaType += $";version={openMetricsVersion}";
-            }
-
-            client.DefaultRequestHeaders.Add("Accept", mediaType);
+            client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
         using var response = await client.GetAsync(path);

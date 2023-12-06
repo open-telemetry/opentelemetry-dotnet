@@ -93,17 +93,19 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(requestOpenMetrics: false);
+        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
     }
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
     {
-        await this.RunPrometheusExporterHttpServerIntegrationTest(openMetricsVersion: "1.0.0");
+        await this.RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
     }
 
-    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, bool requestOpenMetrics = true, string openMetricsVersion = null)
+    private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text")
     {
+        var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text");
+
         Random random = new Random();
         int retryAttempts = 5;
         int port = 0;
@@ -152,16 +154,9 @@ public class PrometheusHttpListenerTests
 
         using HttpClient client = new HttpClient();
 
-        if (requestOpenMetrics)
+        if (!string.IsNullOrEmpty(acceptHeader))
         {
-            var mediaType = "application/openmetrics-text";
-
-            if (!string.IsNullOrEmpty(openMetricsVersion))
-            {
-                mediaType += $";version={openMetricsVersion}";
-            }
-
-            client.DefaultRequestHeaders.Add("Accept", mediaType);
+            client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
         using var response = await client.GetAsync($"{address}metrics");
