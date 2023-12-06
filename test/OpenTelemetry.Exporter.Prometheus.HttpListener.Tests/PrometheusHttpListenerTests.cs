@@ -16,7 +16,6 @@
 
 using System.Diagnostics.Metrics;
 using System.Net;
-
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
