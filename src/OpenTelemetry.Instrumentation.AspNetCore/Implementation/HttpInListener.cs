@@ -179,7 +179,7 @@ internal class HttpInListener : ListenerHandler
 #endif
 
             var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
-            activity.DisplayName = this.GetDisplayName(request.Method);
+            activity.DisplayName = GetDisplayName(request.Method);
 
             // see the spec https://github.com/open-telemetry/semantic-conventions/blob/v1.23.0/docs/http/http-spans.md
 
@@ -242,7 +242,7 @@ internal class HttpInListener : ListenerHandler
             var routePattern = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
             if (!string.IsNullOrEmpty(routePattern))
             {
-                activity.DisplayName = this.GetDisplayName(context.Request.Method, routePattern);
+                activity.DisplayName = GetDisplayName(context.Request.Method, routePattern);
                 activity.SetTag(SemanticConventions.AttributeHttpRoute, routePattern);
             }
 #endif
