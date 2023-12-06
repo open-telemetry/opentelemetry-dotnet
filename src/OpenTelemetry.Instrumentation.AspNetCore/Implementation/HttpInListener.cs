@@ -385,7 +385,7 @@ internal class HttpInListener : ListenerHandler
         }
     }
 
-    private string GetDisplayName(string httpMethod, string httpRoute = null)
+    private static string GetDisplayName(string httpMethod, string httpRoute = null)
     {
         var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
 
