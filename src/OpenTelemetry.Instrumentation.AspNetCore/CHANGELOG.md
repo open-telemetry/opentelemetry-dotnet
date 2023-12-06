@@ -4,11 +4,11 @@
 
 * Re-introduced support for gRPC instrumentation as an opt-in experimental
   feature. From now onwards, gRPC can be enabled by setting
-  `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` to `True`.
-  `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` can be set
-  as an environment variable or via IConfiguration. The change is introduced in
-  order to support stable release of `http` instrumentation. Semantic
-  conventions for RPC is still
+  `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` flag to
+  `True`. `OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` can
+  be set as an environment variable or via IConfiguration. The change is
+  introduced in order to support stable release of `http` instrumentation.
+  Semantic conventions for RPC is still
   [experimental](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/rpc)
   and hence the package will only support it as an opt-in experimental feature.
   Note that the support was removed in `1.6.0-rc.1` version of the package and
