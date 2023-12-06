@@ -16,11 +16,11 @@
 
 namespace OpenTelemetry.Exporter.Prometheus;
 
-internal class PrometheusHeadersParser
+internal static class PrometheusHeadersParser
 {
     private const string OpenMetricsMediaType = "application/openmetrics-text";
 
-    internal bool AcceptsOpenMetrics(string contentType)
+    internal static bool AcceptsOpenMetrics(string contentType)
     {
         var value = contentType.AsSpan();
 

@@ -23,7 +23,6 @@ namespace OpenTelemetry.Exporter;
 internal sealed class PrometheusHttpListener : IDisposable
 {
     private readonly PrometheusExporter exporter;
-    private readonly PrometheusHeadersParser headersParser = new();
     private readonly HttpListener httpListener = new();
     private readonly object syncObject = new();
 
@@ -111,6 +110,18 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
+    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    {
+        var acceptHeader = request.Headers["Accept"];
+
+        if (string.IsNullOrEmpty(acceptHeader))
+        {
+            return false;
+        }
+
+        return PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+    }
+
     private void WorkerProc()
     {
         this.httpListener.Start();
@@ -149,7 +160,7 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         try
         {
-            var openMetricsRequested = this.AcceptsOpenMetrics(context.Request);
+            var openMetricsRequested = AcceptsOpenMetrics(context.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try
@@ -191,17 +202,5 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch
         {
         }
-    }
-
-    private bool AcceptsOpenMetrics(HttpListenerRequest request)
-    {
-        var acceptHeader = request.Headers["Accept"];
-
-        if (string.IsNullOrEmpty(acceptHeader))
-        {
-            return false;
-        }
-
-        return this.headersParser.AcceptsOpenMetrics(acceptHeader);
     }
 }

@@ -29,7 +29,6 @@ namespace OpenTelemetry.Exporter;
 internal sealed class PrometheusExporterMiddleware
 {
     private readonly PrometheusExporter exporter;
-    private readonly PrometheusHeadersParser headersParser = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusExporterMiddleware"/> class.
@@ -66,7 +65,7 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var openMetricsRequested = this.AcceptsOpenMetrics(httpContext.Request);
+            var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try
@@ -109,7 +108,7 @@ internal sealed class PrometheusExporterMiddleware
         this.exporter.OnExport = null;
     }
 
-    private bool AcceptsOpenMetrics(HttpRequest request)
+    private static bool AcceptsOpenMetrics(HttpRequest request)
     {
         var acceptHeader = request.Headers.Accept;
 
@@ -118,6 +117,6 @@ internal sealed class PrometheusExporterMiddleware
             return false;
         }
 
-        return acceptHeader.Any(x => this.headersParser.AcceptsOpenMetrics(x));
+        return acceptHeader.Any(PrometheusHeadersParser.AcceptsOpenMetrics);
     }
 }

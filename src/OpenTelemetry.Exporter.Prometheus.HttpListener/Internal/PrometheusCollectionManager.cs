@@ -174,7 +174,6 @@ internal sealed class PrometheusCollectionManager
         this.exporter.OpenMetricsRequested = openMetricsRequested;
         var result = this.exporter.Collect(Timeout.Infinite);
         this.exporter.OnExport = null;
-        this.exporter.OpenMetricsRequested = false;
         return result;
     }
 
