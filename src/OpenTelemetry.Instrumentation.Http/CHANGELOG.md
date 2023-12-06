@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0-rc.1
+
+Released 2023-Dec-01
+
 * Removed support for `OTEL_SEMCONV_STABILITY_OPT_IN` environment variable. The
   library will now emit only the
   [stable](https://github.com/open-telemetry/semantic-conventions/tree/v1.23.0/docs/http)
@@ -18,6 +22,17 @@
   out this
   [issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/5092).
   ([#5077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5077))
+
+* **Breaking Change**: Renamed `HttpClientInstrumentationOptions` to
+  `HttpClientTraceInstrumentationOptions`.
+  ([#5109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5109))
+
+* **Breaking Change**: Removed `http.user_agent` tag from HttpClient activity.
+  ([#5110](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5110))
+
+* `HttpWebRequest` : Introduced additional values for `error.type` tag on
+  activity and `http.client.request.duration` metric.
+  ([#5111](https://github.com/open-telemetry/opentelemetry-dotnet/pull/5111))
 
 ## 1.6.0-beta.3
 

@@ -20,29 +20,26 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 /*
-// * Summary *
-
-BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2130/21H2/November2021Update)
-Intel Core i7-4790 CPU 3.60GHz(Haswell), 1 CPU, 8 logical and 4 physical cores
-.NET SDK= 7.0.100-preview.7.22377.5
-    [Host]     : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
-    DefaultJob : .NET 6.0.10 (6.0.1022.47605), X64 RyuJIT AVX2
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-|                           Method |      Mean |    Error |   StdDev |   Gen0 | Allocated |
+| Method                           | Mean      | Error    | StdDev   | Gen0   | Allocated |
 |--------------------------------- |----------:|---------:|---------:|-------:|----------:|
-|                       NoListener |  20.86 ns | 0.379 ns | 0.336 ns |      - |         - |
-|           PropagationDataListner | 376.51 ns | 1.361 ns | 1.273 ns | 0.0992 |     416 B |
-|                   AllDataListner | 377.38 ns | 2.715 ns | 2.407 ns | 0.0992 |     416 B |
-|        AllDataAndRecordedListner | 375.79 ns | 3.393 ns | 3.008 ns | 0.0992 |     416 B |
-|                     OneProcessor | 432.98 ns | 1.562 ns | 1.461 ns | 0.0992 |     416 B |
-|                    TwoProcessors | 430.16 ns | 2.538 ns | 2.250 ns | 0.0992 |     416 B |
-|                  ThreeProcessors | 427.39 ns | 3.243 ns | 2.875 ns | 0.0992 |     416 B |
-|               OneInstrumentation | 411.56 ns | 2.310 ns | 2.161 ns | 0.0992 |     416 B |
-|              TwoInstrumentations | 422.27 ns | 3.304 ns | 2.929 ns | 0.0992 |     416 B |
-|    LegacyActivity_ExactMatchMode | 726.59 ns | 4.852 ns | 4.301 ns | 0.0992 |     416 B |
-| LegacyActivity_WildcardMatchMode | 825.79 ns | 7.846 ns | 6.955 ns | 0.0992 |     416 B |
-
+| NoListener                       |  14.00 ns | 0.173 ns | 0.162 ns |      - |         - |
+| PropagationDataListner           | 265.96 ns | 4.022 ns | 3.762 ns | 0.0663 |     416 B |
+| AllDataListner                   | 255.14 ns | 1.819 ns | 1.702 ns | 0.0663 |     416 B |
+| AllDataAndRecordedListner        | 258.32 ns | 2.387 ns | 2.116 ns | 0.0663 |     416 B |
+| OneProcessor                     | 277.12 ns | 2.059 ns | 1.926 ns | 0.0663 |     416 B |
+| TwoProcessors                    | 276.82 ns | 4.442 ns | 4.155 ns | 0.0663 |     416 B |
+| ThreeProcessors                  | 283.12 ns | 1.970 ns | 1.645 ns | 0.0663 |     416 B |
+| OneInstrumentation               | 281.13 ns | 2.199 ns | 2.057 ns | 0.0663 |     416 B |
+| TwoInstrumentations              | 273.99 ns | 2.792 ns | 2.475 ns | 0.0663 |     416 B |
+| LegacyActivity_ExactMatchMode    | 471.38 ns | 2.211 ns | 1.960 ns | 0.0658 |     416 B |
+| LegacyActivity_WildcardMatchMode | 496.84 ns | 2.138 ns | 2.000 ns | 0.0658 |     416 B |
 */
 
 namespace Benchmarks.Trace;

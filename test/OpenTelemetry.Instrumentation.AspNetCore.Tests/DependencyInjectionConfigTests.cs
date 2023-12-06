@@ -46,9 +46,9 @@ public class DependencyInjectionConfigTests
         {
             services.AddOpenTelemetry()
                 .WithTracing(builder => builder
-                    .AddAspNetCoreInstrumentation(name, configureAspNetCoreInstrumentationOptions: null));
+                    .AddAspNetCoreInstrumentation(name, configureAspNetCoreTraceInstrumentationOptions: null));
 
-            services.Configure<AspNetCoreInstrumentationOptions>(name, options =>
+            services.Configure<AspNetCoreTraceInstrumentationOptions>(name, options =>
             {
                 optionsPickedFromDI = true;
             });

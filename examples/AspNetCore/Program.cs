@@ -63,7 +63,7 @@ appBuilder.Services.AddOpenTelemetry()
             .AddAspNetCoreInstrumentation();
 
         // Use IConfiguration binding for AspNetCore instrumentation options.
-        appBuilder.Services.Configure<AspNetCoreInstrumentationOptions>(appBuilder.Configuration.GetSection("AspNetCoreInstrumentation"));
+        appBuilder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(appBuilder.Configuration.GetSection("AspNetCoreInstrumentation"));
 
         switch (tracingExporter)
         {
