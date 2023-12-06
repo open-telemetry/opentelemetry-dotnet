@@ -117,6 +117,14 @@ internal sealed class PrometheusExporterMiddleware
             return false;
         }
 
-        return acceptHeader.Any(PrometheusHeadersParser.AcceptsOpenMetrics);
+        foreach (var header in acceptHeader)
+        {
+            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
