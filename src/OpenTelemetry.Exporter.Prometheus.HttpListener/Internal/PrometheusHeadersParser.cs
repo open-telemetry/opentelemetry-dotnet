@@ -1,4 +1,4 @@
-// <copyright file="ReadOnlySpanExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusHeadersParser.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,31 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore;
+namespace OpenTelemetry.Exporter.Prometheus;
 
-internal static class ReadOnlySpanExtensions
+internal class PrometheusHeadersParser
 {
-    internal static ReadOnlySpan<char> SplitNext(this ref ReadOnlySpan<char> span, char character)
+    private const string OpenMetricsMediaType = "application/openmetrics-text";
+
+    internal bool AcceptsOpenMetrics(string contentType)
+    {
+        var value = contentType.AsSpan();
+
+        while (value.Length > 0)
+        {
+            var headerValue = SplitNext(ref value, ',');
+            var mediaType = SplitNext(ref headerValue, ';');
+
+            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)
     {
         var index = span.IndexOf(character);
 

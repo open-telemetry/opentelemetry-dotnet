@@ -22,9 +22,8 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
-    private const string OpenMetricsMediaType = "application/openmetrics-text";
-
     private readonly PrometheusExporter exporter;
+    private readonly PrometheusHeadersParser headersParser = new();
     private readonly HttpListener httpListener = new();
     private readonly object syncObject = new();
 
@@ -194,35 +193,15 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private static AcceptsOpenMetrics(HttpListenerRequest request)
+    private bool AcceptsOpenMetrics(HttpListenerRequest request)
     {
-        if (request.AcceptTypes == null)
+        var acceptHeader = request.Headers["Accept"];
+
+        if (string.IsNullOrEmpty(acceptHeader))
         {
             return false;
         }
 
-        foreach (var acceptType in request.AcceptTypes)
-        {
-            if (this.GetMediaType(acceptType) == OpenMetricsMediaType)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private string GetMediaType(string acceptHeader)
-    {
-        if (string.IsNullOrEmpty(acceptHeader))
-        {
-            return string.Empty;
-        }
-
-        var separatorIndex = acceptHeader.IndexOf(';');
-
-        return separatorIndex == -1
-            ? acceptHeader
-            : acceptHeader.Substring(0, separatorIndex);
+        return this.headersParser.AcceptsOpenMetrics(acceptHeader);
     }
 }

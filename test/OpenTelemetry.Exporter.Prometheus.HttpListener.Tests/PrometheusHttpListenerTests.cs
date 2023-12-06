@@ -110,7 +110,7 @@ public class PrometheusHttpListenerTests
         int port = 0;
         string address = null;
 
-        MeterProvider provider;
+        MeterProvider provider = null;
         using var meter = new Meter(this.meterName);
 
         while (retryAttempts-- != 0)
@@ -118,10 +118,24 @@ public class PrometheusHttpListenerTests
             port = random.Next(2000, 5000);
             address = $"http://localhost:{port}/";
 
-            provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
-                .Build();
+            try
+            {
+                provider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(meter.Name)
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
+                    .Build();
+
+                break;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException("HttpListener could not be started");
         }
 
         var tags = new KeyValuePair<string, object>[]
@@ -183,5 +197,7 @@ public class PrometheusHttpListenerTests
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+
+        provider.Dispose();
     }
 }
