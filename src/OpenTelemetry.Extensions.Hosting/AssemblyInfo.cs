@@ -16,6 +16,8 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: TypeForwardedTo(typeof(OpenTelemetry.OpenTelemetryBuilder))]
+
 [assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Hosting.Tests" + AssemblyInfo.PublicKey)]
 
 #if SIGNED

@@ -1,1 +1,8 @@
 OpenTelemetry.Metrics.Metric.MeterTags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>?
+OpenTelemetry.OpenTelemetrySdk
+OpenTelemetry.OpenTelemetrySdk.Dispose() -> void
+OpenTelemetry.OpenTelemetrySdk.MeterProvider.get -> OpenTelemetry.Metrics.MeterProvider!
+OpenTelemetry.OpenTelemetrySdk.Services.get -> System.IServiceProvider!
+OpenTelemetry.OpenTelemetrySdk.TracerProvider.get -> OpenTelemetry.Trace.TracerProvider!
+static OpenTelemetry.OpenTelemetrySdk.Create() -> OpenTelemetry.OpenTelemetrySdk!
+static OpenTelemetry.OpenTelemetrySdk.Create(System.Action<OpenTelemetry.OpenTelemetryBuilder!>! configure) -> OpenTelemetry.OpenTelemetrySdk!

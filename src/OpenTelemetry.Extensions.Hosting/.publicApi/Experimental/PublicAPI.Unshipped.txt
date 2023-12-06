@@ -1,3 +1,3 @@
-OpenTelemetry.OpenTelemetryBuilder.WithLogging() -> OpenTelemetry.OpenTelemetryBuilder!
-OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
-OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> OpenTelemetry.OpenTelemetryBuilder!
+OpenTelemetry.OpenTelemetryBuilder.WithLogging() -> OpenTelemetry.OpenTelemetryBuilder! (forwarded, contained in OpenTelemetry)
+OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder! (forwarded, contained in OpenTelemetry)
+OpenTelemetry.OpenTelemetryBuilder.WithLogging(System.Action<OpenTelemetry.Logs.LoggerProviderBuilder!>? configureBuilder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configureOptions) -> OpenTelemetry.OpenTelemetryBuilder! (forwarded, contained in OpenTelemetry)
