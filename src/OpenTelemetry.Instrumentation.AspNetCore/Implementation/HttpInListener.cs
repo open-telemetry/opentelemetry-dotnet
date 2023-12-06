@@ -19,17 +19,13 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Reflection;
-#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
-#endif
 using Microsoft.AspNetCore.Http;
 #if !NETSTANDARD
 using Microsoft.AspNetCore.Routing;
 #endif
 using OpenTelemetry.Context.Propagation;
-#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
-#endif
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -253,12 +249,11 @@ internal class HttpInListener : ListenerHandler
 
             activity.SetTag(SemanticConventions.AttributeHttpResponseStatusCode, TelemetryHelper.GetBoxedStatusCode(response.StatusCode));
 
-#if !NETSTANDARD2_0
             if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
             {
                 this.AddGrpcAttributes(activity, grpcMethod, context);
             }
-#endif
+
             if (activity.Status == ActivityStatusCode.Unset)
             {
                 activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
@@ -339,14 +334,12 @@ internal class HttpInListener : ListenerHandler
             => ExceptionPropertyFetcher.TryFetch(payload, out exc) && exc != null;
     }
 
-#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
     {
         grpcMethod = GrpcTagHelper.GetGrpcMethodFromActivity(activity);
         return !string.IsNullOrEmpty(grpcMethod);
     }
-#endif
 
     private string GetDisplayName(string httpMethod, string httpRoute = null)
     {
@@ -357,7 +350,6 @@ internal class HttpInListener : ListenerHandler
             : $"{normalizedMethod} {httpRoute}";
     }
 
-#if !NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
     {
@@ -401,5 +393,4 @@ internal class HttpInListener : ListenerHandler
             }
         }
     }
-#endif
 }
