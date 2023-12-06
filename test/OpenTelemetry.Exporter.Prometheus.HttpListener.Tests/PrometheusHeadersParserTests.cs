@@ -29,8 +29,7 @@ public class PrometheusHeadersParserTests
     [InlineData("text/plain, */*;q=0.8,application/openmetrics-text; version=1.0.0; charset=utf-8")]
     public void ParseHeader_AcceptHeaders_OpenMetricsValid(string header)
     {
-        var parser = new PrometheusHeadersParser();
-        var result = parser.AcceptsOpenMetrics(header);
+        var result = PrometheusHeadersParser.AcceptsOpenMetrics(header);
 
         Assert.True(result);
     }
@@ -42,8 +41,7 @@ public class PrometheusHeadersParserTests
     [InlineData("*/*;q=0.8,text/plain; charset=utf-8; version=0.0.4")]
     public void ParseHeader_AcceptHeaders_OtherHeadersInvalid(string header)
     {
-        var parser = new PrometheusHeadersParser();
-        var result = parser.AcceptsOpenMetrics(header);
+        var result = PrometheusHeadersParser.AcceptsOpenMetrics(header);
 
         Assert.False(result);
     }
