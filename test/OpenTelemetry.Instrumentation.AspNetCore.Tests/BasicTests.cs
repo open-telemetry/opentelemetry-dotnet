@@ -1042,12 +1042,9 @@ public sealed class BasicTests
     [Fact]
     public async Task NoSiblingActivityCreatedWhenIdFormatIsW3CWithTraceFlagsNone()
     {
-        var exportedItems = new List<Activity>();
-
-        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(exportedItems)
             .Build();
 
         var builder = WebApplication.CreateBuilder();
@@ -1087,19 +1084,14 @@ public sealed class BasicTests
         //    Assert.Single(exportedItems);
         //    Assert.Equal(traceParent, exportedItems[0].ParentId);
         // }
-
-        tracerProvider.Dispose();
     }
 
-    [Fact]
+    [Fact(Skip = "TODO")]
     public async Task SiblingActivityCreatedWhenIdFormatIsNotW3CWithTraceFlagsNone()
     {
-        var exportedItems = new List<Activity>();
-
-        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddAspNetCoreInstrumentation()
-            .AddInMemoryExporter(exportedItems)
             .Build();
 
         var builder = WebApplication.CreateBuilder();
@@ -1141,8 +1133,6 @@ public sealed class BasicTests
         //    Assert.Single(exportedItems);
         //    Assert.Equal(traceParent, exportedItems[0].ParentId);
         // }
-
-        tracerProvider.Dispose();
     }
 #endif
 

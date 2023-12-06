@@ -127,7 +127,7 @@ internal class HttpInListener : ListenerHandler
             var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
             if (ctx.ActivityContext.IsValid()
-                && activity.IdFormat != ActivityIdFormat.W3C
+                && (activity.IdFormat != ActivityIdFormat.W3C || ctx.ActivityContext.TraceFlags == ActivityTraceFlags.Recorded)
                 && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
             {
                 // Create a new activity with its parent set from the extracted context.
