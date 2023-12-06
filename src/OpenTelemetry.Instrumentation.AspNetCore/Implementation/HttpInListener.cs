@@ -251,7 +251,7 @@ internal class HttpInListener : ListenerHandler
 
             if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
             {
-                this.AddGrpcAttributes(activity, grpcMethod, context);
+                AddGrpcAttributes(activity, grpcMethod, context);
             }
 
             if (activity.Status == ActivityStatusCode.Unset)
@@ -341,17 +341,8 @@ internal class HttpInListener : ListenerHandler
         return !string.IsNullOrEmpty(grpcMethod);
     }
 
-    private string GetDisplayName(string httpMethod, string httpRoute = null)
-    {
-        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
-
-        return string.IsNullOrEmpty(httpRoute)
-            ? normalizedMethod
-            : $"{normalizedMethod} {httpRoute}";
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
+    private static void AddGrpcAttributes(Activity activity, string grpcMethod, HttpContext context)
     {
         // The RPC semantic conventions indicate the span name
         // should not have a leading forward slash.
@@ -392,5 +383,14 @@ internal class HttpInListener : ListenerHandler
                 activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
             }
         }
+    }
+
+    private string GetDisplayName(string httpMethod, string httpRoute = null)
+    {
+        var normalizedMethod = RequestMethodHelper.GetNormalizedHttpMethod(httpMethod);
+
+        return string.IsNullOrEmpty(httpRoute)
+            ? normalizedMethod
+            : $"{normalizedMethod} {httpRoute}";
     }
 }
