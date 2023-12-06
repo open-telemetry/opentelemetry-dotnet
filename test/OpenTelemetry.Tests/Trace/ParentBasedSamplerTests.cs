@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Diagnostics;
-using Moq;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
@@ -105,47 +105,28 @@ public class ParentBasedSamplerTests
     [InlineData(false, false)]
     public void CustomSamplers(bool parentIsRemote, bool parentIsSampled)
     {
-        var mockRepository = new MockRepository(MockBehavior.Strict);
-        var remoteParentSampled = mockRepository.Create<Sampler>();
-        var remoteParentNotSampled = mockRepository.Create<Sampler>();
-        var localParentSampled = mockRepository.Create<Sampler>();
-        var localParentNotSampled = mockRepository.Create<Sampler>();
+        var remoteParentSampled = new TestSampler();
+        var remoteParentNotSampled = new TestSampler();
+        var localParentSampled = new TestSampler();
+        var localParentNotSampled = new TestSampler();
 
         var samplerUnderTest = new ParentBasedSampler(
             new AlwaysOnSampler(), // root
-            remoteParentSampled.Object,
-            remoteParentNotSampled.Object,
-            localParentSampled.Object,
-            localParentNotSampled.Object);
+            remoteParentSampled,
+            remoteParentNotSampled,
+            localParentSampled,
+            localParentNotSampled);
 
         var samplingParams = MakeTestParameters(parentIsRemote, parentIsSampled);
-
-        Mock<Sampler> invokedSampler;
-        if (parentIsRemote && parentIsSampled)
-        {
-            invokedSampler = remoteParentSampled;
-        }
-        else if (parentIsRemote && !parentIsSampled)
-        {
-            invokedSampler = remoteParentNotSampled;
-        }
-        else if (!parentIsRemote && parentIsSampled)
-        {
-            invokedSampler = localParentSampled;
-        }
-        else
-        {
-            invokedSampler = localParentNotSampled;
-        }
-
         var expectedResult = new SamplingResult(SamplingDecision.RecordAndSample);
-        invokedSampler.Setup(sampler => sampler.ShouldSample(samplingParams)).Returns(expectedResult);
-
         var actualResult = samplerUnderTest.ShouldSample(samplingParams);
 
-        mockRepository.VerifyAll();
+        Assert.Equal(parentIsRemote && parentIsSampled, remoteParentSampled.LatestSamplingParameters.Equals(samplingParams));
+        Assert.Equal(parentIsRemote && !parentIsSampled, remoteParentNotSampled.LatestSamplingParameters.Equals(samplingParams));
+        Assert.Equal(!parentIsRemote && parentIsSampled, localParentSampled.LatestSamplingParameters.Equals(samplingParams));
+        Assert.Equal(!parentIsRemote && !parentIsSampled, localParentNotSampled.LatestSamplingParameters.Equals(samplingParams));
+
         Assert.Equal(expectedResult, actualResult);
-        mockRepository.VerifyNoOtherCalls();
     }
 
     [Fact]
