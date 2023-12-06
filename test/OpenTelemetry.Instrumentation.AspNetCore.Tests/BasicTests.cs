@@ -1072,67 +1072,6 @@ public sealed class BasicTests
 
         Assert.True(res.IsSuccessStatusCode);
         Assert.True(result);
-
-        // using (var client = this.factory
-        //    .CreateClient())
-        // {
-        //    var req = new HttpRequestMessage(HttpMethod.Get, "/api/values");
-        //    var traceParent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00";
-        //    req.Headers.Add("traceparent", traceParent);
-        //    var res = await client.SendAsync(req);
-        //    Assert.True(res.IsSuccessStatusCode);
-        //    Assert.Single(exportedItems);
-        //    Assert.Equal(traceParent, exportedItems[0].ParentId);
-        // }
-    }
-
-    [Fact(Skip = "TODO")]
-    public async Task SiblingActivityCreatedWhenIdFormatIsNotW3CWithTraceFlagsNone()
-    {
-        this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetSampler(new AlwaysOnSampler())
-            .AddAspNetCoreInstrumentation()
-            .Build();
-
-        var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls("http://*:0");
-        var app = builder.Build();
-
-        app.MapGet("/values", (HttpContext context) =>
-        {
-            var activity = context.Features.GetRequiredFeature<IHttpActivityFeature>().Activity;
-            var equal = Activity.Current.Id == activity.Id;
-
-            return Results.Ok(equal);
-        });
-
-        _ = app.RunAsync();
-
-        var url = app.Urls.ToArray()[0];
-        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
-
-        Activity.DefaultIdFormat = ActivityIdFormat.Hierarchical;
-
-        using var client = new HttpClient();
-        var req = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:{portNumber}/values");
-        req.Headers.Add("traceparent", "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00");
-        var res = await client.SendAsync(req);
-        var result = bool.Parse(await res.Content.ReadAsStringAsync());
-
-        Assert.True(res.IsSuccessStatusCode);
-        Assert.False(result);
-
-        // using (var client = this.factory
-        //    .CreateClient())
-        // {
-        //    var req = new HttpRequestMessage(HttpMethod.Get, "/api/values");
-        //    var traceParent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00";
-        //    req.Headers.Add("traceparent", traceParent);
-        //    var res = await client.SendAsync(req);
-        //    Assert.True(res.IsSuccessStatusCode);
-        //    Assert.Single(exportedItems);
-        //    Assert.Equal(traceParent, exportedItems[0].ParentId);
-        // }
     }
 #endif
 
