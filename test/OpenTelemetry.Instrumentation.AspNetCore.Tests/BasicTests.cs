@@ -1128,18 +1128,17 @@ public sealed class BasicTests
         Assert.True(res.IsSuccessStatusCode);
         Assert.False(result);
 
-        //using (var client = this.factory
+        // using (var client = this.factory
         //    .CreateClient())
-        //{
+        // {
         //    var req = new HttpRequestMessage(HttpMethod.Get, "/api/values");
         //    var traceParent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00";
         //    req.Headers.Add("traceparent", traceParent);
         //    var res = await client.SendAsync(req);
-
         //    Assert.True(res.IsSuccessStatusCode);
         //    Assert.Single(exportedItems);
         //    Assert.Equal(traceParent, exportedItems[0].ParentId);
-        //}
+        // }
 
         tracerProvider.Dispose();
     }
