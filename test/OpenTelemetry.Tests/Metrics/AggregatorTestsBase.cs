@@ -155,7 +155,7 @@ public abstract class AggregatorTestsBase
             boundaries[i] = i;
         }
 
-        var histogramPoint = new MetricPoint(this.aggregatorStore,  null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         var measurementHandler = this.aggregatorStore.MeasurementHandler;
 
