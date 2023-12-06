@@ -98,7 +98,7 @@ public class AspNetCoreTraceInstrumentationOptions
     public bool RecordException { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
+    /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore.
     /// </summary>
     /// <remarks>
     /// https://github.com/open-telemetry/semantic-conventions/blob/main/docs/rpc/rpc-spans.md.
