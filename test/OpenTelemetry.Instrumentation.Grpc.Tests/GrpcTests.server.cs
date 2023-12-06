@@ -22,7 +22,6 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
