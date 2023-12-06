@@ -150,7 +150,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         {
             if (IsCounter || IsGauge)
             {
-                RecoredMeasurementOnLongCounterOrGaugeMetricPoint(ref metricPoint, (long)(object)value!);
+                RecordMeasurementOnLongCounterOrGaugeMetricPoint(ref metricPoint, (long)(object)value!);
             }
             else if (IsHistogramAggregation)
             {
@@ -385,7 +385,7 @@ internal sealed class MetricMeasurementHandler<TAggregatorBehavior, TMetricPoint
         }
     }
 
-    private static void RecoredMeasurementOnLongCounterOrGaugeMetricPoint(ref MetricPoint metricPoint, long value)
+    private static void RecordMeasurementOnLongCounterOrGaugeMetricPoint(ref MetricPoint metricPoint, long value)
     {
         if (LockRequired)
         {
