@@ -17,7 +17,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 using OpenTelemetry.Internal;

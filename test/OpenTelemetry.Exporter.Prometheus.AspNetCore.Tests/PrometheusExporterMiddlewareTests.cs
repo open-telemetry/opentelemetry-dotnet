@@ -17,7 +17,6 @@
 #if !NETFRAMEWORK
 using System.Diagnostics.Metrics;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
