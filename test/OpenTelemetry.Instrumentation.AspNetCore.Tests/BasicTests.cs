@@ -19,9 +19,6 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-#if NET7_0_OR_GREATER
-using Microsoft.AspNetCore.Http.Features;
-#endif
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -1038,39 +1035,37 @@ public sealed class BasicTests
         Assert.Equal(2, numberOfSubscribedEvents);
     }
 
-#if NET7_0_OR_GREATER
+#if NET6_0_OR_GREATER
     [Fact]
-    public async Task NoSiblingActivityCreatedWhenIdFormatIsW3CWithTraceFlagsNone()
+    public async Task NoSiblingActivityCreatedWhenTraceFlagsNone()
     {
         this.tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddAspNetCoreInstrumentation()
             .Build();
 
-        var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls("http://*:0");
-        var app = builder.Build();
+        using var testFactory = this.factory
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .Build();
+                });
 
-        app.MapGet("/values", (HttpContext context) =>
-        {
-            var activity = context.Features.GetRequiredFeature<IHttpActivityFeature>().Activity;
-            var equal = Activity.Current.Id == activity.Id;
+                builder.ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders());
+            });
+        using var client = testFactory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetActivityEquality");
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+        request.Headers.Add("traceparent", $"00-{traceId}-{spanId}-00");
 
-            return Results.Ok(equal);
-        });
+        var response = await client.SendAsync(request);
+        var result = bool.Parse(await response.Content.ReadAsStringAsync());
 
-        _ = app.RunAsync();
-
-        var url = app.Urls.ToArray()[0];
-        var portNumber = url.Substring(url.LastIndexOf(':') + 1);
-
-        using var client = new HttpClient();
-        var req = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:{portNumber}/values");
-        req.Headers.Add("traceparent", "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00");
-        var res = await client.SendAsync(req);
-        var result = bool.Parse(await res.Content.ReadAsStringAsync());
-
-        Assert.True(res.IsSuccessStatusCode);
+        Assert.True(response.IsSuccessStatusCode);
         Assert.True(result);
     }
 #endif
